@@ -1,0 +1,9 @@
+
+file: endpoints
+class: SwaggerSpecifications
+baseuri: "/api"
+mapping:
+  status: "/specs"
+labels:
+  - base
+  - specifications

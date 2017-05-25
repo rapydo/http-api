@@ -1,0 +1,21 @@
+
+common:
+  custom:
+    # publish: false
+    authentication: true
+    authorized:
+      - admin_root
+
+list_queue:
+  summary: List tasks in the queue
+  description: Base implementation of a CELERY queue.
+  responses:
+    '200':
+      description: A list of tasks
+
+single_queue:
+  summary: Information about a single task
+  # description: Do not mess too much with tasks.
+  responses:
+    '200':
+      description: task information

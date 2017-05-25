@@ -1,0 +1,9 @@
+
+file: endpoints
+class: Logout
+baseuri: "/auth"
+mapping:
+  tologout: "/logout"
+labels:
+  - base
+  - authentication

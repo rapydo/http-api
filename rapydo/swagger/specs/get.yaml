@@ -1,0 +1,13 @@
+
+status:
+  summary: Specifications output throught Swagger (open API) standards
+  # description: yeah
+  custom:
+    authentication: false
+    # publish: false
+    publish: true
+  responses:
+    200:
+      description: a JSON with all endpoint defined with Swagger standards
+  # tags:
+  #   - swagger

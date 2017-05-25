@@ -1,0 +1,10 @@
+
+single_queue:
+  summary: Revoke a task from its id
+  custom:
+    authentication: true
+    authorized:
+      - admin_root
+  responses:
+    '204':
+      description: The task was revoked

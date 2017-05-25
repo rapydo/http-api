@@ -1,0 +1,36 @@
+
+# REQUIRED: the name of the REST class
+class: Tokens
+
+# OPTIONAL: The python file where your REST class is located
+# default is the same name of current file's directory holder
+file: endpoints
+# This points to 'rapydo/core/resources/endpoints.py'
+# Custom files will be available in 'rapydo/custom/resources/endpoints.py'
+
+# OPTIONAL: if the class depends on some environment variables
+# (usefull for dependencies on docker containers existence)
+# depends_on:
+# - SKIP_THIS_CLASS_IF_FALSE
+
+# OPTIONAL: Mapping to a certain base path. Allowed: '/api' or '/auth'
+baseuri: /auth
+
+# OPTIONAL: mapping the class to one or more URIs
+# if not specified, we will take the name of the directory
+# Note: this is a list!
+mapping:
+  # Define the URIs aliases; key/values in the form of [label: uri]
+  tokenizers: "/tokens"
+  tokenizer: "/tokens/<token_id>"
+  # It may contain directly nesting paths and various IDs
+  # test: "/study/<string:id>/dataset/<test>"
+
+# OPTIONAL: descriptions for path ids
+ids:
+  token_id: uuid associated to the token you want to select
+
+# OPTIONAL: internal label(s) for classification of endpoints (global tags)
+labels:
+  - base
+  - open_sessions

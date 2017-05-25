@@ -1,0 +1,25 @@
+
+common:
+  # description: some
+  # tags:
+  #   - tokens
+  parameters:
+    - name: username
+      in: query
+      type: string
+  custom:
+    # publish: true
+    authentication: true
+
+tokenizers:
+  summary: Remove all tokens emitted for logged user
+  description: "Note: allowed only for testing"
+  responses:
+    '200':
+      description: Tokens have been erased
+
+tokenizer:
+  summary: Remove specified token and make it invalid from now on
+  responses:
+    '200':
+      description: Token has been invalidated

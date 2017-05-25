@@ -1,0 +1,13 @@
+
+whoami:
+  summary: List profile attributes
+  # description: Mah
+  # tags:
+  #   # - logout
+  #   - authentication
+  custom:
+    # publish: true
+    authentication: true
+  responses:
+    '200':
+      description: Dictionary with all profile attributes

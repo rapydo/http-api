@@ -1,0 +1,11 @@
+
+file: endpoints
+class: Login
+baseuri: /auth
+
+mapping:
+  tologin: "/login"
+
+labels:
+  - base
+  - authentication

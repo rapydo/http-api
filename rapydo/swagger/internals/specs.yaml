@@ -1,0 +1,9 @@
+
+file: endpoints
+class: Internal
+# baseuri: "/api"
+mapping:
+  inter: "/internal"
+labels:
+  - base
+  - helpers

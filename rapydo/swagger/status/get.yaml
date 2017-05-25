@@ -1,0 +1,9 @@
+
+status:
+  summary: Check if the API server is currently reachable
+  description: You may use this URI to monitor network or server problems.
+  custom:
+    authentication: false
+  responses:
+    200:
+      description: Server is alive!

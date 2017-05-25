@@ -1,0 +1,13 @@
+
+whoami:
+  summary: Update profile attributes
+  custom:
+    authentication: true
+  parameters:
+    - name: credentials
+      in: "body"
+      schema:
+        $ref: "#/definitions/ProfileUpdate"
+  responses:
+    '204':
+      description: Updated has been successful

@@ -1,0 +1,10 @@
+
+single_queue:
+  summary: Delete a task
+  custom:
+    authentication: true
+    authorized:
+      - admin_root
+  responses:
+    '204':
+      description: The task with specified id was succesfully deleted

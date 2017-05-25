@@ -1,0 +1,11 @@
+
+inter:
+  summary: Role authentication test with internals
+  custom:
+    authentication: true
+    authorized:
+      - staff_user
+    # publish: false
+  responses:
+    200:
+      description: Current user is classified as internal

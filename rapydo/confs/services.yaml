@@ -1,0 +1,61 @@
+
+# ####################################
+# List of RAPyDo supported services
+#
+# NOTE: order matters
+# ####################################
+
+  # sqlalchemy
+- name: sqlalchemy
+  load_models: 1
+  prefix: alchemy
+  library: Flask-SQLalchemy
+  extension: flask_alchemy
+  class: SqlAlchemy
+  injector: SqlInjector
+
+  # neo4j graphdb ORM
+- name: neo4j
+  load_models: 1
+  prefix: graphdb
+  library: neomodel # would this really be usefull??
+  extension: flask_neo4j
+  class: NeoModel
+  injector: NeoInjector
+
+  # celery
+- name: celery
+  load_models: 0
+  prefix: celery
+  library: Celery
+  extension: flask_celery
+  class: CeleryExt
+  injector: CeleryInjector
+
+  # irods commands
+- name: irods
+  load_models: 0
+  prefix: irods
+  library: python-irodsclient
+  extension: flask_irods
+  class: IrodsPythonExt
+  injector: RPCInjector
+
+##############################
+# # OTHERS?
+# "mongo",
+# "elastic",
+# "redis",
+
+# ##############################
+# # THIS HAS TO BE THE LAST ONE
+# ##############################
+
+  # authentication
+- name: authentication
+  load_models: 0
+  prefix: auth
+  library: null
+  extension: flask_auth
+  class: Authenticator
+  injector: AuthInjector

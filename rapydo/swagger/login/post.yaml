@@ -1,0 +1,44 @@
+
+tologin:
+
+  summary: Login with basic credentials
+  description: Normal credentials (username and password) login endpoint
+
+  custom:
+    authentication: false
+    publish: true
+
+  # consumes:
+  #   - application/json
+
+  parameters:
+    - name: credentials
+      in: body
+      # OPTIONS are 'query', 'body', 'path' or 'header'
+      schema:
+        $ref: "#/definitions/Credentials"
+      # description: your registered username
+
+  responses:
+    '401':
+      description: Invalid username or password
+    '200':
+      description: Credentials are valid
+      examples:
+        application/json:
+          {
+            "Meta": {
+              "data_type": "string",
+              "elements": 1,
+              "errors": 0,
+              "status": 200
+            },
+            "Response": {
+              "data": {
+                "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+              },
+              "errors": {
+                null
+              }
+            }
+          }

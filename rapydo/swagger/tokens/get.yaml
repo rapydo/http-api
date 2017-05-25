@@ -1,0 +1,26 @@
+
+common:
+  # description: some
+  custom:
+    publish: true
+    # pagination: true # activate 'per_page' and 'current_page' in body
+    authentication: true
+  parameters:
+    - name: username
+      # description: test
+      # required: true
+      # default: 'pdonorio'
+      in: query
+      type: string
+
+tokenizers:
+  summary: Show all tokens emitted for logged user
+  responses:
+    '200':
+      description: List of tokens
+
+tokenizer:
+  summary: Show specified token if available for logged user
+  responses:
+    '200':
+      description: Details on the specified token

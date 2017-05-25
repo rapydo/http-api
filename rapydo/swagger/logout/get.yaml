@@ -1,0 +1,13 @@
+
+tologout:
+  summary: Logout from current credentials
+  description: Invalidate current registered token
+  # tags:
+  #   # - logout
+  #   - authentication
+  custom:
+    # publish: true
+    authentication: true
+  responses:
+    '200':
+      description: Token correctly removed

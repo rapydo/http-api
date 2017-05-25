@@ -1,0 +1,50 @@
+
+# TODO: figure out if this is still the right way to give defaults
+# since there will be rapydo base compose configurations
+# and .env custom files for environment variables
+
+variables:
+  python:
+    repos:
+      backend:
+        branch: master
+        repo: http-api
+        path: backend
+        if: true
+      build-templates:
+        branch: master
+        repo: build-templates
+        path: builds_base
+        if: true
+      frontend:
+        branch: master
+        repo: node-ui
+        path: frontend
+        if: $$frontend
+    backend:
+      branch: master
+      credentials:
+        username: user@nomail.org
+        password: test
+        roles:
+          user: normal_user
+          internal: staff_user
+          admin: admin_root
+          default: normal_user
+    frontend:
+      enable: false
+      branch: master
+
+project:
+  title: REST HTTP-API server with Python, Flask and Docker
+  version: v0.1
+  description: No description yet
+
+tags:
+  specifications: JSON with SWAGGER standards for any REST client
+  base: endpoints for base operations
+  helpers: tools for checking status and privileges
+  authentication: log in and out of the REST API
+  profiles: set and view profile for current credentials
+  open_sessions: manage authorized sessions
+
