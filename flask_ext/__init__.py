@@ -214,10 +214,10 @@ class BaseExtension(metaclass=abc.ABCMeta):
     # to be executed only at init time?
 
     def pre_connection(self, **kwargs):
-        pass
+        return True
 
     def post_connection(self, obj=None, **kwargs):
-        pass
+        return True
 
     def close_connection(self, ctx):
         """ override this method if you must close
