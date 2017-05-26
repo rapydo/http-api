@@ -97,7 +97,11 @@ class BaseExtension(metaclass=abc.ABCMeta):
         obj = None
 
         # BEFORE
-        self.pre_connection(**kwargs)
+        ok = self.pre_connection(**kwargs)
+
+        if not ok:
+            log.critical("Unable to make preconnection for %s" % self.name)
+            return obj
 
         # Try until it's connected
         if len(kwargs) > 0:
