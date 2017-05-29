@@ -13,18 +13,6 @@ from rapydo.confs import PRODUCTION
 from rapydo.utils.logs import get_logger
 from rapydo.server import create_app
 
-import signal
-# import sys
-
-
-def handler(signum, frame):
-    print('Shutting down...')
-    # sys.exit(1)
-
-
-print("TEST 1")
-signal.signal(signal.SIGTERM, handler)
-print("TEST 2")
 
 log = get_logger(__name__)
 
