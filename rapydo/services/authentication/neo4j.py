@@ -56,7 +56,7 @@ class Authentication(BaseAuthentication):
         # TOFIX: should be implemented in vanilla, not here
         return payload
 
-    # Also user by POST user
+    # Also used by POST user
     def create_user(self, userdata, roles=[]):
 
         user_node = self.db.User(**userdata)

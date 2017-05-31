@@ -97,7 +97,11 @@ class BaseExtension(metaclass=abc.ABCMeta):
         obj = None
 
         # BEFORE
-        self.pre_connection(**kwargs)
+        ok = self.pre_connection(**kwargs)
+
+        if not ok:
+            log.critical("Unable to make preconnection for %s" % self.name)
+            return obj
 
         # Try until it's connected
         if len(kwargs) > 0:
@@ -181,6 +185,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
         if ctx is None:
             # First connection, before any request
             obj = self.connect()
+            if obj is None:
+                return None
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
@@ -197,6 +203,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
             if obj is None:
                 obj = self.connect(**kwargs)
+                if obj is None:
+                    return None
                 self.set_object(obj=obj, ref=ref, key=unique_hash)
 
             log.verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
@@ -210,10 +218,10 @@ class BaseExtension(metaclass=abc.ABCMeta):
     # to be executed only at init time?
 
     def pre_connection(self, **kwargs):
-        pass
+        return True
 
     def post_connection(self, obj=None, **kwargs):
-        pass
+        return True
 
     def close_connection(self, ctx):
         """ override this method if you must close

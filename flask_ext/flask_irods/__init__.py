@@ -132,9 +132,11 @@ class IrodsPythonExt(BaseExtension):
                     os.environ['X509_USER_CERT'] = proxy_cert_file
                 else:
                     log.critical("Cannot find a valid certificate file")
+                    return False
             else:
                 raise NotImplemented(
                     "Unable to create session, no valid auth option found")
+        return True
 
     def custom_connection(self, **kwargs):
 
