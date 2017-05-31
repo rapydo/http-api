@@ -185,6 +185,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
         if ctx is None:
             # First connection, before any request
             obj = self.connect()
+            if obj is None:
+                return None
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
@@ -201,6 +203,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
             if obj is None:
                 obj = self.connect(**kwargs)
+                if obj is None:
+                    return None
                 self.set_object(obj=obj, ref=ref, key=unique_hash)
 
             log.verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
