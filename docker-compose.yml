@@ -53,6 +53,8 @@ services:
     # user: root
     # working_dir: /code
     environment:
+      # TODO: active or not
+      ACTIVATE: 0
       FLASK_APP: run.py
       VANILLA_PACKAGE: custom
       JWT_APP_SECRETS: ${JWT_APP_SECRETS}
@@ -78,6 +80,8 @@ services:
     hostname: rabbit
     volumes:
       - rabbitdata:/var/lib/rabbitmq
+    environment:
+      ACTIVATE: 0
 
   celery:
     build: ../builds_base/celery
@@ -87,6 +91,7 @@ services:
     user: root
     working_dir: /code
     environment:
+      ACTIVATE: 0
       VANILLA_PACKAGE: custom
       JWT_APP_SECRETS: ${JWT_APP_SECRETS}
     volumes:
@@ -120,6 +125,8 @@ services:
       # NOTE: you have to rewrite all depends_on in a new yml file
       # at the moment they do not cumulate
       - backend
+    environment:
+      ACTIVATE: 0
 
   #############
   # Client interface if using swagger
@@ -127,6 +134,8 @@ services:
     build: ../builds_base/swaggerui
     image: ${COMPOSE_PROJECT_NAME}/swaggerui:template
     # image: swagger-ui:rapydo
+    environment:
+      ACTIVATE: 0
 
   ######################
   postgres:
@@ -135,6 +144,7 @@ services:
       - sqldata:/var/lib/postgresql/data
       - ../builds_base/postgres/pgs_init.sh:/docker-entrypoint-initdb.d/setup-my-schema.sh:ro
     environment:
+      ACTIVATE: 0
       POSTGRES_USER: "${PLACEHOLDER}"
       POSTGRES_PASSWORD: "${PLACEHOLDER}"
       POSTGRES_DBS: ${PLACEHOLDER}
@@ -153,6 +163,7 @@ services:
         aliases:
           - ${GRAPHDB_HOST}
     environment:
+      ACTIVATE: 0
       NEO4J_AUTH: neo4j/${PLACEHOLDER}
       # NEO4J_dbms_memory_pagecache_size: 2048M
       # NEO4J_dbms_memory_heap_maxSize: 4096M
@@ -170,6 +181,8 @@ services:
       db_net:
         aliases:
           - ${MONGO_HOST}
+    environment:
+      ACTIVATE: 0
 
   #################################
   # FTP
@@ -183,6 +196,7 @@ services:
   # with the server's SSL certificates for TLS support. Optional TLS is
   # automatically enabled when the container finds this file on startup.
     environment:
+      ACTIVATE: 0
       PUBLICHOST: ${PROJECT_DOMAIN}
       ADDED_FLAGS: -d -d
 
@@ -196,6 +210,7 @@ services:
     hostname: ${IRODS_HOST}
     # command: sleep infinity
     environment:
+      ACTIVATE: 0
       POSTGRES_HOST: ${PLACEHOLDER}
       POSTGRES_USER: ${PLACEHOLDER}
       POSTGRES_PASSWORD: ${PLACEHOLDER}
@@ -223,6 +238,8 @@ services:
   # This docker image let you access sqllite/postgres/mysql
   # with a phpmyadmin-like web page
   sqladmin:
+    environment:
+      ACTIVATE: 0
     # image: sqladminer:rapydo
     build: ../builds_base/sqladmin
     image: ${COMPOSE_PROJECT_NAME}/sqladmin:template
@@ -237,6 +254,7 @@ services:
     image: ${COMPOSE_PROJECT_NAME}/restclient:template
     # image: apiclient:rapydo
     environment:
+      ACTIVATE: 0
       MAIN_ENDPOINT: ${API_MAIN_ENDPOINT}
     volumes:
       # TOFIX

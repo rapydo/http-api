@@ -62,7 +62,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         credentials = mem.customizer._configurations \
             .get('variables', {}) \
-            .get('python', {}) \
             .get('backend', {}) \
             .get('credentials', {})
 
