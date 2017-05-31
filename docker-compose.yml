@@ -17,6 +17,11 @@ volumes:
     driver: local
   pureftpd:
     driver: local
+  letsencrypt_certs:
+    driver: local
+  ssl_dhparam:
+    driver: local
+
   # redisdata:
   #   driver: local
 
@@ -29,6 +34,7 @@ networks:
   i_net:
   app_net:
   proxy_net:
+  worker_net:
   db_net:
     # driver: bridge
     ipam:
@@ -43,18 +49,17 @@ networks:
 # #####################
 services:
 
-  ##############################
-  # MAIN CONTAINER
+  ########################
+  ###  MAIN CONTAINER  ###
+  ########################
   backend:
     # command: sleep infinity
     build: ../builds_base/backend
     image: ${COMPOSE_PROJECT_NAME}/backend:template
     hostname: restapi
-    # user: root
-    # working_dir: /code
     environment:
       FLASK_APP: run.py
-      VANILLA_PACKAGE: custom
+      VANILLA_PACKAGE: ${COMPOSE_PROJECT_NAME}
       JWT_APP_SECRETS: ${JWT_APP_SECRETS}
     volumes:
       # Base code
@@ -70,65 +75,37 @@ services:
         aliases:
           - ${FLASK_HOST}
       db_net:
-      # i_net:
+
 
   ##############################
-  rabbit:
-    image: rabbitmq:latest
-    hostname: rabbit
-    volumes:
-      - rabbitdata:/var/lib/rabbitmq
-
-  celery:
-    build: ../builds_base/celery
-    image: ${COMPOSE_PROJECT_NAME}/celery:template
-    # hostname: celworker
-    # command: celery worker -c 1 -A flask_ext.flask_celery.worker.celery_app
-    user: root
-    working_dir: /code
-    environment:
-      VANILLA_PACKAGE: custom
-      JWT_APP_SECRETS: ${JWT_APP_SECRETS}
-    volumes:
-      # Base code
-      - ../backend:/code
-      # JWT tokens secret
-      - jwt_tokens:/jwt_tokens
-
-  ##############################
-  # The proxy which decides to redirect requests
-  # based on URLs received.
-  # Redirects /api to backend
-  # Listens on port 80
-  # Should implements SSL on 443
-
   proxy:
-    # image: nginx:1.11-alpine
     build: ../builds_base/proxy
     image: ${COMPOSE_PROJECT_NAME}/proxy:template
-    # image: nginx:rapydo
     hostname: reverseproxy
+    volumes:
+      - letsencrypt_certs:/etc/letsencrypt
+      - ssl_dhparam:/etc/nginx/ssl/
     networks:
       proxy_net:
         aliases:
           - ${PROXY_HOST}
       app_net:
-    # volumes:
-    #   # - ../containers/nginx_proxy:/etc/nginx/conf.d
-    #   - ../confs/nginx/production.conf:/etc/nginx/sites-enabled/production
+    ports:
+      - ${PROXY_DEV_PORT}:${PROXY_DEV_PORT}   # 80 redirect
+      - ${PROXY_PROD_PORT}:${PROXY_PROD_PORT} # 443 SSL
+    environment:
+      DOMAIN: ${PROJECT_DOMAIN}
+      MODE: ${LETSENCRYPT_MODE}
     depends_on:
       # NOTE: you have to rewrite all depends_on in a new yml file
       # at the moment they do not cumulate
       - backend
+      # - frontend
 
-  #############
-  # Client interface if using swagger
-  swaggerui:
-    build: ../builds_base/swaggerui
-    image: ${COMPOSE_PROJECT_NAME}/swaggerui:template
-    # image: swagger-ui:rapydo
 
-  ######################
+  ###################
+  ###  DATABASES  ###
+  ###################
   postgres:
     image: postgres:9.6
     volumes:
@@ -143,9 +120,9 @@ services:
         aliases:
           - ${ALCHEMY_HOST}
 
-  #################################
   neo4j:
-    image: neo4j:3.2.0
+    # image: neo4j:3.2.0
+    image: neo4j:3.1
     volumes:
       - graphdata:/data
     networks:
@@ -160,8 +137,6 @@ services:
     #   - 9090:7474
     #   - 7687:7687
 
-  #################################
-  # Mongo DB
   mongodb:
     image: mongo:3.4
     volumes:
@@ -171,8 +146,98 @@ services:
         aliases:
           - ${MONGO_HOST}
 
-  #################################
-  # FTP
+  #########################
+  ###  QUEUE MANAGEMENT ###
+  #########################
+
+  celery:
+    build: ../builds_base/celery
+    image: ${COMPOSE_PROJECT_NAME}/celery:template
+    # hostname: celworker
+    # command: celery worker -c 1 -A flask_ext.flask_celery.worker.celery_app
+    user: root
+    working_dir: /code
+    environment:
+      VANILLA_PACKAGE: ${COMPOSE_PROJECT_NAME}
+      JWT_APP_SECRETS: ${JWT_APP_SECRETS}
+    volumes:
+      - ..:/code/${COMPOSE_PROJECT_NAME}
+      # Base code
+      - ../backend:/code
+      # JWT tokens secret
+      - jwt_tokens:/jwt_tokens
+    networks:
+      db_net:
+      worker_net:
+    depends_on:
+      - rabbit
+      # - flower
+
+  rabbit:
+    image: rabbitmq:latest
+    hostname: rabbit
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    networks:
+      worker_net:
+        aliases:
+          - ${CELERY_BROKER_HOST}
+
+  flower:
+    build: ../builds_base/celery
+    hostname: flower
+    user: root
+    working_dir: /code
+    command: start_flower
+    expose:
+      - 5555
+    ports:
+      - 5555:5555
+    environment:
+      VANILLA_PACKAGE: ${COMPOSE_PROJECT_NAME}
+      JWT_APP_SECRETS: ${JWT_APP_SECRETS}
+    volumes:
+      - ..:/code/${COMPOSE_PROJECT_NAME}
+      - ../tmp_irods_certificates:/opt/certificates 
+      - ../tmp_files:/uploads
+    networks:
+      db_net:
+      worker_net:
+    depends_on:
+      - rabbit
+
+
+  ##########################
+  ### Client interfaces  ###
+  ##########################
+  swaggerui:
+    build: ../builds_base/swaggerui
+    image: ${COMPOSE_PROJECT_NAME}/swaggerui:template
+
+  # This docker image let you access sqllite/postgres/mysql
+  # with a phpmyadmin-like web page
+  sqladmin:
+    build: ../builds_base/sqladmin
+    image: ${COMPOSE_PROJECT_NAME}/sqladmin:template
+    networks:
+      db_net:
+
+  #############
+  # REST API client (wget, curl, httpie, http-prompt)
+  restclient:
+    build: ../builds_base/restclient
+    image: ${COMPOSE_PROJECT_NAME}/restclient:template
+    environment:
+      MAIN_ENDPOINT: ${API_MAIN_ENDPOINT}
+    volumes:
+      # TOFIX
+      - ../backend:/code/core
+      - ..:/code/custom
+
+
+  ###################
+  ### FTP SERVER  ###
+  ###################
   ftp:
     # image: stilliard/pure-ftpd:latest
     build: ../builds_base/ftp
@@ -186,8 +251,9 @@ services:
       PUBLICHOST: ${PROJECT_DOMAIN}
       ADDED_FLAGS: -d -d
 
-  #############
-  # iRODS iCAT server (usually for EUDAT B2safe)
+  ######################################################
+  ###  iRODS iCAT server (usually for EUDAT B2safe)  ###
+  ######################################################
   icat:
     # B2safe instance on irods
     build: ../builds_base/icat
@@ -213,35 +279,6 @@ services:
     depends_on:
       - postgres
 
-  # #################################
-  # ADMINISTRATIONS
-  # #################################
-
-  #################################
-  # Database administration
-
-  # This docker image let you access sqllite/postgres/mysql
-  # with a phpmyadmin-like web page
-  sqladmin:
-    # image: sqladminer:rapydo
-    build: ../builds_base/sqladmin
-    image: ${COMPOSE_PROJECT_NAME}/sqladmin:template
-    # image: eudatb2stage/sqladminer:latest
-    networks:
-      db_net:
-
-  #############
-  # REST API client (wget, curl, httpie, http-prompt)
-  restclient:
-    build: ../builds_base/restclient
-    image: ${COMPOSE_PROJECT_NAME}/restclient:template
-    # image: apiclient:rapydo
-    environment:
-      MAIN_ENDPOINT: ${API_MAIN_ENDPOINT}
-    volumes:
-      # TOFIX
-      - ../backend:/code/core
-      - ..:/code/custom
 
   # #################################
   # OTHERS
