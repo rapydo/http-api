@@ -185,6 +185,7 @@ services:
 
   flower:
     build: ../builds_base/celery
+    image: ${COMPOSE_PROJECT_NAME}/celery:template
     hostname: flower
     user: root
     working_dir: /code
