@@ -75,7 +75,7 @@ class Customizer(object):
         # TODO: move this part into rapydo.utils
 
         # Read default configuration
-        defaults = load_yaml_file('defaults', path=CORE_CONFIG_PATH)
+        defaults = load_yaml_file('defaults', path=CUSTOM_CONFIG_PATH)
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")
 
