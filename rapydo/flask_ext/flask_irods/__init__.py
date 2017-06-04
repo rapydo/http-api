@@ -8,9 +8,9 @@ import os
 import logging
 from irods.session import iRODSSession
 from rapydo.utils.certificates import Certificates
-from rapydo.confs import PRODUCTION
-from flask_ext import BaseExtension, get_logger
-from flask_ext.flask_irods.client import IrodsPythonClient
+# from rapydo.confs import PRODUCTION
+from rapydo.flask_ext import BaseExtension, get_logger
+from rapydo.flask_ext.flask_irods.client import IrodsPythonClient
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
