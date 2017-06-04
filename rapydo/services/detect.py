@@ -13,9 +13,8 @@ import os
 from rapydo.confs import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
 from rapydo.utils.meta import Meta
 from rapydo.utils.myyaml import load_yaml_file
-
+from rapydo.utils import helpers
 from rapydo.utils.logs import get_logger
-
 
 log = get_logger(__name__)
 
@@ -60,7 +59,16 @@ class Detector(object):
     def check_configuration(self, config_file_name):
 
         self.services_configuration = load_yaml_file(
-            file=config_file_name, path=CORE_CONFIG_PATH)
+            file=config_file_name,
+            path=os.path.join(
+                helpers.script_abspath(__file__),
+                '..',
+                '..',
+                CORE_CONFIG_PATH
+            ),
+            # path=CORE_CONFIG_PATH,
+            logger=log
+        )
 
         for service in self.services_configuration:
 
