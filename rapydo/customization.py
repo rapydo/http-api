@@ -9,13 +9,13 @@ import re
 import glob
 from rapydo.confs import (
     BACKEND_PACKAGE, CUSTOM_PACKAGE,
-    CORE_CONFIG_PATH, PROJECT_CONF_FILE,
-    API_URL, BASE_URLS
+    # CORE_CONFIG_PATH,
+    PROJECT_CONF_FILE, API_URL, BASE_URLS
 )
 
 # TOFIX: should be imported after reading logger level from conf
 from rapydo.utils.meta import Meta
-from rapydo.utils.formats.yaml import YAML_EXT, load_yaml_file
+from rapydo.utils.myyaml import YAML_EXT, load_yaml_file
 from rapydo.attributes import EndpointElements, ExtraAttributes
 from rapydo.swagger import BeSwagger
 

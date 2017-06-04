@@ -13,7 +13,7 @@ import os
 from rapydo.confs import CORE_CONFIG_PATH
 from rapydo.confs import CUSTOM_PACKAGE
 from rapydo.utils.meta import Meta
-from rapydo.utils.formats.yaml import load_yaml_file
+from rapydo.utils.myyaml import load_yaml_file
 
 from rapydo.utils.logs import get_logger
 

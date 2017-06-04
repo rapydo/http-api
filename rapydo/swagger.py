@@ -15,7 +15,7 @@ from bravado_core.spec import Spec
 from rapydo.utils import htmlcodes as hcodes
 from rapydo.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from rapydo.attributes import ExtraAttributes
-from rapydo.utils.formats.yaml import load_yaml_file, YAML_EXT
+from rapydo.utils.myyaml import load_yaml_file, YAML_EXT
 from rapydo.utils.logs import get_logger
 
 log = get_logger(__name__)
