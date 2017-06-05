@@ -16,9 +16,19 @@ setup(
         exclude=['test*', 'rapydo.OLD*']
     ),
     package_data={
+        # FIXME: choose the right list here
+        # p.s. also consider models/swagger.yaml and swagger/*
         'rapydo': ['confs/services.yaml'],
     },
     install_requires=[
+        # TODO: complete this list
+        # from requirements in builds/backend/requirements.txt
+        "attrs",
+        "better_exceptions",
+        "Flask",
+        "flask_injector==v0.9.0",
+        "injector==0.12.0",
+        "bravado-core",
         "rapydo-utils",
     ]
 )
