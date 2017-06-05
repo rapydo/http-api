@@ -47,10 +47,7 @@ class BeSwagger(object):
 
     def read_my_swagger(self, file, method, endpoint):
 
-        ################################
-        # NOTE: the file reading here is cached
-        # you can read it multiple times with no overload
-        mapping = load_yaml_file(file)
+        mapping = load_yaml_file(file, logger=log)
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -372,12 +369,12 @@ class BeSwagger(object):
         # BASE definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(BACKEND_PACKAGE, 'models', file)
-        data = load_yaml_file(path)
+        data = load_yaml_file(path, logger=log)
 
         # CUSTOM definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(CUSTOM_PACKAGE, 'models', file)
-        override = load_yaml_file(path, skip_error=True)
+        override = load_yaml_file(path, skip_error=True, logger=log)
         # They may override existing ones
         if override is not None and isinstance(override, dict):
             for key, value in override.items():
