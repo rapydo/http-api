@@ -402,6 +402,7 @@ class BeSwagger(object):
             # http://j.mp/2hEquZy
             swag_dict = json.loads(json.dumps(swag_dict))
             # write it down
+            # FIXME: can we do better than this?
             with open('/tmp/test.json', 'w') as f:
                 json.dump(swag_dict, f)
         except Exception as e:
