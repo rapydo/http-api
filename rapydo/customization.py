@@ -69,14 +69,14 @@ class Customizer(object):
 
         # Read the custom configuration from the active blueprint file
         custom_config = load_yaml_file(
-            PROJECT_CONF_FILE, path=CUSTOM_CONFIG_PATH, logger=log)
+            PROJECT_CONF_FILE, path=CUSTOM_CONFIG_PATH, logger=True)
         # custom_config[BLUEPRINT_KEY] = blueprint
 
         # TODO: move this part into rapydo.utils?
 
         # Read default configuration
         defaults = load_yaml_file(
-            'defaults', path=CUSTOM_CONFIG_PATH, logger=log)
+            'defaults', path=CUSTOM_CONFIG_PATH, logger=True)
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")
 
@@ -172,7 +172,7 @@ class Customizer(object):
     def read_frameworks(self):
 
         file = os.path.join("config", "frameworks.yaml")
-        self._frameworks = load_yaml_file(file, logger=log)
+        self._frameworks = load_yaml_file(file, logger=True)
 
     def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, isbase):
 
@@ -190,7 +190,7 @@ class Customizer(object):
         for file in glob.glob(yaml_listing):
             if file.endswith('specs.%s' % YAML_EXT):
                 # load configuration and find file and class
-                conf = load_yaml_file(file, logger=log)
+                conf = load_yaml_file(file, logger=True)
             else:
                 # add file to be loaded from swagger extension
                 p = re.compile(r'\/([^\.\/]+)\.' + YAML_EXT + '$')

@@ -47,7 +47,7 @@ class BeSwagger(object):
 
     def read_my_swagger(self, file, method, endpoint):
 
-        mapping = load_yaml_file(file, logger=log)
+        mapping = load_yaml_file(file, logger=True)
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -369,12 +369,12 @@ class BeSwagger(object):
         # BASE definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(BACKEND_PACKAGE, 'models', file)
-        data = load_yaml_file(path, logger=log)
+        data = load_yaml_file(path, logger=True)
 
         # CUSTOM definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(CUSTOM_PACKAGE, 'models', file)
-        override = load_yaml_file(path, skip_error=True, logger=log)
+        override = load_yaml_file(path, skip_error=True, logger=True)
         # They may override existing ones
         if override is not None and isinstance(override, dict):
             for key, value in override.items():

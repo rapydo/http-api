@@ -67,7 +67,7 @@ class Detector(object):
                 CORE_CONFIG_PATH
             ),
             # path=CORE_CONFIG_PATH,
-            logger=log
+            logger=True
         )
 
         for service in self.services_configuration:
