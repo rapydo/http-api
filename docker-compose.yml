@@ -98,13 +98,12 @@ services:
     environment:
       DOMAIN: ${PROJECT_DOMAIN}
       MODE: ${LETSENCRYPT_MODE}
+      ACTIVATE: 0
     depends_on:
       # NOTE: you have to rewrite all depends_on in a new yml file
       # at the moment they do not cumulate
       - backend
       # - frontend
-    environment:
-      ACTIVATE: 0
 
   ###################
   ###  DATABASES  ###
