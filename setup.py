@@ -29,6 +29,6 @@ setup(
         "flask_injector==v0.9.0",
         "injector==0.12.0",
         "bravado-core",
-        "rapydo-utils",
+        "rapydo-utils==0.3.4",
     ]
 )
