@@ -301,10 +301,9 @@ class IrodsPythonClient():
 
             # TODO: could use io package?
             with obj.open('r') as handle:
-                with open(destination, "w", encoding="utf-8") as target:
+                with open(destination, "wb") as target:
                     for line in handle:
-                        s = line.decode("utf-8")
-                        target.write(s)
+                        target.write(line)
             return True
 
         except iexceptions.DataObjectDoesNotExist:
