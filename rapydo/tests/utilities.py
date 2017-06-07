@@ -56,7 +56,7 @@ class TestUtilities(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         "set up test fixtures"
-        print('### Setting up flask server for Telethon tests###')
+        print('### Setting up flask server for tests###')
         app = create_app(testing_mode=True)
         cls.app = app.test_client()
 
@@ -111,7 +111,7 @@ class TestUtilities(unittest.TestCase):
             # self.assertIn("description", status_message)
 
             return status_message["description"]
-        except:
+        except BaseException:
             return None
 
     def save(self, variable, value, read_only=False):
@@ -450,7 +450,6 @@ class TestUtilities(unittest.TestCase):
 
     def _test_endpoint(
             self, definition, endpoint, headers=None, status_code=None):
-
         """
             Make standard tests on endpoint based on Swagger definition
         """
@@ -519,7 +518,6 @@ class TestUtilities(unittest.TestCase):
     def _test_method(self, definition, method, endpoint, headers,
                      status, parse_response=False,
                      data=None, check_error=True, force_error=None):
-
         """
             Test a method (GET/POST/PUT/DELETE) on a given endpoint
             and verifies status error and optionally the returned error

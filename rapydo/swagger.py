@@ -15,7 +15,7 @@ from bravado_core.spec import Spec
 from rapydo.utils import htmlcodes as hcodes
 from rapydo.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from rapydo.attributes import ExtraAttributes
-from rapydo.utils.formats.yaml import load_yaml_file, YAML_EXT
+from rapydo.utils.myyaml import load_yaml_file, YAML_EXT
 from rapydo.utils.logs import get_logger
 
 log = get_logger(__name__)
@@ -47,10 +47,7 @@ class BeSwagger(object):
 
     def read_my_swagger(self, file, method, endpoint):
 
-        ################################
-        # NOTE: the file reading here is cached
-        # you can read it multiple times with no overload
-        mapping = load_yaml_file(file)
+        mapping = load_yaml_file(file, logger=True)
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -372,12 +369,12 @@ class BeSwagger(object):
         # BASE definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(BACKEND_PACKAGE, 'models', file)
-        data = load_yaml_file(path)
+        data = load_yaml_file(path, logger=True)
 
         # CUSTOM definitions
         file = '%s.%s' % (filename, YAML_EXT)
         path = os.path.join(CUSTOM_PACKAGE, 'models', file)
-        override = load_yaml_file(path, skip_error=True)
+        override = load_yaml_file(path, skip_error=True, logger=True)
         # They may override existing ones
         if override is not None and isinstance(override, dict):
             for key, value in override.items():
@@ -405,6 +402,7 @@ class BeSwagger(object):
             # http://j.mp/2hEquZy
             swag_dict = json.loads(json.dumps(swag_dict))
             # write it down
+            # FIXME: can we do better than this?
             with open('/tmp/test.json', 'w') as f:
                 json.dump(swag_dict, f)
         except Exception as e:

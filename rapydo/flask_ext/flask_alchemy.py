@@ -12,7 +12,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import sqlalchemy
 from rapydo.utils.meta import Meta
 from rapydo.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from flask_ext import BaseExtension, get_logger
+from rapydo.flask_ext import BaseExtension, get_logger
 from rapydo.utils.logs import re_obscure_pattern
 
 log = get_logger(__name__)

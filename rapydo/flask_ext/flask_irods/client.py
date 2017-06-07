@@ -222,13 +222,10 @@ class IrodsPythonClient():
 
         try:
             if self.is_collection(src_path):
-                log.critical("source is dir")
                 self.rpc.collections.move(src_path, dest_path)
                 log.debug(
                     "Renamed collection: %s->%s" % (src_path, dest_path))
             else:
-
-                log.critical("source is obj")
                 self.rpc.data_objects.move(src_path, dest_path)
                 log.debug(
                     "Renamed irods object: %s->%s" % (src_path, dest_path))

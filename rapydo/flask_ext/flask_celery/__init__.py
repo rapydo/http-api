@@ -4,7 +4,7 @@
 Celery extension wrapper
 
 """
-from flask_ext import BaseExtension, get_logger
+from rapydo.flask_ext import BaseExtension, get_logger
 from celery import Celery
 
 log = get_logger(__name__)
