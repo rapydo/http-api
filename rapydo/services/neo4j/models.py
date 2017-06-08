@@ -110,6 +110,7 @@ class BooleanProperty(originalBooleanProperty, myAttribProperty):
     """
     Customized version of BooleanProperty implemented in neomodel
     """
+
     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
         self.save_extra_info(show, is_restricted)
         super(BooleanProperty, self).__init__(*args, **kwargs)
@@ -119,6 +120,7 @@ class DateTimeProperty(originalDateTimeProperty, myAttribProperty):
     """
     Customized version of DateTimeProperty implemented in neomodel
     """
+
     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
         self.save_extra_info(show, is_restricted)
         super(DateTimeProperty, self).__init__(*args, **kwargs)
@@ -128,6 +130,7 @@ class DateProperty(originalDateProperty, myAttribProperty):
     """
     Customized version of DateProperty implemented in neomodel
     """
+
     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
         self.save_extra_info(show, is_restricted)
         super(DateProperty, self).__init__(*args, **kwargs)
@@ -137,15 +140,22 @@ class ArrayProperty(originalArrayProperty, myAttribProperty):
     """
     Customized version of ArrayProperty implemented in neomodel
     """
-    def __init__(self, show=None, is_restricted=False, *args, **kwargs):
+
+    # BUG FIX: added base_property, as done in the original neomodel class
+    # with commit c4faec6 on 14 Mar 2017
+    # Releted issue: https://github.com/robinedwards/neomodel/issues/237
+    def __init__(self, base_property=None, show=None, is_restricted=False,
+                 *args, **kwargs):
+
         self.save_extra_info(show, is_restricted)
-        super(ArrayProperty, self).__init__(*args, **kwargs)
+        super(ArrayProperty, self).__init__(base_property, *args, **kwargs)
 
 
 class JSONProperty(originalJSONProperty, myAttribProperty):
     """
     Customized version of JSONProperty implemented in neomodel
     """
+
     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
         self.save_extra_info(show, is_restricted)
         super(JSONProperty, self).__init__(*args, **kwargs)
@@ -165,6 +175,7 @@ class AliasProperty(originalAliasProperty, myAttribProperty):
     """
     Customized version of AliasProperty implemented in neomodel
     """
+
     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
         self.save_extra_info(show, is_restricted)
         super(AliasProperty, self).__init__(*args, **kwargs)
@@ -260,7 +271,7 @@ class IdentifiedNode(StructuredNode):
 
     __abstract_node__ = True
 
-    # TOFIX: now we should use:
+    # TO FIX: now we should use:
     # uuid = UniqueIdProperty
     uuid = StringProperty(default=getUUID, unique_index=True)
 
