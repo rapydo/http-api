@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from rapydo.services.detect import Detector
 
 # from rapydo.confs import PRODUCTION
-from flask_ext import BaseExtension, get_logger
+from rapydo.flask_ext import BaseExtension, get_logger
 from rapydo.services.authentication import BaseAuthentication
 from rapydo.utils import htmlcodes as hcodes
 from rapydo.exceptions import RestApiException

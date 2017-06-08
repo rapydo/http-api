@@ -18,7 +18,7 @@ from rapydo.utils import htmlcodes as hcodes
 from rapydo.utils.globals import mem
 from rapydo.utils.logs import get_logger
 
-from flask_ext.flask_auth import HandleSecurity
+from rapydo.flask_ext.flask_auth import HandleSecurity
 
 log = get_logger(__name__)
 

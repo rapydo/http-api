@@ -10,13 +10,11 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 
 import os
 # from functools import lru_cache
-from rapydo.confs import CORE_CONFIG_PATH
-from rapydo.confs import CUSTOM_PACKAGE
+from rapydo.confs import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
 from rapydo.utils.meta import Meta
-from rapydo.utils.formats.yaml import load_yaml_file
-
+from rapydo.utils.myyaml import load_yaml_file
+from rapydo.utils import helpers
 from rapydo.utils.logs import get_logger
-
 
 log = get_logger(__name__)
 
@@ -61,7 +59,16 @@ class Detector(object):
     def check_configuration(self, config_file_name):
 
         self.services_configuration = load_yaml_file(
-            file=config_file_name, path=CORE_CONFIG_PATH)
+            file=config_file_name,
+            path=os.path.join(
+                helpers.script_abspath(__file__),
+                '..',
+                '..',
+                CORE_CONFIG_PATH
+            ),
+            # path=CORE_CONFIG_PATH,
+            logger=True
+        )
 
         for service in self.services_configuration:
 
@@ -125,7 +132,9 @@ class Detector(object):
 
         # Try inside our extensions
         module = self.meta.get_module_from_string(
-            modulestring='flask_ext' + flaskext, exit_on_fail=True)
+            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
+            exit_on_fail=True
+        )
         if module is None:
             log.critical_exit("Missing %s for %s" % (flaskext, service))
 

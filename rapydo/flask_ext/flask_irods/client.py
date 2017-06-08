@@ -222,13 +222,10 @@ class IrodsPythonClient():
 
         try:
             if self.is_collection(src_path):
-                log.critical("source is dir")
                 self.rpc.collections.move(src_path, dest_path)
                 log.debug(
                     "Renamed collection: %s->%s" % (src_path, dest_path))
             else:
-
-                log.critical("source is obj")
                 self.rpc.data_objects.move(src_path, dest_path)
                 log.debug(
                     "Renamed irods object: %s->%s" % (src_path, dest_path))
@@ -304,10 +301,9 @@ class IrodsPythonClient():
 
             # TODO: could use io package?
             with obj.open('r') as handle:
-                with open(destination, "w", encoding="utf-8") as target:
+                with open(destination, "wb") as target:
                     for line in handle:
-                        s = line.decode("utf-8")
-                        target.write(s)
+                        target.write(line)
             return True
 
         except iexceptions.DataObjectDoesNotExist:
