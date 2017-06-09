@@ -15,7 +15,7 @@ from pymongo.write_concern import WriteConcern
 from pymodm import MongoModel, fields
 
 
-# TOFIX: inheritance? Not working at the moment
+# FIXME: inheritance? Not working at the moment
 # ####################
 # # Templates
 # class AuthModel(MongoModel):
@@ -83,7 +83,7 @@ class ExternalAccounts(MongoModel):
     description = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User)
     # NOTE: in the pre-production release we allow only 1 ext_account per user
-    # TOFIX: probably using user_id instead of main_user
+    # FIXME: probably using user_id instead of main_user
     main_user = fields.EmbeddedDocumentField(User)
 
     class Meta:

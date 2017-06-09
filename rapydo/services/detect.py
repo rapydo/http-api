@@ -157,18 +157,25 @@ class Detector(object):
             # Get the existing class
             MyClass = self.load_class_from_module(ext_name, service=service)
 
-            # Passing variables
-            MyClass.set_variables(variables)
+            try:
+                # Passing variables
+                MyClass.set_variables(variables)
 
-            # Passing models
-            if service.get('load_models'):
-                MyClass.set_models(
-                    self.meta.import_models(name, custom=False),
-                    self.meta.import_models(
-                        name, custom=True, exit_on_fail=False)
-                )
-            else:
-                log.very_verbose("Skipping models")
+                # Passing models
+                if service.get('load_models'):
+                    MyClass.set_models(
+                        self.meta.import_models(name, custom=False),
+                        self.meta.import_models(
+                            name, custom=True, exit_on_fail=False)
+                    )
+                else:
+                    log.very_verbose("Skipping models")
+
+            except AttributeError:
+                log.critical_exit(
+                    'Extension class %s ' % ext_name +
+                    'not compliant: missing method(s)' +
+                    'Did you extend "%s"?' % 'BaseExtension')
 
             # Save
             self.services_classes[name] = MyClass
@@ -193,7 +200,7 @@ class Detector(object):
                 continue
 
             if name == self.authentication_name and auth_backend is None:
-                raise ValueError("No backend service recovered")
+                log.exit("Auth service '%s' seems unreachable" % name)
 
             args = {}
             if name == self.task_service_name:
@@ -201,8 +208,14 @@ class Detector(object):
 
             # Get extension class and build the extension object
             ExtClass = self.services_classes.get(name)
-            ext_instance = ExtClass(app, **args)
-            self.extensions_instances[name] = ext_instance
+            try:
+                pass
+                ext_instance = ExtClass(app, **args)
+            except TypeError as e:
+                log.critical_exit(
+                    'Your class %s is not compliant:\n%s' % (name, e))
+            else:
+                self.extensions_instances[name] = ext_instance
 
             # Initialize the real service getting the first service object
             log.debug("Initializing %s" % name)

@@ -396,6 +396,11 @@ class BeSwagger(object):
         # else:
         #     log.pp(swag_dict)
 
+        tmp_dir = 'tmp'
+        file_name = 'test.json'
+        from rapydo.utils import helpers
+        filepath = os.path.join(helpers.root_path(), tmp_dir, file_name)
+
         try:
             # Fix jsonschema validation problem
             # expected string or bytes-like object
@@ -403,11 +408,11 @@ class BeSwagger(object):
             swag_dict = json.loads(json.dumps(swag_dict))
             # write it down
             # FIXME: can we do better than this?
-            with open('/tmp/test.json', 'w') as f:
+            with open(filepath, 'w') as f:
                 json.dump(swag_dict, f)
         except Exception as e:
             raise e
-            log.warning("Failed to json fix the swagger definition")
+            log.warning("Failed to temporary save the swagger definition")
 
         bravado_config = {
             'validate_swagger_spec': True,
@@ -425,6 +430,8 @@ class BeSwagger(object):
             error = str(e).split('\n')[0]
             log.error("Failed to validate:\n%s\n" % error)
             return False
+        finally:
+            os.remove(filepath)
 
         return True
 

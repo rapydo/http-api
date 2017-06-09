@@ -33,6 +33,15 @@
   injector: CeleryInjector
 
   # irods commands
+- name: mongo
+  load_models: 1
+  prefix: mongo
+  # library: python-irodsclient
+  extension: flask_mongo
+  class: MongoExt
+  injector: MongoInjector
+
+  # irods commands
 - name: irods
   load_models: 0
   prefix: irods
