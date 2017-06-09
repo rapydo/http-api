@@ -19,6 +19,7 @@ setup(
         # FIXME: choose the right list here
         # p.s. also consider models/swagger.yaml and swagger/*
         'rapydo': ['confs/services.yaml'],
+        'rapydo': ['swagger/*'],
     },
     install_requires=[
         # TODO: complete this list
