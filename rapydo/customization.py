@@ -7,13 +7,13 @@ Customization based on configuration 'blueprint' files
 import os
 import re
 import glob
+from rapydo.utils import \
+    PROJECT_CONF_FILENAME, CONF_PATH, DEFAULT_FILENAME, UTILS_PKGNAME
+from rapydo.utils import helpers
 from rapydo.confs import (
-    BACKEND_PACKAGE, CUSTOM_PACKAGE,
-    # CORE_CONFIG_PATH,
-    PROJECT_CONF_FILE, API_URL, BASE_URLS
+    BACKEND_PACKAGE, CUSTOM_PACKAGE,  # CORE_CONFIG_PATH,
+    API_URL, BASE_URLS
 )
-
-# TOFIX: should be imported after reading logger level from conf
 from rapydo.utils.meta import Meta
 from rapydo.utils.myyaml import YAML_EXT, load_yaml_file
 from rapydo.attributes import EndpointElements, ExtraAttributes
@@ -60,23 +60,20 @@ class Customizer(object):
         ##################
         # Reading configuration
 
-        CUSTOM_CONFIG_PATH = os.path.join(CUSTOM_PACKAGE, 'specs')
-
-        # Find out what is the active blueprint
-        # bp_file = os.path.join(CUSTOM_CONFIG_PATH, '%s.init' % BLUEPRINT_KEY)
-        # with open(bp_file) as bp_hd:
-        #     blueprint = bp_hd.read().strip()
-
         # Read the custom configuration from the active blueprint file
         custom_config = load_yaml_file(
-            PROJECT_CONF_FILE, path=CUSTOM_CONFIG_PATH, logger=True)
+            PROJECT_CONF_FILENAME,
+            # path=CUSTOM_CONFIG_PATH
+            path=helpers.current_dir(CUSTOM_PACKAGE, CONF_PATH)
+        )
         # custom_config[BLUEPRINT_KEY] = blueprint
-
-        # TODO: move this part into rapydo.utils?
 
         # Read default configuration
         defaults = load_yaml_file(
-            'defaults', path=CUSTOM_CONFIG_PATH, logger=True)
+            DEFAULT_FILENAME,
+            # path=CUSTOM_CONFIG_PATH
+            path=helpers.script_abspath(__file__, UTILS_PKGNAME)
+        )
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")
 
@@ -123,18 +120,24 @@ class Customizer(object):
         ##################
         # Walk swagger directories looking for endpoints
 
+        # FIXME: how to do this?
         # from rapydo.utils import helpers
         # custom_dir = helpers.current_dir(CUSTOM_PACKAGE)
         # base_dir = helpers.script_abspath(__file__)
 
-        for base_dir in [BACKEND_PACKAGE, CUSTOM_PACKAGE]:
+        base_swagger_confdir = helpers.script_abspath(__file__)
+        custom_swagger_confdir = helpers.current_dir(CUSTOM_PACKAGE)
+
+        # for base_dir in [BACKEND_PACKAGE, CUSTOM_PACKAGE]:
+        for base_dir in [base_swagger_confdir, custom_swagger_confdir]:
 
             swagger_dir = os.path.join(base_dir, 'swagger')
-            # print("DIR", swagger_dir)
+            log.verbose("Swagger dir: %s" % swagger_dir)
 
             for ep in os.listdir(swagger_dir):
 
                 swagger_endpoint_dir = os.path.join(swagger_dir, ep)
+
                 if os.path.isfile(swagger_endpoint_dir):
                     log.debug(
                         "Expected a swagger conf folder, found a file (%s)"
@@ -142,11 +145,13 @@ class Customizer(object):
                     )
                     continue
 
-                isbase = base_dir == BACKEND_PACKAGE
+                # isbase = base_dir == BACKEND_PACKAGE
+                isbase = base_dir.startswith('/usr/local')
+                base_module = helpers.last_dir(base_dir)
                 if isbase:
-                    apiclass_module = '%s.%s' % (base_dir, 'resources')
+                    apiclass_module = '%s.%s' % (base_module, 'resources')
                 else:
-                    apiclass_module = '%s.%s' % (base_dir, 'apis')
+                    apiclass_module = '%s.%s' % (base_module, 'apis')
 
                 current = self.lookup(
                     ep, apiclass_module, swagger_endpoint_dir, isbase)
@@ -172,7 +177,7 @@ class Customizer(object):
     def read_frameworks(self):
 
         file = os.path.join("config", "frameworks.yaml")
-        self._frameworks = load_yaml_file(file, logger=True)
+        self._frameworks = load_yaml_file(file)
 
     def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, isbase):
 
@@ -190,7 +195,7 @@ class Customizer(object):
         for file in glob.glob(yaml_listing):
             if file.endswith('specs.%s' % YAML_EXT):
                 # load configuration and find file and class
-                conf = load_yaml_file(file, logger=True)
+                conf = load_yaml_file(file)
             else:
                 # add file to be loaded from swagger extension
                 p = re.compile(r'\/([^\.\/]+)\.' + YAML_EXT + '$')

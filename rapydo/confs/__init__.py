@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# FIXME: move this inside the rapydo/__init__.py ?
+
 import os
 
 AVOID_COLORS_ENV_LABEL = 'TESTING_FLASK'
@@ -18,7 +20,7 @@ BACKEND_PACKAGE = 'rapydo'
 # only this would allow to have a running rapydo outside of docker
 CUSTOM_PACKAGE = os.environ.get('VANILLA_PACKAGE', 'custom')
 CORE_CONFIG_PATH = os.path.join(BACKEND_PACKAGE, 'confs')
-PROJECT_CONF_FILE = 'project_configuration'
+# PROJECT_CONF_FILE = 'project_configuration'
 # BLUEPRINT_KEY = 'blueprint'
 #################################
 # THE APP

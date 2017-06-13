@@ -15,11 +15,10 @@ from rapydo.server import create_app
 
 log = get_logger(__name__)
 
-# The connection is HTTP internally to containers
-# The proxy will handle HTTPS calls
+# Connection is HTTP internally to containers; proxy will handle HTTPS calls.
 # We can safely disable HTTPS on OAUTHLIB requests
-# http://stackoverflow.com/a/27785830/2114395
 if PRODUCTION:
+    # http://stackoverflow.com/a/27785830/2114395
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 #############################
