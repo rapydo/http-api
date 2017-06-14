@@ -26,7 +26,7 @@ class Authentication(BaseAuthentication):
     #     name = __name__.split('.')[::-1][0]  # returns 'mongo'
     #     self.db = services.get(name).get_instance(dbname='auth')
 
-    # TOFIX: how to call a specific instance with a specifi db
+    # TOFIX: how to call a specific instance with a specific db
 
     def fill_custom_payload(self, userobj, payload):
         """
@@ -110,7 +110,7 @@ class Authentication(BaseAuthentication):
                 transactions.append(user)
                 log.warning("No users inside mongo. Injected default.")
 
-        except Exception as e:
+        except BaseException as e:
             raise AttributeError("Models for auth are wrong:\n%s" % e)
 
         if missing_user or missing_role:
@@ -233,6 +233,7 @@ class Authentication(BaseAuthentication):
         return True
 
     def store_oauth2_user(self, current_user, token):
+        # FIXME: b2access
         raise NotImplementedError("to do")
 #         """
 #         Allow external accounts (oauth2 credentials)

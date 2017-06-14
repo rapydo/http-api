@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pymodm import connect
+import pymodm.connection as mongodb
 from rapydo.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
@@ -8,7 +8,8 @@ log = get_logger(__name__)
 
 class MongoExt(BaseExtension):
 
-    _defaultdb = 'test'
+    # _defaultdb = 'test'
+    _defaultdb = 'auth'
 
     def custom_connection(self, **kwargs):
 
@@ -22,9 +23,16 @@ class MongoExt(BaseExtension):
         uri = "mongodb://%s:%s/%s" % (
             variables.get('host'), variables.get('port'), db)
 
-        # UHM
-        if db == self._defaultdb:
-            connect(uri)
-        else:
-            log.debug("Connected to db %s" % db)
-            connect(uri, alias=db)
+        # if db == self._defaultdb:
+        #     mongodb.connect(uri)
+        #     obj = mongodb._get_connection()
+        # else:
+
+        mongodb.connect(uri, alias=db)
+        link = mongodb._get_connection(alias=db)
+        log.debug("Connected to db %s" % db)
+
+        class obj:
+            connection = link
+
+        return obj

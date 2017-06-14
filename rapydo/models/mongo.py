@@ -6,7 +6,6 @@ Base Models for mongo database.
 See
 https://pymodm.readthedocs.io/en/stable/api/index.html
     #pymodm.base.fields.MongoBaseField
-
 And
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
@@ -15,9 +14,9 @@ from pymongo.write_concern import WriteConcern
 from pymodm import MongoModel, fields
 
 
-# FIXME: inheritance? Not working at the moment
 # ####################
 # # Templates
+# FIXME: inheritance? Not working at the moment
 # class AuthModel(MongoModel):
 
 #     class Meta:
@@ -49,6 +48,9 @@ class User(MongoModel):
     surname = fields.CharField()
     authmethod = fields.CharField()
     password = fields.CharField(required=True)
+    first_login = fields.DateTimeField()
+    last_login = fields.DateTimeField()
+    last_password_change = fields.DateTimeField()
     roles = fields.EmbeddedDocumentListField(Role)
 
     class Meta:
