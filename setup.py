@@ -22,14 +22,30 @@ setup(
         'rapydo': ['swagger/*'],
     },
     install_requires=[
-        # TODO: complete this list
-        # from requirements in builds/backend/requirements.txt
+        # various utilities
         "attrs",
         "better_exceptions",
+        "pyOpenSSL",
+        "PyJWT",
+        # Flask and plugins
         "Flask",
+        "Flask-Cors",
+        "Flask-OAuthlib",
+        "Flask-RESTful",
+        "Flask-SQLAlchemy",
+        "flask-shell-ipython",
         "flask_injector==v0.9.0",
         "injector==0.12.0",
+        # DB drivers
+        "neomodel",
+        "psycopg2",
+        "pymodm",
+        # Swagger
         "bravado-core",
-        "rapydo-utils==0.3.4",
+        "swagger-spec-validator",
+        # Rapydo framework
+        "rapydo-utils==0.4.0",
+        # TODO: complete this list
+        # from requirements in backend/requirements.txt
     ]
 )

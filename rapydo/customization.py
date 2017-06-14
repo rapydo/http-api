@@ -93,7 +93,10 @@ class Customizer(object):
         """ Schemas exposing, if requested """
 
         name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
-        module = self._meta.get_module_from_string(name)
+        module = self._meta.get_module_from_string(
+            name,
+            exit_if_not_found=True
+        )
         schema_class = getattr(module, 'RecoverSchema')
 
         self._schema_endpoint = EndpointElements(
