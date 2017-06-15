@@ -13,9 +13,11 @@ import json
 from bravado_core.spec import Spec
 # from bravado_core.validate import validate_object
 from rapydo.utils import htmlcodes as hcodes
-from rapydo.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from rapydo.utils import helpers
+from rapydo.utils import SWAGGER_DIR, SWAGGER_MODELS_FILE
+from rapydo.confs import CUSTOM_PACKAGE
 from rapydo.attributes import ExtraAttributes
-from rapydo.utils.myyaml import load_yaml_file, YAML_EXT
+from rapydo.utils.myyaml import load_yaml_file
 from rapydo.utils.logs import get_logger
 
 log = get_logger(__name__)
@@ -47,7 +49,7 @@ class BeSwagger(object):
 
     def read_my_swagger(self, file, method, endpoint):
 
-        mapping = load_yaml_file(file, logger=True)
+        mapping = load_yaml_file(file)
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -363,18 +365,19 @@ class BeSwagger(object):
         self._customizer._original_paths = self._original_paths
         return output
 
-    def read_definitions(self, filename='swagger'):
+    def read_definitions(self):
         """ Read definitions from base/custom yaml files """
 
+        filename = SWAGGER_MODELS_FILE
+
         # BASE definitions
-        file = '%s.%s' % (filename, YAML_EXT)
-        path = os.path.join(BACKEND_PACKAGE, 'models', file)
-        data = load_yaml_file(path, logger=True)
+        path = helpers.script_abspath(__file__, SWAGGER_DIR)
+        data = load_yaml_file(filename, path=path)
 
         # CUSTOM definitions
-        file = '%s.%s' % (filename, YAML_EXT)
-        path = os.path.join(CUSTOM_PACKAGE, 'models', file)
-        override = load_yaml_file(path, skip_error=True, logger=True)
+        path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
+        override = load_yaml_file(filename, path=path, skip_error=True)
+
         # They may override existing ones
         if override is not None and isinstance(override, dict):
             for key, value in override.items():
@@ -399,7 +402,7 @@ class BeSwagger(object):
         tmp_dir = 'tmp'
         file_name = 'test.json'
         from rapydo.utils import helpers
-        filepath = os.path.join(helpers.root_path(), tmp_dir, file_name)
+        filepath = helpers.root_path(tmp_dir, file_name)
 
         try:
             # Fix jsonschema validation problem

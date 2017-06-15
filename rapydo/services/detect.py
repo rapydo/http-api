@@ -200,7 +200,10 @@ class Detector(object):
                 continue
 
             if name == self.authentication_name and auth_backend is None:
-                log.exit("Auth service '%s' seems unreachable" % name)
+                log.exit(
+                    "Auth service '%s' seems unreachable"
+                    % self.authentication_service
+                )
 
             args = {}
             if name == self.task_service_name:

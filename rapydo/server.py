@@ -5,6 +5,7 @@ The Main server factory.
 We create all the internal flask components here.
 """
 
+import better_exceptions as be
 import rapydo.confs as config
 import warnings
 from flask import Flask as OriginalFlask, request
@@ -237,4 +238,7 @@ def create_app(name=__name__,
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
+    # activate better loggings
+    be
+    # return our flask app
     return microservice
