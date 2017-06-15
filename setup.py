@@ -44,7 +44,7 @@ setup(
         "bravado-core",
         "swagger-spec-validator",
         # Rapydo framework
-        "rapydo-utils==0.4.2",
+        "rapydo-utils==0.4.3",
         # TODO: complete this list
         # from requirements in backend/requirements.txt
     ]
