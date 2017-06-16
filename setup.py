@@ -2,6 +2,7 @@
 
 from setuptools import setup, find_packages
 from rapydo import __version__
+from rapydo.utils import SWAGGER_DIR
 
 setup(
     name='rapydo_http',
@@ -18,7 +19,8 @@ setup(
     package_data={
         'rapydo': [
             'confs/services.yaml',
-            'swagger/*/*.yaml'
+            '%s/*.yaml' % SWAGGER_DIR,
+            '%s/*/*.yaml' % SWAGGER_DIR,
         ],
     },
     install_requires=[
