@@ -18,7 +18,7 @@ setup(
     package_data={
         'rapydo': [
             'confs/services.yaml',
-            'swagger/*'
+            'swagger/*/*.yaml'
         ],
     },
     install_requires=[
