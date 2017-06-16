@@ -36,3 +36,32 @@ class MongoExt(BaseExtension):
             connection = link
 
         return obj
+
+    def custom_init(self, pinit=False, pdestroy=False, **kwargs):
+        """ Note: we ignore args here """
+
+        # recover instance with the parent method
+        db = super().custom_init()
+
+        if pinit:
+            # TODO: discuss!
+            # needed from EPOS use case
+            pass
+
+        if pdestroy:
+            # massive destruction
+            client = db.connection.database
+
+            from pymongo import MongoClient
+            client = MongoClient(
+                self.variables.get('host'),
+                int(self.variables.get('port'))
+            )
+
+            system_dbs = ['admin', 'local']
+            for db in client.database_names():
+                if db not in system_dbs:
+                    client.drop_database(db)
+                    log.critical("Dropped db '%s'" % db)
+
+        return db
