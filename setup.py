@@ -16,10 +16,10 @@ setup(
         exclude=['test*', 'rapydo.OLD*']
     ),
     package_data={
-        # FIXME: choose the right list here
-        # p.s. also consider models/swagger.yaml and swagger/*
-        'rapydo': ['confs/services.yaml'],
-        'rapydo': ['swagger/*'],
+        'rapydo': [
+            'confs/services.yaml',
+            'swagger/*'
+        ],
     },
     install_requires=[
         # various utilities
