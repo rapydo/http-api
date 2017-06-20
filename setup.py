@@ -2,6 +2,7 @@
 
 from setuptools import setup, find_packages
 from rapydo import __version__
+from rapydo.utils import SWAGGER_DIR
 
 setup(
     name='rapydo_http',
@@ -16,10 +17,11 @@ setup(
         exclude=['test*', 'rapydo.OLD*']
     ),
     package_data={
-        # FIXME: choose the right list here
-        # p.s. also consider models/swagger.yaml and swagger/*
-        'rapydo': ['confs/services.yaml'],
-        'rapydo': ['swagger/*'],
+        'rapydo': [
+            'confs/services.yaml',
+            '%s/*.yaml' % SWAGGER_DIR,
+            '%s/*/*.yaml' % SWAGGER_DIR,
+        ],
     },
     install_requires=[
         # various utilities
@@ -44,7 +46,7 @@ setup(
         "bravado-core",
         "swagger-spec-validator",
         # Rapydo framework
-        "rapydo-utils==0.4.3",
+        "rapydo-utils==0.4.4",
         # TODO: complete this list
         # from requirements in backend/requirements.txt
     ]
