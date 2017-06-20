@@ -306,7 +306,7 @@ class Detector(object):
         # Initialize the 'vanilla' customization
         try:
             module_path = "%s.%s.%s" % \
-                (CUSTOM_PACKAGE, 'project', 'initialization')
+                (CUSTOM_PACKAGE, 'initialization', 'initialization')
             module = self.meta.get_module_from_string(module_path)
             Initializer = self.meta.get_class_from_string(
                 'Initializer', module)
