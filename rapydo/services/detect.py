@@ -77,6 +77,7 @@ class Detector(object):
             # Was this service enabled from the developer?
             enable_var = str(prefix + 'enable').upper()
             self.available_services[name] = self.get_bool_from_os(enable_var)
+
             if self.available_services[name]:
 
                 # read variables
@@ -107,9 +108,17 @@ class Detector(object):
             if enable_var is not None and var == enable_var:
                 continue
             var = var.lower()
+
+            # This is the case when a variable belongs to a service 'prefix'
             if var.startswith(prefix):
+
+                # Fix key and value before saving
                 key = var[len(prefix):]
+                # One thing that we must avoid is any quote around our value
+                value = value.strip('"').strip("'")
+                # save
                 variables[key] = value
+
                 if key == 'host':
                     host = value
 
