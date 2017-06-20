@@ -2,6 +2,7 @@
 
 import os
 from functools import lru_cache
+from flask import request
 
 from rapydo.utils import htmlcodes as hcodes
 from irods.access import iRODSAccess
@@ -308,6 +309,48 @@ class IrodsPythonClient():
 
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot read file: not found")
+        return False
+
+    def save_in_chunks(self, destination, force=False, resource=None,
+                       chunk_size=1024):
+
+        # TOFIX: resource is not used!
+        log.warning("Resource not used in saving irods data...")
+
+        if not force and self.is_dataobject(destination):
+            log.warn("Already exists")
+            raise IrodsException("File '" + destination + "' already exists. " +
+                                 "Change file name or use the force parameter")
+
+        log.info("Uploading file in chunks to %s" % destination)
+        try:
+            self.create_empty(destination, directory=False,
+                              ignore_existing=force)
+            obj = self.rpc.data_objects.get(destination)
+
+            # Based on:
+            # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
+            try:
+                myfile = request.files['file']
+                with obj.open('w') as target:
+                    while True:
+                        chunk = myfile.read(chunk_size)
+                        print('---------->chunk', chunk)
+                        if len(chunk) == 0:
+                            break
+                        target.write(chunk)
+            except BaseException as e:
+                    raise e
+
+            return True
+
+        except iexceptions.CollectionDoesNotExist:
+            raise IrodsException("Cannot write to file: path not found")
+        # except iexceptions.DataObjectDoesNotExist:
+        #     raise IrodsException("Cannot write to file: not found")
+
+        # Should I remove file from iRODS if upload failed?
+        log.debug("Removing object from irods")
         return False
 
     def save(self, path, destination, force=False, resource=None):
