@@ -219,20 +219,23 @@ def create_app(name=__name__,
     @microservice.after_request
     def log_response(response):
 
-        data = handle_log_output(request.data)
+        # if is an upload in streaming, I must not consume
+        # request.data or request.json, otherwise it get lost
+        if request.mimetype != 'application/octet-stream':
+            data = handle_log_output(request.data)
 
-        # Limit the parameters string size, sometimes it's too big
-        for k in data:
-            try:
-                if not isinstance(data[k], str):
-                    continue
-                if len(data[k]) > MAX_CHAR_LEN:
-                    data[k] = data[k][:MAX_CHAR_LEN] + "..."
-            except IndexError:
-                pass
+            # Limit the parameters string size, sometimes it's too big
+            for k in data:
+                try:
+                    if not isinstance(data[k], str):
+                        continue
+                    if len(data[k]) > MAX_CHAR_LEN:
+                        data[k] = data[k][:MAX_CHAR_LEN] + "..."
+                except IndexError:
+                    pass
 
-        log.info("{} {} {} {}".format(
-                 request.method, request.url, data, response))
+            log.info("{} {} {} {}".format(
+                     request.method, request.url, data, response))
         return response
 
     ##############################
