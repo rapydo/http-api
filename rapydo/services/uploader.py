@@ -102,7 +102,8 @@ class Uploader(object):
 
         if 'file' not in request.files:
             return self.force_response(errors={
-                "Missing file": "No files specified"})
+                "Missing file": "No files specified"},
+                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
         myfile = request.files['file']
 
