@@ -305,7 +305,6 @@ class Detector(object):
             log.info("Vanilla project has been initialized")
         except BaseException as e:
             log.debug("Note: no custom init available for mixed services")
-            raise(e)
 
 
 detector = Detector()
