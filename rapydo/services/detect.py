@@ -32,7 +32,6 @@ class Detector(object):
         self.services_classes = {}
         self.extensions_instances = {}
         self.available_services = {}
-
         self.meta = Meta()
         self.check_configuration(config_file_name)
         self.load_classes()
@@ -296,24 +295,17 @@ class Detector(object):
         Please define your class Initializer in
         vanilla/project/initialization.py
         """
-
-        ##############
-        # Initialize the RAPyDo project
-        log.critical("Global project initialization yet to be fullfilled")
-        # log.print(instances)
-
-        ##############
-        # Initialize the 'vanilla' customization
         try:
+            meta = Meta()
             module_path = "%s.%s.%s" % \
                 (CUSTOM_PACKAGE, 'initialization', 'initialization')
-            module = self.meta.get_module_from_string(module_path)
-            Initializer = self.meta.get_class_from_string(
-                'Initializer', module)
-            Initializer()
+            module = meta.get_module_from_string(module_path)
+            Initializer = meta.get_class_from_string('Initializer', module)
+            Initializer(instances)
             log.info("Vanilla project has been initialized")
-        except BaseException:
+        except BaseException as e:
             log.debug("Note: no custom init available for mixed services")
+            raise(e)
 
 
 detector = Detector()
