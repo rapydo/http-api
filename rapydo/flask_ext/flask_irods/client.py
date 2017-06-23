@@ -311,8 +311,8 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    def save_in_chunks(self, destination, force=False, resource=None,
-                       chunk_size=1024):
+    def save_in_streaming(self, destination, force=False, resource=None,
+                          chunk_size=1048576):
 
         # TOFIX: resource is not used!
         log.warning("Resource not used in saving irods data...")
@@ -322,7 +322,8 @@ class IrodsPythonClient():
             raise IrodsException("File '" + destination + "' already exists. " +
                                  "Change file name or use the force parameter")
 
-        log.info("Uploading file in chunks to %s" % destination)
+        log.info("Uploading file in streaming to {} with chunk size {}"
+                 .format(destination, chunk_size))
         try:
             self.create_empty(destination, directory=False,
                               ignore_existing=force)
@@ -330,16 +331,18 @@ class IrodsPythonClient():
 
             # Based on:
             # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
+            # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
-                myfile = request.files['file']
                 with obj.open('w') as target:
                     while True:
-                        chunk = myfile.read(chunk_size)
-                        print('---------->chunk', chunk)
+                        chunk = request.stream.read(chunk_size)
                         if len(chunk) == 0:
                             break
                         target.write(chunk)
             except BaseException as e:
+                    # Should I remove file from iRODS if upload failed?
+                    log.debug("Removing object from irods")
+                    self.remove(destination, force=True)
                     raise e
 
             return True
@@ -349,8 +352,6 @@ class IrodsPythonClient():
         # except iexceptions.DataObjectDoesNotExist:
         #     raise IrodsException("Cannot write to file: not found")
 
-        # Should I remove file from iRODS if upload failed?
-        log.debug("Removing object from irods")
         return False
 
     def save(self, path, destination, force=False, resource=None):
