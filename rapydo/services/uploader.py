@@ -55,6 +55,8 @@ class Uploader(object):
 
     def download(self, filename=None, subfolder=None, get=False):
 
+        log.warning("DEPRECATED: Use this function from the Downloader class")
+
         if not get:
             return self.force_response(
                 "No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED)
@@ -100,7 +102,8 @@ class Uploader(object):
 
         if 'file' not in request.files:
             return self.force_response(errors={
-                "Missing file": "No files specified"})
+                "Missing file": "No files specified"},
+                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
         myfile = request.files['file']
 
