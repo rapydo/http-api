@@ -2,7 +2,7 @@
 
 import os
 from functools import lru_cache
-from flask import request
+from flask import request, stream_with_context, Response
 
 from rapydo.utils import htmlcodes as hcodes
 from irods.access import iRODSAccess
@@ -311,8 +311,39 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    def save_in_streaming(self, destination, force=False, resource=None,
+    
+    def read_in_streaming(self, absolute_path, chunk_size=1048576):
+        """
+        Reads obj from iRODS without saving a local copy
+        """
+        log.info("Downloading file {} in streaming with chunk size {}"
+                 .format(absolute_path, chunk_size))
+        try:
+            obj = self.rpc.data_objects.get(absolute_path)
+
+            handle = obj.open('r')
+            return Response(
+                stream_with_context(self.read_in_chunks(handle, chunk_size)))
+
+        except iexceptions.DataObjectDoesNotExist:
+            raise IrodsException("Cannot read file: not found")        
+
+    def read_in_chunks(self, file_object, chunk_size=1024):
+        """
+        Lazy function (generator) to read a file piece by piece.
+        Default chunk size: 1k.
+        """
+        while True:
+            data = file_object.read(chunk_size)
+            if not data:
+                break
+            yield data
+
+    def write_in_streaming(self, destination, force=False, resource=None,
                           chunk_size=1048576):
+        """
+        Writes obj to iRODS without saving a local copy
+        """
 
         # TOFIX: resource is not used!
         log.warning("Resource not used in saving irods data...")
@@ -336,14 +367,14 @@ class IrodsPythonClient():
                 with obj.open('w') as target:
                     while True:
                         chunk = request.stream.read(chunk_size)
-                        if len(chunk) == 0:
+                        if not chunk:
                             break
                         target.write(chunk)
-            except BaseException as e:
-                    # Should I remove file from iRODS if upload failed?
-                    log.debug("Removing object from irods")
-                    self.remove(destination, force=True)
-                    raise e
+            except BaseException as ex:
+                # Should I remove file from iRODS if upload failed?
+                log.debug("Removing object from irods")
+                self.remove(destination, force=True)
+                raise ex
 
             return True
 
