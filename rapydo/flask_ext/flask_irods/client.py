@@ -64,7 +64,17 @@ class IrodsPythonClient():
         ):
             raise IrodsException("%s not found or no permissions" % path)
 
-    def list(self, path=None, recursive=False, detailed=False, acl=False):
+    def getPath(self, path, prefix=None):
+        if prefix is None:
+            length = 0
+        else:
+            length = len(prefix)
+
+        return os.path.dirname(path[length:])
+
+    def list(
+            self, path=None, recursive=False, detailed=False,
+            acl=False, removePrefix=None):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
@@ -72,6 +82,7 @@ class IrodsPythonClient():
 
         if self.is_dataobject(path):
             raise IrodsException("Cannot list an object, get it instead")
+
         try:
             data = {}
             root = self.rpc.collections.get(path)
@@ -85,8 +96,12 @@ class IrodsPythonClient():
                 row["objects"] = {}
                 if recursive:
                     row["objects"] = self.list(
-                        coll.path, recursive, detailed, acl)
-                row["path"] = coll.path
+                        path=coll.path,
+                        recursive=recursive,
+                        detailed=detailed,
+                        acl=acl,
+                        removePrefix=removePrefix)
+                row["path"] = self.getPath(coll.path, removePrefix)
                 row["object_type"] = "collection"
                 if detailed:
                     row["owner"] = "-"
@@ -102,7 +117,7 @@ class IrodsPythonClient():
                 row = {}
                 key = obj.name
                 row["name"] = obj.name
-                row["path"] = obj.path
+                row["path"] = self.getPath(obj.path, removePrefix)
                 row["object_type"] = "dataobject"
                 row["PID"] = None
                 row["checksum"] = None
