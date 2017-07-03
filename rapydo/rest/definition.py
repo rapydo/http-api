@@ -318,6 +318,8 @@ class EndpointResource(Resource):
         # Bug fix: if errors was initialized above, I received old errors...
         if errors is None:
             errors = []
+        if isinstance(errors, str):
+            errors = [errors]
 
         # See if we have the main message
         if message is not None:
