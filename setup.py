@@ -2,7 +2,8 @@
 
 from setuptools import setup, find_packages
 from rapydo import __version__
-from rapydo.utils import SWAGGER_DIR
+# from rapydo.utils import SWAGGER_DIR
+SWAGGER_DIR = 'swagger'
 
 setup(
     name='rapydo_http',
