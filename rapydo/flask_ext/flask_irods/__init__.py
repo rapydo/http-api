@@ -164,8 +164,7 @@ class IrodsPythonExt(BaseExtension):
                 host_dn = Certificates.get_dn_from_cert(
                     certdir='host', certfilename='hostcert')
             else:
-                host_dn = host_dn.strip('"')
-                log.verbose("Existing DN '%s'" % host_dn)
+                log.verbose("Existing DN:\n\"%s\"" % host_dn)
 
             obj = iRODSSession(
                 user=self.user,

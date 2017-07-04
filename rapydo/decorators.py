@@ -243,11 +243,13 @@ def catch_error(
 
             try:
                 out = func(self, *args, **kwargs)
-
+            # DEBUGGING
+            # except Exception:
+            #     raise
             # Catch the single exception that the user requested
             except exception as e:
-
                 message = exception_label + str(e)
+                log.warning(exception_label, exc_info=True)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                     return send_error(self, message, error_code)
@@ -256,7 +258,7 @@ def catch_error(
 
             # Catch the basic API exception
             except RestApiException as e:
-
+                log.warning(e, exc_info=True)
                 if catch_generic:
                     return send_error(self, e, e.status_code)
                 else:
@@ -264,6 +266,7 @@ def catch_error(
 
             # Catch any other exception
             except Exception as e:
+                log.warning(e, exc_info=True)
                 if catch_generic:
                     return send_error(self, e)
                 else:
