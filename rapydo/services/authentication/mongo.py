@@ -26,11 +26,11 @@ class Authentication(BaseAuthentication):
     #     name = __name__.split('.')[::-1][0]  # returns 'mongo'
     #     self.db = services.get(name).get_instance(dbname='auth')
 
-    # TOFIX: how to call a specific instance with a specific db
+    # FIXME: how to call a specific instance with a specific db
 
     def fill_custom_payload(self, userobj, payload):
         """
-        TOFIX: should probably be implemented inside vanilla
+        FIXME: should probably be implemented inside vanilla
         """
         return payload
 
@@ -128,7 +128,7 @@ class Authentication(BaseAuthentication):
         except Exception:
             hostname = ""
 
-        # TOFIX: generate a token that never expires for admin tests
+        # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 

@@ -263,7 +263,7 @@ Please also fix in celery and celeryui
         #####################
         # Check for dependecies and skip if missing
         for dependency in conf.pop('depends_on', []):
-            # TOFIX: uhm? Should verify the env variable {SERVICE}_ENABLE?
+            # FIXME: uhm? Should verify the env variable {SERVICE}_ENABLE?
             if not getattr(module, dependency, False):
                 log.debug("Skip '%s': unmet %s" % (default_uri, dependency))
                 return endpoint

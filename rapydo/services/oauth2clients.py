@@ -41,13 +41,13 @@ class ExternalLogins(object):
 
     _available_services = {}
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def __init__(self, testing=False):
 
-        # TOFIX: FROM MATTIA: removed this if
+        # FIXME: FROM MATTIA: removed this if
         # if testing:
         #     log.warning("currently skipping oauth2 in tests")
-        #     # TOFIX: provide some tests for oauth2 calls
+        #     # FIXME: provide some tests for oauth2 calls
         #     return
 
         # Global memory of oauth2 services across the whole server instance:
@@ -55,7 +55,7 @@ class ExternalLogins(object):
         # in different places of the code
         if not self._check_if_services_exist():
             # Note: this gets called only at INIT time
-            # TOFIX: FROM MATTIA: the testing parameter is still required?
+            # FIXME: FROM MATTIA: the testing parameter is still required?
             mem.oauth2_services = self.get_oauth2_instances(testing)
 
         # Recover services for current instance
@@ -66,7 +66,7 @@ class ExternalLogins(object):
     def _check_if_services_exist():
         return getattr(mem, 'oauth2_services', None) is not None
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def get_oauth2_instances(self, testing=False):
         """
         Setup every oauth2 instance available through configuration
@@ -89,7 +89,7 @@ class ExternalLogins(object):
 
             # Call the service and save it
             try:
-                # TOFIX: FROM MATTIA: the testing parameter is still required?
+                # FIXME: FROM MATTIA: the testing parameter is still required?
                 obj = func(testing)
 
                 # Make sure it's always a dictionary of objects
@@ -122,7 +122,7 @@ class ExternalLogins(object):
             authorize_url='https://github.com/login/oauth/authorize'
         )
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def b2access(self, testing=False):
 
         # LOAD CREDENTIALS FROM DOCKER ENVIRONMENT

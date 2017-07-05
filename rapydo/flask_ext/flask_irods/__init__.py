@@ -61,7 +61,7 @@ class IrodsPythonExt(BaseExtension):
         # Identity with GSI
         else:
 
-            # TOFIX: move this into certificates.py?
+            # FIXME: move this into certificates.py?
             cdir = Certificates._dir
             cpath = os.path.join(cdir, self.user)
 
@@ -109,7 +109,7 @@ class IrodsPythonExt(BaseExtension):
                         cert_pwd = kwargs.pop("proxy_pass")
 
                         valid = Certificates.get_myproxy_certificate(
-                            # TOFIX: X509_CERT_DIR should be enough
+                            # FIXME: X509_CERT_DIR should be enough
                             irods_env=irods_env,
                             irods_user=user,
                             myproxy_cert_name=cert_name,

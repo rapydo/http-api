@@ -53,7 +53,7 @@ class Authentication(BaseAuthentication):
         return roles
 
     def fill_custom_payload(self, userobj, payload):
-        # TOFIX: should be implemented in vanilla, not here
+        # FIXME: should be implemented in vanilla, not here
         return payload
 
     # Also used by POST user
@@ -105,7 +105,7 @@ class Authentication(BaseAuthentication):
             if role not in current_roles:
                 self.create_role(role)
 
-        # TOFIX: Create some users for testing
+        # FIXME: Create some users for testing
         from flask import current_app
         if current_app.config['TESTING']:
             pass
@@ -178,7 +178,7 @@ class Authentication(BaseAuthentication):
             return False
 
     def get_tokens(self, user=None, token_jti=None):
-        # TOFIX: TTL should be considered?
+        # FIXME: TTL should be considered?
 
         list = []
         tokens = None

@@ -86,7 +86,7 @@ def get_response():
 
 
 # #################################
-# # TOFIX: remove it here, it has been moved to commons
+# # FIXME: remove it here, it has been moved to commons
 
 # # NOTE: ...this decorator took me quite a lot of time...
 
@@ -221,7 +221,7 @@ def send_error(self, e, code=None):
 def catch_error(
         exception=None, catch_generic=True,
         exception_label=None,
-        # TOFIX: where have this gone??
+        # FIXME: where have this gone??
         # error_code=None,
         **kwargs):
     """

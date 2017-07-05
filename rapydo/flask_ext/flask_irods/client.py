@@ -268,7 +268,7 @@ class IrodsPythonClient():
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
-        # TOFIX: remove resource
+        # FIXME: remove resource
         # if resource is not None:
         #     com = 'itrim'
         #     args = ['-S', resource]
@@ -326,7 +326,7 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    
+
     def read_in_streaming(self, absolute_path, chunk_size=1048576):
         """
         Reads obj from iRODS without saving a local copy
@@ -341,7 +341,7 @@ class IrodsPythonClient():
                 stream_with_context(self.read_in_chunks(handle, chunk_size)))
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")        
+            raise IrodsException("Cannot read file: not found")
 
     def read_in_chunks(self, file_object, chunk_size=1024):
         """
@@ -360,7 +360,7 @@ class IrodsPythonClient():
         Writes obj to iRODS without saving a local copy
         """
 
-        # TOFIX: resource is not used!
+        # FIXME: resource is not used!
         log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
@@ -402,7 +402,7 @@ class IrodsPythonClient():
 
     def save(self, path, destination, force=False, resource=None):
 
-        # TOFIX: resource is not used!
+        # FIXME: resource is not used!
         log.warning("Resource not used in saving irods data...")
 
         try:
@@ -460,7 +460,7 @@ class IrodsPythonClient():
                 acl.access_name
             ])
 
-        # TOFIX: how to retrieve inheritance?
+        # FIXME: how to retrieve inheritance?
         data["inheritance"] = "N/A"
 
         return data
@@ -816,7 +816,7 @@ class IrodsPythonClient():
 #         return resources
 
 #     def get_default_resource_admin(self, skip=['bundleResc']):
-#         # TOFIX: find out the right way to get the default irods resource
+#         # FIXME: find out the right way to get the default irods resource
 
 #         # note: we could use ienv
 #         resources = self.get_resources_admin()
