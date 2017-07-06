@@ -214,7 +214,8 @@ def send_error(self, e, code=None):
     if code is None:
         code = hcodes.HTTP_BAD_REQUEST
     error = str(e)
-    log.error(error)
+    # It is already print by send_errors, it is a duplicated msg
+    # log.error(error)
     return self.send_errors(message=error, code=code)
 
 
@@ -243,13 +244,14 @@ def catch_error(
 
             try:
                 out = func(self, *args, **kwargs)
-            # DEBUGGING
+            # DEBUGGING
             # except Exception:
             #     raise
             # Catch the single exception that the user requested
             except exception as e:
                 message = exception_label + str(e)
-                log.warning(exception_label, exc_info=True)
+                # It is already print by send_error, it is a duplicated msg
+                # log.warning(exception_label, exc_info=True)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                     return send_error(self, message, error_code)
@@ -258,7 +260,8 @@ def catch_error(
 
             # Catch the basic API exception
             except RestApiException as e:
-                log.warning(e, exc_info=True)
+                # log.warning(e, exc_info=True)
+                log.warning(e)
                 if catch_generic:
                     return send_error(self, e, e.status_code)
                 else:
