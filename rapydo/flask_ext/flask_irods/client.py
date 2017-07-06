@@ -326,7 +326,6 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    
     def read_in_streaming(self, absolute_path, chunk_size=1048576):
         """
         Reads obj from iRODS without saving a local copy
@@ -341,7 +340,7 @@ class IrodsPythonClient():
                 stream_with_context(self.read_in_chunks(handle, chunk_size)))
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")        
+            raise IrodsException("Cannot read file: not found")
 
     def read_in_chunks(self, file_object, chunk_size=1024):
         """
@@ -355,7 +354,7 @@ class IrodsPythonClient():
             yield data
 
     def write_in_streaming(self, destination, force=False, resource=None,
-                          chunk_size=1048576):
+                           chunk_size=1048576):
         """
         Writes obj to iRODS without saving a local copy
         """
@@ -380,11 +379,12 @@ class IrodsPythonClient():
             # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
                 with obj.open('w') as target:
-                    while True:
-                        chunk = request.stream.read(chunk_size)
-                        if not chunk:
-                            break
-                        target.write(chunk)
+                    #while True:
+                    self.write_in_chunks(target, chunk_size)
+                        # chunk = request.stream.read(chunk_size)
+                        # if not chunk:
+                        #     break
+                        # target.write(chunk)
             except BaseException as ex:
                 # Should I remove file from iRODS if upload failed?
                 log.debug("Removing object from irods")
@@ -399,6 +399,13 @@ class IrodsPythonClient():
         #     raise IrodsException("Cannot write to file: not found")
 
         return False
+
+    def write_in_chunks(self, target, chunk_size=1024):
+        while True:
+            chunk = request.stream.read(chunk_size)
+            if not chunk:
+                break
+            target.write(chunk)
 
     def save(self, path, destination, force=False, resource=None):
 
