@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-# from datetime import datetime
-# import pytz
 from functools import wraps
-# from py2neo.error import GraphError
-# from py2neo.cypher.error.schema import ConstraintViolation
 from rapydo.exceptions import RestApiException
 from rapydo.rest.definition import EndpointResource
 from rapydo.utils import htmlcodes as hcodes
@@ -175,7 +171,7 @@ def catch_graph_exceptions(func):
         except (RequiredProperty) as e:
             raise RestApiException(str(e))
 
-        # TOFIX: to be specified with new neomodel exceptions
+        # FIXME: to be specified with new neomodel exceptions
         # except ConstraintViolation as e:
         # except UniqueProperty as e:
 

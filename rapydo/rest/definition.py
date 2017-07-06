@@ -99,7 +99,7 @@ class EndpointResource(Resource):
 
             for param, data in current_params.items():
 
-                # TOFIX: Add a method to convert types swagger <-> flask
+                # FIXME: Add a method to convert types swagger <-> flask
                 tmptype = data.get('type', 'string')
                 if tmptype == 'boolean':
                     mytype = bool
@@ -252,7 +252,7 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     def method_not_allowed(self, methods=['GET']):
-        # TOFIX: is it used?
+        # FIXME: is it used?
 
         methods.append('HEAD')
         methods.append('OPTIONS')
@@ -321,6 +321,8 @@ class EndpointResource(Resource):
         # Bug fix: if errors was initialized above, I received old errors...
         if errors is None:
             errors = []
+        if isinstance(errors, str):
+            errors = [errors]
 
         # See if we have the main message
         if message is not None:
@@ -420,7 +422,7 @@ class EndpointResource(Resource):
         for instance in instances:
             json_data["content"].append(self.getJsonResponse(instance))
 
-        # TOFIX: get pages FROM SELF ARGS?
+        # FIXME: get pages FROM SELF ARGS?
         # json_data["links"]["next"] = \
         #     endpoint + '?currentpage=2&perpage=1',
         # json_data["links"]["last"] = \
@@ -499,7 +501,7 @@ class EndpointResource(Resource):
                 attribute = get_attribute(instance, key)
                 # datetime is not json serializable,
                 # converting it to string
-                # TOFIX: use flask.jsonify
+                # FIXME: use flask.jsonify
                 if attribute is None:
                     data["attributes"][key] = ""
                 elif isinstance(attribute, datetime):

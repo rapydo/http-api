@@ -20,7 +20,7 @@ if not detector.check_availability(__name__):
 class Authentication(BaseAuthentication):
 
     def fill_custom_payload(self, userobj, payload):
-        # TOFIX: should be implemented as vanilla instead of here
+        # FIXME: this should be implemented as vanilla instead of here
         return payload
 
     def get_user_object(self, username=None, payload=None):
@@ -102,7 +102,7 @@ class Authentication(BaseAuthentication):
         except Exception:
             hostname = ""
 
-        # TOFIX: generate a token that never expires for admin tests
+        # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
@@ -145,7 +145,7 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_tokens(self, user=None, token_jti=None):
-        # TOFIX: TTL should be considered?
+        # FIXME: TTL should be considered?
 
         list = []
         tokens = None
@@ -295,7 +295,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return True
 
-# TOFIX: make this methods below abstract for graph and others too?
+# FIXME: make this methods below abstract for graph and others too?
 
     def oauth_from_token(self, token):
         extus = self.db.ExternalAccounts.query.filter_by(token=token).first()
@@ -308,7 +308,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return
 
-    # TOFIX: to be cached
+    # FIXME: to be cached
     def oauth_from_local(self, internal_user):
         accounts = self.db.ExternalAccounts
         external_user = accounts.query.filter(

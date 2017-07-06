@@ -15,6 +15,8 @@ from rapydo.utils.meta import Meta
 from rapydo.utils.logs import get_logger
 
 log = get_logger(__name__)
+meta = Meta()
+
 
 B2ACCESS_DEV_BASEURL = "https://unity.eudat-aai.fz-juelich.de"
 B2ACCESS_DEV_URL = B2ACCESS_DEV_BASEURL + ":8443"
@@ -24,30 +26,18 @@ B2ACCESS_PROD_BASEURL = "https://b2access.eudat.eu"
 B2ACCESS_PROD_URL = B2ACCESS_PROD_BASEURL + ":8443"
 B2ACCESS_PROD_CA_URL = B2ACCESS_PROD_BASEURL + ":8445"
 
-meta = Meta()
-module = meta.get_module_from_string(
-    "%s.%s.%s" % (CUSTOM_PACKAGE, 'apis', 'common')
-)
-
-# TO BE FIXED
-if module is None:
-    B2ACCESS_ENV = PRODUCTION
-else:
-    B2ACCESS_ENV = getattr(module, 'CURRENT_B2ACCESS_ENVIRONMENT', 'unknown')
-B2ACCESS_ENV_PRODUCTION = B2ACCESS_ENV == 'production'
-
 
 class ExternalLogins(object):
 
     _available_services = {}
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def __init__(self, testing=False):
 
-        # TOFIX: FROM MATTIA: removed this if
+        # FIXME: FROM MATTIA: removed this if
         # if testing:
         #     log.warning("currently skipping oauth2 in tests")
-        #     # TOFIX: provide some tests for oauth2 calls
+        #     # FIXME: provide some tests for oauth2 calls
         #     return
 
         # Global memory of oauth2 services across the whole server instance:
@@ -55,7 +45,7 @@ class ExternalLogins(object):
         # in different places of the code
         if not self._check_if_services_exist():
             # Note: this gets called only at INIT time
-            # TOFIX: FROM MATTIA: the testing parameter is still required?
+            # FIXME: FROM MATTIA: the testing parameter is still required?
             mem.oauth2_services = self.get_oauth2_instances(testing)
 
         # Recover services for current instance
@@ -66,7 +56,7 @@ class ExternalLogins(object):
     def _check_if_services_exist():
         return getattr(mem, 'oauth2_services', None) is not None
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def get_oauth2_instances(self, testing=False):
         """
         Setup every oauth2 instance available through configuration
@@ -90,6 +80,7 @@ class ExternalLogins(object):
             # Call the service and save it
             try:
                 # TOFIX: FROM MATTIA: the testing parameter is still required?
+                # FIXME: PAOLO: check here if it's really used
                 obj = func(testing)
 
                 # Make sure it's always a dictionary of objects
@@ -122,8 +113,19 @@ class ExternalLogins(object):
             authorize_url='https://github.com/login/oauth/authorize'
         )
 
-    # TOFIX: FROM MATTIA: the testing parameter is still required?
+    # FIXME: FROM MATTIA: the testing parameter is still required?
     def b2access(self, testing=False):
+
+        module = meta.get_module_from_string(
+            "%s.%s.%s" % (CUSTOM_PACKAGE, 'apis', 'common')
+        )
+
+        if module is None:
+            B2ACCESS_ENV = PRODUCTION
+        else:
+            B2ACCESS_ENV = \
+                getattr(module, 'CURRENT_B2ACCESS_ENVIRONMENT', 'unknown')
+        B2ACCESS_ENV_PRODUCTION = B2ACCESS_ENV == 'production'
 
         # LOAD CREDENTIALS FROM DOCKER ENVIRONMENT
         key = os.environ.get('B2ACCESS_APPNAME', 'yourappusername')
