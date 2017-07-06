@@ -67,6 +67,14 @@ class BaseTests(RestTestsBase, TestUtilities):
             self._username + 'X', self._password + 'Y',
             status_code=self._hcodes.HTTP_BAD_UNAUTHORIZED)
 
+        # this check verifies a BUG with neo4j causing crash of auth module
+        # when using a non-email-username to authenticate
+        log.info("*** VERIFY with a non-email-username")
+
+        headers, _ = self.do_login(
+            'notanemail', '[A-Za-z0-9]+',
+            status_code=self._hcodes.HTTP_BAD_UNAUTHORIZED)
+
     def test_04_GET_profile(self):
         """ Check if you can use your token for protected endpoints """
 

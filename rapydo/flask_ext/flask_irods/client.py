@@ -70,7 +70,12 @@ class IrodsPythonClient():
         else:
             length = len(prefix)
 
-        return os.path.dirname(path[length:])
+        if length > 0:
+            path = path[length:]
+            if path[0] == "/":
+                path = path[1:]
+
+        return os.path.dirname(path)
 
     def list(
             self, path=None, recursive=False, detailed=False,

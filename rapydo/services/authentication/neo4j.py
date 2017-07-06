@@ -28,12 +28,15 @@ class Authentication(BaseAuthentication):
 
     def get_user_object(self, username=None, payload=None):
 
+        from neomodel.exception import DeflateError
         user = None
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
+        except DeflateError:
+            log.warning("Invalid username '%s'" % username)
         except self.db.User.DoesNotExist:
             log.warning("Could not find user for '%s'" % username)
         return user
