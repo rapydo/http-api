@@ -307,7 +307,7 @@ class Detector(object):
         try:
             meta = Meta()
             module_path = "%s.%s.%s" % \
-                (CUSTOM_PACKAGE, 'initialization', 'initialization')
+                (CUSTOM_PACKAGE, 'project', 'initialization')
             module = meta.get_module_from_string(module_path)
             Initializer = meta.get_class_from_string('Initializer', module)
             Initializer(instances)
