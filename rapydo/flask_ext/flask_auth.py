@@ -20,7 +20,7 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
         import pyqrcode
         # import base64
         from io import BytesIO
-    # TOFIX: cannot use the proper exception (available in python 3.6+)
+    # FIXME: cannot use the proper exception (available in python 3.6+)
     # because we are stuck on python 3.5 con IMC
     # except ModuleNotFoundError:
     except BaseException:
@@ -43,7 +43,7 @@ class Authenticator(BaseExtension):
         # If oauth services are available, set them before every request
         from rapydo.services.oauth2clients import ExternalLogins as oauth2
 
-        # TOFIX: from MATTIA: I removed this IF and always create oauth2()
+        # FIXME: from MATTIA: I removed this IF and always create oauth2()
         # because before of this none create an instance of ExternalLogins to
         # populate the dictionary of oauth2 services. To fix by putting this
         # inizialization somewhere
@@ -51,11 +51,11 @@ class Authenticator(BaseExtension):
         #     ext_auth = oauth2(self.app.config['TESTING'])
         #     custom_auth.set_oauth2_services(ext_auth._available_services)
 
-        # TOFIX: FROM MATTIA: the testing parameter is still required?
+        # FIXME: FROM MATTIA: the testing parameter is still required?
         ext_auth = oauth2(self.app.config['TESTING'])
         custom_auth.set_oauth2_services(ext_auth._available_services)
 
-        # TOFIX: why tests should use a custom secret?
+        # FIXME: why tests should use a custom secret?
         # In this way we cannot test the import_secret
         if self.app.config['TESTING']:
             secret = 'IaMvERYsUPERsECRET'
@@ -109,7 +109,7 @@ class Authenticator(BaseExtension):
         #     """
         #     # TODO: check if this piece of code works
         #     and
-        #     # TOFIX: what if launched in production for the first time?
+        #     # FIXME: what if launched in production for the first time?
         #     """
         #     if obj.check_if_user_defaults():
         #         raise ValueError("Production with default admin user")
@@ -123,7 +123,7 @@ class HandleSecurity(object):
     def get_secret(self, user):
 
         return 'base32secret3232'
-        # TOFIX: use a real secret
+        # FIXME: use a real secret
         # hashes does not works... maybe too long??
         # import hashlib
         # secret = hashlib.sha224(user.email.encode('utf-8'))
@@ -182,7 +182,7 @@ class HandleSecurity(object):
         qr_url.svg(qr_stream, scale=5)
         return qr_stream.getvalue()
 
-    # TOFIX: check password strength, if required
+    # FIXME: check password strength, if required
     def verify_password_strength(self, pwd, old_pwd):
 
         if pwd == old_pwd:
@@ -240,7 +240,7 @@ class HandleSecurity(object):
         elif self.auth.MAX_LOGIN_ATTEMPTS <= 0:
             # We register failed login, but we do not put a max num of failures
             pass
-            # TOFIX: implement get_failed_login
+            # FIXME: implement get_failed_login
         elif self.auth.get_failed_login(username) < \
                 self.auth.MAX_LOGIN_ATTEMPTS:
             # We register and put a max, but user does not reached it yet

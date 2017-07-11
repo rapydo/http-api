@@ -76,6 +76,7 @@ class Detector(object):
             # Was this service enabled from the developer?
             enable_var = str(prefix + 'enable').upper()
             self.available_services[name] = self.get_bool_from_os(enable_var)
+
             if self.available_services[name]:
 
                 # read variables
@@ -106,9 +107,17 @@ class Detector(object):
             if enable_var is not None and var == enable_var:
                 continue
             var = var.lower()
+
+            # This is the case when a variable belongs to a service 'prefix'
             if var.startswith(prefix):
+
+                # Fix key and value before saving
                 key = var[len(prefix):]
+                # One thing that we must avoid is any quote around our value
+                value = value.strip('"').strip("'")
+                # save
                 variables[key] = value
+
                 if key == 'host':
                     host = value
 
@@ -295,17 +304,28 @@ class Detector(object):
         Please define your class Initializer in
         vanilla/project/initialization.py
         """
+
         try:
             meta = Meta()
             module_path = "%s.%s.%s" % \
                 (CUSTOM_PACKAGE, 'initialization', 'initialization')
-            module = meta.get_module_from_string(module_path)
-            Initializer = meta.get_class_from_string('Initializer', module)
-            Initializer(instances)
-            log.info("Vanilla project has been initialized")
+            module = meta.get_module_from_string(
+                module_path,
+                debug_on_fail=False,
+            )
+            Initializer = meta.get_class_from_string(
+                'Initializer',  # the name of the class we are expecting
+                module,
+                skip_error=True
+            )
+            if Initializer is not None:
+                Initializer(instances)
+                log.info("Vanilla project has been initialized")
         except BaseException as e:
+            Initializer = None
+
+        if Initializer is None:
             log.debug("Note: no custom init available for mixed services")
-            raise(e)
 
 
 detector = Detector()

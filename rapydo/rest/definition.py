@@ -99,7 +99,7 @@ class EndpointResource(Resource):
 
             for param, data in current_params.items():
 
-                # TOFIX: Add a method to convert types swagger <-> flask
+                # FIXME: Add a method to convert types swagger <-> flask
                 tmptype = data.get('type', 'string')
                 if tmptype == 'boolean':
                     mytype = bool
@@ -151,26 +151,29 @@ class EndpointResource(Resource):
 
         self.parse()
 
-        if len(self._json_args) < 1:
-            try:
-                self._json_args = request.get_json(force=forcing)
-            except Exception:  # as e:
-                # log.critical("Cannot get JSON for req: '%s'" % e)
-                pass
+        # if is an upload in streaming, I must not consume
+        # request.data or request.json, otherwise it get lost
+        if len(self._json_args) < 1 and \
+           request.mimetype != 'application/octet-stream':
+                try:
+                    self._json_args = request.get_json(force=forcing)
+                except Exception:  # as e:
+                    # log.critical("Cannot get JSON for req: '%s'" % e)
+                    pass
 
-            # json payload and formData cannot co-exist
-            if len(self._json_args) < 1:
-                self._json_args = request.form
+                # json payload and formData cannot co-exist
+                if len(self._json_args) < 1:
+                    self._json_args = request.form
 
-            for key, value in self._json_args.items():
-                if value is None:
-                    continue
-                # if isinstance(value, str) and value == 'None':
-                #     continue
-                if key in self._args and self._args[key] is not None:
-                    # print("Key", key, "Value", value, self._args[key])
-                    key += '_json'
-                self._args[key] = value
+                for key, value in self._json_args.items():
+                    if value is None:
+                        continue
+                    # if isinstance(value, str) and value == 'None':
+                    #     continue
+                    if key in self._args and self._args[key] is not None:
+                        # print("Key", key, "Value", value, self._args[key])
+                        key += '_json'
+                    self._args[key] = value
 
         if single_parameter is not None:
             return self._args.get(single_parameter, default)
@@ -249,7 +252,7 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     def method_not_allowed(self, methods=['GET']):
-        # TOFIX: is it used?
+        # FIXME: is it used?
 
         methods.append('HEAD')
         methods.append('OPTIONS')
@@ -318,6 +321,8 @@ class EndpointResource(Resource):
         # Bug fix: if errors was initialized above, I received old errors...
         if errors is None:
             errors = []
+        if isinstance(errors, str):
+            errors = [errors]
 
         # See if we have the main message
         if message is not None:
@@ -417,7 +422,7 @@ class EndpointResource(Resource):
         for instance in instances:
             json_data["content"].append(self.getJsonResponse(instance))
 
-        # TOFIX: get pages FROM SELF ARGS?
+        # FIXME: get pages FROM SELF ARGS?
         # json_data["links"]["next"] = \
         #     endpoint + '?currentpage=2&perpage=1',
         # json_data["links"]["last"] = \
@@ -496,7 +501,7 @@ class EndpointResource(Resource):
                 attribute = get_attribute(instance, key)
                 # datetime is not json serializable,
                 # converting it to string
-                # TOFIX: use flask.jsonify
+                # FIXME: use flask.jsonify
                 if attribute is None:
                     data["attributes"][key] = ""
                 elif isinstance(attribute, datetime):
@@ -573,7 +578,6 @@ class EndpointResource(Resource):
         return tmp[key]
 
     def get_endpoint_custom_definition(self, is_schema_url=False, method=None):
-
         url = request.url_rule.rule
         if is_schema_url:
             url = mem.customizer._schemas_map[url]

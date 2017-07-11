@@ -14,7 +14,6 @@ http://stackoverflow.com/a/9533843/2114395
 
 import os
 # import shutil
-# import subprocess as shell
 from flask import request, send_from_directory
 from werkzeug import secure_filename
 from rapydo.utils import htmlcodes as hcodes
@@ -82,12 +81,12 @@ class Uploader(object):
         sec_filename = secure_filename(filename)
         abs_fname = os.path.join(destination, sec_filename)
 
-# TOFIX: what happens if chunk 2 arrives before chunk 1?
+# FIXME: what happens if chunk 2 arrives before chunk 1?
         if overwrite and chunk_number == 1:
             if os.path.exists(abs_fname):
                 os.remove(abs_fname)
 
-# TOFIX: file is saved as data, not as ASCII/TEXT
+# FIXME: file is saved as data, not as ASCII/TEXT
         # with open(abs_fname, "wb") as f:
         with open(abs_fname, "ab") as f:
             # log.critical("Copying chunk %d" % chunk_number)
@@ -102,7 +101,8 @@ class Uploader(object):
 
         if 'file' not in request.files:
             return self.force_response(errors={
-                "Missing file": "No files specified"})
+                "Missing file": "No files specified"},
+                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
         myfile = request.files['file']
 

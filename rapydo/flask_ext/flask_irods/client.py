@@ -2,7 +2,7 @@
 
 import os
 from functools import lru_cache
-from flask import request
+from flask import request, stream_with_context, Response
 
 from rapydo.utils import htmlcodes as hcodes
 from irods.access import iRODSAccess
@@ -64,7 +64,22 @@ class IrodsPythonClient():
         ):
             raise IrodsException("%s not found or no permissions" % path)
 
-    def list(self, path=None, recursive=False, detailed=False, acl=False):
+    def getPath(self, path, prefix=None):
+        if prefix is None:
+            length = 0
+        else:
+            length = len(prefix)
+
+        if length > 0:
+            path = path[length:]
+            if path[0] == "/":
+                path = path[1:]
+
+        return os.path.dirname(path)
+
+    def list(
+            self, path=None, recursive=False, detailed=False,
+            acl=False, removePrefix=None):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
@@ -72,6 +87,7 @@ class IrodsPythonClient():
 
         if self.is_dataobject(path):
             raise IrodsException("Cannot list an object, get it instead")
+
         try:
             data = {}
             root = self.rpc.collections.get(path)
@@ -85,8 +101,12 @@ class IrodsPythonClient():
                 row["objects"] = {}
                 if recursive:
                     row["objects"] = self.list(
-                        coll.path, recursive, detailed, acl)
-                row["path"] = coll.path
+                        path=coll.path,
+                        recursive=recursive,
+                        detailed=detailed,
+                        acl=acl,
+                        removePrefix=removePrefix)
+                row["path"] = self.getPath(coll.path, removePrefix)
                 row["object_type"] = "collection"
                 if detailed:
                     row["owner"] = "-"
@@ -102,7 +122,7 @@ class IrodsPythonClient():
                 row = {}
                 key = obj.name
                 row["name"] = obj.name
-                row["path"] = obj.path
+                row["path"] = self.getPath(obj.path, removePrefix)
                 row["object_type"] = "dataobject"
                 row["PID"] = None
                 row["checksum"] = None
@@ -253,7 +273,7 @@ class IrodsPythonClient():
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
-        # TOFIX: remove resource
+        # FIXME: remove resource
         # if resource is not None:
         #     com = 'itrim'
         #     args = ['-S', resource]
@@ -311,10 +331,40 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    def save_in_chunks(self, destination, force=False, resource=None,
-                       chunk_size=1024):
+    def read_in_streaming(self, absolute_path, chunk_size=1048576):
+        """
+        Reads obj from iRODS without saving a local copy
+        """
+        log.info("Downloading file {} in streaming with chunk size {}"
+                 .format(absolute_path, chunk_size))
+        try:
+            obj = self.rpc.data_objects.get(absolute_path)
 
-        # TOFIX: resource is not used!
+            handle = obj.open('r')
+            return Response(
+                stream_with_context(self.read_in_chunks(handle, chunk_size)))
+
+        except iexceptions.DataObjectDoesNotExist:
+            raise IrodsException("Cannot read file: not found")
+
+    def read_in_chunks(self, file_object, chunk_size=1024):
+        """
+        Lazy function (generator) to read a file piece by piece.
+        Default chunk size: 1k.
+        """
+        while True:
+            data = file_object.read(chunk_size)
+            if not data:
+                break
+            yield data
+
+    def write_in_streaming(self, destination, force=False, resource=None,
+                           chunk_size=1048576):
+        """
+        Writes obj to iRODS without saving a local copy
+        """
+
+        # FIXME: resource is not used!
         log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
@@ -322,7 +372,8 @@ class IrodsPythonClient():
             raise IrodsException("File '" + destination + "' already exists. " +
                                  "Change file name or use the force parameter")
 
-        log.info("Uploading file in chunks to %s" % destination)
+        log.info("Uploading file in streaming to {} with chunk size {}"
+                 .format(destination, chunk_size))
         try:
             self.create_empty(destination, directory=False,
                               ignore_existing=force)
@@ -330,17 +381,15 @@ class IrodsPythonClient():
 
             # Based on:
             # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
+            # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
-                myfile = request.files['file']
                 with obj.open('w') as target:
-                    while True:
-                        chunk = myfile.read(chunk_size)
-                        print('---------->chunk', chunk)
-                        if len(chunk) == 0:
-                            break
-                        target.write(chunk)
-            except BaseException as e:
-                    raise e
+                    self.write_in_chunks(target, chunk_size)
+            except BaseException as ex:
+                # Should I remove file from iRODS if upload failed?
+                log.debug("Removing object from irods")
+                self.remove(destination, force=True)
+                raise ex
 
             return True
 
@@ -349,13 +398,18 @@ class IrodsPythonClient():
         # except iexceptions.DataObjectDoesNotExist:
         #     raise IrodsException("Cannot write to file: not found")
 
-        # Should I remove file from iRODS if upload failed?
-        log.debug("Removing object from irods")
         return False
+
+    def write_in_chunks(self, target, chunk_size=1024):
+        while True:
+            chunk = request.stream.read(chunk_size)
+            if not chunk:
+                break
+            target.write(chunk)
 
     def save(self, path, destination, force=False, resource=None):
 
-        # TOFIX: resource is not used!
+        # FIXME: resource is not used!
         log.warning("Resource not used in saving irods data...")
 
         try:
@@ -413,7 +467,7 @@ class IrodsPythonClient():
                 acl.access_name
             ])
 
-        # TOFIX: how to retrieve inheritance?
+        # FIXME: how to retrieve inheritance?
         data["inheritance"] = "N/A"
 
         return data
@@ -769,7 +823,7 @@ class IrodsPythonClient():
 #         return resources
 
 #     def get_default_resource_admin(self, skip=['bundleResc']):
-#         # TOFIX: find out the right way to get the default irods resource
+#         # FIXME: find out the right way to get the default irods resource
 
 #         # note: we could use ienv
 #         resources = self.get_resources_admin()

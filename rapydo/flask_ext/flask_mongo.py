@@ -13,10 +13,10 @@ class MongoExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        if len(kwargs) > 0:
-            variables = kwargs
-        else:
-            variables = self.variables
+        # mix kwargs with variables
+        variables = self.variables
+        for key, value in kwargs.items():
+            variables[key] = value
 
         db = variables.get('database', self._defaultdb)
 

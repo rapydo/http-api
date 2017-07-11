@@ -37,7 +37,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # This string will be replaced with a proper secret file
     JWT_SECRET = 'top secret!'
     JWT_ALGO = 'HS256'
-    # TOFIX: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
+    # FIXME: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
     token_type = 'Bearer'
 
     ##########################
@@ -255,7 +255,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return encode, payload['jti']
 
-    # TOFIX: this method is not used
+    # FIXME: this method is not used
     def create_temporary_token(self, user):
         # expiration = timedelta(seconds=300)
         expiration = timedelta(seconds=10)
@@ -353,7 +353,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-# TOFIX payload should be some basic part + custom payload from the developer
+# FIXME payload should be some basic part + custom payload from the developer
     def fill_custom_payload(self, userobj, payload):
         """
             This method can be implemented by specific Authentication Methods

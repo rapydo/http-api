@@ -28,12 +28,15 @@ class Authentication(BaseAuthentication):
 
     def get_user_object(self, username=None, payload=None):
 
+        from neomodel.exception import DeflateError
         user = None
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
+        except DeflateError:
+            log.warning("Invalid username '%s'" % username)
         except self.db.User.DoesNotExist:
             log.warning("Could not find user for '%s'" % username)
         return user
@@ -53,7 +56,7 @@ class Authentication(BaseAuthentication):
         return roles
 
     def fill_custom_payload(self, userobj, payload):
-        # TOFIX: should be implemented in vanilla, not here
+        # FIXME: should be implemented in vanilla, not here
         return payload
 
     # Also used by POST user
@@ -105,7 +108,7 @@ class Authentication(BaseAuthentication):
             if role not in current_roles:
                 self.create_role(role)
 
-        # TOFIX: Create some users for testing
+        # FIXME: Create some users for testing
         from flask import current_app
         if current_app.config['TESTING']:
             pass
@@ -178,7 +181,7 @@ class Authentication(BaseAuthentication):
             return False
 
     def get_tokens(self, user=None, token_jti=None):
-        # TOFIX: TTL should be considered?
+        # FIXME: TTL should be considered?
 
         list = []
         tokens = None
