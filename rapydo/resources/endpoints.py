@@ -44,7 +44,7 @@ class Status(EndpointResource):
         # msg['To'] = "m.dantonio@cineca.it"
 
         # # Send the message via our own SMTP server.
-        # s = smtplib.SMTP('smtp')
+        # s = smtplib.SMTP('smtp.dockerized.io')
         # s.send_message(msg)
         # s.quit()
 
