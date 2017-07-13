@@ -34,7 +34,8 @@ class NeoModel(BaseExtension):
     def set_connection_exception(self):
         return (
             socket.gaierror,
-            neo4j.bolt.connection.ServiceUnavailable
+            neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
+            neo4j.exceptions.ServiceUnavailable  # neo4j 3.2.2+
         )
 
     def custom_connection(self, **kwargs):
