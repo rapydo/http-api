@@ -44,7 +44,7 @@ class Status(EndpointResource):
         # msg['To'] = "m.dantonio@cineca.it"
 
         # # Send the message via our own SMTP server.
-        # s = smtplib.SMTP('smtp')
+        # s = smtplib.SMTP('smtp.dockerized.io')
         # s.send_message(msg)
         # s.quit()
 
@@ -193,7 +193,7 @@ class Login(EndpointResource):
         # user.save()
         self.auth.save_token(self.auth._user, token, jti)
 
-        # TOFIX: split response as above in access_token and token_type?
+        # FIXME: split response as above in access_token and token_type?
         # # The right response should be the following
         # {
         #   "scope": "https://b2stage.cineca.it/api/.*",
@@ -202,7 +202,7 @@ class Login(EndpointResource):
         #   "user": "pippo",
         #   "expires_in": 28800
         # }
-        # TOFIX: also set headers in a standard way if it exists
+        # FIXME: also set headers in a standard way if it exists
 
         return {'token': token}
 

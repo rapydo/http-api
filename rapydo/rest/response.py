@@ -124,7 +124,7 @@ class ResponseMaker(object):
 
                 if len(response) > 0:
                     elements['defined_content'] = main
-                # TOFIX: should add more checks to 2nd and 3rd element?
+                # FIXME: should add more checks to 2nd and 3rd element?
                 # Should also make sure that 2nd is integer
                 # and headers is a dictionary?
                 if len(response) > 1:
@@ -350,7 +350,7 @@ set_response(
 
 
 ########################
-# TOFIX: Explode the normal response content?
+# FIXME: Explode the normal response content?
 def get_content_from_response(http_out):
 
     response = None

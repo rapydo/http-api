@@ -15,7 +15,7 @@ class RecoverSchema(EndpointResource):
     def get(self, **kwargs):
         """ Expose schemas for UIs automatic form building """
 
-        # TOFIX: not from json but from query
+        # FIXME: not from json but from query
         method = self.get_input(single_parameter='method', default='POST')
 
         # schema_definition = self.get_endpoint_definition(
