@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 from utilities import __version__, SWAGGER_DIR
-from http import __package__ as main_package
+from restapi import __package__ as main_package
 
 app = '%s.__main__:main' % main_package
 
