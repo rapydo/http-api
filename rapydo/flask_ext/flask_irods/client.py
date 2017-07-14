@@ -140,7 +140,7 @@ class IrodsPythonClient():
                 data[key] = row
 
             return data
-        except iexceptions.CollectionDoesNotExist as e:
+        except iexceptions.CollectionDoesNotExist:
             raise IrodsException("Collection not found: %s" % path)
 
         # replicas = []
