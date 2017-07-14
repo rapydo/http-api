@@ -134,7 +134,7 @@ class IrodsPythonExt(BaseExtension):
                     log.critical("Cannot find a valid certificate file")
                     return False
             else:
-                raise NotImplemented(
+                raise NotImplementedError(
                     "Unable to create session, no valid auth option found")
         return True
 
