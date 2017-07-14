@@ -7,12 +7,12 @@ Test base
 import unittest
 import json
 import logging
-from rapydo.server import create_app
-from rapydo.rest.response import get_content_from_response
-from rapydo.services.authentication import BaseAuthentication as ba
-from rapydo.utils import htmlcodes as hcodes
-from rapydo.utils.logs import get_logger, set_global_log_level
-from rapydo.tests.utilities import API_URI, AUTH_URI
+from restapi.server import create_app
+from restapi.rest.response import get_content_from_response
+from restapi.services.authentication import BaseAuthentication as ba
+from utilities import htmlcodes as hcodes
+from utilities.logs import get_logger, set_global_log_level
+from restapi.tests.utilities import API_URI, AUTH_URI
 
 __author__ = "Paolo D'Onorio De Meo (p.donoriodemeo@cineca.it)"
 

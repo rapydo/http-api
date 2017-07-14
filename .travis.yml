@@ -1,0 +1,46 @@
+#############################
+language: python
+sudo: required
+dist: trusty
+group: deprecated-2017Q2
+python:
+- 3.6.1
+services:
+- docker
+before_install:
+- sudo apt-get update
+- sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
+install:
+- pip install --upgrade -r dev-requirements.txt
+- git clone https://github.com/rapydo/core.git
+script:
+- cd core && rapydo init && rapydo start
+- rapydo shell backend --command \
+    pip3 install --upgrade git+https://github.com/rapydo/http-api.git@master
+- sleep 60 && rapydo shell backend --command initialize
+- rapydo shell backend --command testwithcoverage
+
+#############################
+# language: python
+# python:
+# - 3.4
+# - 3.5
+# - 3.6
+# # before_install:
+# # - pip install --upgrade -r dev-requirements.txt
+# install:
+# - pip3 install --upgrade --no-cache-dir --editable .
+# script:
+# - echo hello world
+#     # docker and nose2?
+# # - py.test --cov=http
+# # after_success:
+# # - coveralls
+
+deploy:
+  provider: pypi
+  user: pdonorio
+  password:
+    secure: YNjvWPNpfab00FD7EUwzDgXyorPFkefCk3C7PFDfB9yDaZFz6d/+Mk+HzJce84pqk0Nr0T8rrKVe7c69Ib+PgiYWrtYstnvKthZbN+IpFieEm/f72adG8rdSjLVb5gLNd49cqxfDIBD64V/DgkrJ5+Xif8j0D7d8CohKRqgFYdsAm0G9TiiAXqbaRGiUqEl6aJo1V2/8tDUNikWu3zCaHiCWYerHBf2IfeCdcsbX3qXwUje+g4ECRFH3kZbVD6YDS+47ib4GBuhJGGRMZDdICdk+MHXP1cRUv2EybmH5Q7cH8DZ+JoMuZNP/gQ3xT2Mt2wZ1n1le0wWfCNpkIdTPuOQTFrtxcZQycjDnVupu+mTDa4XCYgr3N0JFSJBVo9G+gYf9fswrt1BTtVBDpYUb0QGtZehFW+wuftNu10lvuibB1B3o1Vqf2TYO8CEgSfQy0c+VRt3oj0BuXnh+C5BxTFVYJpYoIlkDr4u0nomWosmMRyrSRP8i8CkJg4WEtlB//ZaU+9QkurQW3zPr8HetcRz5eIzX1rJPHLO4XIXGuCnc954OhXa6EaaouAHtGeYwYhYP1/wTtJKlBQUdADoYf37B4U8Mttxd6V9x/uRJXLhyt+hSKPPFsS0/PkRnum/B0Mfa70RPfibvgXxjLhq+vspWYty0J4wpxWJNbAQ7NVU=
+  on:
+    tags: true

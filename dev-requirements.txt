@@ -1,0 +1,6 @@
+
+pytest
+pytest-cov
+coveralls
+rapydo-utils==0.5.0
+rapydo-controller==0.5.0

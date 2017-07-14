@@ -6,8 +6,8 @@ Tests for http api base
 """
 
 from tests import RestTestsBase
-from rapydo.tests.utilities import TestUtilities
-from rapydo.utils.logs import get_logger
+from restapi.tests.utilities import TestUtilities
+from utilities.logs import get_logger
 
 __author__ = "Paolo D'Onorio De Meo (p.donoriodemeo@cineca.it)"
 log = get_logger(__name__)
