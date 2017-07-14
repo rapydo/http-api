@@ -11,7 +11,8 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
-- pip install --upgrade -r dev-requirements.txt
+- pip3 install rapydo-utils==0.5.0
+- pip3 install --upgrade -r dev-requirements.txt
 - git clone https://github.com/rapydo/core.git
 script:
 - cd core && rapydo init && rapydo start
