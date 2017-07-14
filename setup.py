@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 
+# this created a lot of difficulties
+# from utilities import __version__ as current_version, SWAGGER_DIR
 from setuptools import setup, find_packages
-# this creates a lot of difficulties
-from utilities import __version__, SWAGGER_DIR
-from restapi import __package__ as main_package
+from restapi import \
+    __package__ as main_package, \
+    __version__ as current_version
+
+
+swagger_dir = 'swagger'
 
 app = '%s.__main__:main' % main_package
 
 setup(
     name='rapydo_http',
-    version=__version__,
+    version=current_version,
     url='https://rapydo.github.io/http-api',
     license='MIT',
     keywords=['http', 'api', 'rest', 'web', 'backend', 'rapydo'],
@@ -20,8 +25,8 @@ setup(
     package_data={
         'rapydo': [
             'confs/services.yaml',
-            '%s/*.yaml' % SWAGGER_DIR,
-            '%s/*/*.yaml' % SWAGGER_DIR,
+            '%s/*.yaml' % swagger_dir,
+            '%s/*/*.yaml' % swagger_dir,
         ],
     },
     # # TODO: investigate
@@ -30,7 +35,7 @@ setup(
     #         'develop = %s' % app,
     install_requires=[
         # Rapydo framework
-        "rapydo-utils==%s" % __version__,
+        "rapydo-utils==%s" % current_version,
         # various utilities
         "attrs",
         "better_exceptions",

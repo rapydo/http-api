@@ -1,0 +1,7 @@
+# to be copied to projects/template/confs/
+version: '3'
+services:
+  backend:
+    build: ../builds/backend
+    image: ${COMPOSE_PROJECT_NAME}/backend:custom
+

@@ -1,4 +1,3 @@
-#############################
 language: python
 sudo: required
 dist: trusty
@@ -7,42 +6,31 @@ python:
 - 3.6.1
 services:
 - docker
-# FIXME: how to avoid this? a lot of conflicts...
 env:
+# TODO: how to avoid versions hard coded in travis?
 - VERSION=0.5.0
 before_install:
 - sudo apt-get update
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
-- pip3 install rapydo-utils==$VERSION
-- pip3 install --upgrade -r dev-requirements.txt
-- git clone https://github.com/rapydo/core.git
+# install requirements in order
+- ./dev-requirements.py
+- git clone https://github.com/rapydo/core.git testenv
 script:
-- cd core && mkdir data
+- cd testenv && mkdir data
+
+##########################
+# fix the backend build with the latest http-api to be tested
+- mkdir -p builds/backend && cp ../core/Dockerfile builds/backend/
+- cp ../core/commons.yml projects/template/confs/
+##########################
+
 - rapydo init
-- cd submodules/builds_base && git checkout $VERSION && cd ../..
 - rapydo start
-- rapydo shell backend --command "pip3 install --upgrade rapydo-utils==$VERSION"
+# only for travis: check on the latest development version
 - rapydo shell backend --command "pip3 install --upgrade  git+https://github.com/rapydo/http-api.git@master"
 - sleep 60 && rapydo shell backend --command initialize
 - rapydo shell backend --command testwithcoverage
-
-#############################
-# language: python
-# python:
-# - 3.4
-# - 3.5
-# - 3.6
-# # before_install:
-# # - pip install --upgrade -r dev-requirements.txt
-# install:
-# - pip3 install --upgrade --no-cache-dir --editable .
-# script:
-# - echo hello world
-#     # docker and nose2?
-# # - py.test --cov=http
-# # after_success:
-# # - coveralls
 
 deploy:
   provider: pypi

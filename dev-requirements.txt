@@ -1,6 +1,7 @@
-
+pip
 pytest
 pytest-cov
 coveralls
-#FIXME: find a better way?
-rapydo-controller==0.5.0
+requests==2.11.1
+rapydo-utils
+rapydo-controller
