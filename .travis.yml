@@ -15,10 +15,12 @@ install:
 - pip3 install --upgrade -r dev-requirements.txt
 - git clone https://github.com/rapydo/core.git
 script:
-- cd core && rapydo init && rapydo start
+- cd core && mkdir data
+- rapydo init && rapydo start
 - rapydo shell backend --command \
     pip3 install --upgrade git+https://github.com/rapydo/http-api.git@master
 - sleep 60 && rapydo shell backend --command initialize
+# FIXME: do not mount latest repos as docker volumes in debug mode
 - rapydo shell backend --command testwithcoverage
 
 #############################

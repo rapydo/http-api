@@ -16,8 +16,6 @@ BASE_URLS = [API_URL, AUTH_URL]
 #################################
 # Directories for core code or user custom code
 BACKEND_PACKAGE = 'rapydo'
-# FIXME: all environment variables should be parameters in config YAML files
-# only this would allow to have a running rapydo outside of docker
 CUSTOM_PACKAGE = os.environ.get('VANILLA_PACKAGE', 'custom')
 CORE_CONFIG_PATH = os.path.join(BACKEND_PACKAGE, 'confs')
 # PROJECT_CONF_FILE = 'project_configuration'
