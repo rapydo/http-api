@@ -155,25 +155,25 @@ class EndpointResource(Resource):
         # request.data or request.json, otherwise it get lost
         if len(self._json_args) < 1 and \
            request.mimetype != 'application/octet-stream':
-                try:
-                    self._json_args = request.get_json(force=forcing)
-                except Exception:  # as e:
-                    # log.critical("Cannot get JSON for req: '%s'" % e)
-                    pass
+            try:
+                self._json_args = request.get_json(force=forcing)
+            except Exception:  # as e:
+                # log.critical("Cannot get JSON for req: '%s'" % e)
+                pass
 
-                # json payload and formData cannot co-exist
-                if len(self._json_args) < 1:
-                    self._json_args = request.form
+            # json payload and formData cannot co-exist
+            if len(self._json_args) < 1:
+                self._json_args = request.form
 
-                for key, value in self._json_args.items():
-                    if value is None:
-                        continue
-                    # if isinstance(value, str) and value == 'None':
-                    #     continue
-                    if key in self._args and self._args[key] is not None:
-                        # print("Key", key, "Value", value, self._args[key])
-                        key += '_json'
-                    self._args[key] = value
+            for key, value in self._json_args.items():
+                if value is None:
+                    continue
+                # if isinstance(value, str) and value == 'None':
+                #     continue
+                if key in self._args and self._args[key] is not None:
+                    # print("Key", key, "Value", value, self._args[key])
+                    key += '_json'
+                self._args[key] = value
 
         if single_parameter is not None:
             return self._args.get(single_parameter, default)
