@@ -1,6 +1,22 @@
 
 # Getting started
 
+## Code base/framework for modern RESTful HTTP API 
+
+A Python **3** Flask HTTP server mapping custom classes into REST API endpoints;
+written with **the base** in mind for middleware APIs in our projects.
+
+It comes bundled with:
+
+* RESTful classes to write endpoints
+* decorators to add properties and parameters
+* as many best practices i found in my experience for Flask
+* easy configuration
+* any database/resource pluggable (in fact, you can write your own)
+* sqlalchemy (sqllite as default) backend
+* security handling (JWT and your database of choice)
+* administration
+
 ### Prerequisites
 
 Install docker and docker-compose. For example:

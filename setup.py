@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from rapydo import __version__
-# from rapydo.utils import SWAGGER_DIR
-SWAGGER_DIR = 'swagger'
+from utilities import __version__, SWAGGER_DIR
+from http import __package__ as main_package
+
+app = '%s.__main__:main' % main_package
 
 setup(
     name='rapydo_http',
     version=__version__,
-    author="Paolo D'Onorio De Meo",
-    author_email='p.donorio.de.meo@gmail.com',
-    url='https://github.com/rapydo/http-api',
+    url='https://rapydo.github.io/http-api',
     license='MIT',
-    # flask_ext & rapydo ?
+    keywords=['http', 'api', 'rest', 'web', 'backend', 'rapydo'],
     packages=find_packages(
         where='.',
-        exclude=['test*', 'rapydo.OLD*']
+        exclude=['test*']
     ),
     package_data={
         'rapydo': [
@@ -24,7 +23,13 @@ setup(
             '%s/*/*.yaml' % SWAGGER_DIR,
         ],
     },
+    # # TODO: investigate
+    # entry_points={
+    #     'console_scripts': [
+    #         'develop = %s' % app,
     install_requires=[
+        # Rapydo framework
+        "rapydo-utils==%s" % __version__,
         # various utilities
         "attrs",
         "better_exceptions",
@@ -50,9 +55,18 @@ setup(
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
-        # Rapydo framework
-        "rapydo-utils==0.4.7",
-        # TODO: complete this list
-        # from requirements in backend/requirements.txt
+    ],
+    # FIXME: import from utils
+    author="Paolo D'Onorio De Meo",
+    author_email='p.donorio.de.meo@gmail.com',
+    # FIXME: import from utils
+    classifiers=[
+        'Programming Language :: Python',
+        'Intended Audience :: Developers',
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ]
 )
