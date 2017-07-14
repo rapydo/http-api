@@ -17,7 +17,7 @@ install:
 script:
 - cd core && mkdir data
 - rapydo init && rapydo start
-- rapydo shell backend --command "pip3 install --upgrade git+https://github.com/rapydo/http-api.git@master"
+- rapydo shell backend --command "pip3 install --upgrade rapydo-utils==0.5.0 git+https://github.com/rapydo/http-api.git@master"
 - sleep 60 && rapydo shell backend --command initialize
 # FIXME: do not mount latest repos as docker volumes in debug mode
 - rapydo shell backend --command testwithcoverage
