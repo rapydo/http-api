@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+# this creates a lot of difficulties
 from utilities import __version__, SWAGGER_DIR
 from restapi import __package__ as main_package
 

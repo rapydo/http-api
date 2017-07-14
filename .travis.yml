@@ -7,6 +7,7 @@ python:
 - 3.6.1
 services:
 - docker
+# FIXME: how to avoid this? a lot of conflicts...
 env:
 - VERSION=0.5.0
 before_install:
@@ -18,11 +19,12 @@ install:
 - git clone https://github.com/rapydo/core.git
 script:
 - cd core && mkdir data
-- rapydo init && rapydo start
+- rapydo init
+- cd submodules/builds_base && git checkout $VERSION && cd ../..
+- rapydo start
 - rapydo shell backend --command "pip3 install --upgrade rapydo-utils==$VERSION"
 - rapydo shell backend --command "pip3 install --upgrade  git+https://github.com/rapydo/http-api.git@master"
 - sleep 60 && rapydo shell backend --command initialize
-# FIXME: do not mount latest repos as docker volumes in debug mode
 - rapydo shell backend --command testwithcoverage
 
 #############################
