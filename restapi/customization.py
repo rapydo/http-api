@@ -10,10 +10,8 @@ import glob
 from utilities import \
     PROJECT_CONF_FILENAME, CONF_PATH, DEFAULT_FILENAME, UTILS_PKGNAME
 from utilities import helpers
-from restapi.confs import (
-    BACKEND_PACKAGE, CUSTOM_PACKAGE,  # CORE_CONFIG_PATH,
-    API_URL, BASE_URLS
-)
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
 from restapi.attributes import EndpointElements, ExtraAttributes

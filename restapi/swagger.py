@@ -12,11 +12,10 @@ import os
 import json
 from bravado_core.spec import Spec
 # from bravado_core.validate import validate_object
+from restapi.attributes import ExtraAttributes
+from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
 from utilities import htmlcodes as hcodes
 from utilities import helpers
-from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE
-from restapi.confs import CUSTOM_PACKAGE
-from restapi.attributes import ExtraAttributes
 from utilities.myyaml import load_yaml_file
 from utilities.logs import get_logger
 

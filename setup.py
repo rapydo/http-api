@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# this created a lot of difficulties
-# from utilities import __version__ as current_version, SWAGGER_DIR
 from setuptools import setup, find_packages
 from restapi import \
     __package__ as main_package, \
@@ -36,8 +34,9 @@ setup(
         [flask.commands]
         launch=%s:launch
         init=%s:init
+        tests=%s:unittests
         clean=%s:clean
-    ''' % (app, app, app),
+    ''' % tuple([app] * 4),
     install_requires=[
         # Rapydo framework
         "rapydo-utils==%s" % current_version,

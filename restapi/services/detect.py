@@ -9,12 +9,11 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 """
 
 import os
-# from functools import lru_cache
-from restapi.confs import CORE_CONFIG_PATH, \
-    BACKEND_PACKAGE, CUSTOM_PACKAGE
+from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities.meta import Meta
 from utilities.myyaml import load_yaml_file
 from utilities import helpers
+# from functools import lru_cache
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
