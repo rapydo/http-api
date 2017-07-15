@@ -9,8 +9,7 @@ from restapi import \
 
 
 swagger_dir = 'swagger'
-
-app = '%s.__main__:main' % main_package
+app = '%s.__commands__' % main_package
 
 setup(
     name='rapydo_http',
@@ -18,21 +17,27 @@ setup(
     url='https://rapydo.github.io/http-api',
     license='MIT',
     keywords=['http', 'api', 'rest', 'web', 'backend', 'rapydo'],
+    author="Paolo D'Onorio De Meo",
+    author_email='p.donorio.de.meo@gmail.com',
     packages=find_packages(
         where='.',
         exclude=['test*']
     ),
     package_data={
-        'rapydo': [
+        main_package: [
             'confs/services.yaml',
             '%s/*.yaml' % swagger_dir,
             '%s/*/*.yaml' % swagger_dir,
         ],
     },
-    # # TODO: investigate
-    # entry_points={
-    #     'console_scripts': [
-    #         'develop = %s' % app,
+    entry_points='''
+        [console_scripts]
+        restapi=flask.cli:main
+        [flask.commands]
+        launch=%s:launch
+        init=%s:init
+        clean=%s:clean
+    ''' % (app, app, app),
     install_requires=[
         # Rapydo framework
         "rapydo-utils==%s" % current_version,
@@ -47,8 +52,7 @@ setup(
         "Flask-OAuthlib",
         "Flask-RESTful",
         "Flask-SQLAlchemy",
-        # FIXME: check if this could be removed
-        "flask-shell-ipython",
+        "flask-shell-ipython",  # TODO: check if this could be removed
         "flask_injector==v0.9.0",
         "injector==0.12.0",
         # DB drivers
@@ -62,10 +66,6 @@ setup(
         "bravado-core",
         "swagger-spec-validator",
     ],
-    # FIXME: import from utils
-    author="Paolo D'Onorio De Meo",
-    author_email='p.donorio.de.meo@gmail.com',
-    # FIXME: import from utils
     classifiers=[
         'Programming Language :: Python',
         'Intended Audience :: Developers',

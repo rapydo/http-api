@@ -1,7 +1,5 @@
 pip
-pytest
-pytest-cov
-coveralls
 requests==2.11.1
 rapydo-utils
 rapydo-controller
+coveralls

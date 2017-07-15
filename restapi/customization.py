@@ -92,7 +92,9 @@ Please also fix in celery and celeryui
         defaults = load_yaml_file(
             DEFAULT_FILENAME,
             # path=CUSTOM_CONFIG_PATH
-            path=helpers.script_abspath(__file__, UTILS_PKGNAME)
+            path=helpers.script_abspath(
+                # FIXME: find a better way
+                __file__, '../../' + UTILS_PKGNAME)
         )
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")

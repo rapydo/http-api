@@ -10,7 +10,8 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 
 import os
 # from functools import lru_cache
-from restapi.confs import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.confs import CORE_CONFIG_PATH, \
+    BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities.meta import Meta
 from utilities.myyaml import load_yaml_file
 from utilities import helpers
@@ -65,7 +66,6 @@ class Detector(object):
                 '..',
                 CORE_CONFIG_PATH
             ),
-            # path=CORE_CONFIG_PATH,
             logger=True
         )
 
@@ -292,7 +292,7 @@ class Detector(object):
 
         if '.' in name:
             # In this case we are receiving a module name
-            # e.g. rapydo.services.mongodb
+            # e.g. restapi.services.mongodb
             name = name.split('.')[::-1][0]
 
         return self.available_services.get(name)
@@ -308,7 +308,7 @@ class Detector(object):
         try:
             meta = Meta()
             module_path = "%s.%s.%s" % \
-                (CUSTOM_PACKAGE, 'initialization', 'initialization')
+                (CUSTOM_PACKAGE, 'projects', 'initialization')
             module = meta.get_module_from_string(
                 module_path,
                 debug_on_fail=False,

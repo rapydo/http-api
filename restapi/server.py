@@ -6,7 +6,7 @@ We create all the internal flask components here.
 """
 
 import better_exceptions as be
-import rapydo.confs as config
+import restapi.confs as config
 import warnings
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
