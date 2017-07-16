@@ -26,7 +26,9 @@ if [ "$CURRENT_BRANCH" != "master" ]; then
 fi
 
 # fix the backend build with the latest http-api to be tested
-mkdir -p builds/backend && cp $mydir/Dockerfile builds/backend/
+mkdir -p builds/backend
+cp $mydir/Dockerfile builds/backend/
+cp $mydir/update* builds/backend/
 echo "updated build"
 
 # force the build within the docker compose options
