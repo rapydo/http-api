@@ -1,4 +1,5 @@
-rapydo/utils
+# if rapydo-core is cloned inside this repo
+core
 
 # Instance dependent files
 instance/

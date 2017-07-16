@@ -89,14 +89,21 @@ def clean():
 
 @click.command()
 @click.option('--initialize/--no-initialize', default=False)
-# @click.option('--count', default=1, help='Number of greetings.')
-# @click.option('--name', prompt='Your name', help='The person to greet.')
-def unittests(initialize):
+@click.option('--sleep/--no-sleep', default=False)
+def unittests(initialize, sleep):
     """Launch tests and compute coverage for the current package"""
 
+    # if request initialize the authorization database
     if initialize:
+        # if request sleep some seconds to wait for db
+        if sleep:
+            import time
+            time.sleep(30)
+        # do init in a rapydo way
         myinit()
 
+    # launch unittests and also compute coverage
+    # TODO: convert the `pyunittests` script from the docker image into python
     from utilities.basher import BashCommands
     bash = BashCommands()
     log.warning(
@@ -104,4 +111,5 @@ def unittests(initialize):
         "This might take some minutes."
     )
     output = bash.execute_command("pyunittests")
+
     log.info("Completed:\n%s" % output)

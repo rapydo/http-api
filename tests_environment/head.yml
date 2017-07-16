@@ -4,4 +4,5 @@ services:
   backend:
     build: ../builds/backend
     image: ${COMPOSE_PROJECT_NAME}/backend:custom
-
+    environment:
+      RAPYDO_HTTP_BRANCH: ${CURRENT_BRANCH} # taken from outside

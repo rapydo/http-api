@@ -7,35 +7,23 @@ python:
 services:
 - docker
 env:
-# TODO: how to avoid versions hard coded in travis?
-- VERSION=0.5.0 CORE_PROJECT=template PROJECT=restapi
+- CORE_PROJECT=template
 before_install:
 - sudo apt-get update
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
-# install requirements in order
-- ./dev-requirements.py
-- git clone https://github.com/rapydo/core.git testenv
+- ./dev-requirements.py # install requirements in order
 script:
-- cd testenv && mkdir data # && mv projects/$CORE_PROJECT projects/$PROJECT
-
-##########################
-# fix the backend build with the latest http-api to be tested
-- mkdir -p builds/backend && cp ../core/Dockerfile builds/backend/
-- cp ../core/commons.yml projects/$CORE_PROJECT/confs/
-##########################
-
+- tests_environment/clone.sh
+- cd core
 - rapydo init
 - rapydo start
-- sleep 60 # wait for postgres to be ready on this slow VMs
-- rapydo shell backend --user developer --command 'restapi tests --initialize'
-# workaround for coverage
+- rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
+# COVERAGE workaround
 - ln -s projects/$CORE_PROJECT/backend/.coverage ../
-# check if it works
-- cd .. && cat .coverage && echo how did I go
+- cd .. && pwd && cat .coverage
 after_success:
 - coveralls
-
 deploy:
   provider: pypi
   user: pdonorio
