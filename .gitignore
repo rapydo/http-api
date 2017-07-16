@@ -1,5 +1,7 @@
 # if rapydo-core is cloned inside this repo
 core
+tests*/converted
+tests*/tail.yml
 
 # Instance dependent files
 instance/

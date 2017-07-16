@@ -1,19 +1,40 @@
 #!/bin/bash
 set -e
 
-# check for CORE_PROJECT and CURRENT_BRANCH
+mydir="../tests_environment"
+rapydodir="core"
 
-YAMLFILE="projects/$CORE_PROJECT/confs/commons.yml"
+export CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
+echo "Current branch: $CURRENT_BRANCH"
 
-# TODO: use a branch for 'http' core' ?
-git clone https://github.com/rapydo/core.git
-# - if CURRENT_BRANCH != master git checkout $CURRENT_BRANCH
-cd core && mkdir data
+if [ -z $CORE_PROJECT ]; then
+    echo "Missing the current testing project with the rapydo core"
+    return
+fi
 
-# TODO: use environment variable from outside to set the branch?
+export YAMLFILE="projects/$CORE_PROJECT/confs/commons.yml"
+echo "config: $YAMLFILE"
+
+if [ ! -d "$rapydodir" ]; then
+    git clone https://github.com/rapydo/$rapydodir.git
+fi
+cd $rapydodir && mkdir -p data
+if [ "$CURRENT_BRANCH" != "master" ]; then
+    echo "checkout"
+    git checkout $CURRENT_BRANCH
+fi
 
 # fix the backend build with the latest http-api to be tested
-mkdir -p builds/backend && cp ../core/Dockerfile builds/backend/
-# add a docker-entrypoint.d/script to update with pip
-tail -n +7  $YAMLFILE > ../core/tail.yml
-cat../core/head.yml ../core/tail.yml $YAMLFILE
+mkdir -p builds/backend && cp $mydir/Dockerfile builds/backend/
+echo "updated build"
+
+# force the build within the docker compose options
+if [ ! -f "$mydir/converted" ]; then
+    tail -n +7 $YAMLFILE > $mydir/tail.yml
+    touch $mydir/converted
+    cat $mydir/head.yml $mydir/tail.yml > $YAMLFILE
+    echo "updated commons"
+fi
+
+cd -

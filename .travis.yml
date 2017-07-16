@@ -14,7 +14,7 @@ before_install:
 install:
 - ./dev-requirements.py # install requirements in order
 script:
-- tests_environment/clone.sh
+- source tests_environment/clone.sh
 - cd core
 - rapydo init
 - rapydo start

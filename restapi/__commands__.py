@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 import click
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
@@ -67,8 +68,12 @@ def myinit():
 
 
 @click.command()
-def init():
+@click.option('--sleep/--no-sleep', default=False)
+def init(sleep):
     """Initialize data for connected services."""
+    if sleep:
+        # if request sleep some seconds to wait for db to be ready
+        time.sleep(30)
     myinit()
 
 
@@ -76,15 +81,6 @@ def init():
 def clean():
     """Destroy current services data."""
     cli({'name': 'Removing data', 'destroy_mode': True})
-
-
-# @click.command()
-# def sleep():
-#     """test 1"""
-#     # TODO: evaluate what to do with the sleep script
-#     # put it in here?
-#     # or create a pypi package?
-#     pass
 
 
 @click.command()
@@ -97,7 +93,6 @@ def unittests(initialize, sleep):
     if initialize:
         # if request sleep some seconds to wait for db
         if sleep:
-            import time
             time.sleep(30)
         # do init in a rapydo way
         myinit()
@@ -113,3 +108,12 @@ def unittests(initialize, sleep):
     output = bash.execute_command("pyunittests")
 
     log.info("Completed:\n%s" % output)
+
+
+# TODO: evaluate what to do with the sleep script
+@click.command()
+def sleep():
+    """test 1"""
+    # put it in here?
+    # or create a pypi package?
+    pass
