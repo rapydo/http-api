@@ -16,8 +16,7 @@ install:
 script:
 - source tests_environment/clone.sh
 - cd core
-- rapydo init
-- rapydo start
+- rapydo init && rapydo start && sleep 30
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
 # COVERAGE workaround
 - ln -s projects/$CORE_PROJECT/backend/.coverage ../
