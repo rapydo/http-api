@@ -19,21 +19,21 @@ script:
 - rapydo init
 - rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
-# - cd ..
+- cd ..
 
 ##################
 # compute coverage in the path where it was produced
 after_success:
-# - cat .coveralls.yml
+## NOT WORKING
 # - cp ../coveralls.yml projects/$CORE_PROJECT/backend
-- docker cp ../.coveralls.yml template_backend_1:/code
-# - rapydo shell backend --command 'pip3 install coveralls'
-- rapydo shell backend --user developer --command coveralls
-# - cd projects/$CORE_PROJECT/backend
-# # - coverage combine
-# - cat .coverage
+# - docker cp ../.coveralls.yml template_backend_1:/code
+# - rapydo shell backend --user developer --command coveralls
+# - coverage combine
 # - coverage report
 # - coveralls
+## WORKING
+- docker cp template_backend_1:/code/.coverage .
+- docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
 ##################
 
 deploy:
