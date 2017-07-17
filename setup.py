@@ -19,7 +19,7 @@ setup(
     author_email='p.donorio.de.meo@gmail.com',
     packages=find_packages(
         where='.',
-        exclude=['test*']
+        exclude=['tests*']
     ),
     package_data={
         main_package: [

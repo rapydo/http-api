@@ -103,8 +103,20 @@ def unittests(initialize, sleep):
         "Running all tests and computing coverage.\n" +
         "This might take some minutes."
     )
-    from restapi import __package__ as current_package
-    output = bash.execute_command("pyunittests", parameters=[current_package])
+
+    # NOTE: running tests on a generic backend
+    # if the current directory is 'core'
+    parameters = []
+    from utilities import helpers
+    basedir = helpers.parent_dir(helpers.current_dir())
+    if basedir == 'core':
+        from restapi import __package__ as current_package
+        parameters.append(current_package)
+
+    output = bash.execute_command(
+        "pyunittests",
+        parameters=parameters
+    )
 
     log.info("Completed:\n%s" % output)
 

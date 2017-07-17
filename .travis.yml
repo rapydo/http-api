@@ -14,19 +14,14 @@ before_install:
 install:
 - ./dev-requirements.py # install requirements in order
 - scripts/clone.sh
-# before_script:
-# - chmod o+w core/projects
 script:
-- CURRENT_VERSION=`grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'"`
-- echo "Current version: $CURRENT_VERSION"
 - cd core
-- git checkout $CURRENT_VERSION
 - rapydo init && rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
-# COVERAGE workaround
-- ln -s projects/$CORE_PROJECT/backend/.coverage ../
-- cd .. && pwd && cat .coverage
+- cd ..
 after_success:
+- ln -s core/projects/$CORE_PROJECT/backend/.coverage . # COVERAGE workaround
+- cat .coverage
 - coveralls
 deploy:
   provider: pypi
