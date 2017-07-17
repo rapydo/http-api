@@ -3,7 +3,8 @@ set -e
 
 rapydodir="core"
 
-export CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+# export CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
+export CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Current branch: $CURRENT_BRANCH"
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
