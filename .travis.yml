@@ -24,7 +24,7 @@ script:
 ##################
 # compute coverage in the path where it was produced
 after_success:
-- cat .coveralls.yml
+# - cat .coveralls.yml
 - cp .coveralls.yml projects/$CORE_PROJECT/backend
 - rapydo shell backend --command 'pip3 install coveralls'
 - rapydo shell backend --user developer --command coveralls
