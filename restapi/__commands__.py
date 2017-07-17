@@ -108,7 +108,9 @@ def unittests(initialize, sleep):
     # if the current directory is 'core'
     parameters = []
     from utilities import helpers
-    basedir = helpers.parent_dir(helpers.current_dir())
+    # FIXME: put this into helpers
+    # basedir = helpers.parent_dir(helpers.current_fullpath())
+    basedir = helpers.parent_dir(os.getcwd())
     log.warning("TEST BASE DIR: %s" % basedir)
     if basedir == 'code':
         from restapi import __package__ as current_package
