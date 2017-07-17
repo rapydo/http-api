@@ -16,7 +16,8 @@ install:
 - scripts/clone.sh
 script:
 - cd core
-- rapydo init && rapydo start
+- rapydo init
+- rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
 - cd ..
 after_success:

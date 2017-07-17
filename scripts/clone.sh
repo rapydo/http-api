@@ -24,7 +24,7 @@ echo "checking permissions:"
 ls -ld projects/$CORE_PROJECT/
 
 if [ "$CURRENT_BRANCH" != "master" ]; then
-    echo "checkout"
+    echo "checkout $CURRENT_BRANCH"
     git checkout $CURRENT_BRANCH
 fi
 
