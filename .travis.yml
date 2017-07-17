@@ -20,11 +20,21 @@ script:
 - rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
 # - cd ..
-after_success:
+
+##################
 # compute coverage in the path where it was produced
-- cd projects/$CORE_PROJECT/backend
-- cat .coverage
-- coveralls
+after_success:
+- cat .coveralls.yml
+- cp .coveralls.yml projects/$CORE_PROJECT/backend
+- rapydo shell backend --command 'pip3 install coveralls'
+- rapydo shell backend --user developer --command coveralls
+# - cd projects/$CORE_PROJECT/backend
+# # - coverage combine
+# - cat .coverage
+# - coverage report
+# - coveralls
+##################
+
 deploy:
   provider: pypi
   user: pdonorio
