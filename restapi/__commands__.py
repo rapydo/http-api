@@ -103,7 +103,8 @@ def unittests(initialize, sleep):
         "Running all tests and computing coverage.\n" +
         "This might take some minutes."
     )
-    output = bash.execute_command("pyunittests")
+    from restapi import __package__ as current_package
+    output = bash.execute_command("pyunittests", parameters=[current_package])
 
     log.info("Completed:\n%s" % output)
 
