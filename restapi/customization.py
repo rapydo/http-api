@@ -92,7 +92,7 @@ Please also fix in celery and celeryui
             # path=CUSTOM_CONFIG_PATH
             path=helpers.script_abspath(
                 # FIXME: find a better way
-                __file__, '../../' + UTILS_PKGNAME)
+                __file__, '../' + UTILS_PKGNAME)
         )
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")
@@ -162,10 +162,13 @@ Please also fix in celery and celeryui
                 swagger_endpoint_dir = os.path.join(swagger_dir, ep)
 
                 if os.path.isfile(swagger_endpoint_dir):
-                    log.debug(
-                        "Expected a swagger conf folder, found a file (%s)"
-                        % (swagger_endpoint_dir)
-                    )
+                    # FIXME: use a configuration for this definition
+                    exception = 'params_models.yaml'
+                    if not swagger_endpoint_dir.endswith('/' + exception):
+                        log.debug(
+                            "Expected swagger folder, found file %s"
+                            % (swagger_endpoint_dir)
+                        )
                     continue
 
                 # isbase = base_dir == BACKEND_PACKAGE

@@ -13,10 +13,12 @@ before_install:
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
 - ./dev-requirements.py # install requirements in order
+- scripts/clone.sh
 script:
-- source tests_environment/clone.sh
 - cd core
-- rapydo init && rapydo start && sleep 30
+- CURRENT_VERSION=`grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'"`
+- echo $CURRENT_VERSION && git checkout $CURRENT_VERSION
+- rapydo init && rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
 # COVERAGE workaround
 - ln -s projects/$CORE_PROJECT/backend/.coverage ../

@@ -21,8 +21,6 @@ def main(args, another_app=None):
             from restapi import __package__ as current_package
             os.environ[APP] = '%s.__main__' % current_package
 
-    print("USING", os.environ.get(APP))
-
     cli = FlaskGroup()
     options = {
         'prog_name': 'restapi',

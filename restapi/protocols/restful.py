@@ -4,18 +4,22 @@
 App specifications
 """
 
-from flask_restful import Api as RestFulApi
-from restapi.rest.farmer import EndpointsFarmer
-
-from utilities.globals import mem
-from utilities.logs import get_logger
-
-log = get_logger(__name__)
+# Little hack to avoid printing unwanted logs when cli is asking usage
+from restapi import FLASK_HELP
+if FLASK_HELP:
+    raise LookupError
+else:
+    from flask_restful import Api as RestFulApi
+    from restapi.rest.farmer import EndpointsFarmer
+    from utilities.globals import mem
+    from utilities.logs import get_logger
+    log = get_logger(__name__)
 
 
 class Api(RestFulApi):
     """
-    Hack the original class to remove the response
+    Hack the original RESTful API class from the extension
+    aiming at the removal of their response
     """
 
     def output(self, resource):
