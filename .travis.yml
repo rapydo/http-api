@@ -15,9 +15,10 @@ install:
 - ./dev-requirements.py # install requirements in order
 - scripts/clone.sh
 script:
-- cd core
 - CURRENT_VERSION=`grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'"`
-- echo $CURRENT_VERSION && git checkout $CURRENT_VERSION
+- echo "Current version: $CURRENT_VERSION"
+- cd core
+- git checkout $CURRENT_VERSION
 - rapydo init && rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
 # COVERAGE workaround
