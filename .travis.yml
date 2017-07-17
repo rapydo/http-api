@@ -19,9 +19,10 @@ script:
 - rapydo init
 - rapydo start
 - rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
-- cd ..
+# - cd ..
 after_success:
-- ln -s core/projects/$CORE_PROJECT/backend/.coverage . # COVERAGE workaround
+# compute coverage in the path where it was produced
+- cd projects/$CORE_PROJECT/backend
 - cat .coverage
 - coveralls
 deploy:
