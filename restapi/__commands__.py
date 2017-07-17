@@ -109,7 +109,7 @@ def unittests(initialize, sleep):
     parameters = []
     from utilities import helpers
     basedir = helpers.parent_dir(helpers.current_dir())
-    if basedir == 'core':
+    if basedir == 'code':
         from restapi import __package__ as current_package
         parameters.append(current_package)
 
