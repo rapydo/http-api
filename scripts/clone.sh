@@ -18,6 +18,11 @@ if [ ! -d "$rapydodir" ]; then
     git clone https://github.com/rapydo/$rapydodir.git
 fi
 cd $rapydodir && mkdir -p data
+
+chmod -R o+Xw projects
+echo "checking permissions:"
+ls -ld projects/$CORE_PROJECT/
+
 if [ "$CURRENT_BRANCH" != "master" ]; then
     echo "checkout"
     git checkout $CURRENT_BRANCH
