@@ -107,10 +107,18 @@ def unittests(initialize, sleep):
     # NOTE: running tests on a generic backend
     # if the current directory is 'core'
     parameters = []
-    from utilities import helpers
+
     # FIXME: put this into helpers
+    def current_fullpath(*suffixes):
+        return os.path.join(os.getcwd(), *suffixes)
+
+    def latest_dir(path):
+        return next(reversed(list(os.path.split(path))))
+
+    basedir = latest_dir(current_fullpath())
+    # from utilities import helpers
     # basedir = helpers.parent_dir(helpers.current_fullpath())
-    basedir = helpers.parent_dir(os.getcwd())
+
     log.warning("TEST BASE DIR: %s" % basedir)
     if basedir == 'code':
         from restapi import __package__ as current_package
