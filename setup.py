@@ -28,15 +28,18 @@ setup(
             '%s/*/*.yaml' % swagger_dir,
         ],
     },
+    # ## OLD WAY (hacking flask)
+    # entry_points='''
+    #     [console_scripts]
+    #     restapi=flask.cli:main
+    #     [flask.commands]
+    #     clean=%s:clean
+    # ''',
+    # ## NEW WAY (using a separated click command)
     entry_points='''
         [console_scripts]
-        restapi=flask.cli:main
-        [flask.commands]
-        launch=%s:launch
-        init=%s:init
-        tests=%s:unittests
-        clean=%s:clean
-    ''' % tuple([app] * 4),
+        %s=%s:cli
+    ''' % (main_package, app),
     install_requires=[
         # Rapydo framework
         "rapydo-utils==%s" % current_version,

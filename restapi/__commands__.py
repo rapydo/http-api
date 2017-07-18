@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
+# import time
 import click
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
@@ -9,6 +9,12 @@ from utilities.logs import get_logger
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
 log = get_logger('COMMANDER')
+
+
+@click.group()
+@click.option('--debug/--no-debug', default=False)
+def cli(debug):
+    click.echo('Debug mode is %s' % ('on' if debug else 'off'))
 
 
 def main(args, another_app=None):
@@ -29,9 +35,7 @@ def main(args, another_app=None):
     cli.main(**options)
 
 
-def cli(options=None):
-    """This is an example command."""
-
+def flask_cli(options=None):
     log.info("Launching the app")
     from restapi.server import create_app
     # log.warning("TEST")
@@ -45,9 +49,9 @@ def cli(options=None):
     log.warning("Server requested to shutdown")
 
 
-@click.command()
+@cli.command()
 def launch():
-    """Launch the RAPyDo-based HTTP API server."""
+    """Launch the RAPyDo-based HTTP API server"""
     args = [
         'run',
         '--host', '0.0.0.0',
@@ -63,37 +67,63 @@ def launch():
 
 # FIXME: merge with below
 def myinit():
-    cli({'name': 'Initializing services', 'init_mode': True})
+    flask_cli({'name': 'Initializing services', 'init_mode': True})
 
 
-@click.command()
-# @click.option('--sleep/--no-sleep', default=False)
-def init(sleep):
-    """Initialize data for connected services."""
+@cli.command()
+# @cli.option('--sleep/--no-sleep', default=False)
+# def init(sleep):
+def init():
+    """Initialize data for connected services"""
     # if sleep:
     #     # if request sleep some seconds to wait for db to be ready
     #     time.sleep(30)
     myinit()
 
 
-@click.command()
+@cli.command()
 def wait():
-    """Wait critical service(s) if they are starting."""
-    pass
+    """Wait critical service(s) startup"""
+
+    from restapi.services.detect import detector
+    service = detector.authentication_service
+    log.info("Waiting for authentication service: %s" % service)
+
+    myclass = detector.services_classes.get(service)
+    host = myclass.variables.get('host')
+    port = int(myclass.variables.get('port'))
+    log.debug("Socket %s:%s" % (host, port))
+
+    import socket
+    import errno
+    while True:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            result = s.connect_ex((host, port))
+        except socket.gaierror:
+            result = errno.ESRCH
+
+        if result == 0:
+            log.info("Service %s is reachable" % service)
+            break
+        else:
+            log.debug("Not reachable yet")  # :\n%s" % errno.errorcode[result])
+            import time
+            time.sleep(2)
 
 
-@click.command()
+@cli.command()
 def clean():
-    """Destroy current services data."""
-    cli({'name': 'Removing data', 'destroy_mode': True})
+    """Destroy current services data"""
+    flask_cli({'name': 'Removing data', 'destroy_mode': True})
 
 
-@click.command()
-# @click.option('--initialize/--no-initialize', default=False)
-# @click.option('--sleep/--no-sleep', default=False)
+@cli.command()
+# @cli.option('--initialize/--no-initialize', default=False)
+# @cli.option('--sleep/--no-sleep', default=False)
 # def unittests(initialize, sleep):
 def unittests():
-    """Launch tests and compute coverage for the current package"""
+    """Compute tests and coverage"""
 
 # # TODO: remove this with 0.5.2
 #     # if request initialize the authorization database
@@ -133,8 +163,8 @@ def unittests():
 
 
 # TODO: evaluate what to do with the sleep script
-@click.command()
-def sleep():
-    # put it in here?
-    # or create a pypi package?
-    pass
+# @cli.command()
+# def sleep():
+#     # put it in here?
+#     # or create a pypi package?
+#     pass
