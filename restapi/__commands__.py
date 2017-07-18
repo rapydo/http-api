@@ -65,25 +65,24 @@ def launch():
     log.warning("Server requested to shutdown")
 
 
-# FIXME: merge with below
-def myinit():
-    flask_cli({'name': 'Initializing services', 'init_mode': True})
-
-
 @cli.command()
-# @cli.option('--sleep/--no-sleep', default=False)
-# def init(sleep):
-def init():
+@cli.option('--wait/--no-wait', default=False)
+def init(wait):
     """Initialize data for connected services"""
-    # if sleep:
-    #     # if request sleep some seconds to wait for db to be ready
-    #     time.sleep(30)
-    myinit()
+    if wait:
+        mywait()
+
+    log.info("Initialization requested")
+    flask_cli({'name': 'Initializing services', 'init_mode': True})
 
 
 @cli.command()
 def wait():
     """Wait critical service(s) startup"""
+    mywait()
+
+
+def mywait():
 
     from restapi.services.detect import detector
     service = detector.authentication_service
@@ -119,20 +118,8 @@ def clean():
 
 
 @cli.command()
-# @cli.option('--initialize/--no-initialize', default=False)
-# @cli.option('--sleep/--no-sleep', default=False)
-# def unittests(initialize, sleep):
 def unittests():
     """Compute tests and coverage"""
-
-# # TODO: remove this with 0.5.2
-#     # if request initialize the authorization database
-#     if initialize:
-#         # if request sleep some seconds to wait for db
-#         if sleep:
-#             time.sleep(30)
-#         # do init in a rapydo way
-#         myinit()
 
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
@@ -144,12 +131,10 @@ def unittests():
     )
 
     # NOTE: running tests on a generic backend
-    # if the current directory is 'core'
+    # if the current directory is '/code'
     parameters = []
-
     from utilities import helpers
     basedir = helpers.latest_dir(helpers.current_fullpath())
-
     if basedir == 'code':
         from restapi import __package__ as current_package
         parameters.append(current_package)
