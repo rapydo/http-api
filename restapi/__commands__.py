@@ -61,18 +61,25 @@ def launch():
     log.warning("Server requested to shutdown")
 
 
+# FIXME: merge with below
 def myinit():
     cli({'name': 'Initializing services', 'init_mode': True})
 
 
 @click.command()
-@click.option('--sleep/--no-sleep', default=False)
+# @click.option('--sleep/--no-sleep', default=False)
 def init(sleep):
     """Initialize data for connected services."""
-    if sleep:
-        # if request sleep some seconds to wait for db to be ready
-        time.sleep(30)
+    # if sleep:
+    #     # if request sleep some seconds to wait for db to be ready
+    #     time.sleep(30)
     myinit()
+
+
+@click.command()
+def wait():
+    """Wait critical service(s) if they are starting."""
+    pass
 
 
 @click.command()
@@ -82,18 +89,20 @@ def clean():
 
 
 @click.command()
-@click.option('--initialize/--no-initialize', default=False)
-@click.option('--sleep/--no-sleep', default=False)
-def unittests(initialize, sleep):
+# @click.option('--initialize/--no-initialize', default=False)
+# @click.option('--sleep/--no-sleep', default=False)
+# def unittests(initialize, sleep):
+def unittests():
     """Launch tests and compute coverage for the current package"""
 
-    # if request initialize the authorization database
-    if initialize:
-        # if request sleep some seconds to wait for db
-        if sleep:
-            time.sleep(30)
-        # do init in a rapydo way
-        myinit()
+# # TODO: remove this with 0.5.2
+#     # if request initialize the authorization database
+#     if initialize:
+#         # if request sleep some seconds to wait for db
+#         if sleep:
+#             time.sleep(30)
+#         # do init in a rapydo way
+#         myinit()
 
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
@@ -108,18 +117,9 @@ def unittests(initialize, sleep):
     # if the current directory is 'core'
     parameters = []
 
-    # FIXME: put this into helpers
-    def current_fullpath(*suffixes):
-        return os.path.join(os.getcwd(), *suffixes)
+    from utilities import helpers
+    basedir = helpers.latest_dir(helpers.current_fullpath())
 
-    def latest_dir(path):
-        return next(reversed(list(os.path.split(path))))
-
-    basedir = latest_dir(current_fullpath())
-    # from utilities import helpers
-    # basedir = helpers.parent_dir(helpers.current_fullpath())
-
-    log.warning("TEST BASE DIR: %s" % basedir)
     if basedir == 'code':
         from restapi import __package__ as current_package
         parameters.append(current_package)
@@ -135,7 +135,6 @@ def unittests(initialize, sleep):
 # TODO: evaluate what to do with the sleep script
 @click.command()
 def sleep():
-    """test 1"""
     # put it in here?
     # or create a pypi package?
     pass
