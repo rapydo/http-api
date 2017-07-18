@@ -66,7 +66,7 @@ def launch():
 
 
 @cli.command()
-@cli.option('--wait/--no-wait', default=False)
+@click.option('--wait/--no-wait', default=False)
 def init(wait):
     """Initialize data for connected services"""
     if wait:

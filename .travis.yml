@@ -16,25 +16,14 @@ install:
 - scripts/clone.sh
 script:
 - cd core
-- rapydo init
 - rapydo start
-- rapydo shell backend --user developer --command 'restapi tests --initialize --sleep'
+- rapydo shell backend --command 'restapi tests'
 - cd ..
 
-##################
-# compute coverage in the path where it was produced
+# coverage within a docker container
 after_success:
-## NOT WORKING
-# - cp ../coveralls.yml projects/$CORE_PROJECT/backend
-# - docker cp ../.coveralls.yml template_backend_1:/code
-# - rapydo shell backend --user developer --command coveralls
-# - coverage combine
-# - coverage report
-# - coveralls
-## WORKING
 - docker cp template_backend_1:/code/.coverage .
 - docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
-##################
 
 deploy:
   provider: pypi
