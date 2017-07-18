@@ -16,6 +16,7 @@ install:
 - scripts/clone.sh
 script:
 - cd core
+- rapydo init  # to be removed from rapydo/issues#39
 - rapydo start
 - rapydo shell backend --command 'restapi tests'
 - cd ..
