@@ -147,7 +147,7 @@ def clean():
 
 
 @cli.command()
-def unittests():
+def tests():
     """Compute tests and coverage"""
 
     # launch unittests and also compute coverage
