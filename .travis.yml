@@ -12,12 +12,12 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
-- ./dev-requirements.py # install requirements in order
+- ./dev-requirements.py  # install requirements in listed order
 - scripts/clone.sh
 script:
 - cd core
-- rapydo init  # to be removed from rapydo/issues#39
-- rapydo start
+- rapydo init
+- rapydo start && sleep 30
 - rapydo shell backend --command 'restapi tests'
 - cd ..
 

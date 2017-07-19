@@ -5,6 +5,7 @@ import os
 import click
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
+from restapi import __package__ as current_package
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
@@ -12,9 +13,11 @@ log = get_logger('COMMANDER')
 
 
 @click.group()
-@click.option('--debug/--no-debug', default=False)
-def cli(debug):
-    click.echo('Debug mode is %s' % ('on' if debug else 'off'))
+# @click.option('--debug/--no-debug', default=False)
+# def cli(debug):
+def cli():
+    # click.echo('Debug mode is %s' % ('on' if debug else 'off'))
+    click.echo('*** RESTful HTTP API ***')
 
 
 def main(args, another_app=None):
@@ -24,7 +27,6 @@ def main(args, another_app=None):
     else:
         current_app = os.environ.get(APP)
         if current_app is None or current_app.strip() == '':
-            from restapi import __package__ as current_package
             os.environ[APP] = '%s.__main__' % current_package
 
     cli = FlaskGroup()
@@ -32,7 +34,17 @@ def main(args, another_app=None):
         'prog_name': 'restapi',
         'args': args,
     }
-    cli.main(**options)
+
+    try:
+        cli.main(**options)
+    except SystemExit as e:
+        # it looks like there is no Keyboard interrupt with flask
+        log.warning("Flask received: system exit")
+    except BaseException as e:
+        # do not let flask close the application
+        # so we can do more code after closing
+        log.error(e)
+        log.warning('error type: %s' % type(e))
 
 
 def flask_cli(options=None):
@@ -46,10 +58,22 @@ def flask_cli(options=None):
     else:
         create_app(**options)
         # app.run(debug=False)
-    log.warning("Server requested to shutdown")
+    log.warning("Completed")
+
+
+def starting_up():
+    from utilities import processes
+    return processes.find(
+        current_package,
+        suffixes=['wait', 'init'],
+        local_bin=True
+    )
 
 
 @cli.command()
+# @click.option(
+#     '--wait/--no-wait', default=False, help='Wait for startup to finish')
+# def launch(wait):
 def launch():
     """Launch the RAPyDo-based HTTP API server"""
     args = [
@@ -61,12 +85,16 @@ def launch():
         '--eager-loading',
         '--with-threads'
     ]
-    main(args)
-    log.warning("Server requested to shutdown")
+
+    if starting_up():
+        log.exit("Please wait few more seconds: resources still starting up")
+    else:
+        main(args)
+        log.warning("Server shutdown")
 
 
 @cli.command()
-@click.option('--wait/--no-wait', default=False)
+@click.option('--wait/--no-wait', default=False, help='Wait for DBs to be up')
 def init(wait):
     """Initialize data for connected services"""
     if wait:
@@ -112,6 +140,7 @@ def mywait():
 
 
 @cli.command()
+@click.confirmation_option(help='Are you sure you want to drop data?')
 def clean():
     """Destroy current services data"""
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
@@ -130,12 +159,13 @@ def unittests():
         "This might take some minutes."
     )
 
-    # NOTE: running tests on a generic backend
-    # if the current directory is '/code'
+    # FIXME: does not work
+    # use the 'template' dir found in /code
     parameters = []
-    from utilities import helpers
-    basedir = helpers.latest_dir(helpers.current_fullpath())
-    if basedir == 'code':
+    # from utilities import helpers
+    # basedir = helpers.latest_dir(helpers.current_fullpath())
+    import glob
+    if 'template' in glob.glob('*'):
         from restapi import __package__ as current_package
         parameters.append(current_package)
 

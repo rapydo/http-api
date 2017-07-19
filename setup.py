@@ -28,14 +28,6 @@ setup(
             '%s/*/*.yaml' % swagger_dir,
         ],
     },
-    # ## OLD WAY (hacking flask)
-    # entry_points='''
-    #     [console_scripts]
-    #     restapi=flask.cli:main
-    #     [flask.commands]
-    #     clean=%s:clean
-    # ''',
-    # ## NEW WAY (using a separated click command)
     entry_points='''
         [console_scripts]
         %s=%s:cli
@@ -54,7 +46,7 @@ setup(
         "Flask-OAuthlib",
         "Flask-RESTful",
         "Flask-SQLAlchemy",
-        "flask-shell-ipython",  # TODO: check if this could be removed
+        # "flask-shell-ipython",
         "flask_injector==v0.9.0",
         "injector==0.12.0",
         # DB drivers

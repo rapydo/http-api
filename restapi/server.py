@@ -96,19 +96,9 @@ def create_app(name=__name__,
     if init_mode:
         microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
-
-        @microservice.cli.command()
-        def init():
-            """Initialize the current app"""
-            log.warning("Initialization completed")
     elif destroy_mode:
         microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-
-        @microservice.cli.command()
-        def destroy():
-            """Destory current data from the app"""
-            log.warning("Data removal completed")
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
     elif worker_mode:
