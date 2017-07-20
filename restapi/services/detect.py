@@ -220,7 +220,6 @@ class Detector(object):
             # Get extension class and build the extension object
             ExtClass = self.services_classes.get(name)
             try:
-                pass
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
                 log.critical_exit(
@@ -321,7 +320,7 @@ class Detector(object):
             if Initializer is not None:
                 Initializer(instances)
                 log.info("Vanilla project has been initialized")
-        except BaseException as e:
+        except BaseException:
             Initializer = None
 
         if Initializer is None:

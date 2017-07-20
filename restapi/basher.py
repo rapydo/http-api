@@ -34,7 +34,7 @@ class BashCommands(object):
                         parseException=False, raisedException=BaseException):
         try:
 
-            """ Pattern in plumbum library for executing a shell command """
+            # Pattern in plumbum library for executing a shell command
             command = self._shell[command]
             # Specify different environment variables
             if env is not None:
@@ -58,9 +58,9 @@ class BashCommands(object):
                                  raisedException=BaseException):
         try:
 
-            """ Pattern in plumbum library for executing a shell command """
+            # Pattern in plumbum library for executing a shell command
             # e.g. ICOM["list"][irods_dir].run(retcode = (0,4))
-    # FIXME: does not work if parameters is bigger than one element
+            # FIXME: does not work if parameters is bigger than one element
             comout = \
                 self._shell[command][parameters].run(retcode=retcodes)
             log.verbose("Executed command %s %s" % (command, parameters))

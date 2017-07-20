@@ -264,8 +264,8 @@ class ElasticFarm(ServiceFarm):
         """
         for _, model_obj in models.items():
 
-# // TO BE FIXED
-# waiting for https://github.com/elastic/elasticsearch-dsl-py/pull/272
+            # TO BE FIXED waiting for the following issue
+            # https://github.com/elastic/elasticsearch-dsl-py/pull/272
             i = Index(model_obj._doc_type.index)
             if i.exists():
                 i.close()

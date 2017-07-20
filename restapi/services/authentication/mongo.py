@@ -124,7 +124,8 @@ class Authentication(BaseAuthentication):
         import socket
         ip = request.remote_addr
         try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+            # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+            hostname, _, _ = socket.gethostbyaddr(ip)
         except Exception:
             hostname = ""
 

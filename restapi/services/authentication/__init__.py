@@ -238,7 +238,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         elif PRODUCTION:
             try:
                 # note: this will return the ip if hostname is not available
-                hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+                # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+                hostname, _, _= socket.gethostbyaddr(ip)
             except Exception as e:
                 log.warning(
                     "Error solving '%s': '%s'" % (ip, e))

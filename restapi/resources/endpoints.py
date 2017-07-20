@@ -368,7 +368,8 @@ class Profile(EndpointResource):
         if totp_authentication:
             security.verify_totp(user, totp_code)
         else:
-            token, jti = self.auth.make_login(username, password)
+            # token, jti = self.auth.make_login(username, password)
+            token, _ = self.auth.make_login(username, password)
             security.verify_token(username, token)
 
         security.change_password(
