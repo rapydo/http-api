@@ -1,32 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import base64
+import pickle
 from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
 
----
-WRITE IT
-
-import pickle
 from restapi.flask_ext.flask_irods.session import iRODSPickleSession as ips
 
 session = ips(
     user='irods', password='chooseapasswordwisely',
     host='rodserver.dockerized.io', zone='tempZone'
 )
-# pickle.dumps(session)
-with open('test.dat', 'wb') as fh:
-    pickle.dump(session, fh)
 
----
-
-READ IT
-
-import pickle
-fh = open('test.dat', 'rb')
-session = pickle.load(fh)
-
+session.serialize()
 
 """
 
@@ -47,7 +35,16 @@ class iRODSPickleSession(iRODSSession):
     def __setstate__(self, state):
 
         for name, value in state.items():
-            print(name, value)
+            # print(name, value)
             setattr(self, name, value)
 
         self.pool = Pool(state.get('account'))
+
+    def serialize(self):
+        """Returns a byte serialized string from the current session"""
+        serialized = pickle.dumps(self)
+        return base64.encodestring(serialized)
+
+    @staticmethod
+    def deserialize(obj):
+        return pickle.loads(base64.decodestring(obj))
