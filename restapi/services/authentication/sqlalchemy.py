@@ -46,7 +46,7 @@ class Authentication(BaseAuthentication):
             roles.append(role.name)
         return roles
 
-    # def create_user(self, userdata, roles=[]):
+    # def create_user(self, userdata, roles):
     # """ UNUSED, should be removed """
     #     if self.default_role not in roles:
     #         roles.append(self.default_role)
