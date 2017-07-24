@@ -15,7 +15,7 @@ STATIC_URL = '/static'
 BASE_URLS = [API_URL, AUTH_URL]
 #################################
 # Directories for core code or user custom code
-BACKEND_PACKAGE = 'rapydo'
+BACKEND_PACKAGE = 'restapi'
 CUSTOM_PACKAGE = os.environ.get('VANILLA_PACKAGE', 'custom')
 CORE_CONFIG_PATH = os.path.join(BACKEND_PACKAGE, 'confs')
 # PROJECT_CONF_FILE = 'project_configuration'

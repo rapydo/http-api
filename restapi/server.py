@@ -6,19 +6,20 @@ We create all the internal flask components here.
 """
 
 import better_exceptions as be
-import rapydo.confs as config
 import warnings
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
+from werkzeug.contrib.fixers import ProxyFix
+
+from restapi import confs as config
 from restapi.protocols.cors import cors
 from restapi.rest.response import InternalResponse
-from werkzeug.contrib.fixers import ProxyFix
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
-from utilities.globals import mem
 from restapi.protocols.restful import Api, EndpointsFarmer, create_endpoints
 from restapi.services.detect import detector
+from utilities.globals import mem
 
 from utilities.logs import \
     get_logger, \
