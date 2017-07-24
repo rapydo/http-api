@@ -24,7 +24,7 @@ Flask-Security enables the following endpoints automatically:
 This is the logic for a valid Token authentication request:
 ```bash
 # Request a token with valid credentials
-http awesome.dev:8081/login email=user@nomail.org password=test
+http awesome.dev:8080/login email=user@nomail.org password=test
 
 [...]
 "response": {
@@ -33,7 +33,7 @@ http awesome.dev:8081/login email=user@nomail.org password=test
 [...]
 
 # Use the token
-http awesome.dev:8081/api/checklogged Authentication-Token:WyIxIiwiOWQyMGRiMjVlY2YwMTE3YzQwOWY3YTNjOTRkYWFiYTkiXQ.CTeIMQ.3Jn4HI00zMgmH928glDPxcUss8w
+http awesome.dev:8080/api/checklogged Authentication-Token:WyIxIiwiOWQyMGRiMjVlY2YwMTE3YzQwOWY3YTNjOTRkYWFiYTkiXQ.CTeIMQ.3Jn4HI00zMgmH928glDPxcUss8w
 
 [
     {
@@ -71,7 +71,7 @@ privileges. Refer to [configuration](conf.md) if you need to change the default 
 There is an automatic interface created with Flask-Admin.
 Once the server is running in [security mode](run.md#security-mode) you can access
 `/admin` endpoint with a browser (e.g.
-[http://localhost:8081/api/manage](http://localhost:8081/api/manage)
+[http://localhost:8080/api/manage](http://localhost:8080/api/manage)
 )
 to administrate users.
 

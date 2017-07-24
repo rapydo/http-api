@@ -41,7 +41,7 @@ $ docker-compose up
 You may test via command line with **wget** or **curl**.
 
 ```
-curl -v http://localhost:8081/api/foo
+curl -v http://localhost:8080/api/foo
 ```
 
 To write a client with python i would suggest using `requests` library.

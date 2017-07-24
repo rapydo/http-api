@@ -43,24 +43,24 @@ The system would provide the two following working URLs:
 
 ```
 # Resource One
-http://localhost:8081/api/foo
+http://localhost:8080/api/foo
 # Resource Two
-http://localhost:8081/api/hello/world
+http://localhost:8080/api/hello/world
 ```
 
 * **STEP 3**: test your endpoints URL by running a server.
 
 ```bash
-curl http://localhost:8081/api/foo
+curl http://localhost:8080/api/foo
 ```
 
 Also as provided example of using a key with an endpoint
 but getting a (programmatic) error response, you may test:
 ```
-curl -v http://localhost:8081/api/hello/world/keyword
+curl -v http://localhost:8080/api/hello/world/keyword
 ```
 
-<small> Note: `localhost:8081` should change to your server ip and port.
+<small> Note: `localhost:8080` should change to your server ip and port.
 The above example is based on running docker compose on linux.</small>
 
 ## Make classes and methods your endpoints
@@ -102,10 +102,10 @@ class MyAPI(ExtendedApiResource):
 Then test your resources on both get or post:
 
 ```bash
-http GET http://localhost:8081/api/myapi
-http GET http://localhost:8081/api/myapi/42
-http POST http://localhost:8081/api/myapi
-http POST http://localhost:8081/api/myapi/28
+http GET http://localhost:8080/api/myapi
+http GET http://localhost:8080/api/myapi/42
+http POST http://localhost:8080/api/myapi
+http POST http://localhost:8080/api/myapi/28
 ```
 
 Note: decorators search only for 'get', 'post', 'put' and 'delete' REST methods.
