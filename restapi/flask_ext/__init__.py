@@ -5,7 +5,7 @@
 # FIXME: create a base object for flask extensions like the injector
 
 import abc
-import time
+# import time
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
 from utilities.meta import Meta
@@ -35,7 +35,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
         log.very_verbose("Opening service instance of %s" % self.name)
 
     @classmethod
-    def set_models(cls, base_models={}, custom_models={}):
+    def set_models(cls, base_models, custom_models):
 
         # Join models as described by issue #16
         cls.models = base_models
@@ -148,9 +148,9 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 obj = self.custom_connection()
             except exceptions as e:
                 raise e
-                log.warning("Service '%s' not available", self.name)
-                log.info("error is: %s(%s)" % (type(e), e))
-                time.sleep(retry_interval)
+                # log.warning("Service '%s' not available", self.name)
+                # log.info("error is: %s(%s)" % (type(e), e))
+                # time.sleep(retry_interval)
             else:
                 break
 

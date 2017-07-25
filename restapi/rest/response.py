@@ -165,7 +165,7 @@ class ResponseMaker(object):
             response_name = str(response.__class__.__name__)
             if response_name in dir(wsgi_exceptions):
                 return True
-        except:
+        except BaseException:
             pass
 
         return False

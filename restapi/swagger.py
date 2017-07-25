@@ -112,9 +112,9 @@ class BeSwagger(object):
                 roles = custom.get('authorized', [])
                 # roles = custom.get('authorized', ['normal_user'])
 
-                for role in roles:
-                    # TODO: create a method inside 'auth' to check this role
-                    pass
+                # TODO: create a method inside 'auth' to check roles
+                # for role in roles:
+                #     pass
 
                 # If everything is fine set the roles to be required by Flask
                 extra.auth = roles
@@ -400,7 +400,6 @@ class BeSwagger(object):
 
         tmp_dir = 'tmp'
         file_name = 'test.json'
-        from utilities import helpers
         filepath = helpers.root_path(tmp_dir, file_name)
 
         try:
@@ -414,7 +413,7 @@ class BeSwagger(object):
                 json.dump(swag_dict, f)
         except Exception as e:
             raise e
-            log.warning("Failed to temporary save the swagger definition")
+            # log.warning("Failed to temporary save the swagger definition")
 
         bravado_config = {
             'validate_swagger_spec': True,

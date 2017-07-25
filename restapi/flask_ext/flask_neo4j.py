@@ -18,13 +18,12 @@ class NeomodelClient():
 
     def cypher(self, query):
         """ Execute normal neo4j queries """
-        from neomodel import db
         try:
-            results, meta = db.cypher_query(query)
+            # results, meta = db.cypher_query(query)
+            results, _ = db.cypher_query(query)
         except Exception as e:
             raise Exception(
                 "Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
-            return False
         # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
 

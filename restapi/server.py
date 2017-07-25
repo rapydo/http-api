@@ -7,19 +7,18 @@ We create all the internal flask components here.
 
 import warnings
 import better_exceptions as be
-import restapi.confs as config
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
-from restapi.rest.response import InternalResponse
 from werkzeug.contrib.fixers import ProxyFix
+from restapi import confs as config
+from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
-from utilities.globals import mem
 from restapi.protocols.restful import Api, \
     EndpointsFarmer, create_endpoints
 from restapi.services.detect import detector
-
+from utilities.globals import mem
 from utilities.logs import \
     get_logger, \
     handle_log_output, MAX_CHAR_LEN, set_global_log_level

@@ -238,7 +238,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         elif PRODUCTION:
             try:
                 # note: this will return the ip if hostname is not available
-                hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+                # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+                hostname, _, _= socket.gethostbyaddr(ip)
             except Exception as e:
                 log.warning(
                     "Error solving '%s': '%s'" % (ip, e))
@@ -456,7 +457,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Create Users #
     # ################
     # @abc.abstractmethod
-    def create_user(self, userdata, roles=[]):
+    def create_user(self, userdata, roles):
         """
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role

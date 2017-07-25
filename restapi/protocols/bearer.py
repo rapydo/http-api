@@ -74,7 +74,7 @@ class HTTPTokenAuth(object):
 
         return auth_type, token
 
-    def authorization_required(self, f, roles=[], from_swagger=False):
+    def authorization_required(self, f, roles, from_swagger=False):
         @wraps(f)
         def decorated(*args, **kwargs):
 

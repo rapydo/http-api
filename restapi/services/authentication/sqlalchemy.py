@@ -46,7 +46,7 @@ class Authentication(BaseAuthentication):
             roles.append(role.name)
         return roles
 
-    # def create_user(self, userdata, roles=[]):
+    # def create_user(self, userdata, roles):
     # """ UNUSED, should be removed """
     #     if self.default_role not in roles:
     #         roles.append(self.default_role)
@@ -98,7 +98,8 @@ class Authentication(BaseAuthentication):
         import socket
         ip = request.remote_addr
         try:
-            hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+            # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
+            hostname, _, _ = socket.gethostbyaddr(ip)
         except Exception:
             hostname = ""
 
@@ -214,7 +215,7 @@ class Authentication(BaseAuthentication):
 
         try:
             values = current_user.data
-        except:
+        except BaseException:
             return None, "Authorized response is invalid"
 
         # print("TEST", values, type(values))
@@ -228,7 +229,7 @@ class Authentication(BaseAuthentication):
         # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
         # is it going to change?
         dn = None
-        for key, value in values.items():
+        for key, _ in values.items():
             if 'urn:oid' in key:
                 dn = values.get(key)
         if dn is None:
