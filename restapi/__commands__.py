@@ -110,20 +110,16 @@ def wait():
     mywait()
 
 
-def mywait():
+def wait_socket(host, port, service_name, sleep_time=2):
 
-    from restapi.services.detect import detector
-    service = detector.authentication_service
-    log.info("Waiting for authentication service: %s" % service)
-
-    myclass = detector.services_classes.get(service)
-    host = myclass.variables.get('host')
-    port = int(myclass.variables.get('port'))
-    log.debug("Socket %s:%s" % (host, port))
-
-    import socket
+    import time
     import errno
+    import socket
+
+    log.verbose("Waiting for %s" % service_name)
+
     while True:
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             result = s.connect_ex((host, port))
@@ -131,12 +127,40 @@ def mywait():
             result = errno.ESRCH
 
         if result == 0:
-            log.info("Service %s is reachable" % service)
+            log.info("Service %s is reachable" % service_name)
             break
         else:
-            log.debug("Not reachable yet")  # :\n%s" % errno.errorcode[result])
-            import time
-            time.sleep(2)
+            log.debug("Not reachable yet: %s" % service_name)
+            time.sleep(sleep_time)
+
+
+def mywait():
+    """
+    Wait for a service on his host:port configuration
+    basing the check on a socket connection.
+
+    NOTE: this could be packaged as a `waiter` cli utility probably
+    p.s. could that be done with rapydo-utils maybe?
+    pp.ss. could rapydo utils be python 2.7+ compliant?
+    """
+
+    from restapi.services.detect import detector
+
+    for name, myclass in detector.services_classes.items():
+
+        if name == 'authentication':
+            continue
+
+        # service = detector.authentication_service
+        # log.info("Waiting for authentication service: %s" % service)
+        # myclass = detector.services_classes.get(service)
+
+        host = myclass.variables.get('host')
+        port = int(myclass.variables.get('port'))
+        log.debug("Socket %s:%s" % (host, port))
+
+        # CHECK
+        wait_socket(host, port, name)
 
 
 @cli.command()
