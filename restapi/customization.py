@@ -174,10 +174,12 @@ Please also fix in celery and celeryui
                 # isbase = base_dir == BACKEND_PACKAGE
                 isbase = base_dir.startswith('/usr/local')
                 base_module = helpers.last_dir(base_dir)
+                from utilities import ENDPOINTS_CODE_DIR
                 if isbase:
                     apiclass_module = '%s.%s' % (base_module, 'resources')
                 else:
-                    apiclass_module = '%s.%s' % (base_module, 'apis')
+                    apiclass_module = '%s.%s' % (
+                        base_module, ENDPOINTS_CODE_DIR)
 
                 current = self.lookup(
                     ep, apiclass_module, swagger_endpoint_dir, isbase)

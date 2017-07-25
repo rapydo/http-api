@@ -117,9 +117,9 @@ class ExternalLogins(object):
     # FIXME: FROM MATTIA: the testing parameter is still required?
     def b2access(self, testing=False):
 
+        from utilities import ENDPOINTS_CODE_DIR
         module = meta.get_module_from_string(
-            "%s.%s.%s" % (CUSTOM_PACKAGE, 'apis', 'common')
-        )
+            "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'common'))
 
         if module is None:
             B2ACCESS_ENV = PRODUCTION
