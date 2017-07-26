@@ -13,16 +13,18 @@ before_install:
 - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 install:
 - ./dev-requirements.py  # install requirements in listed order
+# clone the core
 - scripts/clone.sh
 script:
 - cd core
-- rapydo init
-- rapydo start && sleep 30
-- rapydo shell backend --command 'restapi tests'
+- rapydo init && rapydo start
+- rapydo shell backend --command 'restapi tests --wait'
 - cd ..
 
 # coverage within a docker container
 after_success:
+# NOTE: this works only with the base http api, and not in a real core fork
+# FIXME: do as eudat for a configuration in core and use "rapydo coverage"
 - docker cp template_backend_1:/code/.coverage .
 - docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
 

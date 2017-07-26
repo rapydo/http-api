@@ -171,8 +171,12 @@ def clean():
 
 
 @cli.command()
-def tests():
+@click.option(
+    '--wait/--no-wait', default=False, help='Wait for startup to finish')
+def tests(wait):
     """Compute tests and coverage"""
+    if wait:
+        mywait()
 
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
