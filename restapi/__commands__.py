@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-# import time
+import time
 import click
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
@@ -112,7 +112,6 @@ def wait():
 
 def wait_socket(host, port, service_name, sleep_time=2):
 
-    import time
     import errno
     import socket
 
@@ -176,7 +175,9 @@ def clean():
 def tests(wait):
     """Compute tests and coverage"""
     if wait:
-        mywait()
+        while starting_up():
+            log.debug('Waiting service startup')
+            time.sleep(5)
 
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
