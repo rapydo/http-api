@@ -2,14 +2,14 @@
 
 """ iRODS file-system flask connector """
 
-# TODO: b2access
-
 import os
 import logging
-from irods.session import iRODSSession
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
+from restapi.flask_ext.flask_irods.session \
+    import iRODSPickleSession as iRODSSession
+# from irods.session import iRODSSession
 from restapi.flask_ext.flask_irods.client import IrodsPythonClient
 
 # Silence too much logging from irods
@@ -189,14 +189,14 @@ class IrodsPythonExt(BaseExtension):
         return client
 
     def custom_init(self, pinit=False, **kwargs):
-        """ Note: we ignore args here """
+        # NOTE: we ignore args here
 
-        if pinit and not self.variables.get('external'):
-            log.debug("waiting for internal certificates")
-            # should actually connect with user and password
-            # and verify if GSI is already registered with admin rodsminer
-            import time
-            time.sleep(5)
+        # if pinit and not self.variables.get('external'):
+        #     log.debug("waiting for internal certificates")
+        #     # should actually connect with user and password
+        #     # and verify if GSI is already registered with admin rodsminer
+        #     import time
+        #     time.sleep(5)
 
         # recover instance with the parent method
         return super().custom_init()

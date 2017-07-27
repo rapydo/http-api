@@ -920,3 +920,21 @@ class IrodsPythonClient():
 
 #     def replica_list(self, dataobj):
 #         return self.get_resource_from_dataobject(dataobj)
+
+
+def get_and_verify_irods_session(function, parameters):
+
+    obj = None
+    username = parameters.get('user')
+
+    try:
+        obj = function(**parameters)
+        obj.rpc.users.get(username)
+    except iexceptions.CAT_INVALID_USER:
+        log.warning("Invalid user: %s" % username)
+    except iexceptions.UserDoesNotExist:
+        log.warning("Invalid iCAT user: %s" % username)
+    except iexceptions.CAT_INVALID_AUTHENTICATION:
+        log.warning("Invalid password for %s" % username)
+
+    return obj
