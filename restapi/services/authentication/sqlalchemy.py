@@ -339,16 +339,14 @@ class Authentication(BaseAuthentication):
             # simply skip?
             log.warning("iRODS user already cached: %s" % username)
             user = self.get_user_object(username)
-
+        # token
         token, jti = self.create_token(self.fill_payload(user))
         now = datetime.now(pytz.utc)
         if user.first_login is None:
             user.first_login = now
         user.last_login = now
-        # user.save()
         self.db.session.add(user)
         self.db.session.commit()
         self.save_token(user, token, jti)
-        log.debug("Created token")
 
         return token
