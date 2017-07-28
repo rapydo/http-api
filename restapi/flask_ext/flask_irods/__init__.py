@@ -30,21 +30,25 @@ class IrodsPythonExt(BaseExtension):
 
     def pre_connection(self, **kwargs):
 
-        user = kwargs.get('user')
-        self.password = kwargs.get('password')
+        session = kwargs.get('user_session')
+        if session is not None:
+            user = session.email
+        else:
+            user = kwargs.get('user')
+            self.password = kwargs.get('password')
 
-        proxy = kwargs.get('proxy', False)
-        admin = kwargs.get('be_admin', False)
-        myproxy_host = self.variables.get("myproxy_host")
+            proxy = kwargs.get('proxy', False)
+            admin = kwargs.get('be_admin', False)
+            myproxy_host = self.variables.get("myproxy_host")
 
-        if user is None:
-            if not self.variables.get('external') and admin:
-                # Note: 'user' is referring to the main user inside iCAT
-                user = self.variables.get('default_admin_user')
-            else:
-                # There must be some way to fallback here
-                user = self.variables.get('user')
-                self.password = self.variables.get('password')
+            if user is None:
+                if not self.variables.get('external') and admin:
+                    # Note: 'user' is referring to the main user inside iCAT
+                    user = self.variables.get('default_admin_user')
+                else:
+                    # There must be some way to fallback here
+                    user = self.variables.get('user')
+                    self.password = self.variables.get('password')
 
         if user is None:
             raise AttributeError("No user is defined")
@@ -54,8 +58,12 @@ class IrodsPythonExt(BaseExtension):
             self.schema = self.variables.get('authscheme')
 
         ######################
+        # Irods direct credentials
+        if session is not None:
+            return True
+        ######################
         # Normal credentials
-        if not proxy and self.password is not None:
+        elif not proxy and self.password is not None:
             self.schema = 'credentials'
         ######################
         # Identity with GSI
@@ -142,7 +150,12 @@ class IrodsPythonExt(BaseExtension):
 
         check_connection = True
 
-        if self.schema == 'credentials':
+        session = kwargs.get('user_session')
+        if session is not None:
+            # recover the serialized session
+            obj = self.deserialize(session.session)
+
+        elif self.schema == 'credentials':
 
             obj = iRODSSession(
                 user=self.user,
@@ -201,7 +214,5 @@ class IrodsPythonExt(BaseExtension):
         # recover instance with the parent method
         return super().custom_init()
 
-    @staticmethod
-    def deserialize(obj):
-        print("TEST", obj)
-        return iRODSSession.deserialize(obj.encode())
+    def deserialize(self, obj):
+        return iRODSSession.deserialize(obj)
