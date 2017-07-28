@@ -1,48 +1,26 @@
-#############################
 language: python
 sudo: required
-dist: trusty
-group: deprecated-2017Q2
 python:
 - 3.6.1
 services:
 - docker
-# FIXME: how to avoid this? a lot of conflicts...
 env:
-- VERSION=0.5.0
-before_install:
-- sudo apt-get update
-- sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
-install:
-- pip3 install rapydo-utils==$VERSION
-- pip3 install --upgrade -r dev-requirements.txt
-- git clone https://github.com/rapydo/core.git
-script:
-- cd core && mkdir data
-- rapydo init
-- cd submodules/builds_base && git checkout $VERSION && cd ../..
-- rapydo start
-- rapydo shell backend --command "pip3 install --upgrade rapydo-utils==$VERSION"
-- rapydo shell backend --command "pip3 install --upgrade  git+https://github.com/rapydo/http-api.git@master"
-- sleep 60 && rapydo shell backend --command initialize
-- rapydo shell backend --command testwithcoverage
+- CORE_PROJECT=template
 
-#############################
-# language: python
-# python:
-# - 3.4
-# - 3.5
-# - 3.6
-# # before_install:
-# # - pip install --upgrade -r dev-requirements.txt
-# install:
-# - pip3 install --upgrade --no-cache-dir --editable .
-# script:
-# - echo hello world
-#     # docker and nose2?
-# # - py.test --cov=http
-# # after_success:
-# # - coveralls
+install:
+- ./dev-requirements.py  # install requirements in listed order
+- scripts/clone.sh  # clone the core
+script:
+- cd core
+- rapydo init && rapydo start
+- rapydo shell backend --command 'restapi tests --wait'
+- cd ..
+
+after_success:
+# NOTE: this works only with the base http api, and not in a real core fork
+# FIXME: do as eudat for a configuration in core and use "rapydo coverage"
+- docker cp template_backend_1:/code/.coverage .
+- docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
 
 deploy:
   provider: pypi

@@ -5,22 +5,20 @@ The Main server factory.
 We create all the internal flask components here.
 """
 
-import better_exceptions as be
 import warnings
+import better_exceptions as be
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from werkzeug.contrib.fixers import ProxyFix
-
 from restapi import confs as config
-from restapi.protocols.cors import cors
 from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
-from restapi.protocols.restful import Api, EndpointsFarmer, create_endpoints
+from restapi.protocols.restful import Api, \
+    EndpointsFarmer, create_endpoints
 from restapi.services.detect import detector
 from utilities.globals import mem
-
 from utilities.logs import \
     get_logger, \
     handle_log_output, MAX_CHAR_LEN, set_global_log_level
@@ -97,19 +95,9 @@ def create_app(name=__name__,
     if init_mode:
         microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
-
-        @microservice.cli.command()
-        def init():
-            """Initialize the current app"""
-            log.warning("Initialization completed")
     elif destroy_mode:
         microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-
-        @microservice.cli.command()
-        def destroy():
-            """Destory current data from the app"""
-            log.warning("Data removal completed")
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
     elif worker_mode:
@@ -121,6 +109,7 @@ def create_app(name=__name__,
 
     ##############################
     # Cors
+    from restapi.protocols.cors import cors
     cors.init_app(microservice)
     log.verbose("FLASKING! Injected CORS")
 

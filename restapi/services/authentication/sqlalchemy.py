@@ -4,6 +4,7 @@
 Sql handling authentication process
 """
 
+import pytz
 import sqlalchemy
 from datetime import datetime, timedelta
 from utilities.uuid import getUUID
@@ -315,3 +316,37 @@ class Authentication(BaseAuthentication):
         external_user = accounts.query.filter(
             accounts.main_user.has(id=internal_user.id)).first()
         return internal_user, external_user
+
+    def irods_user(self, username, session):
+
+        # create user
+        user = self.db.User(
+            email=username, name=username, surname='iCAT',
+            uuid=getUUID(), authmethod='irods', session=session,
+        )
+        # add role
+        user.roles.append(
+            self.db.Role.query.filter_by(
+                name=self.default_role).first())
+        # save
+        self.db.session.add(user)
+        from sqlalchemy.exc import IntegrityError
+        try:
+            self.db.session.commit()
+            log.info('Cached iRODS user: %s' % username)
+        except IntegrityError:
+            self.db.session.rollback()
+            # simply skip?
+            log.warning("iRODS user already cached: %s" % username)
+            user = self.get_user_object(username)
+        # token
+        token, jti = self.create_token(self.fill_payload(user))
+        now = datetime.now(pytz.utc)
+        if user.first_login is None:
+            user.first_login = now
+        user.last_login = now
+        self.db.session.add(user)
+        self.db.session.commit()
+        self.save_token(user, token, jti)
+
+        return token
