@@ -6,16 +6,8 @@ from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
-
-from restapi.flask_ext.flask_irods.session import iRODSPickleSession as ips
-
-session = ips(
-    user='irods', password='chooseapasswordwisely',
-    host='rodserver.dockerized.io', zone='tempZone'
-)
-
-session.serialize()
-
+Allow to manipulate irods session as a string,
+to be saved inside a database.
 """
 
 

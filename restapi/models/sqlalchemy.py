@@ -34,7 +34,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True)
     authmethod = db.Column(db.String(20))
     password = db.Column(db.String(255))
-    session = db.Column(db.Text)
+    session = db.Column(db.Text)  # FIXME
     first_login = db.Column(db.DateTime)
     last_login = db.Column(db.DateTime)
     last_password_change = db.Column(db.DateTime)

@@ -200,3 +200,8 @@ class IrodsPythonExt(BaseExtension):
 
         # recover instance with the parent method
         return super().custom_init()
+
+    @staticmethod
+    def deserialize(obj):
+        print("TEST", obj)
+        return iRODSSession.deserialize(obj.encode())
