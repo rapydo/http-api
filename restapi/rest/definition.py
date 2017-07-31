@@ -475,44 +475,45 @@ class EndpointResource(Resource):
             data["links"] = {"self": self_uri}
 
         # Attributes
-        if fields is not None:
-            if len(fields) < 1:
+        if fields is None:
+            fields = []
+        if len(fields) < 1:
 
-                function_name = 'show_fields'
-                if hasattr(instance, function_name):
-                    fn = getattr(instance, function_name)
-                    fields = fn(view_public_only=view_public_only)
+            function_name = 'show_fields'
+            if hasattr(instance, function_name):
+                fn = getattr(instance, function_name)
+                fields = fn(view_public_only=view_public_only)
 
+            else:
+
+                if view_public_only:
+                    field_name = '_public_fields_to_show'
                 else:
+                    field_name = '_fields_to_show'
 
-                    if view_public_only:
-                        field_name = '_public_fields_to_show'
-                    else:
-                        field_name = '_fields_to_show'
+                if hasattr(instance, field_name):
+                    log.warning(
+                        "Obsolete use of %s into models" % field_name)
+                    fields = getattr(instance, field_name)
 
-                    if hasattr(instance, field_name):
-                        log.warning(
-                            "Obsolete use of %s into models" % field_name)
-                        fields = getattr(instance, field_name)
+        for key in fields:
+            if verify_attribute(instance, key):
+                get_attribute = getattr
+                if isinstance(instance, dict):
+                    get_attribute = dict.get
 
-            for key in fields:
-                if verify_attribute(instance, key):
-                    get_attribute = getattr
-                    if isinstance(instance, dict):
-                        get_attribute = dict.get
-
-                    attribute = get_attribute(instance, key)
-                    # datetime is not json serializable,
-                    # converting it to string
-                    # FIXME: use flask.jsonify
-                    if attribute is None:
-                        data["attributes"][key] = ""
-                    elif isinstance(attribute, datetime):
-                        dval = self.string_from_timestamp(
-                            attribute.strftime('%s'))
-                        data["attributes"][key] = dval
-                    else:
-                        data["attributes"][key] = attribute
+                attribute = get_attribute(instance, key)
+                # datetime is not json serializable,
+                # converting it to string
+                # FIXME: use flask.jsonify
+                if attribute is None:
+                    data["attributes"][key] = ""
+                elif isinstance(attribute, datetime):
+                    dval = self.string_from_timestamp(
+                        attribute.strftime('%s'))
+                    data["attributes"][key] = dval
+                else:
+                    data["attributes"][key] = attribute
 
         # Relationships
         if relationship_depth < max_relationship_depth:
