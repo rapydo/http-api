@@ -335,10 +335,13 @@ class Authentication(BaseAuthentication):
             self.db.session.commit()
             log.info('Cached iRODS user: %s' % username)
         except IntegrityError:
+            # rollback current commit
             self.db.session.rollback()
-            # simply skip?
             log.warning("iRODS user already cached: %s" % username)
+            # get the existing object
             user = self.get_user_object(username)
+            # update only the session field
+            user.session = session
         # token
         token, jti = self.create_token(self.fill_payload(user))
         now = datetime.now(pytz.utc)
