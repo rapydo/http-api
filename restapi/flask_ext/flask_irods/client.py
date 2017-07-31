@@ -20,8 +20,8 @@ class IrodsException(RestApiException):
 
 class IrodsPythonClient():
 
-    def __init__(self, rpc, variables, default_chunk_size=1048576):
-        self.rpc = rpc
+    def __init__(self, prc, variables, default_chunk_size=1048576):
+        self.prc = prc
         self.variables = variables
         self.chunk_size = self.variables.get('chunksize', default_chunk_size)
 
@@ -44,11 +44,11 @@ class IrodsPythonClient():
 # ##################################
 # ##################################
     def is_collection(self, path):
-        return self.rpc.collections.exists(path)
+        return self.prc.collections.exists(path)
 
     def is_dataobject(self, path):
         try:
-            self.rpc.data_objects.get(path)
+            self.prc.data_objects.get(path)
             return True
         except iexceptions.CollectionDoesNotExist:
             return False
@@ -57,7 +57,7 @@ class IrodsPythonClient():
 
     def get_dataobject(self, path):
         try:
-            obj = self.rpc.data_objects.get(path)
+            obj = self.prc.data_objects.get(path)
             return obj
         except (
             iexceptions.CollectionDoesNotExist,
@@ -91,7 +91,7 @@ class IrodsPythonClient():
 
         try:
             data = {}
-            root = self.rpc.collections.get(path)
+            root = self.prc.collections.get(path)
 
             for coll in root.subcollections:
 
@@ -160,7 +160,7 @@ class IrodsPythonClient():
 
         try:
 
-            ret = self.rpc.collections.create(path)
+            ret = self.prc.collections.create(path)
             log.debug("Created irods collection: %s" % path)
             return ret
 
@@ -187,7 +187,7 @@ class IrodsPythonClient():
 
         try:
 
-            ret = self.rpc.data_objects.create(path)
+            ret = self.prc.data_objects.create(path)
             log.debug("Create irods object: %s" % path)
             return ret
 
@@ -226,10 +226,10 @@ class IrodsPythonClient():
                 "Source and destination path are the same")
         try:
             log.verbose("Copy %s into %s" % (sourcepath, destpath))
-            source = self.rpc.data_objects.get(sourcepath)
+            source = self.prc.data_objects.get(sourcepath)
             self.create_empty(
                 destpath, directory=False, ignore_existing=force)
-            target = self.rpc.data_objects.get(destpath)
+            target = self.prc.data_objects.get(destpath)
             with source.open('r+') as f:
                 with target.open('w') as t:
                     for line in f:
@@ -244,11 +244,11 @@ class IrodsPythonClient():
 
         try:
             if self.is_collection(src_path):
-                self.rpc.collections.move(src_path, dest_path)
+                self.prc.collections.move(src_path, dest_path)
                 log.debug(
                     "Renamed collection: %s->%s" % (src_path, dest_path))
             else:
-                self.rpc.data_objects.move(src_path, dest_path)
+                self.prc.data_objects.move(src_path, dest_path)
                 log.debug(
                     "Renamed irods object: %s->%s" % (src_path, dest_path))
         except iexceptions.CAT_RECURSIVE_MOVE:
@@ -262,11 +262,11 @@ class IrodsPythonClient():
     def remove(self, path, recursive=False, force=False, resource=None):
         try:
             if self.is_collection(path):
-                self.rpc.collections.remove(
+                self.prc.collections.remove(
                     path, recurse=recursive, force=force)
                 log.debug("Removed irods collection: %s" % path)
             else:
-                self.rpc.data_objects.unlink(path, force=force)
+                self.prc.data_objects.unlink(path, force=force)
                 log.debug("Removed irods object: %s" % path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
             raise IrodsException(
@@ -280,11 +280,11 @@ class IrodsPythonClient():
         #     args = ['-S', resource]
 
         # Try with:
-        # self.rpc.resources.remove(name, test=dryRunTrueOrFalse)
+        # self.prc.resources.remove(name, test=dryRunTrueOrFalse)
 
     def write_file_content(self, path, content, position=0):
         try:
-            obj = self.rpc.data_objects.get(path)
+            obj = self.prc.data_objects.get(path)
             with obj.open('w+') as handle:
 
                 if position > 0 and handle.seekable():
@@ -303,7 +303,7 @@ class IrodsPythonClient():
     def get_file_content(self, path):
         try:
             data = []
-            obj = self.rpc.data_objects.get(path)
+            obj = self.prc.data_objects.get(path)
             with obj.open('r+') as handle:
 
                 if handle.readable():
@@ -319,7 +319,7 @@ class IrodsPythonClient():
     def open(self, absolute_path, destination):
 
         try:
-            obj = self.rpc.data_objects.get(absolute_path)
+            obj = self.prc.data_objects.get(absolute_path)
 
             # TODO: could use io package?
             with obj.open('r') as handle:
@@ -358,7 +358,7 @@ class IrodsPythonClient():
         log.info("Downloading file {} in streaming with chunk size {}"
                  .format(absolute_path, self.chunk_size))
         try:
-            obj = self.rpc.data_objects.get(absolute_path)
+            obj = self.prc.data_objects.get(absolute_path)
 
             handle = obj.open('r')
             return Response(
@@ -387,7 +387,7 @@ class IrodsPythonClient():
         try:
             self.create_empty(destination, directory=False,
                               ignore_existing=force)
-            obj = self.rpc.data_objects.get(destination)
+            obj = self.prc.data_objects.get(destination)
 
             # Based on:
             # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
@@ -421,7 +421,7 @@ class IrodsPythonClient():
                 self.create_empty(
                     destination, directory=False, ignore_existing=force)
 
-                obj = self.rpc.data_objects.get(destination)
+                obj = self.prc.data_objects.get(destination)
 
                 try:
                     with obj.open('w') as target:
@@ -449,9 +449,9 @@ class IrodsPythonClient():
         if type(coll_or_obj) is str:
 
             if self.is_collection(coll_or_obj):
-                coll_or_obj = self.rpc.collections.get(coll_or_obj)
+                coll_or_obj = self.prc.collections.get(coll_or_obj)
             elif self.is_dataobject(coll_or_obj):
-                coll_or_obj = self.rpc.collections.get(coll_or_obj)
+                coll_or_obj = self.prc.collections.get(coll_or_obj)
             else:
                 coll_or_obj = None
 
@@ -461,7 +461,7 @@ class IrodsPythonClient():
         data = {}
         data["path"] = coll_or_obj.path
         data["ACL"] = []
-        acl_list = self.rpc.permissions.get(coll_or_obj)
+        acl_list = self.prc.permissions.get(coll_or_obj)
 
         for acl in acl_list:
             data["ACL"].append([
@@ -485,7 +485,7 @@ class IrodsPythonClient():
                 path=path,
                 user_name=userOrGroup,
                 user_zone=zone)
-            self.rpc.permissions.set(ACL, recursive=recursive)
+            self.prc.permissions.set(ACL, recursive=recursive)
 
             log.debug(
                 "Set %s permission to %s for %s" %
@@ -515,7 +515,7 @@ class IrodsPythonClient():
                 path=path,
                 user_name='',
                 user_zone='')
-            self.rpc.permissions.set(ACL, recursive=recursive)
+            self.prc.permissions.set(ACL, recursive=recursive)
             log.debug("Set inheritance %r to %s" % (inheritance, path))
             return True
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
@@ -555,10 +555,10 @@ class IrodsPythonClient():
         # return path
 
     def get_current_user(self):
-        return self.rpc.username
+        return self.prc.username
 
     def get_current_zone(self, prepend_slash=False):
-        zone = self.rpc.zone
+        zone = self.prc.zone
         if prepend_slash:
             zone = '/' + zone
         return zone
@@ -569,7 +569,7 @@ class IrodsPythonClient():
         if username is None:
             username = self.get_current_user()
         try:
-            user = self.rpc.users.get(username)
+            user = self.prc.users.get(username)
             data = {}
             data["id"] = user.id
             data["name"] = user.name
@@ -581,7 +581,7 @@ class IrodsPythonClient():
             # data["modify time"] = ""
             data["account"] = user.manager.sess.pool.account.__dict__
 
-            results = self.rpc.query(UserGroup.name).filter(
+            results = self.prc.query(UserGroup.name).filter(
                 User.name == user.name).get_results()
             groups = []
             for obj in results:
@@ -613,7 +613,7 @@ class IrodsPythonClient():
         return True, "OK"
 
     def query_user_exists(self, user):
-        results = self.rpc.query(User.name).filter(User.name == user).first()
+        results = self.prc.query(User.name).filter(User.name == user).first()
 
         if results is None:
             return False
@@ -625,7 +625,7 @@ class IrodsPythonClient():
     def get_metadata(self, path):
 
         try:
-            obj = self.rpc.data_objects.get(path)
+            obj = self.prc.data_objects.get(path)
 
             data = {}
             units = {}
@@ -646,7 +646,7 @@ class IrodsPythonClient():
     # We may need this for testing the get_metadata
     def set_metadata(self, path, **meta):
         try:
-            obj = self.rpc.data_objects.get(path)
+            obj = self.prc.data_objects.get(path)
             for key, value in meta.items():
                 obj.metadata.add(key, value)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
@@ -655,7 +655,7 @@ class IrodsPythonClient():
             raise IrodsException("Cannot set metadata, object not found")
 
     def get_user_from_dn(self, dn):
-        results = self.rpc.query(User.name, UserAuth.user_dn) \
+        results = self.prc.query(User.name, UserAuth.user_dn) \
             .filter(UserAuth.user_dn == dn).first()
         if results is not None:
             return results.get(User.name)
@@ -673,25 +673,34 @@ class IrodsPythonClient():
             user_type = 'rodsadmin'
 
         try:
-            user_data = self.rpc.users.create(user, user_type)
-            log.debug("Created user %s" % user_data)
+            user_data = self.prc.users.create(user, user_type)
+            log.info("Created user: %s" % user_data)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
             log.warning("User %s already exists in iRODS" % user)
             return False
 
         return True
 
+    def modify_user_password(self, user, password):
+        log.debug("Changing %s password" % user)
+        return self.prc.users.modify(user, 'password', password)
+
+    def remove_user(self, user_name):
+        user = self.prc.users.get(user_name)
+        log.warning("Removing user: %s" % user_name)
+        return user.remove()
+
     def list_user_attributes(self, user):
 
         try:
-            data = self.rpc.query(
+            data = self.prc.query(
                 User.id, User.name, User.type, User.zone
             ).filter(User.name == user).one()
         except iexceptions.NoResultFound:
             return None
 
         try:
-            auth_data = self.rpc.query(
+            auth_data = self.prc.query(
                 UserAuth.user_dn
             ).filter(UserAuth.user_id == data[User.id]).one()
             dn = auth_data.get(UserAuth.user_dn)
@@ -708,8 +717,8 @@ class IrodsPythonClient():
     def modify_user_dn(self, user, dn, zone):
 
         # addAuth / rmAuth
-        self.rpc.users.modify(user, 'addAuth', dn)
-        # self.rpc.users.modify(user, 'addAuth', dn, user_zone=zone)
+        self.prc.users.modify(user, 'addAuth', dn)
+        # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
 
 # ####################################################
@@ -744,7 +753,7 @@ class IrodsPythonClient():
 #     ############################################
 
 #     # for resources use this object manager:
-#     # self.rpc.resources
+#     # self.prc.resources
 #     def list_resources(self):
 #         com = 'ilsresc'
 #         iout = self.basic_icom(com).strip()
@@ -929,7 +938,7 @@ def get_and_verify_irods_session(function, parameters):
 
     try:
         obj = function(**parameters)
-        obj.rpc.users.get(username)
+        obj.prc.users.get(username)
     except iexceptions.CAT_INVALID_USER:
         log.warning("Invalid user: %s" % username)
     except iexceptions.UserDoesNotExist:

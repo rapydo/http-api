@@ -31,6 +31,7 @@ class IrodsPythonExt(BaseExtension):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
+
         if session is not None:
             user = session.email
         else:
@@ -149,8 +150,9 @@ class IrodsPythonExt(BaseExtension):
     def custom_connection(self, **kwargs):
 
         check_connection = True
-
+        timeout = kwargs.get('timeout', 15.0)
         session = kwargs.get('user_session')
+
         if session is not None:
             # recover the serialized session
             obj = self.deserialize(session.session)
@@ -164,6 +166,8 @@ class IrodsPythonExt(BaseExtension):
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
                 zone=self.variables.get('zone'),
+                # NOTE: timeout has to be below 30s (http request timeout)
+                timeout=timeout
             )
 
         else:
@@ -193,12 +197,20 @@ class IrodsPythonExt(BaseExtension):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
+        # # set timeout on existing socket/connection
+        # with obj.pool.get_connection() as conn:
+        #     timer = conn.socket.gettimeout()
+        #     log.debug("Current timeout: %s" % timer)
+        #     conn.socket.settimeout(10.0)
+        #     timer = conn.socket.gettimeout()
+        #     log.debug("New timeout: %s" % timer)
+
         # Do a simple command to test this session
         if check_connection:
             u = obj.users.get(self.user)
             log.verbose("Tested session retrieving '%s'" % u.name)
 
-        client = IrodsPythonClient(rpc=obj, variables=self.variables)
+        client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
     def custom_init(self, pinit=False, **kwargs):

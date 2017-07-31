@@ -19,6 +19,7 @@ class iRODSPickleSession(iRODSSession):
             obj = getattr(self, attr)
             if attr == 'pool':
                 attrs['account'] = obj.account
+                attrs['timeout'] = obj.timeout
             else:
                 attrs[attr] = obj
 
@@ -30,7 +31,7 @@ class iRODSPickleSession(iRODSSession):
             # print(name, value)
             setattr(self, name, value)
 
-        self.pool = Pool(state.get('account'))
+        self.pool = Pool(state.get('account'), state.get('timeout'))
 
     def serialize(self):
         """Returns a byte serialized string from the current session"""
