@@ -11,6 +11,7 @@ from datetime import datetime
 # from flask import g
 from injector import inject
 from flask_restful import request, Resource, reqparse
+from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
@@ -595,3 +596,77 @@ class EndpointResource(Resource):
             return None
         else:
             return mem.customizer._parameter_schemas[url][method]
+
+    # HANDLE INPUT PARAMETERS
+    def read_properties(self, schema, values, checkRequired=True):
+
+        properties = {}
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+
+            k = field["name"]
+            if k in values:
+                properties[k] = values[k]
+
+            # this field is missing but required!
+            elif checkRequired and field["required"]:
+                raise RestApiException(
+                    'Missing field: %s' % k,
+                    status_code=hcodes.HTTP_BAD_REQUEST)
+
+        return properties
+
+    def update_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+            if key in properties:
+                instance.__dict__[key] = properties[key]
+
+    def parseAutocomplete(
+            self, properties, key, id_key='value', split_char=None):
+        value = properties.get(key, None)
+
+        ids = []
+
+        if value is None:
+            return ids
+
+        # Multiple autocomplete
+        if type(value) is list:
+            for v in value:
+                if v is None:
+                    return None
+                if id_key in v:
+                    ids.append(v[id_key])
+                else:
+                    ids.append(v)
+            return ids
+
+        # Single autocomplete
+        if id_key in value:
+            return [value[id_key]]
+
+        # Command line input
+        if split_char is None:
+            return [value]
+
+        return value.split(split_char)
+
+    def get_roles(self, properties):
+
+        roles = []
+        ids = self.parseAutocomplete(
+            properties, 'roles', id_key='name', split_char=',')
+
+        if ids is None:
+            return roles
+
+        return ids

@@ -16,7 +16,7 @@ class GraphBaseOperations(EndpointResource):
 
     def initGraph(self):
         self.graph = self.get_service_instance('neo4j')
-        self._current_user = self.getLoggedUserInstance()
+        self._current_user = self.get_current_user()
 
     @staticmethod
     def getSingleLinkedNode(relation):
@@ -25,15 +25,6 @@ class GraphBaseOperations(EndpointResource):
         if len(nodes) <= 0:
             return None
         return nodes[0]
-
-    def getLoggedUserInstance(self):
-        user = self.get_current_user()
-        if user is None:
-            return None
-        try:
-            return self.graph.User.nodes.get(email=user.email)
-        except self.graph.User.DoesNotExist:
-            return None
 
     def getNode(self, Model, identifier, field='accession'):
 
@@ -44,75 +35,11 @@ class GraphBaseOperations(EndpointResource):
         except Model.DoesNotExist:
             return None
 
-    # HANDLE INPUT PARAMETERS
-
     @staticmethod
     def createUniqueIndex(*var):
 
         separator = "#_#"
         return separator.join(var)
-
-    def read_properties(self, schema, values, checkRequired=True):
-
-        properties = {}
-        for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-
-            k = field["name"]
-            if k in values:
-                properties[k] = values[k]
-
-            # this field is missing but required!
-            elif checkRequired and field["required"]:
-                raise RestApiException(
-                    'Missing field: %s' % k,
-                    status_code=hcodes.HTTP_BAD_REQUEST)
-
-        return properties
-
-    def update_properties(self, instance, schema, properties):
-
-        for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
-            if key in properties:
-                instance.__dict__[key] = properties[key]
-
-    def parseAutocomplete(
-            self, properties, key, id_key='value', split_char=None):
-        value = properties.get(key, None)
-
-        ids = []
-
-        if value is None:
-            return ids
-
-        # Multiple autocomplete
-        if type(value) is list:
-            for v in value:
-                if v is None:
-                    return None
-                if id_key in v:
-                    ids.append(v[id_key])
-                else:
-                    ids.append(v)
-            return ids
-
-        # Single autocomplete
-        if id_key in value:
-            return [value[id_key]]
-
-        # Command line input
-        if split_char is None:
-            return [value]
-
-        return value.split(split_char)
 
 
 def graph_transactions(func):
