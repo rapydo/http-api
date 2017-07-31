@@ -17,6 +17,7 @@ from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
 from utilities import htmlcodes as hcodes
 from utilities import helpers
 from utilities.myyaml import load_yaml_file
+from utilities.configuration import mix
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -378,12 +379,13 @@ class BeSwagger(object):
         override = load_yaml_file(filename, path=path, skip_error=True)
 
         # They may override existing ones
-        if override is not None and isinstance(override, dict):
-            for key, value in override.items():
-                data[key] = value
+        # if override is not None and isinstance(override, dict):
+        #     for key, value in override.items():
+        #         data[key] = value
+
+        data = mix(data, override)
 
         self._fdp = data.pop('FormDataParameters', [])
-        # self._fdp = data.pop('FormDataParameters', None)
 
         return data
 
