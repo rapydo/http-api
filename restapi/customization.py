@@ -10,7 +10,7 @@ import glob
 from utilities import \
     PROJECT_CONF_FILENAME, CONF_PATH, DEFAULT_FILENAME, UTILS_PKGNAME
 from utilities import helpers
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
 from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
@@ -162,8 +162,7 @@ Please also fix in celery and celeryui
                 swagger_endpoint_dir = os.path.join(swagger_dir, ep)
 
                 if os.path.isfile(swagger_endpoint_dir):
-                    # FIXME: use a configuration for this definition
-                    exception = 'params_models.yaml'
+                    exception = '%s.yaml' % SWAGGER_MODELS_FILE
                     if not swagger_endpoint_dir.endswith('/' + exception):
                         log.debug(
                             "Expected swagger folder, found file %s"
