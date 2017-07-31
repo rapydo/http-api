@@ -32,7 +32,7 @@
   class: CeleryExt
   injector: CeleryInjector
 
-  # irods commands
+  # mongodb
 - name: mongo
   load_models: 1
   prefix: mongo

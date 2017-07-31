@@ -7,6 +7,7 @@ Test base
 import unittest
 import json
 import logging
+from restapi import __package__ as current_package
 from restapi.server import create_app
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
@@ -20,7 +21,7 @@ __author__ = "Paolo D'Onorio De Meo (p.donoriodemeo@cineca.it)"
 TEST_DEBUGGING_LEVEL = logging.DEBUG
 
 #####################
-set_global_log_level('rapydo', TEST_DEBUGGING_LEVEL)
+set_global_log_level(current_package, TEST_DEBUGGING_LEVEL)
 log = get_logger(__name__)
 
 
@@ -69,7 +70,7 @@ class RestTestsBase(unittest.TestCase):
         app = create_app(testing_mode=True)
         self.app = app.test_client()
 
-        # Auth init from base/custom config
+        # Auth init from base/custom config
         ba.myinit()
         self._username = ba.default_user
         self._password = ba.default_password

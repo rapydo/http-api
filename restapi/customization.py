@@ -10,10 +10,8 @@ import glob
 from utilities import \
     PROJECT_CONF_FILENAME, CONF_PATH, DEFAULT_FILENAME, UTILS_PKGNAME
 from utilities import helpers
-from restapi.confs import (
-    BACKEND_PACKAGE, CUSTOM_PACKAGE,  # CORE_CONFIG_PATH,
-    API_URL, BASE_URLS
-)
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
 from restapi.attributes import EndpointElements, ExtraAttributes
@@ -92,7 +90,9 @@ Please also fix in celery and celeryui
         defaults = load_yaml_file(
             DEFAULT_FILENAME,
             # path=CUSTOM_CONFIG_PATH
-            path=helpers.script_abspath(__file__, UTILS_PKGNAME)
+            path=helpers.script_abspath(
+                # FIXME: find a better way
+                __file__, '../' + UTILS_PKGNAME)
         )
         if len(defaults) < 0:
             raise ValueError("Missing defaults for server configuration!")
@@ -162,19 +162,24 @@ Please also fix in celery and celeryui
                 swagger_endpoint_dir = os.path.join(swagger_dir, ep)
 
                 if os.path.isfile(swagger_endpoint_dir):
-                    log.debug(
-                        "Expected a swagger conf folder, found a file (%s)"
-                        % (swagger_endpoint_dir)
-                    )
+                    # FIXME: use a configuration for this definition
+                    exception = 'params_models.yaml'
+                    if not swagger_endpoint_dir.endswith('/' + exception):
+                        log.debug(
+                            "Expected swagger folder, found file %s"
+                            % (swagger_endpoint_dir)
+                        )
                     continue
 
                 # isbase = base_dir == BACKEND_PACKAGE
                 isbase = base_dir.startswith('/usr/local')
                 base_module = helpers.last_dir(base_dir)
+                from utilities import ENDPOINTS_CODE_DIR
                 if isbase:
                     apiclass_module = '%s.%s' % (base_module, 'resources')
                 else:
-                    apiclass_module = '%s.%s' % (base_module, 'apis')
+                    apiclass_module = '%s.%s' % (
+                        base_module, ENDPOINTS_CODE_DIR)
 
                 current = self.lookup(
                     ep, apiclass_module, swagger_endpoint_dir, isbase)

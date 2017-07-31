@@ -70,7 +70,7 @@ You either have to ways of making endpoints, as you may see in the example:
 1) Add a decorator to a method of a class:
 
 ```python
-from restapi.utils.logs import get_logger
+from utilities.logs import get_logger
 from .base import ExtendedApiResource
 from . import decorators as decorate
 

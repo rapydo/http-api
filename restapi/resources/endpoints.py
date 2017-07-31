@@ -106,6 +106,7 @@ class Login(EndpointResource):
             totp_code = jargs.get('totp_code')
         else:
             totp_code = None
+
         # ##################################################
         # Now credentials are checked at every request
         if username is None or password is None:

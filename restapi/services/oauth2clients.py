@@ -9,7 +9,8 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 import os
 from base64 import b64encode
 from restapi.protocols.oauth import oauth
-from restapi.confs import PRODUCTION, CUSTOM_PACKAGE
+from restapi.confs import PRODUCTION
+from utilities import CUSTOM_PACKAGE
 from utilities.globals import mem
 from utilities.meta import Meta
 from utilities.logs import get_logger
@@ -116,9 +117,9 @@ class ExternalLogins(object):
     # FIXME: FROM MATTIA: the testing parameter is still required?
     def b2access(self, testing=False):
 
+        from utilities import ENDPOINTS_CODE_DIR
         module = meta.get_module_from_string(
-            "%s.%s.%s" % (CUSTOM_PACKAGE, 'apis', 'common')
-        )
+            "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'common'))
 
         if module is None:
             B2ACCESS_ENV = PRODUCTION
