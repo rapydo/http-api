@@ -18,3 +18,56 @@ ProfileUpdate:
     newpassword:
       type: string
       description: the new password to associate to your profile
+
+
+  ##############################################
+
+FormDataParameters:
+
+  User:
+    - name: email
+      in: formData
+      type: string
+      required: true
+      description: Email
+      custom:
+        label: Email
+
+    - name: password
+      in: formData
+      type: string
+      format: password
+      required: false
+      description: Password
+      custom:
+        label: Password
+
+    - name: name
+      in: formData
+      type: string
+      required: true
+      description: Name
+      custom:
+        label: Name
+
+    - name: surname
+      in: formData
+      type: string
+      required: true
+      description: Surname
+      custom:
+        label: Surname
+
+    - name: roles
+      in: formData
+      type: string
+      required: false
+      # description: -
+      custom:
+        autocomplete: true
+        multiple: true
+        islink: true
+        label: Roles
+        model_key: _roles
+        select_label: name
+        select_id: name
