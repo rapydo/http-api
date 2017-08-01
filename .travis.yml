@@ -14,18 +14,11 @@ script:
 - cd core
 
 - export PROJECT=template
-- echo "project: ${PROJECT}" > .projectrc
-- rapydo init && rapydo start
-- rapydo shell backend --command 'restapi tests --wait'
-- rapydo shell backend --command 'mv .coverage .coverage.${PROJECT}'
+- rapydo --mode ${PROJECT} init && rapydo --mode ${PROJECT} start
+- rapydo --mode ${PROJECT} shell backend --command 'restapi tests --wait'
+- rapydo --mode ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
 
-# - PROJECT=template
-# - echo "project: $PROJECT" > .projectrc
-# - rapydo init && rapydo start
-# - rapydo shell backend --command 'restapi tests --wait'
-# - mv .coverage .coverage.$PROJECT
-
-- rapydo shell backend --command 'coverage combine'
+- rapydo --mode ${PROJECT} shell backend --command 'coverage combine'
 - cd ..
 
 after_success:
