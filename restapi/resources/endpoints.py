@@ -13,7 +13,7 @@ from flask import jsonify, current_app
 from restapi import decorators as decorate
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
-from restapi.services.authentication import BaseAuthentication
+# from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem

@@ -14,6 +14,8 @@ script:
 - cd core
 - rapydo init && rapydo start
 - rapydo shell backend --command 'restapi tests --wait'
+- mv .coverage .coverage.template
+- coverage combine
 - cd ..
 
 after_success:
