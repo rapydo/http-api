@@ -16,15 +16,17 @@ script:
 - export PROJECT=neo4j
 - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
-- rapydo --project ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
+# - rapydo --project ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
 
-- rapydo --project ${PROJECT} shell backend --command 'coverage combine'
+- docker cp ${PROJECT}_backend_1:/code/.coverage .coverage.${PROJECT}
+# - rapydo --project ${PROJECT} shell backend --command 'coverage combine'
 - cd ..
 
 after_success:
 # NOTE: this works only with the base http api, and not in a real core fork
 # FIXME: do as eudat for a configuration in core and use "rapydo coverage"
-- docker cp template_backend_1:/code/.coverage .
+# - docker cp template_backend_1:/code/.coverage .
+- coverage combine
 - docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
 
 deploy:
