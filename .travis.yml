@@ -12,10 +12,20 @@ install:
 - scripts/clone.sh  # clone the core
 script:
 - cd core
+
+- PROJECT=template
+- echo "project: $PROJECT" > .projectrc
 - rapydo init && rapydo start
 - rapydo shell backend --command 'restapi tests --wait'
-- mv .coverage .coverage.template
-- coverage combine
+- rapydo shell backend --command 'mv .coverage .coverage.$PROJECT'
+
+# - PROJECT=template
+# - echo "project: $PROJECT" > .projectrc
+# - rapydo init && rapydo start
+# - rapydo shell backend --command 'restapi tests --wait'
+# - mv .coverage .coverage.$PROJECT
+
+- rapydo shell backend --command 'coverage combine'
 - cd ..
 
 after_success:
