@@ -17,11 +17,25 @@ script:
 - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
+- rapydo --project ${PROJECT} clean
 
 - export PROJECT=neo4j
 - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
+- rapydo --project ${PROJECT} clean
+
+- export PROJECT=sql
+- rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+- rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
+- docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
+- rapydo --project ${PROJECT} clean
+
+# - export PROJECT=mongo
+# - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+# - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
+# - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
+# - rapydo --project ${PROJECT} clean
 
 - cd ..
 
