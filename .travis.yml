@@ -13,11 +13,11 @@ install:
 script:
 - cd core
 
-- PROJECT=template
-- echo "project: $PROJECT" > .projectrc
+- export PROJECT=template
+- echo "project: ${PROJECT}" > .projectrc
 - rapydo init && rapydo start
 - rapydo shell backend --command 'restapi tests --wait'
-- rapydo shell backend --command 'mv .coverage .coverage.$PROJECT'
+- rapydo shell backend --command 'mv .coverage .coverage.${PROJECT}'
 
 # - PROJECT=template
 # - echo "project: $PROJECT" > .projectrc
