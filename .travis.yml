@@ -13,12 +13,12 @@ install:
 script:
 - cd core
 
-- export PROJECT=template
-- rapydo --mode ${PROJECT} init && rapydo --mode ${PROJECT} start
-- rapydo --mode ${PROJECT} shell backend --command 'restapi tests --wait'
-- rapydo --mode ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
+- export PROJECT=neo4j
+- rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+- rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
+- rapydo --project ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
 
-- rapydo --mode ${PROJECT} shell backend --command 'coverage combine'
+- rapydo --project ${PROJECT} shell backend --command 'coverage combine'
 - cd ..
 
 after_success:
