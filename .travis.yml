@@ -13,7 +13,7 @@ install:
 script:
 - cd core
 
-- export PROJECT=neo4j
+- export PROJECT=template
 - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
 # - rapydo --project ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
