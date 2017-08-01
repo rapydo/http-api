@@ -16,9 +16,8 @@ script:
 - export PROJECT=template
 - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait'
-# - rapydo --project ${PROJECT} shell backend --command 'mv .coverage .coverage.${PROJECT}'
 
-- docker cp ${PROJECT}_backend_1:/code/.coverage .coverage.${PROJECT}
+- docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
 # - rapydo --project ${PROJECT} shell backend --command 'coverage combine'
 - cd ..
 
