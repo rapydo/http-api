@@ -12,6 +12,7 @@ app = '%s.__commands__' % main_package
 setup(
     name='rapydo_http',
     version=current_version,
+    description='HTTP API server working on top of the RAPyDo framework',
     url='https://rapydo.github.io/http-api',
     license='MIT',
     keywords=['http', 'api', 'rest', 'web', 'backend', 'rapydo'],
