@@ -14,28 +14,32 @@ script:
 - cd core
 
 - export PROJECT=template
-- rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+- rapydo --project ${PROJECT} --no-bower init
+- rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
 - rapydo --project ${PROJECT} clean
 
 # - export PROJECT=neo4j
-# - rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+# - rapydo --project ${PROJECT} --no-bower init
+# - rapydo --project ${PROJECT} start
 # - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
 # - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
 # - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
 # - rapydo --project ${PROJECT} clean
 
 - export PROJECT=sql
-- rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+- rapydo --project ${PROJECT} --no-bower init
+- rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
 - rapydo --project ${PROJECT} clean
 
 - export PROJECT=mongo
-- rapydo --project ${PROJECT} init && rapydo --project ${PROJECT} start
+- rapydo --project ${PROJECT} --no-bower init
+- rapydo --project ${PROJECT} start
 - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
