@@ -8,7 +8,7 @@ env:
 - PROJECT=neo
 - PROJECT=sql
 - PROJECT=mongo
-- PROJECT=celerytest
+# - PROJECT=celerytest
 # - PROJECT=irodstest
 
 install:
