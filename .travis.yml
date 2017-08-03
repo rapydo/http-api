@@ -14,6 +14,7 @@ env:
 install:
 - ./dev-requirements.py  # install requirements in listed order
 - scripts/clone.sh  # clone the core
+
 script:
 - cd core
 
@@ -29,7 +30,7 @@ script:
 
 - cd ..
 
-after_success:
+travis_after_all:
 - ls .coverage*
 - coverage combine
 - docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
