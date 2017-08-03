@@ -13,8 +13,8 @@ install:
 script:
 - cd core
 
-- export PROJECT=template
-# - export PROJECT=neo4j
+# - export PROJECT=template
+- export PROJECT=neo
 - rapydo --project ${PROJECT} --no-bower init
 - rapydo --project ${PROJECT} start
 # - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
@@ -38,7 +38,7 @@ script:
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
 - rapydo --project ${PROJECT} clean
 
-- export PROJECT=celery
+- export PROJECT=celery_test
 - rapydo --project ${PROJECT} --no-bower init
 - rapydo --project ${PROJECT} start
 # - rapydo --project ${PROJECT} shell --user root backend --command 'pip install --upgrade git+https://github.com/rapydo/http-api.git@0.6.0'
