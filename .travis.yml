@@ -22,7 +22,8 @@ script:
 - rapydo --project ${PROJECT} start
 
 - docker ps -a
-- docker logs celerytest_backend_1
+- sleep 30
+- docker logs ${PROJECT}_backend_1
 
 - rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
 - docker cp ${PROJECT}_backend_1:/code/.coverage ../.coverage.${PROJECT}
