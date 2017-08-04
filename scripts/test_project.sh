@@ -5,7 +5,7 @@ rapydodir="core"
 PROJECT=$1
 
 # install requirements in listed order
-../dev-requirements.py
+./dev-requirements.py
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 echo "Current branch: $TRAVIS_BRANCH"

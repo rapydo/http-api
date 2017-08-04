@@ -13,7 +13,7 @@ services:
 
 jobs:
   include:
-    - stage: test_project
+    - stage: backend-test
       script: scripts/test_project.sh neo
     - script: scripts/test_project.sh sql
     # - script: scripts/test_project.sh mongo
