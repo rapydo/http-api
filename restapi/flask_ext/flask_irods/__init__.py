@@ -166,9 +166,12 @@ class IrodsPythonExt(BaseExtension):
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
                 zone=self.variables.get('zone'),
-                # NOTE: timeout has to be below 30s (http request timeout)
-                timeout=timeout
+                # # NOTE: timeout has to be below 30s (http request timeout)
+                # timeout=timeout
             )
+
+            # based on https://github.com/irods/python-irodsclient/pull/90
+            obj.connection_timeout = timeout
 
         else:
 
