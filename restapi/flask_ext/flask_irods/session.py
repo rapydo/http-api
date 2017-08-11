@@ -2,11 +2,13 @@
 
 import base64
 import pickle
+# TODO: use dill
+# import dill as pickle
 from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
-Allow to manipulate irods session as a string,
+Manipulate irods session as a string,
 to be saved inside a database.
 """
 
@@ -19,7 +21,7 @@ class iRODSPickleSession(iRODSSession):
             obj = getattr(self, attr)
             if attr == 'pool':
                 attrs['account'] = obj.account
-                attrs['timeout'] = obj.timeout
+                # attrs['timeout'] = obj.timeout
             else:
                 attrs[attr] = obj
 
@@ -31,7 +33,7 @@ class iRODSPickleSession(iRODSSession):
             # print(name, value)
             setattr(self, name, value)
 
-        self.pool = Pool(state.get('account'), state.get('timeout'))
+        self.pool = Pool(state.get('account'))  # , state.get('timeout'))
 
     def serialize(self):
         """Returns a byte serialized string from the current session"""

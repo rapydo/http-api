@@ -197,7 +197,7 @@ class IrodsPythonClient():
         except iexceptions.SYS_INTERNAL_NULL_INPUT_ERR:
             raise IrodsException("Unable to create object, invalid path")
 
-        except iexceptions.OVERWITE_WITHOUT_FORCE_FLAG:
+        except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
                 raise IrodsException(
                     "Irods object already exists",

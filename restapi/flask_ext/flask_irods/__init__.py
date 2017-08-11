@@ -162,16 +162,13 @@ class IrodsPythonExt(BaseExtension):
             obj = iRODSSession(
                 user=self.user,
                 password=self.password,
-                authentication_scheme='password',
+                authentication_scheme='native',
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
                 zone=self.variables.get('zone'),
                 # # NOTE: timeout has to be below 30s (http request timeout)
                 # timeout=timeout
             )
-
-            # based on https://github.com/irods/python-irodsclient/pull/90
-            obj.connection_timeout = timeout
 
         else:
 
@@ -207,6 +204,9 @@ class IrodsPythonExt(BaseExtension):
         #     conn.socket.settimeout(10.0)
         #     timer = conn.socket.gettimeout()
         #     log.debug("New timeout: %s" % timer)
+
+        # based on https://github.com/irods/python-irodsclient/pull/90
+        obj.connection_timeout = timeout
 
         # Do a simple command to test this session
         if check_connection:
