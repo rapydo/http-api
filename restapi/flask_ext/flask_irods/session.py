@@ -2,14 +2,37 @@
 
 import base64
 import pickle
-# TODO: use dill
-# import dill as pickle
 from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
 Manipulate irods session as a string,
 to be saved inside a database.
+
+#############
+TEST IT WITH
+
+USER=paolo
+PASS=tester
+
+iadmin mkuser $USER rodsuser
+iadmin moduser $USER password $PASS
+
+TOKEN=$(http POST localhost:8080/auth/b2safeproxy \
+    username=$USER password=$PASS | jq .Response.data.token | tr -d '"')
+
+http localhost:8080/auth/b2safeproxy Authorization:"Bearer $TOKEN"
+
+#############
+NOTE: an alternative would have been to use dill instead of pickle,
+# import dill as pickle
+but suddenly it stopped working
+
+sess = iRODSSession(...)
+dill.dumps(sess)
+
+TypeError: Cannot serialize socket object
+(which is located in list(sess.pool.idle)[0].socket )
 """
 
 
