@@ -232,12 +232,6 @@ class EndpointResource(Resource):
 
         return content
 
-    # def get_current_token(self):
-    #     # TODO: TO BE DOUBLE CHECKED
-    #     from restapi.protocols.bearer import HTTPTokenAuth
-    #     _, token = HTTPTokenAuth.get_authentication_from_headers()
-    #     return token
-
     def get_current_user(self):
         """
         Return the associated User OBJECT if:
@@ -252,14 +246,11 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     # def method_not_allowed(self, methods=['GET']):
-    #     # FIXME: is it used?
-
     #     methods.append('HEAD')
     #     methods.append('OPTIONS')
     #     methods_string = ""
     #     for method in methods:
     #         methods_string += method + ', '
-
     #     return self.force_response(
     #         headers={'ALLOW': methods_string.strip(', ')},
     #         errors='The method is not allowed for the requested URL.',
@@ -308,17 +299,15 @@ class EndpointResource(Resource):
     def send_errors(self,
                     message=None, errors=None,
                     code=None, headers=None,
-                    label=None,  # TO BE DEPRECATED
+                    label=None,  # TODO: to be DEPRECATED
                     ):
-        """
-        Setup an error message and
-        """
+        """ Setup an error message """
         if label is not None:
             log.warning(
                 "Dictionary errors are deprecated, " +
                 "send errors as a list of strings instead"
             )
-        # Bug fix: if errors was initialized above, I received old errors...
+
         if errors is None:
             errors = []
         if isinstance(errors, str):

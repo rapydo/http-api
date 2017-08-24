@@ -23,7 +23,10 @@ class Role(db.Model):
     description = db.Column(db.String(255))
 
     def __str__(self):
-        return "[db model: %s] %s" % (self.__class__.__name__, self.name)
+        return "db.%s(%s)" % (self.__class__.__name__, self.name)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class User(db.Model):
@@ -41,8 +44,11 @@ class User(db.Model):
                             backref=db.backref('users', lazy='dynamic'))
 
     def __str__(self):
-        return "[db model: %s] %s (%s)" % (
-            self.__class__.__name__, self.email, self.roles)
+        return "db.%s(%s, type=%s) {%s}" % (
+            self.__class__.__name__, self.email, self.authmethod, self.roles)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Token(db.Model):
@@ -60,7 +66,11 @@ class Token(db.Model):
         'User', backref=db.backref('tokens', lazy='dynamic'))
 
     def __str__(self):
-        return "[db model: %s] %s" % (self.__class__.__name__, self.token)
+        return "db.%s(%s){%s}" \
+            % (self.__class__.__name__, self.token, self.emitted_for)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class ExternalAccounts(db.Model):
@@ -79,5 +89,8 @@ class ExternalAccounts(db.Model):
         'User', backref=db.backref('authorization', lazy='dynamic'))
 
     def __str__(self):
-        return "[db model: %s] %s(%s):%s" % (
-            self.__class__.__name__, self.username, self.email, self.user_id)
+        return "db.%s(%s, %s){%s}" % (
+            self.__class__.__name__, self.username, self.email, self.main_user)
+
+    def __repr__(self):
+        return self.__str__()

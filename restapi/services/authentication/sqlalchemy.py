@@ -310,12 +310,10 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return
 
-    # FIXME: to be cached
     def oauth_from_local(self, internal_user):
         accounts = self.db.ExternalAccounts
-        external_user = accounts.query.filter(
+        return accounts.query.filter(
             accounts.main_user.has(id=internal_user.id)).first()
-        return internal_user, external_user
 
     def irods_user(self, username, session):
 

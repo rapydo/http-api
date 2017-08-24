@@ -2,6 +2,7 @@
 
 """ iRODS file-system flask connector """
 
+
 import os
 import logging
 from utilities.certificates import Certificates
@@ -55,7 +56,7 @@ class IrodsPythonExt(BaseExtension):
             raise AttributeError("No user is defined")
         else:
             self.user = user
-            log.verbose("Irods user: %s" % self.user)
+            log.debug("Irods user: %s" % self.user)
             self.schema = self.variables.get('authscheme')
 
         ######################
@@ -84,11 +85,15 @@ class IrodsPythonExt(BaseExtension):
                 if proxy:
                     # this is used by b2access in eudat
                     proxy_file = os.path.join(cpath, 'userproxy.crt')
-                    # temporary fix
+
+                    ####################
+                    # # temporary fix
                     os.environ['X509_USER_KEY'] = proxy_file
                     os.environ['X509_USER_CERT'] = proxy_file
-                    # to fix: the old good way that does not work anymore
+                    # # TODO: check why the right variable doesn't work anymore
                     # os.environ['X509_USER_PROXY'] = proxy_file
+                    ####################
+
                 else:
                     os.environ['X509_USER_KEY'] = \
                         os.path.join(cpath, 'userkey.pem')
@@ -137,6 +142,7 @@ class IrodsPythonExt(BaseExtension):
 
                 ##################
                 if valid:
+                    # os.environ['X509_USER_PROXY'] = proxy_cert_file
                     os.environ['X509_USER_KEY'] = proxy_cert_file
                     os.environ['X509_USER_CERT'] = proxy_cert_file
                 else:
@@ -145,6 +151,12 @@ class IrodsPythonExt(BaseExtension):
             else:
                 raise NotImplementedError(
                     "Unable to create session, no valid auth option found")
+
+            # DEBUG X509 variables
+            # for key, value in os.environ.items():
+            #     if key.startswith('X509'):
+            #         print(key, value)
+
         return True
 
     def custom_connection(self, **kwargs):

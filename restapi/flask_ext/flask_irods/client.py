@@ -78,16 +78,16 @@ class IrodsPythonClient():
 
         return os.path.dirname(path)
 
-    def list(
-            self, path=None, recursive=False, detailed=False,
-            acl=False, removePrefix=None):
+    def list(self, path=None, recursive=False, detailed=False,
+             acl=False, removePrefix=None):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
             path = self.get_user_home()
 
         if self.is_dataobject(path):
-            raise IrodsException("Cannot list an object, get it instead")
+            raise IrodsException(
+                "Cannot list a Data Object; you may get it instead.")
 
         try:
             data = {}
@@ -106,7 +106,8 @@ class IrodsPythonClient():
                         recursive=recursive,
                         detailed=detailed,
                         acl=acl,
-                        removePrefix=removePrefix)
+                        removePrefix=removePrefix
+                    )
                 row["path"] = self.getPath(coll.path, removePrefix)
                 row["object_type"] = "collection"
                 if detailed:
@@ -142,7 +143,7 @@ class IrodsPythonClient():
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Collection not found: %s" % path)
+            raise IrodsException("Not found (or no permission): %s" % path)
 
         # replicas = []
         # for line in lines:
@@ -236,9 +237,11 @@ class IrodsPythonClient():
                         # if t.writable():
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Data object not found: %s" % sourcepath)
+            raise IrodsException(
+                "DataObject not found (or no permission): %s" % sourcepath)
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Collection not found: %s" % sourcepath)
+            raise IrodsException(
+                "Collection not found (or no permission): %s" % sourcepath)
 
     def move(self, src_path, dest_path):
 
