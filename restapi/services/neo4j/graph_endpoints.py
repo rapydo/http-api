@@ -28,6 +28,9 @@ class GraphBaseOperations(EndpointResource):
 
     def getNode(self, Model, identifier, field='accession'):
 
+        log.warning(
+            "This method is deprecated. use Model.get_or_none() instead")
+
         try:
             filter = {field: identifier}
             return Model.nodes.get(**filter)
