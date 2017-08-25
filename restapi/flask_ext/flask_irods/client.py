@@ -270,7 +270,7 @@ class IrodsPythonClient():
                 log.debug("Removed irods object: %s" % path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
             raise IrodsException(
-                "Cannot delete an empty directory without recursive flag")
+                "Cannot delete an non empty directory without recursive flag")
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
