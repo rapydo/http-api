@@ -42,11 +42,14 @@ class IrodsPythonExt(BaseExtension):
         if session is not None:
             user = session.email
         else:
-            # TODO: recover unityid to know which path was used
             user = kwargs.get('user')
             self.password = kwargs.get('password')
 
             gss = kwargs.get('gss', False)
+            if self.variables.get('external'):
+                if self.variables.get('authscheme') == 'GSI':
+                    gss = True
+
             admin = kwargs.get('be_admin', False)
             myproxy_host = self.variables.get("myproxy_host")
 
