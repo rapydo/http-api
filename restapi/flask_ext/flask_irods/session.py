@@ -12,8 +12,8 @@ to be saved inside a database.
 #############
 TEST IT WITH
 
-USER=paolo
-PASS=tester
+USER=paolobeta
+PASS=thisisalongerpassword
 
 iadmin mkuser $USER rodsuser
 iadmin moduser $USER password $PASS
