@@ -628,7 +628,10 @@ class IrodsPythonClient():
     def get_metadata(self, path):
 
         try:
-            obj = self.prc.data_objects.get(path)
+            if (self.is_collection(path)):
+                obj = self.prc.collections.get(path)
+            else:
+                obj = self.prc.data_objects.get(path)
 
             data = {}
             units = {}
@@ -649,7 +652,11 @@ class IrodsPythonClient():
     # We may need this for testing the get_metadata
     def set_metadata(self, path, **meta):
         try:
-            obj = self.prc.data_objects.get(path)
+            if (self.is_collection(path)):
+                obj = self.prc.collections.get(path)
+            else:
+                obj = self.prc.data_objects.get(path)
+                
             for key, value in meta.items():
                 obj.metadata.add(key, value)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
