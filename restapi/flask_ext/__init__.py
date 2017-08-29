@@ -251,9 +251,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 they get activated by specific flask cli commands
 
         """
-        return self.get_instance(
-            # project_initialization=pinit
-        )
+        return self.get_instance()
 
 
 class BaseInjector(Module):
