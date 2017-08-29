@@ -365,11 +365,11 @@ class Authentication(BaseAuthentication):
 
     def oauth_from_local(self, internal_user):
 
-        log.pp(internal_user, prefix_line="internal")
+        # log.pp(internal_user, prefix_line="internal")
         accounts = self.db.ExternalAccounts
         try:
             external_user = accounts.objects.raw(
                 {'user_id': internal_user.email}).first()
         except self.db.ExternalAccounts.DoesNotExist:
             external_user = None
-        return internal_user, external_user
+        return external_user

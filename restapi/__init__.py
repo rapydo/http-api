@@ -2,7 +2,7 @@
 
 import sys
 
-__version__ = '0.5.2'
+__version__ = '0.5.4'
 
 FRAMEWORK_NAME = 'RAPyDo'
 FRAMEWORK_PREFIX = FRAMEWORK_NAME.lower() + '-'
@@ -10,6 +10,17 @@ FRAMEWORK_PREFIX = FRAMEWORK_NAME.lower() + '-'
 # detect if the developer is asking for help/usage on the cli command
 # 1. if using the help option
 # 2. if giving no commands
-FLASK_HELP = \
-    '--help' in sys.argv \
-    or len(sys.argv) < 2
+# 3. watch out when the only arg is uwsgi
+
+if '--help' in sys.argv:
+    FLASK_HELP = True
+elif len(sys.argv) > 1:
+    FLASK_HELP = False
+elif len(sys.argv) == 1 and sys.argv[0].endswith('uwsgi'):
+    FLASK_HELP = False
+else:
+    FLASK_HELP = True
+
+# FLASK_HELP = \
+#     '--help' in sys.argv \
+#     or len(sys.argv) < 2
