@@ -30,6 +30,9 @@ from restapi.flask_ext.flask_irods.client import IrodsPythonClient
 irodslogger = logging.getLogger('irods')
 irodslogger.setLevel(logging.INFO)
 
+NORMAL_AUTH_SCHEME = 'credentials'
+GIS_AUTH_SCHEME = 'GSI'
+
 log = get_logger(__name__)
 
 
@@ -38,6 +41,7 @@ class IrodsPythonExt(BaseExtension):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
+        self.authscheme = self.variables.get('authscheme')
 
         if session is not None:
             user = session.email
@@ -47,7 +51,7 @@ class IrodsPythonExt(BaseExtension):
 
             gss = kwargs.get('gss', False)
             if self.variables.get('external'):
-                if self.variables.get('authscheme') == 'GSI':
+                if self.authscheme == GIS_AUTH_SCHEME:
                     gss = True
 
             admin = kwargs.get('be_admin', False)
@@ -72,7 +76,6 @@ class IrodsPythonExt(BaseExtension):
         else:
             self.user = user
             log.debug("Irods user: %s" % self.user)
-            self.schema = self.variables.get('authscheme')
 
         ######################
         # Irods/b2safe direct credentials
@@ -81,6 +84,10 @@ class IrodsPythonExt(BaseExtension):
         ######################
         # Identity with GSI
         elif gss:
+
+            if self.authscheme != GIS_AUTH_SCHEME:
+                log.debug("Forcing %s authscheme" % GIS_AUTH_SCHEME)
+                self.authscheme = GIS_AUTH_SCHEME
 
             Certificates().globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
@@ -94,7 +101,7 @@ class IrodsPythonExt(BaseExtension):
         ######################
         # Normal credentials
         elif self.password is not None:
-            self.schema = 'credentials'
+            self.authscheme = NORMAL_AUTH_SCHEME
         else:
             raise NotImplementedError(
                 "Unable to create file-system session: no valid options found")
@@ -111,7 +118,7 @@ class IrodsPythonExt(BaseExtension):
             # recover the serialized session
             obj = self.deserialize(session.session)
 
-        elif self.schema == 'credentials':
+        elif self.authscheme == NORMAL_AUTH_SCHEME:
 
             obj = iRODSSession(
                 user=self.user,
@@ -122,7 +129,7 @@ class IrodsPythonExt(BaseExtension):
                 zone=self.variables.get('zone'),
             )
 
-        else:
+        elif self.authscheme == GIS_AUTH_SCHEME:
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
@@ -138,7 +145,7 @@ class IrodsPythonExt(BaseExtension):
             obj = iRODSSession(
                 user=self.user,
                 zone=self.variables.get('zone'),
-                authentication_scheme=self.variables.get('authscheme'),
+                authentication_scheme=self.authscheme,
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
                 server_dn=host_dn
@@ -148,6 +155,10 @@ class IrodsPythonExt(BaseExtension):
             # we want to verify if they expired later
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
+
+        else:
+            raise NotImplementedError(
+                "Untested iRODS authentication scheme: %s" % self.authscheme)
 
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:

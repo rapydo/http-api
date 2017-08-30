@@ -172,7 +172,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
         global_instance = kwargs.pop('global_instance', False)
         isauth = kwargs.pop('authenticator', False)
         # pinit = kwargs('project_initialization', False)
-        # log.print(kwargs)
 
         # Variables
         obj = None
@@ -190,7 +189,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
-            log.very_verbose("First connection for %s" % self.name)
+            log.verbose("First connection for %s" % self.name)
 
         else:
             # isauth = 'Authenticator' == self.__class__.__name__
@@ -206,8 +205,10 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 if obj is None:
                     return None
                 self.set_object(obj=obj, ref=ref, key=unique_hash)
+            else:
+                pass
 
-            log.verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
+            log.very_verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
 
         obj = self.set_models_to_service(obj)
 
