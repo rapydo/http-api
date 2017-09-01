@@ -2,21 +2,8 @@
 
 """
 iRODS file-system flask connector
-
-============================
-
-# NOTE: the B2ACCESS issue
-grid-proxy-init on the certificate creates a valid one...
-
-CERTUSER=13148ea2-4d02-4d2f-b36b-0a646980c779
-cd $CERTDIR/$CERTUSER
-cp userproxy.crt b2access.proxy.crt
-export X509_USER_CERT=$CERTDIR/$CERTUSER/b2access.proxy.crt
-export X509_USER_KEY=$CERTDIR/$CERTUSER/b2access.proxy.crt
-grid-proxy-init -out userproxy.crt
 """
 
-import os
 import logging
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
@@ -31,7 +18,7 @@ irodslogger = logging.getLogger('irods')
 irodslogger.setLevel(logging.INFO)
 
 NORMAL_AUTH_SCHEME = 'credentials'
-GIS_AUTH_SCHEME = 'GSI'
+GSI_AUTH_SCHEME = 'GSI'
 
 log = get_logger(__name__)
 
@@ -51,7 +38,7 @@ class IrodsPythonExt(BaseExtension):
 
             gss = kwargs.get('gss', False)
             if self.variables.get('external'):
-                if self.authscheme == GIS_AUTH_SCHEME:
+                if self.authscheme == GSI_AUTH_SCHEME:
                     gss = True
 
             admin = kwargs.get('be_admin', False)
@@ -85,9 +72,9 @@ class IrodsPythonExt(BaseExtension):
         # Identity with GSI
         elif gss:
 
-            if self.authscheme != GIS_AUTH_SCHEME:
-                log.debug("Forcing %s authscheme" % GIS_AUTH_SCHEME)
-                self.authscheme = GIS_AUTH_SCHEME
+            if self.authscheme != GSI_AUTH_SCHEME:
+                log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
+                self.authscheme = GSI_AUTH_SCHEME
 
             Certificates().globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
@@ -113,6 +100,7 @@ class IrodsPythonExt(BaseExtension):
         check_connection = True
         timeout = kwargs.get('timeout', 15.0)
         session = kwargs.get('user_session')
+        default_zone = self.variables.get('zone')
 
         if session is not None:
             # recover the serialized session
@@ -126,10 +114,10 @@ class IrodsPythonExt(BaseExtension):
                 authentication_scheme='native',
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
-                zone=self.variables.get('zone'),
+                zone=default_zone,
             )
 
-        elif self.authscheme == GIS_AUTH_SCHEME:
+        elif self.authscheme == GSI_AUTH_SCHEME:
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
@@ -144,11 +132,11 @@ class IrodsPythonExt(BaseExtension):
 
             obj = iRODSSession(
                 user=self.user,
-                zone=self.variables.get('zone'),
                 authentication_scheme=self.authscheme,
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
-                server_dn=host_dn
+                server_dn=host_dn,
+                zone=default_zone,
             )
 
             # Do not check for user if its a proxy certificate:
@@ -174,7 +162,7 @@ class IrodsPythonExt(BaseExtension):
 
         # Do a simple command to test this session
         if check_connection:
-            u = obj.users.get(self.user)
+            u = obj.users.get(self.user, user_zone=default_zone)
             log.verbose("Tested session retrieving '%s'" % u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)

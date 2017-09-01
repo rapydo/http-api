@@ -656,7 +656,7 @@ class IrodsPythonClient():
                 obj = self.prc.collections.get(path)
             else:
                 obj = self.prc.data_objects.get(path)
-                
+
             for key, value in meta.items():
                 obj.metadata.add(key, value)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
@@ -948,12 +948,25 @@ def get_and_verify_irods_session(function, parameters):
 
     try:
         obj = function(**parameters)
-        obj.prc.users.get(username)
     except iexceptions.CAT_INVALID_USER:
-        log.warning("Invalid user: %s" % username)
+        log.warning("Invalid user: %s", username)
     except iexceptions.UserDoesNotExist:
-        log.warning("Invalid iCAT user: %s" % username)
+        log.warning("Invalid iCAT user: %s", username)
     except iexceptions.CAT_INVALID_AUTHENTICATION:
-        log.warning("Invalid password for %s" % username)
+        log.warning("Invalid password for %s", username)
+    # This problem below should not happen anymore
+    # except iexceptions.MultipleResultsFound:
+    #     raise IrodsException(
+    #         "User %s belonging to multiple iRODS zones" % username)
+    except BaseException as e:
+        log.warning("Failed with unknown reason:\n[%s] \"%s\"", type(e), e)
+        error = \
+            'Failed to verify credentials against B2SAFE. ' + \
+            'Unknown error: '
+        if str(e).strip() == '':
+            error += e.__class__.__name__
+        else:
+            error *= str(e)
+        raise IrodsException(error)
 
     return obj
