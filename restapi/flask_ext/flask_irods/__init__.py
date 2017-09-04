@@ -28,7 +28,12 @@ class IrodsPythonExt(BaseExtension):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
+        external = self.variables.get('external')
+
+        # Authentication scheme fallback to default (normal basic credentials)
         self.authscheme = self.variables.get('authscheme')
+        if self.authscheme is None or self.authscheme.strip() == '':
+            self.authscheme = NORMAL_AUTH_SCHEME
 
         if session is not None:
             user = session.email
@@ -37,26 +42,41 @@ class IrodsPythonExt(BaseExtension):
             self.password = kwargs.get('password')
 
             gss = kwargs.get('gss', False)
-            if self.variables.get('external'):
-                if self.authscheme == GSI_AUTH_SCHEME:
-                    gss = True
-
-            admin = kwargs.get('be_admin', False)
             myproxy_host = self.variables.get("myproxy_host")
 
+            # To become admin is possible only if:
+            # - we are using a dockerized internal irods
+            # - the user was not specified
+            admin = kwargs.get('be_admin', False)
+
             if user is None:
-                ##################
-                # dockerized iCAT admin bypass
-                if not self.variables.get('external') and admin:
-                    # Note: 'user' is referring to the main user inside iCAT
-                    gss = True
-                    user = self.variables.get('default_admin_user')
-                ##################
-                # external b2safe/irods main user from configuration
+                user = self.variables.get('user')
+                password = self.variables.get('password')
+
+                if admin:
+                    if external:
+                        log.error(
+                            "HTTP API connected to external iRODS instances" +
+                            "must not be used with privileged user")
+                        raise ValueError('iRODS main user: misconfiguration')
+                    else:
+                        # dockerize irods uses a GSI enabled adminer
+                        user = self.variables.get('default_admin_user')
+                        self.authscheme = GSI_AUTH_SCHEME
                 else:
-                    # There must be some way to fallback here
-                    user = self.variables.get('user')
-                    self.password = self.variables.get('password')
+                    if self.authscheme == NORMAL_AUTH_SCHEME:
+                        self.password = password
+
+            log.very_verbose(
+                "Check connection parameters:" +
+                "\nexternal[%s], auth[%s], user[%s], admin[%s]",
+                external, self.authscheme, user, admin
+            )
+
+            # Check if the user requested for GSI explicitely
+            if self.authscheme == GSI_AUTH_SCHEME:
+                # if self.variables.get('external'):
+                gss = True
 
         if user is None:
             raise AttributeError("No user is defined")
@@ -91,7 +111,7 @@ class IrodsPythonExt(BaseExtension):
             self.authscheme = NORMAL_AUTH_SCHEME
         else:
             raise NotImplementedError(
-                "Unable to create file-system session: no valid options found")
+                "Unable to create session: invalid iRODS-auth scheme")
 
         return True
 

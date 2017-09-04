@@ -2,7 +2,7 @@
 
 """ base in common for our flask internal extensions """
 
-# FIXME: create a base object for flask extensions like the injector
+# TODO: we may create a base object for flask extensions like the injector
 
 import abc
 # import time
