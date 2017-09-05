@@ -9,7 +9,7 @@ from restapi import __package__ as current_package
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
-log = get_logger('COMMANDER')
+log = get_logger(__name__)
 
 
 @click.group()
@@ -219,11 +219,3 @@ def tests(wait):
     )
 
     log.info("Completed:\n%s" % output)
-
-
-# TODO: evaluate what to do with the sleep script
-# @cli.command()
-# def sleep():
-#     # put it in here?
-#     # or create a pypi package?
-#     pass
