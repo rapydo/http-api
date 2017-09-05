@@ -215,7 +215,8 @@ def tests(wait):
 
     output = bash.execute_command(
         "pyunittests",
-        parameters=parameters
+        parameters=parameters,
+        catchException=True
     )
 
     log.info("Completed:\n%s" % output)

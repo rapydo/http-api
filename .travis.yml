@@ -12,6 +12,8 @@ install:
 - scripts/clone.sh  # clone the core
 script:
 - cd core
+# disable frontend
+- "sed -i '' 's/enable: true/enable: false/' projects/*/*.yaml"
 - rapydo init && rapydo start
 - rapydo shell backend --command 'restapi tests --wait'
 - cd ..
