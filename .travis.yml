@@ -13,7 +13,7 @@ install:
 script:
 - cd core
 # disable frontend
-- "sed -i '' 's/enable: true/enable: false/' projects/*/*.yaml"
+- "sed -i 's/enable: true/enable: false/' projects/*/*.yaml" # this syntax only works in linux
 - rapydo init && rapydo start
 - rapydo shell backend --command 'restapi tests --wait'
 - cd ..
