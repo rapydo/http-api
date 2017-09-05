@@ -17,7 +17,6 @@ I didn't manage so far to have it working in the way the documentation require.
 
 """
 
-# import traceback
 from functools import wraps
 from restapi.exceptions import RestApiException
 from utilities import htmlcodes as hcodes

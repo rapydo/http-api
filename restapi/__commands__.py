@@ -123,6 +123,7 @@ def wait_socket(host, port, service_name, sleep_time=2):
 
     log.verbose("Waiting for %s" % service_name)
 
+    counter = 0
     while True:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -135,7 +136,15 @@ def wait_socket(host, port, service_name, sleep_time=2):
             log.info("Service %s is reachable" % service_name)
             break
         else:
-            log.debug("Not reachable yet: %s" % service_name)
+            counter += 1
+            if counter % 15 == 0:
+                # FIXME: also do something here if the service is external?
+                log.warning(
+                    "'%s' service looks still unavailable after %s seconds",
+                    service_name, sleep_time * counter
+                )
+            else:
+                log.debug("Not reachable yet: %s" % service_name)
             time.sleep(sleep_time)
 
 

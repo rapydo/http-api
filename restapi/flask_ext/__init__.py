@@ -142,15 +142,16 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
             retry_count += 1
             if retry_count > 1:
-                log.verbose("testing again in %s secs" % retry_interval)
+                log.verbose("testing again in %s secs", retry_interval)
 
             try:
                 obj = self.custom_connection()
             except exceptions as e:
-                raise e
-                # log.warning("Service '%s' not available", self.name)
-                # log.info("error is: %s(%s)" % (type(e), e))
-                # time.sleep(retry_interval)
+                log.error("Catched: %s(%s)", e.__class__.__name__, e)
+                # NOTE: if you critical_exit uwsgi will not show this line
+                log.critical("Service '%s' not available", self.name)
+                log.exit()
+                # raise e
             else:
                 break
 
