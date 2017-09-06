@@ -116,7 +116,7 @@ def wait():
     mywait()
 
 
-def wait_socket(host, port, service_name, sleep_time=2):
+def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
 
     import errno
     import socket
@@ -127,6 +127,11 @@ def wait_socket(host, port, service_name, sleep_time=2):
     while True:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # log.debug("Timeout before: %s", s.gettimeout())
+        s.settimeout(timeout)
+        # log.debug("Timeout after: %s", s.gettimeout())
+
         try:
             result = s.connect_ex((host, port))
         except socket.gaierror:
@@ -137,11 +142,11 @@ def wait_socket(host, port, service_name, sleep_time=2):
             break
         else:
             counter += 1
-            if counter % 15 == 0:
+            if counter % 5 == 0:
                 # FIXME: also do something here if the service is external?
                 log.warning(
                     "'%s' service looks still unavailable after %s seconds",
-                    service_name, sleep_time * counter
+                    service_name, sleep_time * timeout * counter
                 )
             else:
                 log.debug("Not reachable yet: %s" % service_name)
