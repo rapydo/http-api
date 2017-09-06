@@ -198,6 +198,7 @@ class ResponseMaker(object):
         # 2. Apply DEFAULT or CUSTOM manipulation
         # (strictly to the sole content)
         method = get_response()
+        # TODO: check why this is often called twice from flask
         log.very_verbose("Response method: %s" % method.__name__)
         r['defined_content'] = method(r['defined_content'])
 

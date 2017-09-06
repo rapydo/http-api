@@ -268,9 +268,16 @@ def catch_error(
 
             # Catch any other exception
             except Exception as e:
-                log.warning(e, exc_info=True)
+                excname = e.__class__.__name__
+                log.warning(
+                    "Catched exception:\n\n[%s] %s\n",
+                    excname, e, exc_info=True)
                 if catch_generic:
-                    return send_error(self, e)
+                    if excname in ['AttributeError', 'ValueError', 'KeyError']:
+                        error = 'Server failure; please contact admin.'
+                    else:
+                        error = e
+                    return send_error(self, error)
                 else:
                     raise e
 

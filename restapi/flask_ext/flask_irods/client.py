@@ -258,9 +258,14 @@ class IrodsPythonClient():
             raise IrodsException("Source and destination path are the same")
         except iexceptions.SAME_SRC_DEST_PATHS_ERR:
             raise IrodsException("Source and destination path are the same")
+        except iexceptions.CAT_NO_ROWS_FOUND:
+            raise IrodsException("Invalid source or destination")
         except iexceptions.CAT_NAME_EXISTS_AS_DATAOBJ:
             # raised from both collection and data objects?
             raise IrodsException("Destination path already exists")
+        except BaseException as e:
+            log.error("%s(%s)", e.__class__.__name__, e)
+            raise IrodsException("System error; failed to move.")
 
     def remove(self, path, recursive=False, force=False, resource=None):
         try:
