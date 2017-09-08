@@ -35,7 +35,8 @@ setup(
     ''' % (main_package, app),
     install_requires=[
         # Rapydo framework
-        "rapydo-utils==%s" % current_version,
+        # "rapydo-utils==%s" % current_version,
+        "rapydo-utils",
         # various utilities
         "attrs",
         "better_exceptions",
