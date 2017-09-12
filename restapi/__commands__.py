@@ -9,7 +9,8 @@ from restapi import __package__ as current_package
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
-log = get_logger('COMMANDER')
+
+log = get_logger(__name__)
 
 
 @click.group()
@@ -116,16 +117,23 @@ def wait():
     mywait()
 
 
-def wait_socket(host, port, service_name, sleep_time=2):
+
+def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
 
     import errno
     import socket
 
     log.verbose("Waiting for %s" % service_name)
 
+    counter = 0
     while True:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # log.debug("Timeout before: %s", s.gettimeout())
+        s.settimeout(timeout)
+        # log.debug("Timeout after: %s", s.gettimeout())
+
         try:
             result = s.connect_ex((host, port))
         except socket.gaierror:
@@ -135,7 +143,17 @@ def wait_socket(host, port, service_name, sleep_time=2):
             log.info("Service %s is reachable" % service_name)
             break
         else:
-            log.debug("Not reachable yet: %s" % service_name)
+
+            counter += 1
+            if counter % 5 == 0:
+                # FIXME: also do something here if the service is external?
+                log.warning(
+                    "'%s' service looks still unavailable after %s seconds",
+                    service_name, sleep_time * timeout * counter
+                )
+            else:
+                log.debug("Not reachable yet: %s" % service_name)
+
             time.sleep(sleep_time)
 
 
@@ -206,15 +224,8 @@ def tests(wait):
 
     output = bash.execute_command(
         "pyunittests",
-        parameters=parameters
+        parameters=parameters,
+        catchException=True
     )
 
     log.info("Completed:\n%s" % output)
-
-
-# TODO: evaluate what to do with the sleep script
-# @cli.command()
-# def sleep():
-#     # put it in here?
-#     # or create a pypi package?
-#     pass

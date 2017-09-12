@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-""" iRODS file-system flask connector """
-
+"""
+iRODS file-system flask connector
+"""
 import os
 import logging
 from utilities.certificates import Certificates
@@ -16,14 +17,10 @@ from restapi.flask_ext.flask_irods.client import IrodsPythonClient
 irodslogger = logging.getLogger('irods')
 irodslogger.setLevel(logging.INFO)
 
-log = get_logger(__name__)
+NORMAL_AUTH_SCHEME = 'credentials'
+GSI_AUTH_SCHEME = 'GSI'
 
-"""
-When connection errors occurs:
-irods.exception.NetworkException:
-    Could not connect to specified host and port:
-        pippodata.repo.cineca.it:1247
-"""
+log = get_logger(__name__)
 
 
 class IrodsPythonExt(BaseExtension):
@@ -31,142 +28,118 @@ class IrodsPythonExt(BaseExtension):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
+
+        external = self.variables.get('external')
+
+        # Authentication scheme fallback to default (normal basic credentials)
+        self.authscheme = self.variables.get('authscheme')
+        if self.authscheme is None or self.authscheme.strip() == '':
+            self.authscheme = NORMAL_AUTH_SCHEME
+
         if session is not None:
             user = session.email
         else:
             user = kwargs.get('user')
             self.password = kwargs.get('password')
 
-            proxy = kwargs.get('proxy', False)
-            admin = kwargs.get('be_admin', False)
+            gss = kwargs.get('gss', False)
             myproxy_host = self.variables.get("myproxy_host")
 
+            # To become admin is possible only if:
+            # - we are using a dockerized internal irods
+            # - the user was not specified
+            admin = kwargs.get('be_admin', False)
+
             if user is None:
-                if not self.variables.get('external') and admin:
-                    # Note: 'user' is referring to the main user inside iCAT
-                    user = self.variables.get('default_admin_user')
+                user = self.variables.get('user')
+                password = self.variables.get('password')
+
+                if admin:
+                    if external:
+                        log.error(
+                            "HTTP API connected to external iRODS instances" +
+                            "must not be used with privileged user")
+                        raise ValueError('iRODS main user: misconfiguration')
+                    else:
+                        # dockerize irods uses a GSI enabled adminer
+                        user = self.variables.get('default_admin_user')
+                        self.authscheme = GSI_AUTH_SCHEME
                 else:
-                    # There must be some way to fallback here
-                    user = self.variables.get('user')
-                    self.password = self.variables.get('password')
+                    if self.authscheme == NORMAL_AUTH_SCHEME:
+                        self.password = password
+
+            log.very_verbose(
+                "Check connection parameters:" +
+                "\nexternal[%s], auth[%s], user[%s], admin[%s]",
+                external, self.authscheme, user, admin
+            )
+
+            # Check if the user requested for GSI explicitely
+            if self.authscheme == GSI_AUTH_SCHEME:
+                # if self.variables.get('external'):
+                gss = True
 
         if user is None:
             raise AttributeError("No user is defined")
         else:
             self.user = user
-            log.verbose("Irods user: %s" % self.user)
-            self.schema = self.variables.get('authscheme')
+            log.debug("Irods user: %s" % self.user)
 
         ######################
-        # Irods direct credentials
+
+        # Irods/b2safe direct credentials
         if session is not None:
             return True
         ######################
-        # Normal credentials
-        elif not proxy and self.password is not None:
-            self.schema = 'credentials'
-        ######################
         # Identity with GSI
+        elif gss:
+
+            if self.authscheme != GSI_AUTH_SCHEME:
+                log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
+                self.authscheme = GSI_AUTH_SCHEME
+
+            Certificates().globus_proxy(
+                proxy_file=kwargs.get('proxy_file'),
+                user_proxy=self.user,
+                cert_dir=self.variables.get("x509_cert_dir"),
+                myproxy_host=myproxy_host,
+                cert_name=kwargs.get("proxy_cert_name"),
+                cert_pwd=kwargs.get("proxy_pass"),
+            )
+
+        ######################
+        # Normal credentials
+        elif self.password is not None:
+            self.authscheme = NORMAL_AUTH_SCHEME
         else:
+            raise NotImplementedError(
+                "Unable to create session: invalid iRODS-auth scheme")
 
-            # FIXME: move this into certificates.py?
-            cdir = Certificates._dir
-            cpath = os.path.join(cdir, self.user)
-
-            xcdir = self.variables.get("x509_cert_dir")
-            if xcdir is None:
-                os.environ['X509_CERT_DIR'] = os.path.join(cdir, 'simple_ca')
-            else:
-                os.environ['X509_CERT_DIR'] = xcdir
-
-            if os.path.isdir(cpath):
-                if proxy:
-                    # this is used by b2access in eudat
-                    proxy_file = os.path.join(cpath, 'userproxy.crt')
-                    # temporary fix
-                    os.environ['X509_USER_KEY'] = proxy_file
-                    os.environ['X509_USER_CERT'] = proxy_file
-                    # to fix: the old good way that does not work anymore
-                    # os.environ['X509_USER_PROXY'] = proxy_file
-                else:
-                    os.environ['X509_USER_KEY'] = \
-                        os.path.join(cpath, 'userkey.pem')
-                    os.environ['X509_USER_CERT'] = \
-                        os.path.join(cpath, 'usercert.pem')
-            elif myproxy_host is not None:
-                proxy_cert_file = cpath + '.pem'
-                if not os.path.isfile(proxy_cert_file):
-                    # Proxy file does not exist
-                    valid = False
-                else:
-                    valid, not_before, not_after = \
-                        Certificates.check_cert_validity(proxy_cert_file)
-                    if not valid:
-                        error = "Invalid proxy certificate for %s." % user
-                        error += " Validity: %s - %s" % (not_before, not_after)
-                        log.warning(error)
-
-                # Proxy file does not exist or expired
-                if not valid:
-                    log.warning("Creating a new proxy for %s" % user)
-                    try:
-
-                        irods_env = os.environ
-                        # cert_pwd = user_node.irods_cert
-                        cert_name = kwargs.pop("proxy_cert_name")
-                        cert_pwd = kwargs.pop("proxy_pass")
-
-                        valid = Certificates.get_myproxy_certificate(
-                            # FIXME: X509_CERT_DIR should be enough
-                            irods_env=irods_env,
-                            irods_user=user,
-                            myproxy_cert_name=cert_name,
-                            irods_cert_pwd=cert_pwd,
-                            proxy_cert_file=proxy_cert_file,
-                            myproxy_host=myproxy_host
-                        )
-
-                        if valid:
-                            log.info("Proxy refreshed for %s" % user)
-                        else:
-                            log.error("Got invalid proxy for user %s" % user)
-                    except Exception as e:
-                        log.critical("Cannot refresh proxy for user %s" % user)
-                        log.critical(e)
-
-                ##################
-                if valid:
-                    os.environ['X509_USER_KEY'] = proxy_cert_file
-                    os.environ['X509_USER_CERT'] = proxy_cert_file
-                else:
-                    log.critical("Cannot find a valid certificate file")
-                    return False
-            else:
-                raise NotImplementedError(
-                    "Unable to create session, no valid auth option found")
         return True
 
     def custom_connection(self, **kwargs):
 
         check_connection = True
-
+        timeout = kwargs.get('timeout', 15.0)
         session = kwargs.get('user_session')
+        default_zone = self.variables.get('zone')
+
         if session is not None:
             # recover the serialized session
             obj = self.deserialize(session.session)
 
-        elif self.schema == 'credentials':
+        elif self.authscheme == NORMAL_AUTH_SCHEME:
 
             obj = iRODSSession(
                 user=self.user,
                 password=self.password,
-                authentication_scheme='password',
+                authentication_scheme='native',
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
-                zone=self.variables.get('zone'),
+                zone=default_zone,
             )
 
-        else:
+        elif self.authscheme == GSI_AUTH_SCHEME:
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
@@ -181,11 +154,11 @@ class IrodsPythonExt(BaseExtension):
 
             obj = iRODSSession(
                 user=self.user,
-                zone=self.variables.get('zone'),
-                authentication_scheme=self.variables.get('authscheme'),
+                authentication_scheme=self.authscheme,
                 host=self.variables.get('host'),
                 port=self.variables.get('port'),
-                server_dn=host_dn
+                server_dn=host_dn,
+                zone=default_zone,
             )
 
             # Do not check for user if its a proxy certificate:
@@ -193,12 +166,28 @@ class IrodsPythonExt(BaseExtension):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
+        else:
+            raise NotImplementedError(
+                "Untested iRODS authentication scheme: %s" % self.authscheme)
+
+        # # set timeout on existing socket/connection
+        # with obj.pool.get_connection() as conn:
+        #     timer = conn.socket.gettimeout()
+        #     log.debug("Current timeout: %s" % timer)
+        #     conn.socket.settimeout(10.0)
+        #     timer = conn.socket.gettimeout()
+        #     log.debug("New timeout: %s" % timer)
+
+        # based on https://github.com/irods/python-irodsclient/pull/90
+        # NOTE: timeout has to be below 30s (http request timeout)
+        obj.connection_timeout = timeout
+
         # Do a simple command to test this session
         if check_connection:
-            u = obj.users.get(self.user)
+            u = obj.users.get(self.user, user_zone=default_zone)
             log.verbose("Tested session retrieving '%s'" % u.name)
 
-        client = IrodsPythonClient(rpc=obj, variables=self.variables)
+        client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
     def custom_init(self, pinit=False, **kwargs):

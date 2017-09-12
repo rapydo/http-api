@@ -163,8 +163,10 @@ def create_app(name=__name__,
 
         # AVOID warnings from Flask Injector
         warnings.filterwarnings("ignore")
+
         FlaskInjector(app=microservice, modules=modules)
 
+        # otherwise...
         # Catch warnings from Flask Injector
         # try:
         #     FlaskInjector(app=microservice, modules=modules)

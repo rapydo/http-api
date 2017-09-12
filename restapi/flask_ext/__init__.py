@@ -2,7 +2,7 @@
 
 """ base in common for our flask internal extensions """
 
-# FIXME: create a base object for flask extensions like the injector
+# TODO: we may create a base object for flask extensions like the injector
 
 import abc
 # import time
@@ -142,15 +142,16 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
             retry_count += 1
             if retry_count > 1:
-                log.verbose("testing again in %s secs" % retry_interval)
+                log.verbose("testing again in %s secs", retry_interval)
 
             try:
                 obj = self.custom_connection()
             except exceptions as e:
-                raise e
-                # log.warning("Service '%s' not available", self.name)
-                # log.info("error is: %s(%s)" % (type(e), e))
-                # time.sleep(retry_interval)
+                log.error("Catched: %s(%s)", e.__class__.__name__, e)
+                # NOTE: if you critical_exit uwsgi will not show this line
+                log.critical("Service '%s' not available", self.name)
+                log.exit()
+                # raise e
             else:
                 break
 
@@ -172,7 +173,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
         global_instance = kwargs.pop('global_instance', False)
         isauth = kwargs.pop('authenticator', False)
         # pinit = kwargs('project_initialization', False)
-        # log.print(kwargs)
 
         # Variables
         obj = None
@@ -190,7 +190,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
-            log.very_verbose("First connection for %s" % self.name)
+            log.verbose("First connection for %s" % self.name)
 
         else:
             # isauth = 'Authenticator' == self.__class__.__name__
@@ -206,8 +206,10 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 if obj is None:
                     return None
                 self.set_object(obj=obj, ref=ref, key=unique_hash)
+            else:
+                pass
 
-            log.verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
+            log.very_verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
 
         obj = self.set_models_to_service(obj)
 

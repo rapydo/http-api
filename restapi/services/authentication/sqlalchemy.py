@@ -310,12 +310,10 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return
 
-    # FIXME: to be cached
     def oauth_from_local(self, internal_user):
         accounts = self.db.ExternalAccounts
-        external_user = accounts.query.filter(
+        return accounts.query.filter(
             accounts.main_user.has(id=internal_user.id)).first()
-        return internal_user, external_user
 
     def irods_user(self, username, session):
 
@@ -326,8 +324,8 @@ class Authentication(BaseAuthentication):
         )
         # add role
         user.roles.append(
-            self.db.Role.query.filter_by(
-                name=self.default_role).first())
+            self.db.Role.query.filter_by(name=self.default_role).first())
+
         # save
         self.db.session.add(user)
         from sqlalchemy.exc import IntegrityError
@@ -335,10 +333,14 @@ class Authentication(BaseAuthentication):
             self.db.session.commit()
             log.info('Cached iRODS user: %s' % username)
         except IntegrityError:
+            # rollback current commit
             self.db.session.rollback()
-            # simply skip?
             log.warning("iRODS user already cached: %s" % username)
+            # get the existing object
             user = self.get_user_object(username)
+            # update only the session field
+            user.session = session
+
         # token
         token, jti = self.create_token(self.fill_payload(user))
         now = datetime.now(pytz.utc)
@@ -349,4 +351,5 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         self.save_token(user, token, jti)
 
-        return token
+        return token, username
+

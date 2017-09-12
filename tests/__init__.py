@@ -79,6 +79,11 @@ class RestTestsBase(unittest.TestCase):
         log.debug('### Tearing down the Flask server ###')
         del self.app
 
+    def get_service_handler(self, service_name):
+        from restapi.services.detect import detector
+        ExtClass = detector.services_classes.get(service_name)
+        return ExtClass().get_instance()
+
     def get_content(self, response):
         content, err, meta, code = get_content_from_response(response)
 

@@ -6,8 +6,20 @@ from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
-Allow to manipulate irods session as a string,
+Manipulate irods session as a string,
 to be saved inside a database.
+
+===
+
+NOTE: an alternative would have been to use dill instead of pickle,
+# import dill as pickle
+but suddenly it stopped working
+
+sess = iRODSSession(...)
+dill.dumps(sess)
+
+TypeError: Cannot serialize socket object
+(which is located in list(sess.pool.idle)[0].socket )
 """
 
 
@@ -19,6 +31,7 @@ class iRODSPickleSession(iRODSSession):
             obj = getattr(self, attr)
             if attr == 'pool':
                 attrs['account'] = obj.account
+                # attrs['timeout'] = obj.timeout
             else:
                 attrs[attr] = obj
 
@@ -30,7 +43,7 @@ class iRODSPickleSession(iRODSSession):
             # print(name, value)
             setattr(self, name, value)
 
-        self.pool = Pool(state.get('account'))
+        self.pool = Pool(state.get('account'))  # , state.get('timeout'))
 
     def serialize(self):
         """Returns a byte serialized string from the current session"""
