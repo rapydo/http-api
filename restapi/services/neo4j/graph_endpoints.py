@@ -121,13 +121,13 @@ def graph_transactions(func):
         try:
             from neomodel import db as transaction
 
-            log.verbose("Neomodel transaction BEGIN")
             transaction.begin()
+            log.verbose("Neomodel transaction BEGIN")
 
             out = func(self, *args, **kwargs)
 
-            log.verbose("Neomodel transaction COMMIT")
             transaction.commit()
+            log.verbose("Neomodel transaction COMMIT")
 
             return out
         except Exception as e:
