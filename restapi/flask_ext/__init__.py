@@ -35,7 +35,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
         log.very_verbose("Opening service instance of %s" % self.name)
 
     @classmethod
-    def set_models(cls, base_models={}, custom_models={}):
+    def set_models(cls, base_models, custom_models):
 
         # Join models as described by issue #16
         cls.models = base_models

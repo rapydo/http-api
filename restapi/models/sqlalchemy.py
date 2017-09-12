@@ -73,8 +73,8 @@ class ExternalAccounts(db.Model):
     proxyfile = db.Column(db.Text())
     description = db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-# Note: for pre-production release
-# we allow only one external account per local user
+    # Note: for pre-production release
+    # we allow only one external account per local user
     main_user = db.relationship(
         'User', backref=db.backref('authorization', lazy='dynamic'))
 

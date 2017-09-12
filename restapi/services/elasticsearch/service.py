@@ -56,7 +56,7 @@ class BeElastic(ServiceObject):
 
         return str(OrderedDict(sorted(mydict.items())))
 
-    def get_or_create(self, DocumentClass, args={}, forced_id=None):
+    def get_or_create(self, DocumentClass, args, forced_id=None):
         """
         Inspired by `neomodel` function get_or_create
         I want to send args which will create the document inside the index
@@ -165,9 +165,9 @@ class BeElastic(ServiceObject):
         mapping = DocumentClass._doc_type.mapping.to_dict()[doc_name]
         return list(mapping['properties'].keys())
 
-    def search_multifields(self, DocumentClass, keyword, fields=[]):
+    def search_multifields(self, DocumentClass, keyword, fields=None):
 
-        if len(fields) < 1:
+        if fields is None or len(fields) < 1:
             fields = self.get_fields_from_doc(DocumentClass)
 
         output = []
@@ -276,7 +276,7 @@ class ElasticFarm(ServiceFarm):
             # # model_obj._doc_type.refresh()
 
     @classmethod
-    def get_instance(cls, models2skip=[], use_models=True, force=False):
+    def get_instance(cls, models2skip=None, use_models=True, force=False):
 
         if ElasticFarm._instance is None or force:
 
@@ -288,6 +288,9 @@ class ElasticFarm(ServiceFarm):
                 cls.init_models(cls.load_models())
 
                 # Remove the ones which developers do not want
+                if models2skip is None:
+                    models2skip = []
+
                 models = set(list(cls._models.values())) - set(models2skip)
                 ElasticFarm._instance.inject_models(models)
 

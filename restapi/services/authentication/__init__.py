@@ -457,7 +457,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Create Users #
     # ################
     # @abc.abstractmethod
-    def create_user(self, userdata, roles=[]):
+    def create_user(self, userdata, roles):
         """
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role

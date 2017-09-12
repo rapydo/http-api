@@ -251,19 +251,19 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
-    def method_not_allowed(self, methods=['GET']):
-        # FIXME: is it used?
+    # def method_not_allowed(self, methods=['GET']):
+    #     # FIXME: is it used?
 
-        methods.append('HEAD')
-        methods.append('OPTIONS')
-        methods_string = ""
-        for method in methods:
-            methods_string += method + ', '
+    #     methods.append('HEAD')
+    #     methods.append('OPTIONS')
+    #     methods_string = ""
+    #     for method in methods:
+    #         methods_string += method + ', '
 
-        return self.force_response(
-            headers={'ALLOW': methods_string.strip(', ')},
-            errors='The method is not allowed for the requested URL.',
-            code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
+    #     return self.force_response(
+    #         headers={'ALLOW': methods_string.strip(', ')},
+    #         errors='The method is not allowed for the requested URL.',
+    #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
     def force_response(self, *args, **kwargs):
         """
@@ -431,7 +431,8 @@ class EndpointResource(Resource):
         return json_data
 
     def getJsonResponse(self, instance,
-                        fields=[], resource_type=None, skip_missing_ids=False,
+                        fields=None, resource_type=None,
+                        skip_missing_ids=False,
                         view_public_only=False,
                         relationship_depth=0, max_relationship_depth=1):
         """
@@ -474,6 +475,8 @@ class EndpointResource(Resource):
             data["links"] = {"self": self_uri}
 
         # Attributes
+        if fields is None:
+            fields = []
         if len(fields) < 1:
 
             function_name = 'show_fields'
@@ -489,7 +492,8 @@ class EndpointResource(Resource):
                     field_name = '_fields_to_show'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models" % field_name)
+                    log.warning(
+                        "Obsolete use of %s into models" % field_name)
                     fields = getattr(instance, field_name)
 
         for key in fields:
@@ -505,7 +509,8 @@ class EndpointResource(Resource):
                 if attribute is None:
                     data["attributes"][key] = ""
                 elif isinstance(attribute, datetime):
-                    dval = self.string_from_timestamp(attribute.strftime('%s'))
+                    dval = self.string_from_timestamp(
+                        attribute.strftime('%s'))
                     data["attributes"][key] = dval
                 else:
                     data["attributes"][key] = attribute

@@ -60,7 +60,7 @@ class Authentication(BaseAuthentication):
         return payload
 
     # Also used by POST user
-    def create_user(self, userdata, roles=[]):
+    def create_user(self, userdata, roles):
 
         user_node = self.db.User(**userdata)
         try:
