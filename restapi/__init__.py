@@ -10,6 +10,7 @@ FRAMEWORK_PREFIX = FRAMEWORK_NAME.lower() + '-'
 # detect if the developer is asking for help/usage on the cli command
 # 1. if using the help option
 # 2. if giving no commands
+
 # 3. watch out when the only arg is uwsgi
 
 if '--help' in sys.argv:

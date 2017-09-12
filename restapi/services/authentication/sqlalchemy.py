@@ -352,3 +352,4 @@ class Authentication(BaseAuthentication):
         self.save_token(user, token, jti)
 
         return token, username
+

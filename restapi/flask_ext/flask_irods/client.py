@@ -953,6 +953,7 @@ def get_and_verify_irods_session(function, parameters):
 
     try:
         obj = function(**parameters)
+
     except iexceptions.CAT_INVALID_USER:
         log.warning("Invalid user: %s", username)
     except iexceptions.UserDoesNotExist:

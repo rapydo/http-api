@@ -3,7 +3,7 @@
 """
 iRODS file-system flask connector
 """
-
+import os
 import logging
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
@@ -28,6 +28,7 @@ class IrodsPythonExt(BaseExtension):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
+
         external = self.variables.get('external')
 
         # Authentication scheme fallback to default (normal basic credentials)
@@ -85,6 +86,7 @@ class IrodsPythonExt(BaseExtension):
             log.debug("Irods user: %s" % self.user)
 
         ######################
+
         # Irods/b2safe direct credentials
         if session is not None:
             return True

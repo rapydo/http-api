@@ -9,6 +9,7 @@ from restapi import __package__ as current_package
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
+
 log = get_logger(__name__)
 
 
@@ -116,6 +117,7 @@ def wait():
     mywait()
 
 
+
 def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
 
     import errno
@@ -141,6 +143,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             log.info("Service %s is reachable" % service_name)
             break
         else:
+
             counter += 1
             if counter % 5 == 0:
                 # FIXME: also do something here if the service is external?
@@ -150,6 +153,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
                 )
             else:
                 log.debug("Not reachable yet: %s" % service_name)
+
             time.sleep(sleep_time)
 
 
