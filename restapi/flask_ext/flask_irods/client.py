@@ -258,9 +258,14 @@ class IrodsPythonClient():
             raise IrodsException("Source and destination path are the same")
         except iexceptions.SAME_SRC_DEST_PATHS_ERR:
             raise IrodsException("Source and destination path are the same")
+        except iexceptions.CAT_NO_ROWS_FOUND:
+            raise IrodsException("Invalid source or destination")
         except iexceptions.CAT_NAME_EXISTS_AS_DATAOBJ:
             # raised from both collection and data objects?
             raise IrodsException("Destination path already exists")
+        except BaseException as e:
+            log.error("%s(%s)", e.__class__.__name__, e)
+            raise IrodsException("System error; failed to move.")
 
     def remove(self, path, recursive=False, force=False, resource=None):
         try:
@@ -628,7 +633,10 @@ class IrodsPythonClient():
     def get_metadata(self, path):
 
         try:
-            obj = self.prc.data_objects.get(path)
+            if (self.is_collection(path)):
+                obj = self.prc.collections.get(path)
+            else:
+                obj = self.prc.data_objects.get(path)
 
             data = {}
             units = {}
@@ -649,7 +657,11 @@ class IrodsPythonClient():
     # We may need this for testing the get_metadata
     def set_metadata(self, path, **meta):
         try:
-            obj = self.prc.data_objects.get(path)
+            if (self.is_collection(path)):
+                obj = self.prc.collections.get(path)
+            else:
+                obj = self.prc.data_objects.get(path)
+
             for key, value in meta.items():
                 obj.metadata.add(key, value)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
@@ -941,12 +953,26 @@ def get_and_verify_irods_session(function, parameters):
 
     try:
         obj = function(**parameters)
-        obj.prc.users.get(username)
+
     except iexceptions.CAT_INVALID_USER:
-        log.warning("Invalid user: %s" % username)
+        log.warning("Invalid user: %s", username)
     except iexceptions.UserDoesNotExist:
-        log.warning("Invalid iCAT user: %s" % username)
+        log.warning("Invalid iCAT user: %s", username)
     except iexceptions.CAT_INVALID_AUTHENTICATION:
-        log.warning("Invalid password for %s" % username)
+        log.warning("Invalid password for %s", username)
+    # This problem below should not happen anymore
+    # except iexceptions.MultipleResultsFound:
+    #     raise IrodsException(
+    #         "User %s belonging to multiple iRODS zones" % username)
+    except BaseException as e:
+        log.warning("Failed with unknown reason:\n[%s] \"%s\"", type(e), e)
+        error = \
+            'Failed to verify credentials against B2SAFE. ' + \
+            'Unknown error: '
+        if str(e).strip() == '':
+            error += e.__class__.__name__
+        else:
+            error *= str(e)
+        raise IrodsException(error)
 
     return obj

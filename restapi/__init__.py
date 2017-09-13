@@ -12,22 +12,9 @@ FRAMEWORK_PREFIX = FRAMEWORK_NAME.lower() + '-'
 # 2. if giving no commands
 # 3. watch out when the only arg is uwsgi
 
-# FLASK_HELP = \
-#     '--help' in sys.argv \
-#     or len(sys.argv) < 2
-
-# if '--help' in sys.argv:
-#     FLASK_HELP = True
-# elif len(sys.argv) > 1:
-#     FLASK_HELP = False
-# elif len(sys.argv) == 1 and sys.argv[0].endswith('uwsgi'):
-#     FLASK_HELP = False
-# else:
-#     FLASK_HELP = True
-
 if '--help' in sys.argv:
     FLASK_HELP = True
-elif len(sys.argv) >= 2:
+elif len(sys.argv) > 1:
     FLASK_HELP = False
 elif len(sys.argv) == 1 and sys.argv[0].endswith('uwsgi'):
     FLASK_HELP = False

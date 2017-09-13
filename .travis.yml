@@ -11,6 +11,13 @@ services:
 # # - PROJECT=celerytest
 # # - PROJECT=irodstest
 
+
+# 0.5.4 introduced this and at the moment is not longer performed:
+#####################
+# disable frontend
+# - "sed -i 's/enable: true/enable: false/' projects/*/*.yaml" # this syntax only works in linux
+# - head -n 15 projects/template/confs/debug.yml > tmp.yml && cp tmp.yml projects/template/confs/debug.yml
+#####################
 jobs:
   include:
     - stage: backend-test

@@ -23,7 +23,6 @@ TOKEN=$(http POST localhost:8080/auth/b2safeproxy \
 
 http localhost:8080/auth/b2safeproxy Authorization:"Bearer $TOKEN"
 
-#############
 NOTE: an alternative would have been to use dill instead of pickle,
 # import dill as pickle
 but suddenly it stopped working
