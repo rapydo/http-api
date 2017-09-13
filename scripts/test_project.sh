@@ -32,7 +32,7 @@ if [ "$TRAVIS_BRANCH" != "master" ]; then
     git checkout $TRAVIS_BRANCH
 fi
 
-rapydo --project ${PROJECT} --no-bower init
+rapydo --project ${PROJECT} --skip-bower init
 rapydo --project ${PROJECT} start
 docker ps -a
 # sleep 30
