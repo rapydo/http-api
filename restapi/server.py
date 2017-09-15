@@ -6,7 +6,6 @@ We create all the internal flask components here.
 """
 
 import warnings
-import better_exceptions as be
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from werkzeug.contrib.fixers import ProxyFix
@@ -233,7 +232,5 @@ def create_app(name=__name__,
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
-    # activate better loggings
-    be
     # return our flask app
     return microservice

@@ -3,6 +3,7 @@
 import os
 import time
 import click
+import better_exceptions as be
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
 from restapi import __package__ as current_package
@@ -198,10 +199,13 @@ def clean():
     '--wait/--no-wait', default=False, help='Wait for startup to finish')
 def tests(wait):
     """Compute tests and coverage"""
+
     if wait:
         while starting_up():
             log.debug('Waiting service startup')
             time.sleep(5)
+
+    log.debug("Starting unit tests: %s", be)
 
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
