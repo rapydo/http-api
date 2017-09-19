@@ -45,8 +45,8 @@ rapydo --project ${PROJECT} clean
 aws configure set aws_access_key_id $S3_USER 
 aws configure set aws_secret_access_key $S3_PWD
 
-aws --endpoint-url http://130.186.13.129:4321 s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
+aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 
-aws --endpoint-url http://130.186.13.129:4321 s3 sync ../covs s3://http-api-${TRAVIS_BUILD_ID}
+aws --endpoint-url $S3_HOST s3 sync ../covs s3://http-api-${TRAVIS_BUILD_ID}
 
 cd -
