@@ -1,6 +1,36 @@
+#!/bin/bash
+set -e
+
+rapydodir="core"
 
 # install requirements in listed order
 ./dev-requirements.py
+
+echo "Current branch: $TRAVIS_BRANCH"
+
+export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
+echo "Current version: $CURRENT_VERSION"
+
+if [ -z $PROJECT ]; then
+    echo "Missing the current testing project"
+    exit 1
+fi
+
+if [ ! -d "$rapydodir" ]; then
+    git clone https://github.com/rapydo/$rapydodir.git
+fi
+cd $rapydodir && mkdir -p data
+
+chmod -R o+Xw projects
+# echo "checking permissions:"
+# ls -ld projects/$CORE_PROJECT/
+
+if [ "$TRAVIS_BRANCH" != "master" ]; then
+    echo "checkout $TRAVIS_BRANCH"
+    git checkout $TRAVIS_BRANCH
+fi
+
+# UP TO HERE THE SCRIPT IS MORE OR LESS A COPY OF test_project.sh
 
 mkdir covs
 
@@ -13,6 +43,7 @@ cd covs
 ls .coverage*
 
 coverage combine
+
 rapydo --services backend --project template build
 docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
 

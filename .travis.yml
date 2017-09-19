@@ -22,14 +22,25 @@ jobs:
   include:
     - stage: backend-test
       script: scripts/test_project.sh neo
-      env:
+      env: # Just added to show the PROJECT in the travis interface...
         - PROJECT=neo
+
     - script: scripts/test_project.sh sql
-      env:
+      env: # Just added to show the PROJECT in the travis interface...
         - PROJECT=sql
-    # - script: scripts/test_project.sh mongo
-    # - script: scripts/test_project.sh celerytest
-    # - script: scripts/test_project.sh irodstest
+
+    - script: scripts/test_project.sh mongo
+      env: # Just added to show the PROJECT in the travis interface...
+        - PROJECT=mongo
+
+    - script: scripts/test_project.sh celerytest
+      env: # Just added to show the PROJECT in the travis interface...
+        - PROJECT=celerytest
+
+    - script: scripts/test_project.sh irodstest
+      env: # Just added to show the PROJECT in the travis interface...
+        - PROJECT=irodstest
+
     - stage: coverage
       script: scripts/coverage.sh
     - stage: deploy

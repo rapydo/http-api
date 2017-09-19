@@ -2,7 +2,7 @@
 set -e
 
 rapydodir="core"
-PROJECT=$1
+# PROJECT=$1
 
 # install requirements in listed order
 ./dev-requirements.py
