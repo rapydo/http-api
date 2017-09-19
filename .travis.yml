@@ -22,7 +22,11 @@ jobs:
   include:
     - stage: backend-test
       script: scripts/test_project.sh neo
+      env:
+        - PROJECT=neo
     - script: scripts/test_project.sh sql
+      env:
+        - PROJECT=sql
     # - script: scripts/test_project.sh mongo
     # - script: scripts/test_project.sh celerytest
     # - script: scripts/test_project.sh irodstest

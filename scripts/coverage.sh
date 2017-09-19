@@ -1,4 +1,7 @@
 
+# install requirements in listed order
+./dev-requirements.py
+
 mkdir covs
 
 aws configure set aws_access_key_id $S3_USER 
@@ -10,5 +13,6 @@ cd covs
 ls .coverage*
 
 coverage combine
+rapydo --services backend --project template build
 docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
 
