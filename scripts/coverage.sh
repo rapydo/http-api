@@ -11,19 +11,10 @@ echo "Current branch: $TRAVIS_BRANCH"
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
 echo "Current version: $CURRENT_VERSION"
 
-if [ -z $PROJECT ]; then
-    echo "Missing the current testing project"
-    exit 1
-fi
-
 if [ ! -d "$rapydodir" ]; then
     git clone https://github.com/rapydo/$rapydodir.git
 fi
 cd $rapydodir && mkdir -p data
-
-chmod -R o+Xw projects
-# echo "checking permissions:"
-# ls -ld projects/$CORE_PROJECT/
 
 if [ "$TRAVIS_BRANCH" != "master" ]; then
     echo "checkout $TRAVIS_BRANCH"
