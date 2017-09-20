@@ -21,28 +21,28 @@ services:
 jobs:
   include:
     - stage: backend-test
-      script: scripts/test_and_coverage.sh.sh
+      script: scripts/test_and_coverage.sh
       env:
         - PROJECT=neo
 
-    - script: scripts/test_and_coverage.sh.sh
+    - script: scripts/test_and_coverage.sh
       env:
         - PROJECT=sql
 
-    - script: scripts/test_and_coverage.sh.sh
+    - script: scripts/test_and_coverage.sh
       env:
         - PROJECT=mongo
 
-    # - script: scripts/test_and_coverage.sh.sh
+    # - script: scripts/test_and_coverage.sh
     #   env:
     #     - PROJECT=celerytest
 
-    # - script: scripts/test_and_coverage.sh.sh
+    # - script: scripts/test_and_coverage.sh
     #   env:
     #     - PROJECT=irodstest
 
     - stage: coverage
-      script: scripts/test_and_coverage.sh.sh
+      script: scripts/test_and_coverage.sh
       env:
         - PROJECT=COVERAGE
 
