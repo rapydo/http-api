@@ -73,6 +73,10 @@ else
 
 	# Build the backend image and execute coveralls
 	rapydo --services backend --project ${PROJECT} build
+
+	pwd
+	ls
+	cat .coveralls.yml
 	docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
 
 
