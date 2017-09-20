@@ -20,8 +20,17 @@ services:
 #####################
 jobs:
   include:
+    # Note: projects are more or less sorted by average duration DESC
     - stage: backend-test
       script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=irodstest
+
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=celerytest
+
+    - script: scripts/test_and_coverage.sh
       env:
         - PROJECT=neo
 
@@ -32,14 +41,6 @@ jobs:
     - script: scripts/test_and_coverage.sh
       env:
         - PROJECT=mongo
-
-    - script: scripts/test_and_coverage.sh
-      env:
-        - PROJECT=celerytest
-
-    - script: scripts/test_and_coverage.sh
-      env:
-        - PROJECT=irodstest
 
     - stage: coverage
       script: scripts/test_and_coverage.sh
