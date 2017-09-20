@@ -21,28 +21,31 @@ services:
 jobs:
   include:
     - stage: backend-test
-      script: scripts/test_project.sh neo
-      env: # Just added to show the PROJECT in the travis interface...
+      script: scripts/test_and_coverage.sh.sh
+      env:
         - PROJECT=neo
 
-    - script: scripts/test_project.sh sql
-      env: # Just added to show the PROJECT in the travis interface...
+    - script: scripts/test_and_coverage.sh.sh
+      env:
         - PROJECT=sql
 
-    - script: scripts/test_project.sh mongo
-      env: # Just added to show the PROJECT in the travis interface...
+    - script: scripts/test_and_coverage.sh.sh
+      env:
         - PROJECT=mongo
 
-    # - script: scripts/test_project.sh celerytest
-    #   env: # Just added to show the PROJECT in the travis interface...
+    # - script: scripts/test_and_coverage.sh.sh
+    #   env:
     #     - PROJECT=celerytest
 
-    # - script: scripts/test_project.sh irodstest
-    #   env: # Just added to show the PROJECT in the travis interface...
+    # - script: scripts/test_and_coverage.sh.sh
+    #   env:
     #     - PROJECT=irodstest
 
     - stage: coverage
-      script: scripts/coverage.sh
+      script: scripts/test_and_coverage.sh.sh
+      env:
+        - PROJECT=COVERAGE
+
     - stage: deploy
       script: skip
       deploy:
