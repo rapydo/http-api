@@ -93,4 +93,5 @@ else
 
 fi
 
+cd $CORE_DIR
 rapydo --project template clean
