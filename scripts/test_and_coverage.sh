@@ -53,7 +53,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
-	PROJECT = "template"
+	PROJECT="template"
 
 	rapydo --project ${PROJECT} init --skip-bower 
 
