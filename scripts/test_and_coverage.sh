@@ -54,6 +54,10 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	rapydo --project ${PROJECT} init --skip-bower 
 	rapydo --project ${PROJECT} start
 	docker ps -a
+	sleep 40
+	docker ps -a
+	docker logs ${PROJECT}_celery_1
+	docker logs ${PROJECT}_backend_1
 
 	# Test API and calculate coverage
 	rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'

@@ -37,9 +37,9 @@ jobs:
       env:
         - PROJECT=celerytest
 
-    # - script: scripts/test_and_coverage.sh
-    #   env:
-    #     - PROJECT=irodstest
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=irodstest
 
     - stage: coverage
       script: scripts/test_and_coverage.sh
