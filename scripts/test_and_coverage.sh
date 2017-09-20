@@ -62,7 +62,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker logs ${PROJECT}_backend_1
 
 	# Test API and calculate coverage
-	rapydo --project ${PROJECT} shell backend --command 'restapi tests --wait --core'
+	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
 
 	# Sync the coverage file to S3, to be available for the next stage
 	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
