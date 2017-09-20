@@ -56,7 +56,9 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker ps -a
 	sleep 40
 	docker ps -a
-	docker logs ${PROJECT}_celery_1
+	if [ "$PROJECT" = "celerytest" ]; then
+		docker logs ${PROJECT}_celery_1
+	fi
 	docker logs ${PROJECT}_backend_1
 
 	# Test API and calculate coverage
