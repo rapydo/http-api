@@ -153,10 +153,9 @@ class Detector(object):
 
             name, _ = self.prefix_name(service)
 
-            if self.available_services.get(name):
-                log.very_verbose("Looking for class %s" % name)
-            else:
+            if not self.available_services.get(name):
                 continue
+            log.very_verbose("Looking for class %s" % name)
 
             variables = service.get('variables')
             ext_name = service.get('class')

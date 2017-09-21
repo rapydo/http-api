@@ -334,7 +334,26 @@ class BeSwagger(object):
             output['info']['title'] = proj['title']
 
         ###################
-        output['definitions'] = self.read_definitions()
+        models = self.get_models()
+        self._fdp = models.pop('FormDataParameters', {})
+
+        key_found = False
+        for k in ["definitions", "parameters", "responses"]:
+            if k in models:
+                output[k] = models.get(k, {})
+                key_found = True
+
+        #####################################################
+        # I added this for back-compatibility on 21/09/2017.
+        # Please remove me in the future
+        if not key_found:
+            log.warning(
+                "Your swagger model file is obsolete, " +
+                "please add *definitions* key")
+            log.info("Follow issue #59 for details")
+            output['definitions'] = models
+        #####################################################
+
         output['consumes'] = [JSON_APPLICATION]
         output['produces'] = [JSON_APPLICATION]
 
@@ -365,8 +384,8 @@ class BeSwagger(object):
         self._customizer._original_paths = self._original_paths
         return output
 
-    def read_definitions(self):
-        """ Read definitions from base/custom yaml files """
+    def get_models(self):
+        """ Read models from base/custom yaml files """
 
         filename = SWAGGER_MODELS_FILE
 
@@ -378,16 +397,7 @@ class BeSwagger(object):
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
         override = load_yaml_file(filename, path=path, skip_error=True)
 
-        # They may override existing ones
-        # if override is not None and isinstance(override, dict):
-        #     for key, value in override.items():
-        #         data[key] = value
-
-        data = mix(data, override)
-
-        self._fdp = data.pop('FormDataParameters', [])
-
-        return data
+        return mix(data, override)
 
     def validation(self, swag_dict):
         """
