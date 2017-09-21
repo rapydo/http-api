@@ -420,6 +420,42 @@ class EndpointResource(Resource):
 
         return json_data
 
+    def get_show_fields(
+        self, obj, function_name, view_public_only, fields=None):
+
+        if fields is None:
+            fields = []
+        if len(fields) < 1:
+            if hasattr(obj, function_name):
+                fn = getattr(obj, function_name)
+                fields = fn(view_public_only=view_public_only)
+
+        verify_attribute = hasattr
+        if isinstance(obj, dict):
+            verify_attribute = dict.get
+
+        attributes = {}
+        for key in fields:
+            if verify_attribute(obj, key):
+                get_attribute = getattr
+                if isinstance(obj, dict):
+                    get_attribute = dict.get
+
+                attribute = get_attribute(obj, key)
+                # datetime is not json serializable,
+                # converting it to string
+                # FIXME: use flask.jsonify
+                if attribute is None:
+                    attributes[key] = ""
+                elif isinstance(attribute, datetime):
+                    dval = self.string_from_timestamp(
+                        attribute.strftime('%s'))
+                    attributes[key] = dval
+                else:
+                    attributes[key] = attribute
+
+        return attributes
+
     def getJsonResponse(self, instance,
                         fields=None, resource_type=None,
                         skip_missing_ids=False,
@@ -464,46 +500,8 @@ class EndpointResource(Resource):
                 self_uri += '/' + id
             data["links"] = {"self": self_uri}
 
-        # Attributes
-        if fields is None:
-            fields = []
-        if len(fields) < 1:
-
-            function_name = 'show_fields'
-            if hasattr(instance, function_name):
-                fn = getattr(instance, function_name)
-                fields = fn(view_public_only=view_public_only)
-
-            else:
-
-                if view_public_only:
-                    field_name = '_public_fields_to_show'
-                else:
-                    field_name = '_fields_to_show'
-
-                if hasattr(instance, field_name):
-                    log.warning(
-                        "Obsolete use of %s into models" % field_name)
-                    fields = getattr(instance, field_name)
-
-        for key in fields:
-            if verify_attribute(instance, key):
-                get_attribute = getattr
-                if isinstance(instance, dict):
-                    get_attribute = dict.get
-
-                attribute = get_attribute(instance, key)
-                # datetime is not json serializable,
-                # converting it to string
-                # FIXME: use flask.jsonify
-                if attribute is None:
-                    data["attributes"][key] = ""
-                elif isinstance(attribute, datetime):
-                    dval = self.string_from_timestamp(
-                        attribute.strftime('%s'))
-                    data["attributes"][key] = dval
-                else:
-                    data["attributes"][key] = attribute
+        data["attributes"] = self.get_show_fields(
+            instance, 'show_fields', view_public_only, fields)
 
         # Relationships
         if relationship_depth < max_relationship_depth:
@@ -531,14 +529,35 @@ class EndpointResource(Resource):
                 # log.debug("Investigate relationship %s" % relationship)
 
                 if hasattr(instance, relationship):
-                    for node in getattr(instance, relationship).all():
-                        subrelationship.append(
-                            self.getJsonResponse(
-                                node,
-                                view_public_only=view_public_only,
-                                skip_missing_ids=skip_missing_ids,
-                                relationship_depth=relationship_depth + 1,
-                                max_relationship_depth=max_relationship_depth))
+                    rel = getattr(instance, relationship)
+                    for node in rel.all():
+                        subnode = self.getJsonResponse(
+                            node,
+                            view_public_only=view_public_only,
+                            skip_missing_ids=skip_missing_ids,
+                            relationship_depth=relationship_depth + 1,
+                            max_relationship_depth=max_relationship_depth)
+
+                        # Verify if instance and node are linked by a
+                        # relationship with a custom model with fields flagged
+                        # as show=True. In this case, append relationship
+                        # properties to the attribute model of the node
+                        r = rel.relationship(node)
+                        attrs = self.get_show_fields(
+                            r, 'show_fields', view_public_only)
+
+                        for k in attrs:
+                            if k in subnode['attributes']:
+                                log.warning(
+                                    "Name collision %s" % k +
+                                    " on node %s" % subnode +
+                                    " from both model %s" % type(node) +
+                                    " and property model %s" % type(r)
+                                )
+                            subnode['attributes'][k] = attrs[k]
+
+                        # subnode['attributes']['pippo'] = 'boh'
+                        subrelationship.append(subnode)
 
                 linked[relationship] = subrelationship
 
