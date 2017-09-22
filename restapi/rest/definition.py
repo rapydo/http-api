@@ -452,6 +452,21 @@ class EndpointResource(Resource):
                         attribute.strftime('%s'))
                     attributes[key] = dval
                 else:
+
+                    # Based on neomodel choices:
+                    # http://neomodel.readthedocs.io/en/latest/properties.html#choices
+                    choice_function = "get_%s_display" % key
+                    if hasattr(obj, choice_function):
+                        fn = getattr(obj, choice_function)
+                        description = fn()
+
+                        # For back-compatibility if key and value matches
+                        # we only save the key
+                        if attribute != description:
+                            attribute = {
+                                "key": attribute,
+                                "description": description
+                            }
                     attributes[key] = attribute
 
         return attributes
