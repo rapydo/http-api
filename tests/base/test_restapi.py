@@ -229,7 +229,7 @@ class TestApp():
         assert len(content) >= num_tokens
 
         # save the second token to be used for further tests
-        self.save("token_id", str(content.pop(0)["id"]))
+        self.save("token_id", str(content.pop(1)["id"]))
 
         # TEST GET SINGLE TOKEN
         endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
