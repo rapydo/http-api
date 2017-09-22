@@ -5,6 +5,7 @@
 # TODO: we may create a base object for flask extensions like the injector
 
 import abc
+from datetime import datetime, timedelta
 # import time
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
@@ -112,6 +113,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
         # AFTER
         self.post_connection(obj, **kwargs)
+
+        obj.connection_time = datetime.now()
         return obj
 
     def set_models_to_service(self, obj):
@@ -172,6 +175,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
         # Parameters
         global_instance = kwargs.pop('global_instance', False)
         isauth = kwargs.pop('authenticator', False)
+        cache_expiration = kwargs.pop('cache_expiration', None)
         # pinit = kwargs('project_initialization', False)
 
         # Variables
@@ -200,6 +204,16 @@ class BaseExtension(metaclass=abc.ABCMeta):
                     ref = ctx
 
                 obj = self.get_object(ref=ref, key=unique_hash)
+
+            if obj is not None and cache_expiration is not None:
+                now = datetime.now()
+                exp = timedelta(seconds=cache_expiration)
+
+                if now < obj.connection_time + exp:
+                    log.very_verbose("Cache still fresh for %s" % (self))
+                else:
+                    log.warning("Cache expired for %s" % (self))
+                    obj = None
 
             if obj is None:
                 obj = self.connect(**kwargs)
@@ -253,9 +267,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 they get activated by specific flask cli commands
 
         """
-        return self.get_instance(
-            # project_initialization=pinit
-        )
+        return self.get_instance()
 
 
 class BaseInjector(Module):

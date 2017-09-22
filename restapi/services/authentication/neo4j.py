@@ -62,6 +62,12 @@ class Authentication(BaseAuthentication):
     # Also used by POST user
     def create_user(self, userdata, roles):
 
+        if "authmethod" not in userdata:
+            userdata["authmethod"] = "credentials"
+
+        if "password" in userdata:
+            userdata["password"] = self.hash_password(userdata["password"])
+
         user_node = self.db.User(**userdata)
         try:
             user_node.save()
@@ -119,10 +125,11 @@ class Authentication(BaseAuthentication):
             self.create_user({
                 # 'uuid': getUUID(),
                 'email': self.default_user,
-                'authmethod': 'credentials',
+                # 'authmethod': 'credentials',
                 'name': 'Default', 'surname': 'User',
                 'name_surname': 'Default#_#User',
-                'password': self.hash_password(self.default_password)
+                # 'password': self.hash_password(self.default_password)
+                'password': self.default_password
             }, roles=self.default_roles)
 
     def save_token(self, user, token, jti):

@@ -118,7 +118,6 @@ def wait():
     mywait()
 
 
-
 def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
 
     import errno
@@ -197,7 +196,10 @@ def clean():
 @cli.command()
 @click.option(
     '--wait/--no-wait', default=False, help='Wait for startup to finish')
-def tests(wait):
+@click.option(
+    '--core/--no-core', default=False,
+    help='Test for core instead of vanilla code')
+def tests(wait, core):
     """Compute tests and coverage"""
 
     if wait:
@@ -221,16 +223,16 @@ def tests(wait):
     parameters = []
     # from utilities import helpers
     # basedir = helpers.latest_dir(helpers.current_fullpath())
-    import glob
-    if 'template' in glob.glob('*'):
+    if core:
         from restapi import __package__ as current_package
         parameters.append(current_package)
+    # import glob
+    # if 'template' in glob.glob('*'):
+    #     from restapi import __package__ as current_package
+    #     parameters.append(current_package)
 
     output = bash.execute_command(
         "pyunittests",
-        parameters=parameters,
-        catchException=True,
-        error_max_len=-1
-    )
+        parameters=parameters, catchException=True, error_max_len=-1)
 
     log.info("Completed:\n%s" % output)

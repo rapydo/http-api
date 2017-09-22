@@ -4,35 +4,50 @@ python:
 - 3.6.1
 services:
 - docker
-env:
-- CORE_PROJECT=template
 
-install:
-- ./dev-requirements.py  # install requirements in listed order
-- scripts/clone.sh  # clone the core
-script:
-- cd core
-
+# 0.5.4 introduced this and at the moment is not longer performed:
 #####################
 # disable frontend
-- "sed -i 's/enable: true/enable: false/' projects/*/*.yaml" # this syntax only works in linux
-- head -n 15 projects/template/confs/debug.yml > tmp.yml && cp tmp.yml projects/template/confs/debug.yml
+# - "sed -i 's/enable: true/enable: false/' projects/*/*.yaml" # this syntax only works in linux
+# - head -n 15 projects/template/confs/debug.yml > tmp.yml && cp tmp.yml projects/template/confs/debug.yml
 #####################
 
-- rapydo init && rapydo start
-- rapydo shell backend --command 'restapi tests --wait'
-- cd ..
+jobs:
+  include:
+    # Note: projects are more or less sorted by average duration DESC
+    - stage: backend-test
+      script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=irodstest
 
-after_success:
-# NOTE: this works only with the base http api, and not in a real core fork
-# FIXME: do as eudat for a configuration in core and use "rapydo coverage"
-- docker cp template_backend_1:/code/.coverage .
-- docker run -it -v $(pwd):/repo -w /repo $CORE_PROJECT/backend:template coveralls
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=celerytest
 
-deploy:
-  provider: pypi
-  user: pdonorio
-  password:
-    secure: YNjvWPNpfab00FD7EUwzDgXyorPFkefCk3C7PFDfB9yDaZFz6d/+Mk+HzJce84pqk0Nr0T8rrKVe7c69Ib+PgiYWrtYstnvKthZbN+IpFieEm/f72adG8rdSjLVb5gLNd49cqxfDIBD64V/DgkrJ5+Xif8j0D7d8CohKRqgFYdsAm0G9TiiAXqbaRGiUqEl6aJo1V2/8tDUNikWu3zCaHiCWYerHBf2IfeCdcsbX3qXwUje+g4ECRFH3kZbVD6YDS+47ib4GBuhJGGRMZDdICdk+MHXP1cRUv2EybmH5Q7cH8DZ+JoMuZNP/gQ3xT2Mt2wZ1n1le0wWfCNpkIdTPuOQTFrtxcZQycjDnVupu+mTDa4XCYgr3N0JFSJBVo9G+gYf9fswrt1BTtVBDpYUb0QGtZehFW+wuftNu10lvuibB1B3o1Vqf2TYO8CEgSfQy0c+VRt3oj0BuXnh+C5BxTFVYJpYoIlkDr4u0nomWosmMRyrSRP8i8CkJg4WEtlB//ZaU+9QkurQW3zPr8HetcRz5eIzX1rJPHLO4XIXGuCnc954OhXa6EaaouAHtGeYwYhYP1/wTtJKlBQUdADoYf37B4U8Mttxd6V9x/uRJXLhyt+hSKPPFsS0/PkRnum/B0Mfa70RPfibvgXxjLhq+vspWYty0J4wpxWJNbAQ7NVU=
-  on:
-    tags: true
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=neo
+
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=sql
+
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=mongo
+
+    - stage: coverage
+      script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=COVERAGE
+
+    - stage: deploy
+      script: skip
+      deploy:
+        provider: pypi
+        user: pdonorio
+        password:
+          secure: YNjvWPNpfab00FD7EUwzDgXyorPFkefCk3C7PFDfB9yDaZFz6d/+Mk+HzJce84pqk0Nr0T8rrKVe7c69Ib+PgiYWrtYstnvKthZbN+IpFieEm/f72adG8rdSjLVb5gLNd49cqxfDIBD64V/DgkrJ5+Xif8j0D7d8CohKRqgFYdsAm0G9TiiAXqbaRGiUqEl6aJo1V2/8tDUNikWu3zCaHiCWYerHBf2IfeCdcsbX3qXwUje+g4ECRFH3kZbVD6YDS+47ib4GBuhJGGRMZDdICdk+MHXP1cRUv2EybmH5Q7cH8DZ+JoMuZNP/gQ3xT2Mt2wZ1n1le0wWfCNpkIdTPuOQTFrtxcZQycjDnVupu+mTDa4XCYgr3N0JFSJBVo9G+gYf9fswrt1BTtVBDpYUb0QGtZehFW+wuftNu10lvuibB1B3o1Vqf2TYO8CEgSfQy0c+VRt3oj0BuXnh+C5BxTFVYJpYoIlkDr4u0nomWosmMRyrSRP8i8CkJg4WEtlB//ZaU+9QkurQW3zPr8HetcRz5eIzX1rJPHLO4XIXGuCnc954OhXa6EaaouAHtGeYwYhYP1/wTtJKlBQUdADoYf37B4U8Mttxd6V9x/uRJXLhyt+hSKPPFsS0/PkRnum/B0Mfa70RPfibvgXxjLhq+vspWYty0J4wpxWJNbAQ7NVU=
+        on:
+          tags: true
+

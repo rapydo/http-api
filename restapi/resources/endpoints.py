@@ -13,6 +13,7 @@ from flask import jsonify, current_app
 from restapi import decorators as decorate
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
+# from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
@@ -336,6 +337,35 @@ class Profile(EndpointResource):
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         return data
+
+    @decorate.catch_error()
+    def post(self):
+        """ Create new current user """
+        v = self.get_input()
+        if len(v) == 0:
+            raise RestApiException(
+                'Empty input',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+        # INIT #
+        schema = self.get_endpoint_custom_definition()
+        properties = self.read_properties(schema, v)
+        # GRAPH #
+        # properties["authmethod"] = "credentials"
+        # if "password" in properties:
+        # properties["password"] = \
+        #     BaseAuthentication.hash_password(properties["password"])
+
+        # DO CUSTOM STUFFS HERE - e.g. create name_surname index
+        properties, other_properties = \
+            self.custom_pre_handle_user_input(properties, v)
+
+        roles = self.get_roles(v)
+        user = self.auth.create_user(properties, roles)
+
+        self.custom_post_handle_user_input(user, properties, other_properties)
+
+        # DO CUSTOM STUFFS HERE - e.g. link to group
+        return self.force_response(user.uuid)
 
     @decorate.catch_error()
     def put(self):
