@@ -352,6 +352,9 @@ class EndpointResource(Resource):
 
     @staticmethod
     def timestamp_from_string(timestamp_string):
+
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         """
         Neomodels complains about UTC, this is to fix it.
         Taken from http://stackoverflow.com/a/21952077/2114395
@@ -368,6 +371,8 @@ class EndpointResource(Resource):
     @staticmethod
     def date_from_string(date, format="%d/%m/%Y"):
 
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         if date == "":
             return ""
         # datetime.now(pytz.utc)
@@ -380,6 +385,9 @@ class EndpointResource(Resource):
 
     @staticmethod
     def string_from_timestamp(timestamp):
+
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         if timestamp == "":
             return ""
         try:
