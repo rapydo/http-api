@@ -1,5 +1,6 @@
 coveralls
 pip
+six==1.10
 awscli
 
 git+https://github.com/rapydo/utils.git@0.5.5
