@@ -34,6 +34,20 @@ class Authentication(BaseAuthentication):
         """
         return payload
 
+    # Also used by POST user
+    def create_user(self, userdata, roles):
+
+        if "authmethod" not in userdata:
+            userdata["authmethod"] = "credentials"
+
+        if "password" in userdata:
+            userdata["password"] = self.hash_password(userdata["password"])
+
+        user = self.db.User(**userdata)
+        user.roles = roles
+
+        user.save()
+
     def get_user_object(self, username=None, payload=None):
 
         user = None
@@ -95,19 +109,29 @@ class Authentication(BaseAuthentication):
             missing_user = len(list(cursor)) < 1
 
             if missing_user:
-                user = self.db.User(
-                    uuid=getUUID(),
-                    email=self.default_user,
-                    authmethod='credentials',
-                    name='Default', surname='User',
-                    password=self.hash_password(self.default_password))
+
+                self.create_user({
+                    'uuid': getUUID(),
+                    'email': self.default_user,
+                    # 'authmethod': 'credentials',
+                    'name': 'Default', 'surname': 'User',
+                    # 'password': self.hash_password(self.default_password)
+                    'password': self.default_password
+                }, roles=roles)
+
+                # user = self.db.User(
+                #     uuid=getUUID(),
+                #     email=self.default_user,
+                #     authmethod='credentials',
+                #     name='Default', surname='User',
+                #     password=self.hash_password(self.default_password))
 
                 # link roles into users
-                user.roles = roles
+                # user.roles = roles
                 # for role in roles:
                 #     user.roles.append(role)
 
-                transactions.append(user)
+                # transactions.append(user)
                 log.warning("No users inside mongo. Injected default.")
 
         except BaseException as e:

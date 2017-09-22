@@ -24,6 +24,22 @@ class Authentication(BaseAuthentication):
         # FIXME: this should be implemented as vanilla instead of here
         return payload
 
+    # Also used by POST user
+    def create_user(self, userdata, roles):
+
+        if "authmethod" not in userdata:
+            userdata["authmethod"] = "credentials"
+
+        if "password" in userdata:
+            userdata["password"] = self.hash_password(userdata["password"])
+
+        user = self.db.User(**userdata)
+        # link roles into users
+        for role in roles:
+            sqlrole = self.db.Role.query.filter_by(name=role).first()
+            user.roles.append(sqlrole)
+        self.db.session.add(user)
+
     def get_user_object(self, username=None, payload=None):
         user = None
         if username is not None:
@@ -47,11 +63,6 @@ class Authentication(BaseAuthentication):
             roles.append(role.name)
         return roles
 
-    # def create_user(self, userdata, roles):
-    # """ UNUSED, should be removed """
-    #     if self.default_role not in roles:
-    #         roles.append(self.default_role)
-    #     return NotImplementedError("To do")
 
 # TODO: (IMPORTANT) developer should be able to specify a custom init
 # which would replace this function below
@@ -72,18 +83,14 @@ class Authentication(BaseAuthentication):
             missing_user = not self.db.User.query.first()
             if missing_user:
                 log.warning("No users inside db. Injected default.")
-                user = self.db.User(
-                    uuid=getUUID(),
-                    email=self.default_user,
-                    authmethod='credentials',
-                    name='Default', surname='User',
-                    password=self.hash_password(self.default_password))
-
-                # link roles into users
-                for role in self.default_roles:
-                    sqlrole = self.db.Role.query.filter_by(name=role).first()
-                    user.roles.append(sqlrole)
-                self.db.session.add(user)
+                self.create_user({
+                    'uuid': getUUID(),
+                    'email': self.default_user,
+                    # 'authmethod': 'credentials',
+                    'name': 'Default', 'surname': 'User',
+                    # 'password': self.hash_password(self.default_password)
+                    'password': self.default_password
+                }, roles=self.default_roles)
 
         except sqlalchemy.exc.OperationalError:
             raise AttributeError("Existing SQL tables are not consistent " +
@@ -352,4 +359,3 @@ class Authentication(BaseAuthentication):
         self.save_token(user, token, jti)
 
         return token, username
-

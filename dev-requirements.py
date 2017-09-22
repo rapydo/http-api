@@ -17,8 +17,10 @@ with open('dev-requirements.txt') as requirements:
 
         if line.startswith('#'):
             continue
-        else:
-            tool_name = line.strip()
+
+        tool_name = line.strip()
+        if tool_name == '':
+            continue
 
         if FRAMEWORK_PREFIX in tool_name:
             tool_name += '==' + current_version

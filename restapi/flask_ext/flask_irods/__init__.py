@@ -3,6 +3,7 @@
 """
 iRODS file-system flask connector
 """
+
 import os
 import logging
 from utilities.certificates import Certificates
@@ -86,7 +87,6 @@ class IrodsPythonExt(BaseExtension):
             log.debug("Irods user: %s" % self.user)
 
         ######################
-
         # Irods/b2safe direct credentials
         if session is not None:
             return True

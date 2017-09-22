@@ -191,7 +191,34 @@ class AliasProperty(originalAliasProperty, myAttribProperty):
 
 
 class StructuredRel(originalStructuredRel):
-    pass
+    """
+    Customized version of StructuredRel class implemented in neomodel
+    This class exposes the show_fields method.
+    This method uses custom flags set in myAttribProperty instances
+    """
+
+    @classmethod
+    def show_fields(cls, view_public_only=False):
+
+        fields_to_show = []
+
+        classes = inspect.getmro(cls)
+        for cls_name in classes:
+            if cls_name.__name__ == 'StructuredRel':
+                break
+
+            for c in cls_name.__dict__:
+                attrib = getattr(cls, c)
+                # print("fields:", cls.__name__, attrib)
+                if not isinstance(attrib, myAttribProperty):
+                    continue
+                if not attrib.show:
+                    continue
+                if view_public_only and attrib.is_restricted:
+                    continue
+
+                fields_to_show.append(c)
+        return fields_to_show
 
 
 class StructuredNode(originalStructuredNode):

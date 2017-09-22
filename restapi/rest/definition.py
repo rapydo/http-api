@@ -11,6 +11,7 @@ from datetime import datetime
 # from flask import g
 from injector import inject
 from flask_restful import request, Resource, reqparse
+from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
@@ -351,6 +352,9 @@ class EndpointResource(Resource):
 
     @staticmethod
     def timestamp_from_string(timestamp_string):
+
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         """
         Neomodels complains about UTC, this is to fix it.
         Taken from http://stackoverflow.com/a/21952077/2114395
@@ -367,6 +371,8 @@ class EndpointResource(Resource):
     @staticmethod
     def date_from_string(date, format="%d/%m/%Y"):
 
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         if date == "":
             return ""
         # datetime.now(pytz.utc)
@@ -379,6 +385,9 @@ class EndpointResource(Resource):
 
     @staticmethod
     def string_from_timestamp(timestamp):
+
+        log.warning("DEPRECATED: use utilities/time.py instead")
+
         if timestamp == "":
             return ""
         try:
@@ -418,6 +427,57 @@ class EndpointResource(Resource):
         #     endpoint + '?currentpage=' + str(len(instances)) + '&perpage=1',
 
         return json_data
+
+    def get_show_fields(
+        self, obj, function_name, view_public_only, fields=None):
+
+        if fields is None:
+            fields = []
+        if len(fields) < 1:
+            if hasattr(obj, function_name):
+                fn = getattr(obj, function_name)
+                fields = fn(view_public_only=view_public_only)
+
+        verify_attribute = hasattr
+        if isinstance(obj, dict):
+            verify_attribute = dict.get
+
+        attributes = {}
+        for key in fields:
+            if verify_attribute(obj, key):
+                get_attribute = getattr
+                if isinstance(obj, dict):
+                    get_attribute = dict.get
+
+                attribute = get_attribute(obj, key)
+                # datetime is not json serializable,
+                # converting it to string
+                # FIXME: use flask.jsonify
+                if attribute is None:
+                    attributes[key] = ""
+                elif isinstance(attribute, datetime):
+                    dval = self.string_from_timestamp(
+                        attribute.strftime('%s'))
+                    attributes[key] = dval
+                else:
+
+                    # Based on neomodel choices:
+                    # http://neomodel.readthedocs.io/en/latest/properties.html#choices
+                    choice_function = "get_%s_display" % key
+                    if hasattr(obj, choice_function):
+                        fn = getattr(obj, choice_function)
+                        description = fn()
+
+                        # For back-compatibility if key and value matches
+                        # we only save the key
+                        if attribute != description:
+                            attribute = {
+                                "key": attribute,
+                                "description": description
+                            }
+                    attributes[key] = attribute
+
+        return attributes
 
     def getJsonResponse(self, instance,
                         fields=None, resource_type=None,
@@ -463,46 +523,8 @@ class EndpointResource(Resource):
                 self_uri += '/' + id
             data["links"] = {"self": self_uri}
 
-        # Attributes
-        if fields is None:
-            fields = []
-        if len(fields) < 1:
-
-            function_name = 'show_fields'
-            if hasattr(instance, function_name):
-                fn = getattr(instance, function_name)
-                fields = fn(view_public_only=view_public_only)
-
-            else:
-
-                if view_public_only:
-                    field_name = '_public_fields_to_show'
-                else:
-                    field_name = '_fields_to_show'
-
-                if hasattr(instance, field_name):
-                    log.warning(
-                        "Obsolete use of %s into models" % field_name)
-                    fields = getattr(instance, field_name)
-
-        for key in fields:
-            if verify_attribute(instance, key):
-                get_attribute = getattr
-                if isinstance(instance, dict):
-                    get_attribute = dict.get
-
-                attribute = get_attribute(instance, key)
-                # datetime is not json serializable,
-                # converting it to string
-                # FIXME: use flask.jsonify
-                if attribute is None:
-                    data["attributes"][key] = ""
-                elif isinstance(attribute, datetime):
-                    dval = self.string_from_timestamp(
-                        attribute.strftime('%s'))
-                    data["attributes"][key] = dval
-                else:
-                    data["attributes"][key] = attribute
+        data["attributes"] = self.get_show_fields(
+            instance, 'show_fields', view_public_only, fields)
 
         # Relationships
         if relationship_depth < max_relationship_depth:
@@ -530,14 +552,35 @@ class EndpointResource(Resource):
                 # log.debug("Investigate relationship %s" % relationship)
 
                 if hasattr(instance, relationship):
-                    for node in getattr(instance, relationship).all():
-                        subrelationship.append(
-                            self.getJsonResponse(
-                                node,
-                                view_public_only=view_public_only,
-                                skip_missing_ids=skip_missing_ids,
-                                relationship_depth=relationship_depth + 1,
-                                max_relationship_depth=max_relationship_depth))
+                    rel = getattr(instance, relationship)
+                    for node in rel.all():
+                        subnode = self.getJsonResponse(
+                            node,
+                            view_public_only=view_public_only,
+                            skip_missing_ids=skip_missing_ids,
+                            relationship_depth=relationship_depth + 1,
+                            max_relationship_depth=max_relationship_depth)
+
+                        # Verify if instance and node are linked by a
+                        # relationship with a custom model with fields flagged
+                        # as show=True. In this case, append relationship
+                        # properties to the attribute model of the node
+                        r = rel.relationship(node)
+                        attrs = self.get_show_fields(
+                            r, 'show_fields', view_public_only)
+
+                        for k in attrs:
+                            if k in subnode['attributes']:
+                                log.warning(
+                                    "Name collision %s" % k +
+                                    " on node %s" % subnode +
+                                    " from both model %s" % type(node) +
+                                    " and property model %s" % type(r)
+                                )
+                            subnode['attributes'][k] = attrs[k]
+
+                        # subnode['attributes']['pippo'] = 'boh'
+                        subrelationship.append(subnode)
 
                 linked[relationship] = subrelationship
 
@@ -584,3 +627,77 @@ class EndpointResource(Resource):
             return None
         else:
             return mem.customizer._parameter_schemas[url][method]
+
+    # HANDLE INPUT PARAMETERS
+    def read_properties(self, schema, values, checkRequired=True):
+
+        properties = {}
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+
+            k = field["name"]
+            if k in values:
+                properties[k] = values[k]
+
+            # this field is missing but required!
+            elif checkRequired and field["required"]:
+                raise RestApiException(
+                    'Missing field: %s' % k,
+                    status_code=hcodes.HTTP_BAD_REQUEST)
+
+        return properties
+
+    def update_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+            if key in properties:
+                instance.__dict__[key] = properties[key]
+
+    def parseAutocomplete(
+            self, properties, key, id_key='value', split_char=None):
+        value = properties.get(key, None)
+
+        ids = []
+
+        if value is None:
+            return ids
+
+        # Multiple autocomplete
+        if type(value) is list:
+            for v in value:
+                if v is None:
+                    return None
+                if id_key in v:
+                    ids.append(v[id_key])
+                else:
+                    ids.append(v)
+            return ids
+
+        # Single autocomplete
+        if id_key in value:
+            return [value[id_key]]
+
+        # Command line input
+        if split_char is None:
+            return [value]
+
+        return value.split(split_char)
+
+    def get_roles(self, properties):
+
+        roles = []
+        ids = self.parseAutocomplete(
+            properties, 'roles', id_key='name', split_char=',')
+
+        if ids is None:
+            return roles
+
+        return ids
