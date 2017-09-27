@@ -266,7 +266,7 @@ class TestUtilities(unittest.TestCase):
         for data in content['Response']['data']:
             if data["token"] == token:
                 id = data["id"]
-                log.info("Destroying token %s" % id)
+                log.info("Destroying token %s", id)
                 uri = '%s/tokens/%s' % (AUTH_URI, id)
                 r = self.app.delete(uri, headers=headers)
                 self.assertEqual(r.status_code, NO_CONTENT)

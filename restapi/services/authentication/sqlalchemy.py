@@ -56,7 +56,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s" % e)
+                log.warning("Roles check: invalid current user.\n%s", e)
                 return roles
 
         for role in userobj.roles:
@@ -190,7 +190,7 @@ class Authentication(BaseAuthentication):
         user.uuid = getUUID()
         self.db.session.add(user)
         self.db.session.commit()
-        log.warning("User uuid changed to: %s" % user.uuid)
+        log.warning("User uuid changed to: %s", user.uuid)
         return True
 
     def invalidate_token(self, token, user=None):
@@ -255,7 +255,7 @@ class Authentication(BaseAuthentication):
                 log.critical("Multiple users?")
                 return None, "Server misconfiguration"
             internal_user = internal_users.pop()
-            log.debug("Existing internal user: %s" % internal_user)
+            log.debug("Existing internal user: %s", internal_user)
             # A user already locally exists with another authmethod. Not good.
             if internal_user.authmethod != 'oauth2':
                 return None, "Creating a user which locally already exists"
@@ -269,7 +269,7 @@ class Authentication(BaseAuthentication):
                 self.db.Role.query.filter_by(name=self.default_role).first())
             self.db.session.add(internal_user)
             self.db.session.commit()
-            log.info("Created internal user %s" % internal_user)
+            log.info("Created internal user %s", internal_user)
 
         # Get ExternalAccount for the oauth2 data if exists
         external_user = self.db.ExternalAccounts \
@@ -282,7 +282,7 @@ class Authentication(BaseAuthentication):
             external_user.main_user = internal_user
             # Note: for pre-production release
             # we allow only one external account per local user
-            log.info("Created external user %s" % external_user)
+            log.info("Created external user %s", external_user)
 
         # Update external user data to latest info received
         external_user.email = email
@@ -292,7 +292,7 @@ class Authentication(BaseAuthentication):
 
         self.db.session.add(external_user)
         self.db.session.commit()
-        log.debug("Updated external user %s" % external_user)
+        log.debug("Updated external user %s", external_user)
 
         return internal_user, external_user
 
@@ -338,11 +338,11 @@ class Authentication(BaseAuthentication):
         from sqlalchemy.exc import IntegrityError
         try:
             self.db.session.commit()
-            log.info('Cached iRODS user: %s' % username)
+            log.info("Cached iRODS user: %s", username)
         except IntegrityError:
             # rollback current commit
             self.db.session.rollback()
-            log.warning("iRODS user already cached: %s" % username)
+            log.warning("iRODS user already cached: %s", username)
             # get the existing object
             user = self.get_user_object(username)
             # update only the session field

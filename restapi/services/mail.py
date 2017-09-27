@@ -47,7 +47,7 @@ def send_mail(body, subject, to_address=None, from_address=None):
         s.send_message(msg)
         s.quit()
 
-        log.debug("Mail sent to %s" % to_address)
+        log.debug("Mail sent to %s", to_address)
 
         return True
     except BaseException as e:

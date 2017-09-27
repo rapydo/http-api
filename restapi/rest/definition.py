@@ -264,7 +264,7 @@ class EndpointResource(Resource):
 
         Build a ResponseElements instance.
         """
-        # log.debug("Force response:\nargs[%s] kwargs[%s]" % (args, kwargs))
+        # log.debug("Force response:\nargs[%s] kwargs[%s]", args, kwargs)
 
         # If args has something, it should be one simple element
         # That element is the content and nothing else
@@ -394,7 +394,7 @@ class EndpointResource(Resource):
             date = datetime.fromtimestamp(float(timestamp))
             return date.isoformat()
         except BaseException:
-            log.warning("Errors parsing %s" % timestamp)
+            log.warning("Errors parsing %s", timestamp)
             return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
@@ -544,12 +544,12 @@ class EndpointResource(Resource):
                     field_name = '_relationships_to_follow'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models" % field_name)
+                    log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
 
             for relationship in relationships:
                 subrelationship = []
-                # log.debug("Investigate relationship %s" % relationship)
+                # log.debug("Investigate relationship %s", relationship)
 
                 if hasattr(instance, relationship):
                     rel = getattr(instance, relationship)

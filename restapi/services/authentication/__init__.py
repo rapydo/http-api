@@ -288,12 +288,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # now > exp
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
         except Exception as e:
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
 
         return payload
 
@@ -403,7 +403,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         for role in roles:
             if role not in current_roles:
                 if warnings:
-                    log.warning("Auth role '%s' missing for request" % role)
+                    log.warning("Auth role '%s' missing for request", role)
                 return False
         return True
 

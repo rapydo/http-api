@@ -84,7 +84,7 @@ class IrodsPythonExt(BaseExtension):
             raise AttributeError("No user is defined")
         else:
             self.user = user
-            log.debug("Irods user: %s" % self.user)
+            log.debug("Irods user: %s", self.user)
 
         ######################
         # Irods/b2safe direct credentials
@@ -95,7 +95,7 @@ class IrodsPythonExt(BaseExtension):
         elif gss:
 
             if self.authscheme != GSI_AUTH_SCHEME:
-                log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
+                log.debug("Forcing %s authscheme", GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
             Certificates().globus_proxy(
@@ -173,10 +173,10 @@ class IrodsPythonExt(BaseExtension):
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
         #     timer = conn.socket.gettimeout()
-        #     log.debug("Current timeout: %s" % timer)
+        #     log.debug("Current timeout: %s", timer)
         #     conn.socket.settimeout(10.0)
         #     timer = conn.socket.gettimeout()
-        #     log.debug("New timeout: %s" % timer)
+        #     log.debug("New timeout: %s", timer)
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
