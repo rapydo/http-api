@@ -4,7 +4,6 @@
 iRODS file-system flask connector
 """
 
-import os
 import logging
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
