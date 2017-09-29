@@ -109,7 +109,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             obj = self.custom_connection(**kwargs)
         else:
             obj = self.retry()
-            log.info("Connected! %s" % self.name)
+            log.info("Connected! %s", self.name)
 
         # AFTER
         self.post_connection(obj, **kwargs)
@@ -212,7 +212,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 if now < obj.connection_time + exp:
                     log.very_verbose("Cache still fresh for %s" % (self))
                 else:
-                    log.warning("Cache expired for %s" % (self))
+                    log.warning("Cache expired for %s", self)
                     obj = None
 
             if obj is None:

@@ -274,7 +274,7 @@ class Tokens(EndpointResource):
                 if not done:
                     return self.send_errors(message="Failed '%s'" % token)
                 else:
-                    log.debug("Invalidated %s" % token['id'])
+                    log.debug("Invalidated %s", token['id'])
                     invalidated = True
 
         # Check

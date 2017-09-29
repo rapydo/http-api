@@ -66,7 +66,7 @@ class Uploader(object):
 
         path = self.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True)
-        log.info("Provide '%s' from '%s' " % (filename, path))
+        log.info("Provide '%s' from '%s'", filename, path)
 
         return send_from_directory(path, filename)
 
@@ -114,7 +114,7 @@ class Uploader(object):
         # Check file name
         filename = secure_filename(myfile.filename)
         abs_file = self.absolute_upload_file(filename, subfolder)
-        log.info("File request for [%s](%s)" % (myfile, abs_file))
+        log.info("File request for [%s] (%s)", myfile, abs_file)
 
         # ## IMPORTANT NOTE TO SELF:
         # If you are going to receive chunks here there could be problems.
@@ -138,7 +138,7 @@ class Uploader(object):
         # Save the file
         try:
             myfile.save(abs_file)
-            log.debug("Absolute file path should be '%s'" % abs_file)
+            log.debug("Absolute file path should be '%s'", abs_file)
         except Exception:
             return self.force_response(errors={
                 "Permissions": "Failed to write uploaded file"},
@@ -161,7 +161,7 @@ class Uploader(object):
             ftype = tmp[0].strip()
             fcharset = tmp[1].split('=')[1].strip()
         except Exception:
-            log.warning("Unknown type for '%s'" % abs_file)
+            log.warning("Unknown type for '%s'", abs_file)
 
         ########################
         # ## Final response

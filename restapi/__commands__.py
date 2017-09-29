@@ -52,7 +52,6 @@ def main(args, another_app=None):
     #     # do not let flask close the application
     #     # so we can do more code after closing
     #     log.error(e)
-    #     log.warning('error type: %s' % type(e))
 
 
 def flask_cli(options=None):
@@ -140,7 +139,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             result = errno.ESRCH
 
         if result == 0:
-            log.info("Service %s is reachable" % service_name)
+            log.info("Service %s is reachable", service_name)
             break
         else:
 
@@ -152,7 +151,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
                     service_name, sleep_time * timeout * counter
                 )
             else:
-                log.debug("Not reachable yet: %s" % service_name)
+                log.debug("Not reachable yet: %s", service_name)
 
             time.sleep(sleep_time)
 
@@ -175,12 +174,12 @@ def mywait():
             continue
 
         # service = detector.authentication_service
-        # log.info("Waiting for authentication service: %s" % service)
+        # log.info("Waiting for authentication service: %s", service)
         # myclass = detector.services_classes.get(service)
 
         host = myclass.variables.get('host')
         port = int(myclass.variables.get('port'))
-        log.debug("Socket %s:%s" % (host, port))
+        log.debug("Socket %s:%s", host, port)
 
         # CHECK
         wait_socket(host, port, name)
@@ -224,15 +223,13 @@ def tests(wait, core):
     # from utilities import helpers
     # basedir = helpers.latest_dir(helpers.current_fullpath())
     if core:
-        from restapi import __package__ as current_package
         parameters.append(current_package)
     # import glob
     # if 'template' in glob.glob('*'):
-    #     from restapi import __package__ as current_package
     #     parameters.append(current_package)
 
     output = bash.execute_command(
         "pyunittests",
         parameters=parameters, catchException=True, error_max_len=-1)
 
-    log.info("Completed:\n%s" % output)
+    log.info("Completed:\n%s", output)

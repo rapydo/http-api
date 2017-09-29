@@ -211,7 +211,7 @@ Please also fix in celery and celeryui
         log.verbose("Found endpoint dir: '%s'" % endpoint)
 
         if os.path.exists(os.path.join(swagger_endpoint_dir, 'SKIP')):
-            log.info("Skipping: %s" % endpoint)
+            log.info("Skipping: %s", endpoint)
             return None
 
         # Find yaml files
@@ -269,7 +269,7 @@ Please also fix in celery and celeryui
         for dependency in conf.pop('depends_on', []):
             # FIXME: uhm? Should verify the env variable {SERVICE}_ENABLE?
             if not getattr(module, dependency, False):
-                log.debug("Skip '%s': unmet %s" % (default_uri, dependency))
+                log.debug("Skip '%s': unmet %s", default_uri, dependency)
                 return endpoint
 
         endpoint.cls = self._meta.get_class_from_string(class_name, module)
@@ -292,7 +292,7 @@ Please also fix in celery and celeryui
         # base URI
         base = conf.pop('baseuri', API_URL)
         if base not in BASE_URLS:
-            log.warning("Invalid base %s" % base)
+            log.warning("Invalid base %s", base)
             base = API_URL
         base = base.strip('/')
 

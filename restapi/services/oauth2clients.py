@@ -68,8 +68,6 @@ class ExternalLogins(object):
         # For each defined internal service
         for key, func in meta.get_methods_inside_instance(self).items():
 
-            # log.info("META %s-%s" % (key, func))
-
             # Check if credentials are enabled inside docker env
             var1 = key.upper() + '_APPNAME'
             var2 = key.upper() + '_APPKEY'
@@ -91,7 +89,7 @@ class ExternalLogins(object):
                 # Cycle all the Oauth2 group services
                 for name, oauth2 in obj.items():
                     services[name] = oauth2
-                    log.debug("Created Oauth2 service %s" % name)
+                    log.debug("Created Oauth2 service %s", name)
 
             except Exception as e:
                 log.critical(

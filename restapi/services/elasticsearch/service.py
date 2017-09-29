@@ -86,7 +86,7 @@ class BeElastic(ServiceObject):
         obj = DocumentClass.get(id=id, ignore=404)
         # print("Check", id, check)
         if obj is None:
-            log.debug("Creating a new document '%s'" % id)
+            log.debug("Creating a new document '%s'", id)
 
             # Put the id in place
             args['meta'] = {'id': id}
@@ -134,12 +134,15 @@ class BeElastic(ServiceObject):
             # self._connection.indices.create(index)
         # self.rebuild_connection()
 
-    def search(self, DocumentClass, parameters={}, filter=False):
+    def search(self, DocumentClass, parameters=None, filter=False):
         """
         It should be:
             MyESobj.search() \
                 .query('match', field=value).execute()
         """
+
+        if parameters is None:
+            parameters = {}
 
         output = []
         query = DocumentClass.search()
@@ -195,7 +198,7 @@ class BeElastic(ServiceObject):
                 .execute_suggest()
 
         except Exception as e:
-            log.warning("Suggestion error:\n%s" % e)
+            log.warning("Suggestion error:\n%s", e)
             raise e
         # finally:
         #     if suggest is None or 'data' not in suggest:
@@ -237,11 +240,11 @@ class ElasticFarm(ServiceFarm):
         # CHECK 1: verify the library
 
         # self._instance = BeElastic()
-        # log.debug("Plugging '%s' service" % name)
+        # log.debug("Plugging '%s' service", name)
         self.get_instance()
 
         self._instance._connection.ping()
-        log.debug("'%s' service seems plugged" % name)
+        log.debug("'%s' service seems plugged", name)
 
         # # CHECK 2: test the models
         # from elasticsearch_dsl import DocType, String

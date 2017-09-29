@@ -185,7 +185,7 @@ class Detector(object):
 
             # Save
             self.services_classes[name] = MyClass
-            log.debug("Got class definition for %s" % MyClass)
+            log.debug("Got class definition for %s", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
@@ -226,7 +226,7 @@ class Detector(object):
                 self.extensions_instances[name] = ext_instance
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s" % name)
+            log.debug("Initializing %s", name)
             service_instance = ext_instance.custom_init(
                 pinit=project_init,
                 pdestroy=project_clean,

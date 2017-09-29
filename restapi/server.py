@@ -225,8 +225,8 @@ def create_app(name=__name__,
                 except IndexError:
                     pass
 
-            log.info("{} {} {} {}".format(
-                     request.method, request.url, data, response))
+            log.info(
+                "%s %s %s %s", request.method, request.url, data, response)
         return response
 
     ##############################

@@ -41,11 +41,11 @@ class CeleryExt(BaseExtension):
 
             BROKER_URL = 'amqp://%s' % (HOST)
             BACKEND_URL = 'rpc://%s:%s/0' % (HOST, PORT)
-            log.info("Found RabbitMQ as Celery broker %s" % BROKER_URL)
+            log.info("Found RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
             BROKER_URL = 'redis://%s:%s/0' % (HOST, PORT)
             BACKEND_URL = 'redis://%s:%s/0' % (HOST, PORT)
-            log.info("Found Redis as Celery broker %s" % BROKER_URL)
+            log.info("Found Redis as Celery broker %s", BROKER_URL)
         else:
             log.error("Unable to start Celery, missing broker service")
             celery_app = None

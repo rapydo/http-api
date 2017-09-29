@@ -143,7 +143,7 @@ class IrodsPythonClient():
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Not found (or no permission): %s" % path)
+            raise IrodsException("Not found (or no permission): %s", path)
 
         # replicas = []
         # for line in lines:
@@ -162,7 +162,7 @@ class IrodsPythonClient():
         try:
 
             ret = self.prc.collections.create(path)
-            log.debug("Created irods collection: %s" % path)
+            log.debug("Created irods collection: %s", path)
             return ret
 
         except iexceptions.CAT_UNKNOWN_COLLECTION:
@@ -174,13 +174,13 @@ class IrodsPythonClient():
                     "Irods collection already exists",
                     status_code=hcodes.HTTP_BAD_REQUEST)
             else:
-                log.debug("Irods collection already exists: %s" % path)
+                log.debug("Irods collection already exists: %s", path)
 
         except (
             iexceptions.CAT_NO_ACCESS_PERMISSION,
             iexceptions.SYS_NO_API_PRIV
         ):
-            raise IrodsException("You have no permissions on path %s" % path)
+            raise IrodsException("You have no permissions on path %s", path)
 
         return None
 
@@ -189,7 +189,7 @@ class IrodsPythonClient():
         try:
 
             ret = self.prc.data_objects.create(path)
-            log.debug("Create irods object: %s" % path)
+            log.debug("Create irods object: %s", path)
             return ret
 
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
@@ -203,7 +203,7 @@ class IrodsPythonClient():
                 raise IrodsException(
                     "Irods object already exists",
                     status_code=hcodes.HTTP_BAD_REQUEST)
-            log.debug("Irods object already exists: %s" % path)
+            log.debug("Irods object already exists: %s", path)
 
         return False
 
@@ -272,10 +272,10 @@ class IrodsPythonClient():
             if self.is_collection(path):
                 self.prc.collections.remove(
                     path, recurse=recursive, force=force)
-                log.debug("Removed irods collection: %s" % path)
+                log.debug("Removed irods collection: %s", path)
             else:
                 self.prc.data_objects.unlink(path, force=force)
-                log.debug("Removed irods object: %s" % path)
+                log.debug("Removed irods object: %s", path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
             raise IrodsException(
                 "Cannot delete an non empty directory without recursive flag")
@@ -363,8 +363,8 @@ class IrodsPythonClient():
         Reads obj from iRODS without saving a local copy
         """
 
-        log.info("Downloading file {} in streaming with chunk size {}"
-                 .format(absolute_path, self.chunk_size))
+        log.info("Downloading file %s in streaming with chunk size %s",
+                 absolute_path, self.chunk_size)
         try:
             obj = self.prc.data_objects.get(absolute_path)
 
@@ -390,8 +390,9 @@ class IrodsPythonClient():
                 "File '" + destination + "' already exists. " +
                 "Change file name or use the force parameter")
 
-        log.info("Uploading file in streaming to {} with chunk size {}"
-                 .format(destination, self.chunk_size))
+        log.info(
+            "Uploading file in streaming to %s with chunk size %s",
+            destination, self.chunk_size)
         try:
             self.create_empty(destination, directory=False,
                               ignore_existing=force)
@@ -524,7 +525,7 @@ class IrodsPythonClient():
                 user_name='',
                 user_zone='')
             self.prc.permissions.set(ACL, recursive=recursive)
-            log.debug("Set inheritance %r to %s" % (inheritance, path))
+            log.debug("Set inheritance %r to %s", inheritance, path)
             return True
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
             if self.is_dataobject(path):
@@ -689,20 +690,20 @@ class IrodsPythonClient():
 
         try:
             user_data = self.prc.users.create(user, user_type)
-            log.info("Created user: %s" % user_data)
+            log.info("Created user: %s", user_data)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
-            log.warning("User %s already exists in iRODS" % user)
+            log.warning("User %s already exists in iRODS", user)
             return False
 
         return True
 
     def modify_user_password(self, user, password):
-        log.debug("Changing %s password" % user)
+        log.debug("Changing %s password", user)
         return self.prc.users.modify(user, 'password', password)
 
     def remove_user(self, user_name):
         user = self.prc.users.get(user_name)
-        log.warning("Removing user: %s" % user_name)
+        log.warning("Removing user: %s", user_name)
         return user.remove()
 
     def list_user_attributes(self, user):
@@ -748,7 +749,7 @@ class IrodsPythonClient():
 #         com = 'iquest'
 #         args = ["%s" % query]
 #         output = self.basic_icom(com, args)
-#         log.debug("%s query: [%s]\n%s" % (com, query, output))
+#         log.debug("%s query: [%s]\n%s", com, query, output)
 #         if 'CAT_NO_ROWS_FOUND' in output:
 #             return None
 #         return output.split('\n')[0].lstrip("%s = " % key)
@@ -772,7 +773,7 @@ class IrodsPythonClient():
 #     def list_resources(self):
 #         com = 'ilsresc'
 #         iout = self.basic_icom(com).strip()
-#         log.debug("Resources %s" % iout)
+#         log.debug("Resources %s", iout)
 #         return iout.split("\n")
 
 #     def get_base_resource(self):
@@ -790,7 +791,7 @@ class IrodsPythonClient():
 #                 continue
 #             resources.append(elements[2])
 
-#         log.debug("%s: found resources %s" % (filepath, resources))
+#         log.debug("%s: found resources %s", filepath, resources)
 #         return resources
 
 #     def admin(self, command, user=None, extra=None):
@@ -805,7 +806,7 @@ class IrodsPythonClient():
 #             args.append(user)
 #         if extra is not None:
 #             args.append(extra)
-#         log.debug("iRODS admininistration command '%s'" % command)
+#         log.debug("iRODS admininistration command '%s'", command)
 #         return self.basic_icom(com, args)
 
 #     def admin_list(self):
@@ -910,7 +911,7 @@ class IrodsPythonClient():
 #         com = "ilocate"
 #         if like:
 #             path += '%'
-#         log.debug("iRODS search for %s" % path)
+#         log.debug("iRODS search for %s", path)
 #         # Execute
 #         out = self.execute_command(com, path)
 #         content = out.strip().split('\n')
