@@ -13,6 +13,7 @@ import sqlalchemy
 from utilities.meta import Meta
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
+from restapi.confs import PRODUCTION
 from utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
@@ -48,6 +49,10 @@ class SqlAlchemy(BaseExtension):
         self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
+
+        if PRODUCTION:
+            self.app.config['SQLALCHEMY_POOL_SIZE'] = 20  # usually 5
+            self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
 
         obj_name = 'db'
         m = Meta()
