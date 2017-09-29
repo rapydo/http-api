@@ -18,11 +18,15 @@ jobs:
     - stage: backend-test
       script: scripts/test_and_coverage.sh
       env:
-        - PROJECT=irodstest
+        - PROJECT=basic
 
     - script: scripts/test_and_coverage.sh
       env:
         - PROJECT=celerytest
+
+    - script: scripts/test_and_coverage.sh
+      env:
+        - PROJECT=irodstest
 
     - script: scripts/test_and_coverage.sh
       env:
