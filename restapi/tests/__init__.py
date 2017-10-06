@@ -4,8 +4,8 @@ import pytest
 import json
 
 # from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
-from restapi.confs import AUTH_URI
-# from restapi.confs import API_URI
+from restapi.tests.utilities import AUTH_URI
+# from restapi.tests.utilities import API_URI
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
 
