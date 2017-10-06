@@ -1,10 +1,10 @@
-# # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-""" THIS STUFF IS BASED ON NOSE2 -> TO BE REMOVED!!! """
+"""
+*** THIS STUFF IS BASED ON NOSE2 -> TO BE REMOVED!!! ***
 
-# """
-# Test base
-# """
+Test base
+"""
 
 # import unittest
 # import json
