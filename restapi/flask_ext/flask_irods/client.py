@@ -432,9 +432,15 @@ class IrodsPythonClient():
                 obj = self.prc.data_objects.get(destination)
 
                 try:
+                    chunk_size = 1024
                     with obj.open('w') as target:
-                        for line in handle:
-                            target.write(line)
+                        # for line in handle:
+                        #     target.write(line)
+                        while True:
+                            piece = handle.read(chunk_size)
+                            if not piece:
+                                break
+                            target.write(piece)
                 except BaseException as e:
                     self.remove(destination, force=True)
                     raise e

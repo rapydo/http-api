@@ -185,19 +185,11 @@ class ExternalLogins(object):
 
 def decorate_http_request(remote):
     """
-    Necessary for B2ACCESS oauth2 servers.
-
-    Decorate the OAuth call
-    to access token endpoint
-    to inject the Authorization header.
-
-    Original source (for Python2) by @akrause2014:
-    https://github.com/akrause2014
-        /eudat/blob/master/oauth2-client/b2access_client.py
+    Decorate the OAuth call to access token endpoint,
+    injecting the Authorization header.
     """
 
     old_http_request = remote.http_request
-    # print("old http request", old_http_request)
 
     def new_http_request(uri, headers=None, data=None, method=None):
         response = None
