@@ -119,7 +119,7 @@ class ExternalLogins(object):
 
         from utilities import ENDPOINTS_CODE_DIR
         module = meta.get_module_from_string(
-            "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'common'))
+            "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'commons'))
 
         if module is None:
             B2ACCESS_ENV = PRODUCTION

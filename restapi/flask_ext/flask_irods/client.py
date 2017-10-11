@@ -340,18 +340,25 @@ class IrodsPythonClient():
             raise IrodsException("Cannot read file: not found")
         return False
 
-    def read_in_chunks(self, file_object, chunk_size=1024):
+    def read_in_chunks(self, file_object, chunk_size=None):
         """
         Lazy function (generator) to read a file piece by piece.
         Default chunk size: 1k.
         """
+        if chunk_size is None:
+            chunk_size = self.chunk_size
+
         while True:
             data = file_object.read(chunk_size)
             if not data:
                 break
             yield data
 
-    def write_in_chunks(self, target, chunk_size=1024):
+    def write_in_chunks(self, target, chunk_size=None):
+
+        if chunk_size is None:
+            chunk_size = self.chunk_size
+
         while True:
             chunk = request.stream.read(chunk_size)
             if not chunk:
@@ -418,7 +425,11 @@ class IrodsPythonClient():
 
         return False
 
-    def save(self, path, destination, force=False, resource=None):
+    def save(self,
+             path, destination, force=False, resource=None, chunk_size=None):
+
+        if chunk_size is None:
+            chunk_size = self.chunk_size
 
         # FIXME: resource is not used!
         log.warning("Resource not used in saving irods data...")
@@ -432,7 +443,6 @@ class IrodsPythonClient():
                 obj = self.prc.data_objects.get(destination)
 
                 try:
-                    chunk_size = 1024
                     with obj.open('w') as target:
                         # for line in handle:
                         #     target.write(line)
@@ -440,6 +450,7 @@ class IrodsPythonClient():
                             piece = handle.read(chunk_size)
                             if not piece:
                                 break
+                            # if len(piece) > 0:
                             target.write(piece)
                 except BaseException as e:
                     self.remove(destination, force=True)
