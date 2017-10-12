@@ -64,28 +64,6 @@ class Customizer(object):
             path=helpers.current_dir(CONF_PATH)
         )
 
-        if custom_config == {}:
-            # FIXME: DEPRECATED ON 2017/Jul/03 ... delete me in a near future!
-            log.error("""DEPRECATED project_configuration path found
-
-Please edit your confs/backend.yml and fix the path!
-
-You should have something like this:
-- ../projects/${COMPOSE_PROJECT_NAME}/project_configuration.yaml:/code/${COMPOSE_PROJECT_NAME}/confs/project_configuration.yaml
-
-And you should have this:
-- ../projects/${COMPOSE_PROJECT_NAME}/project_configuration.yaml:/code/confs/project_configuration.yaml
-
-Please also fix in celery and celeryui
-
-""")
-            custom_config = load_yaml_file(
-                PROJECT_CONF_FILENAME,
-                path=helpers.current_dir(CUSTOM_PACKAGE, CONF_PATH)
-            )
-
-        # custom_config[BLUEPRINT_KEY] = blueprint
-
         # Read default configuration
         defaults = load_yaml_file(
             DEFAULT_FILENAME,
