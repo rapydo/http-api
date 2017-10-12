@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+@mattia: why is this file here, and why I see thing copied from the old
+tests/__init__.py?
+"""
+
 import pytest
 import json
 
