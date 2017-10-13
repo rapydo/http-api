@@ -378,9 +378,12 @@ def get_content_from_response(http_out):
             " from a malformed response:\n%s" % response)
 
     # Split
-    content = response[ResponseMaker._content_key]['data']
-    err = response[ResponseMaker._content_key]['errors']
-    meta = response[ResponseMaker._content_meta]
-    code = meta['status']
+    content = response.get(ResponseMaker._content_key, {}).get('data')
+    err = response.get(ResponseMaker._content_key, {}).get('errors')
+    meta = response.get(ResponseMaker._content_meta, {})
+    code = meta.get('status')
+
+    # if code is None:
+    #     log.warning("Wrong content?")
 
     return content, err, meta, code
