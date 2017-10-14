@@ -20,6 +20,8 @@ class IrodsException(RestApiException):
 
 class IrodsPythonClient():
 
+    anonymous_user = 'anonymous'
+
     def __init__(self, prc, variables, default_chunk_size=1048576):
         self.prc = prc
         self.variables = variables
@@ -476,7 +478,7 @@ class IrodsPythonClient():
             if self.is_collection(coll_or_obj):
                 coll_or_obj = self.prc.collections.get(coll_or_obj)
             elif self.is_dataobject(coll_or_obj):
-                coll_or_obj = self.prc.collections.get(coll_or_obj)
+                coll_or_obj = self.prc.data_objects.get(coll_or_obj)
             else:
                 coll_or_obj = None
 
@@ -500,8 +502,15 @@ class IrodsPythonClient():
 
         return data
 
-    def set_permissions(self, path, permission, userOrGroup,
-                        zone='', recursive=False):
+    def set_permissions(self, path, permission=None, userOrGroup=None,
+                        zone=None, recursive=False):
+
+        if zone is None:
+            zone = self.get_current_zone()
+
+        # If not specified, remove permission
+        if permission is None:
+            permission = 'null'
 
         try:
 
