@@ -104,6 +104,27 @@ class RestTestsBase(unittest.TestCase):
 #####################
 class RestTestsAuthenticatedBase(RestTestsBase):
 
+    def save_token(self, bearer_token, suffix=None):
+
+        if suffix is None:
+            suffix = ''
+        else:
+            suffix = '_' + suffix
+
+        key = 'bearer_token' + suffix
+        setattr(self.__class__, key, bearer_token)
+
+        key = 'auth_header' + suffix
+        setattr(
+            self.__class__, key,
+            {'Authorization': 'Bearer %s' % bearer_token}
+        )
+
+        # self.__class__.bearer_token = bearer_token
+        # self.__class__.auth_header = {
+        #     'Authorization': 'Bearer %s' % self.__class__.bearer_token
+        # }
+
     def setUp(self):
 
         # Call father's method
@@ -116,10 +137,8 @@ class RestTestsAuthenticatedBase(RestTestsBase):
         r = self.app.post(endpoint, data=credentials)
         self.assertEqual(r.status_code, self._hcodes.HTTP_OK_BASIC)
         content = self.get_content(r)
-        self.__class__.bearer_token = content['token']
-        self.__class__.auth_header = {
-            'Authorization': 'Bearer %s' % self.__class__.bearer_token
-        }
+        self.save_token(content.get('token'))
+        # log.pp(self.__class__)
 
     def tearDown(self):
 
@@ -131,9 +150,9 @@ class RestTestsAuthenticatedBase(RestTestsBase):
         self.assertEqual(r.status_code, self._hcodes.HTTP_OK_BASIC)
         content = self.get_content(r)
         for element in content:
-            if element['token'] == self.__class__.bearer_token:
+            if element.get('token') == self.__class__.bearer_token:
                 # delete only current token
-                ep += '/' + element['id']
+                ep += '/' + element.get('id')
                 rdel = self.app.delete(ep, headers=self.__class__.auth_header)
                 self.assertEqual(
                     rdel.status_code, self._hcodes.HTTP_OK_NORESPONSE)
