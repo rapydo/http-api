@@ -30,22 +30,14 @@ class ExternalLogins(object):
 
     _available_services = {}
 
-    # FIXME: FROM MATTIA: the testing parameter is still required?
-    def __init__(self, testing=False):
-
-        # FIXME: FROM MATTIA: removed this if
-        # if testing:
-        #     log.warning("currently skipping oauth2 in tests")
-        #     # FIXME: provide some tests for oauth2 calls
-        #     return
+    def __init__(self):
 
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
         # in different places of the code
         if not self._check_if_services_exist():
-            # Note: this gets called only at INIT time
-            # FIXME: FROM MATTIA: the testing parameter is still required?
-            mem.oauth2_services = self.get_oauth2_instances(testing)
+            # NOTE: this gets called only at INIT time
+            mem.oauth2_services = self.get_oauth2_instances()
 
         # Recover services for current instance
         # This list will be used from the outside world
@@ -55,8 +47,7 @@ class ExternalLogins(object):
     def _check_if_services_exist():
         return getattr(mem, 'oauth2_services', None) is not None
 
-    # FIXME: FROM MATTIA: the testing parameter is still required?
-    def get_oauth2_instances(self, testing=False):
+    def get_oauth2_instances(self):
         """
         Setup every oauth2 instance available through configuration
         """
@@ -78,9 +69,7 @@ class ExternalLogins(object):
 
             # Call the service and save it
             try:
-                # TOFIX: FROM MATTIA: the testing parameter is still required?
-                # FIXME: PAOLO: check here if it's really used
-                obj = func(testing)
+                obj = func()
 
                 # Make sure it's always a dictionary of objects
                 if not isinstance(obj, dict):
@@ -112,8 +101,7 @@ class ExternalLogins(object):
             authorize_url='https://github.com/login/oauth/authorize'
         )
 
-    # FIXME: FROM MATTIA: the testing parameter is still required?
-    def b2access(self, testing=False):
+    def b2access(self):
 
         from restapi.services.detect import Detector as detect
         b2access_vars = detect.load_variables({'prefix': 'b2access'})
