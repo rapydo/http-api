@@ -9,8 +9,7 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 import os
 from base64 import b64encode
 from restapi.protocols.oauth import oauth
-from restapi.confs import PRODUCTION
-from utilities import CUSTOM_PACKAGE
+# from restapi.confs import PRODUCTION
 from utilities.globals import mem
 from utilities.meta import Meta
 from utilities.logs import get_logger
@@ -18,14 +17,13 @@ from utilities.logs import get_logger
 log = get_logger(__name__)
 meta = Meta()
 
-
-B2ACCESS_DEV_BASEURL = "https://unity.eudat-aai.fz-juelich.de"
-B2ACCESS_DEV_URL = B2ACCESS_DEV_BASEURL + ":8443"
-B2ACCESS_DEV_CA_URL = B2ACCESS_DEV_BASEURL + ":8445"
-
-B2ACCESS_PROD_BASEURL = "https://b2access.eudat.eu"
-B2ACCESS_PROD_URL = B2ACCESS_PROD_BASEURL + ":8443"
-B2ACCESS_PROD_CA_URL = B2ACCESS_PROD_BASEURL + ":8445"
+B2ACCESS_MAIN_PORT = 8443
+B2ACCESS_CA_PORT = 8445
+B2ACCESS_URLS = {
+    'development': 'unity.eudat-aai.fz-juelich.de',
+    'staging': 'b2access-integration.fz-juelich.de',
+    'production': 'b2access.eudat.eu',
+}
 
 
 class ExternalLogins(object):
@@ -117,28 +115,28 @@ class ExternalLogins(object):
     # FIXME: FROM MATTIA: the testing parameter is still required?
     def b2access(self, testing=False):
 
-        from utilities import ENDPOINTS_CODE_DIR
-        module = meta.get_module_from_string(
-            "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'commons'))
+        from restapi.services.detect import Detector as detect
+        b2access_vars = detect.load_variables({'prefix': 'b2access'})
+        selected_b2access = b2access_vars.get('env')
+        if selected_b2access is None:
+            return {}
 
-        if module is None:
-            B2ACCESS_ENV = PRODUCTION
-        else:
-            B2ACCESS_ENV = \
-                getattr(module, 'CURRENT_B2ACCESS_ENVIRONMENT', 'unknown')
-        B2ACCESS_ENV_PRODUCTION = B2ACCESS_ENV == 'production'
+        base_url = B2ACCESS_URLS.get(selected_b2access)
+        b2access_url = "https://%s:%s" % (base_url, B2ACCESS_MAIN_PORT)
+        b2access_ca = "https://%s:%s" % (base_url, B2ACCESS_CA_PORT)
 
-        # LOAD CREDENTIALS FROM DOCKER ENVIRONMENT
-        key = os.environ.get('B2ACCESS_APPNAME', 'yourappusername')
-        secret = os.environ.get('B2ACCESS_APPKEY', 'yourapppw')
+        # NOTE: this was used to understand if production or not
+        # from utilities import ENDPOINTS_CODE_DIR, CUSTOM_PACKAGE
+        # module = meta.get_module_from_string(
+        #     "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'commons'))
+
+        # load credentials from environment
+        key = b2access_vars.get('appname', 'yourappusername')
+        secret = b2access_vars.get('appkey', 'yourapppw')
 
         # SET OTHER URLS
-        token_url = B2ACCESS_DEV_URL + '/oauth2/token'
-        authorize_url = B2ACCESS_DEV_URL + '/oauth2-as/oauth2-authz'
-
-        if B2ACCESS_ENV_PRODUCTION:
-            token_url = B2ACCESS_PROD_URL + '/oauth2/token'
-            authorize_url = B2ACCESS_PROD_URL + '/oauth2-as/oauth2-authz'
+        token_url = b2access_url + '/oauth2/token'
+        authorize_url = b2access_url + '/oauth2-as/oauth2-authz'
 
         # COMMON ARGUMENTS
         arguments = {
@@ -152,20 +150,12 @@ class ExternalLogins(object):
             'access_token_method': 'POST'
         }
 
-        #####################
-        # B2ACCESS
-        arguments['base_url'] = B2ACCESS_DEV_URL + '/oauth2/'
-        if B2ACCESS_ENV_PRODUCTION:
-            arguments['base_url'] = B2ACCESS_PROD_URL + '/oauth2/'
-
+        # B2ACCESS main app
+        arguments['base_url'] = b2access_url + '/oauth2/'
         b2access_oauth = oauth.remote_app('b2access', **arguments)
 
-        #####################
-        # B2ACCESS CERTIFICATION AUTHORITY
-        arguments['base_url'] = B2ACCESS_DEV_CA_URL
-        if B2ACCESS_ENV_PRODUCTION:
-            arguments['base_url'] = B2ACCESS_PROD_CA_URL
-
+        # B2ACCESS certification authority app
+        arguments['base_url'] = b2access_ca
         b2accessCA = oauth.remote_app('b2accessCA', **arguments)
 
         #####################
@@ -179,7 +169,7 @@ class ExternalLogins(object):
         return {
             'b2access': b2access_oauth,
             'b2accessCA': b2accessCA,
-            'prod': B2ACCESS_ENV_PRODUCTION
+            'prod': selected_b2access == 'production'
         }
 
 
