@@ -45,6 +45,14 @@ class IrodsPythonClient():
 # Re-implemented wrappers
 # ##################################
 # ##################################
+
+    def exists(self, path):
+        if self.is_collection(path):
+            return True
+        if self.is_dataobject(path):
+            return True
+        return False
+
     def is_collection(self, path):
         return self.prc.collections.exists(path)
 
