@@ -399,7 +399,7 @@ class IrodsPythonClient():
         """
 
         # FIXME: resource is currently not used!
-        log.warning("Resource not used in saving irods data...")
+        # log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
             log.warn("Already exists")
@@ -442,7 +442,7 @@ class IrodsPythonClient():
             chunk_size = self.chunk_size
 
         # FIXME: resource is not used!
-        log.warning("Resource not used in saving irods data...")
+        # log.warning("Resource not used in saving irods data...")
 
         try:
             with open(path, "rb") as handle:
