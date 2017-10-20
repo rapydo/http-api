@@ -4,7 +4,7 @@
 iRODS file-system flask connector
 """
 
-import os
+# import os
 import logging
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
@@ -46,28 +46,15 @@ class IrodsPythonExt(BaseExtension):
             gss = kwargs.get('gss', False)
             myproxy_host = self.variables.get("myproxy_host")
 
-            # To become admin is possible only if:
-            # - we are using a dockerized internal irods
-            # - the user was not specified
             admin = kwargs.get('be_admin', False)
-
             if user is None:
-                user = self.variables.get('user')
-                password = self.variables.get('password')
-
                 if admin:
-                    if external:
-                        log.error(
-                            "HTTP API connected to external iRODS instances" +
-                            "must not be used with privileged user")
-                        raise ValueError('iRODS main user: misconfiguration')
-                    else:
-                        # dockerize irods uses a GSI enabled adminer
-                        user = self.variables.get('default_admin_user')
-                        self.authscheme = GSI_AUTH_SCHEME
+                    user = self.variables.get('default_admin_user')
+                    self.authscheme = GSI_AUTH_SCHEME
                 else:
+                    user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
-                        self.password = password
+                        self.password = self.variables.get('password')
 
             log.very_verbose(
                 "Check connection parameters:" +
