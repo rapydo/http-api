@@ -70,6 +70,11 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# Test API and calculate coverage
 	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
 
+	if [ "$PROJECT" = "celerytest" ]; then
+		echo "\n\nLogs from Celery:\n\n"
+		docker logs ${PROJECT}_celery_1
+	fi
+
 	# Sync the coverage file to S3, to be available for the next stage
 	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
 
