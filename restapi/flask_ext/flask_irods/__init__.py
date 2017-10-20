@@ -201,7 +201,18 @@ class IrodsPythonExt(BaseExtension):
         #     time.sleep(5)
 
         # recover instance with the parent method
-        return super().custom_init()
+        session = super().custom_init()
+
+        # IF variable 'IRODS_ANONYMOUS? is set THEN
+        # Check if external iRODS / B2SAFE has the 'anonymous' user available
+        user = 'anonymous'
+        if self.variables.get('external') and self.variables.get(user):
+            if not session.query_user_exists(user):
+                log.exit(
+                    "Cannot find '%s' inside " +
+                    "the currently connected iRODS instance", user)
+
+        return session
 
     def deserialize(self, obj):
         return iRODSSession.deserialize(obj)

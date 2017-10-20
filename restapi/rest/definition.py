@@ -15,6 +15,7 @@ from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
+from utilities.time import string_from_timestamp
 from restapi.services.detect import detector
 from utilities.logs import get_logger
 
@@ -456,8 +457,7 @@ class EndpointResource(Resource):
                 if attribute is None:
                     attributes[key] = ""
                 elif isinstance(attribute, datetime):
-                    dval = self.string_from_timestamp(
-                        attribute.strftime('%s'))
+                    dval = string_from_timestamp(attribute.strftime('%s'))
                     attributes[key] = dval
                 else:
 

@@ -94,13 +94,14 @@ class Detector(object):
             log.info("Authentication based on '%s' service"
                      % self.authentication_service)
 
-    def load_variables(self, service, enable_var=None, prefix=None):
+    @staticmethod
+    def load_variables(service, enable_var=None, prefix=None):
 
         variables = {}
         host = None
 
         if prefix is None:
-            _, prefix = self.prefix_name(service)
+            _, prefix = Detector.prefix_name(service)
 
         for var, value in os.environ.items():
             if enable_var is not None and var == enable_var:
