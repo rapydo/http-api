@@ -77,8 +77,11 @@ class ExternalLogins(object):
 
                 # Cycle all the Oauth2 group services
                 for name, oauth2 in obj.items():
-                    services[name] = oauth2
-                    log.debug("Created Oauth2 service %s" % name)
+                    if oauth2 is None:
+                        log.debug("Skipping failing credentials: %s" % key)
+                    else:
+                        services[name] = oauth2
+                        log.debug("Created Oauth2 service %s" % name)
 
             except Exception as e:
                 log.critical(
@@ -109,6 +112,14 @@ class ExternalLogins(object):
         if selected_b2access is None:
             return {}
 
+        # load credentials from environment
+        key = b2access_vars.get('appname', 'yourappusername')
+        secret = b2access_vars.get('appkey', 'yourapppw')
+
+        if secret is None or secret.strip() == '':
+            log.warning("B2ACCESS credentials not set")
+            return None
+
         base_url = B2ACCESS_URLS.get(selected_b2access)
         b2access_url = "https://%s:%s" % (base_url, B2ACCESS_MAIN_PORT)
         b2access_ca = "https://%s:%s" % (base_url, B2ACCESS_CA_PORT)
@@ -117,10 +128,6 @@ class ExternalLogins(object):
         # from utilities import ENDPOINTS_CODE_DIR, CUSTOM_PACKAGE
         # module = meta.get_module_from_string(
         #     "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'commons'))
-
-        # load credentials from environment
-        key = b2access_vars.get('appname', 'yourappusername')
-        secret = b2access_vars.get('appkey', 'yourapppw')
 
         # SET OTHER URLS
         token_url = b2access_url + '/oauth2/token'

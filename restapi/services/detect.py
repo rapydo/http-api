@@ -44,8 +44,11 @@ class Detector(object):
     def get_bool_from_os(name):
         bool_var = os.environ.get(name, False)
         if not isinstance(bool_var, bool):
-            tmp = int(bool_var)
-            bool_var = bool(tmp)
+            try:
+                tmp = int(bool_var)
+                bool_var = bool(tmp)
+            except ValueError:
+                bool_var = False
         return bool_var
 
     @staticmethod
