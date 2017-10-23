@@ -78,6 +78,7 @@ class NeoModel(BaseExtension):
         with self.app.app_context():
 
             if pdestroy:
+                log.critical("Destroy current Neo4j data")
                 from neomodel import clear_neo4j_database
                 clear_neo4j_database(db)
 
