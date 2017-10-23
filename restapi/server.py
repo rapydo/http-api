@@ -79,6 +79,9 @@ def create_app(name=__name__,
                **kwargs):
     """ Create the server istance for Flask application """
 
+    if PRODUCTION and testing_mode:
+        log.exit("Unable to execute tests in production")
+
     #############################
     # Initialize reading of all files
     mem.customizer = Customizer(testing_mode, PRODUCTION, init_mode)
@@ -99,6 +102,10 @@ def create_app(name=__name__,
         skip_endpoint_mapping = True
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
+        destroy_mode = True
+        init_mode = True
+        microservice.config['DESTROY_MODE'] = destroy_mode
+        microservice.config['INIT_MODE'] = init_mode
     elif worker_mode:
         skip_endpoint_mapping = True
 
