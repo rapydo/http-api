@@ -43,11 +43,6 @@ class MongoExt(BaseExtension):
         # recover instance with the parent method
         db = super().custom_init()
 
-        if pinit:
-            # TODO: discuss!
-            # needed from EPOS use case
-            pass
-
         if pdestroy:
             # massive destruction
             client = db.connection.database
@@ -63,5 +58,10 @@ class MongoExt(BaseExtension):
                 if db not in system_dbs:
                     client.drop_database(db)
                     log.critical("Dropped db '%s'" % db)
+
+        if pinit:
+            # TODO: discuss!
+            # needed from EPOS use case
+            pass
 
         return db

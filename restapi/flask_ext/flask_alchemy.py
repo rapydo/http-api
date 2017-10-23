@@ -87,14 +87,14 @@ class SqlAlchemy(BaseExtension):
             sql = text('SELECT 1')
             db.engine.execute(sql)
 
-            if pinit:
-                # all is fine: now create table
-                # because they should not exist yet
-                db.create_all()
-
             if pdestroy:
                 # massive destruction
                 log.critical("Destroy current SQL data")
                 db.drop_all()
+
+            if pinit:
+                # all is fine: now create table
+                # because they should not exist yet
+                db.create_all()
 
         return db
