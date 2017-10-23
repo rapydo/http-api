@@ -85,12 +85,17 @@ class IrodsPythonExt(BaseExtension):
                 log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
+            proxy_cert_name = "%s%s" % (
+                self.variables.get('certificates_prefix', ""),
+                kwargs.get("proxy_cert_name")
+            )
+
             Certificates().globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
                 user_proxy=self.user,
                 cert_dir=self.variables.get("x509_cert_dir"),
                 myproxy_host=myproxy_host,
-                cert_name=kwargs.get("proxy_cert_name"),
+                cert_name=proxy_cert_name,
                 cert_pwd=kwargs.get("proxy_pass"),
             )
 
