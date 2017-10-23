@@ -73,7 +73,7 @@ class NeoModel(BaseExtension):
         # recover instance with the parent method
         db = super().custom_init()
 
-        db.init_app(self.app)
+        # db.init_app(self.app)
 
         with self.app.app_context():
 

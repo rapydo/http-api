@@ -102,9 +102,9 @@ def create_app(name=__name__,
         skip_endpoint_mapping = True
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
-        destroy_mode = True
+        # destroy_mode = True
+        # microservice.config['DESTROY_MODE'] = destroy_mode
         init_mode = True
-        microservice.config['DESTROY_MODE'] = destroy_mode
         microservice.config['INIT_MODE'] = init_mode
     elif worker_mode:
         skip_endpoint_mapping = True
