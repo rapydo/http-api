@@ -16,6 +16,7 @@ fi
 ./dev-requirements.py
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
+export TESTING=1
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 echo "Current branch: $TRAVIS_BRANCH"
@@ -68,7 +69,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker logs ${PROJECT}_backend_1
 
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --project ${PROJECT} shell backend --command 'restapi clean'
+	rapydo --project ${PROJECT} shell backend --command 'restapi test_clean'
 	
 	# Test API and calculate coverage
 	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
