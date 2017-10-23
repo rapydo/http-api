@@ -71,7 +71,7 @@ class NeoModel(BaseExtension):
         """ Note: we ignore args here """
 
         # recover instance with the parent method
-        db = super().custom_init()
+        graph = super().custom_init()
 
         # db.init_app(self.app)
 
@@ -80,9 +80,9 @@ class NeoModel(BaseExtension):
             if pdestroy:
                 log.critical("Destroy current Neo4j data")
                 from neomodel import clear_neo4j_database
-                clear_neo4j_database(db)
+                clear_neo4j_database(graph.db)
 
             if pinit:
                 pass
 
-        return db
+        return graph
