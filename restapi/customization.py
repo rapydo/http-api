@@ -245,9 +245,24 @@ class Customizer(object):
         # Check for dependecies and skip if missing
         from restapi.services.detect import detector
 
-        for dependency in conf.pop('depends_on', []):
-            if not detector.get_bool_from_os(dependency):
-                log.debug("Skip '%s': unmet %s" % (default_uri, dependency))
+        for var in conf.pop('depends_on', []):
+
+            negate = ''
+            pieces = var.split(' ')
+            pieces_num = len(pieces)
+            if pieces_num == 1:
+                dependency = pieces.pop()
+            elif pieces_num == 2:
+                negate, dependency = pieces
+            else:
+                log.exit('Wrong parameter: %s', var)
+
+            check = detector.get_bool_from_os(dependency)
+            if negate.lower() == 'not':
+                check = not check
+
+            if not check:
+                log.error("Skip '%s': unmet %s" % (default_uri, dependency))
                 return endpoint
 
         # Get the class from the module
