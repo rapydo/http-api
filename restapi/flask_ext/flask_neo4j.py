@@ -66,3 +66,22 @@ class NeoModel(BaseExtension):
         return client
 
         # return db
+
+    def custom_init(self, pinit=False, pdestroy=False, **kwargs):
+        """ Note: we ignore args here """
+
+        # recover instance with the parent method
+        db = super().custom_init()
+
+        db.init_app(self.app)
+
+        with self.app.app_context():
+
+            if pdestroy:
+                from neomodel import clear_neo4j_database
+                clear_neo4j_database(db)
+
+            if pinit:
+                pass
+
+        return db
