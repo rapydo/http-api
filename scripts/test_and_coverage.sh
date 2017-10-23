@@ -16,7 +16,7 @@ fi
 ./dev-requirements.py
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
-export TESTING=1
+export TESTING="1"
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 echo "Current branch: $TRAVIS_BRANCH"

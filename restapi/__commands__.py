@@ -193,8 +193,9 @@ def clean():
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 
 
-testing_mode = os.environ.get('TESTING', 0)
-if testing_mode:
+log.pp(os.environ)
+testing_mode = os.environ.get('TESTING', "0")
+if testing_mode == "1":
     @cli.command()
     def test_clean():
         """Destroy current services data"""
