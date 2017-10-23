@@ -27,8 +27,24 @@ log = get_logger(__name__)
 class Status(EndpointResource):
     """ API online client testing """
 
+    # @decorate.catch_error()
     def get(self):
+
+        #####################
+        # DEBUG
         # print(self.auth)
+        # return {'Hello', 'World!'}
+
+        #####################
+        # TEST ERRORS
+        # return self.send_errors(message='test error')
+
+        #####################
+        # NORMAL RESPONSE
+        return 'Server is alive!'
+
+        #####################
+        # MAIL TEST BLOCK
 
         # # Import smtplib for the actual sending function
         # import smtplib
@@ -48,8 +64,6 @@ class Status(EndpointResource):
         # s = smtplib.SMTP('smtp.dockerized.io')
         # s.send_message(msg)
         # s.quit()
-
-        return 'Server is alive!'
 
 
 class SwaggerSpecifications(EndpointResource):
