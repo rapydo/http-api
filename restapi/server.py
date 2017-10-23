@@ -120,6 +120,7 @@ def create_app(name=__name__,
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
+    # log.pp(microservice.__dict__)
 
     ##############################
     if PRODUCTION:
