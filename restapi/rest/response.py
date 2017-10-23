@@ -274,7 +274,9 @@ class ResponseMaker(object):
         response = (final_content, r['code'], r['headers'])
 
         if request_from_browser():
-            return respond_to_browser(r)
+            # skip in case of errors, for now
+            if r.get('errors') is None:
+                return respond_to_browser(r)
 
         return response
 
