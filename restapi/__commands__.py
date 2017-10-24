@@ -194,6 +194,12 @@ def clean():
 
 
 @cli.command()
+def test_clean_do_not_use_me():
+    """Destroy current services data"""
+    flask_cli({'name': 'Removing data', 'destroy_mode': True})
+
+
+@cli.command()
 @click.option(
     '--wait/--no-wait', default=False, help='Wait for startup to finish')
 @click.option(
