@@ -431,10 +431,8 @@ class EndpointResource(Resource):
 
         return json_data
 
-    def get_show_fields(
-        self, obj, function_name, view_public_only, fields=None
-    ):
-
+    def get_show_fields(self, obj, function_name,
+                        view_public_only, fields=None):
         if fields is None:
             fields = []
         if len(fields) < 1:

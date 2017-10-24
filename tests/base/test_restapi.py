@@ -7,7 +7,7 @@ Tests for http api base (mostly authentication)
 
 # from tests import RestTestsBase
 from restapi.tests import BaseTests
-from restapi.tests.utilities import API_URI, AUTH_URI
+from restapi.tests.utilities import API_URI
 from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
 
