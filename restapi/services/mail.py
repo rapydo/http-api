@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import smtplib
-from email.mime.text import MIMEText
 import os
 
+from utilities.email import send_mail as send
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -12,44 +11,24 @@ def send_mail(body, subject, to_address=None, from_address=None):
 
     try:
         host = os.environ.get("SMTP_HOST")
-
-        if host is None:
-            log.info("Skipping send email: smtp host not configured")
-            return False
+        port = os.environ.get("SMTP_PORT")
+        username = os.environ.get("SMTP_USERNAME")
+        password = os.environ.get("SMTP_PASSWORD")
 
         if from_address is None:
             from_address = os.environ.get("SMTP_ADMIN")
 
-        if from_address is None:
-            log.warning(
-                "Unable to send email: " +
-                "both from address and default admin are missing")
-            return False
-
         if to_address is None:
             to_address = os.environ.get("SMTP_ADMIN")
 
-        if to_address is None:
-            log.warning(
-                "Unable to send email: " +
-                "both destination address and default admin are missing")
-            return False
+        return send(
+            body, subject, to_address, from_address,
+            smtp_host=host,
+            smtp_port=port,
+            username=username,
+            password=password
+        )
 
-        msg = MIMEText(body)
-
-        # me == the sender's email address
-        # you == the recipient's email address
-        msg['Subject'] = subject
-        msg['From'] = from_address
-        msg['To'] = to_address
-
-        s = smtplib.SMTP(host)
-        s.send_message(msg)
-        s.quit()
-
-        log.debug("Mail sent to %s" % to_address)
-
-        return True
     except BaseException as e:
         log.error(str(e))
         return False
