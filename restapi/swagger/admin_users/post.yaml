@@ -1,0 +1,16 @@
+common:
+  custom:
+    # publish: true
+    authentication: true
+    authorized:
+      - admin_root
+
+  # custom_parameters:
+  #   - AdminUsers
+
+users:
+  summary: Create a new user
+  # description: -
+  responses:
+    '200':
+      description: The uuid of the new user is returned
