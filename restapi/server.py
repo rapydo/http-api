@@ -14,8 +14,7 @@ from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
-from restapi.protocols.restful import Api, \
-    EndpointsFarmer, create_endpoints
+from restapi.protocols.restful import Api, farmer, create_endpoints
 from restapi.services.detect import detector
 from utilities.globals import mem
 from utilities.logs import \
@@ -79,14 +78,24 @@ def create_app(name=__name__,
                **kwargs):
     """ Create the server istance for Flask application """
 
+    if PRODUCTION and testing_mode:
+        log.exit("Unable to execute tests in production")
+
     #############################
     # Initialize reading of all files
     mem.customizer = Customizer(testing_mode, PRODUCTION, init_mode)
     # FIXME: try to remove mem. from everywhere...
 
+    #############################
+    # Add template dir for output in HTML
+    from utilities import helpers
+    tp = helpers.script_abspath(__file__, 'templates')
+    kwargs['template_folder'] = tp
+
     #################################################
     # Flask app instance
     #################################################
+
     microservice = Flask(name, **kwargs)
 
     ##############################
@@ -99,6 +108,8 @@ def create_app(name=__name__,
         skip_endpoint_mapping = True
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
+        init_mode = True
+        # microservice.config['INIT_MODE'] = init_mode
     elif worker_mode:
         skip_endpoint_mapping = True
 
@@ -120,6 +131,7 @@ def create_app(name=__name__,
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
+    # log.pp(microservice.__dict__)
 
     ##############################
     if PRODUCTION:
@@ -149,7 +161,7 @@ def create_app(name=__name__,
     # Restful plugin
     if not skip_endpoint_mapping:
         # Triggering automatic mapping of REST endpoints
-        current_endpoints = create_endpoints(EndpointsFarmer(Api))
+        current_endpoints = create_endpoints(farmer.EndpointsFarmer(Api))
         # Restful init of the app
         current_endpoints.rest_api.init_app(microservice)
 

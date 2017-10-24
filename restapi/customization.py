@@ -64,28 +64,6 @@ class Customizer(object):
             path=helpers.current_dir(CONF_PATH)
         )
 
-        if custom_config == {}:
-            # FIXME: DEPRECATED ON 2017/Jul/03 ... delete me in a near future!
-            log.error("""DEPRECATED project_configuration path found
-
-Please edit your confs/backend.yml and fix the path!
-
-You should have something like this:
-- ../projects/${COMPOSE_PROJECT_NAME}/project_configuration.yaml:/code/${COMPOSE_PROJECT_NAME}/confs/project_configuration.yaml
-
-And you should have this:
-- ../projects/${COMPOSE_PROJECT_NAME}/project_configuration.yaml:/code/confs/project_configuration.yaml
-
-Please also fix in celery and celeryui
-
-""")
-            custom_config = load_yaml_file(
-                PROJECT_CONF_FILENAME,
-                path=helpers.current_dir(CUSTOM_PACKAGE, CONF_PATH)
-            )
-
-        # custom_config[BLUEPRINT_KEY] = blueprint
-
         # Read default configuration
         defaults = load_yaml_file(
             DEFAULT_FILENAME,
@@ -250,13 +228,13 @@ Please also fix in celery and celeryui
 
         endpoint = EndpointElements(custom={})
 
-        #####################
         # Load the endpoint class defined in the YAML file
         file_name = conf.pop('file', default_uri)
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
         module = self._meta.get_module_from_string(name)
 
+        # Error if unable to find the module in python
         if module is None:
             debugger = log.warning
             if self._production:
@@ -264,14 +242,32 @@ Please also fix in celery and celeryui
             debugger("Could not find module %s (in %s)" % (name, file_name))
             return endpoint
 
-        #####################
         # Check for dependecies and skip if missing
-        for dependency in conf.pop('depends_on', []):
-            # FIXME: uhm? Should verify the env variable {SERVICE}_ENABLE?
-            if not getattr(module, dependency, False):
-                log.debug("Skip '%s': unmet %s" % (default_uri, dependency))
+        from restapi.services.detect import detector
+
+        for var in conf.pop('depends_on', []):
+
+            negate = ''
+            pieces = var.split(' ')
+            pieces_num = len(pieces)
+            if pieces_num == 1:
+                dependency = pieces.pop()
+            elif pieces_num == 2:
+                negate, dependency = pieces
+            else:
+                log.exit('Wrong parameter: %s', var)
+
+            check = detector.get_bool_from_os(dependency)
+            if negate.lower() == 'not':
+                check = not check
+
+            if not check:
+                if not self._testing:
+                    log.warning(
+                        "Skip '%s': unmet %s" % (default_uri, dependency))
                 return endpoint
 
+        # Get the class from the module
         endpoint.cls = self._meta.get_class_from_string(class_name, module)
         if endpoint.cls is None:
             log.critical("Could not extract python class '%s'" % class_name)

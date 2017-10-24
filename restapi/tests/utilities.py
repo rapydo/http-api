@@ -1,3 +1,8 @@
+"""
+
+    THIS SCRIPT IS OBSOLETE!
+    I'm moving what is need for py.test in restapi/tests/__init__.py
+"""
 import unittest
 import random
 import json

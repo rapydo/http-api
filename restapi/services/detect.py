@@ -44,8 +44,11 @@ class Detector(object):
     def get_bool_from_os(name):
         bool_var = os.environ.get(name, False)
         if not isinstance(bool_var, bool):
-            tmp = int(bool_var)
-            bool_var = bool(tmp)
+            try:
+                tmp = int(bool_var)
+                bool_var = bool(tmp)
+            except ValueError:
+                bool_var = False
         return bool_var
 
     @staticmethod
@@ -94,13 +97,14 @@ class Detector(object):
             log.info("Authentication based on '%s' service"
                      % self.authentication_service)
 
-    def load_variables(self, service, enable_var=None, prefix=None):
+    @staticmethod
+    def load_variables(service, enable_var=None, prefix=None):
 
         variables = {}
         host = None
 
         if prefix is None:
-            _, prefix = self.prefix_name(service)
+            _, prefix = Detector.prefix_name(service)
 
         for var, value in os.environ.items():
             if enable_var is not None and var == enable_var:

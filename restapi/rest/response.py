@@ -38,6 +38,56 @@ from utilities.logs import get_logger
 
 log = get_logger(__name__)
 
+MIMETYPE_JSON = 'application/json'
+MIMETYPE_XML = 'application/xml'
+MIMETYPE_HTML = 'text/html'
+MIMETYPE_CSV = 'text/csv'
+
+
+########################
+# Utility
+########################
+def request_from_browser():
+    """ Was a browser asking current request? """
+
+    from flask import request
+    # agent = request.headers.get('User-Agent')
+    # log.pp(request.user_agent.__dict__)
+    return request.user_agent.browser is not None
+
+
+def add_to_dict(mydict, content, key='content'):
+    if content is None:
+        content = {}
+    elif not isinstance(content, dict):
+        content = {key: content}
+    mydict.update(content)
+    return mydict
+
+
+def respond_to_browser(r):
+    log.debug("Request from a browser: reply with HTML.")
+
+    array = False
+    content = r.get('defined_content')
+    if isinstance(content, str):
+        html_content = content
+    else:
+        html_content = getattr(content, 'HTML', None)
+
+    if html_content is None:
+        data = {}
+        data = add_to_dict(data, content, key='data')
+        data = add_to_dict(data, r.get('errors'), key='errors')
+        array = True
+    else:
+        data = html_content
+
+    from restapi.protocols.restful import output_html
+    return output_html(
+        data=data, array=array,
+        code=r.get('code'), headers=r.get('headers'))
+
 
 ########################
 # Flask custom response
@@ -45,22 +95,21 @@ log = get_logger(__name__)
 
 class InternalResponse(Response):
     """
-    Note: basically the response cannot be modified anymore at this point
+    adding a few extra checks on the original flask response
     """
 
-    # def __init__(self, response, **kwargs):
     def __init__(self, *args, **kwargs):
+        """
+        If the application is not responding JSON (e.g. HTML),
+        This call is not executed
+        """
 
         if 'mimetype' not in kwargs and 'contenttype' not in kwargs:
-            # our default
-            kwargs['mimetype'] = 'application/json'
-
+            kwargs['mimetype'] = MIMETYPE_JSON  # our default
             # if response.startswith('<?xml'):
-            #     kwargs['mimetype'] = 'application/xml'
+            #     kwargs['mimetype'] = MIMETYPE_XML
 
-        self._latest_response = \
-            super().__init__(*args, **kwargs)
-        #    super().__init__(response, **kwargs)  # THIS WAS A HUGE BUG :/
+        self._latest_response = super().__init__(*args, **kwargs)
 
     @classmethod
     def force_type(cls, rv, environ=None):
@@ -70,8 +119,8 @@ class InternalResponse(Response):
             try:
                 rv = jsonify(rv)
             except BaseException:
-                print("DEBUG", rv)
-                log.error("Cannot jsonify rv")
+                log.error("Cannot jsonify rv:")
+                log.pp(rv)
 
         return super(InternalResponse, cls).force_type(rv, environ)
 
@@ -86,13 +135,17 @@ class ResponseMaker(object):
 
     def __init__(self, response):
         """
+        Executed before building the final response.
+
         We would receive most of the time a ResponseElements class
         that we have to parse.
-
+        So we call our parse to find out things about the current context.
         The parser will find out if inside there is either:
         - an original Flask/Werkzeug Response
         - A Flask Exception (e.g. NotFound)
         """
+
+        # Build a flask response
         self._response = self.parse_elements(response)
 
     def parse_elements(self, response):
@@ -175,8 +228,7 @@ class ResponseMaker(object):
         """
         Our default for response content
         """
-## Follow jsonapi.org?
-        return content
+        return content  # Could we follow jsonapi.org?
 
     def already_converted(self):
         return self.is_internal_response(self._response)
@@ -188,12 +240,12 @@ class ResponseMaker(object):
         a tuple (content, status, headers)
         """
 
-        if self.already_converted():
-            return self._response
-
         # 1. Use response elements
         r = self._response
         # log.pp(r)
+
+        if self.already_converted():
+            return r
 
         # 2. Apply DEFAULT or CUSTOM manipulation
         # (strictly to the sole content)
@@ -213,12 +265,18 @@ class ResponseMaker(object):
             r['code'], r['errors'], r['meta'])
 
         if r['extra'] is not None:
-            log.warning("NOT IMPLEMENTED YET: " +
-                           "what to do with extra field?\n%s" % r['extra'])
+            log.warning(
+                "NOT IMPLEMENTED YET: " +
+                "what to do with extra field?\n%s" % r['extra'])
 
         # 5. Return what is necessary to build a standard flask response
         # from all that was gathered so far
         response = (final_content, r['code'], r['headers'])
+
+        if request_from_browser():
+            # skip in case of errors, for now
+            if r.get('errors') is None:
+                return respond_to_browser(r)
 
         return response
 
@@ -334,7 +392,6 @@ class ResponseMaker(object):
     def flask_response(data, status=hcodes.HTTP_OK_BASIC, headers=None):
 
         raise DeprecationWarning("Useless mimic of Flask response")
-#         """
 #         Was inspired by
 #         http://blog.miguelgrinberg.com/
 #             post/customizing-the-flask-response-class
@@ -378,9 +435,12 @@ def get_content_from_response(http_out):
             " from a malformed response:\n%s" % response)
 
     # Split
-    content = response[ResponseMaker._content_key]['data']
-    err = response[ResponseMaker._content_key]['errors']
-    meta = response[ResponseMaker._content_meta]
-    code = meta['status']
+    content = response.get(ResponseMaker._content_key, {}).get('data')
+    err = response.get(ResponseMaker._content_key, {}).get('errors')
+    meta = response.get(ResponseMaker._content_meta, {})
+    code = meta.get('status')
+
+    # if code is None:
+    #     log.warning("Wrong content?")
 
     return content, err, meta, code

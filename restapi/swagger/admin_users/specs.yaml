@@ -1,0 +1,9 @@
+file: admin_users
+class: AdminUsers
+schema:
+  expose: true
+mapping:
+  users: "/admin/users"
+  user: "/admin/users/<user_id>"
+labels:
+  - admin 

@@ -15,6 +15,7 @@ from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
+from utilities.time import string_from_timestamp
 from restapi.services.detect import detector
 from utilities.logs import get_logger
 
@@ -215,9 +216,10 @@ class EndpointResource(Resource):
 
         return (current_page, limit)
 
-    def explode_response(self,
-                         api_output, get_all=False,
-                         get_error=False, get_status=False, get_meta=False):
+    def explode_response(
+        self, api_output, get_all=False,
+        get_error=False, get_status=False, get_meta=False
+    ):
 
         from restapi.rest.response import get_content_from_response
         content, err, meta, code = get_content_from_response(api_output)
@@ -327,8 +329,9 @@ class EndpointResource(Resource):
 
         return self.force_response(errors=errors, code=code, headers=headers)
 
-    def report_generic_error(self,
-                             message=None, current_response_available=True):
+    def report_generic_error(
+        self, message=None, current_response_available=True
+    ):
 
         if message is None:
             message = "Something BAD happened somewhere..."
@@ -428,9 +431,8 @@ class EndpointResource(Resource):
 
         return json_data
 
-    def get_show_fields(
-        self, obj, function_name, view_public_only, fields=None):
-
+    def get_show_fields(self, obj, function_name,
+                        view_public_only, fields=None):
         if fields is None:
             fields = []
         if len(fields) < 1:
@@ -456,8 +458,7 @@ class EndpointResource(Resource):
                 if attribute is None:
                     attributes[key] = ""
                 elif isinstance(attribute, datetime):
-                    dval = self.string_from_timestamp(
-                        attribute.strftime('%s'))
+                    dval = string_from_timestamp(attribute.strftime('%s'))
                     attributes[key] = dval
                 else:
 
@@ -479,11 +480,11 @@ class EndpointResource(Resource):
 
         return attributes
 
-    def getJsonResponse(self, instance,
-                        fields=None, resource_type=None,
-                        skip_missing_ids=False,
-                        view_public_only=False,
-                        relationship_depth=0, max_relationship_depth=1):
+    def getJsonResponse(
+        self, instance, fields=None, resource_type=None,
+        skip_missing_ids=False, view_public_only=False,
+        relationship_depth=0, max_relationship_depth=1
+    ):
         """
         Lots of meta introspection to guess the JSON specifications
         Very important: this method only works with customized neo4j models

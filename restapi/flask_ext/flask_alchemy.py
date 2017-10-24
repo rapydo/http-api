@@ -13,6 +13,7 @@ import sqlalchemy
 from utilities.meta import Meta
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
+from restapi.confs import PRODUCTION
 from utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
@@ -49,6 +50,13 @@ class SqlAlchemy(BaseExtension):
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
+        pool_size = self.variables.get('poolsize')
+        if pool_size is not None:
+            # sqlalchemy docs: http://j.mp/2xT0GOc
+            # defaults: overflow=10, pool_size=5
+            self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+            self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+
         obj_name = 'db'
         m = Meta()
         # search the original sqlalchemy object into models
@@ -79,14 +87,14 @@ class SqlAlchemy(BaseExtension):
             sql = text('SELECT 1')
             db.engine.execute(sql)
 
-            if pinit:
-                # all is fine: now create table
-                # because they should not exist yet
-                db.create_all()
-
             if pdestroy:
                 # massive destruction
                 log.critical("Destroy current SQL data")
                 db.drop_all()
+
+            if pinit:
+                # all is fine: now create table
+                # because they should not exist yet
+                db.create_all()
 
         return db
