@@ -44,122 +44,130 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
-    def test_02_GET_specifications(self, client):
-        """ Test that the flask server is running and reachable """
+        # TODO: test that a call from a browser receives HTML back
+        # from restapi.rest.response import MIMETYPE_HTML
+        # r = client.get(endpoint, content_type=MIMETYPE_HTML)
+        # output = self.get_content(r)
+        # print("TEST", r, output)
 
-        # Check success
-        endpoint = API_URI + '/specs'
-        log.info("*** VERIFY if API specifications are online")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        # Check HTML response to status if agent/request is text/html
 
-    def test_03_GET_login(self, client):
-        """ Check that you can login and receive back your token """
+    # def test_02_GET_specifications(self, client):
+    #     """ Test that the flask server is running and reachable """
 
-        log.info("*** VERIFY valid credentials")
-        headers, _ = self.do_login(client, None, None)
-        self.save("auth_header", headers)
+    #     # Check success
+    #     endpoint = API_URI + '/specs'
+    #     log.info("*** VERIFY if API specifications are online")
+    #     r = client.get(endpoint)
+    #     assert r.status_code == hcodes.HTTP_OK_BASIC
 
-        # Check failure
-        log.info("*** VERIFY invalid credentials")
+    # def test_03_GET_login(self, client):
+    #     """ Check that you can login and receive back your token """
 
-        headers, _ = self.do_login(
-            client, 'ABC-Random-User-XYZ', 'ABC-Random-Pass-XYZ',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+    #     log.info("*** VERIFY valid credentials")
+    #     headers, _ = self.do_login(client, None, None)
+    #     self.save("auth_header", headers)
 
-        # this check verifies a BUG with neo4j causing crash of auth module
-        # when using a non-email-username to authenticate
-        log.info("*** VERIFY with a non-email-username")
+    #     # Check failure
+    #     log.info("*** VERIFY invalid credentials")
 
-        headers, _ = self.do_login(
-            client, 'notanemail', '[A-Za-z0-9]+',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+    #     headers, _ = self.do_login(
+    #         client, 'ABC-Random-User-XYZ', 'ABC-Random-Pass-XYZ',
+    #         status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
-    def test_04_GET_profile(self, client):
-        """ Check if you can use your token for protected endpoints """
+    #     # this check verifies a BUG with neo4j causing crash of auth module
+    #     # when using a non-email-username to authenticate
+    #     log.info("*** VERIFY with a non-email-username")
 
-        endpoint = AUTH_URI + '/profile'
+    #     headers, _ = self.do_login(
+    #         client, 'notanemail', '[A-Za-z0-9]+',
+    #         status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
-        # Check success
-        log.info("*** VERIFY valid token")
-        r = client.get(endpoint, headers=self.get("auth_header"))
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+    # def test_04_GET_profile(self, client):
+    #     """ Check if you can use your token for protected endpoints """
 
-        # Check failure
-        log.info("*** VERIFY invalid token")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+    #     endpoint = AUTH_URI + '/profile'
 
-    def test_05_GET_logout(self, client):
-        """ Check that you can logout with a valid token """
+    #     # Check success
+    #     log.info("*** VERIFY valid token")
+    #     r = client.get(endpoint, headers=self.get("auth_header"))
+    #     assert r.status_code == hcodes.HTTP_OK_BASIC
 
-        endpoint = AUTH_URI + '/logout'
+    #     # Check failure
+    #     log.info("*** VERIFY invalid token")
+    #     r = client.get(endpoint)
+    #     assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        # Check success
-        log.info("*** VERIFY valid token")
-        r = client.get(endpoint, headers=self.get("auth_header"))
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+    # def test_05_GET_logout(self, client):
+    #     """ Check that you can logout with a valid token """
 
-        # Check failure
-        log.info("*** VERIFY invalid token")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+    #     endpoint = AUTH_URI + '/logout'
 
-    def test_06_GET_tokens(self, client):
+    #     # Check success
+    #     log.info("*** VERIFY valid token")
+    #     r = client.get(endpoint, headers=self.get("auth_header"))
+    #     assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
-        endpoint = AUTH_URI + '/login'
+    #     # Check failure
+    #     log.info("*** VERIFY invalid token")
+    #     r = client.get(endpoint)
+    #     assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        # CREATING 3 TOKENS
-        tokens = []
-        num_tokens = 3
+    # def test_06_GET_tokens(self, client):
 
-        for i in range(num_tokens):
-            header, token = self.do_login(client, None, None)
-            if i == 0:
-                self.save("tokens_header", header, read_only=True)
-            tokens.append(token)
+    #     endpoint = AUTH_URI + '/login'
 
-        endpoint = AUTH_URI + '/tokens'
+    #     # CREATING 3 TOKENS
+    #     tokens = []
+    #     num_tokens = 3
 
-        # TEST GET ALL TOKENS (expected at least num_tokens)
-        r = client.get(endpoint, headers=self.get("tokens_header"))
-        content = self.get_content(r)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
-        assert len(content) >= num_tokens
+    #     for i in range(num_tokens):
+    #         header, token = self.do_login(client, None, None)
+    #         if i == 0:
+    #             self.save("tokens_header", header, read_only=True)
+    #         tokens.append(token)
 
-        # save the second token to be used for further tests
-        self.save("token_id", str(content.pop(1)["id"]))
+    #     endpoint = AUTH_URI + '/tokens'
 
-        # TEST GET SINGLE TOKEN
-        endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
-        r = client.get(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+    #     # TEST GET ALL TOKENS (expected at least num_tokens)
+    #     r = client.get(endpoint, headers=self.get("tokens_header"))
+    #     content = self.get_content(r)
+    #     assert r.status_code == hcodes.HTTP_OK_BASIC
+    #     assert len(content) >= num_tokens
 
-        # TEST GET INVALID SINGLE TOKEN
-        r = client.get(endpoint + "/0", headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+    #     # save the second token to be used for further tests
+    #     self.save("token_id", str(content.pop(1)["id"]))
 
-    def test_07_DELETE_tokens(self, client):
+    #     # TEST GET SINGLE TOKEN
+    #     endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
+    #     r = client.get(endpoint_single, headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_OK_BASIC
 
-        endpoint = AUTH_URI + '/tokens'
-        endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
+    #     # TEST GET INVALID SINGLE TOKEN
+    #     r = client.get(endpoint + "/0", headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
-        # TEST DELETE OF A SINGLE TOKEN
-        r = client.delete(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+    # def test_07_DELETE_tokens(self, client):
 
-        # TEST AN ALREADY DELETED TOKEN
-        r = client.delete(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+    #     endpoint = AUTH_URI + '/tokens'
+    #     endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
 
-        # TEST INVALID DELETE OF A SINGLE TOKEN
-        r = client.delete(endpoint + "/0", headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+    #     # TEST DELETE OF A SINGLE TOKEN
+    #     r = client.delete(endpoint_single, headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
-        # TEST DELETE OF ALL TOKENS
-        r = client.delete(endpoint, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+    #     # TEST AN ALREADY DELETED TOKEN
+    #     r = client.delete(endpoint_single, headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        # TEST TOKEN IS NOW INVALID
-        r = client.get(endpoint, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+    #     # TEST INVALID DELETE OF A SINGLE TOKEN
+    #     r = client.delete(endpoint + "/0", headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+    #     # TEST DELETE OF ALL TOKENS
+    #     r = client.delete(endpoint, headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+
+    #     # TEST TOKEN IS NOW INVALID
+    #     r = client.get(endpoint, headers=self.get("tokens_header"))
+    #     assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED

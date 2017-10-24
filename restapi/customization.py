@@ -262,7 +262,9 @@ class Customizer(object):
                 check = not check
 
             if not check:
-                log.error("Skip '%s': unmet %s" % (default_uri, dependency))
+                if not self._testing:
+                    log.warning(
+                        "Skip '%s': unmet %s" % (default_uri, dependency))
                 return endpoint
 
         # Get the class from the module
