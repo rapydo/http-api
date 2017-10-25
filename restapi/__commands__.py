@@ -140,7 +140,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             result = errno.ESRCH
 
         if result == 0:
-            log.info("Service %s is reachable" % service_name)
+            log.info("Service %s is reachable", service_name)
             break
         else:
 
@@ -152,7 +152,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
                     service_name, sleep_time * timeout * counter
                 )
             else:
-                log.debug("Not reachable yet: %s" % service_name)
+                log.debug("Not reachable yet: %s", service_name)
 
             time.sleep(sleep_time)
 
@@ -180,7 +180,7 @@ def mywait():
 
         host = myclass.variables.get('host')
         port = int(myclass.variables.get('port'))
-        log.debug("Socket %s:%s" % (host, port))
+        log.debug("Socket %s:%s", host, port)
 
         # CHECK
         wait_socket(host, port, name)
@@ -241,4 +241,4 @@ def tests(wait, core):
         "pyunittests",
         parameters=parameters, catchException=True, error_max_len=-1)
 
-    log.info("Completed:\n%s" % output)
+    log.info("Completed:\n%s", output)

@@ -189,7 +189,7 @@ class Customizer(object):
         log.verbose("Found endpoint dir: '%s'" % endpoint)
 
         if os.path.exists(os.path.join(swagger_endpoint_dir, 'SKIP')):
-            log.info("Skipping: %s" % endpoint)
+            log.info("Skipping: %s", endpoint)
             return None
 
         # Find yaml files
@@ -260,14 +260,13 @@ class Customizer(object):
 
             if not check:
                 if not self._testing:
-                    log.warning(
-                        "Skip '%s': unmet %s" % (default_uri, dependency))
+                    log.warning("Skip '%s': unmet %s", default_uri, dependency)
                 return endpoint
 
         # Get the class from the module
         endpoint.cls = self._meta.get_class_from_string(class_name, module)
         if endpoint.cls is None:
-            log.critical("Could not extract python class '%s'" % class_name)
+            log.critical("Could not extract python class '%s'", class_name)
             return endpoint
         else:
             endpoint.exists = True
@@ -285,7 +284,7 @@ class Customizer(object):
         # base URI
         base = conf.pop('baseuri', API_URL)
         if base not in BASE_URLS:
-            log.warning("Invalid base %s" % base)
+            log.warning("Invalid base %s", base)
             base = API_URL
         base = base.strip('/')
 
