@@ -117,3 +117,12 @@ class BaseTests():
             "status": code,
         }
         return content
+
+    def get_celery(self, app):
+
+        from restapi.flask_ext.flask_celery import CeleryExt
+        from restapi.services.detect import detector
+        celery = detector.extensions_instances.get('celery')
+        celery.celery_app.app = app
+        CeleryExt.celery_app = celery.celery_app
+        return CeleryExt

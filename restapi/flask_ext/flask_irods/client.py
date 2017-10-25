@@ -20,6 +20,8 @@ class IrodsException(RestApiException):
 
 class IrodsPythonClient():
 
+    anonymous_user = 'anonymous'
+
     def __init__(self, prc, variables, default_chunk_size=1048576):
         self.prc = prc
         self.variables = variables
@@ -43,6 +45,14 @@ class IrodsPythonClient():
 # Re-implemented wrappers
 # ##################################
 # ##################################
+
+    def exists(self, path):
+        if self.is_collection(path):
+            return True
+        if self.is_dataobject(path):
+            return True
+        return False
+
     def is_collection(self, path):
         return self.prc.collections.exists(path)
 
@@ -389,7 +399,7 @@ class IrodsPythonClient():
         """
 
         # FIXME: resource is currently not used!
-        log.warning("Resource not used in saving irods data...")
+        # log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
             log.warn("Already exists")
@@ -432,7 +442,7 @@ class IrodsPythonClient():
             chunk_size = self.chunk_size
 
         # FIXME: resource is not used!
-        log.warning("Resource not used in saving irods data...")
+        # log.warning("Resource not used in saving irods data...")
 
         try:
             with open(path, "rb") as handle:
@@ -476,7 +486,7 @@ class IrodsPythonClient():
             if self.is_collection(coll_or_obj):
                 coll_or_obj = self.prc.collections.get(coll_or_obj)
             elif self.is_dataobject(coll_or_obj):
-                coll_or_obj = self.prc.collections.get(coll_or_obj)
+                coll_or_obj = self.prc.data_objects.get(coll_or_obj)
             else:
                 coll_or_obj = None
 
@@ -500,8 +510,15 @@ class IrodsPythonClient():
 
         return data
 
-    def set_permissions(self, path, permission, userOrGroup,
-                        zone='', recursive=False):
+    def set_permissions(self, path, permission=None, userOrGroup=None,
+                        zone=None, recursive=False):
+
+        if zone is None:
+            zone = self.get_current_zone()
+
+        # If not specified, remove permission
+        if permission is None:
+            permission = 'null'
 
         try:
 

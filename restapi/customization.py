@@ -228,25 +228,43 @@ class Customizer(object):
 
         endpoint = EndpointElements(custom={})
 
-        #####################
         # Load the endpoint class defined in the YAML file
         file_name = conf.pop('file', default_uri)
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
         module = self._meta.get_module_from_string(name, exit_on_fail=True)
 
+        # Error if unable to find the module in python
         if module is None:
             log.critical_exit(
                 "Could not find module %s (in %s)" % (name, file_name))
 
-        #####################
         # Check for dependecies and skip if missing
-        for dependency in conf.pop('depends_on', []):
-            # FIXME: uhm? Should verify the env variable {SERVICE}_ENABLE?
-            if not getattr(module, dependency, False):
-                log.debug("Skip '%s': unmet %s" % (default_uri, dependency))
+        from restapi.services.detect import detector
+
+        for var in conf.pop('depends_on', []):
+
+            negate = ''
+            pieces = var.split(' ')
+            pieces_num = len(pieces)
+            if pieces_num == 1:
+                dependency = pieces.pop()
+            elif pieces_num == 2:
+                negate, dependency = pieces
+            else:
+                log.exit('Wrong parameter: %s', var)
+
+            check = detector.get_bool_from_os(dependency)
+            if negate.lower() == 'not':
+                check = not check
+
+            if not check:
+                if not self._testing:
+                    log.warning(
+                        "Skip '%s': unmet %s" % (default_uri, dependency))
                 return endpoint
 
+        # Get the class from the module
         endpoint.cls = self._meta.get_class_from_string(class_name, module)
         if endpoint.cls is None:
             log.critical("Could not extract python class '%s'" % class_name)

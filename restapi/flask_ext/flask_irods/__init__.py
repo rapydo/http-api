@@ -4,7 +4,7 @@
 iRODS file-system flask connector
 """
 
-import os
+# import os
 import logging
 from utilities.certificates import Certificates
 # from restapi.confs import PRODUCTION
@@ -46,28 +46,15 @@ class IrodsPythonExt(BaseExtension):
             gss = kwargs.get('gss', False)
             myproxy_host = self.variables.get("myproxy_host")
 
-            # To become admin is possible only if:
-            # - we are using a dockerized internal irods
-            # - the user was not specified
             admin = kwargs.get('be_admin', False)
-
             if user is None:
-                user = self.variables.get('user')
-                password = self.variables.get('password')
-
                 if admin:
-                    if external:
-                        log.error(
-                            "HTTP API connected to external iRODS instances" +
-                            "must not be used with privileged user")
-                        raise ValueError('iRODS main user: misconfiguration')
-                    else:
-                        # dockerize irods uses a GSI enabled adminer
-                        user = self.variables.get('default_admin_user')
-                        self.authscheme = GSI_AUTH_SCHEME
+                    user = self.variables.get('default_admin_user')
+                    self.authscheme = GSI_AUTH_SCHEME
                 else:
+                    user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
-                        self.password = password
+                        self.password = self.variables.get('password')
 
             log.very_verbose(
                 "Check connection parameters:" +
@@ -98,12 +85,17 @@ class IrodsPythonExt(BaseExtension):
                 log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
+            proxy_cert_name = "%s%s" % (
+                self.variables.get('certificates_prefix', ""),
+                kwargs.get("proxy_cert_name")
+            )
+
             Certificates().globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
                 user_proxy=self.user,
                 cert_dir=self.variables.get("x509_cert_dir"),
                 myproxy_host=myproxy_host,
-                cert_name=kwargs.get("proxy_cert_name"),
+                cert_name=proxy_cert_name,
                 cert_pwd=kwargs.get("proxy_pass"),
             )
 
@@ -201,7 +193,18 @@ class IrodsPythonExt(BaseExtension):
         #     time.sleep(5)
 
         # recover instance with the parent method
-        return super().custom_init()
+        session = super().custom_init()
+
+        # IF variable 'IRODS_ANONYMOUS? is set THEN
+        # Check if external iRODS / B2SAFE has the 'anonymous' user available
+        user = 'anonymous'
+        if self.variables.get('external') and self.variables.get(user):
+            if not session.query_user_exists(user):
+                log.exit(
+                    "Cannot find '%s' inside " +
+                    "the currently connected iRODS instance", user)
+
+        return session
 
     def deserialize(self, obj):
         return iRODSSession.deserialize(obj)

@@ -1,0 +1,16 @@
+common:
+  custom:
+    # publish: true
+    authentication: true
+    authorized:
+      - admin_root
+
+  # custom_parameters:
+  #   - AdminUsers
+
+user:
+  summary: Modify a user
+  # description: -
+  responses:
+    '200':
+      description: User successfully modified

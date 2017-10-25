@@ -44,6 +44,14 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
+        # TODO: test that a call from a browser receives HTML back
+        # from restapi.rest.response import MIMETYPE_HTML
+        # r = client.get(endpoint, content_type=MIMETYPE_HTML)
+        # output = self.get_content(r)
+        # print("TEST", r, output)
+
+        # Check HTML response to status if agent/request is text/html
+
     def test_02_GET_specifications(self, client):
         """ Test that the flask server is running and reachable """
 

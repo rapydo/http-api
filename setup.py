@@ -27,6 +27,7 @@ setup(
             'confs/services.yaml',
             '%s/*.yaml' % swagger_dir,
             '%s/*/*.yaml' % swagger_dir,
+            'templates/index.html',
         ],
     },
     entry_points='''

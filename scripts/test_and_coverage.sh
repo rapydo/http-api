@@ -18,7 +18,11 @@ fi
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
-echo "Current branch: $TRAVIS_BRANCH"
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then 
+	echo "Pull request from BRANCH ${TRAVIS_PULL_REQUEST_BRANCH} to ${TRAVIS_BRANCH}"
+else
+	echo "Current branch: $TRAVIS_BRANCH"
+fi
 echo "Current project: $PROJECT"
 echo "Current version: $CURRENT_VERSION"
 
@@ -41,9 +45,22 @@ fi
 cd $CORE_DIR
 mkdir -p data
 
-if [ "$TRAVIS_BRANCH" != "master" ]; then
-    echo "checkout $TRAVIS_BRANCH"
-    git checkout $TRAVIS_BRANCH
+# Pull requests
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then 
+	if [ "$TRAVIS_PULL_REQUEST_BRANCH" != "master" ]; then
+	    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
+	    git checkout $TRAVIS_PULL_REQUEST_BRANCH
+
+	    echo "pulling $TRAVIS_BRANCH"
+	    git pull origin $TRAVIS_BRANCH
+	fi
+# Normal commits
+else
+
+	if [ "$TRAVIS_BRANCH" != "master" ]; then
+	    echo "checkout $TRAVIS_BRANCH"
+	    git checkout $TRAVIS_BRANCH
+	fi
 fi
 
 if [ "$PROJECT" != "COVERAGE" ]; then
@@ -67,8 +84,16 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	echo "\n\nLogs from Backend:\n\n"
 	docker logs ${PROJECT}_backend_1
 
+	# Beware!! Cleaning DB before starting the tests
+	rapydo --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
+	
 	# Test API and calculate coverage
 	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
+
+	if [ "$PROJECT" = "celerytest" ]; then
+		echo "\n\nLogs from Celery:\n\n"
+		docker logs ${PROJECT}_celery_1
+	fi
 
 	# Sync the coverage file to S3, to be available for the next stage
 	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
