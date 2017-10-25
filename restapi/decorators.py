@@ -49,7 +49,7 @@ def set_response(original=False, custom_method=None, first_call=False):
 
         # Debug when response is injected and if custom
         if not first_call:
-            log.debug("Response method set to: %s" % custom_method)
+            log.debug("Response method set to: %s", custom_method)
 
 
 def custom_response(func=None, original=False):

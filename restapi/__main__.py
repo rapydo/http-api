@@ -26,5 +26,5 @@ if PRODUCTION:
 app = create_app(name='REST_API')
 
 if __name__ == "__main__":
-    log.debug("Server running (w/ %s)" % be.__name__)
+    log.debug("Server running (w/ %s)", be.__name__)
     app.run(host='0.0.0.0', threaded=True)

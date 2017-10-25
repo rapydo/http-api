@@ -127,5 +127,4 @@ class HTTPTokenAuth(object):
 authentication = HTTPTokenAuth()
 
 log.info(
-    "Initizialized a valid authentication class: [%s]"
-    % authentication._scheme)
+    "Initizialized a valid authentication class: [%s]", authentication._scheme)
