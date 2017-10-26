@@ -47,13 +47,22 @@ MIMETYPE_CSV = 'text/csv'
 ########################
 # Utility
 ########################
-def request_from_browser():
-    """ Was a browser asking current request? """
+# def request_from_browser():
+#     """ Was a browser asking current request? """
 
+#     from flask import request
+
+#     # agent = request.headers.get('User-Agent')
+#     # log.pp(request.user_agent.__dict__)
+#     return request.user_agent.browser is not None
+
+
+def get_accepted_formats():
     from flask import request
-    # agent = request.headers.get('User-Agent')
-    # log.pp(request.user_agent.__dict__)
-    return request.user_agent.browser is not None
+    for val in request.headers:
+        if val[0] == "Accept":
+            return [x.strip() for x in val[1].split(',')]
+    return ['*/*']
 
 
 def add_to_dict(mydict, content, key='content'):
@@ -273,12 +282,33 @@ class ResponseMaker(object):
         # from all that was gathered so far
         response = (final_content, r['code'], r['headers'])
 
-        if request_from_browser():
+        accepted_formats = get_accepted_formats()
+
+        if MIMETYPE_HTML in accepted_formats:
             # skip in case of errors, for now
             if r.get('errors') is None:
                 return respond_to_browser(r)
 
+        if MIMETYPE_JSON in accepted_formats:
+            return response
+
+        if MIMETYPE_XML in accepted_formats:
+            # TODO: we should convert in XML
+            pass
+
+        if MIMETYPE_CSV in accepted_formats:
+            # TODO: we should convert in CSV
+            pass
+
+        # The client does not support any particular format, use the default
         return response
+
+        # if request_from_browser(request, accepted_formats):
+        #     # skip in case of errors, for now
+        #     if r.get('errors') is None:
+        #         return respond_to_browser(r)
+
+        # return response
 
     def get_errors_and_status(
             self, defined_content=None, code=None, errors=None):

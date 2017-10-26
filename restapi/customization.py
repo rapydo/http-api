@@ -232,15 +232,12 @@ class Customizer(object):
         file_name = conf.pop('file', default_uri)
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
-        module = self._meta.get_module_from_string(name)
+        module = self._meta.get_module_from_string(name, exit_on_fail=False)
 
         # Error if unable to find the module in python
         if module is None:
-            debugger = log.warning
-            if self._production:
-                debugger = log.critical_exit
-            debugger("Could not find module %s (in %s)" % (name, file_name))
-            return endpoint
+            log.critical_exit(
+                "Could not find module %s (in %s)" % (name, file_name))
 
         # Check for dependecies and skip if missing
         from restapi.services.detect import detector
