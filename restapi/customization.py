@@ -245,7 +245,7 @@ class Customizer(object):
         for var in conf.pop('depends_on', []):
 
             negate = ''
-            pieces = var.split(' ')
+            pieces = var.strip().split(' ')
             pieces_num = len(pieces)
             if pieces_num == 1:
                 dependency = pieces.pop()
@@ -255,9 +255,11 @@ class Customizer(object):
                 log.exit('Wrong parameter: %s', var)
 
             check = detector.get_bool_from_os(dependency)
+            # Enable the possibility to depend on not having a variable
             if negate.lower() == 'not':
                 check = not check
 
+            # Skip if not meeting the requirements of the dependency
             if not check:
                 if not self._testing:
                     log.warning("Skip '%s': unmet %s", default_uri, dependency)

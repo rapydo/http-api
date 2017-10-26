@@ -13,7 +13,7 @@ from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities.meta import Meta
 from utilities.myyaml import load_yaml_file
 from utilities import helpers
-# from functools import lru_cache
+from functools import lru_cache
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -41,9 +41,20 @@ class Detector(object):
         return os.environ.get(key, default)
 
     @staticmethod
+    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
     def get_bool_from_os(name):
+
         bool_var = os.environ.get(name, False)
+
+        # if not directly a bool, try an interpretation
         if not isinstance(bool_var, bool):
+
+            # any non empty string with a least one char
+            # has to be considered True
+            if isinstance(bool_var, str) and len(bool_var) > 0:
+                bool_var = 1
+
+            # convert integers to boolean
             try:
                 tmp = int(bool_var)
                 bool_var = bool(tmp)
