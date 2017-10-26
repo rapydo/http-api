@@ -283,7 +283,6 @@ class ResponseMaker(object):
         response = (final_content, r['code'], r['headers'])
 
         accepted_formats = get_accepted_formats()
-        log.critical(accepted_formats)
 
         if MIMETYPE_HTML in accepted_formats:
             # skip in case of errors, for now
