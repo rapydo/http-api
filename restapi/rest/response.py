@@ -47,14 +47,19 @@ MIMETYPE_CSV = 'text/csv'
 ########################
 # Utility
 ########################
-# def request_from_browser():
-#     """ Was a browser asking current request? """
+def request_from_browser():
+    """
+    Was a browser asking current request?
 
-#     from flask import request
+    # NOTE: this utility is used by some projects to check the browser
+    # e.g. for a landing page
+    """
 
-#     # agent = request.headers.get('User-Agent')
-#     # log.pp(request.user_agent.__dict__)
-#     return request.user_agent.browser is not None
+    from flask import request
+
+    # agent = request.headers.get('User-Agent')
+    # log.pp(request.user_agent.__dict__)
+    return request.user_agent.browser is not None
 
 
 def get_accepted_formats():
