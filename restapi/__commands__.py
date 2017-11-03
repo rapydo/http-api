@@ -140,7 +140,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             result = errno.ESRCH
 
         if result == 0:
-            log.info("Service %s is reachable" % service_name)
+            log.info("Service %s is reachable", service_name)
             break
         else:
 
@@ -152,7 +152,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
                     service_name, sleep_time * timeout * counter
                 )
             else:
-                log.debug("Not reachable yet: %s" % service_name)
+                log.debug("Not reachable yet: %s", service_name)
 
             time.sleep(sleep_time)
 
@@ -174,16 +174,32 @@ def mywait():
         if name == 'authentication':
             continue
 
-        # service = detector.authentication_service
-        # log.info("Waiting for authentication service: %s" % service)
-        # myclass = detector.services_classes.get(service)
-
         host = myclass.variables.get('host')
-        port = int(myclass.variables.get('port'))
-        log.debug("Socket %s:%s" % (host, port))
+        if host is None:
+            log.warning("Unable to find HOST variable for %s" % name)
+            for k in myclass.variables:
+                if k.endswith("_host"):
+                    host = myclass.variables.get(k)
+                    log.info("Using %s as HOST variable for %s" % (k, name))
+
+        port = myclass.variables.get('port')
+        if port is None:
+            log.warning("Unable to find PORT variable for %s" % name)
+            for k in myclass.variables:
+                if k.endswith("_port"):
+                    port = myclass.variables.get(k)
+                    log.info("Using %s as PORT variable for %s" % (k, name))
+
+        if host is None:
+            log.exit("Cannot find any variable matching a host for %s"% name)
+
+        if port is None:
+            log.exit("Cannot find any variable matching a port for %s"% name)
+
+        log.debug("Socket %s:%s", host, port)
 
         # CHECK
-        wait_socket(host, port, name)
+        wait_socket(host, int(port), name)
 
 
 @cli.command()
@@ -241,4 +257,4 @@ def tests(wait, core):
         "pyunittests",
         parameters=parameters, catchException=True, error_max_len=-1)
 
-    log.info("Completed:\n%s" % output)
+    log.info("Completed:\n%s", output)

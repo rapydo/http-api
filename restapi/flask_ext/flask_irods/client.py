@@ -172,7 +172,7 @@ class IrodsPythonClient():
         try:
 
             ret = self.prc.collections.create(path)
-            log.debug("Created irods collection: %s" % path)
+            log.debug("Created irods collection: %s", path)
             return ret
 
         except iexceptions.CAT_UNKNOWN_COLLECTION:
@@ -184,7 +184,7 @@ class IrodsPythonClient():
                     "Irods collection already exists",
                     status_code=hcodes.HTTP_BAD_REQUEST)
             else:
-                log.debug("Irods collection already exists: %s" % path)
+                log.debug("Irods collection already exists: %s", path)
 
         except (
             iexceptions.CAT_NO_ACCESS_PERMISSION,
@@ -199,7 +199,7 @@ class IrodsPythonClient():
         try:
 
             ret = self.prc.data_objects.create(path)
-            log.debug("Create irods object: %s" % path)
+            log.debug("Create irods object: %s", path)
             return ret
 
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
@@ -213,7 +213,7 @@ class IrodsPythonClient():
                 raise IrodsException(
                     "Irods object already exists",
                     status_code=hcodes.HTTP_BAD_REQUEST)
-            log.debug("Irods object already exists: %s" % path)
+            log.debug("Irods object already exists: %s", path)
 
         return False
 
@@ -258,12 +258,10 @@ class IrodsPythonClient():
         try:
             if self.is_collection(src_path):
                 self.prc.collections.move(src_path, dest_path)
-                log.debug(
-                    "Renamed collection: %s->%s" % (src_path, dest_path))
+                log.debug("Renamed collection: %s->%s", src_path, dest_path)
             else:
                 self.prc.data_objects.move(src_path, dest_path)
-                log.debug(
-                    "Renamed irods object: %s->%s" % (src_path, dest_path))
+                log.debug("Renamed irods object: %s->%s", src_path, dest_path)
         except iexceptions.CAT_RECURSIVE_MOVE:
             raise IrodsException("Source and destination path are the same")
         except iexceptions.SAME_SRC_DEST_PATHS_ERR:
@@ -282,10 +280,10 @@ class IrodsPythonClient():
             if self.is_collection(path):
                 self.prc.collections.remove(
                     path, recurse=recursive, force=force)
-                log.debug("Removed irods collection: %s" % path)
+                log.debug("Removed irods collection: %s", path)
             else:
                 self.prc.data_objects.unlink(path, force=force)
-                log.debug("Removed irods object: %s" % path)
+                log.debug("Removed irods object: %s", path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
             raise IrodsException(
                 "Cannot delete an non empty directory without recursive flag")
@@ -529,9 +527,7 @@ class IrodsPythonClient():
                 user_zone=zone)
             self.prc.permissions.set(ACL, recursive=recursive)
 
-            log.debug(
-                "Set %s permission to %s for %s" %
-                (permission, path, userOrGroup))
+            log.debug("Grant %s=%s to %s", userOrGroup, permission, path)
             return True
 
         except iexceptions.CAT_INVALID_USER:
@@ -558,7 +554,7 @@ class IrodsPythonClient():
                 user_name='',
                 user_zone='')
             self.prc.permissions.set(ACL, recursive=recursive)
-            log.debug("Set inheritance %r to %s" % (inheritance, path))
+            log.debug("Set inheritance %r to %s", inheritance, path)
             return True
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
             if self.is_dataobject(path):
@@ -723,20 +719,20 @@ class IrodsPythonClient():
 
         try:
             user_data = self.prc.users.create(user, user_type)
-            log.info("Created user: %s" % user_data)
+            log.info("Created user: %s", user_data)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
-            log.warning("User %s already exists in iRODS" % user)
+            log.warning("User %s already exists in iRODS", user)
             return False
 
         return True
 
     def modify_user_password(self, user, password):
-        log.debug("Changing %s password" % user)
+        log.debug("Changing %s password", user)
         return self.prc.users.modify(user, 'password', password)
 
     def remove_user(self, user_name):
         user = self.prc.users.get(user_name)
-        log.warning("Removing user: %s" % user_name)
+        log.warning("Removing user: %s", user_name)
         return user.remove()
 
     def list_user_attributes(self, user):

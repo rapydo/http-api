@@ -71,7 +71,7 @@ class IrodsPythonExt(BaseExtension):
             raise AttributeError("No user is defined")
         else:
             self.user = user
-            log.debug("Irods user: %s" % self.user)
+            log.debug("Irods user: %s", self.user)
 
         ######################
         # Irods/b2safe direct credentials

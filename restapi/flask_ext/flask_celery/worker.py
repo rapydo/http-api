@@ -43,4 +43,4 @@ meta = Meta()
 # # Custom tasks
 submodules = meta.import_submodules_from_package("%s.tasks" % CUSTOM_PACKAGE)
 
-log.debug("Celery worker is ready %s" % celery_app)
+log.debug("Celery worker is ready %s", celery_app)

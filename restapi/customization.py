@@ -189,7 +189,7 @@ class Customizer(object):
         log.verbose("Found endpoint dir: '%s'" % endpoint)
 
         if os.path.exists(os.path.join(swagger_endpoint_dir, 'SKIP')):
-            log.info("Skipping: %s" % endpoint)
+            log.info("Skipping: %s", endpoint)
             return None
 
         # Find yaml files
@@ -232,15 +232,12 @@ class Customizer(object):
         file_name = conf.pop('file', default_uri)
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
-        module = self._meta.get_module_from_string(name)
+        module = self._meta.get_module_from_string(name, exit_on_fail=False)
 
         # Error if unable to find the module in python
         if module is None:
-            debugger = log.warning
-            if self._production:
-                debugger = log.critical_exit
-            debugger("Could not find module %s (in %s)" % (name, file_name))
-            return endpoint
+            log.critical_exit(
+                "Could not find module %s (in %s)" % (name, file_name))
 
         # Check for dependecies and skip if missing
         from restapi.services.detect import detector
@@ -248,7 +245,7 @@ class Customizer(object):
         for var in conf.pop('depends_on', []):
 
             negate = ''
-            pieces = var.split(' ')
+            pieces = var.strip().split(' ')
             pieces_num = len(pieces)
             if pieces_num == 1:
                 dependency = pieces.pop()
@@ -258,19 +255,20 @@ class Customizer(object):
                 log.exit('Wrong parameter: %s', var)
 
             check = detector.get_bool_from_os(dependency)
+            # Enable the possibility to depend on not having a variable
             if negate.lower() == 'not':
                 check = not check
 
+            # Skip if not meeting the requirements of the dependency
             if not check:
                 if not self._testing:
-                    log.warning(
-                        "Skip '%s': unmet %s" % (default_uri, dependency))
+                    log.warning("Skip '%s': unmet %s", default_uri, dependency)
                 return endpoint
 
         # Get the class from the module
         endpoint.cls = self._meta.get_class_from_string(class_name, module)
         if endpoint.cls is None:
-            log.critical("Could not extract python class '%s'" % class_name)
+            log.critical("Could not extract python class '%s'", class_name)
             return endpoint
         else:
             endpoint.exists = True
@@ -288,7 +286,7 @@ class Customizer(object):
         # base URI
         base = conf.pop('baseuri', API_URL)
         if base not in BASE_URLS:
-            log.warning("Invalid base %s" % base)
+            log.warning("Invalid base %s", base)
             base = API_URL
         base = base.strip('/')
 
