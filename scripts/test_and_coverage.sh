@@ -68,8 +68,8 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $WORK_DIR/core
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --project ${PROJECT} init --skip-bower 
-	rapydo --project ${PROJECT} start
+	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40
 	docker ps -a
@@ -85,10 +85,10 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker logs ${PROJECT}_backend_1
 
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
 	
 	# Test API and calculate coverage
-	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
 
 	if [ "$PROJECT" = "celerytest" ]; then
 		echo "\n\nLogs from Celery:\n\n"
@@ -108,8 +108,8 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --project ${PROJECT} init --skip-bower 
-	rapydo --project ${PROJECT} --services backend start
+	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 	# Build the backend image and execute coveralls
 	# rapydo --services backend --project ${PROJECT} build
@@ -132,4 +132,4 @@ else
 fi
 
 cd $CORE_DIR
-rapydo --project template clean
+rapydo --development --project template clean
