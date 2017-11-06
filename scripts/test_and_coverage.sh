@@ -126,7 +126,8 @@ else
 	cp $COV_DIR/.coverage $WORK_DIR/
 
 	cd $WORK_DIR
-	docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
+	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
+	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
 
 fi
 
