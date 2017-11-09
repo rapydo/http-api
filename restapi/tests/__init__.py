@@ -7,6 +7,8 @@ tests/__init__.py?
 
 import pytest
 import json
+import string
+import random
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.rest.response import get_content_from_response
@@ -22,9 +24,12 @@ API_URI = '%s%s' % (SERVER_URI, API_URL)
 AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
 
 
+class ParsedResponse(object):
+    pass
+
+
 class BaseTests():
 
-    #  COPIED FROM restapi/tests/utilities.py
     def do_login(self, client, USER, PWD,
                  status_code=hcodes.HTTP_OK_BASIC,
                  error=None, **kwargs):
@@ -123,3 +128,86 @@ class BaseTests():
         celery.celery_app.app = app
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
+
+    def randomString(self, len=16, prefix="TEST:"):
+        """
+            Create a random string to be used to build data for tests
+        """
+        if len > 500000:
+            lis = list(string.ascii_lowercase)
+            return ''.join(random.choice(lis) for _ in range(len))
+
+        rand = random.SystemRandom()
+        charset = string.ascii_uppercase + string.digits
+
+        random_string = prefix
+        for _ in range(len):
+            random_string += rand.choice(charset)
+
+        return random_string
+
+    def parseResponse(self, response, inner=False):
+        """
+            This method is used to verify and simplify the access to
+            json-standard-responses. It returns an Object built
+            by mapping json content as attributes.
+            This is a recursive method, the inner flag is used to
+            distinguish further calls on inner elements.
+        """
+
+        if response is None:
+            return None
+
+        # OLD RESPONSE, NOT STANDARD-JSON
+        if not inner and isinstance(response, dict):
+            return response
+
+        data = []
+
+        assert isinstance(response, list)
+
+        for element in response:
+            assert isinstance(element, dict)
+            assert "id" in element
+            assert "type" in element
+            assert "attributes" in element
+            # # links is optional -> don't test
+            assert "links" in element
+            # # relationships is optional -> don't test
+            assert "relationships" in element
+
+            newelement = ParsedResponse()
+            setattr(newelement, "_id", element["id"])
+            setattr(newelement, "_type", element["type"])
+            if "links" in element:
+                setattr(newelement, "_links", element["links"])
+
+            setattr(newelement, "attributes", ParsedResponse())
+
+            for key in element["attributes"]:
+                setattr(newelement.attributes, key, element["attributes"][key])
+
+            if "relationships" in element:
+                for relationship in element["relationships"]:
+                    setattr(newelement, "_" + relationship,
+                            self.parseResponse(
+                                element["relationships"][relationship],
+                                inner=True
+                            ))
+
+            data.append(newelement)
+
+        return data
+
+    def checkResponse(self, response, fields, relationships):
+        """
+        Verify that the response contains the given fields and relationships
+        """
+
+        for f in fields:
+            if not hasattr(response[0].attributes, f):
+                pytest.fail("Missing property: %s" % f)
+
+        for r in relationships:
+            if not hasattr(response[0], "_" + r):
+                pytest.fail("Missing relationship: %s" % r)

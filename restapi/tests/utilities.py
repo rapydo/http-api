@@ -6,11 +6,11 @@
 import unittest
 import random
 import json
-import string
+# import string
 import logging
 import os
 
-from restapi.server import create_app
+# from restapi.server import create_app
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from utilities.logs import get_logger
 from utilities import htmlcodes as hcodes
@@ -52,23 +52,23 @@ CONFLICT = hcodes.HTTP_BAD_CONFLICT                 # 409
 # }
 
 
-class ParsedResponse(object):
-    pass
+# class ParsedResponse(object):
+#     pass
 
 
 class TestUtilities(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        "set up test fixtures"
-        print('### Setting up flask server for tests###')
-        app = create_app(testing_mode=True)
-        cls.app = app.test_client()
+    # @classmethod
+    # def setUpClass(cls):
+    #     "set up test fixtures"
+    #     print('### Setting up flask server for tests###')
+    #     app = create_app(testing_mode=True)
+    #     cls.app = app.test_client()
 
-    @classmethod
-    def tearDownClass(cls):
-        "tear down test fixtures"
-        print('### Tearing down the flask server ###')
+    # @classmethod
+    # def tearDownClass(cls):
+    #     "tear down test fixtures"
+    #     print('### Tearing down the flask server ###')
 
     def get_specs(self):
         """
@@ -119,32 +119,32 @@ class TestUtilities(unittest.TestCase):
         except BaseException:
             return None
 
-    def save(self, variable, value, read_only=False):
-        """
-            Save a variable in the class, to be re-used in further tests
-            In read_only mode the variable cannot be rewritten
-        """
-        if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "read_only" in data and data["read_only"]:
-                self.assertFalse(
-                    "Cannot overwrite a read_only variable [%s]" % variable
-                )
+    # def save(self, variable, value, read_only=False):
+    #     """
+    #         Save a variable in the class, to be re-used in further tests
+    #         In read_only mode the variable cannot be rewritten
+    #     """
+    #     if hasattr(self.__class__, variable):
+    #         data = getattr(self.__class__, variable)
+    #         if "read_only" in data and data["read_only"]:
+    #             self.assertFalse(
+    #                 "Cannot overwrite a read_only variable [%s]" % variable
+    #             )
 
-        data = {'value': value, 'read_only': read_only}
-        setattr(self.__class__, variable, data)
+    #     data = {'value': value, 'read_only': read_only}
+    #     setattr(self.__class__, variable, data)
 
-    def get(self, variable):
-        """
-            Retrieve a previously stored variable using the .save method
-        """
-        if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "value" in data:
-                return data["value"]
+    # def get(self, variable):
+    #     """
+    #         Retrieve a previously stored variable using the .save method
+    #     """
+    #     if hasattr(self.__class__, variable):
+    #         data = getattr(self.__class__, variable)
+    #         if "value" in data:
+    #             return data["value"]
 
-        raise AttributeError("Class variable %s not found" % variable)
-        return None
+    #     raise AttributeError("Class variable %s not found" % variable)
+    #     return None
 
     def get_user_uuid(self, email):
 
@@ -218,45 +218,45 @@ class TestUtilities(unittest.TestCase):
 
         return user, password
 
-    def do_login(self, USER, PWD, status_code=OK, error=None, **kwargs):
-        """
-            Make login and return both token and authorization header
-        """
+    # def do_login(self, USER, PWD, status_code=OK, error=None, **kwargs):
+    #     """
+    #         Make login and return both token and authorization header
+    #     """
 
-        # AUTH_MAX_LOGIN_ATTEMPTS=0
-        # AUTH_REGISTER_FAILED_LOGIN=False
+    #     # AUTH_MAX_LOGIN_ATTEMPTS=0
+    #     # AUTH_REGISTER_FAILED_LOGIN=False
 
-        # AUTH_SECOND_FACTOR_AUTHENTICATION=None
+    #     # AUTH_SECOND_FACTOR_AUTHENTICATION=None
 
-        # AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=0
-        # AUTH_MAX_PASSWORD_VALIDITY=0
+    #     # AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=0
+    #     # AUTH_MAX_PASSWORD_VALIDITY=0
 
-        data = {'username': USER, 'password': PWD}
-        for v in kwargs:
-            data[v] = kwargs[v]
+    #     data = {'username': USER, 'password': PWD}
+    #     for v in kwargs:
+    #         data[v] = kwargs[v]
 
-        r = self.app.post(AUTH_URI + '/login',
-                          data=json.dumps(data))
+    #     r = self.app.post(AUTH_URI + '/login',
+    #                       data=json.dumps(data))
 
-        if r.status_code != OK:
-            # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
-            c = json.loads(r.data.decode('utf-8'))
-            log.error(c['Response']['errors'])
+    #     if r.status_code != OK:
+    #         # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
+    #         c = json.loads(r.data.decode('utf-8'))
+    #         log.error(c['Response']['errors'])
 
-        self.assertEqual(r.status_code, status_code)
+    #     self.assertEqual(r.status_code, status_code)
 
-        content = json.loads(r.data.decode('utf-8'))
-        if error is not None:
-            errors = content['Response']['errors']
-            if errors is not None:
-                self.assertEqual(errors[0], error)
+    #     content = json.loads(r.data.decode('utf-8'))
+    #     if error is not None:
+    #         errors = content['Response']['errors']
+    #         if errors is not None:
+    #             self.assertEqual(errors[0], error)
 
-        token = ''
-        if content is not None:
-            data = content.get('Response', {}).get('data', {})
-            if data is not None:
-                token = data.get('token', '')
-        return {'Authorization': 'Bearer ' + token}, token
+    #     token = ''
+    #     if content is not None:
+    #         data = content.get('Response', {}).get('data', {})
+    #         if data is not None:
+    #             token = data.get('token', '')
+    #     return {'Authorization': 'Bearer ' + token}, token
 
     def destroyToken(self, token, headers):
         """
@@ -282,22 +282,22 @@ class TestUtilities(unittest.TestCase):
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
 
-    def randomString(self, len=16, prefix="TEST:"):
-        """
-            Create a random string to be used to build data for tests
-        """
-        if len > 500000:
-            lis = list(string.ascii_lowercase)
-            return ''.join(random.choice(lis) for _ in range(len))
+    # def randomString(self, len=16, prefix="TEST:"):
+    #     """
+    #         Create a random string to be used to build data for tests
+    #     """
+    #     if len > 500000:
+    #         lis = list(string.ascii_lowercase)
+    #         return ''.join(random.choice(lis) for _ in range(len))
 
-        rand = random.SystemRandom()
-        charset = string.ascii_uppercase + string.digits
+    #     rand = random.SystemRandom()
+    #     charset = string.ascii_uppercase + string.digits
 
-        random_string = prefix
-        for _ in range(len):
-            random_string += rand.choice(charset)
+    #     random_string = prefix
+    #     for _ in range(len):
+    #         random_string += rand.choice(charset)
 
-        return random_string
+    #     return random_string
 
     def getInputSchema(self, endpoint, headers):
         """
@@ -384,74 +384,74 @@ class TestUtilities(unittest.TestCase):
             return partialData
         return None
 
-    def parseResponse(self, response, inner=False):
-        """
-            This method is used to verify and simplify the access to
-            json-standard-responses. It returns an Object built
-            by mapping json content as attributes.
-            This is a recursive method, the inner flag is used to
-            distinguish further calls on inner elements.
-        """
+    # def parseResponse(self, response, inner=False):
+    #     """
+    #         This method is used to verify and simplify the access to
+    #         json-standard-responses. It returns an Object built
+    #         by mapping json content as attributes.
+    #         This is a recursive method, the inner flag is used to
+    #         distinguish further calls on inner elements.
+    #     """
 
-        if response is None:
-            return None
+    #     if response is None:
+    #         return None
 
-        # OLD RESPONSE, NOT STANDARD-JSON
-        if not inner and isinstance(response, dict):
-            return response
+    #     # OLD RESPONSE, NOT STANDARD-JSON
+    #     if not inner and isinstance(response, dict):
+    #         return response
 
-        data = []
+    #     data = []
 
-        self.assertIsInstance(response, list)
+    #     self.assertIsInstance(response, list)
 
-        for element in response:
-            self.assertIsInstance(element, dict)
-            self.assertIn("id", element)
-            self.assertIn("type", element)
-            self.assertIn("attributes", element)
-            # # links is optional -> don't test
-            # self.assertIn("links", element)
-            # # relationships is optional -> don't test
-            # self.assertIn("relationships", element)
+    #     for element in response:
+    #         self.assertIsInstance(element, dict)
+    #         self.assertIn("id", element)
+    #         self.assertIn("type", element)
+    #         self.assertIn("attributes", element)
+    #         # # links is optional -> don't test
+    #         # self.assertIn("links", element)
+    #         # # relationships is optional -> don't test
+    #         # self.assertIn("relationships", element)
 
-            newelement = ParsedResponse()
-            setattr(newelement, "_id", element["id"])
-            setattr(newelement, "_type", element["type"])
-            if "links" in element:
-                setattr(newelement, "_links", element["links"])
+    #         newelement = ParsedResponse()
+    #         setattr(newelement, "_id", element["id"])
+    #         setattr(newelement, "_type", element["type"])
+    #         if "links" in element:
+    #             setattr(newelement, "_links", element["links"])
 
-            setattr(newelement, "attributes", ParsedResponse())
+    #         setattr(newelement, "attributes", ParsedResponse())
 
-            for key in element["attributes"]:
-                setattr(newelement.attributes, key, element["attributes"][key])
+    #         for key in element["attributes"]:
+    #             setattr(newelement.attributes, key, element["attributes"][key])
 
-            if "relationships" in element:
-                for relationship in element["relationships"]:
-                    setattr(newelement, "_" + relationship,
-                            self.parseResponse(
-                                element["relationships"][relationship],
-                                inner=True
-                            ))
+    #         if "relationships" in element:
+    #             for relationship in element["relationships"]:
+    #                 setattr(newelement, "_" + relationship,
+    #                         self.parseResponse(
+    #                             element["relationships"][relationship],
+    #                             inner=True
+    #                         ))
 
-            data.append(newelement)
+    #         data.append(newelement)
 
-        return data
+    #     return data
 
-    def checkResponse(self, response, fields, relationships):
-        """
-        Verify that the response contains the given fields and relationships
-        """
+    # def checkResponse(self, response, fields, relationships):
+    #     """
+    #     Verify that the response contains the given fields and relationships
+    #     """
 
-        for f in fields:
-            # How to verify the existence of a property?
-            # assertTrue will hide the name of the missing property
-            # I can verify my self and then use an always-false assert
-            if not hasattr(response[0].attributes, f):
-                self.assertIn(f, [])
+    #     for f in fields:
+    #         # How to verify the existence of a property?
+    #         # assertTrue will hide the name of the missing property
+    #         # I can verify my self and then use an always-false assert
+    #         if not hasattr(response[0].attributes, f):
+    #             self.assertIn(f, [])
 
-        for r in relationships:
-            if not hasattr(response[0], "_" + r):
-                self.assertIn(r, [])
+    #     for r in relationships:
+    #         if not hasattr(response[0], "_" + r):
+    #             self.assertIn(r, [])
 
     def _test_endpoint(
             self, definition, endpoint, headers=None, status_code=None):
