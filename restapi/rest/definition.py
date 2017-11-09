@@ -49,6 +49,11 @@ class EndpointResource(Resource):
         self.load_authentication()
         self.init_parameters()
 
+        # Custom init
+        custom_method = getattr(self, 'custom_init', None)
+        if custom_method is not None:
+            custom_method()
+
     def myname(self):
         return self.__class__.__name__
 
