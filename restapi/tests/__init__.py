@@ -8,21 +8,18 @@ tests/__init__.py?
 import pytest
 import json
 
-# from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
-from restapi.tests.utilities import AUTH_URI
-# from restapi.tests.utilities import API_URI
+from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
-
 from utilities import htmlcodes as hcodes
 
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
 
-# SERVER_URI = 'http://%s:%s' % (DEFAULT_HOST, DEFAULT_PORT)
-# API_URI = '%s%s' % (SERVER_URI, API_URL)
-# AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
+SERVER_URI = 'http://%s:%s' % (DEFAULT_HOST, DEFAULT_PORT)
+API_URI = '%s%s' % (SERVER_URI, API_URL)
+AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
 
 
 class BaseTests():
