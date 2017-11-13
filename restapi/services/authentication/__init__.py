@@ -95,8 +95,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             user = self.get_user_object(username=username)
         except BaseException as e:
-            log.error("Broken auth backend:\n[%s] %s" % (type(e), e))
-            log.critical("Please reinitialize backend tables")
+            log.error("Unable to connect to auth backend\n[%s] %s", type(e), e)
+            # log.critical("Please reinitialize backend tables")
             from restapi.exceptions import RestApiException
             raise RestApiException(
                 "Server authentication misconfiguration",
@@ -135,8 +135,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
         except IOError:
-            log.warning("Jwt secret file %s not found, using default "
-                        % abs_filename)
+            log.warning(
+                "Jwt secret file %s not found, using default", abs_filename)
             log.info("To create your own secret file:\n" +
                      "head -c 24 /dev/urandom > %s" % abs_filename)
 
@@ -241,8 +241,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
                 hostname, _, _= socket.gethostbyaddr(ip)
             except Exception as e:
-                log.warning(
-                    "Error solving '%s': '%s'" % (ip, e))
+                log.warning("Error resolving '%s': '%s'", ip, e)
         return ip, hostname
 
     # ###################
@@ -288,12 +287,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # now > exp
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
         except Exception as e:
-            log.warning("Unable to decode JWT token. %s" % e)
+            log.warning("Unable to decode JWT token. %s", e)
 
         return payload
 
@@ -403,7 +402,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         for role in roles:
             if role not in current_roles:
                 if warnings:
-                    log.warning("Auth role '%s' missing for request" % role)
+                    log.warning("Auth role '%s' missing for request", role)
                 return False
         return True
 

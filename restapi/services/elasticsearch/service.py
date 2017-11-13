@@ -74,22 +74,22 @@ class BeElastic(ServiceObject):
         if len(args) < 1:
             raise AttributeError("Cannot create id from no arguments")
 
-        id = None
+        used_id = None
         if forced_id is None:
             # Since the ID with same parameters is the same
             # the document will be created only with non existing data
-            id = getUUIDfromString(self.dict2ordered_string(args))
+            used_id = getUUIDfromString(self.dict2ordered_string(args))
         else:
-            id = forced_id
+            used_id = forced_id
 
         # If you want to check existence
-        obj = DocumentClass.get(id=id, ignore=404)
+        obj = DocumentClass.get(id=used_id, ignore=404)
         # print("Check", id, check)
         if obj is None:
-            log.debug("Creating a new document '%s'" % id)
+            log.debug("Creating a new document '%s'", used_id)
 
             # Put the id in place
-            args['meta'] = {'id': id}
+            args['meta'] = {'id': used_id}
             # print("ARGS", args)
             obj = DocumentClass(**args)
             # obj.update()
@@ -195,7 +195,7 @@ class BeElastic(ServiceObject):
                 .execute_suggest()
 
         except Exception as e:
-            log.warning("Suggestion error:\n%s" % e)
+            log.warning("Suggestion error:\n%s", e)
             raise e
         # finally:
         #     if suggest is None or 'data' not in suggest:
@@ -241,7 +241,7 @@ class ElasticFarm(ServiceFarm):
         self.get_instance()
 
         self._instance._connection.ping()
-        log.debug("'%s' service seems plugged" % name)
+        log.debug("'%s' service seems plugged", name)
 
         # # CHECK 2: test the models
         # from elasticsearch_dsl import DocType, String

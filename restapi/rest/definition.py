@@ -202,16 +202,15 @@ class EndpointResource(Resource):
             limit = int(limit)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s" %
-                (PERPAGE_KEY, limit))
+                "%s is expected to be an int, not %s", PERPAGE_KEY, limit)
             limit = DEFAULT_PERPAGE
 
         try:
             current_page = int(current_page)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s" %
-                (CURRENTPAGE_KEY, current_page))
+                "%s is expected to be an int, not %s",
+                CURRENTPAGE_KEY, current_page)
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
@@ -397,7 +396,7 @@ class EndpointResource(Resource):
             date = datetime.fromtimestamp(float(timestamp))
             return date.isoformat()
         except BaseException:
-            log.warning("Errors parsing %s" % timestamp)
+            log.warning("Errors parsing %s", timestamp)
             return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
@@ -542,7 +541,7 @@ class EndpointResource(Resource):
                     field_name = '_relationships_to_follow'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models" % field_name)
+                    log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
 
             for relationship in relationships:

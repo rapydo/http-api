@@ -143,8 +143,8 @@ class Customizer(object):
                     exception = '%s.yaml' % SWAGGER_MODELS_FILE
                     if not swagger_endpoint_dir.endswith('/' + exception):
                         log.debug(
-                            "Expected swagger folder, found file %s"
-                            % (swagger_endpoint_dir)
+                            "Found a file instead of a folder: %s",
+                            swagger_endpoint_dir
                         )
                     continue
 

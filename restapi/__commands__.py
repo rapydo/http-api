@@ -176,19 +176,19 @@ def mywait():
 
         host = myclass.variables.get('host')
         if host is None:
-            log.warning("Unable to find HOST variable for %s" % name)
+            log.warning("Unable to find HOST variable for %s", name)
             for k in myclass.variables:
                 if k.endswith("_host"):
                     host = myclass.variables.get(k)
-                    log.info("Using %s as HOST variable for %s" % (k, name))
+                    log.info("Using %s as HOST variable for %s", k, name)
 
         port = myclass.variables.get('port')
         if port is None:
-            log.warning("Unable to find PORT variable for %s" % name)
+            log.warning("Unable to find PORT variable for %s", name)
             for k in myclass.variables:
                 if k.endswith("_port"):
                     port = myclass.variables.get(k)
-                    log.info("Using %s as PORT variable for %s" % (k, name))
+                    log.info("Using %s as PORT variable for %s", k, name)
 
         if host is None:
             log.exit("Cannot find any variable matching a host for %s"% name)

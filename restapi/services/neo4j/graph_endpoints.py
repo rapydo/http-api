@@ -64,9 +64,8 @@ def graph_transactions(func):
             log.verbose("Neomodel transaction ROLLBACK")
             try:
                 transaction.rollback()
-            except Exception as rollback_exp:
-                log.warning(
-                    "Exception raised during rollback: %s" % rollback_exp)
+            except Exception as e:
+                log.warning("Exception raised during rollback: %s", e)
             raise e
 
     return wrapper

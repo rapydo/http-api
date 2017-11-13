@@ -201,7 +201,7 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
-        self.test_endpoin(
+        self.test_endpoint(
             client, endpoint, headers,
             hcodes.HTTP_OK_NORESPONSE,
             hcodes.HTTP_BAD_REQUEST,

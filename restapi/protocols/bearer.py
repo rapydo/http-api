@@ -38,6 +38,9 @@ class HTTPTokenAuth(object):
         self._scheme = scheme or HTTPAUTH_DEFAULT_SCHEME
         self._realm = realm or HTTPAUTH_DEFAULT_REALM
 
+    def get_scheme(self):
+        return self._scheme
+
     def authenticate_header(self):
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
@@ -126,5 +129,4 @@ class HTTPTokenAuth(object):
 
 authentication = HTTPTokenAuth()
 
-log.info(
-    "Initizialized a valid authentication class: [%s]", authentication._scheme)
+log.info("%s authentication class initizialized", authentication.get_scheme())
