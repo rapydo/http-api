@@ -33,17 +33,18 @@ class TestApp(BaseTests):
 
         # Check success
         endpoint = API_URI + '/status'
+        alive_message = "Server is alive!"
+
         log.info("*** VERIFY if API is online")
         r = client.get(endpoint)
         assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = self.get_content(r)
+        assert output == alive_message
 
         # Check failure
         log.info("*** VERIFY if invalid endpoint gives Not Found")
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
-        output = self.get_content(r)
-        alive_message = "Server is alive!"
-        assert output == alive_message
 
         # Check HTML response to status if agent/request is text/html
         from restapi.rest.response import MIMETYPE_HTML
