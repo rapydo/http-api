@@ -41,6 +41,9 @@ class TestApp(BaseTests):
         log.info("*** VERIFY if invalid endpoint gives Not Found")
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+        output = self.get_content(r)
+        alive_message = "Server is alive!"
+        assert output == alive_message
 
         # Check HTML response to status if agent/request is text/html
         from restapi.rest.response import MIMETYPE_HTML
@@ -49,9 +52,8 @@ class TestApp(BaseTests):
         }
         r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
-        output = self.get_content(r)
-        print("TEST", r, output)
-        assert output == "write something here"
+        output = r.data.decode('utf-8')
+        assert output == "<html>%s</html>" % alive_message
 
     def test_02_GET_specifications(self, client):
         """ Test that the flask server expose swagger specs """
