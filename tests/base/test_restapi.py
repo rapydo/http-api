@@ -56,7 +56,8 @@ class TestApp(BaseTests):
         output = r.data.decode('utf-8')
         assert output != alive_message
         assert alive_message in output
-        assert "<html>" in output
+        assert "<html" in output
+        assert "<body>" in output
 
     def test_02_GET_specifications(self, client):
         """ Test that the flask server expose swagger specs """
