@@ -203,10 +203,10 @@ class TestApp(BaseTests):
         endpoint = "admin/users"
         self.test_endpoint(
             client, endpoint, headers,
-            hcodes.HTTP_OK_NORESPONSE,
+            hcodes.HTTP_OK_BASIC,
             hcodes.HTTP_BAD_REQUEST,
-            hcodes.HTTP_BAD_REQUEST,
-            hcodes.HTTP_BAD_REQUEST
+            hcodes.HTTP_BAD_NOTFOUND,
+            hcodes.HTTP_BAD_NOTFOUND
         )
 
         endpoint = AUTH_URI + '/logout'
