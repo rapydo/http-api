@@ -3,8 +3,8 @@
 from restapi import decorators as decorate
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
-from restapi.services.neo4j.graph_endpoints import graph_transactions
-from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
+# from restapi.services.neo4j.graph_endpoints import graph_transactions
+# from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
@@ -36,7 +36,7 @@ class AdminUsers(GraphBaseOperations):
                 pass
 
     @decorate.catch_error()
-    @catch_graph_exceptions
+    # @catch_graph_exceptions
     def get(self, id=None):
 
         data = []
@@ -54,8 +54,8 @@ class AdminUsers(GraphBaseOperations):
         return self.force_response(data)
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def post(self):
 
         if not detector.check_availability('neo4j'):
@@ -103,8 +103,8 @@ class AdminUsers(GraphBaseOperations):
         return self.force_response(user.uuid)
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def put(self, user_id=None):
 
         if user_id is None:
@@ -157,8 +157,8 @@ class AdminUsers(GraphBaseOperations):
         return self.empty_response()
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def delete(self, user_id=None):
 
         if user_id is None:
