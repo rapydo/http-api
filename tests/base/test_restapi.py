@@ -42,22 +42,20 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
-        # TODO: test that a call from a browser receives HTML back
-        # from restapi.rest.response import MIMETYPE_HTML
-        # r = client.get(endpoint, content_type=MIMETYPE_HTML)
-        # output = self.get_content(r)
-        # print("TEST", r, output)
-
         # Check HTML response to status if agent/request is text/html
+        from restapi.rest.response import MIMETYPE_HTML
+        r = client.get(endpoint, content_type=MIMETYPE_HTML)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = self.get_content(r)
+        print("TEST", r, output)
+        assert output == "write something here"
 
     def test_02_GET_specifications(self, client):
-        """ Test that the flask server is running and reachable """
+        """ Test that the flask server expose swagger specs """
 
-        # Check success
-        endpoint = API_URI + '/specs'
-        log.info("*** VERIFY if API specifications are online")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        specs = self.get_specs()
+
+        assert specs == "write something here"
 
     def test_03_GET_login(self, client):
         """ Check that you can login and receive back your token """
