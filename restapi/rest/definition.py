@@ -469,13 +469,10 @@ class EndpointResource(Resource):
                         fn = getattr(obj, choice_function)
                         description = fn()
 
-                        # For back-compatibility if key and value matches
-                        # we only save the key
-                        if attribute != description:
-                            attribute = {
-                                "key": attribute,
-                                "description": description
-                            }
+                        attribute = {
+                            "key": attribute,
+                            "description": description
+                        }
                     attributes[key] = attribute
 
         return attributes

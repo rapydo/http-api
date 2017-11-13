@@ -64,7 +64,27 @@ class TestApp(BaseTests):
 
         specs = self.get_specs(client)
 
-        assert specs == "write something here"
+        assert "basePath" in specs
+        assert "consumes" in specs
+        assert "produces" in specs
+        assert "application/json" in specs["consumes"]
+        assert "application/json" in specs["produces"]
+        assert "definitions" in specs
+        assert "host" in specs
+        assert "info" in specs
+        assert "schemes" in specs
+        assert "swagger" in specs
+        assert "tags" in specs
+        assert "security" in specs
+        assert "Bearer" in specs["security"]
+        assert "securityDefinitions" in specs
+        assert "Bearer" in specs["securityDefinitions"]
+        assert "paths" in specs
+        assert "/auth/login" in specs["paths"]
+        assert "get" not in specs["paths"]["/auth/login"]
+        assert "post" in specs["paths"]["/auth/login"]
+        assert "put" not in specs["paths"]["/auth/login"]
+        assert "delete" not in specs["paths"]["/auth/login"]
 
     def test_03_GET_login(self, client):
         """ Check that you can login and receive back your token """
