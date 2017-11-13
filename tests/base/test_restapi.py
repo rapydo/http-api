@@ -54,7 +54,9 @@ class TestApp(BaseTests):
         r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         output = r.data.decode('utf-8')
-        assert output == "<html>%s</html>" % alive_message
+        assert output != alive_message
+        assert alive_message in output
+        assert "<html>" in output
 
     def test_02_GET_specifications(self, client):
         """ Test that the flask server expose swagger specs """
