@@ -62,7 +62,7 @@ class TestApp(BaseTests):
     def test_02_GET_specifications(self, client):
         """ Test that the flask server expose swagger specs """
 
-        specs = self.get_specs()
+        specs = self.get_specs(client)
 
         assert specs == "write something here"
 

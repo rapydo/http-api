@@ -57,11 +57,11 @@ class BaseTests():
         raise AttributeError("Class variable %s not found" % variable)
         return None
 
-    def get_specs(self):
+    def get_specs(self, client):
         """
             Retrieve Swagger definition by calling API/specs endpoint
         """
-        r = self.app.get(API_URI + '/specs')
+        r = client.get(API_URI + '/specs')
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
         return content
@@ -77,22 +77,22 @@ class BaseTests():
         assert mapping in specs["paths"]
         return specs["paths"][mapping]
 
-    def getInputSchema(self, endpoint, headers):
+    def getInputSchema(self, client, endpoint, headers):
         """
             Retrieve a swagger-like data schema associated with a endpoint
         """
-        r = self.app.get(API_URI + '/schemas/' + endpoint, headers=headers)
+        r = client.get(API_URI + '/schemas/' + endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
 
-    def getDynamicInputSchema(self, endpoint, headers):
+    def getDynamicInputSchema(self, client, endpoint, headers):
         """
             Retrieve a dynamic data schema associated with a endpoint
         """
 
         data = {"get_schema": 1}
-        r = self.app.post(
+        r = client.post(
             "%s/%s" % (API_URI, endpoint),
             data=data,
             headers=headers)
@@ -163,8 +163,8 @@ class BaseTests():
                 token = data.get('token', '')
         return {'Authorization': 'Bearer ' + token}, token
 
-    def get_profile(self, headers):
-        r = self.app.get(AUTH_URI + '/profile', headers=headers)
+    def get_profile(self, headers, client):
+        r = client.get(AUTH_URI + '/profile', headers=headers)
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
 
