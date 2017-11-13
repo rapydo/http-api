@@ -44,7 +44,10 @@ class TestApp(BaseTests):
 
         # Check HTML response to status if agent/request is text/html
         from restapi.rest.response import MIMETYPE_HTML
-        r = client.get(endpoint, content_type=MIMETYPE_HTML)
+        headers = {
+            "Accept": MIMETYPE_HTML
+        }
+        r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         output = self.get_content(r)
         print("TEST", r, output)
@@ -167,3 +170,20 @@ class TestApp(BaseTests):
         # TEST TOKEN IS NOW INVALID
         r = client.get(endpoint, headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+    def test_08_admin_users(self, client):
+
+        headers, _ = self.do_login(client, None, None)
+        endpoint = "admin/users"
+        self.test_endpoin(
+            client, endpoint, headers,
+            hcodes.HTTP_OK_NORESPONSE,
+            hcodes.HTTP_BAD_REQUEST,
+            hcodes.HTTP_BAD_REQUEST,
+            hcodes.HTTP_BAD_REQUEST
+        )
+
+        endpoint = AUTH_URI + '/logout'
+
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
