@@ -372,7 +372,7 @@ class EndpointResource(Resource):
         return aware_utc_dt
 
     @staticmethod
-    def date_from_string(date, format="%d/%m/%Y"):
+    def date_from_string(date, fmt="%d/%m/%Y"):
 
         log.warning("DEPRECATED: use utilities/time.py instead")
 
@@ -380,7 +380,7 @@ class EndpointResource(Resource):
             return ""
         # datetime.now(pytz.utc)
         try:
-            return_date = datetime.strptime(date, format)
+            return_date = datetime.strptime(date, fmt)
         except BaseException:
             return_date = dateutil.parser.parse(date)
 

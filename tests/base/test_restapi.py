@@ -76,7 +76,7 @@ class TestApp(BaseTests):
         assert "swagger" in specs
         assert "tags" in specs
         assert "security" in specs
-        assert "Bearer" in specs["security"]
+        assert "Bearer" in specs["security"][0]
         assert "securityDefinitions" in specs
         assert "Bearer" in specs["securityDefinitions"]
         assert "paths" in specs
