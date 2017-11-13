@@ -321,3 +321,42 @@ class BaseTests():
             del partialData[key]
             return partialData
         return None
+
+    def test_endpoint(self, client, endpoint, headers=None,
+                      get_status=None, post_status=None,
+                      put_status=None, del_status=None):
+
+        endpoint = "%s/%s" % (API_URI, endpoint)
+
+        if headers is not None:
+
+            if get_status is not None and \
+                    get_status != hcodes.HTTP_BAD_NOTFOUND:
+                r = client.get(endpoint)
+                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+            if post_status is not None and \
+                    post_status != hcodes.HTTP_BAD_NOTFOUND:
+                r = client.post(endpoint)
+                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+            if put_status is not None and \
+                    put_status != hcodes.HTTP_BAD_NOTFOUND:
+                r = client.put(endpoint)
+                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+            if del_status is not None and \
+                    del_status != hcodes.HTTP_BAD_NOTFOUND:
+                r = client.delete(endpoint)
+                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        get_r = client.get(endpoint, headers=headers)
+        assert get_r.status_code == get_status
+        post_r = client.post(endpoint, headers=headers)
+        assert post_r.status_code == post_status
+        put_r = client.put(endpoint, headers=headers)
+        assert put_r.status_code == put_status
+        delete_r = client.delete(endpoint, headers=headers)
+        assert delete_r.status_code == del_status
+
+        return get_r, post_r, put_r, delete_r
