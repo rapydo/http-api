@@ -322,6 +322,17 @@ class BaseTests():
             return partialData
         return None
 
+    @staticmethod
+    def method_exists(status):
+        if status is None:
+            return False
+        if status == hcodes.HTTP_BAD_NOTFOUND:
+            return False
+        if status == hcodes.HTTP_BAD_METHOD_NOT_ALLOWED:
+            return False
+
+        return True
+
     def test_endpoint(self, client, endpoint, headers=None,
                       get_status=None, post_status=None,
                       put_status=None, del_status=None):
@@ -330,23 +341,19 @@ class BaseTests():
 
         if headers is not None:
 
-            if get_status is not None and \
-                    get_status != hcodes.HTTP_BAD_NOTFOUND:
+            if self.method_exists(get_status):
                 r = client.get(endpoint)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-            if post_status is not None and \
-                    post_status != hcodes.HTTP_BAD_NOTFOUND:
+            if self.method_exists(post_status):
                 r = client.post(endpoint)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-            if put_status is not None and \
-                    put_status != hcodes.HTTP_BAD_NOTFOUND:
+            if self.method_exists(put_status):
                 r = client.put(endpoint)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-            if del_status is not None and \
-                    del_status != hcodes.HTTP_BAD_NOTFOUND:
+            if self.method_exists(del_status):
                 r = client.delete(endpoint)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 

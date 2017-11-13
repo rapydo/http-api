@@ -205,7 +205,7 @@ class TestApp(BaseTests):
             client, endpoint, headers,
             hcodes.HTTP_OK_BASIC,
             hcodes.HTTP_BAD_REQUEST,
-            hcodes.HTTP_BAD_NOTFOUND,
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
             hcodes.HTTP_BAD_NOTFOUND
         )
 
