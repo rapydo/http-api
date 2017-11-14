@@ -185,12 +185,16 @@ class AdminUsers(GraphBaseOperations):
 
 class UserRole(GraphBaseOperations):
     @decorate.catch_error(exception=Exception, catch_generic=True)
-    @catch_graph_exceptions
+    # @catch_graph_exceptions
     def get(self, query=None):
+
+        data = []
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.force_response(data)
 
         self.initGraph()
 
-        data = []
         cypher = "MATCH (r:Role)"
 
         if query is not None:
