@@ -209,7 +209,7 @@ class TestApp(BaseTests):
             hcodes.HTTP_BAD_METHOD_NOT_ALLOWED
         )
 
-        get_response = self.checkResponse(get_r)
+        self.checkResponse(get_r, [], [])
 
         # users_def = self.get("def.users")
         # user_def = self.get("def.user")
