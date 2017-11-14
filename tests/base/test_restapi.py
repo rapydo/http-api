@@ -201,13 +201,33 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
-        self._test_endpoint(
+        get_r, _, _, _ = self._test_endpoint(
             client, endpoint, headers,
             hcodes.HTTP_OK_BASIC,
             hcodes.HTTP_BAD_REQUEST,
             hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
             hcodes.HTTP_BAD_METHOD_NOT_ALLOWED
         )
+
+        get_response = self.checkResponse(get_r)
+
+        # users_def = self.get("def.users")
+        # user_def = self.get("def.user")
+
+        # user, user_pwd = self.create_user('tester_user1@none.it')
+
+        # user_headers, user_token = self.do_login(user, user_pwd)
+
+        # data = {}
+        # data['name'] = "A new name"
+        # data['password'] = self.randomString()
+        # self._test_update(
+        #     user_def, 'custom_admin/users/' + user,
+        #     headers, data, hcodes.HTTP_OK_NORESPONSE)
+
+        # self._test_delete(
+        #     user_def, 'custom_admin/users/' + user,
+        #     headers, hcodes.HTTP_OK_NORESPONSE)
 
         endpoint = AUTH_URI + '/logout'
 

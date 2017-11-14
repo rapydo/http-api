@@ -9,6 +9,7 @@ import pytest
 import json
 import string
 import random
+import os
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.rest.response import get_content_from_response
@@ -22,10 +23,6 @@ log = get_logger(__name__)
 SERVER_URI = 'http://%s:%s' % (DEFAULT_HOST, DEFAULT_PORT)
 API_URI = '%s%s' % (SERVER_URI, API_URL)
 AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
-
-
-class ParsedResponse(object):
-    pass
 
 
 class BaseTests():
@@ -163,6 +160,67 @@ class BaseTests():
                 token = data.get('token', '')
         return {'Authorization': 'Bearer ' + token}, token
 
+    # def create_user(self, username, **kwargs):
+
+    #     users_def = self.get("def.users")
+    #     user_def = self.get("def.user")
+    #     admin_headers = self.get("admin_headers")
+    #     endpoint = 'admin/users'
+
+    #     # This prefix ensure a strong password
+
+    #     if "password" in kwargs:
+    #         password = kwargs.pop("password")
+    #     else:
+    #         password = self.randomString(prefix="Aa1+")
+
+    #     user = self.get_user_uuid(username)
+
+    #     if user is not None:
+    #         self._test_delete(user_def, 'admin/users/' + user,
+    #                           admin_headers, hcodes.HTTP_OK_NORESPONSE)
+
+    #     data = {}
+    #     data['email'] = username
+    #     data['password'] = password
+    #     data['name'] = username
+    #     data['surname'] = username
+
+    #     for v in kwargs:
+    #         data[v] = kwargs[v]
+
+    #     # data['group'] = group
+    #     # if irods_user is not None:
+    #     #     data['irods_user'] = irods_user
+
+    #     # if irods_cert is not None:
+    #     #     data['irods_cert'] = irods_cert
+
+    #     user = self._test_create(
+    #         users_def, endpoint, admin_headers, data, hcodes.HTTP_OK_BASIC)
+
+    #     env = os.environ
+    #     CHANGE_FIRST_PASSWORD = env.get("AUTH_FORCE_FIRST_PASSWORD_CHANGE")
+
+    #     if CHANGE_FIRST_PASSWORD:
+    #         error = "Please change your temporary password"
+    #         self.do_login(username, password,
+    #                       status_code=hcodes.HTTP_BAD_FORBIDDEN, error=error)
+
+    #         new_password = self.randomString(prefix="Aa1+")
+    #         data = {
+    #             "new_password": new_password,
+    #             "password_confirm": new_password
+    #         }
+
+    #         self.do_login(
+    #             username, password, status_code=hcodes.HTTP_OK_BASIC, **data)
+    #         # password change also changes the uuid
+    #         user = self.get_user_uuid(username)
+    #         password = new_password
+
+    #     return user, password
+
     def get_profile(self, headers, client):
         r = client.get(AUTH_URI + '/profile', headers=headers)
         content = json.loads(r.data.decode('utf-8'))
@@ -193,59 +251,6 @@ class BaseTests():
             random_string += rand.choice(charset)
 
         return random_string
-
-    def parseResponse(self, response, inner=False):
-        """
-            This method is used to verify and simplify the access to
-            json-standard-responses. It returns an Object built
-            by mapping json content as attributes.
-            This is a recursive method, the inner flag is used to
-            distinguish further calls on inner elements.
-        """
-
-        if response is None:
-            return None
-
-        # OLD RESPONSE, NOT STANDARD-JSON
-        if not inner and isinstance(response, dict):
-            return response
-
-        data = []
-
-        assert isinstance(response, list)
-
-        for element in response:
-            assert isinstance(element, dict)
-            assert "id" in element
-            assert "type" in element
-            assert "attributes" in element
-            # # links is optional -> don't test
-            assert "links" in element
-            # # relationships is optional -> don't test
-            assert "relationships" in element
-
-            newelement = ParsedResponse()
-            setattr(newelement, "_id", element["id"])
-            setattr(newelement, "_type", element["type"])
-            if "links" in element:
-                setattr(newelement, "_links", element["links"])
-
-            setattr(newelement, "attributes", ParsedResponse())
-
-            for key in element["attributes"]:
-                setattr(newelement.attributes, key, element["attributes"][key])
-
-            if "relationships" in element:
-                for relationship in element["relationships"]:
-                    setattr(newelement, "_" + relationship,
-                            self.parseResponse(
-                                element["relationships"][relationship],
-                                inner=True
-                            ))
-
-            data.append(newelement)
-
-        return data
 
     def checkResponse(self, response, fields, relationships):
         """

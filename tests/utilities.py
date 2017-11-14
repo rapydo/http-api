@@ -52,8 +52,8 @@ CONFLICT = hcodes.HTTP_BAD_CONFLICT                 # 409
 # }
 
 
-# class ParsedResponse(object):
-#     pass
+class ParsedResponse(object):
+    pass
 
 
 class TestUtilities(unittest.TestCase):
@@ -175,6 +175,59 @@ class TestUtilities(unittest.TestCase):
                 r = self.app.delete(uri, headers=headers)
                 self.assertEqual(r.status_code, NO_CONTENT)
                 break
+
+    def parseResponse(self, response, inner=False):
+        """
+            This method is used to verify and simplify the access to
+            json-standard-responses. It returns an Object built
+            by mapping json content as attributes.
+            This is a recursive method, the inner flag is used to
+            distinguish further calls on inner elements.
+        """
+
+        if response is None:
+            return None
+
+        # OLD RESPONSE, NOT STANDARD-JSON
+        if not inner and isinstance(response, dict):
+            return response
+
+        data = []
+
+        assert isinstance(response, list)
+
+        for element in response:
+            assert isinstance(element, dict)
+            assert "id" in element
+            assert "type" in element
+            assert "attributes" in element
+            # # links is optional -> don't test
+            assert "links" in element
+            # # relationships is optional -> don't test
+            assert "relationships" in element
+
+            newelement = ParsedResponse()
+            setattr(newelement, "_id", element["id"])
+            setattr(newelement, "_type", element["type"])
+            if "links" in element:
+                setattr(newelement, "_links", element["links"])
+
+            setattr(newelement, "attributes", ParsedResponse())
+
+            for key in element["attributes"]:
+                setattr(newelement.attributes, key, element["attributes"][key])
+
+            if "relationships" in element:
+                for relationship in element["relationships"]:
+                    setattr(newelement, "_" + relationship,
+                            self.parseResponse(
+                                element["relationships"][relationship],
+                                inner=True
+                            ))
+
+            data.append(newelement)
+
+        return data
 
     def _test_endpoint(
             self, definition, endpoint, headers=None, status_code=None):
