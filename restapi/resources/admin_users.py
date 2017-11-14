@@ -58,16 +58,17 @@ class AdminUsers(GraphBaseOperations):
     # @graph_transactions
     def post(self):
 
-        if not detector.check_availability('neo4j'):
-            log.warning("This endpoint is implemented only for neo4j")
-            return self.force_response('0')
-        self.initGraph()
-
         v = self.get_input()
         if len(v) == 0:
             raise RestApiException(
                 'Empty input',
                 status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.force_response('0')
+
+        self.initGraph()
 
         schema = self.get_endpoint_custom_definition()
         # INIT #
