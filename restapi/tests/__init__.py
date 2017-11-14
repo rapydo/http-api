@@ -333,9 +333,9 @@ class BaseTests():
 
         return True
 
-    def test_endpoint(self, client, endpoint, headers=None,
-                      get_status=None, post_status=None,
-                      put_status=None, del_status=None):
+    def _test_endpoint(self, client, endpoint, headers=None,
+                       get_status=None, post_status=None,
+                       put_status=None, del_status=None):
 
         endpoint = "%s/%s" % (API_URI, endpoint)
 
