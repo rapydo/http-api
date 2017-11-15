@@ -328,14 +328,18 @@ class Detector(object):
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
-            if Initializer is not None:
-                Initializer(instances)
-                log.info("Vanilla project has been initialized")
-        except BaseException:
-            Initializer = None
+            if Initializer is None:
+                log.debug("No custom init available")
+            else:
+                try:
+                    Initializer(instances)
+                except BaseException as e:
+                    log.error("Errors during custom initialization: %s", e)
+                else:
+                    log.info("Vanilla project has been initialized")
 
-        if Initializer is None:
-            log.debug("Note: no custom init available for mixed services")
+        except BaseException:
+            log.debug("No custom init available")
 
 
 detector = Detector()
