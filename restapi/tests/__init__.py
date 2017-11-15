@@ -258,11 +258,11 @@ class BaseTests():
         """
 
         for f in fields:
-            if not hasattr(response[0].attributes, f):
+            if f not in response[0]["attributes"]:
                 pytest.fail("Missing property: %s" % f)
 
         for r in relationships:
-            if not hasattr(response[0], "_" + r):
+            if ("_" + r) not in response[0]:
                 pytest.fail("Missing relationship: %s" % r)
 
     def buildData(self, schema):
@@ -296,12 +296,14 @@ class BaseTests():
                         break
                 else:
                     value = "NOT_FOUND"
-            elif type == "int":
+            elif type == "number" or type == "int":
                 value = random.randrange(0, 1000, 1)
             elif format == "date":
                 value = "1969-07-20"  # 20:17:40 UTC
             elif type == "multi_section":
                 continue
+            elif type == "boolean":
+                value = True
             else:
                 value = self.randomString()
 
@@ -362,13 +364,22 @@ class BaseTests():
                 r = client.delete(endpoint)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        get_r = client.get(endpoint, headers=headers)
-        assert get_r.status_code == get_status
-        post_r = client.post(endpoint, headers=headers)
-        assert post_r.status_code == post_status
-        put_r = client.put(endpoint, headers=headers)
-        assert put_r.status_code == put_status
-        delete_r = client.delete(endpoint, headers=headers)
-        assert delete_r.status_code == del_status
+        get_r = post_r = put_r = delete_r = None
+
+        if get_status is not None:
+            get_r = client.get(endpoint, headers=headers)
+            assert get_r.status_code == get_status
+
+        if post_status is not None:
+            post_r = client.post(endpoint, headers=headers)
+            assert post_r.status_code == post_status
+
+        if put_status is not None:
+            put_r = client.put(endpoint, headers=headers)
+            assert put_r.status_code == put_status
+
+        if del_status is not None:
+            delete_r = client.delete(endpoint, headers=headers)
+            assert delete_r.status_code == del_status
 
         return get_r, post_r, put_r, delete_r
