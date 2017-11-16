@@ -119,6 +119,13 @@ class Detector(object):
                 variables[key] = value
         return variables
 
+    def output_service_variables(self, service_name):
+        service_class = self.services_classes.get(service_name, {})
+        try:
+            return service_class.variables
+        except BaseException:
+            return {}
+
     @staticmethod
     def load_variables(service, enable_var=None, prefix=None):
 
@@ -232,10 +239,14 @@ class Detector(object):
                 continue
 
             if name == self.authentication_name and auth_backend is None:
-                log.exit(
-                    "Auth service '%s' seems unreachable"
-                    % self.authentication_service
-                )
+                if self.authentication_service is None:
+                    log.warning("No authentication")
+                    continue
+                else:
+                    log.exit(
+                        "Auth service '%s' seems unreachable"
+                        % self.authentication_service
+                    )
 
             args = {}
             if name == self.task_service_name:
