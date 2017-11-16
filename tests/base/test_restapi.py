@@ -33,31 +33,58 @@ class TestApp(BaseTests):
 
         # Check success
         endpoint = API_URI + '/status'
+        alive_message = "Server is alive!"
+
         log.info("*** VERIFY if API is online")
         r = client.get(endpoint)
         assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = self.get_content(r)
+        assert output == alive_message
 
         # Check failure
         log.info("*** VERIFY if invalid endpoint gives Not Found")
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
-        # TODO: test that a call from a browser receives HTML back
-        # from restapi.rest.response import MIMETYPE_HTML
-        # r = client.get(endpoint, content_type=MIMETYPE_HTML)
-        # output = self.get_content(r)
-        # print("TEST", r, output)
-
         # Check HTML response to status if agent/request is text/html
+        from restapi.rest.response import MIMETYPE_HTML
+        headers = {
+            "Accept": MIMETYPE_HTML
+        }
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = r.data.decode('utf-8')
+        assert output != alive_message
+        assert alive_message in output
+        assert "<html" in output
+        assert "<body>" in output
 
     def test_02_GET_specifications(self, client):
-        """ Test that the flask server is running and reachable """
+        """ Test that the flask server expose swagger specs """
 
-        # Check success
-        endpoint = API_URI + '/specs'
-        log.info("*** VERIFY if API specifications are online")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        specs = self.get_specs(client)
+
+        assert "basePath" in specs
+        assert "consumes" in specs
+        assert "produces" in specs
+        assert "application/json" in specs["consumes"]
+        assert "application/json" in specs["produces"]
+        assert "definitions" in specs
+        assert "host" in specs
+        assert "info" in specs
+        assert "schemes" in specs
+        assert "swagger" in specs
+        assert "tags" in specs
+        assert "security" in specs
+        assert "Bearer" in specs["security"][0]
+        assert "securityDefinitions" in specs
+        assert "Bearer" in specs["securityDefinitions"]
+        assert "paths" in specs
+        assert "/auth/login" in specs["paths"]
+        assert "get" not in specs["paths"]["/auth/login"]
+        assert "post" in specs["paths"]["/auth/login"]
+        assert "put" not in specs["paths"]["/auth/login"]
+        assert "delete" not in specs["paths"]["/auth/login"]
 
     def test_03_GET_login(self, client):
         """ Check that you can login and receive back your token """
@@ -169,3 +196,40 @@ class TestApp(BaseTests):
         # TEST TOKEN IS NOW INVALID
         r = client.get(endpoint, headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+    def test_08_admin_users(self, client):
+
+        headers, _ = self.do_login(client, None, None)
+        endpoint = "admin/users"
+        get_r, _, _, _ = self._test_endpoint(
+            client, endpoint, headers,
+            hcodes.HTTP_OK_BASIC,
+            hcodes.HTTP_BAD_REQUEST,
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED
+        )
+
+        self.checkResponse(get_r, [], [])
+
+        # users_def = self.get("def.users")
+        # user_def = self.get("def.user")
+
+        # user, user_pwd = self.create_user('tester_user1@none.it')
+
+        # user_headers, user_token = self.do_login(user, user_pwd)
+
+        # data = {}
+        # data['name'] = "A new name"
+        # data['password'] = self.randomString()
+        # self._test_update(
+        #     user_def, 'custom_admin/users/' + user,
+        #     headers, data, hcodes.HTTP_OK_NORESPONSE)
+
+        # self._test_delete(
+        #     user_def, 'custom_admin/users/' + user,
+        #     headers, hcodes.HTTP_OK_NORESPONSE)
+
+        endpoint = AUTH_URI + '/logout'
+
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE

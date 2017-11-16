@@ -441,7 +441,7 @@ class BeSwagger(object):
         except Exception as e:
             # raise e
             error = str(e).split('\n')[0]
-            log.error("Failed to validate:\n%s\n" % error)
+            log.error("Failed to validate:\n%s\n", error)
             return False
         finally:
             os.remove(filepath)

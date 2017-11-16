@@ -27,7 +27,7 @@ class Downloader(object):
 
         path = self.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True)
-        log.info("Provide '%s' from '%s' " % (filename, path))
+        log.info("Provide '%s' from '%s'", filename, path)
 
         return send_from_directory(path, filename)
 
@@ -43,7 +43,7 @@ class Downloader(object):
             yield data
 
     def send_file_streamed(self, path, mime):
-        log.info("Providing streamed content of %s" % path)
+        log.info("Providing streamed content from %s", path)
 
         f = open(path, "rb")
         return Response(
@@ -78,8 +78,8 @@ class Downloader(object):
             length = size - byte1
 
         log.info(
-            "Providing partial content (bytes %s-%s, len = %s bytes) of %s"
-            % (byte1, byte2, length, path)
+            "Providing partial content (bytes %s-%s, len = %s bytes) from %s",
+            byte1, byte2, length, path
         )
 
         data = None

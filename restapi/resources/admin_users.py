@@ -3,13 +3,14 @@
 from restapi import decorators as decorate
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
-from restapi.services.neo4j.graph_endpoints import graph_transactions
-from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
+# from restapi.services.neo4j.graph_endpoints import graph_transactions
+# from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
 
 from utilities.logs import get_logger
-logger = get_logger(__name__)
+log = get_logger(__name__)
 
 __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
@@ -19,7 +20,7 @@ class AdminUsers(GraphBaseOperations):
     def link_role(self, user, properties):
         ids = self.parseAutocomplete(
             properties, 'roles', id_key='name', split_char=',')
-        logger.critical(ids)
+        # log.critical(ids)
 
         if ids is None:
             return
@@ -35,13 +36,17 @@ class AdminUsers(GraphBaseOperations):
                 pass
 
     @decorate.catch_error()
-    @catch_graph_exceptions
+    # @catch_graph_exceptions
     def get(self, id=None):
+
+        data = []
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.force_response(data)
 
         self.initGraph()
         nodeset = self.graph.User.nodes
 
-        data = []
         for n in nodeset.all():
             user = self.getJsonResponse(n, max_relationship_depth=2)
             data.append(user)
@@ -49,17 +54,21 @@ class AdminUsers(GraphBaseOperations):
         return self.force_response(data)
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def post(self):
-
-        self.initGraph()
 
         v = self.get_input()
         if len(v) == 0:
             raise RestApiException(
                 'Empty input',
                 status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.force_response('0')
+
+        self.initGraph()
 
         schema = self.get_endpoint_custom_definition()
         # INIT #
@@ -86,7 +95,8 @@ class AdminUsers(GraphBaseOperations):
         properties["password"] = \
             BaseAuthentication.hash_password(properties["password"])
         # properties["name_surname"] = \
-        #     self.createUniqueIndex(properties["name"], properties["surname"])
+        #     self.createUniqueIndex(
+        #         properties["name"], properties["surname"])
         user = self.graph.User(**properties).save()
         user.belongs_to.connect(group)
         self.link_role(user, v)
@@ -94,8 +104,8 @@ class AdminUsers(GraphBaseOperations):
         return self.force_response(user.uuid)
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def put(self, user_id=None):
 
         if user_id is None:
@@ -103,6 +113,10 @@ class AdminUsers(GraphBaseOperations):
             raise RestApiException(
                 "Please specify a user id",
                 status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.empty_response()
 
         schema = self.get_endpoint_custom_definition()
         self.initGraph()
@@ -144,8 +158,8 @@ class AdminUsers(GraphBaseOperations):
         return self.empty_response()
 
     @decorate.catch_error()
-    @catch_graph_exceptions
-    @graph_transactions
+    # @catch_graph_exceptions
+    # @graph_transactions
     def delete(self, user_id=None):
 
         if user_id is None:
@@ -153,6 +167,10 @@ class AdminUsers(GraphBaseOperations):
             raise RestApiException(
                 "Please specify a user id",
                 status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.empty_response()
 
         self.initGraph()
 
@@ -168,12 +186,16 @@ class AdminUsers(GraphBaseOperations):
 
 class UserRole(GraphBaseOperations):
     @decorate.catch_error(exception=Exception, catch_generic=True)
-    @catch_graph_exceptions
+    # @catch_graph_exceptions
     def get(self, query=None):
+
+        data = []
+        if not detector.check_availability('neo4j'):
+            log.warning("This endpoint is implemented only for neo4j")
+            return self.force_response(data)
 
         self.initGraph()
 
-        data = []
         cypher = "MATCH (r:Role)"
 
         if query is not None:

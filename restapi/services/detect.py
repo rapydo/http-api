@@ -218,7 +218,7 @@ class Detector(object):
 
             # Save
             self.services_classes[name] = MyClass
-            log.debug("Got class definition for %s" % MyClass)
+            log.debug("Got class definition for %s", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
@@ -263,7 +263,7 @@ class Detector(object):
                 self.extensions_instances[name] = ext_instance
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s" % name)
+            log.debug("Initializing %s", name)
             service_instance = ext_instance.custom_init(
                 pinit=project_init,
                 pdestroy=project_clean,
@@ -350,14 +350,18 @@ class Detector(object):
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
-            if Initializer is not None:
-                Initializer(instances)
-                log.info("Vanilla project has been initialized")
-        except BaseException:
-            Initializer = None
+            if Initializer is None:
+                log.debug("No custom init available")
+            else:
+                try:
+                    Initializer(instances)
+                except BaseException as e:
+                    log.error("Errors during custom initialization: %s", e)
+                else:
+                    log.info("Vanilla project has been initialized")
 
-        if Initializer is None:
-            log.debug("Note: no custom init available for mixed services")
+        except BaseException:
+            log.debug("No custom init available")
 
 
 detector = Detector()

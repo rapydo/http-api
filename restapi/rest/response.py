@@ -392,7 +392,7 @@ class ResponseMaker(object):
 
             code = int(code)
         except Exception as e:
-            log.critical("Could not build response!\n%s" % e)
+            log.critical("Could not build response!\n%s", e)
             # Revert to defaults
             defined_content = None,
             data_type = str(type(defined_content))
@@ -453,7 +453,7 @@ def get_content_from_response(http_out):
         try:
             response = json.loads(http_out.get_data().decode())
         except Exception as e:
-            log.critical("Failed to load response:\n%s" % e)
+            log.critical("Failed to load response:\n%s", e)
             raise ValueError(
                 "Trying to recover informations" +
                 " from a malformed response:\n%s" % http_out)
