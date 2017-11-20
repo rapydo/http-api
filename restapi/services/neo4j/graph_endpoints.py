@@ -15,6 +15,9 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 class GraphBaseOperations(EndpointResource):
 
     def initGraph(self):
+        log.warning(
+            "This method is deprecated, use get_service_instance and " +
+            "get_current_user instead")
         self.graph = self.get_service_instance('neo4j')
         self._current_user = self.get_current_user()
 
