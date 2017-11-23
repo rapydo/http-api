@@ -92,14 +92,62 @@ class SwaggerSpecifications(EndpointResource):
 class Login(EndpointResource):
     """ Let a user login with the developer chosen method """
 
+    def verify_information(
+            self, user, security, totp_auth, totp_code, now=None):
+
+        message_body = {}
+        message_body['actions'] = []
+        error_message = None
+
+        if totp_auth and totp_code is None:
+            message_body['actions'].append(
+                self.auth.SECOND_FACTOR_AUTHENTICATION)
+            error_message = "You do not provided a valid second factor"
+
+        epoch = datetime.fromtimestamp(0, pytz.utc)
+        last_pwd_change = user.last_password_change
+        if last_pwd_change is None or last_pwd_change == 0:
+            last_pwd_change = epoch
+
+        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
+
+            message_body['actions'].append('FIRST LOGIN')
+            error_message = "Please change your temporary password"
+
+            if totp_auth:
+
+                qr_code = security.get_qrcode(user)
+
+                message_body["qr_code"] = qr_code
+
+        elif self.auth.MAX_PASSWORD_VALIDITY > 0:
+
+            if last_pwd_change == epoch:
+                expired = True
+            else:
+                valid_until = \
+                    last_pwd_change + timedelta(
+                        days=self.auth.MAX_PASSWORD_VALIDITY)
+
+                if now is None:
+                    now = datetime.now(pytz.utc)
+                expired = (valid_until < now)
+
+            if expired:
+
+                message_body['actions'].append('PASSWORD EXPIRED')
+                error_message = "Your password is expired, please change it"
+
+        if error_message is None:
+            return None
+
+        return self.force_response(
+            message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN)
+
     @decorate.catch_error()
     def post(self):
 
         # ########## INIT ##########
-        security = HandleSecurity(self.auth)
-
-        now = datetime.now(pytz.utc)
-
         jargs = self.get_input()
         username = jargs.get('username')
         if username is None:
@@ -108,6 +156,15 @@ class Login(EndpointResource):
         password = jargs.get('password')
         if password is None:
             password = jargs.get('pwd')
+
+        # ##################################################
+        # Now credentials are checked at every request
+        if username is None or password is None:
+            msg = "Missing username or password"
+            raise RestApiException(
+                msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
+        now = datetime.now(pytz.utc)
 
         new_password = jargs.get('new_password')
         password_confirm = jargs.get('password_confirm')
@@ -122,13 +179,7 @@ class Login(EndpointResource):
         else:
             totp_code = None
 
-        # ##################################################
-        # Now credentials are checked at every request
-        if username is None or password is None:
-            msg = "Missing username or password"
-            raise RestApiException(
-                msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
-
+        security = HandleSecurity(self.auth)
         # ##################################################
         # Authentication control
         security.verify_blocked_username(username)
@@ -153,51 +204,10 @@ class Login(EndpointResource):
 
         # ##################################################
         # Something is missing in the authentication, asking action to user
-        message_body = {}
-        message_body['actions'] = []
-        error_message = None
-
-        if totp_authentication and totp_code is None:
-            message_body['actions'].append(
-                self.auth.SECOND_FACTOR_AUTHENTICATION)
-            error_message = "You do not provided a valid second factor"
-
-        epoch = datetime.fromtimestamp(0, pytz.utc)
-        last_pwd_change = user.last_password_change
-        if last_pwd_change is None or last_pwd_change == 0:
-            last_pwd_change = epoch
-
-        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
-
-            message_body['actions'].append('FIRST LOGIN')
-            error_message = "Please change your temporary password"
-
-            if totp_authentication:
-
-                qr_code = security.get_qrcode(user)
-
-                message_body["qr_code"] = qr_code
-
-        elif self.auth.MAX_PASSWORD_VALIDITY > 0:
-
-            if last_pwd_change == epoch:
-                expired = True
-            else:
-                valid_until = \
-                    last_pwd_change + timedelta(
-                        days=self.auth.MAX_PASSWORD_VALIDITY)
-                expired = (valid_until < now)
-
-            if expired:
-
-                message_body['actions'].append('PASSWORD EXPIRED')
-                error_message = "Your password is expired, please change it"
-
-        if error_message is not None:
-            return self.force_response(
-                message_body,
-                errors=error_message,
-                code=hcodes.HTTP_BAD_FORBIDDEN)
+        ret = self.verify_information(
+            user, security, totp_authentication, totp_code, now)
+        if ret is not None:
+            return ret
 
         # ##################################################
         # Everything is ok, let's save authentication information
