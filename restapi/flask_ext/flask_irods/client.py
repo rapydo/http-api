@@ -221,6 +221,9 @@ class IrodsPythonClient():
              recursive=False, force=False,
              compute_checksum=False, compute_and_verify_checksum=False):
 
+        if recursive:
+            log.error("Recursive flag not implemented for copy")
+
         if self.is_collection(sourcepath):
             raise IrodsException("Copy directory not supported")
 

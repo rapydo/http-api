@@ -89,6 +89,9 @@ class Authenticator(BaseExtension):
             with self.app.app_context():
                 obj.init_users_and_roles()
                 log.info("Initialized authentication module")
+
+        if pdestroy:
+            log.error("Destroy not implemented for authentication service")
         # elif PRODUCTION:
         #     """
         #     # TODO: check if this piece of code works
