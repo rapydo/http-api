@@ -134,7 +134,7 @@ class BeElastic(ServiceObject):
             # self._connection.indices.create(index)
         # self.rebuild_connection()
 
-    def search(self, DocumentClass, parameters={}, filter=False):
+    def search(self, DocumentClass, parameters=None, filter=False):
         """
         It should be:
             MyESobj.search() \
@@ -143,11 +143,12 @@ class BeElastic(ServiceObject):
 
         output = []
         query = DocumentClass.search()
-        if isinstance(parameters, dict) and len(parameters) > 0:
-            if filter:
-                query = query.filter('term', **parameters)
-            else:
-                query = query.query('match', **parameters)
+        if parameters is not None:
+            if isinstance(parameters, dict) and len(parameters) > 0:
+                if filter:
+                    query = query.filter('term', **parameters)
+                else:
+                    query = query.query('match', **parameters)
 
         # for hit in query.execute():
         #     print("TEST", hit, DocumentClass.from_es(hit))
