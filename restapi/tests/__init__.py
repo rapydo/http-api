@@ -262,7 +262,7 @@ class BaseTests():
                 pytest.fail("Missing property: %s" % f)
 
         for r in relationships:
-            if ("_" + r) not in response[0]:
+            if r not in response[0]["relationships"]:
                 pytest.fail("Missing relationship: %s" % r)
 
     def buildData(self, schema):
