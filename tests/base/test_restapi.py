@@ -97,12 +97,14 @@ class TestApp(BaseTests):
         BaseAuthentication.myinit()
         USER = BaseAuthentication.default_user.upper()
         PWD = BaseAuthentication.default_password
-        self.do_login(client, USER, PWD)
+        headers, _ = self.do_login(client, USER, PWD)
+        # Override saved token...
+        self.save("auth_header", headers)
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
-        headers, _ = self.do_login(
+        self.do_login(
             client, 'ABC-Random-User-XYZ', 'ABC-Random-Pass-XYZ',
             status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
@@ -110,7 +112,7 @@ class TestApp(BaseTests):
         # when using a non-email-username to authenticate
         log.info("*** VERIFY with a non-email-username")
 
-        headers, _ = self.do_login(
+        self.do_login(
             client, 'notanemail', '[A-Za-z0-9]+',
             status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
