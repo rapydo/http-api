@@ -235,7 +235,7 @@ class BaseTests():
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    def randomString(self, len=16, prefix="TEST:"):
+    def randomString(self, len=16, prefix="TEST-"):
         """
             Create a random string to be used to build data for tests
         """
@@ -262,7 +262,7 @@ class BaseTests():
                 pytest.fail("Missing property: %s" % f)
 
         for r in relationships:
-            if ("_" + r) not in response[0]:
+            if r not in response[0]["relationships"]:
                 pytest.fail("Missing relationship: %s" % r)
 
     def buildData(self, schema):
@@ -274,8 +274,8 @@ class BaseTests():
         for d in schema:
 
             key = d["name"]
-            type = d["type"]
-            format = d.get("format", "")
+            field_type = d["type"]
+            field_format = d.get("format", "")
             default = d.get("default", None)
             custom = d.get("custom", {})
             autocomplete = custom.get("autocomplete", False)
@@ -296,13 +296,16 @@ class BaseTests():
                         break
                 else:
                     value = "NOT_FOUND"
-            elif type == "number" or type == "int":
+            elif field_type == "number" or field_type == "int":
                 value = random.randrange(0, 1000, 1)
-            elif format == "date":
+            elif field_format == "date":
                 value = "1969-07-20"  # 20:17:40 UTC
-            elif type == "multi_section":
+            elif field_format == "email":
+                value = self.randomString()
+                value += "@nomail.com"
+            elif field_type == "multi_section":
                 continue
-            elif type == "boolean":
+            elif field_type == "boolean":
                 value = True
             else:
                 value = self.randomString()

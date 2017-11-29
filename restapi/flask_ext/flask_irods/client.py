@@ -221,6 +221,9 @@ class IrodsPythonClient():
              recursive=False, force=False,
              compute_checksum=False, compute_and_verify_checksum=False):
 
+        if recursive:
+            log.error("Recursive flag not implemented for copy")
+
         if self.is_collection(sourcepath):
             raise IrodsException("Copy directory not supported")
 
@@ -378,8 +381,8 @@ class IrodsPythonClient():
         Reads obj from iRODS without saving a local copy
         """
 
-        log.info("Downloading file {} in streaming with chunk size {}"
-                 .format(absolute_path, self.chunk_size))
+        log.info("Downloading file %s in streaming with chunk size %s",
+                 absolute_path, self.chunk_size)
         try:
             obj = self.prc.data_objects.get(absolute_path)
 
@@ -405,8 +408,8 @@ class IrodsPythonClient():
                 "File '" + destination + "' already exists. " +
                 "Change file name or use the force parameter")
 
-        log.info("Uploading file in streaming to {} with chunk size {}"
-                 .format(destination, self.chunk_size))
+        log.info("Uploading file in streaming to %s with chunk size %s",
+                 destination, self.chunk_size)
         try:
             self.create_empty(destination, directory=False,
                               ignore_existing=force)

@@ -16,5 +16,5 @@ class RestApiException(Exception):
 
         if status_code is None:
             status_code = hcodes.HTTP_BAD_NOTFOUND
-        super(RestApiException).__init__()
+        super(RestApiException, self).__init__(exception)
         self.status_code = status_code
