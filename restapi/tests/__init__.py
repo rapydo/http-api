@@ -9,11 +9,11 @@ import pytest
 import json
 import string
 import random
-import os
+# import os
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.rest.response import get_content_from_response
-from restapi.services.authentication import BaseAuthentication as ba
+from restapi.services.authentication import BaseAuthentication
 from utilities import htmlcodes as hcodes
 
 from utilities.logs import get_logger
@@ -120,11 +120,11 @@ class BaseTests():
         """
 
         if USER is None or PWD is None:
-            ba.myinit()
+            BaseAuthentication.myinit()
             if USER is None:
-                USER = ba.default_user
+                USER = BaseAuthentication.default_user
             if PWD is None:
-                PWD = ba.default_password
+                PWD = BaseAuthentication.default_password
 
         # AUTH_MAX_LOGIN_ATTEMPTS=0
         # AUTH_REGISTER_FAILED_LOGIN=False

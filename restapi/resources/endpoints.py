@@ -152,6 +152,7 @@ class Login(EndpointResource):
         username = jargs.get('username')
         if username is None:
             username = jargs.get('email')
+        username = username.lower()
 
         password = jargs.get('password')
         if password is None:
@@ -251,6 +252,7 @@ class Tokens(EndpointResource):
         if iamadmin:
             username = self.get_input(single_parameter='username')
             if username is not None:
+                username = username.lower()
                 return self.auth.get_user_object(username=username)
 
         return self.get_current_user()

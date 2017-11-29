@@ -5,7 +5,7 @@ Tests for http api base (mostly authentication)
 """
 
 
-from restapi.tests import BaseTests, API_URI, AUTH_URI
+from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
 
@@ -92,6 +92,12 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid credentials")
         headers, _ = self.do_login(client, None, None)
         self.save("auth_header", headers)
+
+        log.info("*** VERIFY CASE INSENSITIVE LOGIN")
+        BaseAuthentication.myinit()
+        USER = BaseAuthentication.default_user.upper()
+        PWD = BaseAuthentication.default_password
+        self.do_login(client, USER, PWD)
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
