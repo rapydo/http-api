@@ -154,14 +154,14 @@ class TestApp(BaseTests):
         endpoint = AUTH_URI + '/login'
 
         # CREATING 3 TOKENS
-        tokens = []
+        first_token = None
         num_tokens = 3
 
         for i in range(num_tokens):
             header, token = self.do_login(client, None, None)
             if i == 0:
                 self.save("tokens_header", header, read_only=True)
-            tokens.append(token)
+                first_token = token
 
         endpoint = AUTH_URI + '/tokens'
 
@@ -171,10 +171,11 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_OK_BASIC
         assert len(content) >= num_tokens
 
-        # save the second token to be used for further tests
-        self.save("token_id", str(content.pop(1)["id"]))
-
-        assert self.get("token_id") != self.get("tokens_header")
+        # save a token to be used for further tests
+        for c in content:
+            if c["token"] == first_token:
+                continue
+            self.save("token_id", c["id"])
 
         # TEST GET SINGLE TOKEN
         endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
