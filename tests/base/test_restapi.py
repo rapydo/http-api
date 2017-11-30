@@ -89,16 +89,19 @@ class TestApp(BaseTests):
     def test_03_GET_login(self, client):
         """ Check that you can login and receive back your token """
 
-        log.info("*** VERIFY valid credentials")
-        headers, _ = self.do_login(client, None, None)
-        self.save("auth_header", headers)
-
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
         BaseAuthentication.myinit()
-        USER = BaseAuthentication.default_user.upper()
+        USER = BaseAuthentication.default_user
         PWD = BaseAuthentication.default_password
-        headers, _ = self.do_login(client, USER, PWD)
-        # Override saved token...
+        self.do_login(client, USER.upper(), PWD)
+
+        # Off course PWD cannot be upper :D
+        self.do_login(
+            client, USER, PWD.upper(),
+            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
+        log.info("*** VERIFY valid credentials")
+        headers, _ = self.do_login(client, None, None)
         self.save("auth_header", headers)
 
         # Check failure
@@ -170,6 +173,8 @@ class TestApp(BaseTests):
 
         # save the second token to be used for further tests
         self.save("token_id", str(content.pop(1)["id"]))
+
+        assert self.get("token_id") != self.get("tokens_header")
 
         # TEST GET SINGLE TOKEN
         endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
