@@ -7,10 +7,11 @@ Customization based on configuration 'blueprint' files
 import os
 import re
 import glob
-from utilities import \
-    PROJECT_CONF_FILENAME, CONF_PATH, DEFAULT_FILENAME, UTILS_PKGNAME
-from utilities import helpers
+from utilities import CONF_PATH
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
+# from utilities import PROJECT_CONF_FILENAME, DEFAULT_FILENAME, UTILS_PKGNAME
+from utilities import helpers
+from utilities import configuration
 from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
@@ -47,45 +48,23 @@ class Customizer(object):
         self._meta = Meta()
 
         # Do things
-        self.do_config()
+        self.read_configuration()
 
         if not self._initiliazing:
             self.do_schema()
             self.find_endpoints()
             self.do_swagger()
 
-    def do_config(self):
+    def read_configuration(self):
         ##################
         # Reading configuration
 
-        # Read the custom configuration from the active blueprint file
-        custom_config = load_yaml_file(
-            PROJECT_CONF_FILENAME,
-            path=helpers.current_dir(CONF_PATH)
+        default_file_path = helpers.current_dir(CONF_PATH)
+        project_file_path = helpers.current_dir(CONF_PATH)
+        self._configurations = configuration.read(
+            default_file_path,
+            project_path=project_file_path,
         )
-
-        # Read default configuration
-        defaults = load_yaml_file(
-            DEFAULT_FILENAME,
-            # path=CUSTOM_CONFIG_PATH
-            path=helpers.script_abspath(
-                # FIXME: find a better way
-                __file__, '../' + UTILS_PKGNAME)
-        )
-        if len(defaults) < 0:
-            raise ValueError("Missing defaults for server configuration!")
-
-        # Mix default and custom configuration
-        # We go deep into two levels down of dictionaries
-        for key, elements in defaults.items():
-            if key not in custom_config:
-                custom_config[key] = {}
-            for label, element in elements.items():
-                if label not in custom_config[key]:
-                    custom_config[key][label] = element
-
-        # Save in memory all of the current configuration
-        self._configurations = custom_config
 
     def do_schema(self):
         """ Schemas exposing, if requested """
