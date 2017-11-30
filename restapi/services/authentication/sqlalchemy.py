@@ -194,17 +194,17 @@ class Authentication(BaseAuthentication):
         return True
 
     def invalidate_token(self, token, user=None):
-        if user is None:
-            user = self.get_user()
+        # if user is None:
+        #     user = self.get_user()
 
-        token_entry = self.db.Token.query.filter_by(token=token).first()
+        token_entry = self.db.Token.query.filter_by(jti=token).first()
         if token_entry is not None:
             token_entry.emitted_for = None
             self.db.session.commit()
-        else:
-            log.warning("Could not invalidate token")
+            return True
 
-        return True
+        log.warning("Could not invalidate token")
+        return False
 
     def verify_token_custom(self, jti, user, payload):
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
