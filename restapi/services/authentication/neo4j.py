@@ -226,8 +226,8 @@ class Authentication(BaseAuthentication):
         return True
 
     def invalidate_token(self, token, user=None):
-        if user is None:
-            user = self.get_user()
+        # if user is None:
+        #     user = self.get_user()
         try:
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()

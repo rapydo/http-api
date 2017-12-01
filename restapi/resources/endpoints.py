@@ -301,12 +301,11 @@ class Tokens(EndpointResource):
         for token in tokens:
             if token["id"] != token_id:
                 continue
-            if not self.auth.invalidate_token(token=token_id, user=user):
+            if not self.auth.invalidate_token(token=token["token"], user=user):
                 return self.send_errors(
                     message="Failed token invalidation: '%s'" % token,
                     code=hcodes.HTTP_BAD_REQUEST)
             log.debug("Token invalidated: %s", token_id)
-            log.critical(token)
             return self.empty_response()
 
         message = "Token not emitted for your account or does not exist"

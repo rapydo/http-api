@@ -197,7 +197,7 @@ class Authentication(BaseAuthentication):
         # if user is None:
         #     user = self.get_user()
 
-        token_entry = self.db.Token.query.filter_by(jti=token).first()
+        token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry is not None:
             token_entry.emitted_for = None
             self.db.session.commit()
