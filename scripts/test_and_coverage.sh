@@ -26,7 +26,7 @@ fi
 echo "Current project: $PROJECT"
 echo "Current version: $CURRENT_VERSION"
 
-CORE_DIR="${WORK_DIR}/tests"
+CORE_DIR="${WORK_DIR}/rapydo_tests"
 COV_DIR="${WORK_DIR}/coverage_files"
 
 echo "WORK_DIR = ${WORK_DIR}"
@@ -65,7 +65,7 @@ fi
 
 if [ "$PROJECT" != "COVERAGE" ]; then
 
-	# CURRENT DIR IS $WORK_DIR/tests
+	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --skip-bower 
@@ -103,7 +103,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
-	# CURRENT DIR IS $WORK_DIR/tests
+	# CURRENT DIR IS $CORE_DIR
 
 	PROJECT="template"
 
