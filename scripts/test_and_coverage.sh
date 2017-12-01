@@ -26,7 +26,7 @@ fi
 echo "Current project: $PROJECT"
 echo "Current version: $CURRENT_VERSION"
 
-CORE_DIR="${WORK_DIR}/core"
+CORE_DIR="${WORK_DIR}/tests"
 COV_DIR="${WORK_DIR}/coverage_files"
 
 echo "WORK_DIR = ${WORK_DIR}"
@@ -40,7 +40,7 @@ aws configure set aws_secret_access_key $S3_PWD
 mkdir -p $COV_DIR
 
 if [ ! -d $CORE_DIR ]; then
-    git clone https://github.com/rapydo/core.git $CORE_DIR
+    git clone https://github.com/rapydo/tests.git $CORE_DIR
 fi
 cd $CORE_DIR
 mkdir -p data
@@ -65,7 +65,7 @@ fi
 
 if [ "$PROJECT" != "COVERAGE" ]; then
 
-	# CURRENT DIR IS $WORK_DIR/core
+	# CURRENT DIR IS $WORK_DIR/tests
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --skip-bower 
@@ -103,7 +103,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
-	# CURRENT DIR IS $WORK_DIR/core
+	# CURRENT DIR IS $WORK_DIR/tests
 
 	PROJECT="template"
 

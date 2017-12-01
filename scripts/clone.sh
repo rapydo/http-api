@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-rapydodir="core"
+rapydodir="tests"
 
 # export CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
 # export CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -12,7 +12,7 @@ export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version
 echo "Current version: $CURRENT_VERSION"
 
 if [ -z $CORE_PROJECT ]; then
-    echo "Missing the current testing project with the rapydo core"
+    echo "Project ${CORE_PROJECT} not found on rapydo tests"
     exit 1
 fi
 
