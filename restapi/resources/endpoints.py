@@ -152,6 +152,7 @@ class Login(EndpointResource):
         username = jargs.get('username')
         if username is None:
             username = jargs.get('email')
+        username = username.lower()
 
         password = jargs.get('password')
         if password is None:
@@ -251,6 +252,7 @@ class Tokens(EndpointResource):
         if iamadmin:
             username = self.get_input(single_parameter='username')
             if username is not None:
+                username = username.lower()
                 return self.auth.get_user_object(username=username)
 
         return self.get_current_user()
@@ -287,37 +289,28 @@ class Tokens(EndpointResource):
             return self.send_errors(
                 message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST)
 
-        tokens = self.auth.get_tokens(user=user)
-        invalidated = False
-
-        for token in tokens:
-            # all or specific
-            if token_id is None or token["id"] == token_id:
-                done = self.auth.invalidate_token(
-                    token=token["token"], user=user)
-                if not done:
-                    return self.send_errors(message="Failed '%s'" % token)
-                else:
-                    log.debug("Invalidated %s", token['id'])
-                    invalidated = True
-
-        # Check
-
-        # ALL
         if token_id is None:
             # NOTE: this is allowed only in removing tokens in unittests
             if not current_app.config['TESTING']:
-                raise KeyError("Please specify a valid token")
+                raise KeyError("TESTING IS FALSE! Specify a valid token")
             self.auth.invalidate_all_tokens(user=user)
-        # SPECIFIC
-        else:
-            if not invalidated:
-                message = "Token not found: " + \
-                    "not emitted for your account or does not exist"
-                return self.send_errors(
-                    message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            return self.empty_response()
 
-        return self.empty_response()
+        tokens = self.auth.get_tokens(user=user)
+
+        for token in tokens:
+            if token["id"] != token_id:
+                continue
+            if not self.auth.invalidate_token(token=token["token"], user=user):
+                return self.send_errors(
+                    message="Failed token invalidation: '%s'" % token,
+                    code=hcodes.HTTP_BAD_REQUEST)
+            log.debug("Token invalidated: %s", token_id)
+            return self.empty_response()
+
+        message = "Token not emitted for your account or does not exist"
+        return self.send_errors(
+            message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
 
 class Profile(EndpointResource):
