@@ -45,22 +45,24 @@ class Detector(object):
     def get_bool_from_os(name):
 
         bool_var = os.environ.get(name, False)
+        if isinstance(bool_var, bool):
+            return bool_var
 
         # if not directly a bool, try an interpretation
-        if not isinstance(bool_var, bool):
+        # INTEGERS
+        try:
+            tmp = int(bool_var)
+            return bool(tmp)
+        except ValueError:
+            pass
 
-            # any non empty string with a least one char
-            # has to be considered True
-            if isinstance(bool_var, str) and len(bool_var) > 0:
-                bool_var = 1
+        # STRINGS
+        # any non empty string with a least one char
+        # has to be considered True
+        if isinstance(bool_var, str) and len(bool_var) > 0:
+            return True
 
-            # convert integers to boolean
-            try:
-                tmp = int(bool_var)
-                bool_var = bool(tmp)
-            except ValueError:
-                bool_var = False
-        return bool_var
+        return False
 
     @staticmethod
     # @lru_cache(maxsize=None)
