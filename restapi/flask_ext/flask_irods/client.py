@@ -372,6 +372,7 @@ class IrodsPythonClient():
 
         while True:
             chunk = request.stream.read(chunk_size)
+            # print("\n\n\nCONTENT", chunk)
             if not chunk:
                 break
             target.write(chunk)
@@ -411,8 +412,8 @@ class IrodsPythonClient():
         log.info("Uploading file in streaming to %s with chunk size %s",
                  destination, self.chunk_size)
         try:
-            self.create_empty(destination, directory=False,
-                              ignore_existing=force)
+            self.create_empty(
+                destination, directory=False, ignore_existing=force)
             obj = self.prc.data_objects.get(destination)
 
             # Based on:
@@ -422,6 +423,7 @@ class IrodsPythonClient():
                 with obj.open('w') as target:
                     self.write_in_chunks(target, self.chunk_size)
             except BaseException as ex:
+                log.critical("Failed streaming upload: %s", ex)
                 # Should I remove file from iRODS if upload failed?
                 log.debug("Removing object from irods")
                 self.remove(destination, force=True)
@@ -430,9 +432,13 @@ class IrodsPythonClient():
             return True
 
         except iexceptions.CollectionDoesNotExist:
+            log.critical("Failed streaming upload: collection not found")
             raise IrodsException("Cannot write to file: path not found")
         # except iexceptions.DataObjectDoesNotExist:
         #     raise IrodsException("Cannot write to file: not found")
+        except BaseException as ex:
+            log.critical("Failed streaming upload: %s", ex)
+            raise ex
 
         return False
 
