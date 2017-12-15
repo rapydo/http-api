@@ -604,11 +604,15 @@ class IrodsPythonClient():
     def get_current_user(self):
         return self.prc.username
 
-    def get_current_zone(self, prepend_slash=False):
+    def get_current_zone(self, prepend_slash=False, suffix=None):
         zone = self.prc.zone
-        if prepend_slash:
+        has_suffix = suffix is not None
+        if prepend_slash or has_suffix:
             zone = '/' + zone
-        return zone
+        if has_suffix:
+            return zone + '/' + suffix
+        else:
+            return zone
 
     @lru_cache(maxsize=4)
     def get_user_info(self, username=None):
