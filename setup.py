@@ -56,8 +56,7 @@ setup(
         "psycopg2",
         "pymodm",
         # FS
-        # "python-irodsclient==0.6.0",
-        "python-irodsclient==0.7.0a0",
+        "python-irodsclient==0.7.0",
         "gssapi==1.2.0",
         # Swagger
         "bravado-core",
