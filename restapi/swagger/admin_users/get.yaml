@@ -14,9 +14,6 @@ users:
 
 user:
   summary: Obtain information on a single user
-  custom:
-    # publish: true
-    authentication: true
   responses:
     '200':
       description: User information successfully retrieved
