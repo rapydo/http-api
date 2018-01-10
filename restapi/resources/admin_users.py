@@ -35,6 +35,22 @@ class AdminUsers(GraphBaseOperations):
             except self.graph.Role.DoesNotExist:
                 pass
 
+    def parse_group(self, v):
+        groups = self.parseAutocomplete(v, 'group', id_key='id')
+
+        if groups is None:
+            raise RestApiException(
+                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
+
+        group_id = groups.pop()
+        group = self.graph.Group.nodes.get_or_none(uuid=group_id)
+
+        if group is None:
+            raise RestApiException(
+                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
+
+        return group
+
     @decorate.catch_error()
     # @catch_graph_exceptions
     def get(self, id=None):
@@ -44,7 +60,7 @@ class AdminUsers(GraphBaseOperations):
             log.warning("This endpoint is implemented only for neo4j")
             return self.force_response(data)
 
-        self.initGraph()
+        self.graph = self.get_service_instance('neo4j')
         nodeset = self.graph.User.nodes
 
         for n in nodeset.all():
@@ -68,26 +84,15 @@ class AdminUsers(GraphBaseOperations):
             log.warning("This endpoint is implemented only for neo4j")
             return self.force_response('0')
 
-        self.initGraph()
+        self.graph = self.get_service_instance('neo4j')
 
         schema = self.get_endpoint_custom_definition()
         # INIT #
         properties = self.read_properties(schema, v)
 
-        groups = self.parseAutocomplete(v, 'group', id_key='id')
-
-        if groups is None:
-            raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
-
-        group_id = groups.pop()
-
-        group = self.graph.Group.nodes.get_or_none(uuid=group_id)
-        # group = self.getNode(self.graph.Group, group_id, field='uuid')
-
-        if group is None:
-            raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
+        group = None
+        if 'group' in v:
+            group = self.parse_group(v)
 
         # GRAPH #
         properties["authmethod"] = "credentials"
@@ -98,7 +103,10 @@ class AdminUsers(GraphBaseOperations):
         #     self.createUniqueIndex(
         #         properties["name"], properties["surname"])
         user = self.graph.User(**properties).save()
-        user.belongs_to.connect(group)
+
+        if group is not None:
+            user.belongs_to.connect(group)
+
         self.link_role(user, v)
 
         return self.force_response(user.uuid)
@@ -119,7 +127,7 @@ class AdminUsers(GraphBaseOperations):
             return self.empty_response()
 
         schema = self.get_endpoint_custom_definition()
-        self.initGraph()
+        self.graph = self.get_service_instance('neo4j')
 
         v = self.get_input()
 
@@ -136,13 +144,10 @@ class AdminUsers(GraphBaseOperations):
         self.update_properties(user, schema, v)
         user.name_surname = self.createUniqueIndex(user.name, user.surname)
         user.save()
-        groups = self.parseAutocomplete(v, 'group', id_key='id')
 
-        if groups is not None:
-            group_id = groups.pop()
+        if 'group' in v:
 
-            group = self.graph.Group.nodes.get_or_none(uuid=group_id)
-            # group = self.getNode(self.graph.Group, group_id, field='uuid')
+            group = self.parse_group(v)
 
             p = None
             for p in user.belongs_to.all():
@@ -172,7 +177,7 @@ class AdminUsers(GraphBaseOperations):
             log.warning("This endpoint is implemented only for neo4j")
             return self.empty_response()
 
-        self.initGraph()
+        self.graph = self.get_service_instance('neo4j')
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
         # user = self.getNode(self.graph.User, user_id, field='uuid')
@@ -194,7 +199,7 @@ class UserRole(GraphBaseOperations):
             log.warning("This endpoint is implemented only for neo4j")
             return self.force_response(data)
 
-        self.initGraph()
+        self.graph = self.get_service_instance('neo4j')
 
         cypher = "MATCH (r:Role)"
 
