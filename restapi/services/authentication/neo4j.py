@@ -171,6 +171,12 @@ class Authentication(BaseAuthentication):
         if user is None:
             return False
 
+        # coordinator is defined at vanilla level, by default does not exist
+        # if not defined, you cannot be a group admin
+        if not hasattr(user, 'coordinator'):
+            return False
+
+        # if you are coordinator of at least one group
         for g in user.coordinator.all():
             return True
 
