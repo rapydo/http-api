@@ -236,11 +236,11 @@ class TestApp(BaseTests):
         # data['name'] = "A new name"
         # data['password'] = self.randomString()
         # self._test_update(
-        #     user_def, 'custom_admin/users/' + user,
+        #     user_def, 'admin/users/' + user,
         #     headers, data, hcodes.HTTP_OK_NORESPONSE)
 
         # self._test_delete(
-        #     user_def, 'custom_admin/users/' + user,
+        #     user_def, 'admin/users/' + user,
         #     headers, hcodes.HTTP_OK_NORESPONSE)
 
         endpoint = AUTH_URI + '/logout'
