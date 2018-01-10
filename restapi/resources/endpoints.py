@@ -332,16 +332,7 @@ class Profile(EndpointResource):
             roles[role.name] = role.name
         data["roles"] = roles
         data["isAdmin"] = self.auth.verify_admin()
-
-        # FIXME: this only work with neo4j, extend to other db if required
-        # FIXME: we could move this in auth, to be db-dependent
-        try:
-
-            for g in current_user.coordinator.all():
-                data["isGroupAdmin"] = True
-        except BaseException as e:
-            log.critical(e)
-            data["isGroupAdmin"] = False
+        data["isGroupAdmin"] = self.auth.verify_group_admin()
 
         if hasattr(current_user, 'name'):
             data["name"] = current_user.name

@@ -165,6 +165,17 @@ class Authentication(BaseAuthentication):
 
         return True
 
+    def verify_group_admin(self):
+
+        user = self.get_user()
+        if user is None:
+            return False
+
+        for g in user.coordinator.all():
+            return True
+
+        return False
+
     def refresh_token(self, jti):
         now = datetime.now(pytz.utc)
         try:

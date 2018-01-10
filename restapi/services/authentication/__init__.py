@@ -410,6 +410,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """ Check if current user has administration role """
         return self.verify_roles([self.role_admin], warnings=False)
 
+    # FIXME: this only implemented in neo4j, extend to other db if required
+    def verify_group_admin(self):
+        return False
+
     @abc.abstractmethod
     def get_roles_from_user(self, userobj=None):
         """

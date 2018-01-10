@@ -51,6 +51,32 @@ class AdminUsers(GraphBaseOperations):
 
         return group
 
+    def check_permissions(self, user, node, is_admin, is_group_admin):
+
+        if node is None:
+            return False
+
+        # an ADMIN is always authorized
+        if is_admin:
+            return True
+
+        # You are neither an ADMIN nor a GROUP ADMIN
+        if not is_group_admin:
+            return False
+
+        # If you are not an ADMIN, you cannot modify yourself...
+        # use the profile instead!
+        if user == node:
+            return False
+
+        # FIXME: only implemented for neo4j
+        # You are a group admin... but the group mathes??
+        for g in user.coordinator.all():
+            if node.belongs_to.is_connected(g):
+                return True
+
+        return False
+
     @decorate.catch_error()
     # @catch_graph_exceptions
     def get(self, id=None):
@@ -61,9 +87,25 @@ class AdminUsers(GraphBaseOperations):
             return self.force_response(data)
 
         self.graph = self.get_service_instance('neo4j')
+
+        is_admin = self.auth.verify_admin()
+        is_group_admin = self.auth.verify_group_admin()
+        if not is_admin and not is_group_admin:
+            raise RestApiException(
+                "You are not authorized: missing privileges",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
+        current_user = self.get_current_user()
         nodeset = self.graph.User.nodes
 
         for n in nodeset.all():
+
+            is_authorized = self.check_permissions(
+                current_user, n, is_admin, is_group_admin
+            )
+            if not is_authorized:
+                continue
+
             user = self.getJsonResponse(n, max_relationship_depth=2)
             data.append(user)
 
@@ -85,6 +127,13 @@ class AdminUsers(GraphBaseOperations):
             return self.force_response('0')
 
         self.graph = self.get_service_instance('neo4j')
+
+        is_admin = self.auth.verify_admin()
+        is_group_admin = self.auth.verify_group_admin()
+        if not is_admin and not is_group_admin:
+            raise RestApiException(
+                "You are not authorized: missing privileges",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         schema = self.get_endpoint_custom_definition()
         # INIT #
@@ -129,12 +178,28 @@ class AdminUsers(GraphBaseOperations):
         schema = self.get_endpoint_custom_definition()
         self.graph = self.get_service_instance('neo4j')
 
+        is_admin = self.auth.verify_admin()
+        is_group_admin = self.auth.verify_group_admin()
+        if not is_admin and not is_group_admin:
+            raise RestApiException(
+                "You are not authorized: missing privileges",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
         v = self.get_input()
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
         # user = self.getNode(self.graph.User, user_id, field='uuid')
         if user is None:
-            raise RestApiException("User not found")
+            raise RestApiException(
+                "This user cannot be found or you are not authorized")
+
+        current_user = self.get_current_user()
+        is_authorized = self.check_permissions(
+            current_user, user, is_admin, is_group_admin
+        )
+        if not is_authorized:
+            raise RestApiException(
+                "This user cannot be found or you are not authorized")
 
         if "password" in v and v["password"] == "":
             del v["password"]
@@ -179,10 +244,26 @@ class AdminUsers(GraphBaseOperations):
 
         self.graph = self.get_service_instance('neo4j')
 
+        is_admin = self.auth.verify_admin()
+        is_group_admin = self.auth.verify_group_admin()
+        if not is_admin and not is_group_admin:
+            raise RestApiException(
+                "You are not authorized: missing privileges",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
         # user = self.getNode(self.graph.User, user_id, field='uuid')
         if user is None:
-            raise RestApiException('This user cannot be found')
+            raise RestApiException(
+                "This user cannot be found or you are not authorized")
+
+        current_user = self.get_current_user()
+        is_authorized = self.check_permissions(
+            current_user, user, is_admin, is_group_admin
+        )
+        if not is_authorized:
+            raise RestApiException(
+                "This user cannot be found or you are not authorized")
 
         user.delete()
 
