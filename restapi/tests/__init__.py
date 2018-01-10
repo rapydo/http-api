@@ -345,7 +345,8 @@ class BaseTests():
 
     def _test_endpoint(self, client, endpoint, headers=None,
                        get_status=None, post_status=None,
-                       put_status=None, del_status=None):
+                       put_status=None, del_status=None,
+                       post_data=None):
 
         endpoint = "%s/%s" % (API_URI, endpoint)
 
@@ -356,7 +357,7 @@ class BaseTests():
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
             if self.method_exists(post_status):
-                r = client.post(endpoint)
+                r = client.post(endpoint, data=post_data)
                 assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
             if self.method_exists(put_status):
@@ -374,7 +375,7 @@ class BaseTests():
             assert get_r.status_code == get_status
 
         if post_status is not None:
-            post_r = client.post(endpoint, headers=headers)
+            post_r = client.post(endpoint, headers=headers, data=post_data)
             assert post_r.status_code == post_status
 
         if put_status is not None:
