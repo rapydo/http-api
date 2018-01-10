@@ -5,8 +5,8 @@ common:
     authorized:
       - admin_root
 
-  # custom_parameters:
-  #   - AdminUsers
+  custom_parameters:
+    - AdminUsers
 
 user:
   summary: Modify a user
