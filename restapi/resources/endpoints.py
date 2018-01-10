@@ -223,7 +223,7 @@ class Login(EndpointResource):
         # FIXME: split response as above in access_token and token_type?
         # # The right response should be the following
         # {
-        #   "scope": "https://b2stage.cineca.it/api/.*",
+        #   "scope": "https://b2stage-test.cineca.it/api/.*",
         #   "access_token": "EEwJ6tF9x5WCIZDYzyZGaz6Khbw7raYRIBV_WxVvgmsG",
         #   "token_type": "Bearer",
         #   "user": "pippo",
