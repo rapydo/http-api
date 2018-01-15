@@ -145,17 +145,24 @@ class AdminUsers(GraphBaseOperations):
 
         # GRAPH #
         properties["authmethod"] = "credentials"
-        # if "password" in properties:
-        properties["password"] = \
-            BaseAuthentication.hash_password(properties["password"])
+        if "password" in properties:
+            properties["password"] = \
+                BaseAuthentication.hash_password(properties["password"])
         # properties["name_surname"] = \
         #     self.createUniqueIndex(
         #         properties["name"], properties["surname"])
         user = self.graph.User(**properties).save()
 
         if group is not None:
+            if not is_admin:
+                raise RestApiException(
+                    "Check if you are allowed to assign users to this group")
+
             user.belongs_to.connect(group)
 
+        if not is_admin:
+            raise RestApiException(
+                "Check if you are allowed to assign users to this role")
         self.link_role(user, v)
 
         return self.force_response(user.uuid)
@@ -214,6 +221,10 @@ class AdminUsers(GraphBaseOperations):
 
             group = self.parse_group(v)
 
+            if not is_admin:
+                raise RestApiException(
+                    "Check if you are allowed to assign users to this group")
+
             p = None
             for p in user.belongs_to.all():
                 if p == group:
@@ -223,6 +234,11 @@ class AdminUsers(GraphBaseOperations):
                 user.belongs_to.reconnect(p, group)
             else:
                 user.belongs_to.connect(group)
+
+        if not is_admin:
+            raise RestApiException(
+                "Check if you are allowed to assign users to this role")
+
         self.link_role(user, v)
 
         return self.empty_response()
@@ -268,34 +284,3 @@ class AdminUsers(GraphBaseOperations):
         user.delete()
 
         return self.empty_response()
-
-
-class UserRole(GraphBaseOperations):
-    @decorate.catch_error(exception=Exception, catch_generic=True)
-    # @catch_graph_exceptions
-    def get(self, query=None):
-
-        data = []
-        if not detector.check_availability('neo4j'):
-            log.warning("This endpoint is implemented only for neo4j")
-            return self.force_response(data)
-
-        self.graph = self.get_service_instance('neo4j')
-
-        cypher = "MATCH (r:Role)"
-
-        if query is not None:
-            cypher += " WHERE r.description <> 'automatic'"
-            cypher += " AND r.name =~ '(?i).*%s.*'" % query
-
-        cypher += " RETURN r ORDER BY r.name ASC"
-
-        if query is None:
-            cypher += " LIMIT 20"
-
-        result = self.graph.cypher(cypher)
-        for row in result:
-            r = self.graph.Role.inflate(row[0])
-            data.append({"name": r.name, "description": r.description})
-
-        return self.force_response(data)
