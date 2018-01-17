@@ -5,9 +5,7 @@ Tests for http api base (mostly authentication)
 """
 
 
-# from tests import RestTestsBase
-from restapi.tests import BaseTests
-from restapi.tests.utilities import API_URI, AUTH_URI
+from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
 
@@ -35,34 +33,72 @@ class TestApp(BaseTests):
 
         # Check success
         endpoint = API_URI + '/status'
+        alive_message = "Server is alive!"
+
         log.info("*** VERIFY if API is online")
         r = client.get(endpoint)
         assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = self.get_content(r)
+        assert output == alive_message
 
         # Check failure
         log.info("*** VERIFY if invalid endpoint gives Not Found")
         r = client.get(API_URI)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
-        # TODO: test that a call from a browser receives HTML back
-        # from restapi.rest.response import MIMETYPE_HTML
-        # r = client.get(endpoint, content_type=MIMETYPE_HTML)
-        # output = self.get_content(r)
-        # print("TEST", r, output)
-
         # Check HTML response to status if agent/request is text/html
+        from restapi.rest.response import MIMETYPE_HTML
+        headers = {
+            "Accept": MIMETYPE_HTML
+        }
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        output = r.data.decode('utf-8')
+        assert output != alive_message
+        assert alive_message in output
+        assert "<html" in output
+        assert "<body>" in output
 
     def test_02_GET_specifications(self, client):
-        """ Test that the flask server is running and reachable """
+        """ Test that the flask server expose swagger specs """
 
-        # Check success
-        endpoint = API_URI + '/specs'
-        log.info("*** VERIFY if API specifications are online")
-        r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        specs = self.get_specs(client)
+
+        assert "basePath" in specs
+        assert "consumes" in specs
+        assert "produces" in specs
+        assert "application/json" in specs["consumes"]
+        assert "application/json" in specs["produces"]
+        assert "definitions" in specs
+        assert "host" in specs
+        assert "info" in specs
+        assert "schemes" in specs
+        assert "swagger" in specs
+        assert "tags" in specs
+        assert "security" in specs
+        assert "Bearer" in specs["security"][0]
+        assert "securityDefinitions" in specs
+        assert "Bearer" in specs["securityDefinitions"]
+        assert "paths" in specs
+        assert "/auth/login" in specs["paths"]
+        assert "get" not in specs["paths"]["/auth/login"]
+        assert "post" in specs["paths"]["/auth/login"]
+        assert "put" not in specs["paths"]["/auth/login"]
+        assert "delete" not in specs["paths"]["/auth/login"]
 
     def test_03_GET_login(self, client):
         """ Check that you can login and receive back your token """
+
+        log.info("*** VERIFY CASE INSENSITIVE LOGIN")
+        BaseAuthentication.myinit()
+        USER = BaseAuthentication.default_user
+        PWD = BaseAuthentication.default_password
+        self.do_login(client, USER.upper(), PWD)
+
+        # Off course PWD cannot be upper :D
+        self.do_login(
+            client, USER, PWD.upper(),
+            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         log.info("*** VERIFY valid credentials")
         headers, _ = self.do_login(client, None, None)
@@ -71,7 +107,7 @@ class TestApp(BaseTests):
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
-        headers, _ = self.do_login(
+        self.do_login(
             client, 'ABC-Random-User-XYZ', 'ABC-Random-Pass-XYZ',
             status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
@@ -79,7 +115,7 @@ class TestApp(BaseTests):
         # when using a non-email-username to authenticate
         log.info("*** VERIFY with a non-email-username")
 
-        headers, _ = self.do_login(
+        self.do_login(
             client, 'notanemail', '[A-Za-z0-9]+',
             status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
@@ -118,14 +154,14 @@ class TestApp(BaseTests):
         endpoint = AUTH_URI + '/login'
 
         # CREATING 3 TOKENS
-        tokens = []
+        first_token = None
         num_tokens = 3
 
         for i in range(num_tokens):
             header, token = self.do_login(client, None, None)
             if i == 0:
                 self.save("tokens_header", header, read_only=True)
-            tokens.append(token)
+                first_token = token
 
         endpoint = AUTH_URI + '/tokens'
 
@@ -135,8 +171,11 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_OK_BASIC
         assert len(content) >= num_tokens
 
-        # save the second token to be used for further tests
-        self.save("token_id", str(content.pop(1)["id"]))
+        # save a token to be used for further tests
+        for c in content:
+            if c["token"] == first_token:
+                continue
+            self.save("token_id", c["id"])
 
         # TEST GET SINGLE TOKEN
         endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
@@ -171,3 +210,40 @@ class TestApp(BaseTests):
         # TEST TOKEN IS NOW INVALID
         r = client.get(endpoint, headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+    def test_08_admin_users(self, client):
+
+        headers, _ = self.do_login(client, None, None)
+        endpoint = "admin/users"
+        get_r, _, _, _ = self._test_endpoint(
+            client, endpoint, headers,
+            hcodes.HTTP_OK_BASIC,
+            hcodes.HTTP_BAD_REQUEST,
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED
+        )
+
+        self.checkResponse(get_r, [], [])
+
+        # users_def = self.get("def.users")
+        # user_def = self.get("def.user")
+
+        # user, user_pwd = self.create_user('tester_user1@none.it')
+
+        # user_headers, user_token = self.do_login(user, user_pwd)
+
+        # data = {}
+        # data['name'] = "A new name"
+        # data['password'] = self.randomString()
+        # self._test_update(
+        #     user_def, 'admin/users/' + user,
+        #     headers, data, hcodes.HTTP_OK_NORESPONSE)
+
+        # self._test_delete(
+        #     user_def, 'admin/users/' + user,
+        #     headers, hcodes.HTTP_OK_NORESPONSE)
+
+        endpoint = AUTH_URI + '/logout'
+
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE

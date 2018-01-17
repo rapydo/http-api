@@ -13,7 +13,6 @@ import sqlalchemy
 from utilities.meta import Meta
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
-from restapi.confs import PRODUCTION
 from utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)

@@ -33,6 +33,7 @@ This collection of utilities is meant to simplify the writing of endpoints tests
 
 
 
+# OBSOLETE DOC # 
 ## How to use the Test Utilities ##
 
 Your own test class should import and extend test utilities

@@ -49,6 +49,11 @@ class EndpointResource(Resource):
         self.load_authentication()
         self.init_parameters()
 
+        # Custom init
+        custom_method = getattr(self, 'custom_init', None)
+        if custom_method is not None:
+            custom_method()
+
     def myname(self):
         return self.__class__.__name__
 
@@ -202,16 +207,15 @@ class EndpointResource(Resource):
             limit = int(limit)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s" %
-                (PERPAGE_KEY, limit))
+                "%s is expected to be an int, not %s", PERPAGE_KEY, limit)
             limit = DEFAULT_PERPAGE
 
         try:
             current_page = int(current_page)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s" %
-                (CURRENTPAGE_KEY, current_page))
+                "%s is expected to be an int, not %s",
+                CURRENTPAGE_KEY, current_page)
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
@@ -372,7 +376,7 @@ class EndpointResource(Resource):
         return aware_utc_dt
 
     @staticmethod
-    def date_from_string(date, format="%d/%m/%Y"):
+    def date_from_string(date, fmt="%d/%m/%Y"):
 
         log.warning("DEPRECATED: use utilities/time.py instead")
 
@@ -380,7 +384,7 @@ class EndpointResource(Resource):
             return ""
         # datetime.now(pytz.utc)
         try:
-            return_date = datetime.strptime(date, format)
+            return_date = datetime.strptime(date, fmt)
         except BaseException:
             return_date = dateutil.parser.parse(date)
 
@@ -397,7 +401,7 @@ class EndpointResource(Resource):
             date = datetime.fromtimestamp(float(timestamp))
             return date.isoformat()
         except BaseException:
-            log.warning("Errors parsing %s" % timestamp)
+            log.warning("Errors parsing %s", timestamp)
             return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
@@ -469,13 +473,10 @@ class EndpointResource(Resource):
                         fn = getattr(obj, choice_function)
                         description = fn()
 
-                        # For back-compatibility if key and value matches
-                        # we only save the key
-                        if attribute != description:
-                            attribute = {
-                                "key": attribute,
-                                "description": description
-                            }
+                        attribute = {
+                            "key": attribute,
+                            "description": description
+                        }
                     attributes[key] = attribute
 
         return attributes
@@ -545,7 +546,7 @@ class EndpointResource(Resource):
                     field_name = '_relationships_to_follow'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models" % field_name)
+                    log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
 
             for relationship in relationships:

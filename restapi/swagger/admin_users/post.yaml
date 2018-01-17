@@ -2,11 +2,14 @@ common:
   custom:
     # publish: true
     authentication: true
-    authorized:
-      - admin_root
 
-  # custom_parameters:
-  #   - AdminUsers
+    # BEWARE: NOW IS VERIFIED INSIDE THE CODE
+    # authorized:
+    #   - admin_root
+
+
+  custom_parameters:
+    - AdminUsers
 
 users:
   summary: Create a new user

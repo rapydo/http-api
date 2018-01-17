@@ -45,22 +45,24 @@ class Detector(object):
     def get_bool_from_os(name):
 
         bool_var = os.environ.get(name, False)
+        if isinstance(bool_var, bool):
+            return bool_var
 
         # if not directly a bool, try an interpretation
-        if not isinstance(bool_var, bool):
+        # INTEGERS
+        try:
+            tmp = int(bool_var)
+            return bool(tmp)
+        except ValueError:
+            pass
 
-            # any non empty string with a least one char
-            # has to be considered True
-            if isinstance(bool_var, str) and len(bool_var) > 0:
-                bool_var = 1
+        # STRINGS
+        # any non empty string with a least one char
+        # has to be considered True
+        if isinstance(bool_var, str) and len(bool_var) > 0:
+            return True
 
-            # convert integers to boolean
-            try:
-                tmp = int(bool_var)
-                bool_var = bool(tmp)
-            except ValueError:
-                bool_var = False
-        return bool_var
+        return False
 
     @staticmethod
     # @lru_cache(maxsize=None)
@@ -107,6 +109,24 @@ class Detector(object):
         else:
             log.info("Authentication based on '%s' service"
                      % self.authentication_service)
+
+    def load_group(self, label):
+
+        variables = {}
+        for var, value in os.environ.items():
+            var = var.lower()
+            if var.startswith(label):
+                key = var[len(label):].strip('_')
+                value = value.strip('"').strip("'")
+                variables[key] = value
+        return variables
+
+    def output_service_variables(self, service_name):
+        service_class = self.services_classes.get(service_name, {})
+        try:
+            return service_class.variables
+        except BaseException:
+            return {}
 
     @staticmethod
     def load_variables(service, enable_var=None, prefix=None):
@@ -200,7 +220,7 @@ class Detector(object):
 
             # Save
             self.services_classes[name] = MyClass
-            log.debug("Got class definition for %s" % MyClass)
+            log.debug("Got class definition for %s", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
@@ -221,10 +241,14 @@ class Detector(object):
                 continue
 
             if name == self.authentication_name and auth_backend is None:
-                log.exit(
-                    "Auth service '%s' seems unreachable"
-                    % self.authentication_service
-                )
+                if self.authentication_service is None:
+                    log.warning("No authentication")
+                    continue
+                else:
+                    log.exit(
+                        "Auth service '%s' seems unreachable"
+                        % self.authentication_service
+                    )
 
             args = {}
             if name == self.task_service_name:
@@ -241,7 +265,7 @@ class Detector(object):
                 self.extensions_instances[name] = ext_instance
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s" % name)
+            log.debug("Initializing %s", name)
             service_instance = ext_instance.custom_init(
                 pinit=project_init,
                 pdestroy=project_clean,
@@ -328,14 +352,18 @@ class Detector(object):
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
-            if Initializer is not None:
-                Initializer(instances)
-                log.info("Vanilla project has been initialized")
-        except BaseException:
-            Initializer = None
+            if Initializer is None:
+                log.debug("No custom init available")
+            else:
+                try:
+                    Initializer(instances)
+                except BaseException as e:
+                    log.error("Errors during custom initialization: %s", e)
+                else:
+                    log.info("Vanilla project has been initialized")
 
-        if Initializer is None:
-            log.debug("Note: no custom init available for mixed services")
+        except BaseException:
+            log.debug("No custom init available")
 
 
 detector = Detector()

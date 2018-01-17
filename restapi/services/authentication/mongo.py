@@ -76,7 +76,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s" % e)
+                log.warning("Roles check: invalid current user.\n%s", e)
                 return roles
 
         for role in userobj.roles:
@@ -229,7 +229,7 @@ class Authentication(BaseAuthentication):
             user = self._user
         user.uuid = getUUID()
         user.save()
-        log.warning("User uuid changed to: %s" % user.uuid)
+        log.warning("User uuid changed to: %s", user.uuid)
         return True
 
     def invalidate_token(self, token, user=None):

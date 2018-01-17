@@ -92,22 +92,80 @@ class SwaggerSpecifications(EndpointResource):
 class Login(EndpointResource):
     """ Let a user login with the developer chosen method """
 
+    def verify_information(
+            self, user, security, totp_auth, totp_code, now=None):
+
+        message_body = {}
+        message_body['actions'] = []
+        error_message = None
+
+        if totp_auth and totp_code is None:
+            message_body['actions'].append(
+                self.auth.SECOND_FACTOR_AUTHENTICATION)
+            error_message = "You do not provided a valid second factor"
+
+        epoch = datetime.fromtimestamp(0, pytz.utc)
+        last_pwd_change = user.last_password_change
+        if last_pwd_change is None or last_pwd_change == 0:
+            last_pwd_change = epoch
+
+        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
+
+            message_body['actions'].append('FIRST LOGIN')
+            error_message = "Please change your temporary password"
+
+            if totp_auth:
+
+                qr_code = security.get_qrcode(user)
+
+                message_body["qr_code"] = qr_code
+
+        elif self.auth.MAX_PASSWORD_VALIDITY > 0:
+
+            if last_pwd_change == epoch:
+                expired = True
+            else:
+                valid_until = \
+                    last_pwd_change + timedelta(
+                        days=self.auth.MAX_PASSWORD_VALIDITY)
+
+                if now is None:
+                    now = datetime.now(pytz.utc)
+                expired = (valid_until < now)
+
+            if expired:
+
+                message_body['actions'].append('PASSWORD EXPIRED')
+                error_message = "Your password is expired, please change it"
+
+        if error_message is None:
+            return None
+
+        return self.force_response(
+            message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN)
+
     @decorate.catch_error()
     def post(self):
 
         # ########## INIT ##########
-        security = HandleSecurity(self.auth)
-
-        now = datetime.now(pytz.utc)
-
         jargs = self.get_input()
         username = jargs.get('username')
         if username is None:
             username = jargs.get('email')
+        username = username.lower()
 
         password = jargs.get('password')
         if password is None:
             password = jargs.get('pwd')
+
+        # ##################################################
+        # Now credentials are checked at every request
+        if username is None or password is None:
+            msg = "Missing username or password"
+            raise RestApiException(
+                msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+
+        now = datetime.now(pytz.utc)
 
         new_password = jargs.get('new_password')
         password_confirm = jargs.get('password_confirm')
@@ -122,13 +180,7 @@ class Login(EndpointResource):
         else:
             totp_code = None
 
-        # ##################################################
-        # Now credentials are checked at every request
-        if username is None or password is None:
-            msg = "Missing username or password"
-            raise RestApiException(
-                msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
-
+        security = HandleSecurity(self.auth)
         # ##################################################
         # Authentication control
         security.verify_blocked_username(username)
@@ -153,51 +205,10 @@ class Login(EndpointResource):
 
         # ##################################################
         # Something is missing in the authentication, asking action to user
-        message_body = {}
-        message_body['actions'] = []
-        error_message = None
-
-        if totp_authentication and totp_code is None:
-            message_body['actions'].append(
-                self.auth.SECOND_FACTOR_AUTHENTICATION)
-            error_message = "You do not provided a valid second factor"
-
-        epoch = datetime.fromtimestamp(0, pytz.utc)
-        last_pwd_change = user.last_password_change
-        if last_pwd_change is None or last_pwd_change == 0:
-            last_pwd_change = epoch
-
-        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
-
-            message_body['actions'].append('FIRST LOGIN')
-            error_message = "Please change your temporary password"
-
-            if totp_authentication:
-
-                qr_code = security.get_qrcode(user)
-
-                message_body["qr_code"] = qr_code
-
-        elif self.auth.MAX_PASSWORD_VALIDITY > 0:
-
-            if last_pwd_change == epoch:
-                expired = True
-            else:
-                valid_until = \
-                    last_pwd_change + timedelta(
-                        days=self.auth.MAX_PASSWORD_VALIDITY)
-                expired = (valid_until < now)
-
-            if expired:
-
-                message_body['actions'].append('PASSWORD EXPIRED')
-                error_message = "Your password is expired, please change it"
-
-        if error_message is not None:
-            return self.force_response(
-                message_body,
-                errors=error_message,
-                code=hcodes.HTTP_BAD_FORBIDDEN)
+        ret = self.verify_information(
+            user, security, totp_authentication, totp_code, now)
+        if ret is not None:
+            return ret
 
         # ##################################################
         # Everything is ok, let's save authentication information
@@ -212,7 +223,7 @@ class Login(EndpointResource):
         # FIXME: split response as above in access_token and token_type?
         # # The right response should be the following
         # {
-        #   "scope": "https://b2stage.cineca.it/api/.*",
+        #   "scope": "https://b2stage-test.cineca.it/api/.*",
         #   "access_token": "EEwJ6tF9x5WCIZDYzyZGaz6Khbw7raYRIBV_WxVvgmsG",
         #   "token_type": "Bearer",
         #   "user": "pippo",
@@ -241,6 +252,7 @@ class Tokens(EndpointResource):
         if iamadmin:
             username = self.get_input(single_parameter='username')
             if username is not None:
+                username = username.lower()
                 return self.auth.get_user_object(username=username)
 
         return self.get_current_user()
@@ -277,37 +289,28 @@ class Tokens(EndpointResource):
             return self.send_errors(
                 message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST)
 
-        tokens = self.auth.get_tokens(user=user)
-        invalidated = False
-
-        for token in tokens:
-            # all or specific
-            if token_id is None or token["id"] == token_id:
-                done = self.auth.invalidate_token(
-                    token=token["token"], user=user)
-                if not done:
-                    return self.send_errors(message="Failed '%s'" % token)
-                else:
-                    log.debug("Invalidated %s", token['id'])
-                    invalidated = True
-
-        # Check
-
-        # ALL
         if token_id is None:
             # NOTE: this is allowed only in removing tokens in unittests
             if not current_app.config['TESTING']:
-                raise KeyError("Please specify a valid token")
+                raise KeyError("TESTING IS FALSE! Specify a valid token")
             self.auth.invalidate_all_tokens(user=user)
-        # SPECIFIC
-        else:
-            if not invalidated:
-                message = "Token not found: " + \
-                    "not emitted for your account or does not exist"
-                return self.send_errors(
-                    message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            return self.empty_response()
 
-        return self.empty_response()
+        tokens = self.auth.get_tokens(user=user)
+
+        for token in tokens:
+            if token["id"] != token_id:
+                continue
+            if not self.auth.invalidate_token(token=token["token"], user=user):
+                return self.send_errors(
+                    message="Failed token invalidation: '%s'" % token,
+                    code=hcodes.HTTP_BAD_REQUEST)
+            log.debug("Token invalidated: %s", token_id)
+            return self.empty_response()
+
+        message = "Token not emitted for your account or does not exist"
+        return self.send_errors(
+            message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
 
 class Profile(EndpointResource):
@@ -329,6 +332,7 @@ class Profile(EndpointResource):
             roles[role.name] = role.name
         data["roles"] = roles
         data["isAdmin"] = self.auth.verify_admin()
+        data["isGroupAdmin"] = self.auth.verify_group_admin()
 
         if hasattr(current_user, 'name'):
             data["name"] = current_user.name

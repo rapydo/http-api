@@ -5,7 +5,7 @@
 # NOTE: order matters
 # ####################################
 
-  # sqlalchemy
+  # sqlalchemy relational databases
 - name: sqlalchemy
   load_models: 1
   prefix: alchemy
@@ -23,7 +23,7 @@
   class: NeoModel
   injector: NeoInjector
 
-  # celery
+  # celery tasks
 - name: celery
   load_models: 0
   prefix: celery
@@ -32,16 +32,23 @@
   class: CeleryExt
   injector: CeleryInjector
 
-  # mongodb
+  # mongo database
 - name: mongo
   load_models: 1
   prefix: mongo
-  # library: python-irodsclient
   extension: flask_mongo
   class: MongoExt
   injector: MongoInjector
 
-  # irods commands
+  # rabbitmq message queue
+- name: rabbit
+  load_models: 0
+  prefix: rabbitmq
+  extension: flask_rabbit
+  class: RabbitExt
+  injector: RabbitInjector
+
+  # irods file system commands
 - name: irods
   load_models: 0
   prefix: irods
@@ -52,12 +59,11 @@
 
 ##############################
 # # OTHERS?
-# "mongo",
 # "elastic",
 # "redis",
 
 # ##############################
-# # THIS HAS TO BE THE LAST ONE
+# NOTE: THIS HAS TO BE THE LAST ONE
 # ##############################
 
   # authentication

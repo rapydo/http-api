@@ -2,8 +2,10 @@ common:
   custom:
     # publish: true
     authentication: true
-    authorized:
-      - admin_root
+
+    # BEWARE: NOW IS VERIFIED INSIDE THE CODE
+    # authorized:
+    #   - admin_root
 
 users:
   summary: List of users
@@ -14,9 +16,6 @@ users:
 
 user:
   summary: Obtain information on a single user
-  custom:
-    # publish: true
-    authentication: true
   responses:
     '200':
       description: User information successfully retrieved

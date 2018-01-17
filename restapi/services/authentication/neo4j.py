@@ -36,9 +36,9 @@ class Authentication(BaseAuthentication):
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
         except DeflateError:
-            log.warning("Invalid username '%s'" % username)
+            log.warning("Invalid username '%s'", username)
         except self.db.User.DoesNotExist:
-            log.warning("Could not find user for '%s'" % username)
+            log.warning("Could not find user for '%s'", username)
         return user
 
     def get_roles_from_user(self, userobj=None):
@@ -48,7 +48,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s" % e)
+                log.warning("Roles check: invalid current user.\n%s", e)
                 return roles
 
         for role in userobj.roles.all():
@@ -90,7 +90,7 @@ class Authentication(BaseAuthentication):
             user.roles.disconnect(p)
 
         for role in roles:
-            log.debug("Adding role %s" % role)
+            log.debug("Adding role %s", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
             except self.db.Role.DoesNotExist:
@@ -165,6 +165,23 @@ class Authentication(BaseAuthentication):
 
         return True
 
+    def verify_group_admin(self):
+
+        user = self.get_user()
+        if user is None:
+            return False
+
+        # coordinator is defined at vanilla level, by default does not exist
+        # if not defined, you cannot be a group admin
+        if not hasattr(user, 'coordinator'):
+            return False
+
+        # if you are coordinator of at least one group
+        for g in user.coordinator.all():
+            return True
+
+        return False
+
     def refresh_token(self, jti):
         now = datetime.now(pytz.utc)
         try:
@@ -184,7 +201,7 @@ class Authentication(BaseAuthentication):
 
             return True
         except self.db.Token.DoesNotExist:
-            log.warning("Token %s not found" % jti)
+            log.warning("Token %s not found", jti)
             return False
 
     def get_tokens(self, user=None, token_jti=None):
@@ -226,13 +243,13 @@ class Authentication(BaseAuthentication):
         return True
 
     def invalidate_token(self, token, user=None):
-        if user is None:
-            user = self.get_user()
+        # if user is None:
+        #     user = self.get_user()
         try:
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()
         except self.db.Token.DoesNotExist:
-            log.warning("Unable to invalidate, token not found: %s" % token)
+            log.warning("Unable to invalidate, token not found: %s", token)
             return False
         return True
 

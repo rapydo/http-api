@@ -38,6 +38,9 @@ class HTTPTokenAuth(object):
         self._scheme = scheme or HTTPAUTH_DEFAULT_SCHEME
         self._realm = realm or HTTPAUTH_DEFAULT_REALM
 
+    def get_scheme(self):
+        return self._scheme
+
     def authenticate_header(self):
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
@@ -82,7 +85,6 @@ class HTTPTokenAuth(object):
             auth_type, token = self.get_auth_from_header()
             # Base header for errors
             headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
-            bad_code = hcodes.HTTP_BAD_UNAUTHORIZED
             # Internal API 'self' reference
             decorated_self = Meta.get_self_reference_from_args(*args)
 
@@ -94,7 +96,8 @@ class HTTPTokenAuth(object):
                 #
                 return decorated_self.send_errors(
                     # label="No authentication schema",
-                    message=msg, headers=headers, code=bad_code)
+                    message=msg, headers=headers,
+                    code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
             # Handling OPTIONS forwarded to our application:
             # ignore headers and let go, avoid unwanted interactions with CORS
@@ -109,7 +112,7 @@ class HTTPTokenAuth(object):
                     # To use the same standards
                     return decorated_self.send_errors(
                         message="Invalid token received '%s'" % token,
-                        headers=headers, code=bad_code)
+                        headers=headers, code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
             # Check roles
             if len(roles) > 0:
@@ -117,7 +120,7 @@ class HTTPTokenAuth(object):
                 if not self.authenticate_roles(roles_fn, roles):
                     return decorated_self.send_errors(
                         message="You are not authorized: missing privileges",
-                        code=bad_code)
+                        code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
             return f(*args, **kwargs)
 
@@ -126,5 +129,4 @@ class HTTPTokenAuth(object):
 
 authentication = HTTPTokenAuth()
 
-log.info(
-    "Initizialized a valid authentication class: [%s]", authentication._scheme)
+log.info("%s authentication class initizialized", authentication.get_scheme())

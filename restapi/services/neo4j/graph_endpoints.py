@@ -15,6 +15,9 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 class GraphBaseOperations(EndpointResource):
 
     def initGraph(self):
+        log.warning(
+            "This method is deprecated, use get_service_instance and " +
+            "get_current_user instead")
         self.graph = self.get_service_instance('neo4j')
         self._current_user = self.get_current_user()
 
@@ -64,9 +67,8 @@ def graph_transactions(func):
             log.verbose("Neomodel transaction ROLLBACK")
             try:
                 transaction.rollback()
-            except Exception as rollback_exp:
-                log.warning(
-                    "Exception raised during rollback: %s" % rollback_exp)
+            except Exception as sub_ex:
+                log.warning("Exception raised during rollback: %s", sub_ex)
             raise e
 
     return wrapper

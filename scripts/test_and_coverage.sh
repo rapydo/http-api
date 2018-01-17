@@ -26,7 +26,7 @@ fi
 echo "Current project: $PROJECT"
 echo "Current version: $CURRENT_VERSION"
 
-CORE_DIR="${WORK_DIR}/core"
+CORE_DIR="${WORK_DIR}/rapydo_tests"
 COV_DIR="${WORK_DIR}/coverage_files"
 
 echo "WORK_DIR = ${WORK_DIR}"
@@ -40,7 +40,7 @@ aws configure set aws_secret_access_key $S3_PWD
 mkdir -p $COV_DIR
 
 if [ ! -d $CORE_DIR ]; then
-    git clone https://github.com/rapydo/core.git $CORE_DIR
+    git clone https://github.com/rapydo/tests.git $CORE_DIR
 fi
 cd $CORE_DIR
 mkdir -p data
@@ -65,11 +65,11 @@ fi
 
 if [ "$PROJECT" != "COVERAGE" ]; then
 
-	# CURRENT DIR IS $WORK_DIR/core
+	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --project ${PROJECT} init --skip-bower 
-	rapydo --project ${PROJECT} start
+	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40
 	docker ps -a
@@ -85,10 +85,10 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker logs ${PROJECT}_backend_1
 
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
 	
 	# Test API and calculate coverage
-	rapydo --project ${PROJECT} shell backend --command 'restapi tests --core'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
 
 	if [ "$PROJECT" = "celerytest" ]; then
 		echo "\n\nLogs from Celery:\n\n"
@@ -103,13 +103,13 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
-	# CURRENT DIR IS $WORK_DIR/core
+	# CURRENT DIR IS $CORE_DIR
 
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --project ${PROJECT} init --skip-bower 
-	rapydo --project ${PROJECT} --services backend start
+	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 	# Build the backend image and execute coveralls
 	# rapydo --services backend --project ${PROJECT} build
@@ -126,9 +126,10 @@ else
 	cp $COV_DIR/.coverage $WORK_DIR/
 
 	cd $WORK_DIR
-	docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
+	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
+	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
 
 fi
 
 cd $CORE_DIR
-rapydo --project template clean
+rapydo --development --project template clean
