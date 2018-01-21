@@ -377,7 +377,7 @@ class IrodsPythonClient():
                 break
             target.write(chunk)
 
-    def read_in_streaming(self, absolute_path):
+    def read_in_streaming(self, absolute_path, headers=None):
         """
         Reads obj from iRODS without saving a local copy
         """
@@ -388,9 +388,13 @@ class IrodsPythonClient():
             obj = self.prc.data_objects.get(absolute_path)
 
             handle = obj.open('r')
+            if headers is None:
+                headers = {}
             return Response(
                 stream_with_context(
-                    self.read_in_chunks(handle, self.chunk_size)))
+                    self.read_in_chunks(handle, self.chunk_size)),
+                headers=headers,
+            )
 
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot read file: not found")
