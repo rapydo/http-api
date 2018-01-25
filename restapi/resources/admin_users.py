@@ -8,6 +8,7 @@ from restapi.exceptions import RestApiException
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
+from utilities.globals import mem
 
 from utilities.logs import get_logger
 log = get_logger(__name__)
@@ -284,3 +285,38 @@ class AdminUsers(GraphBaseOperations):
         user.delete()
 
         return self.empty_response()
+
+
+class UserRole(GraphBaseOperations):
+    @decorate.catch_error(exception=Exception, catch_generic=True)
+    # @catch_graph_exceptions
+    def get(self, query=None):
+
+        self.graph = self.get_service_instance('neo4j')
+
+        data = []
+
+        cypher = "MATCH (r:Role)"
+        if not self.auth.verify_admin():
+            allowed_roles = mem.customizer._configurations \
+                .get('variables', {}) \
+                .get('backend', {}) \
+                .get('allowed_roles', [])
+            # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
+            cypher += " WHERE r.name in %s" % allowed_roles
+        # Admin only
+        elif query is not None:
+                cypher += " WHERE r.description <> 'automatic'"
+                cypher += " AND r.name =~ '(?i).*%s.*'" % query
+
+        cypher += " RETURN r ORDER BY r.name ASC"
+
+        if query is None:
+            cypher += " LIMIT 20"
+
+        result = self.graph.cypher(cypher)
+        for row in result:
+            r = self.graph.Role.inflate(row[0])
+            data.append({"name": r.name, "description": r.description})
+
+        return self.force_response(data)
