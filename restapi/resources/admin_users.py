@@ -3,8 +3,8 @@
 from restapi import decorators as decorate
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
-# from restapi.services.neo4j.graph_endpoints import graph_transactions
-# from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
+from restapi.services.neo4j.graph_endpoints import graph_transactions
+from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from utilities import htmlcodes as hcodes
@@ -18,10 +18,12 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 class AdminUsers(GraphBaseOperations):
 
-    def link_role(self, user, properties):
-        ids = self.parseAutocomplete(
+    def parse_roles(self, properties):
+        return self.parseAutocomplete(
             properties, 'roles', id_key='name', split_char=',')
-        # log.critical(ids)
+
+    def link_role(self, user, properties):
+        ids = self.parse_roles(properties)
 
         if ids is None:
             return
@@ -79,7 +81,7 @@ class AdminUsers(GraphBaseOperations):
         return False
 
     @decorate.catch_error()
-    # @catch_graph_exceptions
+    @catch_graph_exceptions
     def get(self, id=None):
 
         data = []
@@ -113,8 +115,8 @@ class AdminUsers(GraphBaseOperations):
         return self.force_response(data)
 
     @decorate.catch_error()
-    # @catch_graph_exceptions
-    # @graph_transactions
+    @catch_graph_exceptions
+    @graph_transactions
     def post(self):
 
         v = self.get_input()
@@ -156,21 +158,32 @@ class AdminUsers(GraphBaseOperations):
 
         if group is not None:
             if not is_admin:
-                raise RestApiException(
-                    "Check if you are allowed to assign users to this group")
+                current_user = self.get_current_user()
+                if not group.coordinator.is_connected(current_user):
+                    raise RestApiException(
+                        "You are allowed to assign users to this group")
 
             user.belongs_to.connect(group)
 
         if not is_admin:
-            raise RestApiException(
-                "Check if you are allowed to assign users to this role")
+            allowed_roles = mem.customizer._configurations \
+                .get('variables', {}) \
+                .get('backend', {}) \
+                .get('allowed_roles', [])
+
+            roles = self.parse_roles(v)
+
+            for r in roles:
+                if r not in allowed_roles:
+                    raise RestApiException(
+                        "You are allowed to assign users to this role")
         self.link_role(user, v)
 
         return self.force_response(user.uuid)
 
     @decorate.catch_error()
-    # @catch_graph_exceptions
-    # @graph_transactions
+    @catch_graph_exceptions
+    @graph_transactions
     def put(self, user_id=None):
 
         if user_id is None:
@@ -223,8 +236,9 @@ class AdminUsers(GraphBaseOperations):
             group = self.parse_group(v)
 
             if not is_admin:
-                raise RestApiException(
-                    "Check if you are allowed to assign users to this group")
+                if not group.coordinator.is_connected(current_user):
+                    raise RestApiException(
+                        "You are allowed to assign users to this group")
 
             p = None
             for p in user.belongs_to.all():
@@ -237,16 +251,25 @@ class AdminUsers(GraphBaseOperations):
                 user.belongs_to.connect(group)
 
         if not is_admin:
-            raise RestApiException(
-                "Check if you are allowed to assign users to this role")
+            allowed_roles = mem.customizer._configurations \
+                .get('variables', {}) \
+                .get('backend', {}) \
+                .get('allowed_roles', [])
+
+            roles = self.parse_roles(v)
+
+            for r in roles:
+                if r not in allowed_roles:
+                    raise RestApiException(
+                        "You are allowed to assign users to this role")
 
         self.link_role(user, v)
 
         return self.empty_response()
 
     @decorate.catch_error()
-    # @catch_graph_exceptions
-    # @graph_transactions
+    @catch_graph_exceptions
+    @graph_transactions
     def delete(self, user_id=None):
 
         if user_id is None:
@@ -289,7 +312,7 @@ class AdminUsers(GraphBaseOperations):
 
 class UserRole(GraphBaseOperations):
     @decorate.catch_error(exception=Exception, catch_generic=True)
-    # @catch_graph_exceptions
+    @catch_graph_exceptions
     def get(self, query=None):
 
         self.graph = self.get_service_instance('neo4j')
