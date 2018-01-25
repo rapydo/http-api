@@ -8,8 +8,6 @@ all:
   responses:
     '200':
       description: List of roles successfully retrieved
-    '401':
-      description: This endpoint requires a valid authorization token 
 
 query:
   summary: List of existing roles matching a substring query
@@ -20,5 +18,3 @@ query:
   responses:
     '200':
       description: Matching roles successfully retrieved
-    '401':
-      description: This endpoint requires a valid authorization token 
