@@ -36,8 +36,7 @@ setup(
     ''' % (main_package, app),
     install_requires=[
         # Rapydo framework
-        # "rapydo-utils==%s" % current_version,
-        "rapydo-utils",
+        "rapydo-utils==%s" % current_version,
         # various utilities
         "attrs",
         "pyOpenSSL",
@@ -56,7 +55,7 @@ setup(
         "psycopg2",
         "pymodm",
         # FS
-        "python-irodsclient==0.6.0",
+        "python-irodsclient",
         # "python-irodsclient==0.7.0a0",
         "gssapi==1.2.0",
         # Swagger
