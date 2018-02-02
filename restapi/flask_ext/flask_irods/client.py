@@ -288,8 +288,13 @@ class IrodsPythonClient():
                 self.prc.data_objects.unlink(path, force=force)
                 log.debug("Removed irods object: %s", path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
-            raise IrodsException(
-                "Cannot delete an non empty directory without recursive flag")
+
+            if recursive:
+                raise IrodsException(
+                    "Error deleting non empty directory")
+            else:
+                raise IrodsException(
+                    "Cannot delete non empty directory without recursive flag")
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
