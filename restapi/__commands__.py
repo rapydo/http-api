@@ -210,8 +210,8 @@ def clean():
 
 
 @cli.command()
-def test_clean_do_not_use_me():
-    """Destroy current services data"""
+def forced_clean():
+    """DANGEROUS: Destroy current data without asking yes/no """
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 
 
