@@ -1,0 +1,9 @@
+file: admin_users
+class: UserRole 
+schema:
+  expose: true
+mapping:
+  all: "/role"
+  query: "/role/<query>"
+labels:
+  - miscellaneous 
