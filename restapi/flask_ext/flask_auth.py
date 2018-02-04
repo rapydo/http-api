@@ -81,8 +81,8 @@ class Authenticator(BaseExtension):
 
         # Get the instance from the parent
         obj = super().custom_init()
-        # Inject the backend as the object 'db' inside the instance
-        # IMPORTANT: this is the 'hat trick' that makes things possible
+        # NOTE: Inject the backend as the object 'db' inside the instance
+        # IMPORTANT!!! this is the 'hat trick' that makes things possible
         obj.db = abackend
 
         if pinit:
