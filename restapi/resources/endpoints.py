@@ -332,8 +332,7 @@ class Profile(EndpointResource):
             roles[role.name] = role.name
         data["roles"] = roles
         data["isAdmin"] = self.auth.verify_admin()
-        # FIXME: temporary disabled - re-enable me on next version
-        # data["isGroupAdmin"] = self.auth.verify_group_admin()
+        data["isGroupAdmin"] = self.auth.verify_group_admin()
 
         if hasattr(current_user, 'name'):
             data["name"] = current_user.name
