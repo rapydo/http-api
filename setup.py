@@ -36,8 +36,7 @@ setup(
     ''' % (main_package, app),
     install_requires=[
         # Rapydo framework
-        # "rapydo-utils==%s" % current_version,
-        "rapydo-utils",
+        "rapydo-utils==%s" % current_version,
         # various utilities
         "attrs",
         "pyOpenSSL",
