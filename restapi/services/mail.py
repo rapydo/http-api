@@ -7,6 +7,13 @@ from utilities.logs import get_logger
 log = get_logger(__name__)
 
 
+def send_mail_is_active():
+    host = os.environ.get("SMTP_HOST")
+    port = os.environ.get("SMTP_PORT")
+
+    return host is not None and port is not None
+
+
 def send_mail(body, subject, to_address=None, from_address=None):
 
     try:
@@ -14,6 +21,9 @@ def send_mail(body, subject, to_address=None, from_address=None):
         port = os.environ.get("SMTP_PORT")
         username = os.environ.get("SMTP_USERNAME")
         password = os.environ.get("SMTP_PASSWORD")
+
+        if from_address is None:
+            from_address = os.environ.get("SMTP_NOREPLY")
 
         if from_address is None:
             from_address = os.environ.get("SMTP_ADMIN")
