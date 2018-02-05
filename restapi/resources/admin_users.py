@@ -7,6 +7,7 @@ from restapi.services.neo4j.graph_endpoints import graph_transactions
 from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.services.mail import send_mail, send_mail_is_active
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 
@@ -80,6 +81,22 @@ class AdminUsers(GraphBaseOperations):
 
         return False
 
+    def send_notification(self, user, unhashed_password, is_update=False):
+
+        title = mem.customizer._configurations \
+            .get('project', {}) \
+            .get('title', "Unkown title")
+
+        subject = "%s: " % title
+        if is_update:
+            subject += "password changed"
+        else:
+            subject += "new credentials"
+
+        body = "Your password: %s" % unhashed_password
+
+        send_mail(body, subject, user.email)
+
     @decorate.catch_error()
     @catch_graph_exceptions
     def get(self, id=None):
@@ -139,6 +156,47 @@ class AdminUsers(GraphBaseOperations):
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         schema = self.get_endpoint_custom_definition()
+
+        if 'get_schema' in v:
+
+            new_schema = schema[:]
+
+            if send_mail_is_active():
+                new_schema.append(
+                    {
+                        "name": "email_notification",
+                        "description": "Notify password by email",
+                        "type": "boolean",
+                        "default": False,
+                        "custom": {
+                            "htmltype": "checkbox",
+                            "label": "Notify password by email"
+                        }
+                    }
+                )
+            if is_admin:
+                return self.force_response(new_schema)
+
+            # institutes = self.graph.Institute.nodes
+            # users = self.graph.User.nodes
+            current_user = self.get_current_user()
+            for idx, val in enumerate(new_schema):
+                if val["name"] == "group":
+                    new_schema[idx]["default"] = None
+                    new_schema[idx]["custom"] = {
+                        "htmltype": "select",
+                        "label": "Group"
+                    }
+                    new_schema[idx]["enum"] = []
+
+                    for g in current_user.coordinator.all():
+                        new_schema[idx]["enum"].append(
+                            {g.uuid: g.shortname}
+                        )
+                        if new_schema[idx]["default"] is None:
+                            new_schema[idx]["default"] = g.uuid
+
+            return self.force_response(new_schema)
         # INIT #
         properties = self.read_properties(schema, v)
 
@@ -147,10 +205,15 @@ class AdminUsers(GraphBaseOperations):
             group = self.parse_group(v)
 
         # GRAPH #
+        unhashed_password = None
         properties["authmethod"] = "credentials"
+        if "password" in properties and properties["password"] == "":
+            del properties["password"]
+
         if "password" in properties:
-            properties["password"] = \
-                BaseAuthentication.hash_password(properties["password"])
+            unhashed_password = properties["password"]
+            properties["password"] = BaseAuthentication.hash_password(
+                unhashed_password)
         # properties["name_surname"] = \
         #     self.createUniqueIndex(
         #         properties["name"], properties["surname"])
@@ -175,9 +238,15 @@ class AdminUsers(GraphBaseOperations):
 
             for r in roles:
                 if r not in allowed_roles:
+                    if r.strip() == "":
+                        continue
                     raise RestApiException(
                         "You are not allowed to assign users to this role")
         self.link_role(user, v)
+
+        email_notification = v.get('email_notification', False)
+        if email_notification and unhashed_password is not None:
+            self.send_notification(user, unhashed_password, is_update=False)
 
         return self.force_response(user.uuid)
 
@@ -222,10 +291,12 @@ class AdminUsers(GraphBaseOperations):
             raise RestApiException(
                 "This user cannot be found or you are not authorized")
 
+        unhashed_password = None
         if "password" in v and v["password"] == "":
             del v["password"]
         else:
-            v["password"] = BaseAuthentication.hash_password(v["password"])
+            unhashed_password = v["password"]
+            v["password"] = BaseAuthentication.hash_password(unhashed_password)
 
         self.update_properties(user, schema, v)
         user.name_surname = self.createUniqueIndex(user.name, user.surname)
@@ -259,11 +330,17 @@ class AdminUsers(GraphBaseOperations):
             roles = self.parse_roles(v)
 
             for r in roles:
+                if r.strip() == "":
+                    continue
                 if r not in allowed_roles:
                     raise RestApiException(
                         "You are not allowed to assign users to this role")
 
         self.link_role(user, v)
+
+        email_notification = v.get('email_notification', False)
+        if email_notification and unhashed_password is not None:
+            self.send_notification(user, unhashed_password, is_update=True)
 
         return self.empty_response()
 
