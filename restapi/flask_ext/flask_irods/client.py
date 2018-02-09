@@ -526,6 +526,25 @@ class IrodsPythonClient():
 
         return data
 
+    def enable_inheritance(self, path, zone=None):
+
+        if zone is None:
+            zone = self.get_current_zone()
+
+        key = 'inherit'
+        ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
+        try:
+            self.prc.permissions.set(ACL)  # , recursive=False)
+            log.debug("Enabled %s to %s", key, path)
+        except iexceptions.CAT_INVALID_ARGUMENT:
+            if not self.is_collection(path) and not self.is_dataobject(path):
+                raise IrodsException("Cannot set Inherit: path not found")
+            else:
+                raise IrodsException("Cannot set Inherit")
+            return False
+        else:
+            return True
+
     def set_permissions(self, path, permission=None, userOrGroup=None,
                         zone=None, recursive=False):
 
