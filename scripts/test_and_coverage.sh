@@ -68,7 +68,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init --skip-bower
+	rapydo --development --project ${PROJECT} init --skip-npm
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40
@@ -108,7 +108,7 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --skip-bower
+	rapydo --development --project ${PROJECT} init --skip-npm
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 	# Build the backend image and execute coveralls
