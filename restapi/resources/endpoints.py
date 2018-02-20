@@ -33,6 +33,8 @@ class Status(EndpointResource):
         #####################
         # DEBUG
         # print(self.auth)
+        # log.pp({'test': 1})
+        # log.pp(pytz)
         # return {'Hello', 'World!'}
 
         #####################

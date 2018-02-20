@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import requests
-from beeprint import pp
+# from beeprint import pp
+from prettyprinter import pprint as pp
 
 TOKEN = ''
 
