@@ -108,7 +108,10 @@ class AdminUsers(GraphBaseOperations):
 
         log.critical(html)
 
-        body = "Your password: %s" % unhashed_password
+        body = """
+            Username: %s"
+            Password: %s"
+        """ % (user.email, unhashed_password)
 
         if html is None:
             send_mail(body, subject, user.email)
