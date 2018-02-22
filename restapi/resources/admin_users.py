@@ -238,9 +238,11 @@ class AdminUsers(GraphBaseOperations):
             unhashed_password = properties["password"]
             properties["password"] = BaseAuthentication.hash_password(
                 unhashed_password)
-        # properties["name_surname"] = \
-        #     self.createUniqueIndex(
-        #         properties["name"], properties["surname"])
+
+        # Temporary: remove me in a near future...
+        properties["name_surname"] = \
+            self.createUniqueIndex(
+                properties["name"], properties["surname"])
         user = self.graph.User(**properties).save()
 
         if group is not None:
