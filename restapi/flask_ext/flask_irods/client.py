@@ -392,6 +392,7 @@ class IrodsPythonClient():
         try:
             obj = self.prc.data_objects.get(absolute_path)
 
+            # NOTE: what about binary option?
             handle = obj.open('r')
             if headers is None:
                 headers = {}
@@ -404,7 +405,9 @@ class IrodsPythonClient():
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot read file: not found")
 
-    def write_in_streaming(self, destination, force=False, resource=None):
+    def write_in_streaming(self,
+                           destination, force=False,
+                           resource=None, binary=False):
         """
         Writes obj to iRODS without saving a local copy
         """
@@ -429,7 +432,11 @@ class IrodsPythonClient():
             # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
             # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
-                with obj.open('w') as target:
+                # NOTE binary option for non ASCII files
+                mode = 'w'
+                if binary:
+                    mode = 'w+'
+                with obj.open(mode) as target:
                     self.write_in_chunks(target, self.chunk_size)
             except BaseException as ex:
                 log.critical("Failed streaming upload: %s", ex)
