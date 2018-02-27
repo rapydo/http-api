@@ -243,6 +243,10 @@ class AdminUsers(GraphBaseOperations):
         properties["name_surname"] = \
             self.createUniqueIndex(
                 properties["name"], properties["surname"])
+
+        if "email" in properties:
+            properties["email"] = properties["email"].lower()
+
         user = self.graph.User(**properties).save()
 
         if group is not None:
@@ -323,6 +327,9 @@ class AdminUsers(GraphBaseOperations):
         else:
             unhashed_password = v["password"]
             v["password"] = BaseAuthentication.hash_password(unhashed_password)
+
+        if "email" in v:
+            v["email"] = v["email"].lower()
 
         self.update_properties(user, schema, v)
         user.name_surname = self.createUniqueIndex(user.name, user.surname)
