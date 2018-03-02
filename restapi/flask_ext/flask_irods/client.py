@@ -217,6 +217,24 @@ class IrodsPythonClient():
 
         return False
 
+    def icopy(self, sourcepath, destpath, ignore_existing=False, warning=None):
+
+        from irods.manager.data_object_manager import DataObjectManager
+        dm = DataObjectManager(self.prc)
+        if warning is None:
+            warning = 'Irods object already exists'
+
+        try:
+            dm.copy(sourcepath, destpath)
+        except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
+            if not ignore_existing:
+                raise IrodsException(
+                    "Irods object already exists",
+                    status_code=hcodes.HTTP_BAD_REQUEST)
+            log.warning("%s: %s", warning, destpath)
+        else:
+            log.debug("Copied: %s -> %s", sourcepath, destpath)
+
     def copy(self, sourcepath, destpath,
              recursive=False, force=False,
              compute_checksum=False, compute_and_verify_checksum=False):
@@ -551,6 +569,16 @@ class IrodsPythonClient():
             return False
         else:
             return True
+
+    def create_collection_inheritable(self, ipath, user, permissions='own'):
+
+        # Create the directory
+        self.create_empty(ipath, directory=True, ignore_existing=True)
+        # This user will own the directory
+        self.set_permissions(
+            ipath, permission=permissions, userOrGroup=user)
+        # Let the permissions scale to subelements
+        self.enable_inheritance(ipath)
 
     def set_permissions(self, path, permission=None, userOrGroup=None,
                         zone=None, recursive=False):

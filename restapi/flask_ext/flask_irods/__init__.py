@@ -107,6 +107,7 @@ class IrodsPythonExt(BaseExtension):
         else:
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme")
+        # log.pp(self.variables)
 
         return True
 
