@@ -219,6 +219,8 @@ class IrodsPythonClient():
 
     def icopy(self, sourcepath, destpath, ignore_existing=False, warning=None):
 
+        # Replace 'copy'
+
         from irods.manager.data_object_manager import DataObjectManager
         dm = DataObjectManager(self.prc)
         if warning is None:
@@ -841,6 +843,49 @@ class IrodsPythonClient():
         self.prc.users.modify(user, 'addAuth', dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
+    def irule(self):
+        import textwrap
+        from irods.rule import Rule
+
+        rule_body = textwrap.dedent('''\
+            test {{
+                # add metadata
+                *attribute.*name = *value;
+                msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
+        }}''')
+
+        # test metadata
+        attr_name = "test_attr"
+        attr_value = "test_value"
+        object_path = "/tempZone/home/public/temp.txt"
+
+        # rule parameters
+        input_params = {  # extra quotes for string literals
+            '*object': '"%s"' % object_path,
+            '*name': '"%s"' % attr_name,
+            '*value': '"%s"' % attr_value,
+        }
+        output = 'ruleExecOut'
+
+        # run test rule
+        myrule = Rule(
+            self.prc,
+            body=rule_body, params=input_params, output=output)
+        try:
+            myrule.execute()
+        # except iexceptions.CAT_UNKNOWN_FILE:
+        #     log.error("Error with file: %s", object_path)
+        #     raise IrodsException("Unable to execute rule")
+        # except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
+        #     log.error("Metadata already exists: %s", attr_name)
+        #     raise IrodsException("Failed to set metadata")
+        except BaseException as e:
+            msg = 'Irule failed: %s' % e.__class__.__name__
+            log.error(msg)
+            log.warning(e)
+            raise IrodsException(msg)
+        else:
+            log.info("Yes!")
 
 # ####################################################
 # ####################################################
