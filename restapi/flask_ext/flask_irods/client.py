@@ -169,9 +169,11 @@ class IrodsPythonClient():
 
     def create_directory(self, path, ignore_existing=False):
 
+        # print("TEST", path, ignore_existing)
         try:
 
-            ret = self.prc.collections.create(path)
+            ret = self.prc.collections.create(
+                path, recurse=ignore_existing)
             log.debug("Created irods collection: %s", path)
             return ret
 
