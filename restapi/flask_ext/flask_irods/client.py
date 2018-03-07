@@ -843,49 +843,44 @@ class IrodsPythonClient():
         self.prc.users.modify(user, 'addAuth', dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
-    def irule(self):
+    def irule(self, name, body, inputs, output):
         import textwrap
         from irods.rule import Rule
 
         rule_body = textwrap.dedent('''\
-            test {{
-                # add metadata
-                *attribute.*name = *value;
-                msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
-        }}''')
+            %s {{
+                %s
+        }}''' % (name, body))
 
-        # test metadata
-        attr_name = "test_attr"
-        attr_value = "test_value"
-        object_path = "/tempZone/home/public/temp.txt"
+        # iRODS rule
+        myrule = Rule(self.prc, body=rule_body, params=inputs, output=output)
+        log.pp(myrule)
 
-        # rule parameters
-        input_params = {  # extra quotes for string literals
-            '*object': '"%s"' % object_path,
-            '*name': '"%s"' % attr_name,
-            '*value': '"%s"' % attr_value,
-        }
-        output = 'ruleExecOut'
-
-        # run test rule
-        myrule = Rule(
-            self.prc,
-            body=rule_body, params=input_params, output=output)
         try:
-            myrule.execute()
-        # except iexceptions.CAT_UNKNOWN_FILE:
-        #     log.error("Error with file: %s", object_path)
-        #     raise IrodsException("Unable to execute rule")
-        # except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
-        #     log.error("Metadata already exists: %s", attr_name)
-        #     raise IrodsException("Failed to set metadata")
+            raw_out = myrule.execute()
+            out_array = raw_out.MsParam_PI[0].inOutStruct
+            log.pp(out_array)
         except BaseException as e:
             msg = 'Irule failed: %s' % e.__class__.__name__
             log.error(msg)
             log.warning(e)
+
             raise IrodsException(msg)
         else:
-            log.info("Yes!")
+            log.debug("Rule %s executed: %s", name, out_array)
+
+            # retrieve out buffer
+            buf = out_array.stdoutBuf.buf
+            if buf is not None:
+                # it's binary data (BinBytesBuf) so must be decoded
+                buf = buf.decode('utf-8')
+                log.debug("Out buff: %s", buf)
+            err_buf = out_array.stderrBuf.buf
+            if err_buf is not None:
+                err_buf = err_buf.decode('utf-8')
+                log.debug("Err buff: %s", err_buf)
+
+            return buf
 
 # ####################################################
 # ####################################################
