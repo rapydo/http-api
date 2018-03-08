@@ -856,33 +856,35 @@ class IrodsPythonClient():
 
         # iRODS rule
         myrule = Rule(self.prc, body=rule_body, params=inputs, output=output)
-        log.pp(myrule)
+        # log.pp(myrule)
 
         try:
             raw_out = myrule.execute()
-            out_array = raw_out.MsParam_PI[0].inOutStruct
-            log.pp(out_array)
+            # out_array = raw_out.MsParam_PI[0].inOutStruct
+            # log.pp(out_array)
         except BaseException as e:
             msg = 'Irule failed: %s' % e.__class__.__name__
             log.error(msg)
             log.warning(e)
 
-            raise IrodsException(msg)
+            raise e
+            # raise IrodsException(msg)
         else:
-            log.debug("Rule %s executed: %s", name, out_array)
+            log.debug("Rule %s executed: %s", name, raw_out)
 
-            # retrieve out buffer
-            buf = out_array.stdoutBuf.buf
-            if buf is not None:
-                # it's binary data (BinBytesBuf) so must be decoded
-                buf = buf.decode('utf-8')
-                log.debug("Out buff: %s", buf)
-            err_buf = out_array.stderrBuf.buf
-            if err_buf is not None:
-                err_buf = err_buf.decode('utf-8')
-                log.debug("Err buff: %s", err_buf)
+            # # retrieve out buffer
+            # buf = out_array.stdoutBuf.buf
+            # if buf is not None:
+            #     # it's binary data (BinBytesBuf) so must be decoded
+            #     buf = buf.decode('utf-8')
+            #     log.debug("Out buff: %s", buf)
+            # err_buf = out_array.stderrBuf.buf
+            # if err_buf is not None:
+            #     err_buf = err_buf.decode('utf-8')
+            #     log.debug("Err buff: %s", err_buf)
 
-            return buf
+            # return buf
+            return raw_out
 
 # ####################################################
 # ####################################################
