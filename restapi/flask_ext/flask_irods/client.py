@@ -886,6 +886,23 @@ class IrodsPythonClient():
             # return buf
             return raw_out
 
+        # # EXAMPLE FOR IRULE: #METADATA RULE
+        # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
+        # test_name = 'paolo2'
+        # inputs = {  # extra quotes for string literals
+        #     '*object': '"%s"' % object_path,
+        #     '*name': '"%s"' % test_name,
+        #     '*value': '"%s"' % test_name,
+        # }
+        # body = """
+        #     # add metadata
+        #     *attribute.*name = *value;
+        #     msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
+        # """
+        # output = imain.irule('test', body, inputs, 'ruleExecOut')
+        # print("TEST", output)
+        # # log.pp(output)
+
 # ####################################################
 # ####################################################
 # ####################################################
