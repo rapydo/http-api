@@ -6,6 +6,7 @@ from flask import request, stream_with_context, Response
 
 from utilities import htmlcodes as hcodes
 from irods.access import iRODSAccess
+from irods.rule import Rule
 from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
@@ -845,63 +846,82 @@ class IrodsPythonClient():
         self.prc.users.modify(user, 'addAuth', dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
-    def irule(self, name, body, inputs, output):
+    def rule(self, name, body, inputs, output=False):
+
         import textwrap
-        from irods.rule import Rule
 
         rule_body = textwrap.dedent('''\
             %s {{
                 %s
         }}''' % (name, body))
 
-        # iRODS rule
-        myrule = Rule(self.prc, body=rule_body, params=inputs, output=output)
-        # log.pp(myrule)
-
+        outname = None
+        if output:
+            outname = 'ruleExecOut'
+        myrule = Rule(self.prc, body=rule_body, params=inputs, output=outname)
         try:
             raw_out = myrule.execute()
-            # out_array = raw_out.MsParam_PI[0].inOutStruct
-            # log.pp(out_array)
         except BaseException as e:
             msg = 'Irule failed: %s' % e.__class__.__name__
             log.error(msg)
             log.warning(e)
-
-            raise e
             # raise IrodsException(msg)
+            raise e
         else:
             log.debug("Rule %s executed: %s", name, raw_out)
 
-            # # retrieve out buffer
-            # buf = out_array.stdoutBuf.buf
-            # if buf is not None:
-            #     # it's binary data (BinBytesBuf) so must be decoded
-            #     buf = buf.decode('utf-8')
-            #     log.debug("Out buff: %s", buf)
-            # err_buf = out_array.stderrBuf.buf
-            # if err_buf is not None:
-            #     err_buf = err_buf.decode('utf-8')
-            #     log.debug("Err buff: %s", err_buf)
+            # retrieve out buffer
+            if output and len(raw_out.MsParam_PI) > 0:
+                out_array = raw_out.MsParam_PI[0].inOutStruct
+                # print("out array", out_array)
 
-            # return buf
+                import re
+                file_coding = 'utf-8'
+
+                buf = out_array.stdoutBuf.buf
+                if buf is not None:
+                    # it's binary data (BinBytesBuf) so must be decoded
+                    buf = buf.decode(file_coding)
+                    buf = re.sub(r'\s+', '', buf)
+                    buf = re.sub(r'\\x00', '', buf)
+                    buf = buf.rstrip('\x00')
+                    log.debug("Out buff: %s", buf)
+
+                err_buf = out_array.stderrBuf.buf
+                if err_buf is not None:
+                    err_buf = err_buf.decode(file_coding)
+                    err_buf = re.sub(r'\s+', '', err_buf)
+                    log.debug("Err buff: %s", err_buf)
+
+                return buf
+
             return raw_out
 
-        # # EXAMPLE FOR IRULE: #METADATA RULE
-        # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
-        # test_name = 'paolo2'
-        # inputs = {  # extra quotes for string literals
-        #     '*object': '"%s"' % object_path,
-        #     '*name': '"%s"' % test_name,
-        #     '*value': '"%s"' % test_name,
-        # }
-        # body = """
-        #     # add metadata
-        #     *attribute.*name = *value;
-        #     msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
-        # """
-        # output = imain.irule('test', body, inputs, 'ruleExecOut')
-        # print("TEST", output)
-        # # log.pp(output)
+        """
+        # EXAMPLE FOR IRULE: #METADATA RULE
+        object_path = "/sdcCineca/home/httpadmin/tmp.txt"
+        test_name = 'paolo2'
+        inputs = {  # extra quotes for string literals
+            '*object': '"%s"' % object_path,
+            '*name': '"%s"' % test_name,
+            '*value': '"%s"' % test_name,
+        }
+        body = \"\"\"
+            # add metadata
+            *attribute.*name = *value;
+            msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
+        \"\"\"
+        output = imain.irule('test', body, inputs, 'ruleExecOut')
+        print("TEST", output)
+        # log.pp(output)
+        """
+
+    def ticket(self, path):
+        from irods.ticket import Ticket
+        ticket = Ticket(self.prc)
+        # print("TEST", self.prc, path)
+        ticket.issue('read', path)
+        return ticket
 
 # ####################################################
 # ####################################################
