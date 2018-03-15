@@ -584,7 +584,8 @@ class EndpointResource(Resource):
                         # subnode['attributes']['pippo'] = 'boh'
                         subrelationship.append(subnode)
 
-                linked[relationship] = subrelationship
+                if len(subrelationship) > 0:
+                    linked[relationship] = subrelationship
 
             if len(linked) > 0:
                 data['relationships'] = linked
