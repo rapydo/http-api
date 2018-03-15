@@ -460,7 +460,7 @@ class EndpointResource(Resource):
                 # converting it to string
                 # FIXME: use flask.jsonify
                 if attribute is None:
-                    attributes[key] = ""
+                    attributes[key] = None
                 elif isinstance(attribute, datetime):
                     dval = string_from_timestamp(attribute.strftime('%s'))
                     attributes[key] = dval
