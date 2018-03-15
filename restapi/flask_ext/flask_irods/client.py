@@ -240,6 +240,10 @@ class IrodsPythonClient():
         else:
             log.debug("Copied: %s -> %s", sourcepath, destpath)
 
+    def put(self, local_path, irods_path):
+        # NOTE: this action always overwrite
+        return self.prc.data_objects.put(local_path, irods_path)
+
     def copy(self, sourcepath, destpath,
              recursive=False, force=False,
              compute_checksum=False, compute_and_verify_checksum=False):
@@ -565,7 +569,7 @@ class IrodsPythonClient():
         ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
         try:
             self.prc.permissions.set(ACL)  # , recursive=False)
-            log.debug("Enabled %s to %s", key, path)
+            log.verbose("Enabled %s to %s", key, path)
         except iexceptions.CAT_INVALID_ARGUMENT:
             if not self.is_collection(path) and not self.is_dataobject(path):
                 raise IrodsException("Cannot set Inherit: path not found")
@@ -752,9 +756,7 @@ class IrodsPythonClient():
             data = {}
             units = {}
             for meta in obj.metadata.items():
-
                 name = meta.name
-
                 data[name] = meta.value
                 units[name] = meta.units
 
@@ -765,7 +767,6 @@ class IrodsPythonClient():
         ):
             raise IrodsException("Cannot extract metadata, object not found")
 
-    # We may need this for testing the get_metadata
     def set_metadata(self, path, **meta):
         try:
             if (self.is_collection(path)):
@@ -922,6 +923,25 @@ class IrodsPythonClient():
         # print("TEST", self.prc, path)
         ticket.issue('read', path)
         return ticket
+
+    def list_tickets(self, user=None):
+        from irods.models import Ticket, DataObject
+        try:
+            data = self.prc.query(
+                # Ticket.id,
+                Ticket.string, Ticket.type, User.name, DataObject.name,
+                Ticket.uses_limit, Ticket.uses_count,
+                Ticket.expiration
+            ).all()
+            # ).filter(User.name == user).one()
+
+            for obj in data:
+                print("TEST", obj)
+                # for _, grp in obj.items():
+        except iexceptions.NoResultFound:
+            return None
+        else:
+            return data
 
 # ####################################################
 # ####################################################
