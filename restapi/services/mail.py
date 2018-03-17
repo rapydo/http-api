@@ -24,6 +24,8 @@ def send_mail(
         password = os.environ.get("SMTP_PASSWORD")
 
         if from_address is None:
+            from_address = os.environ.get("SMTP_NOREPLY")
+        if from_address is None:
             from_address = os.environ.get("SMTP_ADMIN")
 
         if to_address is None:
