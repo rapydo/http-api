@@ -18,6 +18,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from utilities import htmlcodes as hcodes
+from utilities.time import timestamp_from_string
 from utilities.globals import mem
 from utilities.logs import get_logger
 
@@ -262,6 +263,8 @@ class RecoverPassword(EndpointResource):
                 'Invalid recovery email',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
+        recover_email = recover_email.lower()
+
         user = self.auth.get_user_object(username=recover_email)
 
         if user is None:
@@ -314,8 +317,13 @@ class RecoverPassword(EndpointResource):
 
         # Recovering token object from jti
         token = self.auth.get_tokens(token_jti=self.auth._jti)
+        if len(token) == 0:
+            raise RestApiException(
+                'Invalid recovery token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
         token = token.pop(0)
-        emitted = token["emitted"]
+        emitted = timestamp_from_string(token["emitted"])
 
         # If user logged in after the token emission invalidate the token
         if self.auth._user.last_login is not None and \
@@ -334,7 +342,33 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # The recovery token is valid, do something
-        log.critical(emitted)
+
+        data = self.get_input()
+        new_password = data.get("new_password")
+        password_confirm = data.get("password_confirm")
+
+        # No password to be changed, just a token verification
+        if new_password is None and password_confirm is None:
+            return self.empty_response()
+
+        # Something is missing
+        if new_password is None or password_confirm is None:
+            raise RestApiException(
+                'Invalid password',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if new_password != password_confirm:
+            raise RestApiException(
+                'New password does not match with confirmation',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        security = HandleSecurity(self.auth)
+
+        security.change_password(
+            self.auth._user, None, new_password, password_confirm)
+        # I really don't know why this save is required... since it is already
+        # in change_password ... But if I remove it the new pwd is not saved...
+        self.auth._user.save()
 
         # Bye bye token (recovery tokens are valid only once)
         # self.auth.invalidate_token(token_id)
@@ -523,7 +557,7 @@ class Profile(EndpointResource):
 
         security.change_password(
             user, password, new_password, password_confirm)
-        # I really don't why this save is required... since it is already
+        # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
         user.save()
 
