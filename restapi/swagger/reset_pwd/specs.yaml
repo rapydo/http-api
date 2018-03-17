@@ -7,8 +7,8 @@ class: RecoverPassword
 baseuri: /auth
 
 mapping:
-  ask_recover: "/recover"
-  do_recover: "/recover/<token_id>"
+  ask_reset: "/reset"
+  do_reset: "/reset/<token_id>"
 
 labels:
   - base

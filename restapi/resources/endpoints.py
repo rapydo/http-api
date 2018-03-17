@@ -254,48 +254,49 @@ class RecoverPassword(EndpointResource):
 
         if not send_mail_is_active():
             raise RestApiException(
-                'Server misconfiguration, unable to recover password. ' +
-                'Please report to adminstrators',
+                'Server misconfiguration, unable to reset password. ' +
+                'Please report this error to adminstrators',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
-        recover_email = self.get_input(single_parameter='recover_email')
+        reset_email = self.get_input(single_parameter='reset_email')
 
-        if recover_email is None:
+        if reset_email is None:
             raise RestApiException(
-                'Invalid recovery email',
+                'Invalid reset email',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
-        recover_email = recover_email.lower()
+        reset_email = reset_email.lower()
 
-        user = self.auth.get_user_object(username=recover_email)
+        user = self.auth.get_user_object(username=reset_email)
 
         if user is None:
             raise RestApiException(
-                'Invalid recovery email',
+                'Sorry, %s ' % reset_email +
+                'is not recognized as a valid username or email address',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
         title = mem.customizer._configurations \
             .get('project', {}) \
             .get('title', "Unkown title")
 
-        # invalidate previous recovery tokens
+        # invalidate previous reset tokens
         tokens = self.auth.get_tokens(user=user)
         for t in tokens:
             token_type = t.get("token_type")
             if token_type is None:
                 continue
-            if token_type != self.auth.PWD_RECOVERY:
+            if token_type != self.auth.PWD_RESET:
                 continue
 
             tok = t.get("token")
             if self.auth.invalidate_token(tok):
-                log.info("Previous recovery token invalidated: %s", tok)
+                log.info("Previous reset token invalidated: %s", tok)
 
-        # Generate a new recovery token
-        recovery_token, jti = self.auth.create_temporary_token(
+        # Generate a new reset token
+        reset_token, jti = self.auth.create_temporary_token(
             user,
             duration=86400,
-            token_type=self.auth.PWD_RECOVERY
+            token_type=self.auth.PWD_RESET
         )
 
         domain = os.environ.get("DOMAIN")
@@ -304,16 +305,18 @@ class RecoverPassword(EndpointResource):
         else:
             protocol = "http"
 
-        u = "%s://%s/public/recover/%s" % (protocol, domain, recovery_token)
-        body = "link to recover password: %s" % u
-        html_body = "link to recover password: <a href='%s'>click here</a>" % u
-        subject = "%s: password recovery" % title
-        send_mail(html_body, subject, recover_email, plain_body=body)
+        u = "%s://%s/public/reset/%s" % (protocol, domain, reset_token)
+        body = "link to reset password: %s" % u
+        html_body = "link to reset password: <a href='%s'>click here</a>" % u
+        subject = "%s: password reset" % title
+        send_mail(html_body, subject, reset_email, plain_body=body)
 
         self.auth.save_token(
-            user, recovery_token, jti, token_type=self.auth.PWD_RECOVERY)
+            user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
-        return "Recovery link sent to your email address"
+        msg = "We are sending an email to your email address where " + \
+            "you will find the link to enter a new password"
+        return msg
 
     @decorate.catch_error()
     def put(self, token_id):
@@ -322,31 +325,31 @@ class RecoverPassword(EndpointResource):
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token_id, raiseErrors=True, token_type=self.auth.PWD_RECOVERY)
+                token_id, raiseErrors=True, token_type=self.auth.PWD_RESET)
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError as e:
             raise RestApiException(
-                'Invalid recovery token: this request is expired',
+                'Invalid reset token: this request is expired',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # if token is not yet active
         except jwt.exceptions.ImmatureSignatureError as e:
             raise RestApiException(
-                'Invalid recovery token',
+                'Invalid reset token',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # if token does not exist (or other generic errors)
         except Exception as e:
             raise RestApiException(
-                'Invalid recovery token',
+                'Invalid reset token',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # Recovering token object from jti
         token = self.auth.get_tokens(token_jti=self.auth._jti)
         if len(token) == 0:
             raise RestApiException(
-                'Invalid recovery token: this request is no longer valid',
+                'Invalid reset token: this request is no longer valid',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         token = token.pop(0)
@@ -357,7 +360,7 @@ class RecoverPassword(EndpointResource):
                 self.auth._user.last_login >= emitted:
             self.auth.invalidate_token(token_id)
             raise RestApiException(
-                'Invalid recovery token: this request is no longer valid',
+                'Invalid reset token: this request is no longer valid',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # If user changed the pwd after the token emission invalidate the token
@@ -365,10 +368,10 @@ class RecoverPassword(EndpointResource):
                 self.auth._user.last_password_change >= emitted:
             self.auth.invalidate_token(token_id)
             raise RestApiException(
-                'Invalid recovery token: this request is no longer valid',
+                'Invalid reset token: this request is no longer valid',
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
-        # The recovery token is valid, do something
+        # The reset token is valid, do something
 
         data = self.get_input()
         new_password = data.get("new_password")
@@ -397,7 +400,7 @@ class RecoverPassword(EndpointResource):
         # in change_password ... But if I remove it the new pwd is not saved...
         self.auth._user.save()
 
-        # Bye bye token (recovery tokens are valid only once)
+        # Bye bye token (reset tokens are valid only once)
         self.auth.invalidate_token(token_id)
 
         return "Password changed"

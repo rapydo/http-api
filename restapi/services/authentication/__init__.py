@@ -41,7 +41,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     token_type = 'Bearer'
 
     FULL_TOKEN = "f"
-    PWD_RECOVERY = "r"
+    PWD_RESET = "r"
     ##########################
     _oauth2 = {}
 
@@ -408,7 +408,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             .lower() == 'false'
 
         if token_type is not None:
-            if token_type == self.PWD_RECOVERY:
+            if token_type == self.PWD_RESET:
                 short_jwt = True
                 payload["t"] = token_type
 
