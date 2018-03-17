@@ -18,6 +18,7 @@ from restapi.rest.definition import EndpointResource
 # from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.mail import get_html_template
 from utilities import htmlcodes as hcodes
 from utilities.time import timestamp_from_string
 from utilities.globals import mem
@@ -307,7 +308,12 @@ class RecoverPassword(EndpointResource):
 
         u = "%s://%s/public/reset/%s" % (protocol, domain, reset_token)
         body = "link to reset password: %s" % u
-        html_body = "link to reset password: <a href='%s'>click here</a>" % u
+
+        replaces = {
+            "url": u
+        }
+        html_body = get_html_template("reset_password.html", replaces)
+        # html_body = "link to reset password: <a href='%s'>click here</a>" % u
         subject = "%s: password reset" % title
         send_mail(html_body, subject, reset_email, plain_body=body)
 

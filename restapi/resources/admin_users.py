@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 from restapi import decorators as decorate
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
@@ -9,10 +8,9 @@ from restapi.services.neo4j.graph_endpoints import catch_graph_exceptions
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.mail import get_html_template
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
-from utilities import helpers
-from utilities import MODELS_DIR, CUSTOM_PACKAGE
 
 from utilities.logs import get_logger
 log = get_logger(__name__)
@@ -98,15 +96,12 @@ class AdminUsers(GraphBaseOperations):
             subject += "new credentials"
             template = "new_credentials.html"
 
-        path = helpers.current_dir(CUSTOM_PACKAGE, MODELS_DIR)
-        template = os.path.join(path, "emails", template)
+        replaces = {
+            "username": user.email,
+            "password": unhashed_password
+        }
 
-        html = None
-        if os.path.isfile(template):
-            with open(template, 'r') as f:
-                html = f.read()
-
-        log.critical(html)
+        html = get_html_template(template, replaces)
 
         body = """
             Username: %s"
@@ -116,9 +111,6 @@ class AdminUsers(GraphBaseOperations):
         if html is None:
             send_mail(body, subject, user.email)
         else:
-
-            html = html.replace("%%username%%", user.email)
-            html = html.replace("%%password%%", unhashed_password)
             send_mail(html, subject, user.email, plain_body=body)
 
     @decorate.catch_error()
