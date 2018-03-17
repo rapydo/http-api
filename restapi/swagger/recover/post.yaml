@@ -1,0 +1,16 @@
+
+ask_recover:
+
+  summary: Request password recovery via email
+  description: Request password recovery via email 
+
+  custom:
+    authentication: false
+    publish: true
+
+  responses:
+    '401':
+      description: Invalid recover email
+    '200':
+      description: Recover email is valid
+

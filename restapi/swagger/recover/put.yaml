@@ -1,0 +1,16 @@
+
+do_recover:
+
+  summary: Change password as conseguence of a recovery request
+  description: Change password as conseguence of a recovery request 
+
+  custom:
+    authentication: false
+    publish: true
+
+  responses:
+    '401':
+      description: Invalid recover token 
+    '200':
+      description: Recover token is valid, password changed
+

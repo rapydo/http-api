@@ -6,6 +6,7 @@ And a Farm: How to create endpoints into REST service.
 """
 
 import pytz
+import jwt
 
 from datetime import datetime, timedelta
 from flask import jsonify, current_app
@@ -15,6 +16,7 @@ from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
 # from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.services.mail import send_mail, send_mail_is_active
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 from utilities.logs import get_logger
@@ -239,6 +241,104 @@ class Logout(EndpointResource):
 
     def get(self):
         self.auth.invalidate_token(token=self.auth.get_token())
+        return self.empty_response()
+
+
+class RecoverPassword(EndpointResource):
+
+    @decorate.catch_error()
+    def post(self):
+
+        if not send_mail_is_active():
+            raise RestApiException(
+                'Server misconfiguration, unable to recover password. ' +
+                'Please report to adminstrators',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        recover_email = self.get_input(single_parameter='recover_email')
+
+        if recover_email is None:
+            raise RestApiException(
+                'Invalid recovery email',
+                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+
+        user = self.auth.get_user_object(username=recover_email)
+
+        if user is None:
+            raise RestApiException(
+                'Invalid recovery email',
+                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+
+        title = mem.customizer._configurations \
+            .get('project', {}) \
+            .get('title', "Unkown title")
+
+        recover_token, jti = self.auth.create_temporary_token(
+            user, token_type=self.auth.PWD_RECOVERY)
+
+        u = "http://localhost/public/recover/%s" % recover_token
+        body = "link to recover password: %s" % u
+        html_body = "link to recover password: <a href='%s'>click here</a>" % u
+        subject = "%s: password recovery" % title
+        send_mail(html_body, subject, recover_email, plain_body=body)
+
+        self.auth.save_token(user, recover_token, jti)
+        return self.empty_response()
+
+    @decorate.catch_error()
+    def put(self, token_id):
+
+        try:
+            # Unpack and verify token. If ok, self.auth will be added with
+            # auth._user auth._token and auth._jti
+            self.auth.verify_token(
+                token_id, raiseErrors=True, token_type=self.auth.PWD_RECOVERY)
+
+        # If token is expired
+        except jwt.exceptions.ExpiredSignatureError as e:
+            raise RestApiException(
+                'Invalid recovery token: this request is expired',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token is not yet active
+        except jwt.exceptions.ImmatureSignatureError as e:
+            raise RestApiException(
+                'Invalid recovery token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token does not exist (or other generic errors)
+        except Exception as e:
+            raise RestApiException(
+                'Invalid recovery token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # Recovering token object from jti
+        token = self.auth.get_tokens(token_jti=self.auth._jti)
+        token = token.pop(0)
+        emitted = token["emitted"]
+
+        # If user logged in after the token emission invalidate the token
+        if self.auth._user.last_login is not None and \
+                self.auth._user.last_login >= emitted:
+            self.auth.invalidate_token(token_id)
+            raise RestApiException(
+                'Invalid recovery token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # If user changed the pwd after the token emission invalidate the token
+        if self.auth._user.last_password_change is not None and \
+                self.auth._user.last_password_change >= emitted:
+            self.auth.invalidate_token(token_id)
+            raise RestApiException(
+                'Invalid recovery token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # The recovery token is valid, do something
+        log.critical(emitted)
+
+        # Bye bye token (recovery tokens are valid only once)
+        # self.auth.invalidate_token(token_id)
+
         return self.empty_response()
 
 
