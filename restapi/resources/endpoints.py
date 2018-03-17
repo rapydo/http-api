@@ -7,6 +7,7 @@ And a Farm: How to create endpoints into REST service.
 
 import pytz
 import jwt
+import os
 
 from datetime import datetime, timedelta
 from flask import jsonify, current_app
@@ -20,6 +21,7 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from utilities import htmlcodes as hcodes
 from utilities.time import timestamp_from_string
 from utilities.globals import mem
+from restapi.confs import PRODUCTION
 from utilities.logs import get_logger
 
 from restapi.flask_ext.flask_auth import HandleSecurity
@@ -291,9 +293,18 @@ class RecoverPassword(EndpointResource):
 
         # Generate a new recovery token
         recovery_token, jti = self.auth.create_temporary_token(
-            user, token_type=self.auth.PWD_RECOVERY)
+            user,
+            duration=86400,
+            token_type=self.auth.PWD_RECOVERY
+        )
 
-        u = "http://localhost/public/recover/%s" % recovery_token
+        domain = os.environ.get("DOMAIN")
+        if PRODUCTION:
+            protocol = "https"
+        else:
+            protocol = "http"
+
+        u = "%s://%s/public/recover/%s" % (protocol, domain, recovery_token)
         body = "link to recover password: %s" % u
         html_body = "link to recover password: <a href='%s'>click here</a>" % u
         subject = "%s: password recovery" % title
