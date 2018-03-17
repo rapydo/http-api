@@ -242,7 +242,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 # note: this will return the ip if hostname is not available
                 # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
-                hostname, _, _= socket.gethostbyaddr(ip)
+                hostname, _, _ = socket.gethostbyaddr(ip)
             except Exception as e:
                 log.warning("Error resolving '%s': '%s'", ip, e)
         return ip, hostname
@@ -358,7 +358,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._jti = payload['jti']
         return True
 
-    def save_token(self, user, token, jti):
+    def save_token(self, user, token, jti, token_type=None):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod

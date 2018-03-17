@@ -276,17 +276,33 @@ class RecoverPassword(EndpointResource):
             .get('project', {}) \
             .get('title', "Unkown title")
 
-        recover_token, jti = self.auth.create_temporary_token(
+        # invalidate previous recovery tokens
+        tokens = self.auth.get_tokens(user=user)
+        for t in tokens:
+            token_type = t.get("token_type")
+            if token_type is None:
+                continue
+            if token_type != self.auth.PWD_RECOVERY:
+                continue
+
+            tok = t.get("token")
+            if self.auth.invalidate_token(tok):
+                log.info("Previous recovery token invalidated: %s", tok)
+
+        # Generate a new recovery token
+        recovery_token, jti = self.auth.create_temporary_token(
             user, token_type=self.auth.PWD_RECOVERY)
 
-        u = "http://localhost/public/recover/%s" % recover_token
+        u = "http://localhost/public/recover/%s" % recovery_token
         body = "link to recover password: %s" % u
         html_body = "link to recover password: <a href='%s'>click here</a>" % u
         subject = "%s: password recovery" % title
         send_mail(html_body, subject, recover_email, plain_body=body)
 
-        self.auth.save_token(user, recover_token, jti)
-        return self.empty_response()
+        self.auth.save_token(
+            user, recovery_token, jti, token_type=self.auth.PWD_RECOVERY)
+
+        return "Recovery link sent to your email address"
 
     @decorate.catch_error()
     def put(self, token_id):
@@ -371,9 +387,9 @@ class RecoverPassword(EndpointResource):
         self.auth._user.save()
 
         # Bye bye token (recovery tokens are valid only once)
-        # self.auth.invalidate_token(token_id)
+        self.auth.invalidate_token(token_id)
 
-        return self.empty_response()
+        return "Password changed"
 
 
 class Tokens(EndpointResource):

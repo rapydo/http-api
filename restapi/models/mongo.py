@@ -61,6 +61,7 @@ class User(MongoModel):
 class Token(MongoModel):
     jti = fields.CharField()
     token = fields.CharField()
+    token_type = fields.CharField()
     creation = fields.DateTimeField()
     expiration = fields.DateTimeField()
     last_access = fields.DateTimeField()
