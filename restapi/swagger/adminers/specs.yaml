@@ -1,4 +1,7 @@
 
+depends_on:
+  - DEBUG_ENDPOINTS
+
 file: endpoints
 class: Admin
 # baseuri: "/api"

@@ -1,4 +1,7 @@
 
+depends_on:
+  - not PROFILE_DISABLED
+
 file: endpoints
 class: Profile
 baseuri: "/auth"
