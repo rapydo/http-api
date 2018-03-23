@@ -7,6 +7,7 @@ from flask import request, stream_with_context, Response
 from utilities import htmlcodes as hcodes
 from irods.access import iRODSAccess
 from irods.rule import Rule
+from irods.ticket import Ticket
 from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
@@ -918,11 +919,34 @@ class IrodsPythonClient():
         """
 
     def ticket(self, path):
-        from irods.ticket import Ticket
         ticket = Ticket(self.prc)
         # print("TEST", self.prc, path)
         ticket.issue('read', path)
         return ticket
+
+    def ticket_supply(self, code):
+        # use ticket for access
+        ticket = Ticket(self.prc, code)
+        ticket.supply()
+
+    def test_ticket(self, path):
+        # self.ticket_supply(code)
+
+        try:
+            with self.prc.data_objects.open(path, 'r') as obj:
+                obj.__class__.__name__
+        except iexceptions.SYS_FILE_DESC_OUT_OF_RANGE:
+            return False
+        else:
+            return True
+
+    def stream_ticket(self, path, headers=None):
+        obj = self.prc.data_objects.open(path, 'r')
+        return Response(
+            stream_with_context(
+                self.read_in_chunks(obj, self.chunk_size)),
+            headers=headers,
+        )
 
     def list_tickets(self, user=None):
         from irods.models import Ticket, DataObject
