@@ -239,7 +239,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 # note: this will return the ip if hostname is not available
                 # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
-                hostname, _, _= socket.gethostbyaddr(ip)
+                hostname, _, _ = socket.gethostbyaddr(ip)
             except Exception as e:
                 log.warning("Error resolving '%s': '%s'", ip, e)
         return ip, hostname
@@ -256,9 +256,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return encode, payload['jti']
 
     # FIXME: this method is not used
-    def create_temporary_token(self, user):
-        # expiration = timedelta(seconds=300)
-        expiration = timedelta(seconds=10)
+    def create_temporary_token(self, user, duration=300):
+        expiration = timedelta(seconds=duration)
         payload = self.fill_payload(user, expiration=expiration)
         return self.create_token(payload)
 

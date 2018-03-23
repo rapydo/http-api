@@ -460,7 +460,7 @@ class EndpointResource(Resource):
                 # converting it to string
                 # FIXME: use flask.jsonify
                 if attribute is None:
-                    attributes[key] = ""
+                    attributes[key] = None
                 elif isinstance(attribute, datetime):
                     dval = string_from_timestamp(attribute.strftime('%s'))
                     attributes[key] = dval
@@ -584,7 +584,8 @@ class EndpointResource(Resource):
                         # subnode['attributes']['pippo'] = 'boh'
                         subrelationship.append(subnode)
 
-                linked[relationship] = subrelationship
+                if len(subrelationship) > 0:
+                    linked[relationship] = subrelationship
 
             if len(linked) > 0:
                 data['relationships'] = linked
