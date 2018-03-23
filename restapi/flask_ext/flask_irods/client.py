@@ -959,9 +959,10 @@ class IrodsPythonClient():
             ).all()
             # ).filter(User.name == user).one()
 
-            for obj in data:
-                print("TEST", obj)
-                # for _, grp in obj.items():
+            # for obj in data:
+            #     print("TEST", obj)
+            #     # for _, grp in obj.items():
+
         except iexceptions.NoResultFound:
             return None
         else:
