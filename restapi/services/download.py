@@ -77,12 +77,10 @@ class Downloader(object):
         else:
             length = size - byte1
 
-        # 10 mb
-        # MAX_LENGTH = 1048576
-
-        # if length > MAX_LENGTH:
-        #     # log.warning("Length exceding!")
-        #     return Response('', hcodes.HTTP_BAD_PAYLOAD_TOO_LARGE)
+        # 1 mb
+        MAX_ALLOWED_LENGTH = 1048576
+        if length > MAX_ALLOWED_LENGTH:
+            length = MAX_ALLOWED_LENGTH
 
         log.info(
             "Providing partial content (bytes %s-%s, len = %s bytes) from %s",
