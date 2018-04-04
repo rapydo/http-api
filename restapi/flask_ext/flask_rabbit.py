@@ -12,8 +12,9 @@ class RabbitExt(BaseExtension):
     def custom_connection(self, **kwargs):
 
         variables = self.variables
+        # print("\n\n\nTEST")
 
-        # PAOLO's old way
+        # DIRECT AMQP connection
         # uri = 'amqp://%s:%s@%s:%s/' % (
         #     variables.get('user'),
         #     variables.get('password'),
@@ -24,7 +25,7 @@ class RabbitExt(BaseExtension):
         # parameter = pika.connection.URLParameters(uri)
         # return pika.BlockingConnection(parameter)
 
-        # MERRET's new way
+        # PIKA based
         credentials = pika.PlainCredentials(
             variables.get('user'),
             variables.get('password')
@@ -32,6 +33,7 @@ class RabbitExt(BaseExtension):
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get('host'),
+                port=variables.get('port'),
                 virtual_host=variables.get('vhost'),
                 credentials=credentials
             )
