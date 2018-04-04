@@ -545,7 +545,7 @@ class Profile(EndpointResource):
         # properties["password"] = \
         #     BaseAuthentication.hash_password(properties["password"])
 
-        # DO CUSTOM STUFFS HERE - e.g. create name_surname index
+        # DO CUSTOM STUFFS HERE - e.g. create irods user
         properties, other_properties = \
             self.custom_pre_handle_user_input(properties, v)
 

@@ -154,10 +154,6 @@ class AdminUsers(GraphBaseOperations):
                     raise RestApiException(
                         "You are allowed to assign users to this role")
 
-        # properties["name_surname"] = \
-        #     self.createUniqueIndex(
-        #         properties["name"], properties["surname"])
-
         # # GRAPH #
         # properties["authmethod"] = "credentials"
         # if "password" in properties:
@@ -232,7 +228,6 @@ class AdminUsers(GraphBaseOperations):
             v["password"] = BaseAuthentication.hash_password(v["password"])
 
         self.update_properties(user, schema, v)
-        # user.name_surname = self.createUniqueIndex(user.name, user.surname)
         user.save()
 
         if 'group' in v:
