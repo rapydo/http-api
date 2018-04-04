@@ -43,7 +43,7 @@
   # rabbitmq message queue
 - name: rabbit
   load_models: 0
-  prefix: rabbitmq
+  prefix: rabbit
   extension: flask_rabbit
   class: RabbitExt
   injector: RabbitInjector
