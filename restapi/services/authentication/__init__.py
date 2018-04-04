@@ -505,6 +505,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             except BaseException as e:
                 log.error("Unable to customize user properties: %s", e)
 
+        if "email" in userdata:
+            userdata["email"] = userdata["email"].lower()
+
         return userdata
 
     # ################
