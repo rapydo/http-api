@@ -28,6 +28,8 @@ echo "Current version: $CURRENT_VERSION"
 
 CORE_DIR="${WORK_DIR}/rapydo_tests"
 COV_DIR="${WORK_DIR}/coverage_files"
+COV_FILE="/tmp/.coverage"
+export COVERAGE_FILE=$COV_FILE
 
 echo "WORK_DIR = ${WORK_DIR}"
 echo "CORE_DIR = ${CORE_DIR}"
@@ -97,7 +99,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	fi
 
 	# Sync the coverage file to S3, to be available for the next stage
-	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
+	docker cp ${PROJECT}_backend_1:$COV_FILE $COV_DIR/.coverage.${PROJECT}
 
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
