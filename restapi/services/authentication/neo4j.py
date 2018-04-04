@@ -68,6 +68,8 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        userdata = self.custom_user_properties(userdata)
+
         user_node = self.db.User(**userdata)
         try:
             user_node.save()
@@ -127,7 +129,6 @@ class Authentication(BaseAuthentication):
                 'email': self.default_user,
                 # 'authmethod': 'credentials',
                 'name': 'Default', 'surname': 'User',
-                'name_surname': 'Default#_#User',
                 # 'password': self.hash_password(self.default_password)
                 'password': self.default_password
             }, roles=self.default_roles)

@@ -13,11 +13,13 @@ import base64
 import pytz
 import socket
 
+from utilities import CUSTOM_PACKAGE
 from utilities.uuid import getUUID
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
 from restapi.confs import PRODUCTION
+from utilities.meta import Meta
 from utilities.globals import mem
 from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
@@ -478,11 +480,32 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             create_user(
                 email=self.DEFAULT_USER,
                 name="Whatever", surname="YouLike",
-                name_surname="Whatever#_#YouLike",
                 password=self.DEFAULT_PASSWORD,
                 roles=DEFAULT_ROLES)
         """
         return
+
+    def custom_user_properties(self, userdata):
+        meta = Meta()
+        module_path = "%s.%s.%s" % \
+            (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module = meta.get_module_from_string(
+            module_path,
+            debug_on_fail=False,
+        )
+
+        Customizer = meta.get_class_from_string(
+            'Customizer', module, skip_error=True
+        )
+        if Customizer is None:
+            log.debug("No user properties customizer available")
+        else:
+            try:
+                userdata = Customizer().custom_user_properties(userdata)
+            except BaseException as e:
+                log.error("Unable to customize user properties: %s", e)
+
+        return userdata
 
     # ################
     # # Create Users #

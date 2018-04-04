@@ -33,6 +33,8 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        userdata = self.custom_user_properties(userdata)
+
         user = self.db.User(**userdata)
         # link roles into users
         for role in roles:
