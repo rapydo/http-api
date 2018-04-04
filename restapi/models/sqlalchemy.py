@@ -56,6 +56,7 @@ class Token(db.Model):
     jti = db.Column(db.String(36), unique=True)
     # token = db.Column(db.String(360), unique=True)
     token = db.Column(db.Text())
+    token_type = db.Column(db.String(1))
     creation = db.Column(db.DateTime)
     expiration = db.Column(db.DateTime)
     last_access = db.Column(db.DateTime)

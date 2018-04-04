@@ -132,21 +132,23 @@ class Authentication(BaseAuthentication):
                 'password': self.default_password
             }, roles=self.default_roles)
 
-    def save_token(self, user, token, jti):
+    def save_token(self, user, token, jti, token_type=None):
 
         now = datetime.now(pytz.utc)
         exp = now + timedelta(seconds=self.shortTTL)
 
+        if token_type is None:
+            token_type = self.FULL_TOKEN
+
         token_node = self.db.Token()
         token_node.jti = jti
         token_node.token = token
+        token_node.token_type = token_type
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
 
         ip, hostname = self.get_host_info()
-        # log.critical(ip)
-        # log.critical(hostname)
         token_node.IP = ip
         token_node.hostname = hostname
 
@@ -224,6 +226,7 @@ class Authentication(BaseAuthentication):
 
                 t["id"] = token.jti
                 t["token"] = token.token
+                t["token_type"] = token.token_type
                 t["emitted"] = token.creation.strftime('%s')
                 t["last_access"] = token.last_access.strftime('%s')
                 if token.expiration is not None:

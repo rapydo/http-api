@@ -69,6 +69,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --skip-npm
+
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40

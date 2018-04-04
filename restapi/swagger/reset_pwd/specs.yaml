@@ -1,0 +1,15 @@
+
+depends_on:
+  - MAIN_LOGIN_ENABLE
+
+file: endpoints
+class: RecoverPassword 
+baseuri: /auth
+
+mapping:
+  ask_reset: "/reset"
+  do_reset: "/reset/<token_id>"
+
+labels:
+  - base
+  - authentication

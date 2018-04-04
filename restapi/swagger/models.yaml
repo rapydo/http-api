@@ -69,7 +69,7 @@ FormDataParameters:
         islink: true
         label: Roles
         model_key: _roles
-        select_label: description
+        select_label: name
         select_id: name
 
   AdminUsers:
@@ -130,5 +130,5 @@ FormDataParameters:
         islink: true
         label: Roles
         model_key: _roles
-        select_label: description
+        select_label: name
         select_id: name

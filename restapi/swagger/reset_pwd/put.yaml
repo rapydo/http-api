@@ -1,0 +1,16 @@
+
+do_reset:
+
+  summary: Change password as conseguence of a reset request
+  description: Change password as conseguence of a reset request 
+
+  custom:
+    authentication: false
+    publish: true
+
+  responses:
+    '401':
+      description: Invalid reset token 
+    '200':
+      description: Reset token is valid, password changed
+
