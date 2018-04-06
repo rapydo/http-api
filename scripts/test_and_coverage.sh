@@ -28,6 +28,7 @@ echo "Current version: $CURRENT_VERSION"
 
 CORE_DIR="${WORK_DIR}/rapydo_tests"
 COV_DIR="${WORK_DIR}/coverage_files"
+COVERAGE_FILE="/tmp/.coverage"
 
 echo "WORK_DIR = ${WORK_DIR}"
 echo "CORE_DIR = ${CORE_DIR}"
@@ -69,6 +70,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --skip-npm
+
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40
@@ -96,7 +98,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	fi
 
 	# Sync the coverage file to S3, to be available for the next stage
-	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
+	docker cp ${PROJECT}_backend_1:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}

@@ -249,6 +249,7 @@ def create_app(name=__name__,
                 data = 'OTHER_UPLOAD'
 
         log.info("%s %s %s %s", request.method, request.url, data, response)
+
         return response
 
     ##############################

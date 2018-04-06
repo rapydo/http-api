@@ -33,6 +33,8 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        userdata = self.custom_user_properties(userdata)
+
         user = self.db.User(**userdata)
         # link roles into users
         for role in roles:
@@ -100,16 +102,12 @@ class Authentication(BaseAuthentication):
         if missing_user or missing_role:
             self.db.session.commit()
 
-    def save_token(self, user, token, jti):
+    def save_token(self, user, token, jti, token_type=None):
 
-        from flask import request
-        import socket
-        ip = request.remote_addr
-        try:
-            # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
-            hostname, _, _ = socket.gethostbyaddr(ip)
-        except Exception:
-            hostname = ""
+        ip, hostname = self.get_host_info()
+
+        if token_type is None:
+            token_type = self.FULL_TOKEN
 
         # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
@@ -118,6 +116,7 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.Token(
             jti=jti,
             token=token,
+            token_type=token_type,
             creation=now,
             last_access=now,
             expiration=exp,
@@ -171,6 +170,7 @@ class Authentication(BaseAuthentication):
 
                 t["id"] = token.jti
                 t["token"] = token.token
+                t["token_type"] = token.token_type
                 t["emitted"] = token.creation.strftime('%s')
                 t["last_access"] = token.last_access.strftime('%s')
                 if token.expiration is not None:
