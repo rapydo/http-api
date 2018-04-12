@@ -28,7 +28,7 @@ class Authentication(BaseAuthentication):
 
     def get_user_object(self, username=None, payload=None):
 
-        from neomodel.exception import DeflateError
+        from neomodel.exceptions import DeflateError
         user = None
         try:
             if username is not None:

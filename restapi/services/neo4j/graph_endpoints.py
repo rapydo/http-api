@@ -78,8 +78,8 @@ def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        from neomodel.exception import RequiredProperty
-        from neomodel.exception import UniqueProperty
+        from neomodel.exceptions import RequiredProperty
+        from neomodel.exceptions import UniqueProperty
 
         try:
             return func(self, *args, **kwargs)

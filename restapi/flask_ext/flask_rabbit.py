@@ -11,6 +11,18 @@ class RabbitExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
+        #############################
+        # NOTE: for SeaDataCloud
+        # Unused for debugging at the moment
+        from restapi.confs import PRODUCTION
+        if not PRODUCTION:
+            log.warning("Skipping Rabbit")
+
+            class Empty:
+                pass
+            return Empty()
+
+        #############################
         variables = self.variables
         # print("\n\n\nTEST")
 
@@ -33,7 +45,7 @@ class RabbitExt(BaseExtension):
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get('host'),
-                port=variables.get('port'),
+                port=int(variables.get('port')),
                 virtual_host=variables.get('vhost'),
                 credentials=credentials
             )
