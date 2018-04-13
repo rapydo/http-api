@@ -17,7 +17,10 @@ def send_mail_is_active():
 
 
 def send_mail(
-        body, subject, to_address=None, from_address=None, plain_body=None):
+        body, subject,
+        to_address=None, from_address=None,
+        cc=None, bcc=None,
+        plain_body=None):
 
     try:
         host = os.environ.get("SMTP_HOST")
@@ -39,6 +42,7 @@ def send_mail(
                 smtp_host=host,
                 smtp_port=port,
                 username=username,
+                cc=cc, bcc=bcc,
                 password=password
             )
         else:
