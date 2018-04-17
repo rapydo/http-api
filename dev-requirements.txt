@@ -1,9 +1,9 @@
-coveralls
-pip
-six==1.10
-awscli
+coveralls==1.3.0
+pip==10.0.0
+six==1.11.0
+awscli==1.15.4
 
 git+https://github.com/rapydo/utils.git@0.6.0
-requests==2.11.1
+requests==2.18.4
 git+https://github.com/rapydo/do.git@0.6.0
 
