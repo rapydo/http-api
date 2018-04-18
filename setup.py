@@ -36,8 +36,7 @@ setup(
     ''' % (main_package, app),
     install_requires=[
         # Rapydo framework
-        # "rapydo-utils==%s" % current_version,
-        "rapydo-utils",
+        "rapydo-utils==%s" % current_version,
         # various utilities
         "attrs",
         "pyOpenSSL",
@@ -49,15 +48,17 @@ setup(
         "Flask-RESTful",
         "Flask-SQLAlchemy",
         # "flask-shell-ipython",
-        "flask_injector==v0.9.0",
+        "flask_injector==0.10.1",
         "injector==0.12.0",
         # DB drivers
-        "neomodel==3.2.5",
-        "psycopg2",
+        "neomodel==3.2.6",
+        # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi
+        # "psycopg2",
+        "psycopg2-binary",
         "pymodm",
         # FS
-        "python-irodsclient==0.7.0",
-        "gssapi==1.2.0",
+        "python-irodsclient",
+        "gssapi==1.4.1",
         # Swagger
         "bravado-core",
         "swagger-spec-validator",

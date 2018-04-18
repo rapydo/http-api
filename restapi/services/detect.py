@@ -129,6 +129,18 @@ class Detector(object):
             return {}
 
     @staticmethod
+    def load_group(label):
+        from utilities.basher import detect_vargroup
+        return detect_vargroup(label)
+
+    def output_service_variables(self, service_name):
+        service_class = self.services_classes.get(service_name, {})
+        try:
+            return service_class.variables
+        except BaseException:
+            return {}
+
+    @staticmethod
     def load_variables(service, enable_var=None, prefix=None):
 
         variables = {}

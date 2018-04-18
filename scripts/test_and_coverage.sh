@@ -18,7 +18,7 @@ fi
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then 
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 	echo "Pull request from BRANCH ${TRAVIS_PULL_REQUEST_BRANCH} to ${TRAVIS_BRANCH}"
 else
 	echo "Current branch: $TRAVIS_BRANCH"
@@ -28,13 +28,14 @@ echo "Current version: $CURRENT_VERSION"
 
 CORE_DIR="${WORK_DIR}/rapydo_tests"
 COV_DIR="${WORK_DIR}/coverage_files"
+COVERAGE_FILE="/tmp/.coverage"
 
 echo "WORK_DIR = ${WORK_DIR}"
 echo "CORE_DIR = ${CORE_DIR}"
 echo "COVERAGE_DIR = ${COV_DIR}"
 
 # Save credentials for S3 storage
-aws configure set aws_access_key_id $S3_USER 
+aws configure set aws_access_key_id $S3_USER
 aws configure set aws_secret_access_key $S3_PWD
 
 mkdir -p $COV_DIR
@@ -46,7 +47,7 @@ cd $CORE_DIR
 mkdir -p data
 
 # Pull requests
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then 
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 	if [ "$TRAVIS_PULL_REQUEST_BRANCH" != "master" ]; then
 	    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
 	    git checkout $TRAVIS_PULL_REQUEST_BRANCH
@@ -68,7 +69,8 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} init --skip-npm
+
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
 	sleep 40
@@ -85,8 +87,8 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker logs ${PROJECT}_backend_1
 
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi test_clean_do_not_use_me'
-	
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced_clean'
+
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
 
@@ -96,7 +98,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	fi
 
 	# Sync the coverage file to S3, to be available for the next stage
-	docker cp ${PROJECT}_backend_1:/code/.coverage $COV_DIR/.coverage.${PROJECT}
+	docker cp ${PROJECT}_backend_1:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
@@ -108,7 +110,7 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --skip-bower 
+	rapydo --development --project ${PROJECT} init --skip-npm
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 	# Build the backend image and execute coveralls

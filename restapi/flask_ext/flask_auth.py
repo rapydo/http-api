@@ -81,8 +81,8 @@ class Authenticator(BaseExtension):
 
         # Get the instance from the parent
         obj = super().custom_init()
-        # Inject the backend as the object 'db' inside the instance
-        # IMPORTANT: this is the 'hat trick' that makes things possible
+        # NOTE: Inject the backend as the object 'db' inside the instance
+        # IMPORTANT!!! this is the 'hat trick' that makes things possible
         obj.db = abackend
 
         if pinit:
@@ -170,10 +170,15 @@ class HandleSecurity(object):
         return qr_stream.getvalue()
 
     # FIXME: check password strength, if required
-    def verify_password_strength(self, pwd, old_pwd):
+    def verify_password_strength(self, pwd, old_pwd=None, old_hash=None):
 
-        if pwd == old_pwd:
+        if old_pwd is not None and pwd == old_pwd:
             return False, "Password cannot match the previous password"
+        if old_hash is not None:
+            new_hash = BaseAuthentication.hash_password(pwd)
+            if old_hash == new_hash:
+                return False, "Password cannot match the previous password"
+
         if len(pwd) < 8:
             return False, "Password is too short, use at least 8 characters"
 
@@ -198,8 +203,13 @@ class HandleSecurity(object):
             raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
 
         if self.auth.VERIFY_PASSWORD_STRENGTH:
-            check, msg = self.verify_password_strength(
-                new_password, password)
+            check = True
+            if password is not None:
+                check, msg = self.verify_password_strength(
+                    new_password, old_pwd=password)
+            else:
+                check, msg = self.verify_password_strength(
+                    new_password, old_hash=user.password)
 
             if not check:
                 raise RestApiException(

@@ -1,0 +1,20 @@
+
+all:
+  summary: List of existing roles 
+  # description: -
+  custom:
+    # publish: true
+    authentication: true
+  responses:
+    '200':
+      description: List of roles successfully retrieved
+
+query:
+  summary: List of existing roles matching a substring query
+  # description: -
+  custom:
+    # publish: true
+    authentication: true
+  responses:
+    '200':
+      description: Matching roles successfully retrieved

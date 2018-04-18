@@ -3,11 +3,11 @@ depends_on:
   - not ADMINER_DISABLED
 
 file: admin_users
-class: AdminUsers
+class: UserRole
 schema:
   expose: true
 mapping:
-  users: "/admin/users"
-  user: "/admin/users/<user_id>"
+  all: "/role"
+  query: "/role/<query>"
 labels:
-  - admin
+  - miscellaneous

@@ -222,23 +222,34 @@ def create_app(name=__name__,
     @microservice.after_request
     def log_response(response):
 
-        # if is an upload in streaming, I must not consume
-        # request.data or request.json, otherwise it get lost
-        if request.mimetype != 'application/octet-stream':
-            data = handle_log_output(request.data)
+        ###############################
+        # NOTE: if it is an upload,
+        # I must NOT consume request.data or request.json,
+        # otherwise the content gets lost
+        do_not_log_types = [
+            'application/octet-stream',
+            'multipart/form-data',
+        ]
 
-            # Limit the parameters string size, sometimes it's too big
-            for k in data:
-                try:
-                    if not isinstance(data[k], str):
-                        continue
-                    if len(data[k]) > MAX_CHAR_LEN:
-                        data[k] = data[k][:MAX_CHAR_LEN] + "..."
-                except IndexError:
-                    pass
+        if request.mimetype in do_not_log_types:
+            data = 'STREAM_UPLOAD'
+        else:
+            try:
+                data = handle_log_output(request.data)
+                # Limit the parameters string size, sometimes it's too big
+                for k in data:
+                    try:
+                        if not isinstance(data[k], str):
+                            continue
+                        if len(data[k]) > MAX_CHAR_LEN:
+                            data[k] = data[k][:MAX_CHAR_LEN] + "..."
+                    except IndexError:
+                        pass
+            except Exception as e:
+                data = 'OTHER_UPLOAD'
 
-            log.info(
-                "%s %s %s %s", request.method, request.url, data, response)
+        log.info("%s %s %s %s", request.method, request.url, data, response)
+
         return response
 
     ##############################

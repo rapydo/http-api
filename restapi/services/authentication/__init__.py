@@ -13,11 +13,13 @@ import base64
 import pytz
 import socket
 
+from utilities import CUSTOM_PACKAGE
 from utilities.uuid import getUUID
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
 from restapi.confs import PRODUCTION
+from utilities.meta import Meta
 from utilities.globals import mem
 from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
@@ -40,6 +42,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # FIXME: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
     token_type = 'Bearer'
 
+    FULL_TOKEN = "f"
+    PWD_RESET = "r"
     ##########################
     _oauth2 = {}
 
@@ -51,6 +55,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
+        self._jti = None
         self._user = None
 
     @classmethod
@@ -239,7 +244,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 # note: this will return the ip if hostname is not available
                 # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
-                hostname, _, _= socket.gethostbyaddr(ip)
+                hostname, _, _ = socket.gethostbyaddr(ip)
             except Exception as e:
                 log.warning("Error resolving '%s': '%s'", ip, e)
         return ip, hostname
@@ -255,11 +260,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return encode, payload['jti']
 
-    # FIXME: this method is not used
-    def create_temporary_token(self, user):
-        # expiration = timedelta(seconds=300)
-        expiration = timedelta(seconds=10)
-        payload = self.fill_payload(user, expiration=expiration)
+    def create_temporary_token(self, user, duration=300, token_type=None):
+        expiration = timedelta(seconds=duration)
+        payload = self.fill_payload(
+            user, expiration=expiration, token_type=token_type)
         return self.create_token(payload)
 
     @abc.abstractmethod
@@ -278,7 +282,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    def unpack_token(self, token):
+    def unpack_token(self, token, raiseErrors=False):
 
         payload = None
         try:
@@ -287,16 +291,25 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # now > exp
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
-            log.warning("Unable to decode JWT token. %s", e)
+            if raiseErrors:
+                raise(e)
+            else:
+                log.warning("Unable to decode JWT token. %s", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
-            log.warning("Unable to decode JWT token. %s", e)
+            if raiseErrors:
+                raise(e)
+            else:
+                log.warning("Unable to decode JWT token. %s", e)
         except Exception as e:
-            log.warning("Unable to decode JWT token. %s", e)
+            if raiseErrors:
+                raise(e)
+            else:
+                log.warning("Unable to decode JWT token. %s", e)
 
         return payload
 
-    def verify_token(self, token):
+    def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force token cleaning
         payload = {}
@@ -306,11 +319,22 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False
 
         # Decode the current token
-        tmp_payload = self.unpack_token(token)
+        tmp_payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if tmp_payload is None:
             return False
         else:
             payload = tmp_payload
+
+        payload_type = payload.get("t", self.FULL_TOKEN)
+
+        if token_type is None:
+            token_type = self.FULL_TOKEN
+
+        if token_type != payload_type:
+            log.error(
+                "Invalid token type %s, required: %s",
+                payload_type, token_type)
+            return False
 
         # Get the user from payload
         self._user = self.get_user_object(payload=payload)
@@ -332,9 +356,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         logfunc("User authorized")
 
         self._token = token
+        self._jti = payload['jti']
         return True
 
-    def save_token(self, user, token, jti):
+    def save_token(self, user, token, jti, token_type=None):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
@@ -361,7 +386,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return payload
 
-    def fill_payload(self, userobj, expiration=None):
+    def fill_payload(self, userobj, expiration=None, token_type=None):
         """ Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
@@ -382,6 +407,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         short_jwt = \
             Detector.get_global_var('AUTH_FULL_JWT_PAYLOAD', '') \
             .lower() == 'false'
+
+        if token_type is not None:
+            if token_type == self.PWD_RESET:
+                short_jwt = True
+                payload["t"] = token_type
 
         if not short_jwt:
             now = datetime.now(pytz.utc)
@@ -450,11 +480,35 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             create_user(
                 email=self.DEFAULT_USER,
                 name="Whatever", surname="YouLike",
-                name_surname="Whatever#_#YouLike",
                 password=self.DEFAULT_PASSWORD,
                 roles=DEFAULT_ROLES)
         """
         return
+
+    def custom_user_properties(self, userdata):
+        meta = Meta()
+        module_path = "%s.%s.%s" % \
+            (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module = meta.get_module_from_string(
+            module_path,
+            debug_on_fail=False,
+        )
+
+        Customizer = meta.get_class_from_string(
+            'Customizer', module, skip_error=True
+        )
+        if Customizer is None:
+            log.debug("No user properties customizer available")
+        else:
+            try:
+                userdata = Customizer().custom_user_properties(userdata)
+            except BaseException as e:
+                log.error("Unable to customize user properties: %s", e)
+
+        if "email" in userdata:
+            userdata["email"] = userdata["email"].lower()
+
+        return userdata
 
     # ################
     # # Create Users #

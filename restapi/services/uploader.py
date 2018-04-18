@@ -100,6 +100,14 @@ class Uploader(object):
     def upload(self, subfolder=None, force=False):
 
         if 'file' not in request.files:
+
+            # # the PUT problem for uploading?
+            # tmp = request.stream.read()
+            # print("TEST", len(tmp))
+            # with open('uploaded_image.jpg', 'w') as f:
+            #     f.write(request.stream.read())
+            # # print("TEST", request.data)
+
             return self.force_response(errors={
                 "Missing file": "No files specified"},
                 code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)

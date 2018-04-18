@@ -6,6 +6,8 @@ from flask import request, stream_with_context, Response
 
 from utilities import htmlcodes as hcodes
 from irods.access import iRODSAccess
+from irods.rule import Rule
+from irods.ticket import Ticket
 from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
@@ -169,9 +171,11 @@ class IrodsPythonClient():
 
     def create_directory(self, path, ignore_existing=False):
 
+        # print("TEST", path, ignore_existing)
         try:
 
-            ret = self.prc.collections.create(path)
+            ret = self.prc.collections.create(
+                path, recurse=ignore_existing)
             log.debug("Created irods collection: %s", path)
             return ret
 
@@ -216,6 +220,30 @@ class IrodsPythonClient():
             log.debug("Irods object already exists: %s", path)
 
         return False
+
+    def icopy(self, sourcepath, destpath, ignore_existing=False, warning=None):
+
+        # Replace 'copy'
+
+        from irods.manager.data_object_manager import DataObjectManager
+        dm = DataObjectManager(self.prc)
+        if warning is None:
+            warning = 'Irods object already exists'
+
+        try:
+            dm.copy(sourcepath, destpath)
+        except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
+            if not ignore_existing:
+                raise IrodsException(
+                    "Irods object already exists",
+                    status_code=hcodes.HTTP_BAD_REQUEST)
+            log.warning("%s: %s", warning, destpath)
+        else:
+            log.debug("Copied: %s -> %s", sourcepath, destpath)
+
+    def put(self, local_path, irods_path):
+        # NOTE: this action always overwrite
+        return self.prc.data_objects.put(local_path, irods_path)
 
     def copy(self, sourcepath, destpath,
              recursive=False, force=False,
@@ -288,8 +316,13 @@ class IrodsPythonClient():
                 self.prc.data_objects.unlink(path, force=force)
                 log.debug("Removed irods object: %s", path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
-            raise IrodsException(
-                "Cannot delete an non empty directory without recursive flag")
+
+            if recursive:
+                raise IrodsException(
+                    "Error deleting non empty directory")
+            else:
+                raise IrodsException(
+                    "Cannot delete non empty directory without recursive flag")
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
@@ -377,7 +410,7 @@ class IrodsPythonClient():
                 break
             target.write(chunk)
 
-    def read_in_streaming(self, absolute_path):
+    def read_in_streaming(self, absolute_path, headers=None):
         """
         Reads obj from iRODS without saving a local copy
         """
@@ -387,15 +420,22 @@ class IrodsPythonClient():
         try:
             obj = self.prc.data_objects.get(absolute_path)
 
+            # NOTE: what about binary option?
             handle = obj.open('r')
+            if headers is None:
+                headers = {}
             return Response(
                 stream_with_context(
-                    self.read_in_chunks(handle, self.chunk_size)))
+                    self.read_in_chunks(handle, self.chunk_size)),
+                headers=headers,
+            )
 
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot read file: not found")
 
-    def write_in_streaming(self, destination, force=False, resource=None):
+    def write_in_streaming(self,
+                           destination, force=False,
+                           resource=None, binary=False):
         """
         Writes obj to iRODS without saving a local copy
         """
@@ -420,7 +460,11 @@ class IrodsPythonClient():
             # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
             # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
-                with obj.open('w') as target:
+                # NOTE binary option for non ASCII files
+                mode = 'w'
+                if binary:
+                    mode = 'w+'
+                with obj.open(mode) as target:
                     self.write_in_chunks(target, self.chunk_size)
             except BaseException as ex:
                 log.critical("Failed streaming upload: %s", ex)
@@ -516,6 +560,35 @@ class IrodsPythonClient():
         data["inheritance"] = "N/A"
 
         return data
+
+    def enable_inheritance(self, path, zone=None):
+
+        if zone is None:
+            zone = self.get_current_zone()
+
+        key = 'inherit'
+        ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
+        try:
+            self.prc.permissions.set(ACL)  # , recursive=False)
+            log.verbose("Enabled %s to %s", key, path)
+        except iexceptions.CAT_INVALID_ARGUMENT:
+            if not self.is_collection(path) and not self.is_dataobject(path):
+                raise IrodsException("Cannot set Inherit: path not found")
+            else:
+                raise IrodsException("Cannot set Inherit")
+            return False
+        else:
+            return True
+
+    def create_collection_inheritable(self, ipath, user, permissions='own'):
+
+        # Create the directory
+        self.create_empty(ipath, directory=True, ignore_existing=True)
+        # This user will own the directory
+        self.set_permissions(
+            ipath, permission=permissions, userOrGroup=user)
+        # Let the permissions scale to subelements
+        self.enable_inheritance(ipath)
 
     def set_permissions(self, path, permission=None, userOrGroup=None,
                         zone=None, recursive=False):
@@ -684,9 +757,7 @@ class IrodsPythonClient():
             data = {}
             units = {}
             for meta in obj.metadata.items():
-
                 name = meta.name
-
                 data[name] = meta.value
                 units[name] = meta.units
 
@@ -697,7 +768,6 @@ class IrodsPythonClient():
         ):
             raise IrodsException("Cannot extract metadata, object not found")
 
-    # We may need this for testing the get_metadata
     def set_metadata(self, path, **meta):
         try:
             if (self.is_collection(path)):
@@ -778,6 +848,125 @@ class IrodsPythonClient():
         self.prc.users.modify(user, 'addAuth', dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
+    def rule(self, name, body, inputs, output=False):
+
+        import textwrap
+
+        rule_body = textwrap.dedent('''\
+            %s {{
+                %s
+        }}''' % (name, body))
+
+        outname = None
+        if output:
+            outname = 'ruleExecOut'
+        myrule = Rule(self.prc, body=rule_body, params=inputs, output=outname)
+        try:
+            raw_out = myrule.execute()
+        except BaseException as e:
+            msg = 'Irule failed: %s' % e.__class__.__name__
+            log.error(msg)
+            log.warning(e)
+            # raise IrodsException(msg)
+            raise e
+        else:
+            log.debug("Rule %s executed: %s", name, raw_out)
+
+            # retrieve out buffer
+            if output and len(raw_out.MsParam_PI) > 0:
+                out_array = raw_out.MsParam_PI[0].inOutStruct
+                # print("out array", out_array)
+
+                import re
+                file_coding = 'utf-8'
+
+                buf = out_array.stdoutBuf.buf
+                if buf is not None:
+                    # it's binary data (BinBytesBuf) so must be decoded
+                    buf = buf.decode(file_coding)
+                    buf = re.sub(r'\s+', '', buf)
+                    buf = re.sub(r'\\x00', '', buf)
+                    buf = buf.rstrip('\x00')
+                    log.debug("Out buff: %s", buf)
+
+                err_buf = out_array.stderrBuf.buf
+                if err_buf is not None:
+                    err_buf = err_buf.decode(file_coding)
+                    err_buf = re.sub(r'\s+', '', err_buf)
+                    log.debug("Err buff: %s", err_buf)
+
+                return buf
+
+            return raw_out
+
+        """
+        # EXAMPLE FOR IRULE: #METADATA RULE
+        object_path = "/sdcCineca/home/httpadmin/tmp.txt"
+        test_name = 'paolo2'
+        inputs = {  # extra quotes for string literals
+            '*object': '"%s"' % object_path,
+            '*name': '"%s"' % test_name,
+            '*value': '"%s"' % test_name,
+        }
+        body = \"\"\"
+            # add metadata
+            *attribute.*name = *value;
+            msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
+        \"\"\"
+        output = imain.irule('test', body, inputs, 'ruleExecOut')
+        print("TEST", output)
+        # log.pp(output)
+        """
+
+    def ticket(self, path):
+        ticket = Ticket(self.prc)
+        # print("TEST", self.prc, path)
+        ticket.issue('read', path)
+        return ticket
+
+    def ticket_supply(self, code):
+        # use ticket for access
+        ticket = Ticket(self.prc, code)
+        ticket.supply()
+
+    def test_ticket(self, path):
+        # self.ticket_supply(code)
+
+        try:
+            with self.prc.data_objects.open(path, 'r') as obj:
+                obj.__class__.__name__
+        except iexceptions.SYS_FILE_DESC_OUT_OF_RANGE:
+            return False
+        else:
+            return True
+
+    def stream_ticket(self, path, headers=None):
+        obj = self.prc.data_objects.open(path, 'r')
+        return Response(
+            stream_with_context(
+                self.read_in_chunks(obj, self.chunk_size)),
+            headers=headers,
+        )
+
+    def list_tickets(self, user=None):
+        from irods.models import Ticket, DataObject
+        try:
+            data = self.prc.query(
+                # Ticket.id,
+                Ticket.string, Ticket.type, User.name, DataObject.name,
+                Ticket.uses_limit, Ticket.uses_count,
+                Ticket.expiration
+            ).all()
+            # ).filter(User.name == user).one()
+
+            # for obj in data:
+            #     print("TEST", obj)
+            #     # for _, grp in obj.items():
+
+        except iexceptions.NoResultFound:
+            return None
+        else:
+            return data
 
 # ####################################################
 # ####################################################

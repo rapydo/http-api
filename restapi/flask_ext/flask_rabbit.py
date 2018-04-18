@@ -11,9 +11,22 @@ class RabbitExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        variables = self.variables
+        #############################
+        # NOTE: for SeaDataCloud
+        # Unused for debugging at the moment
+        from restapi.confs import PRODUCTION
+        if not PRODUCTION:
+            log.warning("Skipping Rabbit")
 
-        # PAOLO's old way
+            class Empty:
+                pass
+            return Empty()
+
+        #############################
+        variables = self.variables
+        # print("\n\n\nTEST")
+
+        # DIRECT AMQP connection
         # uri = 'amqp://%s:%s@%s:%s/' % (
         #     variables.get('user'),
         #     variables.get('password'),
@@ -24,7 +37,7 @@ class RabbitExt(BaseExtension):
         # parameter = pika.connection.URLParameters(uri)
         # return pika.BlockingConnection(parameter)
 
-        # MERRET's new way
+        # PIKA based
         credentials = pika.PlainCredentials(
             variables.get('user'),
             variables.get('password')
@@ -32,6 +45,7 @@ class RabbitExt(BaseExtension):
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get('host'),
+                port=int(variables.get('port')),
                 virtual_host=variables.get('vhost'),
                 credentials=credentials
             )

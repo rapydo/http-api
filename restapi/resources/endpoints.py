@@ -6,6 +6,8 @@ And a Farm: How to create endpoints into REST service.
 """
 
 import pytz
+import jwt
+import os
 
 from datetime import datetime, timedelta
 from flask import jsonify, current_app
@@ -15,8 +17,12 @@ from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
 # from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.mail import get_html_template
 from utilities import htmlcodes as hcodes
+from utilities.time import timestamp_from_string
 from utilities.globals import mem
+from restapi.confs import PRODUCTION
 from utilities.logs import get_logger
 
 from restapi.flask_ext.flask_auth import HandleSecurity
@@ -33,6 +39,8 @@ class Status(EndpointResource):
         #####################
         # DEBUG
         # print(self.auth)
+        # log.pp({'test': 1})
+        # log.pp(pytz)
         # return {'Hello', 'World!'}
 
         #####################
@@ -242,6 +250,170 @@ class Logout(EndpointResource):
         return self.empty_response()
 
 
+class RecoverPassword(EndpointResource):
+
+    @decorate.catch_error()
+    def post(self):
+
+        if not send_mail_is_active():
+            raise RestApiException(
+                'Server misconfiguration, unable to reset password. ' +
+                'Please report this error to adminstrators',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        reset_email = self.get_input(single_parameter='reset_email')
+
+        if reset_email is None:
+            raise RestApiException(
+                'Invalid reset email',
+                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+
+        reset_email = reset_email.lower()
+
+        user = self.auth.get_user_object(username=reset_email)
+
+        if user is None:
+            raise RestApiException(
+                'Sorry, %s ' % reset_email +
+                'is not recognized as a valid username or email address',
+                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+
+        title = mem.customizer._configurations \
+            .get('project', {}) \
+            .get('title', "Unkown title")
+
+        # invalidate previous reset tokens
+        tokens = self.auth.get_tokens(user=user)
+        for t in tokens:
+            token_type = t.get("token_type")
+            if token_type is None:
+                continue
+            if token_type != self.auth.PWD_RESET:
+                continue
+
+            tok = t.get("token")
+            if self.auth.invalidate_token(tok):
+                log.info("Previous reset token invalidated: %s", tok)
+
+        # Generate a new reset token
+        reset_token, jti = self.auth.create_temporary_token(
+            user,
+            duration=86400,
+            token_type=self.auth.PWD_RESET
+        )
+
+        domain = os.environ.get("DOMAIN")
+        if PRODUCTION:
+            protocol = "https"
+        else:
+            protocol = "http"
+
+        u = "%s://%s/public/reset/%s" % (protocol, domain, reset_token)
+        body = "link to reset password: %s" % u
+
+        replaces = {
+            "url": u
+        }
+        html_body = get_html_template("reset_password.html", replaces)
+        # html_body = "link to reset password: <a href='%s'>click here</a>" % u
+        subject = "%s Password Reset" % title
+        send_mail(html_body, subject, reset_email, plain_body=body)
+
+        self.auth.save_token(
+            user, reset_token, jti, token_type=self.auth.PWD_RESET)
+
+        msg = "We are sending an email to your email address where " + \
+            "you will find the link to enter a new password"
+        return msg
+
+    @decorate.catch_error()
+    def put(self, token_id):
+
+        try:
+            # Unpack and verify token. If ok, self.auth will be added with
+            # auth._user auth._token and auth._jti
+            self.auth.verify_token(
+                token_id, raiseErrors=True, token_type=self.auth.PWD_RESET)
+
+        # If token is expired
+        except jwt.exceptions.ExpiredSignatureError as e:
+            raise RestApiException(
+                'Invalid reset token: this request is expired',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token is not yet active
+        except jwt.exceptions.ImmatureSignatureError as e:
+            raise RestApiException(
+                'Invalid reset token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token does not exist (or other generic errors)
+        except Exception as e:
+            raise RestApiException(
+                'Invalid reset token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # Recovering token object from jti
+        token = self.auth.get_tokens(token_jti=self.auth._jti)
+        if len(token) == 0:
+            raise RestApiException(
+                'Invalid reset token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        token = token.pop(0)
+        emitted = timestamp_from_string(token["emitted"])
+
+        # If user logged in after the token emission invalidate the token
+        if self.auth._user.last_login is not None and \
+                self.auth._user.last_login >= emitted:
+            self.auth.invalidate_token(token_id)
+            raise RestApiException(
+                'Invalid reset token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # If user changed the pwd after the token emission invalidate the token
+        if self.auth._user.last_password_change is not None and \
+                self.auth._user.last_password_change >= emitted:
+            self.auth.invalidate_token(token_id)
+            raise RestApiException(
+                'Invalid reset token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # The reset token is valid, do something
+
+        data = self.get_input()
+        new_password = data.get("new_password")
+        password_confirm = data.get("password_confirm")
+
+        # No password to be changed, just a token verification
+        if new_password is None and password_confirm is None:
+            return self.empty_response()
+
+        # Something is missing
+        if new_password is None or password_confirm is None:
+            raise RestApiException(
+                'Invalid password',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if new_password != password_confirm:
+            raise RestApiException(
+                'New password does not match with confirmation',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        security = HandleSecurity(self.auth)
+
+        security.change_password(
+            self.auth._user, None, new_password, password_confirm)
+        # I really don't know why this save is required... since it is already
+        # in change_password ... But if I remove it the new pwd is not saved...
+        self.auth._user.save()
+
+        # Bye bye token (reset tokens are valid only once)
+        self.auth.invalidate_token(token_id)
+
+        return "Password changed"
+
+
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
@@ -373,7 +545,7 @@ class Profile(EndpointResource):
         # properties["password"] = \
         #     BaseAuthentication.hash_password(properties["password"])
 
-        # DO CUSTOM STUFFS HERE - e.g. create name_surname index
+        # DO CUSTOM STUFFS HERE - e.g. create irods user
         properties, other_properties = \
             self.custom_pre_handle_user_input(properties, v)
 
@@ -423,7 +595,7 @@ class Profile(EndpointResource):
 
         security.change_password(
             user, password, new_password, password_confirm)
-        # I really don't why this save is required... since it is already
+        # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
         user.save()
 

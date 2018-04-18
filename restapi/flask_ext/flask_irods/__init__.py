@@ -51,6 +51,7 @@ class IrodsPythonExt(BaseExtension):
                 if admin:
                     user = self.variables.get('default_admin_user')
                     self.authscheme = GSI_AUTH_SCHEME
+                    # self.authscheme = self.variables.get('default_admin_auth')
                 else:
                     user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
@@ -106,6 +107,7 @@ class IrodsPythonExt(BaseExtension):
         else:
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme")
+        # log.pp(self.variables)
 
         return True
 
@@ -173,6 +175,12 @@ class IrodsPythonExt(BaseExtension):
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
         obj.connection_timeout = timeout
+
+        #########################
+        # TODO: this connection test, like in restapi wait
+        # should be used for debugging, with the output in case of failure
+        # restapi verify SERVICE
+        #########################
 
         # Do a simple command to test this session
         if check_connection:
