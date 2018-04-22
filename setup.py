@@ -51,7 +51,7 @@ setup(
         "flask_injector==0.10.1",
         "injector==0.12.0",
         # DB drivers
-        "neomodel==3.2.5",
+        "neomodel==3.2.6",
         # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi
         # "psycopg2",
         "psycopg2-binary",

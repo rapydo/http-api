@@ -316,7 +316,7 @@ class RecoverPassword(EndpointResource):
         }
         html_body = get_html_template("reset_password.html", replaces)
         # html_body = "link to reset password: <a href='%s'>click here</a>" % u
-        subject = "%s: password reset" % title
+        subject = "%s Password Reset" % title
         send_mail(html_body, subject, reset_email, plain_body=body)
 
         self.auth.save_token(
