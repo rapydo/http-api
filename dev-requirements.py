@@ -25,4 +25,6 @@ with open('dev-requirements.txt') as requirements:
         if FRAMEWORK_PREFIX in tool_name:
             tool_name += '==' + current_version
 
-        pip.main(['install', '-U', tool_name])
+        pip.main(
+            ['install', '--trusted-host', 'pypi.python.org', '-U', tool_name]
+        )
