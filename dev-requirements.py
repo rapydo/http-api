@@ -4,6 +4,8 @@
 """
 Implementing a solution to install pip requirements
 following the order indicated in the file
+
+# DEPRECATED: not working with pip10
 """
 
 import pip

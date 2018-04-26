@@ -1,5 +1,5 @@
 coveralls
-pip==9.0.3
+pip==10.0.1
 six==1.10
 awscli
 
