@@ -11,7 +11,8 @@ if [ -z $PROJECT ]; then
     exit 1
 fi
 
-pip install --upgrade pip beeprint
+# PIP10 DEBUG
+# pip install --upgrade pip
 
 # install requirements in listed order
 ./dev-requirements.py
