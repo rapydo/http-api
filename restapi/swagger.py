@@ -292,7 +292,7 @@ class BeSwagger(object):
 
         # A template base
         output = {
-            "swagger": "2.0",
+            "swagger": "2.0",  # TODO: update to 3.0.1?
             "info": {
                 "version": "0.0.1",
                 "title": "Your application name",

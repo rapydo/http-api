@@ -11,9 +11,16 @@ if [ -z $PROJECT ]; then
     exit 1
 fi
 
+# PIP10 DEBUG
+# pip install --upgrade pip
 
 # install requirements in listed order
-./dev-requirements.py
+# ./dev-requirements.py
+for package in `cat dev-requirements.txt`;
+do
+    echo "adding: $package";
+    pip3 install --upgrade --no-cache-dir $package;
+done
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
 

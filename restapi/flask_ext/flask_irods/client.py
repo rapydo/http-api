@@ -768,6 +768,20 @@ class IrodsPythonClient():
         ):
             raise IrodsException("Cannot extract metadata, object not found")
 
+    def remove_metadata(self, path, key):
+        if (self.is_collection(path)):
+            obj = self.prc.collections.get(path)
+        else:
+            obj = self.prc.data_objects.get(path)
+        tmp = None
+        for meta in obj.metadata.items():
+            if key == meta.name:
+                tmp = meta
+                break
+        # print(tmp)
+        if tmp is not None:
+            obj.metadata.remove(tmp)
+
     def set_metadata(self, path, **meta):
         try:
             if (self.is_collection(path)):
