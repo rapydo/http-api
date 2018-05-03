@@ -50,6 +50,7 @@ class RabbitExt(BaseExtension):
                 credentials=credentials
             )
         )
+        log.debug('Connecting to the Rabbit')
 
         # channel = connection.channel()
         # # Declare exchange, queue, and binding
