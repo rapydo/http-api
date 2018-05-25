@@ -308,7 +308,8 @@ class RecoverPassword(EndpointResource):
         else:
             protocol = "http"
 
-        u = "%s://%s/public/reset/%s" % (protocol, domain, reset_token)
+        rt = reset_token.replace(".", "+")
+        u = "%s://%s/public/reset/%s" % (protocol, domain, rt)
         body = "link to reset password: %s" % u
 
         replaces = {
@@ -329,6 +330,7 @@ class RecoverPassword(EndpointResource):
     @decorate.catch_error()
     def put(self, token_id):
 
+        token_id = token_id.replace("+", ".")
         try:
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
