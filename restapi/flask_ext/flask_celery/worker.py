@@ -27,8 +27,8 @@ celery_app = app.extensions.get('celery').celery_app
 celery_app.app = app
 
 
-def get_service(service):
-    return celery_app.app.extensions.get(service).get_instance()
+def get_service(service, **kwargs):
+    return celery_app.app.extensions.get(service).get_instance(**kwargs)
 
 
 celery_app.get_service = get_service
