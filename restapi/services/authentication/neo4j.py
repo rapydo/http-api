@@ -82,11 +82,11 @@ class Authentication(BaseAuthentication):
 
         return user_node
 
-    # Also user by PUT user
+    # Also usre by PUT user
     def link_roles(self, user, roles):
 
-        if self.default_role not in roles:
-            roles.append(self.default_role)
+        # if self.default_role not in roles:
+        #     roles.append(self.default_role)
 
         for p in user.roles.all():
             user.roles.disconnect(p)

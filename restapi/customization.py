@@ -72,7 +72,7 @@ class Customizer(object):
         name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
         module = self._meta.get_module_from_string(
             name,
-            exit_if_not_found=True
+            exit_if_not_found=True, exit_on_fail=True
         )
         schema_class = getattr(module, 'RecoverSchema')
 

@@ -175,6 +175,59 @@ class AdminUsers(GraphBaseOperations):
                         }
                     }
                 )
+
+            if 'autocomplete' in v and not v['autocomplete']:
+                for idx, val in enumerate(new_schema):
+                    if val["name"] == "group":
+                        new_schema[idx]["default"] = None
+
+                        if "custom" not in new_schema[idx]:
+                            new_schema[idx]["custom"] = {}
+
+                        new_schema[idx]["custom"]["htmltype"]: "select"
+                        new_schema[idx]["custom"]["label"]: "Group"
+
+                        new_schema[idx]["enum"] = []
+
+                        for g in self.graph.Group.nodes.all():
+                            new_schema[idx]["enum"].append(
+                                {g.uuid: g.fullname}
+                            )
+                            if new_schema[idx]["default"] is None:
+                                new_schema[idx]["default"] = g.uuid
+
+                    if val["name"] == "roles":
+
+                        new_schema[idx]["default"] = None
+                        new_schema[idx]["multiple"] = True
+                        if "custom" not in new_schema[idx]:
+                            new_schema[idx]["custom"] = {}
+
+                        new_schema[idx]["custom"]["htmltype"]: "select"
+                        new_schema[idx]["custom"]["label"]: "Roles"
+
+                        new_schema[idx]["enum"] = []
+
+                        cypher = "MATCH (r:Role)"
+                        if not self.auth.verify_admin():
+                            allowed_roles = mem.customizer._configurations \
+                                .get('variables', {}) \
+                                .get('backend', {}) \
+                                .get('allowed_roles', [])
+                            cypher += " WHERE r.name in %s" % allowed_roles
+                        # Admin only
+                        else:
+                            cypher += " WHERE r.description <> 'automatic'"
+
+                        cypher += " RETURN r ORDER BY r.name ASC"
+
+                        result = self.graph.cypher(cypher)
+                        for row in result:
+                            r = self.graph.Role.inflate(row[0])
+                            new_schema[idx]["enum"].append(
+                                {r.name: r.description}
+                            )
+
             if is_admin:
                 return self.force_response(new_schema)
 
@@ -198,7 +251,7 @@ class AdminUsers(GraphBaseOperations):
                             new_schema[idx]["default"] = g.uuid
 
             return self.force_response(new_schema)
- 
+
         # INIT #
         properties = self.read_properties(schema, v)
 
