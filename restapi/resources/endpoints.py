@@ -637,6 +637,7 @@ if detector.check_availability('celery'):
 
             active_tasks = workers.active()
             revoked_tasks = workers.revoked()
+            reserved_tasks = workers.reserved()
             scheduled_tasks = workers.scheduled()
 
             if active_tasks is None:
@@ -645,6 +646,8 @@ if detector.check_availability('celery'):
                 revoked_tasks = []
             if scheduled_tasks is None:
                 scheduled_tasks = []
+            if reserved_tasks is None:
+                reserved_tasks = []
 
             for worker in active_tasks:
                 tasks = active_tasks[worker]
@@ -692,6 +695,22 @@ if detector.check_availability('celery'):
                     row['task'] = task["request"]["name"]
                     row['args'] = task["request"]["args"]
                     data.append(row)
+
+            for worker, tasks in enumerate(scheduled_tasks):
+                for task in tasks:
+                    if task_id is not None and \
+                       task["id"] != task_id:
+                        continue
+
+                    data.append({
+                        'status': 'SCHEDULED',
+                        'worker': worker,
+                        'ETA': task['time_start'],
+                        'task_id': task["id"],
+                        'priority': task['delivery_info']["priority"],
+                        'task': task["name"],
+                        'args': task["args"],
+                    })
 
             # from celery.task.control import inspect
             # tasks = inspect()
