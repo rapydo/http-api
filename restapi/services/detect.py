@@ -104,7 +104,7 @@ class Detector(object):
 
         # log.pp(self.services_configuration)
 
-        if self.authentication_sevice is None:
+        if self.authentication_service is None:
             log.warning("no service defined behind authentication")
             # raise AttributeError("no service defined behind authentication")
         else:
