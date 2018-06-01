@@ -696,7 +696,7 @@ if detector.check_availability('celery'):
                     row['args'] = task["request"]["args"]
                     data.append(row)
 
-            for worker, tasks in enumerate(scheduled_tasks):
+            for worker, tasks in enumerate(reserved_tasks):
                 for task in tasks:
                     if task_id is not None and \
                        task["id"] != task_id:
