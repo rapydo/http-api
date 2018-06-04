@@ -27,6 +27,12 @@ class NeomodelClient():
         # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
 
+    def sanitize_input(self, term):
+        '''
+        Strip and clean up term from special characters.
+        '''
+        return term.strip().replace("*", "").replace("'", "\\'")
+
 
 class NeoModel(BaseExtension):
 
