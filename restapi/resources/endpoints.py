@@ -629,28 +629,49 @@ if detector.check_availability('celery'):
 
         def get(self, task_id=None):
 
+            data = []
             # Inspect all worker nodes
             celery = self.get_service_instance('celery')
-            workers = celery.control.inspect()
 
-            data = []
+            #############################
+            # FAST WAY
+            stats = celery.control.inspect().stats()
+            workers = list(stats.keys())
 
-            active_tasks = workers.active()
-            revoked_tasks = workers.revoked()
-            reserved_tasks = workers.reserved()
-            scheduled_tasks = workers.scheduled()
+            active_tasks = {}
+            revoked_tasks = {}
+            scheduled_tasks = {}
+            reserved_tasks = {}
 
-            if active_tasks is None:
-                active_tasks = []
-            if revoked_tasks is None:
-                revoked_tasks = []
-            if scheduled_tasks is None:
-                scheduled_tasks = []
-            if reserved_tasks is None:
-                reserved_tasks = []
+            for worker in workers:
+                i = celery.control.inspect([worker])
+                for key, value in i.active().items():
+                    active_tasks[key] = value
+                for key, value in i.revoked().items():
+                    revoked_tasks[key] = value
+                for key, value in i.reserved().items():
+                    reserved_tasks[key] = value
+                for key, value in i.scheduled().items():
+                    scheduled_tasks[key] = value
 
-            for worker in active_tasks:
-                tasks = active_tasks[worker]
+            #############################
+            # workers = celery.control.inspect()
+            # SLOW WAY
+            # active_tasks = workers.active()
+            # revoked_tasks = workers.revoked()
+            # reserved_tasks = workers.reserved()
+            # scheduled_tasks = workers.scheduled()
+            # SLOW WAY
+            # if active_tasks is None:
+            #     active_tasks = []
+            # if revoked_tasks is None:
+            #     revoked_tasks = []
+            # if scheduled_tasks is None:
+            #     scheduled_tasks = []
+            # if reserved_tasks is None:
+            #     reserved_tasks = []
+
+            for worker, tasks in active_tasks.items():
                 for task in tasks:
                     if task_id is not None and task["id"] != task_id:
                         continue
@@ -669,8 +690,7 @@ if detector.check_availability('celery'):
                         row['info'] = task_result.info
                     data.append(row)
 
-            for worker in revoked_tasks:
-                tasks = revoked_tasks[worker]
+            for worker, tasks in revoked_tasks.items():
                 for task in tasks:
                     if task_id is not None and task != task_id:
                         continue
@@ -679,8 +699,7 @@ if detector.check_availability('celery'):
                     row['task_id'] = task
                     data.append(row)
 
-            for worker in scheduled_tasks:
-                tasks = scheduled_tasks[worker]
+            for worker, tasks in scheduled_tasks.items():
                 for task in tasks:
                     if task_id is not None and \
                        task["request"]["id"] != task_id:
