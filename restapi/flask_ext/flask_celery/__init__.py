@@ -19,35 +19,39 @@ class CeleryExt(BaseExtension):
         worker_mode = self.args.get("worker_mode", False)
 
         broker = self.variables.get("broker")
+        backend = self.variables.get("backend")
 
         if broker is None:
-            broker = "UNKNOWN"
+            log.error("Unable to start Celery, missing broker service")
+            celery_app = None
+            return celery_app
+
+        if backend is None:
+            backend = broker
 
         HOST = self.variables.get("broker_host")
         PORT = int(self.variables.get("broker_port"))
         if broker == 'RABBIT':
-
-            # BROKER_URL = 'amqp://guest:guest@%s:%s/0' % (HOST, PORT)
-            # BROKER_URL = 'amqp://%s:%s' % (HOST, PORT)
-
-            # This url is equivalent to:
-            # 'amqp://%s:5672/' % (HOST)
-            # where / is the vhost, as obtained in rabbit container executing:
-            # rabbitmqctl list_vhosts
-            # Listing vhosts ...
-            # /
-            # See http://stackoverflow.com/questions/26624263/
-            #                   celery-didnt-operate-well-because-of-errno-104
-
             BROKER_URL = 'amqp://%s' % (HOST)
-            BACKEND_URL = 'rpc://%s:%s/0' % (HOST, PORT)
-            log.info("Found RabbitMQ as Celery broker %s", BROKER_URL)
+            log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
             BROKER_URL = 'redis://%s:%s/0' % (HOST, PORT)
-            BACKEND_URL = 'redis://%s:%s/0' % (HOST, PORT)
-            log.info("Found Redis as Celery broker %s", BROKER_URL)
+            log.info("Configured Redis as Celery broker %s", BROKER_URL)
         else:
-            log.error("Unable to start Celery, missing broker service")
+            log.error(
+                "Unable to start Celery unknown broker service: %s" % broker)
+            celery_app = None
+            return celery_app
+
+        if backend == 'RABBIT':
+            BACKEND_URL = 'rpc://%s:%s/0' % (HOST, PORT)
+            log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
+        elif backend == 'REDIS':
+            BACKEND_URL = 'redis://%s:%s/0' % (HOST, PORT)
+            log.info("Configured Redis as Celery backend %s", BACKEND_URL)
+        else:
+            log.error(
+                "Unable to start Celery unknown backend service: %s" % backend)
             celery_app = None
             return celery_app
 
@@ -65,9 +69,9 @@ class CeleryExt(BaseExtension):
                 log.warning("No running Celery workers were found")
 
         # Skip initial warnings, avoiding pickle format (deprecated)
-        celery_app.conf.CELERY_ACCEPT_CONTENT = ['json']
-        celery_app.conf.CELERY_TASK_SERIALIZER = 'json'
-        celery_app.conf.CELERY_RESULT_SERIALIZER = 'json'
+        celery_app.conf.accept_content = ['json']
+        celery_app.conf.task_serializer = 'json'
+        celery_app.conf.result_serializer = 'json'
 
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
