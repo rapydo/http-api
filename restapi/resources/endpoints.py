@@ -645,6 +645,7 @@ if detector.check_availability('celery'):
 
             for worker in workers:
                 i = celery.control.inspect([worker])
+                log.debug('checked worker: %s', worker)
                 for key, value in i.active().items():
                     active_tasks[key] = value
                 for key, value in i.revoked().items():
@@ -671,6 +672,7 @@ if detector.check_availability('celery'):
             # if reserved_tasks is None:
             #     reserved_tasks = []
 
+            log.verbose('listing items')
             for worker, tasks in active_tasks.items():
                 for task in tasks:
                     if task_id is not None and task["id"] != task_id:
@@ -733,6 +735,7 @@ if detector.check_availability('celery'):
 
             # from celery.task.control import inspect
             # tasks = inspect()
+            log.verbose('listing completed')
 
             return self.force_response(data)
 
