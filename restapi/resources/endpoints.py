@@ -635,10 +635,13 @@ if detector.check_availability('celery'):
 
             if task_id is not None:
                 task_result = celery.AsyncResult(task_id)
+                res = task_result.result
+                if not isinstance(res, dict):
+                    res = str(res)
                 return {
                     'status': task_result.status,
                     # 'info': task_result.info,
-                    'output': task_result.result,
+                    'output': res,
                 }
 
             #############################
