@@ -19,23 +19,24 @@ class CeleryExt(BaseExtension):
         worker_mode = self.args.get("worker_mode", False)
 
         broker = self.variables.get("broker")
-        backend = self.variables.get("backend")
 
         if broker is None:
-            log.error("Unable to start Celery, missing broker service")
-            celery_app = None
-            return celery_app
+            log.exit("Unable to start Celery, missing broker service")
+            # celery_app = None
+            # return celery_app
 
-        if backend is None:
-            backend = broker
+        BROKER_HOST = self.variables.get("broker_host")
+        BROKER_PORT = int(self.variables.get("broker_port"))
 
-        HOST = self.variables.get("broker_host")
-        PORT = int(self.variables.get("broker_port"))
+        backend = self.variables.get("backend", broker)
+        BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
+        BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
+
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://%s' % (HOST)
+            BROKER_URL = 'amqp://%s' % (BROKER_HOST)
             log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
-            BROKER_URL = 'redis://%s:%s/0' % (HOST, PORT)
+            BROKER_URL = 'redis://%s:%s/0' % (BROKER_HOST, BROKER_PORT)
             log.info("Configured Redis as Celery broker %s", BROKER_URL)
         else:
             log.error(
@@ -44,16 +45,19 @@ class CeleryExt(BaseExtension):
             return celery_app
 
         if backend == 'RABBIT':
-            BACKEND_URL = 'rpc://%s:%s/0' % (HOST, PORT)
+            BACKEND_URL = 'rpc://%s:%s/0' % (BACKEND_HOST, BACKEND_PORT)
             log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
         elif backend == 'REDIS':
-            BACKEND_URL = 'redis://%s:%s/0' % (HOST, PORT)
+            BACKEND_URL = 'redis://%s:%s/0' % (BACKEND_HOST, BACKEND_PORT)
             log.info("Configured Redis as Celery backend %s", BACKEND_URL)
+        elif backend == 'MONGODB':
+            BACKEND_URL = 'mongodb://%s:%s' % (BACKEND_HOST, BACKEND_PORT)
+            log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
         else:
-            log.error(
+            log.exit(
                 "Unable to start Celery unknown backend service: %s" % backend)
-            celery_app = None
-            return celery_app
+            # celery_app = None
+            # return celery_app
 
         celery_app = Celery(
             'RestApiQueue',
