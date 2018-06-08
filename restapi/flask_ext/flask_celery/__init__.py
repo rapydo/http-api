@@ -61,8 +61,8 @@ class CeleryExt(BaseExtension):
 
         celery_app = Celery(
             'RestApiQueue',
-            backend=BACKEND_URL,
             broker=BROKER_URL,
+            backend=BACKEND_URL
         )
 
         if not worker_mode:
