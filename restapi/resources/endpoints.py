@@ -633,6 +633,9 @@ if detector.check_availability('celery'):
             # Inspect all worker nodes
             celery = self.get_service_instance('celery')
 
+            if task_id is not None:
+                return celery.AsyncResult(task_id)
+
             #############################
             # FAST WAY
             stats = celery.control.inspect().stats()
