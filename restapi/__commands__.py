@@ -157,6 +157,37 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             time.sleep(sleep_time)
 
 
+def get_service_address(variables, host_var, port_var, service):
+
+    host = variables.get(host_var)
+    # if host is None:
+    #     log.warning("Unable to find HOST variable for %s", service)
+    #     for k in myclass.variables:
+    #         log.critical(myclass.variables)
+    #         if k.endswith("_host"):
+    #             host = myclass.variables.get(k)
+    #             log.info("Using %s as HOST variable for %s", k, service)
+    if host is None:
+        log.exit(
+            "Cannot find any variable matching %s for %s", host_var, service)
+
+    port = variables.get(port_var)
+    # if port is None:
+    #     log.warning("Unable to find PORT variable for %s", service)
+    #     for k in myclass.variables:
+    #         if k.endswith("_port"):
+    #             port = myclass.variables.get(k)
+    #             log.info("Using %s as PORT variable for %s", k, service)
+
+    if port is None:
+        log.exit(
+            "Cannot find any variable matching %s  for %s", port_var, service)
+
+    log.debug("Checking address: %s:%s", host, port)
+
+    return host, int(port)
+
+
 def mywait():
     """
     Wait for a service on his host:port configuration
@@ -174,32 +205,21 @@ def mywait():
         if name == 'authentication':
             continue
 
-        host = myclass.variables.get('host')
-        if host is None:
-            log.warning("Unable to find HOST variable for %s", name)
-            for k in myclass.variables:
-                if k.endswith("_host"):
-                    host = myclass.variables.get(k)
-                    log.info("Using %s as HOST variable for %s", k, name)
+        if name == 'celery':
+            host, port = get_service_address(
+                myclass.variables, 'broker_host', 'broker_port', name)
 
-        port = myclass.variables.get('port')
-        if port is None:
-            log.warning("Unable to find PORT variable for %s", name)
-            for k in myclass.variables:
-                if k.endswith("_port"):
-                    port = myclass.variables.get(k)
-                    log.info("Using %s as PORT variable for %s", k, name)
+            wait_socket(host, port, name)
 
-        if host is None:
-            log.exit("Cannot find any variable matching a host for %s"% name)
+            host, port = get_service_address(
+                myclass.variables, 'backend_host', 'backend_port', name)
 
-        if port is None:
-            log.exit("Cannot find any variable matching a port for %s"% name)
+            wait_socket(host, port, name)
+        else:
+            host, port = get_service_address(
+                myclass.variables, 'host', 'port', name)
 
-        log.debug("Socket %s:%s", host, port)
-
-        # CHECK
-        wait_socket(host, int(port), name)
+            wait_socket(host, port, name)
 
 
 @cli.command()
