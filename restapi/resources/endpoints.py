@@ -637,8 +637,8 @@ if detector.check_availability('celery'):
                 task_result = celery.AsyncResult(task_id)
                 return {
                     'status': task_result.status,
-                    'info': task_result.info,
-                    'results': task_result.result,
+                    # 'info': task_result.info,
+                    'output': task_result.result,
                 }
 
             #############################
