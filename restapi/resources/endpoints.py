@@ -634,7 +634,12 @@ if detector.check_availability('celery'):
             celery = self.get_service_instance('celery')
 
             if task_id is not None:
-                return celery.AsyncResult(task_id)
+                task_result = celery.AsyncResult(task_id)
+                return {
+                    'status': task_result.status,
+                    'info': task_result.info,
+                    'results': task_result.result,
+                }
 
             #############################
             # FAST WAY
