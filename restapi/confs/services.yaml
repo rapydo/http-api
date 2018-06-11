@@ -57,6 +57,15 @@
   class: IrodsPythonExt
   injector: RPCInjector
 
+  # full text search
+- name: elastic
+  load_models: 0
+  prefix: elastic
+  library: elasticsearch
+  extension: flask_elastic
+  class: ElasticPythonExt
+  injector: ElasticInjector
+
 ##############################
 # # OTHERS?
 # "elastic",
