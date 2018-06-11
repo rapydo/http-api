@@ -97,6 +97,67 @@ class Uploader(object):
 
         return abs_fname, sec_filename
 
+    def upload_data(self, filename, subfolder=None, force=False):
+
+        filename = secure_filename(filename)
+
+        # Check file extension?
+        if not self.allowed_file(filename):
+            return self.force_response(errors=[
+                "Wrong extension, file extension not allowed"])
+
+        content = request.data
+
+        abs_file = self.absolute_upload_file(filename, subfolder)
+        log.info("File request for %s", abs_file)
+
+        if os.path.exists(abs_file):
+
+            log.warn("Already exists")
+            if force:
+                os.remove(abs_file)
+                log.debug("Forced removal")
+            else:
+                return self.force_response(
+                    errors=[
+                        "File '" + filename + "' already exists",
+                    ], code=hcodes.HTTP_BAD_REQUEST)
+
+        with open(abs_file, "ab") as f:
+            f.write(content)
+            f.close()
+
+        # Check exists
+        if not os.path.exists(abs_file):
+            return self.force_response(errors=[
+                "Server error: unable to recover the uploaded file"],
+                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL)
+
+        # Extra info
+        ftype = None
+        fcharset = None
+        try:
+            # Check the type
+            from plumbum.cmd import file
+            out = file["-ib", abs_file]()
+            tmp = out.split(';')
+            ftype = tmp[0].strip()
+            fcharset = tmp[1].split('=')[1].strip()
+        except Exception:
+            log.warning("Unknown type for '%s'", abs_file)
+
+        ########################
+        # ## Final response
+
+        # Default redirect is to 302 state, which makes client
+        # think that response was unauthorized....
+        # see http://dotnet.dzone.com/articles/getting-know-cross-origin
+
+        return self.force_response({
+            'filename': filename,
+            'meta': {'type': ftype, 'charset': fcharset}
+        }, code=hcodes.HTTP_OK_BASIC)
+
     def upload(self, subfolder=None, force=False):
 
         if 'file' not in request.files:

@@ -17,6 +17,7 @@ log = get_logger(__name__)
 
 cors = CORS(
     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+    supports_credentials=['true'],
     methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
 log.verbose("Created CORS requests")
 
