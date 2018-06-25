@@ -22,8 +22,17 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 class AdminUsers(GraphBaseOperations):
 
     def parse_roles(self, properties):
-        return self.parseAutocomplete(
-            properties, 'roles', id_key='name', split_char=',')
+
+        if 'roles' in properties:
+            return self.parseAutocomplete(
+                properties, 'roles', id_key='name', split_char=',')
+        else:
+            roles = []
+            for p in properties:
+                if p.startswith("roles_"):
+                    if properties.get(p, False):
+                        roles.append(p[6:])
+            return roles
 
     def parse_group(self, v):
         groups = self.parseAutocomplete(v, 'group', id_key='id')
@@ -196,17 +205,41 @@ class AdminUsers(GraphBaseOperations):
                             if new_schema[idx]["default"] is None:
                                 new_schema[idx]["default"] = g.uuid
 
+                    # Roles as multi select... not working due to default values...
+                    # if val["name"] == "roles":
+
+                    #     new_schema[idx]["default"] = None
+                    #     new_schema[idx]["multiple"] = True
+                    #     if "custom" not in new_schema[idx]:
+                    #         new_schema[idx]["custom"] = {}
+
+                    #     new_schema[idx]["custom"]["htmltype"]: "select"
+                    #     new_schema[idx]["custom"]["label"]: "Roles"
+
+                    #     new_schema[idx]["enum"] = []
+
+                    #     cypher = "MATCH (r:Role)"
+                    #     if not self.auth.verify_admin():
+                    #         allowed_roles = mem.customizer._configurations \
+                    #             .get('variables', {}) \
+                    #             .get('backend', {}) \
+                    #             .get('allowed_roles', [])
+                    #         cypher += " WHERE r.name in %s" % allowed_roles
+                    #     # Admin only
+                    #     else:
+                    #         cypher += " WHERE r.description <> 'automatic'"
+
+                    #     cypher += " RETURN r ORDER BY r.name ASC"
+
+                    #     result = self.graph.cypher(cypher)
+                    #     for row in result:
+                    #         r = self.graph.Role.inflate(row[0])
+                    #         new_schema[idx]["enum"].append(
+                    #             {r.name: r.description}
+                    #         )
+
+                    # Roles as multi checkbox
                     if val["name"] == "roles":
-
-                        new_schema[idx]["default"] = None
-                        new_schema[idx]["multiple"] = True
-                        if "custom" not in new_schema[idx]:
-                            new_schema[idx]["custom"] = {}
-
-                        new_schema[idx]["custom"]["htmltype"]: "select"
-                        new_schema[idx]["custom"]["label"]: "Roles"
-
-                        new_schema[idx]["enum"] = []
 
                         cypher = "MATCH (r:Role)"
                         if not self.auth.verify_admin():
@@ -222,11 +255,23 @@ class AdminUsers(GraphBaseOperations):
                         cypher += " RETURN r ORDER BY r.name ASC"
 
                         result = self.graph.cypher(cypher)
+
+                        del new_schema[idx]
+
                         for row in result:
                             r = self.graph.Role.inflate(row[0])
-                            new_schema[idx]["enum"].append(
-                                {r.name: r.description}
-                            )
+
+                            role = {
+                                "type": "checkbox",
+                                # "name": "roles[%s]" % r.name,
+                                "name": "roles_%s" % r.name,
+                                # "name": r.name,
+                                "custom": {
+                                    "label": r.description
+                                }
+                            }
+
+                            new_schema.insert(idx, role)
 
             if is_admin:
                 return self.force_response(new_schema)
@@ -337,11 +382,14 @@ class AdminUsers(GraphBaseOperations):
             raise RestApiException(
                 "This user cannot be found or you are not authorized")
 
-        unhashed_password = None
         if "password" in v and v["password"] == "":
             del v["password"]
-        else:
+
+        if "password" in v:
+            unhashed_password = v["password"]
             v["password"] = BaseAuthentication.hash_password(v["password"])
+        else:
+            unhashed_password = None
 
         if "email" in v:
             v["email"] = v["email"].lower()
