@@ -1,9 +1,34 @@
 # -*- coding: utf-8 -*-
 
-import pymodm.connection as mongodb
+import sys
+import contextlib
 from restapi.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
+
+
+########################
+class Devnull(object):
+
+    def write(self, _):
+        pass
+
+    def flush(self):
+        pass
+
+
+@contextlib.contextmanager
+def nostderr():
+    """
+    Thanks Alex: https://stackoverflow.com/a/1810086
+    """
+    savestderr = sys.stderr
+    sys.stderr = Devnull()
+    try:
+        yield
+    finally:
+        sys.stderr = savestderr
+########################
 
 
 class ElasticPythonExt(BaseExtension):
@@ -16,11 +41,22 @@ class ElasticPythonExt(BaseExtension):
             variables[key] = value
 
         from elasticsearch import Elasticsearch
-        host = {
-            'host': "%s:%s" % (variables.get('host'), variables.get('port')),
-            # 'port': 443, 'url_prefix': 'es', 'use_ssl': True
-        }
+        elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
+        host = {'host': elhost}
         obj = Elasticsearch([host])
+        with nostderr():
+            try:
+                check = obj.ping()
+            except BaseException:
+                check = False
+
+        if check:
+            log.debug('Connected to elastic: %s', elhost)
+        else:
+            msg = 'Failed to connect: %s', elhost
+            log.error(msg)
+            raise EnvironmentError(msg)
+
         return obj
 
     # def custom_init(self, pinit=False, pdestroy=False, **kwargs):
@@ -53,3 +89,34 @@ class ElasticPythonExt(BaseExtension):
     #     return db
 
 # ElasticInjector
+
+
+def today():
+    from datetime import datetime
+    return datetime.today().strftime("%Y.%m.%d")
+
+
+def log_today(elastic, msg=None):
+    if msg is None:
+        return False
+    index = 'log-%s' % today()
+    doc = 'logs'
+    elastic.index(index=index, doc_type=doc, body=msg)
+    return True
+
+
+def generator(data):
+    for element in data.get('hits', []).get('hits', []):
+        yield element.get('_source', {})
+
+
+def get_logs(elastic, day=None):
+    if day is None:
+        day = today()
+    index = 'log-%s' % today()
+
+    # search all
+    out = elastic.search(
+        index=index, size=10000, body={"query": {'match_all': {}}}
+    )
+    return generator(out)
