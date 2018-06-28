@@ -6,6 +6,7 @@ Mongodb based implementation
 
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
+from restapi.flask_ext.flask_mongo import AUTH_DB
 from utilities.uuid import getUUID
 from restapi.services.detect import detector
 from utilities.logs import get_logger
@@ -19,14 +20,16 @@ if not detector.check_availability(__name__):
 
 class Authentication(BaseAuthentication):
 
-    # def __init__(self, services=None):
-    #     # Read init credentials and configuration
-    #     self.myinit()
-    #     # Get the instance for mongodb
-    #     name = __name__.split('.')[::-1][0]  # returns 'mongo'
-    #     self.db = services.get(name).get_instance(dbname='auth')
+    def __init__(self):
 
-    # FIXME: how to call a specific instance with a specific db
+        # Read init credentials and configuration
+        super().__init__()
+
+        # Get the instance for mongodb
+        name = __name__.split('.')[::-1][0]  # returns 'mongo'
+        from restapi.services.detect import detector
+        extension = detector.services_classes.get(name)
+        self.db = extension().get_instance(dbname=AUTH_DB)
 
     def fill_custom_payload(self, userobj, payload):
         """
