@@ -61,12 +61,12 @@ setup(
         # "psycopg2",
         "psycopg2-binary",
         "pymodm",
-        # FS
-        "python-irodsclient",
-        "gssapi==1.5.0",
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
+        # # FS
+        # "python-irodsclient",
+        # "gssapi==1.5.0",
     ],
     classifiers=[
         'Programming Language :: Python',
