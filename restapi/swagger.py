@@ -395,7 +395,9 @@ class BeSwagger(object):
 
         # CUSTOM definitions
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
-        override = load_yaml_file(filename, path=path, skip_error=True)
+        override = load_yaml_file(
+            filename, path=path, skip_error=True, logger=False)
+        # NOTE: with logger=False I skip the warning if this file doesn't exist
 
         return mix(data, override)
 
