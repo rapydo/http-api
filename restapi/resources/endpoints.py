@@ -8,6 +8,7 @@ And a Farm: How to create endpoints into REST service.
 import pytz
 import jwt
 import os
+from glom import glom
 
 from datetime import datetime, timedelta
 from flask import jsonify, current_app
@@ -50,28 +51,6 @@ class Status(EndpointResource):
         #####################
         # NORMAL RESPONSE
         return 'Server is alive!'
-
-        #####################
-        # MAIL TEST BLOCK
-
-        # # Import smtplib for the actual sending function
-        # import smtplib
-
-        # # Import the email modules we'll need
-        # from email.mime.text import MIMEText
-
-        # msg = MIMEText("just a simple test")
-
-        # # me == the sender's email address
-        # # you == the recipient's email address
-        # msg['Subject'] = 'Test email'
-        # msg['From'] = "m.dantonio@cineca.it"
-        # msg['To'] = "m.dantonio@cineca.it"
-
-        # # Send the message via our own SMTP server.
-        # s = smtplib.SMTP('smtp.dockerized.io')
-        # s.send_message(msg)
-        # s.quit()
 
 
 class SwaggerSpecifications(EndpointResource):
@@ -196,6 +175,7 @@ class Login(EndpointResource):
         security.verify_token(username, token)
         user = self.auth.get_user()
         security.verify_blocked_user(user)
+        security.verify_active_user(user)
 
         if totp_authentication and totp_code is not None:
             security.verify_totp(user, totp_code)
@@ -278,29 +258,22 @@ class RecoverPassword(EndpointResource):
                 'is not recognized as a valid username or email address',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
-        title = mem.customizer._configurations \
-            .get('project', {}) \
-            .get('title', "Unkown title")
+        if user.is_active is not None and not user.is_active:
+            raise RestApiException(
+                "Sorry, this account is not active",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
-        # invalidate previous reset tokens
-        tokens = self.auth.get_tokens(user=user)
-        for t in tokens:
-            token_type = t.get("token_type")
-            if token_type is None:
-                continue
-            if token_type != self.auth.PWD_RESET:
-                continue
+        # title = mem.customizer._configurations \
+        #     .get('project', {}) \
+        #     .get('title', "Unkown title")
 
-            tok = t.get("token")
-            if self.auth.invalidate_token(tok):
-                log.info("Previous reset token invalidated: %s", tok)
+        title = glom(
+            mem.customizer._configurations,
+            "project.title",
+            default='Unkown title')
 
-        # Generate a new reset token
-        reset_token, jti = self.auth.create_temporary_token(
-            user,
-            duration=86400,
-            token_type=self.auth.PWD_RESET
-        )
+        reset_token, jti = self.auth.create_reset_token(
+            user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
         if PRODUCTION:
@@ -310,15 +283,21 @@ class RecoverPassword(EndpointResource):
 
         rt = reset_token.replace(".", "+")
         u = "%s://%s/public/reset/%s" % (protocol, domain, rt)
-        body = "link to reset password: %s" % u
+        body = "Follow this link to reset password: %s" % u
 
         replaces = {
             "url": u
         }
         html_body = get_html_template("reset_password.html", replaces)
-        # html_body = "link to reset password: <a href='%s'>click here</a>" % u
+        if html_body is None:
+            log.warning("Unable to find email template")
+            html_body = body
+            body = None
         subject = "%s Password Reset" % title
-        send_mail(html_body, subject, reset_email, plain_body=body)
+        c = send_mail(html_body, subject, reset_email, plain_body=body)
+
+        if not c:
+            raise RestApiException("Error sending email, please retry")
 
         self.auth.save_token(
             user, reset_token, jti, token_type=self.auth.PWD_RESET)
@@ -534,32 +513,100 @@ class Profile(EndpointResource):
 
     @decorate.catch_error()
     def post(self):
-        """ Create new current user """
+        """ Create new user """
+
+        if not send_mail_is_active():
+            raise RestApiException(
+                'Server misconfiguration, unable to reset password. ' +
+                'Please report this error to adminstrators',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
         v = self.get_input()
         if len(v) == 0:
             raise RestApiException(
                 'Empty input',
                 status_code=hcodes.HTTP_BAD_REQUEST)
+
         # INIT #
-        schema = self.get_endpoint_custom_definition()
-        properties = self.read_properties(schema, v)
-        # GRAPH #
-        # properties["authmethod"] = "credentials"
-        # if "password" in properties:
-        # properties["password"] = \
-        #     BaseAuthentication.hash_password(properties["password"])
+        # schema = self.get_endpoint_custom_definition()
+        # properties = self.read_properties(schema, v)
 
-        # DO CUSTOM STUFFS HERE - e.g. create irods user
-        properties, other_properties = \
-            self.custom_pre_handle_user_input(properties, v)
+        if 'password' not in v:
+            raise RestApiException(
+                "Missing input: password",
+                status_code=hcodes.HTTP_BAD_REQUEST)
+        if 'password_confirmation' not in v:
+            raise RestApiException(
+                "Missing input: password confirmation",
+                status_code=hcodes.HTTP_BAD_REQUEST)
+        if v['password'] != v['password_confirmation']:
+            raise RestApiException(
+                "Password and confirmation do not match",
+                status_code=hcodes.HTTP_BAD_REQUEST)
+        if 'email' not in v:
+            raise RestApiException(
+                "Missing input: email",
+                status_code=hcodes.HTTP_BAD_REQUEST)
 
-        roles = self.get_roles(v)
-        user = self.auth.create_user(properties, roles)
+        user = self.auth.get_user_object(username=v['email'])
+        if user is not None:
+            raise RestApiException(
+                "This user already exists: %s" % v['email'],
+                status_code=hcodes.HTTP_BAD_REQUEST)
 
-        self.custom_post_handle_user_input(user, properties, other_properties)
+        v['is_active'] = False
+        user = self.auth.create_user(v, [self.auth.default_role])
 
-        # DO CUSTOM STUFFS HERE - e.g. link to group
-        return self.force_response(user.uuid)
+        try:
+            self.auth.custom_post_handle_user_input(user, v)
+
+            # title = mem.customizer._configurations \
+            #     .get('project', {}) \
+            #     .get('title', "Unkown title")
+
+            title = glom(
+                mem.customizer._configurations,
+                "project.title",
+                default='Unkown title')
+
+            activation_token, jti = self.auth.create_reset_token(
+                user, self.auth.ACTIVATE_ACCOUNT)
+
+            domain = os.environ.get("DOMAIN")
+            if PRODUCTION:
+                protocol = "https"
+            else:
+                protocol = "http"
+
+            rt = activation_token.replace(".", "+")
+            u = "%s://%s/public/register/%s" % (protocol, domain, rt)
+            body = "Follow this link to activate your account: %s" % u
+
+            replaces = {
+                "url": u
+            }
+            html_body = get_html_template("activate_account.html", replaces)
+            if html_body is None:
+                log.warning("Unable to find email template")
+                html_body = body
+                body = None
+            subject = "%s account activation" % title
+            c = send_mail(html_body, subject, user.email, plain_body=body)
+
+            if not c:
+                raise BaseException("Error sending email, please retry")
+
+            self.auth.save_token(
+                user, activation_token, jti,
+                token_type=self.auth.ACTIVATE_ACCOUNT)
+
+            msg = "We are sending an email to your email address where " + \
+                "you will find the link to activate your account"
+            return msg
+        except BaseException as e:
+            log.error("Errors during account registration: %s" % str(e))
+            user.delete()
+            raise RestApiException(str(e))
 
     @decorate.catch_error()
     def put(self):
@@ -604,6 +651,63 @@ class Profile(EndpointResource):
         user.save()
 
         return self.empty_response()
+
+
+class ProfileActivate(EndpointResource):
+
+    @decorate.catch_error()
+    def put(self, token_id):
+
+        token_id = token_id.replace("+", ".")
+        try:
+            # Unpack and verify token. If ok, self.auth will be added with
+            # auth._user auth._token and auth._jti
+            self.auth.verify_token(
+                token_id, raiseErrors=True,
+                token_type=self.auth.ACTIVATE_ACCOUNT)
+
+        # If token is expired
+        except jwt.exceptions.ExpiredSignatureError as e:
+            raise RestApiException(
+                'Invalid activation token: this request is expired',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token is not yet active
+        except jwt.exceptions.ImmatureSignatureError as e:
+            raise RestApiException(
+                'Invalid activation token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # if token does not exist (or other generic errors)
+        except Exception as e:
+            raise RestApiException(
+                'Invalid activation token',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # Recovering token object from jti
+        token = self.auth.get_tokens(token_jti=self.auth._jti)
+        if len(token) == 0:
+            raise RestApiException(
+                'Invalid activation token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # If user logged is already active, invalidate the token
+        if self.auth._user.is_active is not None and \
+                self.auth._user.is_active:
+            self.auth.invalidate_token(token_id)
+            raise RestApiException(
+                'Invalid activation token: this request is no longer valid',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        # The activation token is valid, do something
+
+        self.auth._user.is_active = True
+        self.auth._user.save()
+
+        # Bye bye token (reset activation are valid only once)
+        self.auth.invalidate_token(token_id)
+
+        return "Account activated"
 
 
 ###########################
