@@ -266,3 +266,12 @@ class HandleSecurity(object):
                 if valid_until < now:
                     msg = "Sorry, this account is blocked for inactivity"
                     raise RestApiException(msg, status_code=code)
+
+    def verify_active_user(self, user):
+
+        if user.is_active is None:
+            log.warning("None value is_active")
+        elif not user.is_active:
+            raise RestApiException(
+                "Sorry, this account is not active",
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
