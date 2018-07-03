@@ -52,7 +52,7 @@ class User(MongoModel):
     first_login = fields.DateTimeField()
     last_login = fields.DateTimeField()
     last_password_change = fields.DateTimeField()
-    is_active = fields.BooleanField(default=True)
+    # is_active = fields.BooleanField(default=True)
     roles = fields.EmbeddedDocumentListField(Role)
 
     class Meta:
