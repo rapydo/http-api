@@ -40,6 +40,7 @@ class User(db.Model):
     first_login = db.Column(db.DateTime)
     last_login = db.Column(db.DateTime)
     last_password_change = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
 
