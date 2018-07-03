@@ -59,7 +59,7 @@ class MongoExt(BaseExtension):
                 int(self.variables.get('port'))
             )
 
-            system_dbs = ['admin', 'local']
+            system_dbs = ['admin', 'local', 'config']
             for db in client.database_names():
                 if db not in system_dbs:
                     client.drop_database(db)
