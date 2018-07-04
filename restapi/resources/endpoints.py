@@ -478,10 +478,8 @@ class Profile(EndpointResource):
             'email': current_user.email
         }
 
-        # roles = []
         roles = {}
         for role in current_user.roles:
-            # roles.append(role.name)
             roles[role.name] = role.name
         data["roles"] = roles
         data["isAdmin"] = self.auth.verify_admin()
@@ -535,14 +533,7 @@ class Profile(EndpointResource):
             raise RestApiException(
                 "Missing input: password",
                 status_code=hcodes.HTTP_BAD_REQUEST)
-        if 'password_confirmation' not in v:
-            raise RestApiException(
-                "Missing input: password confirmation",
-                status_code=hcodes.HTTP_BAD_REQUEST)
-        if v['password'] != v['password_confirmation']:
-            raise RestApiException(
-                "Password and confirmation do not match",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+
         if 'email' not in v:
             raise RestApiException(
                 "Missing input: email",
