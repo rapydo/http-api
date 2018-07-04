@@ -94,7 +94,7 @@ class CeleryExt(BaseExtension):
 
         https://github.com/celery/celery/issues/4226
         """
-        celery_app.conf.broker_pool_limit = None
+        # celery_app.conf.broker_pool_limit = None
 
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
