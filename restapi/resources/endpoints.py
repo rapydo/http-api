@@ -539,6 +539,16 @@ class Profile(EndpointResource):
                 "Missing input: email",
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
+        if 'name' not in v:
+            raise RestApiException(
+                "Missing input: name",
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if 'surname' not in v:
+            raise RestApiException(
+                "Missing input: surname",
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
         user = self.auth.get_user_object(username=v['email'])
         if user is not None:
             raise RestApiException(
@@ -570,6 +580,7 @@ class Profile(EndpointResource):
                 protocol = "http"
 
             rt = activation_token.replace(".", "+")
+            log.debug("Activation token: %s" % rt)
             u = "%s://%s/public/register/%s" % (protocol, domain, rt)
             body = "Follow this link to activate your account: %s" % u
 

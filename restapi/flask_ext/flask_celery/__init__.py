@@ -77,6 +77,25 @@ class CeleryExt(BaseExtension):
         celery_app.conf.task_serializer = 'json'
         celery_app.conf.result_serializer = 'json'
 
+        """
+        This is a workaround, please fix me!
+
+        This workaround is required to avoid the work be freeze when is
+        the connection to rabbit is temporary lost.
+        Behavious without the option:
+        connection lost
+        => trying to connect - repeat until the connection is back
+        => once the connection is back Celery raise an exception and stops:
+        ConnectionResetError: [Errno 104] Connection reset by peer
+
+        broker_pool_limit = None means that the connection pool is disabled
+        and connections will be established and closed for every use
+        I found this workaround here:
+
+        https://github.com/celery/celery/issues/4226
+        """
+        celery_app.conf.broker_pool_limit = None
+
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
 
