@@ -259,6 +259,8 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
         if user.is_active is not None and not user.is_active:
+            # Beware, frontend leverage on this exact message,
+            # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -466,6 +468,50 @@ class Tokens(EndpointResource):
             message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
 
+def send_activation_link(auth, user):
+
+    # title = mem.customizer._configurations \
+    #     .get('project', {}) \
+    #     .get('title', "Unkown title")
+
+    title = glom(
+        mem.customizer._configurations,
+        "project.title",
+        default='Unkown title')
+
+    activation_token, jti = auth.create_reset_token(
+        user, auth.ACTIVATE_ACCOUNT)
+
+    domain = os.environ.get("DOMAIN")
+    if PRODUCTION:
+        protocol = "https"
+    else:
+        protocol = "http"
+
+    rt = activation_token.replace(".", "+")
+    log.debug("Activation token: %s" % rt)
+    u = "%s://%s/public/register/%s" % (protocol, domain, rt)
+    body = "Follow this link to activate your account: %s" % u
+
+    replaces = {
+        "url": u
+    }
+    html_body = get_html_template("activate_account.html", replaces)
+    if html_body is None:
+        log.warning("Unable to find email template")
+        html_body = body
+        body = None
+    subject = "%s account activation" % title
+    c = send_mail(html_body, subject, user.email, plain_body=body)
+
+    if not c:
+        raise BaseException("Error sending email, please retry")
+
+    auth.save_token(
+        user, activation_token, jti,
+        token_type=auth.ACTIVATE_ACCOUNT)
+
+
 class Profile(EndpointResource):
     """ Current user informations """
 
@@ -561,46 +607,7 @@ class Profile(EndpointResource):
         try:
             self.auth.custom_post_handle_user_input(user, v)
 
-            # title = mem.customizer._configurations \
-            #     .get('project', {}) \
-            #     .get('title', "Unkown title")
-
-            title = glom(
-                mem.customizer._configurations,
-                "project.title",
-                default='Unkown title')
-
-            activation_token, jti = self.auth.create_reset_token(
-                user, self.auth.ACTIVATE_ACCOUNT)
-
-            domain = os.environ.get("DOMAIN")
-            if PRODUCTION:
-                protocol = "https"
-            else:
-                protocol = "http"
-
-            rt = activation_token.replace(".", "+")
-            log.debug("Activation token: %s" % rt)
-            u = "%s://%s/public/register/%s" % (protocol, domain, rt)
-            body = "Follow this link to activate your account: %s" % u
-
-            replaces = {
-                "url": u
-            }
-            html_body = get_html_template("activate_account.html", replaces)
-            if html_body is None:
-                log.warning("Unable to find email template")
-                html_body = body
-                body = None
-            subject = "%s account activation" % title
-            c = send_mail(html_body, subject, user.email, plain_body=body)
-
-            if not c:
-                raise BaseException("Error sending email, please retry")
-
-            self.auth.save_token(
-                user, activation_token, jti,
-                token_type=self.auth.ACTIVATE_ACCOUNT)
+            send_activation_link(self.auth, user)
 
             msg = "We are sending an email to your email address where " + \
                 "you will find the link to activate your account"
@@ -710,6 +717,31 @@ class ProfileActivate(EndpointResource):
         self.auth.invalidate_token(token_id)
 
         return "Account activated"
+
+    @decorate.catch_error()
+    def post(self):
+
+        v = self.get_input()
+        if len(v) == 0:
+            raise RestApiException(
+                'Empty input',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if 'username' not in v:
+            raise RestApiException(
+                'Missing required input: username',
+                status_code=hcodes.HTTP_BAD_REQUEST)
+
+        user = self.auth.get_user_object(username=v['username'])
+
+        # if user is None this endpoint does nothing and the response
+        # remain the same (we are sending an email bla bla)
+        # => security to avoid user guessing
+        if user is not None:
+            send_activation_link(self.auth, user)
+        msg = "We are sending an email to your email address where " + \
+            "you will find the link to activate your account"
+        return msg
 
 
 ###########################
