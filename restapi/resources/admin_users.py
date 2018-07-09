@@ -213,39 +213,6 @@ class AdminUsers(GraphBaseOperations):
                             if new_schema[idx]["default"] is None:
                                 new_schema[idx]["default"] = g.uuid
 
-                    # Roles as multi select... not working due to default values...
-                    # if val["name"] == "roles":
-
-                    #     new_schema[idx]["default"] = None
-                    #     new_schema[idx]["multiple"] = True
-                    #     if "custom" not in new_schema[idx]:
-                    #         new_schema[idx]["custom"] = {}
-
-                    #     new_schema[idx]["custom"]["htmltype"]: "select"
-                    #     new_schema[idx]["custom"]["label"]: "Roles"
-
-                    #     new_schema[idx]["enum"] = []
-
-                    #     cypher = "MATCH (r:Role)"
-                    #     if not self.auth.verify_admin():
-                    #         allowed_roles = mem.customizer._configurations \
-                    #             .get('variables', {}) \
-                    #             .get('backend', {}) \
-                    #             .get('allowed_roles', [])
-                    #         cypher += " WHERE r.name in %s" % allowed_roles
-                    #     # Admin only
-                    #     else:
-                    #         cypher += " WHERE r.description <> 'automatic'"
-
-                    #     cypher += " RETURN r ORDER BY r.name ASC"
-
-                    #     result = self.graph.cypher(cypher)
-                    #     for row in result:
-                    #         r = self.graph.Role.inflate(row[0])
-                    #         new_schema[idx]["enum"].append(
-                    #             {r.name: r.description}
-                    #         )
-
                     # Roles as multi checkbox
                     if val["name"] == "roles":
 
@@ -296,7 +263,20 @@ class AdminUsers(GraphBaseOperations):
                     }
                     new_schema[idx]["enum"] = []
 
+                    default_group = self.graph.Group.nodes.get_or_none(
+                        shortname="default")
+
+                    if default_group is not None:
+                        new_schema[idx]["enum"].append(
+                            {default_group.uuid: default_group.shortname}
+                        )
+                        new_schema[idx]["default"] = default_group.uuid
+
                     for g in current_user.coordinator.all():
+
+                        if g == default_group:
+                            continue
+
                         new_schema[idx]["enum"].append(
                             {g.uuid: g.shortname}
                         )
