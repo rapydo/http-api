@@ -272,6 +272,8 @@ class HandleSecurity(object):
         if user.is_active is None:
             log.warning("None value is_active")
         elif not user.is_active:
+            # Beware, frontend leverages on this exact message,
+            # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)

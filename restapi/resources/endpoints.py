@@ -259,7 +259,7 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_FORBIDDEN)
 
         if user.is_active is not None and not user.is_active:
-            # Beware, frontend leverage on this exact message,
+            # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
@@ -529,9 +529,7 @@ class Profile(EndpointResource):
             roles[role.name] = role.name
         data["roles"] = roles
         data["isAdmin"] = self.auth.verify_admin()
-        if self.auth.verify_group_admin():
-            data["isGroupAdmin"] = True
-            data["roles"]["group_admin"] = "group_admin"
+        data["isLocalAdmin"] = self.auth.verify_local_admin()
 
         if hasattr(current_user, 'name'):
             data["name"] = current_user.name

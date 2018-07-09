@@ -50,7 +50,7 @@ class AdminUsers(GraphBaseOperations):
 
         return group
 
-    def check_permissions(self, user, node, is_admin, is_group_admin):
+    def check_permissions(self, user, node, is_admin, is_local_admin):
 
         if node is None:
             return False
@@ -59,8 +59,8 @@ class AdminUsers(GraphBaseOperations):
         if is_admin:
             return True
 
-        # You are neither an ADMIN nor a GROUP ADMIN
-        if not is_group_admin:
+        # You are neither an ADMIN nor a LOCAL ADMIN
+        if not is_local_admin:
             return False
 
         # If you are not an ADMIN, you cannot modify yourself...
@@ -69,10 +69,18 @@ class AdminUsers(GraphBaseOperations):
             return False
 
         # FIXME: only implemented for neo4j
-        # You are a group admin... but the group mathes??
+        # You are a local admin... but the group matches??
         for g in user.coordinator.all():
             if node.belongs_to.is_connected(g):
                 return True
+
+        # FIXME: only implemented for neo4j
+        # All local admins have rights on general users
+        # g = general group
+        g = self.graph.Group.nodes.get_or_none(name="default")
+        if g is not None:
+            node.belongs_to.connect(group)
+            return True
 
         return False
 
@@ -119,8 +127,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -131,7 +139,7 @@ class AdminUsers(GraphBaseOperations):
         for n in nodeset.all():
 
             is_authorized = self.check_permissions(
-                current_user, n, is_admin, is_group_admin
+                current_user, n, is_admin, is_local_admin
             )
             if not is_authorized:
                 continue
@@ -159,8 +167,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -360,8 +368,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -376,7 +384,7 @@ class AdminUsers(GraphBaseOperations):
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_group_admin
+            current_user, user, is_admin, is_local_admin
         )
         if not is_authorized:
             raise RestApiException(
@@ -454,8 +462,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -468,7 +476,7 @@ class AdminUsers(GraphBaseOperations):
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_group_admin
+            current_user, user, is_admin, is_local_admin
         )
         if not is_authorized:
             raise RestApiException(
