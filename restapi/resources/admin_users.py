@@ -77,10 +77,10 @@ class AdminUsers(GraphBaseOperations):
         # FIXME: only implemented for neo4j
         # All local admins have rights on general users
         # g = general group
-        g = self.graph.Group.nodes.get_or_none(name="default")
+        g = self.graph.Group.nodes.get_or_none(shortname="default")
         if g is not None:
-            node.belongs_to.connect(group)
-            return True
+            if node.belongs_to.is_connected(g):
+                return True
 
         return False
 
