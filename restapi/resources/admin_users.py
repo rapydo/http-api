@@ -68,6 +68,10 @@ class AdminUsers(GraphBaseOperations):
         if user == node:
             return False
 
+        # If you are not an ADMIN, you cannot modify ADMINs
+        if self.auth.role_admin in self.auth.get_roles_from_user(node):
+            return False
+
         # FIXME: only implemented for neo4j
         # You are a local admin... but the group matches??
         for g in user.coordinator.all():
