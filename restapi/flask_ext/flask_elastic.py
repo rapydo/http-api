@@ -41,10 +41,14 @@ class ElasticPythonExt(BaseExtension):
             variables[key] = value
 
         from elasticsearch import Elasticsearch
-        elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
-        host = {'host': elhost}
-        log.verbose("Connecting to elastic: %s", elhost)
-        obj = Elasticsearch([host])
+
+        host = variables.get('host')
+        port = variables.get('port')
+        obj = Elasticsearch([host], port=port)
+        # elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
+        # host = {'host': elhost}
+        # log.verbose("Connecting to elastic: %s", elhost)
+        # obj = Elasticsearch([host])
         with nostderr():
             try:
                 check = obj.ping()
