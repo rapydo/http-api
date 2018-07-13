@@ -56,9 +56,9 @@ class ElasticPythonExt(BaseExtension):
                 check = False
 
         if check:
-            log.debug('Connected to elastic: %s', elhost)
+            log.debug('Connected to elastic: %s:%s', host, port)
         else:
-            msg = 'Failed to connect: %s', elhost
+            msg = 'Failed to connect: %s:%s', host, port
             log.error(msg)
             raise EnvironmentError(msg)
 
