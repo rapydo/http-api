@@ -43,6 +43,7 @@ class ElasticPythonExt(BaseExtension):
         from elasticsearch import Elasticsearch
         elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
         host = {'host': elhost}
+        log.verbose("Connecting to elastic: %s", elhost)
         obj = Elasticsearch([host])
         with nostderr():
             try:
