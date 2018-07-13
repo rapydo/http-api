@@ -402,12 +402,16 @@ class IrodsPythonClient():
 
         if chunk_size is None:
             chunk_size = self.chunk_size
-
+        stream_is_valid = False
         while True:
             chunk = request.stream.read(chunk_size)
             # print("\n\n\nCONTENT", chunk)
             if not chunk:
+                if not stream_is_valid:
+                    raise BaseException(
+                        "Invalid or empty stream of data")
                 break
+            stream_is_valid = True
             target.write(chunk)
 
     def read_in_streaming(self, absolute_path, headers=None):
@@ -466,6 +470,7 @@ class IrodsPythonClient():
                     mode = 'w+'
                 with obj.open(mode) as target:
                     self.write_in_chunks(target, self.chunk_size)
+
             except BaseException as ex:
                 log.critical("Failed streaming upload: %s", ex)
                 # Should I remove file from iRODS if upload failed?
