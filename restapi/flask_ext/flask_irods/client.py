@@ -406,7 +406,7 @@ class IrodsPythonClient():
         while True:
             chunk = request.stream.read(chunk_size)
             # print("\n\n\nCONTENT", chunk)
-            if not chunk:
+            if not chunk or len(chunk) == 0:
                 if not stream_is_valid:
                     raise BaseException(
                         "Invalid or empty stream of data")
