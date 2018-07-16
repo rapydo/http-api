@@ -460,9 +460,10 @@ class IrodsPythonClient():
             # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
                 # NOTE binary option for non ASCII files
-                mode = 'w'
                 if binary:
-                    mode = 'w+'
+                    mode = 'wb'
+                else:
+                    mode = 'w'
                 with obj.open(mode) as target:
                     self.write_in_chunks(target, self.chunk_size)
 
