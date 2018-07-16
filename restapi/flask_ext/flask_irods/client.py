@@ -461,7 +461,7 @@ class IrodsPythonClient():
             try:
                 # NOTE binary option for non ASCII files
                 if binary:
-                    mode = 'wb'
+                    mode = 'w+'
                 else:
                     mode = 'w'
                 with obj.open(mode) as target:
