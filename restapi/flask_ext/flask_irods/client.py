@@ -432,9 +432,7 @@ class IrodsPythonClient():
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot read file: not found")
 
-    def write_in_streaming(self,
-                           destination, force=False,
-                           resource=None, binary=False):
+    def write_in_streaming(self, destination, force=False, resource=None):
         """
         Writes obj to iRODS without saving a local copy
         """
@@ -455,16 +453,8 @@ class IrodsPythonClient():
                 destination, directory=False, ignore_existing=force)
             obj = self.prc.data_objects.get(destination)
 
-            # Based on:
-            # https://blog.pelicandd.com/article/80/streaming-input-and-output-in-flask
-            # https://github.com/pallets/flask/issues/2086#issuecomment-261962321
             try:
-                # NOTE binary option for non ASCII files
-                if binary:
-                    mode = 'w+'
-                else:
-                    mode = 'w'
-                with obj.open(mode) as target:
+                with obj.open('w') as target:
                     self.write_in_chunks(target, self.chunk_size)
 
             except BaseException as ex:
