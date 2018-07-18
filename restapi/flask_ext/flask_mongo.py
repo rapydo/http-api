@@ -65,9 +65,7 @@ class MongoExt(BaseExtension):
                     client.drop_database(db)
                     log.critical("Dropped db '%s'", db)
 
-        if pinit:
-            # TODO: discuss!
-            # needed from EPOS use case
-            pass
+        # if pinit:
+        #     pass
 
         return db
