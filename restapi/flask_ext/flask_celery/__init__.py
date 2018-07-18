@@ -27,16 +27,27 @@ class CeleryExt(BaseExtension):
 
         BROKER_HOST = self.variables.get("broker_host")
         BROKER_PORT = int(self.variables.get("broker_port"))
+        BROKER_USER = self.variables.get("broker_user")
+        BROKER_PASSWORD = self.variables.get("broker_password")
 
         backend = self.variables.get("backend", broker)
         BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
         BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
+        BACKEND_USER = self.variables.get("backend_user", BROKER_USER)
+        BACKEND_PASSWORD = self.variables.get(
+            "backend_password", BROKER_PASSWORD)
+
+        if BROKER_USER is not None and BROKER_PASSWORD is not None:
+            BROKER_CREDENTIALS = "%s:%s@" % (BROKER_USER, BROKER_PASSWORD)
+        else:
+            BROKER_CREDENTIALS = ""
 
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://%s' % (BROKER_HOST)
+            BROKER_URL = 'amqp://%s%s' % (BROKER_CREDENTIALS, BROKER_HOST)
             log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
-            BROKER_URL = 'redis://%s:%s/0' % (BROKER_HOST, BROKER_PORT)
+            BROKER_URL = 'redis://%s%s:%s/0' % (
+                BROKER_CREDENTIALS, BROKER_HOST, BROKER_PORT)
             log.info("Configured Redis as Celery broker %s", BROKER_URL)
         else:
             log.error(
@@ -44,14 +55,22 @@ class CeleryExt(BaseExtension):
             celery_app = None
             return celery_app
 
+        if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
+            BACKEND_CREDENTIALS = "%s:%s@" % (BACKEND_USER, BACKEND_PASSWORD)
+        else:
+            BACKEND_CREDENTIALS = ""
+
         if backend == 'RABBIT':
-            BACKEND_URL = 'rpc://%s:%s/0' % (BACKEND_HOST, BACKEND_PORT)
+            BACKEND_URL = 'rpc://%s%s:%s/0' % (
+                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
             log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
         elif backend == 'REDIS':
-            BACKEND_URL = 'redis://%s:%s/0' % (BACKEND_HOST, BACKEND_PORT)
+            BACKEND_URL = 'redis://%s%s:%s/0' % (
+                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
             log.info("Configured Redis as Celery backend %s", BACKEND_URL)
         elif backend == 'MONGODB':
-            BACKEND_URL = 'mongodb://%s:%s' % (BACKEND_HOST, BACKEND_PORT)
+            BACKEND_URL = 'mongodb://%s%s:%s' % (
+                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
             log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
         else:
             log.exit(

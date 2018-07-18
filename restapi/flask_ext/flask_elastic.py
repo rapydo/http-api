@@ -41,9 +41,14 @@ class ElasticPythonExt(BaseExtension):
             variables[key] = value
 
         from elasticsearch import Elasticsearch
-        elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
-        host = {'host': elhost}
-        obj = Elasticsearch([host])
+
+        host = variables.get('host')
+        port = variables.get('port')
+        obj = Elasticsearch([host], port=port)
+        # elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
+        # host = {'host': elhost}
+        # log.verbose("Connecting to elastic: %s", elhost)
+        # obj = Elasticsearch([host])
         with nostderr():
             try:
                 check = obj.ping()
@@ -51,9 +56,9 @@ class ElasticPythonExt(BaseExtension):
                 check = False
 
         if check:
-            log.debug('Connected to elastic: %s', elhost)
+            log.debug('Connected to elastic: %s:%s', host, port)
         else:
-            msg = 'Failed to connect: %s', elhost
+            msg = 'Failed to connect: %s:%s', host, port
             log.error(msg)
             raise EnvironmentError(msg)
 
