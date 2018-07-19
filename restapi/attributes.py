@@ -10,6 +10,8 @@ from attr import (
     ib as attribute
 )
 
+ALL_ROLES = 'all'
+ANY_ROLE = 'any'
 
 ########################
 # All attributes we use for a Flask Response
@@ -34,6 +36,7 @@ class ExtraAttributes(object):
     publish = attribute(default=True)
     schema = attribute(default={})
     whatever = attribute(default=None)
+    required_roles = attribute(default=ALL_ROLES)
 
 
 ########################

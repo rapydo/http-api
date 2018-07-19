@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
 from restapi.confs import PRODUCTION
+from restapi.attributes import ALL_ROLES, ANY_ROLE
 from utilities.meta import Meta
 from utilities.globals import mem
 from utilities import htmlcodes as hcodes
@@ -448,15 +449,30 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     # # Roles handling #
     # ##################
-    def verify_roles(self, roles, warnings=True):
+    def verify_roles(self, roles, required_roles=None, warnings=True):
+
+        if required_roles is None:
+            required_roles = ALL_ROLES
 
         current_roles = self.get_roles_from_user()
-        for role in roles:
-            if role not in current_roles:
-                if warnings:
-                    log.warning("Auth role '%s' missing for request", role)
+
+        if required_roles == ALL_ROLES:
+            for role in roles:
+                if role not in current_roles:
+                    if warnings:
+                        log.warning("Auth role '%s' missing for request", role)
+                    return False
+            return True
+
+        if required_roles == ANY_ROLE:
+            for role in roles:
+                if role in current_roles:
+                    return True
                 return False
-        return True
+
+        log.critical(
+            "Unknown role authorization requirement: %s", required_roles)
+        return False
 
     def verify_admin(self):
         """ Check if current user has administration role """

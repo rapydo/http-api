@@ -54,9 +54,10 @@ class HTTPTokenAuth(object):
         """ Returns (auth, token) """
         return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
 
-    def authenticate_roles(self, verify_roles_callback, roles):
+    def authenticate_roles(self, verify_roles_callback, roles, required_roles):
         if verify_roles_callback:
-            return verify_roles_callback(roles)
+            return verify_roles_callback(
+                roles, required_roles=required_roles)
         return False
 
     def get_auth_from_header(self):
@@ -77,7 +78,8 @@ class HTTPTokenAuth(object):
 
         return auth_type, token
 
-    def authorization_required(self, f, roles, from_swagger=False):
+    def authorization_required(self, f, roles,
+                               from_swagger=False, required_roles=None):
         @wraps(f)
         def decorated(*args, **kwargs):
 
@@ -117,7 +119,7 @@ class HTTPTokenAuth(object):
             # Check roles
             if len(roles) > 0:
                 roles_fn = decorated_self.auth.verify_roles
-                if not self.authenticate_roles(roles_fn, roles):
+                if not self.authenticate_roles(roles_fn, roles, required_roles):
                     return decorated_self.send_errors(
                         message="You are not authorized: missing privileges",
                         code=hcodes.HTTP_BAD_UNAUTHORIZED)
