@@ -470,7 +470,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             for role in roles:
                 if role in current_roles:
                     return True
-                return False
+            return False
 
         log.critical(
             "Unknown role authorization requirement: %s", required_roles)
