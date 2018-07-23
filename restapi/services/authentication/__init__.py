@@ -59,8 +59,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
-        self.defaultTTL = Detector.get_global_var(
-            'TOKEN_DEFAULT_TTL', self.shortTTL)
+        self.defaultTTL = float(Detector.get_global_var(
+            'TOKEN_DEFAULT_TTL', self.shortTTL))
 
     @classmethod
     def myinit(cls):
