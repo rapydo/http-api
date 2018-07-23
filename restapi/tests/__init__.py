@@ -25,7 +25,7 @@ API_URI = '%s%s' % (SERVER_URI, API_URL)
 AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
 
 
-class BaseTests():
+class BaseTests(object):
 
     def save(self, variable, value, read_only=False):
         """
@@ -159,6 +159,17 @@ class BaseTests():
             if data is not None:
                 token = data.get('token', '')
         return {'Authorization': 'Bearer ' + token}, token
+
+    def do_logout(self, client, headers):
+        r = client.get(AUTH_URI + '/logout', headers=headers)
+        if r.status_code == hcodes.HTTP_OK_NORESPONSE:
+            log.info("Test TOKEN removed")
+        else:
+            log.error("Failed to logout with:\n%s", headers)
+
+    def delete_tokens(self, client, headers):
+        # r = client.delete(AUTH_URI + '/tokens', headers=headers)
+        pass
 
     # def create_user(self, username, **kwargs):
 
