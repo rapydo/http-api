@@ -244,6 +244,8 @@ class Authentication(BaseAuthentication):
 
         try:
             token_entry = self.db.Token.objects.raw({'token': token}).first()
+            # NOTE: Other auth db (sqlalchemy, neo4j) delete the token instead
+            # of keep it without the user association
             token_entry.user_id = None
             token_entry.save()
         except self.db.Token.DoesNotExist:

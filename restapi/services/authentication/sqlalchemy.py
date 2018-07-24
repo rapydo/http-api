@@ -199,7 +199,10 @@ class Authentication(BaseAuthentication):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry is not None:
-            token_entry.emitted_for = None
+            # Token are now deleted and no longer kept with no emision info
+            # token_entry.emitted_for = None
+            self.db.session.delete(token_entry)
+
             self.db.session.commit()
             return True
 
