@@ -47,11 +47,15 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-
         user = self.db.User(**userdata)
-        user.roles = roles
 
+        roles_obj = []
+        for role_name in roles:
+            role_obj = self.db.Role.objects.raw({'_id': 'normal_user'}).first()
+            roles_obj.append(role_obj)
+        user.roles = roles_obj
         user.save()
+        return user
 
     def get_user_object(self, username=None, payload=None):
 
@@ -86,6 +90,7 @@ class Authentication(BaseAuthentication):
 
         for role in userobj.roles:
             roles.append(role.name)
+            # roles.append(role)
         return roles
 
     def init_users_and_roles(self):
