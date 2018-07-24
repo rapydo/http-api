@@ -105,14 +105,16 @@ class Authentication(BaseAuthentication):
             cursor = self.db.Role.objects.all()
             missing_role = len(list(cursor)) < 1
 
-            for role in self.default_roles:
-                role = self.db.Role(name=role, description="automatic")
-                if missing_role:
-                    transactions.append(role)
-                roles.append(role)
-
             if missing_role:
                 log.warning("No roles inside mongo. Injected defaults.")
+                for role in self.default_roles:
+                    roles.append(
+                        self.db.Role(
+                            name=role, description="automatic").save()
+                    )
+                    # if missing_role:
+                    #     transactions.append(role)
+                    # roles.append(role)
 
             # if no users
             cursor = self.db.User.objects.all()
@@ -147,10 +149,10 @@ class Authentication(BaseAuthentication):
         except BaseException as e:
             raise AttributeError("Models for auth are wrong:\n%s" % e)
 
-        if missing_user or missing_role:
-            for transaction in transactions:
-                transaction.save()
-            log.info("Saved init transactions")
+        # if missing_user or missing_role:
+        #     for transaction in transactions:
+        #         transaction.save()
+        #     log.info("Saved init transactions")
 
     def save_token(self, user, token, jti, token_type=None):
 
