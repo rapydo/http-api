@@ -27,11 +27,20 @@ class CeleryExt(BaseExtension):
 
         BROKER_HOST = self.variables.get("broker_host")
         BROKER_PORT = int(self.variables.get("broker_port"))
-        BROKER_USER = self.variables.get("broker_user")
-        BROKER_PASSWORD = self.variables.get("broker_password")
-        BROKER_VIRTUALHOST = self.variables.get("broker_virtual_host", "")
-        if BROKER_VIRTUALHOST != "":
-            BROKER_VIRTUALHOST = "/%s" % BROKER_VIRTUALHOST
+        BROKER_USER = self.variables.get("broker_user", "")
+        BROKER_PASSWORD = self.variables.get("broker_password", "")
+        BROKER_VHOST = self.variables.get("broker_vhost", "")
+
+        if BROKER_USER == "":
+            BROKER_USER = None
+        if BROKER_PASSWORD == "":
+            BROKER_PASSWORD = None
+
+        if BROKER_VHOST == "":
+            BROKER_VHOST = None
+
+        if BROKER_VHOST is not None:
+            BROKER_VHOST = "/%s" % BROKER_VHOST
 
         backend = self.variables.get("backend", broker)
         BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
@@ -40,6 +49,11 @@ class CeleryExt(BaseExtension):
         BACKEND_PASSWORD = self.variables.get(
             "backend_password", BROKER_PASSWORD)
 
+        if BACKEND_USER == "":
+            BACKEND_USER = None
+        if BACKEND_PASSWORD == "":
+            BACKEND_PASSWORD = None
+
         if BROKER_USER is not None and BROKER_PASSWORD is not None:
             BROKER_CREDENTIALS = "%s:%s@" % (BROKER_USER, BROKER_PASSWORD)
         else:
@@ -47,7 +61,7 @@ class CeleryExt(BaseExtension):
 
         if broker == 'RABBIT':
             BROKER_URL = 'amqp://%s%s%s' % (
-                BROKER_CREDENTIALS, BROKER_HOST, BROKER_VIRTUALHOST)
+                BROKER_CREDENTIALS, BROKER_HOST, BROKER_VHOST)
             log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
             BROKER_URL = 'redis://%s%s:%s/0' % (
