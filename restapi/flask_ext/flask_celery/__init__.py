@@ -33,8 +33,14 @@ class CeleryExt(BaseExtension):
         BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
 
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://%s' % (BROKER_HOST)
-            log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
+            BROKER_USER = int(self.variables.get("broker_user"))
+            BROKER_PW = int(self.variables.get("broker_password"))
+            BROKER_VHOST = int(self.variables.get("broker_virtual_host"))
+            # TODO Is there any place in the repo where we can define defaults?
+            
+            BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (BROKER_USER, BROKER_PW,
+                BROKER_HOST, BROKER_PORT, BROKER_VHOST))
+            log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL.replace(BROKER_PW, '***'))
         elif broker == 'REDIS':
             BROKER_URL = 'redis://%s:%s/0' % (BROKER_HOST, BROKER_PORT)
             log.info("Configured Redis as Celery broker %s", BROKER_URL)
