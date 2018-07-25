@@ -36,10 +36,7 @@ class CeleryExt(BaseExtension):
         if BROKER_PASSWORD == "":
             BROKER_PASSWORD = None
 
-        if BROKER_VHOST == "":
-            BROKER_VHOST = None
-
-        if BROKER_VHOST is not None:
+        if BROKER_VHOST != "":
             BROKER_VHOST = "/%s" % BROKER_VHOST
 
         backend = self.variables.get("backend", broker)
