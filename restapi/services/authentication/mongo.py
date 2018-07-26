@@ -47,7 +47,7 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-        user = self.db.User(**userdata)
+        user = self.db.User(uuid=getUUID(), **userdata)
 
         roles_obj = []
         for role_name in roles:
@@ -69,12 +69,20 @@ class Authentication(BaseAuthentication):
                 # don't do things, user will remain 'None'
                 pass
 
-        if payload is not None and 'user_id' in payload:
-            try:
-                user = self.db.User.objects.raw(
-                    {'uuid': payload['user_id']}).first()
-            except self.db.User.DoesNotExist:
-                pass
+        if payload is not None:
+            if payload.get('user_id'):  # skip: '', None
+                try:
+                    user = self.db.User.objects.get(
+                        {'uuid': payload['user_id']})
+                except self.db.User.DoesNotExist:
+                    pass
+            elif payload.get('jti'):  # skip: '', None
+                try:
+                    user = self.db.Token.objects.get(
+                        {'jti': payload['jti']}
+                    ).user_id
+                except self.db.Token.DoesNotExist:
+                    pass
 
         return user
 
