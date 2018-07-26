@@ -87,13 +87,15 @@ class EndpointResource(Resource):
         self._parser = reqparse.RequestParser()
 
         # use self to get the classname
-        k1 = self.myname()
+        classname = self.myname()
         # use request to recover uri and method
-        k2 = str(request.url_rule)
-        k3 = request.method.lower()
+        uri = str(request.url_rule)
+        method = request.method.lower()
+
+        # FIXME: this works only for 'query' parameters
         # recover from the global mem parameters query parameters
         current_params = mem.customizer._query_params \
-            .get(k1, {}).get(k2, {}).get(k3, {})
+            .get(classname, {}).get(uri, {}).get(method, {})
 
         if len(current_params) > 0:
 
@@ -124,7 +126,6 @@ class EndpointResource(Resource):
                     default=data.get('default', None),
                     required=data.get('required', False),
                     trim=trim, action=act, location=loc)
-
                 log.very_verbose("Accept param '%s' type %s" % (param, mytype))
 
         # TODO: should I check body parameters?
@@ -157,6 +158,8 @@ class EndpointResource(Resource):
         """
 
         self.parse()
+        # TODO: study how to apply types in swagger not only for query params
+        # so we can use them for validation
 
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
@@ -172,6 +175,8 @@ class EndpointResource(Resource):
             if len(self._json_args) < 1:
                 self._json_args = request.form
 
+            # print("TEST\n\n\n", self._json_args)
+            # NOTE: if JSON all parameters are just string at the moment...
             for key, value in self._json_args.items():
                 if value is None:
                     continue
