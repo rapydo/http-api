@@ -42,7 +42,7 @@ echo "CORE_DIR = ${CORE_DIR}"
 echo "COVERAGE_DIR = ${COV_DIR}"
 
 # Save credentials for S3 storage
-echo "TEST *${S3_USER}* *${S3_PWD}*"
+# echo "TEST *${S3_USER}* *${S3_PWD}*"
 aws configure set aws_access_key_id $S3_USER
 aws configure set aws_secret_access_key $S3_PWD
 
