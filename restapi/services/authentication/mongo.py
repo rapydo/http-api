@@ -105,13 +105,14 @@ class Authentication(BaseAuthentication):
 
         missing_role = missing_user = False
         roles = []
-        transactions = []
+        # transactions = []
 
         try:
 
             # if no roles
             cursor = self.db.Role.objects.all()
-            missing_role = len(list(cursor)) < 1
+            fetch_roles = list(cursor)
+            missing_role = len(roles) < 1
 
             if missing_role:
                 log.warning("No roles inside mongo. Injected defaults.")
@@ -123,6 +124,8 @@ class Authentication(BaseAuthentication):
                     # if missing_role:
                     #     transactions.append(role)
                     # roles.append(role)
+            else:
+                roles = fetch_roles
 
             # if no users
             cursor = self.db.User.objects.all()
@@ -131,7 +134,7 @@ class Authentication(BaseAuthentication):
             if missing_user:
 
                 self.create_user({
-                    'uuid': getUUID(),
+                    # 'uuid': getUUID(),  # FIXME: check here
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default', 'surname': 'User',
