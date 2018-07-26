@@ -37,6 +37,12 @@ class Authentication(BaseAuthentication):
         """
         return payload
 
+    def custom_user_properties(self, userdata):
+        new_userdata = super(Authentication, self).custom_user_properties(userdata)
+        if not new_userdata.get('uuid'):
+            new_user_data['uuid'] = getUUID()
+        return new_userdata
+
     # Also used by POST user
     def create_user(self, userdata, roles):
 
@@ -47,7 +53,7 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-        user = self.db.User(uuid=getUUID(), **userdata)
+        user = self.db.User(**userdata)
 
         roles_obj = []
         for role_name in roles:
