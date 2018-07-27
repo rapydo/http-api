@@ -38,9 +38,10 @@ class Authentication(BaseAuthentication):
         return payload
 
     def custom_user_properties(self, userdata):
-        new_userdata = super(Authentication, self).custom_user_properties(userdata)
+        new_userdata = super(
+            Authentication, self).custom_user_properties(userdata)
         if not new_userdata.get('uuid'):
-            new_user_data['uuid'] = getUUID()
+            new_userdata['uuid'] = getUUID()
         return new_userdata
 
     # Also used by POST user
@@ -53,7 +54,7 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-        user = self.db.User(uuid=getUUID(), **userdata)
+        user = self.db.User(**userdata)
 
         roles_obj = []
         for role_name in roles:
@@ -140,7 +141,6 @@ class Authentication(BaseAuthentication):
             if missing_user:
 
                 self.create_user({
-                    # 'uuid': getUUID(),  # FIXME: check here
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default', 'surname': 'User',
