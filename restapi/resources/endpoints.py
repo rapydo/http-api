@@ -139,7 +139,6 @@ class Login(EndpointResource):
         username = jargs.get('username')
         if username is None:
             username = jargs.get('email')
-        username = username.lower()
 
         password = jargs.get('password')
         if password is None:
@@ -152,6 +151,7 @@ class Login(EndpointResource):
             raise RestApiException(
                 msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
+        username = username.lower()
         now = datetime.now(pytz.utc)
 
         new_password = jargs.get('new_password')
