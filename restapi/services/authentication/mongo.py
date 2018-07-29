@@ -119,7 +119,7 @@ class Authentication(BaseAuthentication):
             # if no roles
             cursor = self.db.Role.objects.all()
             fetch_roles = list(cursor)
-            missing_role = len(roles) < 1
+            missing_role = len(fetch_roles) < 1
 
             if missing_role:
                 log.warning("No roles inside mongo. Injected defaults.")
