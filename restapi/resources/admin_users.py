@@ -22,8 +22,17 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 class AdminUsers(GraphBaseOperations):
 
     def parse_roles(self, properties):
-        return self.parseAutocomplete(
-            properties, 'roles', id_key='name', split_char=',')
+
+        if 'roles' in properties:
+            return self.parseAutocomplete(
+                properties, 'roles', id_key='name', split_char=',')
+        else:
+            roles = []
+            for p in properties:
+                if p.startswith("roles_"):
+                    if properties.get(p, False):
+                        roles.append(p[6:])
+            return roles
 
     def parse_group(self, v):
         groups = self.parseAutocomplete(v, 'group', id_key='id')
@@ -41,7 +50,7 @@ class AdminUsers(GraphBaseOperations):
 
         return group
 
-    def check_permissions(self, user, node, is_admin, is_group_admin):
+    def check_permissions(self, user, node, is_admin, is_local_admin):
 
         if node is None:
             return False
@@ -50,8 +59,8 @@ class AdminUsers(GraphBaseOperations):
         if is_admin:
             return True
 
-        # You are neither an ADMIN nor a GROUP ADMIN
-        if not is_group_admin:
+        # You are neither an ADMIN nor a LOCAL ADMIN
+        if not is_local_admin:
             return False
 
         # If you are not an ADMIN, you cannot modify yourself...
@@ -59,9 +68,21 @@ class AdminUsers(GraphBaseOperations):
         if user == node:
             return False
 
+        # If you are not an ADMIN, you cannot modify ADMINs
+        if self.auth.role_admin in self.auth.get_roles_from_user(node):
+            return False
+
         # FIXME: only implemented for neo4j
-        # You are a group admin... but the group mathes??
+        # You are a local admin... but the group matches??
         for g in user.coordinator.all():
+            if node.belongs_to.is_connected(g):
+                return True
+
+        # FIXME: only implemented for neo4j
+        # All local admins have rights on general users
+        # g = general group
+        g = self.graph.Group.nodes.get_or_none(shortname="default")
+        if g is not None:
             if node.belongs_to.is_connected(g):
                 return True
 
@@ -110,8 +131,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -122,7 +143,7 @@ class AdminUsers(GraphBaseOperations):
         for n in nodeset.all():
 
             is_authorized = self.check_permissions(
-                current_user, n, is_admin, is_group_admin
+                current_user, n, is_admin, is_local_admin
             )
             if not is_authorized:
                 continue
@@ -150,8 +171,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -175,6 +196,62 @@ class AdminUsers(GraphBaseOperations):
                         }
                     }
                 )
+
+            if 'autocomplete' in v and not v['autocomplete']:
+                for idx, val in enumerate(new_schema):
+                    if val["name"] == "group":
+                        new_schema[idx]["default"] = None
+
+                        if "custom" not in new_schema[idx]:
+                            new_schema[idx]["custom"] = {}
+
+                        new_schema[idx]["custom"]["htmltype"]: "select"
+                        new_schema[idx]["custom"]["label"]: "Group"
+
+                        new_schema[idx]["enum"] = []
+
+                        for g in self.graph.Group.nodes.all():
+                            new_schema[idx]["enum"].append(
+                                {g.uuid: g.fullname}
+                            )
+                            if new_schema[idx]["default"] is None:
+                                new_schema[idx]["default"] = g.uuid
+
+                    # Roles as multi checkbox
+                    if val["name"] == "roles":
+
+                        cypher = "MATCH (r:Role)"
+                        if not self.auth.verify_admin():
+                            allowed_roles = mem.customizer._configurations \
+                                .get('variables', {}) \
+                                .get('backend', {}) \
+                                .get('allowed_roles', [])
+                            cypher += " WHERE r.name in %s" % allowed_roles
+                        # Admin only
+                        else:
+                            cypher += " WHERE r.description <> 'automatic'"
+
+                        cypher += " RETURN r ORDER BY r.name ASC"
+
+                        result = self.graph.cypher(cypher)
+
+                        del new_schema[idx]
+
+                        for row in result:
+                            r = self.graph.Role.inflate(row[0])
+
+                            role = {
+                                "type": "checkbox",
+                                # "name": "roles[%s]" % r.name,
+                                "name": "roles_%s" % r.name,
+                                # "name": r.name,
+                                "custom": {
+                                    "label": r.description
+                                }
+                            }
+
+                            new_schema.insert(idx, role)
+
             if is_admin:
                 return self.force_response(new_schema)
 
@@ -190,7 +267,20 @@ class AdminUsers(GraphBaseOperations):
                     }
                     new_schema[idx]["enum"] = []
 
+                    default_group = self.graph.Group.nodes.get_or_none(
+                        shortname="default")
+
+                    if default_group is not None:
+                        new_schema[idx]["enum"].append(
+                            {default_group.uuid: default_group.shortname}
+                        )
+                        new_schema[idx]["default"] = default_group.uuid
+
                     for g in current_user.coordinator.all():
+
+                        if g == default_group:
+                            continue
+
                         new_schema[idx]["enum"].append(
                             {g.uuid: g.shortname}
                         )
@@ -198,7 +288,7 @@ class AdminUsers(GraphBaseOperations):
                             new_schema[idx]["default"] = g.uuid
 
             return self.force_response(new_schema)
- 
+
         # INIT #
         properties = self.read_properties(schema, v)
 
@@ -262,8 +352,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -278,17 +368,20 @@ class AdminUsers(GraphBaseOperations):
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_group_admin
+            current_user, user, is_admin, is_local_admin
         )
         if not is_authorized:
             raise RestApiException(
                 "This user cannot be found or you are not authorized")
 
-        unhashed_password = None
         if "password" in v and v["password"] == "":
             del v["password"]
-        else:
+
+        if "password" in v:
+            unhashed_password = v["password"]
             v["password"] = BaseAuthentication.hash_password(v["password"])
+        else:
+            unhashed_password = None
 
         if "email" in v:
             v["email"] = v["email"].lower()
@@ -353,8 +446,8 @@ class AdminUsers(GraphBaseOperations):
         self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
-        is_group_admin = self.auth.verify_group_admin()
-        if not is_admin and not is_group_admin:
+        is_local_admin = self.auth.verify_local_admin()
+        if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
@@ -367,7 +460,7 @@ class AdminUsers(GraphBaseOperations):
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_group_admin
+            current_user, user, is_admin, is_local_admin
         )
         if not is_authorized:
             raise RestApiException(

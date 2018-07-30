@@ -5,32 +5,38 @@ from restapi.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
 
+AUTH_DB = 'auth'
+
 
 class MongoExt(BaseExtension):
 
     # _defaultdb = 'test'
-    _defaultdb = 'auth'
+    # _authdb = 'auth'
+    # _defaultdb = 'auth'
 
     def custom_connection(self, **kwargs):
 
+        ##################
         # mix kwargs with variables
         variables = self.variables
         for key, value in kwargs.items():
             variables[key] = value
+        # log.pp(variables)
 
-        db = variables.get('database', self._defaultdb)
+        ##################
+        # connect for authentication if required
+        uri = "mongodb://%s:%s/%s" % (
+            variables.get('host'), variables.get('port'), AUTH_DB)
+        mongodb.connect(uri, alias=AUTH_DB)
 
+        ##################
+        db = variables.get('database', 'UNKNOWN')
         uri = "mongodb://%s:%s/%s" % (
             variables.get('host'), variables.get('port'), db)
 
-        # if db == self._defaultdb:
-        #     mongodb.connect(uri)
-        #     obj = mongodb._get_connection()
-        # else:
-
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)
-        log.debug("Connected to db %s", db)
+        log.very_verbose("Connected to db %s", db)
 
         class obj:
             connection = link
@@ -53,15 +59,13 @@ class MongoExt(BaseExtension):
                 int(self.variables.get('port'))
             )
 
-            system_dbs = ['admin', 'local']
+            system_dbs = ['admin', 'local', 'config']
             for db in client.database_names():
                 if db not in system_dbs:
                     client.drop_database(db)
                     log.critical("Dropped db '%s'", db)
 
-        if pinit:
-            # TODO: discuss!
-            # needed from EPOS use case
-            pass
+        # if pinit:
+        #     pass
 
         return db

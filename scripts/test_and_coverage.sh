@@ -42,6 +42,7 @@ echo "CORE_DIR = ${CORE_DIR}"
 echo "COVERAGE_DIR = ${COV_DIR}"
 
 # Save credentials for S3 storage
+# echo "TEST *${S3_USER}* *${S3_PWD}*"
 aws configure set aws_access_key_id $S3_USER
 aws configure set aws_secret_access_key $S3_PWD
 
@@ -76,7 +77,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init --skip-npm
+	rapydo --development --project ${PROJECT} init
 
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
@@ -117,7 +118,7 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --skip-npm
+	rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 	# Build the backend image and execute coveralls

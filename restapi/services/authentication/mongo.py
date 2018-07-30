@@ -6,6 +6,7 @@ Mongodb based implementation
 
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
+from restapi.flask_ext.flask_mongo import AUTH_DB
 from utilities.uuid import getUUID
 from restapi.services.detect import detector
 from utilities.logs import get_logger
@@ -19,20 +20,29 @@ if not detector.check_availability(__name__):
 
 class Authentication(BaseAuthentication):
 
-    # def __init__(self, services=None):
-    #     # Read init credentials and configuration
-    #     self.myinit()
-    #     # Get the instance for mongodb
-    #     name = __name__.split('.')[::-1][0]  # returns 'mongo'
-    #     self.db = services.get(name).get_instance(dbname='auth')
+    def __init__(self):
 
-    # FIXME: how to call a specific instance with a specific db
+        # Read init credentials and configuration
+        super().__init__()
+
+        # Get the instance for mongodb
+        name = __name__.split('.')[::-1][0]  # returns 'mongo'
+        from restapi.services.detect import detector
+        extension = detector.services_classes.get(name)
+        self.db = extension().get_instance(dbname=AUTH_DB)
 
     def fill_custom_payload(self, userobj, payload):
         """
         FIXME: should probably be implemented inside vanilla
         """
         return payload
+
+    def custom_user_properties(self, userdata):
+        new_userdata = super(
+            Authentication, self).custom_user_properties(userdata)
+        if not new_userdata.get('uuid'):
+            new_userdata['uuid'] = getUUID()
+        return new_userdata
 
     # Also used by POST user
     def create_user(self, userdata, roles):
@@ -44,11 +54,15 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-
         user = self.db.User(**userdata)
-        user.roles = roles
 
+        roles_obj = []
+        for role_name in roles:
+            role_obj = self.db.Role.objects.raw({'_id': 'normal_user'}).first()
+            roles_obj.append(role_obj)
+        user.roles = roles_obj
         user.save()
+        return user
 
     def get_user_object(self, username=None, payload=None):
 
@@ -62,12 +76,20 @@ class Authentication(BaseAuthentication):
                 # don't do things, user will remain 'None'
                 pass
 
-        if payload is not None and 'user_id' in payload:
-            try:
-                user = self.db.User.objects.raw(
-                    {'uuid': payload['user_id']}).first()
-            except self.db.User.DoesNotExist:
-                pass
+        if payload is not None:
+            if payload.get('user_id'):  # skip: '', None
+                try:
+                    user = self.db.User.objects.get(
+                        {'uuid': payload['user_id']})
+                except self.db.User.DoesNotExist:
+                    pass
+            elif payload.get('jti'):  # skip: '', None
+                try:
+                    user = self.db.Token.objects.get(
+                        {'jti': payload['jti']}
+                    ).user_id
+                except self.db.Token.DoesNotExist:
+                    pass
 
         return user
 
@@ -83,28 +105,34 @@ class Authentication(BaseAuthentication):
 
         for role in userobj.roles:
             roles.append(role.name)
+            # roles.append(role)
         return roles
 
     def init_users_and_roles(self):
 
         missing_role = missing_user = False
         roles = []
-        transactions = []
+        # transactions = []
 
         try:
 
             # if no roles
             cursor = self.db.Role.objects.all()
-            missing_role = len(list(cursor)) < 1
-
-            for role in self.default_roles:
-                role = self.db.Role(name=role, description="automatic")
-                if missing_role:
-                    transactions.append(role)
-                roles.append(role)
+            fetch_roles = list(cursor)
+            missing_role = len(fetch_roles) < 1
 
             if missing_role:
                 log.warning("No roles inside mongo. Injected defaults.")
+                for role in self.default_roles:
+                    roles.append(
+                        self.db.Role(
+                            name=role, description="automatic").save()
+                    )
+                    # if missing_role:
+                    #     transactions.append(role)
+                    # roles.append(role)
+            else:
+                roles = fetch_roles
 
             # if no users
             cursor = self.db.User.objects.all()
@@ -113,7 +141,6 @@ class Authentication(BaseAuthentication):
             if missing_user:
 
                 self.create_user({
-                    'uuid': getUUID(),
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default', 'surname': 'User',
@@ -139,10 +166,10 @@ class Authentication(BaseAuthentication):
         except BaseException as e:
             raise AttributeError("Models for auth are wrong:\n%s" % e)
 
-        if missing_user or missing_role:
-            for transaction in transactions:
-                transaction.save()
-            log.info("Saved init transactions")
+        # if missing_user or missing_role:
+        #     for transaction in transactions:
+        #         transaction.save()
+        #     log.info("Saved init transactions")
 
     def save_token(self, user, token, jti, token_type=None):
 
@@ -152,7 +179,7 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
         # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
-        exp = now + timedelta(seconds=self.shortTTL)
+        exp = now + timedelta(seconds=self.defaultTTL)
 
         if user is None:
             log.error("Trying to save an empty token")
@@ -179,7 +206,7 @@ class Authentication(BaseAuthentication):
             log.critical("This token is no longer valid")
             return False
 
-        exp = now + timedelta(seconds=self.shortTTL)
+        exp = now + timedelta(seconds=self.defaultTTL)
         token_entry.last_access = now
         token_entry.expiration = exp
 
@@ -236,6 +263,8 @@ class Authentication(BaseAuthentication):
 
         try:
             token_entry = self.db.Token.objects.raw({'token': token}).first()
+            # NOTE: Other auth db (sqlalchemy, neo4j) delete the token instead
+            # of keep it without the user association
             token_entry.user_id = None
             token_entry.save()
         except self.db.Token.DoesNotExist:

@@ -1,0 +1,13 @@
+
+depends_on:
+  - not PROFILE_DISABLED
+
+file: endpoints
+class: ProfileActivate
+baseuri: "/auth"
+mapping:
+  activate: "/profile/activate/<token_id>"
+  ask: "/profile/activate"
+labels:
+  - base
+  - profiles

@@ -10,8 +10,9 @@ And
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
 
-from pymongo.write_concern import WriteConcern
+# from pymongo.write_concern import WriteConcern
 from pymodm import MongoModel, fields
+from restapi.flask_ext.flask_mongo import AUTH_DB
 
 
 # ####################
@@ -36,8 +37,8 @@ class Role(MongoModel):
     description = fields.CharField()
 
     class Meta:
-        write_concern = WriteConcern(j=True)
-        connection_alias = 'auth'
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
 
 
 class User(MongoModel):
@@ -51,11 +52,12 @@ class User(MongoModel):
     first_login = fields.DateTimeField()
     last_login = fields.DateTimeField()
     last_password_change = fields.DateTimeField()
+    is_active = fields.BooleanField(default=True)
     roles = fields.EmbeddedDocumentListField(Role)
 
     class Meta:
-        write_concern = WriteConcern(j=True)
-        connection_alias = 'auth'
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
 
 
 class Token(MongoModel):
@@ -71,8 +73,8 @@ class Token(MongoModel):
     # emitted_for = fields.EmbeddedDocumentField(User, blank=True)
 
     class Meta:
-        write_concern = WriteConcern(j=True)
-        connection_alias = 'auth'
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
 
 
 class ExternalAccounts(MongoModel):
@@ -90,5 +92,5 @@ class ExternalAccounts(MongoModel):
     main_user = fields.EmbeddedDocumentField(User)
 
     class Meta:
-        write_concern = WriteConcern(j=True)
-        connection_alias = 'auth'
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB

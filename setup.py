@@ -42,26 +42,31 @@ setup(
         "pyOpenSSL",
         "PyJWT",
         # Flask and plugins
-        "Flask==0.12.2",
+        "flask==1.0.2",
         "Flask-Cors",
         "Flask-OAuthlib",
         "Flask-RESTful",
         "Flask-SQLAlchemy",
         # "flask-shell-ipython",
         "flask_injector==0.10.1",
-        "injector==0.12.0",
+
+        # AssertionError: Passing keyword arguments to inject is no
+        # longer supported. Use inject in combination with parameter
+        # annotations to declare dependencies.
+        # "injector==0.13.4",
+        "injector==0.12",
         # DB drivers
-        "neomodel==3.2.6",
+        "neomodel==3.2.8",
         # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi
         # "psycopg2",
         "psycopg2-binary",
         "pymodm",
-        # FS
-        "python-irodsclient",
-        "gssapi==1.4.1",
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
+        # # FS
+        # "python-irodsclient",
+        # "gssapi==1.5.0",
     ],
     classifiers=[
         'Programming Language :: Python',

@@ -82,11 +82,11 @@ class Authentication(BaseAuthentication):
 
         return user_node
 
-    # Also user by PUT user
+    # Also usre by PUT user
     def link_roles(self, user, roles):
 
-        if self.default_role not in roles:
-            roles.append(self.default_role)
+        # if self.default_role not in roles:
+        #     roles.append(self.default_role)
 
         for p in user.roles.all():
             user.roles.disconnect(p)
@@ -167,23 +167,6 @@ class Authentication(BaseAuthentication):
             return False
 
         return True
-
-    def verify_group_admin(self):
-
-        user = self.get_user()
-        if user is None:
-            return False
-
-        # coordinator is defined at vanilla level, by default does not exist
-        # if not defined, you cannot be a group admin
-        if not hasattr(user, 'coordinator'):
-            return False
-
-        # if you are coordinator of at least one group
-        for g in user.coordinator.all():
-            return True
-
-        return False
 
     def refresh_token(self, jti):
         now = datetime.now(pytz.utc)

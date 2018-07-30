@@ -300,3 +300,26 @@ class BaseInjector(Module):
         # my_instance = MyClass(app, **self.args)
         return binder.bind(MyClass, to=MyClass(app), scope=singleton)
         # return my_instance
+
+
+def get_debug_instance(MyClass):
+    """
+    Obtain a debug instance from any flask ext we have in the app
+
+    e.g. from restapi.flask_ext.flask_celery import CeleryExt
+    obj = get_debug_instance(CeleryExt)
+    """
+
+    #######
+    # NOTE: impors are needed here for logging to work correctly
+    from utilities.logs import get_logger
+    from restapi.services.detect import detector
+    detector  # avoid PEP complaints
+    get_logger
+    # FIXME: e.g. importing-programmatically
+    # docs.python.org/3/library/importlib.html
+
+    #######
+    instance = MyClass()
+    obj = instance.connect()
+    return obj

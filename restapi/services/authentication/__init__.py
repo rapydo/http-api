@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
 from restapi.confs import PRODUCTION
+from restapi.attributes import ALL_ROLES, ANY_ROLE
 from utilities.meta import Meta
 from utilities.globals import mem
 from utilities import htmlcodes as hcodes
@@ -44,6 +45,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     FULL_TOKEN = "f"
     PWD_RESET = "r"
+    ACTIVATE_ACCOUNT = "a"
     ##########################
     _oauth2 = {}
 
@@ -57,6 +59,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
+        self.defaultTTL = float(Detector.get_global_var(
+            'TOKEN_DEFAULT_TTL', self.shortTTL))
 
     @classmethod
     def myinit(cls):
@@ -266,6 +270,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             user, expiration=expiration, token_type=token_type)
         return self.create_token(payload)
 
+    def create_reset_token(self, user, type, duration=86400):
+        # invalidate previous reset tokens
+        tokens = self.get_tokens(user=user)
+        for t in tokens:
+            token_type = t.get("token_type")
+            if token_type is None:
+                continue
+            if token_type != type:
+                continue
+
+            tok = t.get("token")
+            if self.invalidate_token(tok):
+                log.info("Previous token invalidated: %s", tok)
+
+        # Generate a new reset token
+        new_token, jti = self.create_temporary_token(
+            user, duration=duration, token_type=type)
+
+        return new_token, jti
+
     @abc.abstractmethod
     def verify_token_custom(self, jti, user, payload):
         """
@@ -409,7 +433,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             .lower() == 'false'
 
         if token_type is not None:
-            if token_type == self.PWD_RESET:
+            if token_type == self.PWD_RESET or \
+               token_type == self.ACTIVATE_ACCOUNT:
                 short_jwt = True
                 payload["t"] = token_type
 
@@ -426,23 +451,37 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     # # Roles handling #
     # ##################
-    def verify_roles(self, roles, warnings=True):
+    def verify_roles(self, roles, required_roles=None, warnings=True):
+
+        if required_roles is None:
+            required_roles = ALL_ROLES
 
         current_roles = self.get_roles_from_user()
-        for role in roles:
-            if role not in current_roles:
-                if warnings:
-                    log.warning("Auth role '%s' missing for request", role)
-                return False
-        return True
+
+        if required_roles == ALL_ROLES:
+            for role in roles:
+                if role not in current_roles:
+                    if warnings:
+                        log.warning("Auth role '%s' missing for request", role)
+                    return False
+            return True
+
+        if required_roles == ANY_ROLE:
+            for role in roles:
+                if role in current_roles:
+                    return True
+            return False
+
+        log.critical(
+            "Unknown role authorization requirement: %s", required_roles)
+        return False
 
     def verify_admin(self):
         """ Check if current user has administration role """
         return self.verify_roles([self.role_admin], warnings=False)
 
-    # FIXME: this only implemented in neo4j, extend to other db if required
-    def verify_group_admin(self):
-        return False
+    def verify_local_admin(self):
+        return self.verify_roles(["local_admin"], warnings=False)
 
     @abc.abstractmethod
     def get_roles_from_user(self, userobj=None):
@@ -509,6 +548,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             userdata["email"] = userdata["email"].lower()
 
         return userdata
+
+    def custom_post_handle_user_input(self, user_node, input_data):
+        meta = Meta()
+        module_path = "%s.%s.%s" % \
+            (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module = meta.get_module_from_string(
+            module_path,
+            debug_on_fail=False,
+        )
+
+        Customizer = meta.get_class_from_string(
+            'Customizer', module, skip_error=True
+        )
+        if Customizer is None:
+            log.debug("No user properties customizer available")
+        else:
+            try:
+                Customizer().custom_post_handle_user_input(
+                    self, user_node, input_data
+                )
+            except BaseException as e:
+                log.error("Unable to customize user properties: %s", e)
 
     # ################
     # # Create Users #

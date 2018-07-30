@@ -14,8 +14,9 @@ class RabbitExt(BaseExtension):
         #############################
         # NOTE: for SeaDataCloud
         # Unused for debugging at the moment
-        from restapi.confs import PRODUCTION
-        if not PRODUCTION:
+        # from restapi.confs import PRODUCTION
+        # if not PRODUCTION:
+        if True:
             log.warning("Skipping Rabbit")
 
             class Empty:
@@ -50,6 +51,7 @@ class RabbitExt(BaseExtension):
                 credentials=credentials
             )
         )
+        log.debug('Connecting to the Rabbit')
 
         # channel = connection.channel()
         # # Declare exchange, queue, and binding

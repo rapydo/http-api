@@ -4,7 +4,7 @@
 
 from restapi.services.neo4j.models import \
     StructuredNode, IdentifiedNode, \
-    StringProperty, DateTimeProperty, EmailProperty, \
+    StringProperty, DateTimeProperty, EmailProperty, BooleanProperty, \
     RelationshipTo, RelationshipFrom
 from neomodel import OneOrMore, ZeroOrMore, ZeroOrOne
 
@@ -19,6 +19,7 @@ class User(IdentifiedNode):
     first_login = DateTimeProperty(show=True)
     last_login = DateTimeProperty(show=True)
     last_password_change = DateTimeProperty(show=True)
+    is_active = BooleanProperty(default=True, show=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
     roles = RelationshipTo(
         'Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)

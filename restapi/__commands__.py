@@ -6,6 +6,7 @@ import click
 import better_exceptions as be
 from flask.cli import FlaskGroup
 from utilities.logs import get_logger
+from utilities.processes import wait_socket
 from restapi import __package__ as current_package
 
 APP = 'FLASK_APP'
@@ -102,6 +103,24 @@ def launch():
 
 
 @cli.command()
+@click.option('--services', '-s', multiple=True, default=['postgres'])
+def verify(services):
+    """Verify connected service"""
+    from restapi.services.detect import detector
+
+    for service in services:
+        myclass = detector.services_classes.get(service)
+        if myclass is None:
+            log.exit("Service \"%s\" was NOT detected" % service)
+        log.info("Verifying service: %s", service)
+        host, port = get_service_address(
+            myclass.variables, 'host', 'port', service)
+        wait_socket(host, port, service)
+
+    log.info("Completed successfully")
+
+
+@cli.command()
 @click.option('--wait/--no-wait', default=False, help='Wait for DBs to be up')
 def init(wait):
     """Initialize data for connected services"""
@@ -118,43 +137,35 @@ def wait():
     mywait()
 
 
-def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
+def get_service_address(variables, host_var, port_var, service):
 
-    import errno
-    import socket
+    host = variables.get(host_var)
+    # if host is None:
+    #     log.warning("Unable to find HOST variable for %s", service)
+    #     for k in myclass.variables:
+    #         log.critical(myclass.variables)
+    #         if k.endswith("_host"):
+    #             host = myclass.variables.get(k)
+    #             log.info("Using %s as HOST variable for %s", k, service)
+    if host is None:
+        log.exit(
+            "Cannot find any variable matching %s for %s", host_var, service)
 
-    log.verbose("Waiting for %s" % service_name)
+    port = variables.get(port_var)
+    # if port is None:
+    #     log.warning("Unable to find PORT variable for %s", service)
+    #     for k in myclass.variables:
+    #         if k.endswith("_port"):
+    #             port = myclass.variables.get(k)
+    #             log.info("Using %s as PORT variable for %s", k, service)
 
-    counter = 0
-    while True:
+    if port is None:
+        log.exit(
+            "Cannot find any variable matching %s  for %s", port_var, service)
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    log.debug("Checking address: %s:%s", host, port)
 
-        # log.debug("Timeout before: %s", s.gettimeout())
-        s.settimeout(timeout)
-        # log.debug("Timeout after: %s", s.gettimeout())
-
-        try:
-            result = s.connect_ex((host, port))
-        except socket.gaierror:
-            result = errno.ESRCH
-
-        if result == 0:
-            log.info("Service %s is reachable", service_name)
-            break
-        else:
-
-            counter += 1
-            if counter % 5 == 0:
-                # FIXME: also do something here if the service is external?
-                log.warning(
-                    "'%s' service looks still unavailable after %s seconds",
-                    service_name, sleep_time * timeout * counter
-                )
-            else:
-                log.debug("Not reachable yet: %s", service_name)
-
-            time.sleep(sleep_time)
+    return host, int(port)
 
 
 def mywait():
@@ -166,7 +177,6 @@ def mywait():
     p.s. could that be done with rapydo-utils maybe?
     pp.ss. could rapydo utils be python 2.7+ compliant?
     """
-
     from restapi.services.detect import detector
 
     for name, myclass in detector.services_classes.items():
@@ -174,32 +184,21 @@ def mywait():
         if name == 'authentication':
             continue
 
-        host = myclass.variables.get('host')
-        if host is None:
-            log.warning("Unable to find HOST variable for %s", name)
-            for k in myclass.variables:
-                if k.endswith("_host"):
-                    host = myclass.variables.get(k)
-                    log.info("Using %s as HOST variable for %s", k, name)
+        if name == 'celery':
+            host, port = get_service_address(
+                myclass.variables, 'broker_host', 'broker_port', name)
 
-        port = myclass.variables.get('port')
-        if port is None:
-            log.warning("Unable to find PORT variable for %s", name)
-            for k in myclass.variables:
-                if k.endswith("_port"):
-                    port = myclass.variables.get(k)
-                    log.info("Using %s as PORT variable for %s", k, name)
+            wait_socket(host, port, name)
 
-        if host is None:
-            log.exit("Cannot find any variable matching a host for %s"% name)
+            host, port = get_service_address(
+                myclass.variables, 'backend_host', 'backend_port', name)
 
-        if port is None:
-            log.exit("Cannot find any variable matching a port for %s"% name)
+            wait_socket(host, port, name)
+        else:
+            host, port = get_service_address(
+                myclass.variables, 'host', 'port', name)
 
-        log.debug("Socket %s:%s", host, port)
-
-        # CHECK
-        wait_socket(host, int(port), name)
+            wait_socket(host, port, name)
 
 
 @cli.command()

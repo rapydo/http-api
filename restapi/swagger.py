@@ -12,7 +12,7 @@ import os
 import json
 from bravado_core.spec import Spec
 # from bravado_core.validate import validate_object
-from restapi.attributes import ExtraAttributes
+from restapi.attributes import ExtraAttributes, ALL_ROLES
 from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
 from utilities import htmlcodes as hcodes
 from utilities import helpers
@@ -119,6 +119,8 @@ class BeSwagger(object):
 
                 # If everything is fine set the roles to be required by Flask
                 extra.auth = roles
+                extra.required_roles = custom.get(
+                    'required_roles', ALL_ROLES).lower()
             else:
                 extra.auth = None
 
@@ -395,7 +397,9 @@ class BeSwagger(object):
 
         # CUSTOM definitions
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
-        override = load_yaml_file(filename, path=path, skip_error=True)
+        override = load_yaml_file(
+            filename, path=path, skip_error=True, logger=False)
+        # NOTE: with logger=False I skip the warning if this file doesn't exist
 
         return mix(data, override)
 
