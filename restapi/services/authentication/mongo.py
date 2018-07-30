@@ -37,6 +37,13 @@ class Authentication(BaseAuthentication):
         """
         return payload
 
+    def custom_user_properties(self, userdata):
+        new_userdata = super(
+            Authentication, self).custom_user_properties(userdata)
+        if not new_userdata.get('uuid'):
+            new_userdata['uuid'] = getUUID()
+        return new_userdata
+
     # Also used by POST user
     def create_user(self, userdata, roles):
 
@@ -47,7 +54,7 @@ class Authentication(BaseAuthentication):
             userdata["password"] = self.hash_password(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
-        user = self.db.User(uuid=getUUID(), **userdata)
+        user = self.db.User(**userdata)
 
         roles_obj = []
         for role_name in roles:
@@ -105,13 +112,14 @@ class Authentication(BaseAuthentication):
 
         missing_role = missing_user = False
         roles = []
-        transactions = []
+        # transactions = []
 
         try:
 
             # if no roles
             cursor = self.db.Role.objects.all()
-            missing_role = len(list(cursor)) < 1
+            fetch_roles = list(cursor)
+            missing_role = len(fetch_roles) < 1
 
             if missing_role:
                 log.warning("No roles inside mongo. Injected defaults.")
@@ -123,6 +131,8 @@ class Authentication(BaseAuthentication):
                     # if missing_role:
                     #     transactions.append(role)
                     # roles.append(role)
+            else:
+                roles = fetch_roles
 
             # if no users
             cursor = self.db.User.objects.all()
@@ -131,7 +141,6 @@ class Authentication(BaseAuthentication):
             if missing_user:
 
                 self.create_user({
-                    'uuid': getUUID(),
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default', 'surname': 'User',
