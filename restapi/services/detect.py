@@ -289,7 +289,8 @@ class Detector(object):
             if name == self.authentication_service:
                 auth_backend = service_instance
 
-            self.extensions_instances[name] = ext_instance
+            # NOTE: commented, looks like a duplicate from try/expect above
+            # self.extensions_instances[name] = ext_instance
 
             # Injecting into the Celery Extension Class
             # all celery tasks found in *vanilla_package/tasks*
