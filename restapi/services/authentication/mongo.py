@@ -53,14 +53,15 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
-        userdata = self.custom_user_properties(userdata)
-        user = self.db.User(**userdata)
-
         roles_obj = []
         for role_name in roles:
-            role_obj = self.db.Role.objects.raw({'_id': 'normal_user'}).first()
+            role_obj = self.db.Role.objects.get({'_id': role_name})
             roles_obj.append(role_obj)
-        user.roles = roles_obj
+
+        userdata = self.custom_user_properties(userdata)
+        userdata['roles'] = roles_obj
+        user = self.db.User(**userdata)
+
         user.save()
         return user
 
@@ -126,13 +127,15 @@ class Authentication(BaseAuthentication):
                 for role in self.default_roles:
                     roles.append(
                         self.db.Role(
-                            name=role, description="automatic").save()
+                            name=role, description="automatic").save().name
                     )
                     # if missing_role:
                     #     transactions.append(role)
                     # roles.append(role)
             else:
-                roles = fetch_roles
+                # roles = fetch_roles
+                for role_obj in fetch_roles:
+                    roles.append(role_obj.name)
 
             # if no users
             cursor = self.db.User.objects.all()
@@ -148,22 +151,10 @@ class Authentication(BaseAuthentication):
                     'password': self.default_password
                 }, roles=roles)
 
-                # user = self.db.User(
-                #     uuid=getUUID(),
-                #     email=self.default_user,
-                #     authmethod='credentials',
-                #     name='Default', surname='User',
-                #     password=self.hash_password(self.default_password))
-
-                # link roles into users
-                # user.roles = roles
-                # for role in roles:
-                #     user.roles.append(role)
-
-                # transactions.append(user)
-                log.warning("No users inside mongo. Injected default.")
+                log.warning("No users inside mongo. Injected default one.")
 
         except BaseException as e:
+            raise e
             raise AttributeError("Models for auth are wrong:\n%s" % e)
 
         # if missing_user or missing_role:
@@ -287,108 +278,15 @@ class Authentication(BaseAuthentication):
     def store_oauth2_user(self, current_user, token):
         # FIXME: b2access
         raise NotImplementedError("to do")
-#         """
-#         Allow external accounts (oauth2 credentials)
-#         to be connected to internal local user
-#         """
-
-#         try:
-#             values = current_user.data
-#         except:
-#             return None, "Authorized response is invalid"
-
-#         # print("TEST", values, type(values))
-#         if not isinstance(values, dict) or len(values) < 1:
-#             return None, "Authorized response is empty"
-
-#         email = values.get('email')
-#         cn = values.get('cn')
-#         ui = values.get('unity:persistent')
-
-#         # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
-#         # is it going to change?
-#         dn = None
-#         for key, value in values.items():
-#             if 'urn:oid' in key:
-#                 dn = values.get(key)
-#         if dn is None:
-#             return None, "Missing DN from authorized response..."
-
-#         # Check if a user already exists with this email
-#         internal_user = None
-#         internal_users = self.db.User.query.filter(
-#             self.db.User.email == email).all()
-
-#         # If something found
-#         if len(internal_users) > 0:
-#             # Should never happen, please
-#             if len(internal_users) > 1:
-#                 log.critical("Multiple users?")
-#                 return None, "Server misconfiguration"
-#             internal_user = internal_users.pop()
-#             log.debug("Existing internal user: %s" % internal_user)
-#             # A user already locally exists with another authmethod. Not good.
-#             if internal_user.authmethod != 'oauth2':
-#                 return None, "Creating a user which locally already exists"
-#         # If missing, add it locally
-#         else:
-#             # Create new one
-#             internal_user = self.db.User(
-#                 uuid=getUUID(), email=email, authmethod='oauth2')
-#             # link default role into users
-#             internal_user.roles.append(
-#                 self.db.Role.query.filter_by(name=self.default_role).first())
-#             self.db.session.add(internal_user)
-#             self.db.session.commit()
-#             log.info("Created internal user %s" % internal_user)
-
-#         # Get ExternalAccount for the oauth2 data if exists
-#         external_user = self.db.ExternalAccounts \
-#             .query.filter_by(username=email).first()
-#         # or create it otherwise
-#         if external_user is None:
-#             external_user = self.db.ExternalAccounts(username=email, unity=ui)
-
-#             # Connect the external account to the current user
-#             external_user.main_user = internal_user
-#             # Note: for pre-production release
-#             # we allow only one external account per local user
-#             log.info("Created external user %s" % external_user)
-
-#         # Update external user data to latest info received
-#         external_user.email = email
-#         external_user.token = token
-#         external_user.certificate_cn = cn
-#         external_user.certificate_dn = dn
-
-#         self.db.session.add(external_user)
-#         self.db.session.commit()
-#         log.debug("Updated external user %s" % external_user)
-
-#         return internal_user, external_user
 
     def store_proxy_cert(self, external_user, proxy):
         raise NotImplementedError("to do")
-#         if external_user is None:
-#             return False
-#         external_user.proxyfile = proxy
-#         self.db.session.add(external_user)  # can be commented
-#         self.db.session.commit()
-#         return True
 
     def oauth_from_token(self, token):
         raise NotImplementedError("to do")
-#         extus = self.db.ExternalAccounts.query.filter_by(token=token).first()
-#         intus = extus.main_user
-#         # print(token, intus, extus)
-#         return intus, extus
 
     def associate_object_to_attr(self, obj, key, value):
         raise NotImplementedError("to do")
-
-#         setattr(obj, key, value)
-#         self.db.session.commit()
-#         return
 
     def oauth_from_local(self, internal_user):
 
