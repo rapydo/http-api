@@ -352,10 +352,12 @@ class Detector(object):
         """ Custom initialization of your project
 
         Please define your class Initializer in
-        vanilla/project/initialization.py
+        project/YOURPROJECT/backend/initialization/initialization.py
         """
 
         try:
+            # NOTE: this might be a pattern
+            # see in meta.py:get_customizer_class
             meta = Meta()
             module_path = "%s.%s.%s" % \
                 (CUSTOM_PACKAGE, 'initialization', 'initialization')

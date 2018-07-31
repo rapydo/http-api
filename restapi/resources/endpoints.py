@@ -23,12 +23,14 @@ from restapi.services.mail import get_html_template
 from utilities import htmlcodes as hcodes
 from utilities.time import timestamp_from_string
 from utilities.globals import mem
+from utilities.meta import Meta
 from restapi.confs import PRODUCTION
 from utilities.logs import get_logger
 
 from restapi.flask_ext.flask_auth import HandleSecurity
 
 log = get_logger(__name__)
+meta = Meta()
 
 
 class Status(EndpointResource):
@@ -551,6 +553,13 @@ class Profile(EndpointResource):
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
+
+        obj = meta.get_customizer_class('apis.profile', 'CustomProfile', {})
+        if obj is not None:
+            try:
+                data = obj.manipulate(data)
+            except BaseException as e:
+                log.error("Could not custom manipulate profile:\n%s", e)
 
         return data
 
