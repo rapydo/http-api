@@ -524,10 +524,11 @@ class Profile(EndpointResource):
             'email': current_user.email
         }
 
-        roles = {}
+        roles = []
         for role in current_user.roles:
-            roles[role.name] = role.name
+            roles.append(role.name)
         data["roles"] = roles
+
         data["isAdmin"] = self.auth.verify_admin()
         data["isLocalAdmin"] = self.auth.verify_local_admin()
 
