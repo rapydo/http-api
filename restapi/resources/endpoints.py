@@ -36,23 +36,29 @@ meta = Meta()
 class Status(EndpointResource):
     """ API online client testing """
 
-    # @decorate.catch_error()
-    def get(self):
+    @decorate.catch_error()
+    def get(self, service=None):
 
-        #####################
-        # DEBUG
-        # print(self.auth)
-        # log.pp({'test': 1})
-        # log.pp(pytz)
-        # return {'Hello', 'World!'}
-
-        #####################
-        # TEST ERRORS
-        # return self.send_errors(message='test error')
-
-        #####################
-        # NORMAL RESPONSE
         return 'Server is alive!'
+
+
+class Verify(EndpointResource):
+    """ Service connection testing """
+
+    @decorate.catch_error()
+    def get(self, service):
+
+        log.critical(detector.available_services)
+        if not detector.check_availability(service):
+            raise RestApiException(
+                "Unknown service: %s" % service,
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            )
+
+        service_instance = self.get_service_instance(
+            service, global_instance=False)
+        log.critical(service_instance)
+        return "Service is reachable: %s" % service
 
 
 class SwaggerSpecifications(EndpointResource):
