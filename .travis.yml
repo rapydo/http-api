@@ -36,5 +36,8 @@ jobs:
       on:
         tags: true
 notifications:
+  email: false
   slack:
     secure: WJ0T3PK+e7TPMWuouNFr2/4Aef7HPjr2KHdiVe1QZPrbeFwSohKQRj76GUydn6SRoRw0O1tK6ZYiHeN5wTmlPEHR2MLO3GtenQ9VXEkKwU9Ck25AuQcv2bf1v96g2bd61NwmJjctJn465uUGX410Gw7CT0kxCkVu5oiXFgX3n79mMUNWYiu0Xl31RPLul3ar+Si7pd6GqzvMr4b2jHxNR1osdT4xQBrYrelQV9YGFVnaTrODfd1axj0jB0ISvmVpFEMBFDINYK4Xf+LfmdBNOJ1j57bUXtfl4MmgpauMoD1d+Lk+v1vJMJInaaugvjlbHbc4BxsZeiOmg+Y+gswain50hnbUo/MszmBwlfYLoaavj+T+yZnkakglaaYDat9Hsp+OJvJnmOZWrysfxSylIthhvBca37nRQg2SPfKQRBr9l3PLgvwJkwIhKzzSdVs4w8Uz3To3X6c82bkVC0Q/9yPEky5Wxoiwt+qpxPY6xpndjz2VcHkL1wj8DmTkB1kh1ILJ3ri/Wtah51JlWh3r5VGwszIl6kFt7f4sbSXVH+S9CNBNIp1SGZC3Budwp3af6foYwFc1OCjbLefuGxF1Q0pR4TN46nKB8oeUJ6sM2XQvZWvEmpYvsMs7A17QpGPEz2Wd5Tw5y4P0xmOKikT9AOtx1fZjI92DUNXe9JaPtP4=
+  on_success: change # default: always
+  on_failure: always # default: always
