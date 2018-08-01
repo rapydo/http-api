@@ -540,17 +540,6 @@ class Profile(EndpointResource):
         if hasattr(current_user, 'surname'):
             data["surname"] = current_user.surname
 
-        if hasattr(current_user, 'irods_user'):
-            data["irods_user"] = current_user.irods_user
-            if not data["irods_user"]:
-                data["irods_user"] = None
-            elif data["irods_user"] == '':
-                data["irods_user"] = None
-            elif data["irods_user"] == '0':
-                data["irods_user"] = None
-            elif data["irods_user"][0] == '-':
-                data["irods_user"] = None
-
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
