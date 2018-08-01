@@ -557,7 +557,7 @@ class Profile(EndpointResource):
         obj = meta.get_customizer_class('apis.profile', 'CustomProfile', {})
         if obj is not None:
             try:
-                data = obj.manipulate(data)
+                data = obj.manipulate(ref=self, user=current_user, data=data)
             except BaseException as e:
                 log.error("Could not custom manipulate profile:\n%s", e)
 
