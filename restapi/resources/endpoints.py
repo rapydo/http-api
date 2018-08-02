@@ -507,9 +507,9 @@ def send_activation_link(auth, user):
 
     ##################
     # customized template
-    html_body = get_html_template("activate_account.html", replaces)
+    template_file = "activate_account.html"
+    html_body = get_html_template(template_file, replaces)
     if html_body is None:
-        log.warning("Unable to find email template")
         html_body = body
         body = None
 

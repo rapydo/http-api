@@ -72,6 +72,8 @@ def get_html_template(template_file, replaces):
     if os.path.isfile(template):
         with open(template, 'r') as f:
             html = f.read()
+    else:
+        log.warning("Unable to find email template: %s", template)
 
     if html is None:
         return html
