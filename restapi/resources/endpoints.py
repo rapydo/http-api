@@ -36,23 +36,29 @@ meta = Meta()
 class Status(EndpointResource):
     """ API online client testing """
 
-    # @decorate.catch_error()
-    def get(self):
+    @decorate.catch_error()
+    def get(self, service=None):
 
-        #####################
-        # DEBUG
-        # print(self.auth)
-        # log.pp({'test': 1})
-        # log.pp(pytz)
-        # return {'Hello', 'World!'}
-
-        #####################
-        # TEST ERRORS
-        # return self.send_errors(message='test error')
-
-        #####################
-        # NORMAL RESPONSE
         return 'Server is alive!'
+
+
+class Verify(EndpointResource):
+    """ Service connection testing """
+
+    @decorate.catch_error()
+    def get(self, service):
+
+        log.critical(detector.available_services)
+        if not detector.check_availability(service):
+            raise RestApiException(
+                "Unknown service: %s" % service,
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            )
+
+        service_instance = self.get_service_instance(
+            service, global_instance=False)
+        log.critical(service_instance)
+        return "Service is reachable: %s" % service
 
 
 class SwaggerSpecifications(EndpointResource):
@@ -547,17 +553,6 @@ class Profile(EndpointResource):
 
         if hasattr(current_user, 'surname'):
             data["surname"] = current_user.surname
-
-        if hasattr(current_user, 'irods_user'):
-            data["irods_user"] = current_user.irods_user
-            if not data["irods_user"]:
-                data["irods_user"] = None
-            elif data["irods_user"] == '':
-                data["irods_user"] = None
-            elif data["irods_user"] == '0':
-                data["irods_user"] = None
-            elif data["irods_user"][0] == '-':
-                data["irods_user"] = None
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION

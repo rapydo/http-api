@@ -77,6 +77,10 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
+	rapydo --development --project ${PROJECT} init --no-build
+
+	rapydo --development --project ${PROJECT} pull
+
 	rapydo --development --project ${PROJECT} init
 
 	rapydo --development --project ${PROJECT} start
@@ -118,6 +122,8 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
+	rapydo --development --project ${PROJECT} init --no-build
+	rapydo --development --project ${PROJECT} pull
 	rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
