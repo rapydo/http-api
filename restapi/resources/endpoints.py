@@ -498,15 +498,23 @@ def send_activation_link(auth, user):
     replaces = {
         "url": u
     }
+
+    ##################
+    # customized template
     html_body = get_html_template("activate_account.html", replaces)
     if html_body is None:
         log.warning("Unable to find email template")
         html_body = body
         body = None
-    subject = "%s account activation" % title
-    c = send_mail(html_body, subject, user.email, plain_body=body)
 
-    if not c:
+    ##################
+    # NOTE: possibility to define a different subject
+    default_subject = "%s account activation" % title
+    subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+
+    ##################
+    sent = send_mail(html_body, subject, user.email, plain_body=body)
+    if not sent:
         raise BaseException("Error sending email, please retry")
 
     auth.save_token(
