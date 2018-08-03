@@ -62,6 +62,9 @@ def send_mail(
 
 
 def get_html_template(template_file, replaces):
+    """
+    # FIXME: use jinja2 instead :)
+    """
     path = helpers.current_dir(CUSTOM_PACKAGE, MODELS_DIR)
     template = os.path.join(path, "emails", template_file)
 
@@ -69,6 +72,8 @@ def get_html_template(template_file, replaces):
     if os.path.isfile(template):
         with open(template, 'r') as f:
             html = f.read()
+    else:
+        log.warning("Unable to find email template: %s", template)
 
     if html is None:
         return html
