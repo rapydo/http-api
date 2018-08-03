@@ -220,7 +220,10 @@ def forced_clean():
 @click.option(
     '--core/--no-core', default=False,
     help='Test for core instead of vanilla code')
-def tests(wait, core):
+@click.option(
+    '--file', default=None,
+    help='Test a single file of tests')
+def tests(wait, core, file):
     """Compute tests and coverage"""
 
     if wait:
@@ -246,6 +249,11 @@ def tests(wait, core):
     # basedir = helpers.latest_dir(helpers.current_fullpath())
     if core:
         parameters.append(current_package)
+    elif file is not None:
+        parameters.append("default")
+
+    if file is not None:
+        parameters.append(file)
     # import glob
     # if 'template' in glob.glob('*'):
     #     from restapi import __package__ as current_package
