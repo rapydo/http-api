@@ -46,6 +46,7 @@ class BeSwagger(object):
         # Save schemas for parameters before to remove the custom sections
         # It is used to provide schemas for unittests and automatic forms
         self._parameter_schemas = {}
+        self._used_swagger_tags = {}
 
     def read_my_swagger(self, file, method, endpoint):
 
@@ -244,6 +245,7 @@ class BeSwagger(object):
             if 'tags' not in specs and len(endpoint.tags) > 0:
                 specs['tags'] = []
             for tag in endpoint.tags:
+                self._used_swagger_tags[tag] = True
                 if tag not in specs['tags']:
                     specs['tags'].append(tag)
 
@@ -380,6 +382,9 @@ class BeSwagger(object):
         ###################
         tags = []
         for tag, desc in self._customizer._configurations['tags'].items():
+            if tag not in self._used_swagger_tags:
+                log.warning("Skipping unsed tag: %s", tag)
+                continue
             tags.append({'name': tag, 'description': desc})
         output['tags'] = tags
 
