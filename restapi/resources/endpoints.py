@@ -620,6 +620,16 @@ class Profile(EndpointResource):
 
             send_activation_link(self.auth, user)
 
+            # Sending an email to the administrator
+            title = glom(
+                mem.customizer._configurations,
+                "project.title",
+                default='Unkown title')
+            subject = "%s New credentials requested" % title
+            body = "New credentials request from %s" % user.email
+
+            send_mail(body, subject)
+
             msg = "We are sending an email to your email address where " + \
                 "you will find the link to activate your account"
             return msg
