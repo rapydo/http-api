@@ -67,7 +67,7 @@ def flask_cli(options=None):
     else:
         create_app(**options)
         # app.run(debug=False)
-    log.warning("Completed")
+    log.debug("cli execution completed")
 
 
 def starting_up():
