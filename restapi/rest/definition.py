@@ -175,15 +175,15 @@ class EndpointResource(Resource):
             if len(self._json_args) < 1:
                 self._json_args = request.form
 
-            # print("TEST\n\n\n", self._json_args)
             # NOTE: if JSON all parameters are just string at the moment...
             for key, value in self._json_args.items():
+
                 if value is None:
                     continue
-                # if isinstance(value, str) and value == 'None':
-                #     continue
+                # TODO: remove and check
+                # how to fix the `request.form` emptiness
+
                 if key in self._args and self._args[key] is not None:
-                    # print("Key", key, "Value", value, self._args[key])
                     key += '_json'
                 self._args[key] = value
 
