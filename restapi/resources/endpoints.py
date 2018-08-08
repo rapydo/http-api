@@ -620,7 +620,8 @@ class Profile(EndpointResource):
 
             send_activation_link(self.auth, user)
 
-            if os.environ.get("REGISTRATION_NOTIFICATIONS", True):
+            var = "REGISTRATION_NOTIFICATIONS"
+            if detector.get_bool_from_os(var):
                 # Sending an email to the administrator
                 title = glom(
                     mem.customizer._configurations,
