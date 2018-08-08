@@ -60,7 +60,7 @@ setup(
         # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi
         # "psycopg2",
         "psycopg2-binary",
-        "pymodm==0.4.1",
+        "pymodm==0.4.0",  # avoid laziness in objects
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
