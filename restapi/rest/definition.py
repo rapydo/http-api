@@ -225,6 +225,21 @@ class EndpointResource(Resource):
 
         return (current_page, limit)
 
+    def get_input_properties(self):
+        """
+        NOTE: usefull to use for swagger validation?
+        """
+
+        # get body definition name
+        parameters = self.get_endpoint_custom_definition().copy()
+        parameter = parameters.pop()
+        ref = parameter.get('schema', {}).get('$ref')
+        refname = ref.split('/').pop()
+        # get body definition properties
+        from utilities.globals import mem
+        definitions = mem.customizer._definitions.get('definitions')
+        return definitions.get(refname).get('properties')
+
     def explode_response(
         self, api_output, get_all=False,
         get_error=False, get_status=False, get_meta=False
