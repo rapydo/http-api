@@ -3,36 +3,19 @@
 """
 Base Models for mongo database.
 
-See
-https://pymodm.readthedocs.io/en/stable/api/index.html
-    #pymodm.base.fields.MongoBaseField
-And
+Docs:
+https://pymodm.readthedocs.io
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
 
+from pymodm import fields
+from restapi.flask_ext.flask_mongo import BaseMongoModel, AUTH_DB
 # from pymongo.write_concern import WriteConcern
-from pymodm import MongoModel, fields
-from restapi.flask_ext.flask_mongo import AUTH_DB
-
-
-# ####################
-# # Templates
-# FIXME: inheritance? Not working at the moment
-# class AuthModel(MongoModel):
-
-#     class Meta:
-#         write_concern = WriteConcern(j=True)
-#         connection_alias = 'auth'
-
-
-# class AuthModelWithUuid(AuthModel):
-
-#     uuid = fields.UUIDField()
 
 
 ####################
 # Base Models
-class Role(MongoModel):
+class Role(BaseMongoModel):
     name = fields.CharField(primary_key=True)
     description = fields.CharField()
 
@@ -41,7 +24,7 @@ class Role(MongoModel):
         connection_alias = AUTH_DB
 
 
-class User(MongoModel):
+class User(BaseMongoModel):
     email = fields.EmailField(primary_key=True)
     uuid = fields.CharField()
     # uuid = fields.UUIDField(default=getUUID())
@@ -60,7 +43,7 @@ class User(MongoModel):
         connection_alias = AUTH_DB
 
 
-class Token(MongoModel):
+class Token(BaseMongoModel):
     jti = fields.CharField()
     token = fields.CharField()
     token_type = fields.CharField()
@@ -77,7 +60,7 @@ class Token(MongoModel):
         connection_alias = AUTH_DB
 
 
-class ExternalAccounts(MongoModel):
+class ExternalAccounts(BaseMongoModel):
     username = fields.CharField(primary_key=True)
     token = fields.CharField()
     token_expiration = fields.DateTimeField()
