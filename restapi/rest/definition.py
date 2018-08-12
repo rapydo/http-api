@@ -724,3 +724,26 @@ class EndpointResource(Resource):
             return roles
 
         return ids
+
+    def get_user_if_logged(self):
+        """
+        Helper to be used inside an endpoint that doesn't explicitly
+        ask for authentication, but might want to do some extra behaviour
+        when a valid token is presented
+        """
+        user = None
+
+        if request.method == 'OPTIONS':
+            return user
+
+        from restapi.protocols.bearer import HTTPTokenAuth
+        http = HTTPTokenAuth()
+        auth_type, token = http.get_auth_from_header()
+
+        if auth_type is not None:
+            if http.authenticate(self.auth.verify_token, token):
+                # we have a valid token in header
+                user = self.get_current_user()
+                log.warning("Logged user: %s", user.email)
+
+        return user
