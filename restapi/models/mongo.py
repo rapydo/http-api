@@ -9,13 +9,14 @@ https://docs.mongodb.com/manual/applications/data-models-relationships
 """
 
 from pymodm import fields
-from restapi.flask_ext.flask_mongo import BaseMongoModel, AUTH_DB
+from pymodm import MongoModel
+from restapi.flask_ext.flask_mongo import AUTH_DB
 # from pymongo.write_concern import WriteConcern
 
 
 ####################
 # Base Models
-class Role(BaseMongoModel):
+class Role(MongoModel):
     name = fields.CharField(primary_key=True)
     description = fields.CharField()
 
@@ -24,7 +25,7 @@ class Role(BaseMongoModel):
         connection_alias = AUTH_DB
 
 
-class User(BaseMongoModel):
+class User(MongoModel):
     email = fields.EmailField(primary_key=True)
     uuid = fields.CharField()
     # uuid = fields.UUIDField(default=getUUID())
@@ -43,7 +44,7 @@ class User(BaseMongoModel):
         connection_alias = AUTH_DB
 
 
-class Token(BaseMongoModel):
+class Token(MongoModel):
     jti = fields.CharField()
     token = fields.CharField()
     token_type = fields.CharField()
@@ -60,7 +61,7 @@ class Token(BaseMongoModel):
         connection_alias = AUTH_DB
 
 
-class ExternalAccounts(BaseMongoModel):
+class ExternalAccounts(MongoModel):
     username = fields.CharField(primary_key=True)
     token = fields.CharField()
     token_expiration = fields.DateTimeField()

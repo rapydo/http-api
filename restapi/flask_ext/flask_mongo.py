@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pymodm.connection as mongodb
-from pymodm import MongoModel
 from restapi.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
@@ -72,7 +71,10 @@ class MongoExt(BaseExtension):
         return db
 
 
-class BaseMongoModel(MongoModel):
+class Converter(object):
+
+    def __init__(self, mongo_model):
+        self._model = mongo_model
 
     @classmethod
     def recursive_inspect(
@@ -120,5 +122,5 @@ class BaseMongoModel(MongoModel):
     def asdict(self, *args, **kwargs):
         return self.recursive_inspect(
             # src: https://jira.mongodb.org/browse/PYMODM-105
-            dict(self.to_son()), **kwargs
+            dict(self._model.to_son()), **kwargs
         )
