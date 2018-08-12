@@ -557,7 +557,7 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        obj = meta.get_customizer_class('apis.profile', 'CustomProfile', {})
+        obj = meta.get_customizer_class('apis.profile', 'CustomProfile')
         if obj is not None:
             try:
                 data = obj.manipulate(ref=self, user=current_user, data=data)
@@ -634,11 +634,21 @@ class Profile(EndpointResource):
 
             msg = "We are sending an email to your email address where " + \
                 "you will find the link to activate your account"
-            return msg
         except BaseException as e:
             log.error("Errors during account registration: %s" % str(e))
             user.delete()
             raise RestApiException(str(e))
+        else:
+            # Add some custom registration
+            obj = meta.get_customizer_class('apis.profile', 'CustomRegister')
+            if obj is not None:
+                try:
+                    obj.new_member(
+                        email=v['email'], name=v['name'], surname=v['surname'])
+                except BaseException as e:
+                    log.error("Could not custom register profile:\n%s", e)
+
+            return msg
 
     @decorate.catch_error()
     def put(self):
