@@ -639,14 +639,19 @@ class Profile(EndpointResource):
             user.delete()
             raise RestApiException(str(e))
         else:
-            # Add some custom registration
-            obj = meta.get_customizer_class('apis.profile', 'CustomRegister')
+            # Add the possibility to user a custom registration extra service
+            oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
+            obj = meta.get_customizer_class(
+                'apis.profile', 'CustomRegister', {'client_name': oscr}
+            )
             if obj is not None:
                 try:
                     obj.new_member(
                         email=v['email'], name=v['name'], surname=v['surname'])
                 except BaseException as e:
-                    log.error("Could not custom register profile:\n%s", e)
+                    log.error(
+                        "Could not register your custom profile:\n%s: %s",
+                        e.__class__.__name__, e)
 
             return msg
 
