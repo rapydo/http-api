@@ -292,7 +292,10 @@ class RecoverPassword(EndpointResource):
             protocol = "http"
 
         rt = reset_token.replace(".", "+")
-        u = "%s://%s/public/reset/%s" % (protocol, domain, rt)
+
+        var = "RESET_PASSWORD_URI"
+        uri = detector.get_global_var(key=var, default='/public/reset')
+        u = "%s://%s%s/%s" % (protocol, domain, uri, rt)
         body = "Follow this link to reset password: %s" % u
 
         replaces = {
