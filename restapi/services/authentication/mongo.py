@@ -4,6 +4,7 @@
 Mongodb based implementation
 """
 
+from pytz import utc
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
 from restapi.flask_ext.flask_mongo import AUTH_DB
@@ -148,13 +149,14 @@ class Authentication(BaseAuthentication):
                     # 'authmethod': 'credentials',
                     'name': 'Default', 'surname': 'User',
                     # 'password': self.hash_password(self.default_password)
-                    'password': self.default_password
+                    'password': self.default_password,
+                    'last_password_change': datetime.now(utc),
                 }, roles=roles)
 
                 log.warning("No users inside mongo. Injected default one.")
 
         except BaseException as e:
-            raise e
+            # raise e
             raise AttributeError("Models for auth are wrong:\n%s" % e)
 
         # if missing_user or missing_role:
