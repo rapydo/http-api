@@ -357,18 +357,16 @@ class RecoverPassword(EndpointResource):
         token = token.pop(0)
         emitted = timestamp_from_string(token["emitted"])
 
+        last_change = None
         # If user logged in after the token emission invalidate the token
-        if self.auth._user.last_login is not None and \
-                self.auth._user.last_login >= emitted:
-            self.auth.invalidate_token(token_id)
-            raise RestApiException(
-                'Invalid reset token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
-
+        if self.auth._user.last_login is not None:
+            last_change = self.auth._user.last_login
         # If user changed the pwd after the token emission invalidate the token
-        if self.auth._user.last_password_change is not None:
-
+        elif self.auth._user.last_password_change is not None:
             last_change = self.auth._user.last_password_change
+
+        if last_change is not None:
+
             try:
                 expired = last_change >= emitted
             except TypeError:
