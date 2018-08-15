@@ -366,15 +366,25 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_REQUEST)
 
         # If user changed the pwd after the token emission invalidate the token
-        if self.auth._user.last_password_change is not None and \
-                self.auth._user.last_password_change >= emitted:
-            self.auth.invalidate_token(token_id)
-            raise RestApiException(
-                'Invalid reset token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+        if self.auth._user.last_password_change is not None:
+
+            last_change = self.auth._user.last_password_change
+            try:
+                expired = last_change >= emitted
+            except TypeError:
+                # pymongo has problems here:
+                # http://api.mongodb.com/python/current/examples/
+                #  datetimes.html#reading-time
+                log.debug("Localizing last password change")
+                expired = pytz.utc.localize(last_change) >= emitted
+
+            if expired:
+                self.auth.invalidate_token(token_id)
+                raise RestApiException(
+                    'Invalid reset token: this request is no longer valid',
+                    status_code=hcodes.HTTP_BAD_REQUEST)
 
         # The reset token is valid, do something
-
         data = self.get_input()
         new_password = data.get("new_password")
         password_confirm = data.get("password_confirm")
