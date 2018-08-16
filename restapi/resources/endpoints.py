@@ -666,17 +666,8 @@ class Profile(EndpointResource):
 
             return msg
 
-    @decorate.catch_error()
-    def put(self):
-        """ Update profile for current user """
+    def update_password(self, user, data):
 
-        user = self.auth.get_user()
-        username = user.email
-        # if user.uuid != uuid:
-        #     msg = "Invalid uuid: not matching current user"
-        #     raise RestApiException(msg)
-
-        data = self.get_input()
         password = data.get('password')
         new_password = data.get('new_password')
         password_confirm = data.get('password_confirm')
@@ -698,15 +689,36 @@ class Profile(EndpointResource):
         if totp_authentication:
             security.verify_totp(user, totp_code)
         else:
-            # token, jti = self.auth.make_login(username, password)
-            token, _ = self.auth.make_login(username, password)
-            security.verify_token(username, token)
+            token, _ = self.auth.make_login(user.email, password)
+            security.verify_token(user.email, token)
 
         security.change_password(
             user, password, new_password, password_confirm)
-        # I really don't know why this save is required... since it is already
-        # in change_password ... But if I remove it the new pwd is not saved...
-        user.save()
+
+        # NOTE already in change_password
+        # but if removed new pwd is not saved
+        return user.save()
+
+    def update_profile(self, user, data):
+        log.warning("TO DO")
+        pass
+
+    @decorate.catch_error()
+    def put(self):
+        """ Update profile for current user """
+
+        user = self.auth.get_user()
+        data = self.get_input()
+
+        has_pw_update = True
+        for key in data.keys():
+            if 'password' not in key:
+                has_pw_update = False
+
+        if has_pw_update:
+            self.update_password(user, data)
+        else:
+            self.update_profile(user, data)
 
         return self.empty_response()
 
