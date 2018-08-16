@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import pika
+import json
 from restapi.flask_ext import BaseExtension, get_logger
 # from utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
 
+'''
+This class provides a (wrapper for a) RabbitMQ connection 
+in order to write log messages into a queue.
 
+This is used in SeaDataCloud, where the log
+queues are then consumed by Logstash / ElasticSearch.
+'''
 class RabbitExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
@@ -25,48 +32,79 @@ class RabbitExt(BaseExtension):
                 pass
             return Empty()
 
-        #############################
-        variables = self.variables
-        # print("\n\n\nTEST")
 
-        # DIRECT AMQP connection
-        # uri = 'amqp://%s:%s@%s:%s/' % (
-        #     variables.get('user'),
-        #     variables.get('password'),
-        #     variables.get('host'),
-        #     variables.get('port'),
-        # ) + '%' + '2F'
-        # log.very_verbose("URI IS %s" % re_obscure_pattern(uri))
-        # parameter = pika.connection.URLParameters(uri)
-        # return pika.BlockingConnection(parameter)
-
-        # PIKA based
-        credentials = pika.PlainCredentials(
-            variables.get('user'),
-            variables.get('password')
-        )
-        connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=variables.get('host'),
-                port=int(variables.get('port')),
-                virtual_host=variables.get('vhost'),
-                credentials=credentials
-            )
-        )
         log.debug('Connecting to the Rabbit')
+        conn_wrapper = RabbitWrapper(self.variables, dont_connect)
+        log.debug('Connection wrapper was created, will be passed back.')
+        return conn_wrapper
 
-        # channel = connection.channel()
-        # # Declare exchange, queue, and binding
-        # channel.queue_declare(queue=QUEUE)
-        # channel.exchange_declare(exchange=EXCHANGE, exchange_type='topic')
-        # channel.queue_bind(
-        #     exchange=EXCHANGE, queue=QUEUE, routing_key=ROUTING_KEY)
-        return connection
+class RabbitWrapper(object):
 
-    # def custom_init(self, pinit=False, pdestroy=False, **kwargs):
-    #     """ Note: we ignore args here """
+    def __init__(self, variables, dont_connect=False):
+        log.debug('Creating RabbitMQ connection wrapper with variables %s' % variables)
+        self.__variables = variables
+        self.__connection = None
+        self.__channel = None
+        self.__dont_connect = dont_connect
+        self.__couldnt_connect = 0
+        # TODO: Declare queue and exchange, just in case?
+        
+        # Initial connection:
+        if self.__dont_connect:
+            log.warn('Will not connect to RabbitMQ (dont_connect = True).')
+            log.debug('Creating RabbitMQ connection wrapper... done. (without connection).')
+            return None
 
-    #     # recover instance with the parent method
-    #     queue = super().custom_init()
-    #     print(queue)
-    #     return queue
+        try:
+            self.__connect()
+            log.debug('Creating RabbitMQ connection wrapper... done. (successful).')
+
+        except pika.exceptions.AMQPConnectionError as e:
+            ''' Includes AuthenticationError, ProbableAuthenticationError,
+            ProbableAccessDeniedError, ConnectionClosed...
+            '''
+            log.warn('Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.')
+            log.debug('Creating RabbitMQ connection wrapper... done. (without connection).')
+
+
+    def __connect(self):
+        log.info('Connecting to the Rabbit...')
+
+        credentials = pika.PlainCredentials(
+            self.__variables.get('user'),
+            self.__variables.get('password')
+        )
+
+        try:
+            self.__connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host = self.__variables.get('host'),
+                    port = int(self.__variables.get('port')),
+                    virtual_host = self.__variables.get('vhost'),
+                    credentials = credentials
+                )
+            )
+            self.__couldnt_connect = 0
+            log.info('Connecting to the Rabbit... done.')
+
+        except pika.exceptions.AMQPConnectionError as e:
+            ''' Includes AuthenticationError, ProbableAuthenticationError,
+            ProbableAccessDeniedError, ConnectionClosed...
+            '''
+            log.warn('Connecting to the Rabbit... failed (%s)' % e)
+            self.__connection = None
+            self.__couldnt_connect = self.__couldnt_connect+1
+            raise e
+
+
+    '''
+    Cleanly close the connection.
+    '''
+    def close_connection(self):
+        # TODO: This must be called!
+        if self.__dont_connect:
+            return
+        if self.__connection.is_closed or self.__connection.is_closing:
+            log.debug('Connection already closed or closing.')
+        else:
+            self.__connection.close()
