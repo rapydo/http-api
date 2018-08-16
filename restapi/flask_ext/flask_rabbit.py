@@ -7,6 +7,7 @@ from restapi.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
 
+
 '''
 This class provides a (wrapper for a) RabbitMQ connection 
 in order to write log messages into a queue.
@@ -18,20 +19,20 @@ class RabbitExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        #############################
         # NOTE: for SeaDataCloud
-        # Unused for debugging at the moment
-        # from restapi.confs import PRODUCTION
-        # if not PRODUCTION:
-        if True:
-            log.warning("Skipping Rabbit, logging to normal log instead.")
-            dont_connect = True
-            # TODO: Have a TEST setting for testbeds, with different queue?
-            # TODO: Log into some file if Rabbit not available?
 
-        log.debug('Connecting to the Rabbit')
+        # Only used in production
+        dont_connect = False
+        from restapi.confs import PRODUCTION
+        if not PRODUCTION:
+            dont_connect = True
+            log.warning("Skipping Rabbit, logging to normal log instead.")
+            # TODO: Have a TEST setting for testbeds, with different queue?
+            # TODO: Log into some file if Rabbit not available?        
+
+        log.debug('Creating connection wrapper...')
         conn_wrapper = RabbitWrapper(self.variables, dont_connect)
-        log.debug('Connection wrapper was created, will be passed back.')
+        log.debug('Creating connection wrapper... done.')
         return conn_wrapper
 
 class RabbitWrapper(object):
@@ -100,6 +101,7 @@ class RabbitWrapper(object):
     the messages get logged into the normal log files.
     If the connection is dead, reconnection is attempted,
     but not eternally.
+
     :param dictionary_message: JSON log message
     :param app_name: App name (will be used for the ElasticSearch index name)
     :param exchange: RabbitMQ exchange where the message should be sent
@@ -181,9 +183,11 @@ class RabbitWrapper(object):
                 log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
 
 
+
     '''
     Return existing channel (if healthy) or create and
     return new one.
+    
     :return: The channel, or None if connection is switched off.
     :raises: AttributeError if the connection is None.
     '''
