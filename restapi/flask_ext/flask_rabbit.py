@@ -18,6 +18,8 @@ class RabbitExt(BaseExtension):
         # if not PRODUCTION:
         if True:
             log.warning("Skipping Rabbit")
+            # TODO: Have a TEST setting for testbeds, with different queue?
+            # TODO: Log into some file if Rabbit not available?
 
             class Empty:
                 pass
