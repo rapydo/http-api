@@ -671,6 +671,7 @@ class Profile(EndpointResource):
         password = data.get('password')
         new_password = data.get('new_password')
         password_confirm = data.get('password_confirm')
+
         totp_authentication = (
             self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
             self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
@@ -700,8 +701,27 @@ class Profile(EndpointResource):
         return user.save()
 
     def update_profile(self, user, data):
-        log.warning("TO DO")
-        pass
+
+        # log.pp(data)
+        avoid_update = [
+            'uuid', 'authmethod', 'is_active', 'roles'
+        ]
+
+        try:
+            for key, value in data.items():
+                if key.startswith('_') or key in avoid_update:
+                    continue
+                log.debug("Profile new value: %s=%s", key, value)
+                setattr(user, key, value)
+        except BaseException as e:
+            log.error(
+                "Failed to update profile:\n%s: %s",
+                e.__class__.__name__, e
+            )
+        else:
+            log.info("Profile updated")
+
+        return user.save()
 
     @decorate.catch_error()
     def put(self):
@@ -711,14 +731,16 @@ class Profile(EndpointResource):
         data = self.get_input()
 
         has_pw_update = True
+        no_pw_data = {}
         for key in data.keys():
             if 'password' not in key:
+                no_pw_data[key] = data[key]
                 has_pw_update = False
 
         if has_pw_update:
             self.update_password(user, data)
         else:
-            self.update_profile(user, data)
+            self.update_profile(user, no_pw_data)
 
         return self.empty_response()
 
