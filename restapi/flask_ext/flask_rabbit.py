@@ -45,6 +45,7 @@ class RabbitWrapper(object):
         self.__variables = variables
         self.__connection = None
         self.__channel = None
+        self.__couldnt_connect = 0
         # TODO: Declare queue and exchange, just in case?
         
         # Initial connection:
@@ -77,6 +78,7 @@ class RabbitWrapper(object):
                     credentials = credentials
                 )
             )
+            self.__couldnt_connect = 0
             log.info('Connecting to the Rabbit... done.')
 
         except pika.exceptions.AMQPConnectionError as e:
@@ -85,6 +87,7 @@ class RabbitWrapper(object):
             '''
             log.warn('Connecting to the Rabbit... failed (%s)' % e)
             self.__connection = None
+            self.__couldnt_connect = self.__couldnt_connect+1
             raise e
 
 
@@ -104,6 +107,12 @@ class RabbitWrapper(object):
         log.verbose('Asked to log (%s, %s, %s): %s' % (exchange, queue, app_name, dictionary_message))
         body = json.dumps(dictionary_message)
 
+        # If no RabbitMQ connection, write into normal log:
+        max_reconnect = 3
+        if self.__couldnt_connect > max_reconnect:
+            log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
+            return
+
         # Settings for the message:
         filter_code = 'de.dkrz.seadata.filter_code.json'
         permanent_delivery=2
@@ -121,7 +130,7 @@ class RabbitWrapper(object):
 
             try:
                 
-                if self.__connection is None:
+                if self.__connection is None and self.__couldnt_connect <= max_reconnect:
                     self.__connect()
                 elif not self.__connection.is_open:
                     self.__connect()
@@ -168,7 +177,6 @@ class RabbitWrapper(object):
             if i+1 >= max_publish:
                 log.warning('Could not log to RabbitMQ (%s), logging here instead...' % e)
                 log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
-                break
 
 
     '''
