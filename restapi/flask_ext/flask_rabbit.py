@@ -24,31 +24,33 @@ class RabbitExt(BaseExtension):
         # from restapi.confs import PRODUCTION
         # if not PRODUCTION:
         if True:
-            log.warning("Skipping Rabbit")
+            log.warning("Skipping Rabbit, logging to normal log instead.")
+            dont_connect = True
             # TODO: Have a TEST setting for testbeds, with different queue?
             # TODO: Log into some file if Rabbit not available?
 
-            class Empty:
-                pass
-            return Empty()
-
-
         log.debug('Connecting to the Rabbit')
-        conn_wrapper = RabbitWrapper(self.variables)
+        conn_wrapper = RabbitWrapper(self.variables, dont_connect)
         log.debug('Connection wrapper was created, will be passed back.')
         return conn_wrapper
 
 class RabbitWrapper(object):
 
-    def __init__(self, variables):
+    def __init__(self, variables, dont_connect=False):
         log.debug('Creating RabbitMQ connection wrapper with variables %s' % variables)
         self.__variables = variables
         self.__connection = None
         self.__channel = None
+        self.__dont_connect = dont_connect
         self.__couldnt_connect = 0
         # TODO: Declare queue and exchange, just in case?
         
         # Initial connection:
+        if self.__dont_connect:
+            log.warn('Will not connect to RabbitMQ (dont_connect = True).')
+            log.debug('Creating RabbitMQ connection wrapper... done. (without connection).')
+            return None
+
         try:
             self.__connect()
             log.debug('Creating RabbitMQ connection wrapper... done. (successful).')
@@ -109,7 +111,7 @@ class RabbitWrapper(object):
 
         # If no RabbitMQ connection, write into normal log:
         max_reconnect = 3
-        if self.__couldnt_connect > max_reconnect:
+        if self.__dont_connect or self.__couldnt_connect > max_reconnect:
             log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
             return
 
@@ -187,7 +189,10 @@ class RabbitWrapper(object):
     '''
     def __get_channel(self):
 
-        if self.__channel is None:
+        if self.__dont_connect:
+            self.__channel = None
+
+        elif self.__channel is None:
             log.verbose('Creating new channel.')
             self.__channel = self.__connection.channel()
 
@@ -203,6 +208,8 @@ class RabbitWrapper(object):
     '''
     def close_connection(self):
         # TODO: This must be called!
+        if self.__dont_connect:
+            return
         if self.__connection.is_closed or self.__connection.is_closing:
             log.debug('Connection already closed or closing.')
         else:
