@@ -238,6 +238,22 @@ class Logout(EndpointResource):
         return self.empty_response()
 
 
+def send_internal_password_reset(uri, title, reset_email):
+    # Internal templating
+    body = "Follow this link to reset password: %s" % uri
+    html_body = get_html_template("reset_password.html", {"url": uri})
+    if html_body is None:
+        log.warning("Unable to find email template")
+        html_body = body
+        body = None
+    subject = "%s Password Reset" % title
+
+    # Internal email sending
+    c = send_mail(html_body, subject, reset_email, plain_body=body)
+    if not c:
+        raise RestApiException("Error sending email, please retry")
+
+
 class RecoverPassword(EndpointResource):
 
     @decorate.catch_error()
@@ -295,23 +311,17 @@ class RecoverPassword(EndpointResource):
 
         var = "RESET_PASSWORD_URI"
         uri = detector.get_global_var(key=var, default='/public/reset')
-        u = "%s://%s%s/%s" % (protocol, domain, uri, rt)
+        complete_uri = "%s://%s%s/%s" % (protocol, domain, uri, rt)
 
         ##################
-        # TODO: move me into a dedicated function
-        # Internal templating
-        body = "Follow this link to reset password: %s" % u
-        html_body = get_html_template("reset_password.html", {"url": u})
-        if html_body is None:
-            log.warning("Unable to find email template")
-            html_body = body
-            body = None
-        subject = "%s Password Reset" % title
-
-        # Internal email sending
-        c = send_mail(html_body, subject, reset_email, plain_body=body)
-        if not c:
-            raise RestApiException("Error sending email, please retry")
+        # Send email with internal or external SMTP
+        obj = meta.get_customizer_class('apis.profile', 'CustomReset')
+        if obj is None:
+            # normal activation + internal smtp
+            send_internal_password_reset(complete_uri, title, reset_email)
+        else:
+            # external smtp
+            obj.request_reset(user.name, user.email, complete_uri)
 
         ##################
         # Completing the reset task
