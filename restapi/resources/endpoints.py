@@ -296,22 +296,25 @@ class RecoverPassword(EndpointResource):
         var = "RESET_PASSWORD_URI"
         uri = detector.get_global_var(key=var, default='/public/reset')
         u = "%s://%s%s/%s" % (protocol, domain, uri, rt)
-        body = "Follow this link to reset password: %s" % u
 
-        replaces = {
-            "url": u
-        }
-        html_body = get_html_template("reset_password.html", replaces)
+        ##################
+        # TODO: move me into a dedicated function
+        # Internal templating
+        body = "Follow this link to reset password: %s" % u
+        html_body = get_html_template("reset_password.html", {"url": u})
         if html_body is None:
             log.warning("Unable to find email template")
             html_body = body
             body = None
         subject = "%s Password Reset" % title
-        c = send_mail(html_body, subject, reset_email, plain_body=body)
 
+        # Internal email sending
+        c = send_mail(html_body, subject, reset_email, plain_body=body)
         if not c:
             raise RestApiException("Error sending email, please retry")
 
+        ##################
+        # Completing the reset task
         self.auth.save_token(
             user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
@@ -489,10 +492,6 @@ class Tokens(EndpointResource):
 
 def send_activation_link(auth, user):
 
-    # title = mem.customizer._configurations \
-    #     .get('project', {}) \
-    #     .get('title', "Unkown title")
-
     title = glom(
         mem.customizer._configurations,
         "project.title",
@@ -509,34 +508,73 @@ def send_activation_link(auth, user):
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: %s" % rt)
-    u = "%s://%s/public/register/%s" % (protocol, domain, rt)
-    body = "Follow this link to activate your account: %s" % u
+    url = "%s://%s/public/register/%s" % (protocol, domain, rt)
+    body = "Follow this link to activate your account: %s" % url
 
-    replaces = {
-        "url": u
-    }
+    obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
 
-    ##################
-    # customized template
-    template_file = "activate_account.html"
-    html_body = get_html_template(template_file, replaces)
-    if html_body is None:
-        html_body = body
-        body = None
+    # NORMAL ACTIVATION
+    if obj is None:
 
-    ##################
-    # NOTE: possibility to define a different subject
-    default_subject = "%s account activation" % title
-    subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+        # customized template
+        template_file = "activate_account.html"
+        html_body = get_html_template(template_file, {"url": url})
+        if html_body is None:
+            html_body = body
+            body = None
 
-    ##################
-    sent = send_mail(html_body, subject, user.email, plain_body=body)
-    if not sent:
-        raise BaseException("Error sending email, please retry")
+        # NOTE: possibility to define a different subject
+        default_subject = "%s account activation" % title
+        subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+
+        sent = send_mail(html_body, subject, user.email, plain_body=body)
+        if not sent:
+            raise BaseException("Error sending email, please retry")
+
+    # EXTERNAL SMTP/EMAIL SENDER
+    else:
+        try:
+            obj.request_activation(name=user.name, email=user.email, url=url)
+        except BaseException as e:
+            log.error(
+                "Could not send email with custom service:\n%s: %s",
+                e.__class__.__name__, e)
+            raise
 
     auth.save_token(
         user, activation_token, jti,
         token_type=auth.ACTIVATE_ACCOUNT)
+
+
+def notify_registration(user):
+    var = "REGISTRATION_NOTIFICATIONS"
+    if detector.get_bool_from_os(var):
+        # Sending an email to the administrator
+        title = glom(
+            mem.customizer._configurations,
+            "project.title",
+            default='Unkown title')
+        subject = "%s New credentials requested" % title
+        body = "New credentials request from %s" % user.email
+
+        send_mail(body, subject)
+
+
+def custom_extra_registration(variables):
+    # Add the possibility to user a custom registration extra service
+    oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
+    obj = meta.get_customizer_class(
+        'apis.profile', 'CustomRegister', {'client_name': oscr}
+    )
+    if obj is not None:
+        try:
+            obj.new_member(
+                email=variables['email'],
+                name=variables['name'], surname=variables['surname'])
+        except BaseException as e:
+            log.error(
+                "Could not register your custom profile:\n%s: %s",
+                e.__class__.__name__, e)
 
 
 class Profile(EndpointResource):
@@ -628,42 +666,17 @@ class Profile(EndpointResource):
 
         try:
             self.auth.custom_post_handle_user_input(user, v)
-
             send_activation_link(self.auth, user)
-
-            var = "REGISTRATION_NOTIFICATIONS"
-            if detector.get_bool_from_os(var):
-                # Sending an email to the administrator
-                title = glom(
-                    mem.customizer._configurations,
-                    "project.title",
-                    default='Unkown title')
-                subject = "%s New credentials requested" % title
-                body = "New credentials request from %s" % user.email
-
-                send_mail(body, subject)
-
+            notify_registration(user)
             msg = "We are sending an email to your email address where " + \
                 "you will find the link to activate your account"
+
         except BaseException as e:
             log.error("Errors during account registration: %s" % str(e))
             user.delete()
             raise RestApiException(str(e))
         else:
-            # Add the possibility to user a custom registration extra service
-            oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
-            obj = meta.get_customizer_class(
-                'apis.profile', 'CustomRegister', {'client_name': oscr}
-            )
-            if obj is not None:
-                try:
-                    obj.new_member(
-                        email=v['email'], name=v['name'], surname=v['surname'])
-                except BaseException as e:
-                    log.error(
-                        "Could not register your custom profile:\n%s: %s",
-                        e.__class__.__name__, e)
-
+            custom_extra_registration(v)
             return msg
 
     def update_password(self, user, data):
