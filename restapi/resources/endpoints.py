@@ -554,6 +554,12 @@ class Profile(EndpointResource):
         if hasattr(current_user, 'surname'):
             data["surname"] = current_user.surname
 
+        if hasattr(current_user, 'is_active'):
+            data["is_active"] = current_user.is_active
+
+        if hasattr(current_user, 'privacy_accepted'):
+            data["privacy_accepted"] = current_user.privacy_accepted
+
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
@@ -644,41 +650,53 @@ class Profile(EndpointResource):
         """ Update profile for current user """
 
         user = self.auth.get_user()
+
+        if not user.is_active:
+            msg = "Your accout is not active"
+            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_REQUEST)
+
         username = user.email
         # if user.uuid != uuid:
         #     msg = "Invalid uuid: not matching current user"
         #     raise RestApiException(msg)
 
         data = self.get_input()
-        password = data.get('password')
-        new_password = data.get('new_password')
-        password_confirm = data.get('password_confirm')
+        password = data.pop('password', None)
+        new_password = data.pop('new_password', None)
+        password_confirm = data.pop('password_confirm', None)
         totp_authentication = (
             self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
             self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
         )
         if totp_authentication:
-            totp_code = data.get('totp_code')
+            totp_code = data.pop('totp_code', None)
         else:
             totp_code = None
 
         security = HandleSecurity(self.auth)
 
-        if new_password is None or password_confirm is None:
-            msg = "New password is missing"
-            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_REQUEST)
+        if new_password is not None and password_confirm is not None:
 
-        if totp_authentication:
-            security.verify_totp(user, totp_code)
+            if totp_authentication:
+                security.verify_totp(user, totp_code)
+            else:
+                # token, jti = self.auth.make_login(username, password)
+                token, _ = self.auth.make_login(username, password)
+                security.verify_token(username, token)
+
+            security.change_password(
+                user, password, new_password, password_confirm)
         else:
-            # token, jti = self.auth.make_login(username, password)
-            token, _ = self.auth.make_login(username, password)
-            security.verify_token(username, token)
+            # Save all elements in data without any validation is
+            # a great security breach. Waiting for a better validation
+            # I simply extract a list of known properties
+            for elem in ['name', 'surname', 'privacy_accepted']:
+                if elem not in data:
+                    continue
+                if not hasattr(user, elem):
+                    continue
+                setattr(user, elem, data.get('name'))
 
-        security.change_password(
-            user, password, new_password, password_confirm)
-        # I really don't know why this save is required... since it is already
-        # in change_password ... But if I remove it the new pwd is not saved...
         user.save()
 
         return self.empty_response()

@@ -314,6 +314,14 @@ class AdminUsers(GraphBaseOperations):
 
         user = self.auth.create_user(properties, roles)
 
+        # If created by admins, credentials
+        # must accept privacy at the login
+        if "privacy_accepted" in v:
+            if not v["privacy_accepted"]:
+                if hasattr(user, 'privacy_accepted'):
+                    user.privacy_accepted = False
+                    user.save()
+
         group = None
         if 'group' in v:
             group = self.parse_group(v)
