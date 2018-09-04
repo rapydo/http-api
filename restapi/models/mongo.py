@@ -3,31 +3,15 @@
 """
 Base Models for mongo database.
 
-See
-https://pymodm.readthedocs.io/en/stable/api/index.html
-    #pymodm.base.fields.MongoBaseField
-And
+Docs:
+https://pymodm.readthedocs.io
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
 
-# from pymongo.write_concern import WriteConcern
-from pymodm import MongoModel, fields
+from pymodm import fields
+from pymodm import MongoModel
 from restapi.flask_ext.flask_mongo import AUTH_DB
-
-
-# ####################
-# # Templates
-# FIXME: inheritance? Not working at the moment
-# class AuthModel(MongoModel):
-
-#     class Meta:
-#         write_concern = WriteConcern(j=True)
-#         connection_alias = 'auth'
-
-
-# class AuthModelWithUuid(AuthModel):
-
-#     uuid = fields.UUIDField()
+# from pymongo.write_concern import WriteConcern
 
 
 ####################

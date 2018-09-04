@@ -47,14 +47,12 @@ setup(
         "Flask-OAuthlib",
         "Flask-RESTful",
         "Flask-SQLAlchemy",
-        # "flask-shell-ipython",
-        "flask_injector==0.10.1",
-
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
-        # annotations to declare dependencies.
+        # annotations to declare dependencies. :/
         # "injector==0.13.4",
         "injector==0.12",
+        "flask_injector==0.10.1",
         # DB drivers
         "neomodel==3.2.8",
         # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi

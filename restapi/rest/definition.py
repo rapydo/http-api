@@ -175,15 +175,15 @@ class EndpointResource(Resource):
             if len(self._json_args) < 1:
                 self._json_args = request.form
 
-            # print("TEST\n\n\n", self._json_args)
             # NOTE: if JSON all parameters are just string at the moment...
             for key, value in self._json_args.items():
+
                 if value is None:
                     continue
-                # if isinstance(value, str) and value == 'None':
-                #     continue
+                # TODO: remove and check
+                # how to fix the `request.form` emptiness
+
                 if key in self._args and self._args[key] is not None:
-                    # print("Key", key, "Value", value, self._args[key])
                     key += '_json'
                 self._args[key] = value
 
@@ -224,6 +224,21 @@ class EndpointResource(Resource):
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
+
+    def get_input_properties(self):
+        """
+        NOTE: usefull to use for swagger validation?
+        """
+
+        # get body definition name
+        parameters = self.get_endpoint_custom_definition().copy()
+        parameter = parameters.pop()
+        ref = parameter.get('schema', {}).get('$ref')
+        refname = ref.split('/').pop()
+        # get body definition properties
+        from utilities.globals import mem
+        definitions = mem.customizer._definitions.get('definitions')
+        return definitions.get(refname).get('properties')
 
     def explode_response(
         self, api_output, get_all=False,
@@ -709,3 +724,26 @@ class EndpointResource(Resource):
             return roles
 
         return ids
+
+    def get_user_if_logged(self):
+        """
+        Helper to be used inside an endpoint that doesn't explicitly
+        ask for authentication, but might want to do some extra behaviour
+        when a valid token is presented
+        """
+        user = None
+
+        if request.method == 'OPTIONS':
+            return user
+
+        from restapi.protocols.bearer import HTTPTokenAuth
+        http = HTTPTokenAuth()
+        auth_type, token = http.get_auth_from_header()
+
+        if auth_type is not None:
+            if http.authenticate(self.auth.verify_token, token):
+                # we have a valid token in header
+                user = self.get_current_user()
+                log.warning("Logged user: %s", user.email)
+
+        return user

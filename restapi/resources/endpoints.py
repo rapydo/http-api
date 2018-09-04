@@ -238,6 +238,22 @@ class Logout(EndpointResource):
         return self.empty_response()
 
 
+def send_internal_password_reset(uri, title, reset_email):
+    # Internal templating
+    body = "Follow this link to reset password: %s" % uri
+    html_body = get_html_template("reset_password.html", {"url": uri})
+    if html_body is None:
+        log.warning("Unable to find email template")
+        html_body = body
+        body = None
+    subject = "%s Password Reset" % title
+
+    # Internal email sending
+    c = send_mail(html_body, subject, reset_email, plain_body=body)
+    if not c:
+        raise RestApiException("Error sending email, please retry")
+
+
 class RecoverPassword(EndpointResource):
 
     @decorate.catch_error()
@@ -292,23 +308,23 @@ class RecoverPassword(EndpointResource):
             protocol = "http"
 
         rt = reset_token.replace(".", "+")
-        u = "%s://%s/public/reset/%s" % (protocol, domain, rt)
-        body = "Follow this link to reset password: %s" % u
 
-        replaces = {
-            "url": u
-        }
-        html_body = get_html_template("reset_password.html", replaces)
-        if html_body is None:
-            log.warning("Unable to find email template")
-            html_body = body
-            body = None
-        subject = "%s Password Reset" % title
-        c = send_mail(html_body, subject, reset_email, plain_body=body)
+        var = "RESET_PASSWORD_URI"
+        uri = detector.get_global_var(key=var, default='/public/reset')
+        complete_uri = "%s://%s%s/%s" % (protocol, domain, uri, rt)
 
-        if not c:
-            raise RestApiException("Error sending email, please retry")
+        ##################
+        # Send email with internal or external SMTP
+        obj = meta.get_customizer_class('apis.profile', 'CustomReset')
+        if obj is None:
+            # normal activation + internal smtp
+            send_internal_password_reset(complete_uri, title, reset_email)
+        else:
+            # external smtp
+            obj.request_reset(user.name, user.email, complete_uri)
 
+        ##################
+        # Completing the reset task
         self.auth.save_token(
             user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
@@ -354,24 +370,32 @@ class RecoverPassword(EndpointResource):
         token = token.pop(0)
         emitted = timestamp_from_string(token["emitted"])
 
+        last_change = None
         # If user logged in after the token emission invalidate the token
-        if self.auth._user.last_login is not None and \
-                self.auth._user.last_login >= emitted:
-            self.auth.invalidate_token(token_id)
-            raise RestApiException(
-                'Invalid reset token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
-
+        if self.auth._user.last_login is not None:
+            last_change = self.auth._user.last_login
         # If user changed the pwd after the token emission invalidate the token
-        if self.auth._user.last_password_change is not None and \
-                self.auth._user.last_password_change >= emitted:
-            self.auth.invalidate_token(token_id)
-            raise RestApiException(
-                'Invalid reset token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+        elif self.auth._user.last_password_change is not None:
+            last_change = self.auth._user.last_password_change
+
+        if last_change is not None:
+
+            try:
+                expired = last_change >= emitted
+            except TypeError:
+                # pymongo has problems here:
+                # http://api.mongodb.com/python/current/examples/
+                #  datetimes.html#reading-time
+                log.debug("Localizing last password change")
+                expired = pytz.utc.localize(last_change) >= emitted
+
+            if expired:
+                self.auth.invalidate_token(token_id)
+                raise RestApiException(
+                    'Invalid reset token: this request is no longer valid',
+                    status_code=hcodes.HTTP_BAD_REQUEST)
 
         # The reset token is valid, do something
-
         data = self.get_input()
         new_password = data.get("new_password")
         password_confirm = data.get("password_confirm")
@@ -478,10 +502,6 @@ class Tokens(EndpointResource):
 
 def send_activation_link(auth, user):
 
-    # title = mem.customizer._configurations \
-    #     .get('project', {}) \
-    #     .get('title', "Unkown title")
-
     title = glom(
         mem.customizer._configurations,
         "project.title",
@@ -498,34 +518,73 @@ def send_activation_link(auth, user):
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: %s" % rt)
-    u = "%s://%s/public/register/%s" % (protocol, domain, rt)
-    body = "Follow this link to activate your account: %s" % u
+    url = "%s://%s/public/register/%s" % (protocol, domain, rt)
+    body = "Follow this link to activate your account: %s" % url
 
-    replaces = {
-        "url": u
-    }
+    obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
 
-    ##################
-    # customized template
-    template_file = "activate_account.html"
-    html_body = get_html_template(template_file, replaces)
-    if html_body is None:
-        html_body = body
-        body = None
+    # NORMAL ACTIVATION
+    if obj is None:
 
-    ##################
-    # NOTE: possibility to define a different subject
-    default_subject = "%s account activation" % title
-    subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+        # customized template
+        template_file = "activate_account.html"
+        html_body = get_html_template(template_file, {"url": url})
+        if html_body is None:
+            html_body = body
+            body = None
 
-    ##################
-    sent = send_mail(html_body, subject, user.email, plain_body=body)
-    if not sent:
-        raise BaseException("Error sending email, please retry")
+        # NOTE: possibility to define a different subject
+        default_subject = "%s account activation" % title
+        subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+
+        sent = send_mail(html_body, subject, user.email, plain_body=body)
+        if not sent:
+            raise BaseException("Error sending email, please retry")
+
+    # EXTERNAL SMTP/EMAIL SENDER
+    else:
+        try:
+            obj.request_activation(name=user.name, email=user.email, url=url)
+        except BaseException as e:
+            log.error(
+                "Could not send email with custom service:\n%s: %s",
+                e.__class__.__name__, e)
+            raise
 
     auth.save_token(
         user, activation_token, jti,
         token_type=auth.ACTIVATE_ACCOUNT)
+
+
+def notify_registration(user):
+    var = "REGISTRATION_NOTIFICATIONS"
+    if detector.get_bool_from_os(var):
+        # Sending an email to the administrator
+        title = glom(
+            mem.customizer._configurations,
+            "project.title",
+            default='Unkown title')
+        subject = "%s New credentials requested" % title
+        body = "New credentials request from %s" % user.email
+
+        send_mail(body, subject)
+
+
+def custom_extra_registration(variables):
+    # Add the possibility to user a custom registration extra service
+    oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
+    obj = meta.get_customizer_class(
+        'apis.profile', 'CustomRegister', {'client_name': oscr}
+    )
+    if obj is not None:
+        try:
+            obj.new_member(
+                email=variables['email'],
+                name=variables['name'], surname=variables['surname'])
+        except BaseException as e:
+            log.error(
+                "Could not register your custom profile:\n%s: %s",
+                e.__class__.__name__, e)
 
 
 class Profile(EndpointResource):
@@ -554,16 +613,10 @@ class Profile(EndpointResource):
         if hasattr(current_user, 'surname'):
             data["surname"] = current_user.surname
 
-        if hasattr(current_user, 'is_active'):
-            data["is_active"] = current_user.is_active
-
-        if hasattr(current_user, 'privacy_accepted'):
-            data["privacy_accepted"] = current_user.privacy_accepted
-
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        obj = meta.get_customizer_class('apis.profile', 'CustomProfile', {})
+        obj = meta.get_customizer_class('apis.profile', 'CustomProfile')
         if obj is not None:
             try:
                 data = obj.manipulate(ref=self, user=current_user, data=data)
@@ -623,81 +676,94 @@ class Profile(EndpointResource):
 
         try:
             self.auth.custom_post_handle_user_input(user, v)
-
             send_activation_link(self.auth, user)
-
-            if os.environ.get("REGISTRATION_NOTIFICATIONS", True):
-                # Sending an email to the administrator
-                title = glom(
-                    mem.customizer._configurations,
-                    "project.title",
-                    default='Unkown title')
-                subject = "%s New credentials requested" % title
-                body = "New credentials request from %s" % user.email
-
-                send_mail(body, subject)
-
+            notify_registration(user)
             msg = "We are sending an email to your email address where " + \
                 "you will find the link to activate your account"
-            return msg
+
         except BaseException as e:
             log.error("Errors during account registration: %s" % str(e))
             user.delete()
             raise RestApiException(str(e))
+        else:
+            custom_extra_registration(v)
+            return msg
+
+    def update_password(self, user, data):
+
+        password = data.get('password')
+        new_password = data.get('new_password')
+        password_confirm = data.get('password_confirm')
+
+        totp_authentication = (
+            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
+            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
+        )
+        if totp_authentication:
+            totp_code = data.get('totp_code')
+        else:
+            totp_code = None
+
+        security = HandleSecurity(self.auth)
+
+        if new_password is None or password_confirm is None:
+            msg = "New password is missing"
+            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_REQUEST)
+
+        if totp_authentication:
+            security.verify_totp(user, totp_code)
+        else:
+            token, _ = self.auth.make_login(user.email, password)
+            security.verify_token(user.email, token)
+
+        security.change_password(
+            user, password, new_password, password_confirm)
+
+        # NOTE already in change_password
+        # but if removed new pwd is not saved
+        return user.save()
+
+    def update_profile(self, user, data):
+
+        # log.pp(data)
+        avoid_update = [
+            'uuid', 'authmethod', 'is_active', 'roles'
+        ]
+
+        try:
+            for key, value in data.items():
+                if key.startswith('_') or key in avoid_update:
+                    continue
+                log.debug("Profile new value: %s=%s", key, value)
+                setattr(user, key, value)
+        except BaseException as e:
+            log.error(
+                "Failed to update profile:\n%s: %s",
+                e.__class__.__name__, e
+            )
+        else:
+            log.info("Profile updated")
+
+        return user.save()
 
     @decorate.catch_error()
     def put(self):
         """ Update profile for current user """
 
         user = self.auth.get_user()
-
-        if not user.is_active:
-            msg = "Your accout is not active"
-            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_REQUEST)
-
-        username = user.email
-        # if user.uuid != uuid:
-        #     msg = "Invalid uuid: not matching current user"
-        #     raise RestApiException(msg)
-
         data = self.get_input()
-        password = data.pop('password', None)
-        new_password = data.pop('new_password', None)
-        password_confirm = data.pop('password_confirm', None)
-        totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
-            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
-        )
-        if totp_authentication:
-            totp_code = data.pop('totp_code', None)
+
+        has_pw_update = True
+        no_pw_data = {}
+        for key in data.keys():
+            if 'password' not in key:
+                no_pw_data[key] = data[key]
+                has_pw_update = False
+
+        if has_pw_update:
+            self.update_password(user, data)
         else:
-            totp_code = None
-
-        security = HandleSecurity(self.auth)
-
-        if new_password is not None and password_confirm is not None:
-
-            if totp_authentication:
-                security.verify_totp(user, totp_code)
-            else:
-                # token, jti = self.auth.make_login(username, password)
-                token, _ = self.auth.make_login(username, password)
-                security.verify_token(username, token)
-
-            security.change_password(
-                user, password, new_password, password_confirm)
-        else:
-            # Save all elements in data without any validation is
-            # a great security breach. Waiting for a better validation
-            # I simply extract a list of known properties
-            for elem in ['name', 'surname', 'privacy_accepted']:
-                if elem not in data:
-                    continue
-                if not hasattr(user, elem):
-                    continue
-                setattr(user, elem, data.get('name'))
-
-        user.save()
+            self.update_profile(user, no_pw_data)
 
         return self.empty_response()
 
