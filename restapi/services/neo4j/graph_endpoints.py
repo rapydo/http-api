@@ -51,8 +51,8 @@ class GraphBaseOperations(EndpointResource):
 def graph_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
         try:
-            from neomodel import db as transaction
 
             transaction.begin()
             log.verbose("Neomodel transaction BEGIN")
@@ -73,6 +73,42 @@ def graph_transactions(func):
 
     return wrapper
 
+
+def graph_nestable_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
+        transaction_open = True
+        try:
+
+            try:
+                transaction.begin()
+                log.verbose("Neomodel transaction BEGIN2")
+            except SystemError as e:
+                transaction_open = False
+                log.debug("Neomodel transaction is already in progress")
+
+            out = func(self, *args, **kwargs)
+
+            if transaction_open:
+                transaction.commit()
+                log.verbose("Neomodel transaction COMMIT2")
+            else:
+                log.debug("Skipping neomodel transaction commit")
+
+            return out
+        except Exception as e:
+            if not transaction_open:
+                log.debug("Skipping neomodel transaction rollback")
+            else:
+                try:
+                    log.verbose("Neomodel transaction ROLLBACK")
+                    transaction.rollback()
+                except Exception as sub_ex:
+                    log.warning("Exception raised during rollback: %s", sub_ex)
+            raise e
+
+    return wrapper
 
 def catch_graph_exceptions(func):
     @wraps(func)
