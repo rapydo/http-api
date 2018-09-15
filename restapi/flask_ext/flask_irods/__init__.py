@@ -33,8 +33,12 @@ class IrodsPythonExt(BaseExtension):
 
         external = self.variables.get('external')
 
-        # Authentication scheme fallback to default (normal basic credentials)
-        self.authscheme = self.variables.get('authscheme')
+        # Retrieve authentication schema
+        self.authscheme = kwargs.get('authscheme')
+        # Authentication scheme fallback to default from project_configuration
+        if self.authscheme is None or self.authscheme.strip() == '':
+            self.authscheme = self.variables.get('authscheme')
+        # Authentication scheme fallback to default (credentials)
         if self.authscheme is None or self.authscheme.strip() == '':
             self.authscheme = NORMAL_AUTH_SCHEME
 
