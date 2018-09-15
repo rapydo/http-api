@@ -167,9 +167,20 @@ class IrodsPythonExt(BaseExtension):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
+        elif self.authscheme == PAM_AUTH_SCHEME:
+
+            obj = iRODSSession(
+                user=self.user,
+                password=self.password,
+                authentication_scheme=self.authscheme,
+                host=self.variables.get('host'),
+                port=self.variables.get('port'),
+                zone=default_zone,
+            )
+
         else:
             raise NotImplementedError(
-                "Untested iRODS authentication scheme: %s" % self.authscheme)
+                "Invalid iRODS authentication scheme: %s" % self.authscheme)
 
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
