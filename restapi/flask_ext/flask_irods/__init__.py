@@ -20,6 +20,7 @@ irodslogger.setLevel(logging.INFO)
 
 NORMAL_AUTH_SCHEME = 'credentials'
 GSI_AUTH_SCHEME = 'GSI'
+PAM_AUTH_SCHEME = 'PAM'
 
 log = get_logger(__name__)
 
@@ -100,10 +101,12 @@ class IrodsPythonExt(BaseExtension):
                 cert_pwd=kwargs.get("proxy_pass"),
             )
 
-        ######################
-        # Normal credentials
+        elif self.authscheme == PAM_AUTH_SCHEME:
+            pass
+
         elif self.password is not None:
             self.authscheme = NORMAL_AUTH_SCHEME
+
         else:
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme")
