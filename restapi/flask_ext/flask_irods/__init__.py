@@ -20,6 +20,7 @@ irodslogger.setLevel(logging.INFO)
 
 NORMAL_AUTH_SCHEME = 'credentials'
 GSI_AUTH_SCHEME = 'GSI'
+PAM_AUTH_SCHEME = 'PAM'
 
 log = get_logger(__name__)
 
@@ -32,8 +33,12 @@ class IrodsPythonExt(BaseExtension):
 
         external = self.variables.get('external')
 
-        # Authentication scheme fallback to default (normal basic credentials)
-        self.authscheme = self.variables.get('authscheme')
+        # Retrieve authentication schema
+        self.authscheme = kwargs.get('authscheme')
+        # Authentication scheme fallback to default from project_configuration
+        if self.authscheme is None or self.authscheme.strip() == '':
+            self.authscheme = self.variables.get('authscheme')
+        # Authentication scheme fallback to default (credentials)
         if self.authscheme is None or self.authscheme.strip() == '':
             self.authscheme = NORMAL_AUTH_SCHEME
 
@@ -100,10 +105,12 @@ class IrodsPythonExt(BaseExtension):
                 cert_pwd=kwargs.get("proxy_pass"),
             )
 
-        ######################
-        # Normal credentials
+        elif self.authscheme == PAM_AUTH_SCHEME:
+            pass
+
         elif self.password is not None:
             self.authscheme = NORMAL_AUTH_SCHEME
+
         else:
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme")
@@ -160,9 +167,20 @@ class IrodsPythonExt(BaseExtension):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
+        elif self.authscheme == PAM_AUTH_SCHEME:
+
+            obj = iRODSSession(
+                user=self.user,
+                password=self.password,
+                authentication_scheme=self.authscheme,
+                host=self.variables.get('host'),
+                port=self.variables.get('port'),
+                zone=default_zone,
+            )
+
         else:
             raise NotImplementedError(
-                "Untested iRODS authentication scheme: %s" % self.authscheme)
+                "Invalid iRODS authentication scheme: %s" % self.authscheme)
 
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:

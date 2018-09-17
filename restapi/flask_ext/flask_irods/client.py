@@ -533,7 +533,8 @@ class IrodsPythonClient():
                 coll_or_obj = None
 
         if coll_or_obj is None:
-            raise IrodsException("Cannot get permission of a null object")
+            raise IrodsException(
+                "Cannot get permission: path not found: %s" % coll_or_obj)
 
         data = {}
         data["path"] = coll_or_obj.path
