@@ -80,6 +80,12 @@ class RabbitWrapper(object):
             self.__variables.get('user'),
             self.__variables.get('password')
         )
+        ssl_enabled = self.__variables.get('ssl_enabled')
+        if ssl_enabled is None:
+            ssl_enabled = False
+        else:
+            ssl_enabled = (ssl_enabled.lower() == 'true' or int(ssl_enabled)==1)
+        log.info('SSL enabled for RabbitMQ? %s' % ssl_enabled)
 
         try:
             self.__connection = pika.BlockingConnection(
@@ -87,7 +93,8 @@ class RabbitWrapper(object):
                     host = self.__variables.get('host'),
                     port = int(self.__variables.get('port')),
                     virtual_host = self.__variables.get('vhost'),
-                    credentials = credentials
+                    credentials = credentials,
+                    ssl = ssl_enabled
                 )
             )
             self.__couldnt_connect = 0
