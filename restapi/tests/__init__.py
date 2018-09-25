@@ -92,7 +92,7 @@ class BaseTests(object):
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
 
-    def get_content(self, response):
+    def get_content(self, response, return_errors=False):
         content, err, meta, code = get_content_from_response(response)
 
         # Since unittests use class object and not instances
@@ -105,7 +105,10 @@ class BaseTests(object):
             "errors": err,
             "status": code,
         }
-        return content
+        if return_errors:
+            return err
+        else:
+            return content
 
     def do_login(self, client, USER, PWD,
                  status_code=hcodes.HTTP_OK_BASIC,
