@@ -350,6 +350,16 @@ class Authentication(BaseAuthentication):
             user = self.get_user_object(username)
             # update only the session field
             user.session = session
+        except BaseException as e:
+            log.error("Errors saving iRODS user: %s", username)
+            log.error(str(e))
+            log.print_stack(e)
+
+            user = self.get_user_object(username)
+            # Unable to do something...
+            if user is None:
+                raise e
+            user.session = session
 
         # token
         token, jti = self.create_token(self.fill_payload(user))
