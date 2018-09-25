@@ -353,6 +353,7 @@ class Authentication(BaseAuthentication):
         except BaseException as e:
             log.error("Errors saving iRODS user: %s", username)
             log.error(str(e))
+            log.error(type(e))
             log.print_stack(e)
 
             user = self.get_user_object(username)
