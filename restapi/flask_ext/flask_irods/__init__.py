@@ -204,12 +204,21 @@ class IrodsPythonExt(BaseExtension):
 
         # Do a simple command to test this session
         if check_connection:
+            catch_exceptions = kwargs.get('catch_exceptions', False)
             try:
                 u = obj.users.get(self.user, user_zone=default_zone)
-            except iexceptions.CAT_INVALID_AUTHENTICATION:
-                raise IrodsException("CAT_INVALID_AUTHENTICATION")
-            except iexceptions.PAM_AUTH_PASSWORD_FAILED:
-                raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
+
+            except iexceptions.CAT_INVALID_AUTHENTICATION as e:
+                if catch_exceptions:
+                    raise IrodsException("CAT_INVALID_AUTHENTICATION")
+                else:
+                    raise e
+
+            except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
+                if catch_exceptions:
+                    raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
+                else:
+                    raise e
 
             log.verbose("Tested session retrieving '%s'" % u.name)
 
