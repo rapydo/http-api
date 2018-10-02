@@ -218,7 +218,8 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, current_user, token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -292,6 +293,7 @@ class Authentication(BaseAuthentication):
 
         # Update external user data to latest info received
         external_user.email = email
+        external_user.account_type = account_type
         external_user.token = token
         external_user.refresh_token = refresh_token
         external_user.certificate_cn = cn

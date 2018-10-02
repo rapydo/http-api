@@ -31,7 +31,6 @@ class User(IdentifiedNode):
 class Token(StructuredNode):
     jti = StringProperty(required=True, unique_index=True)
     token = StringProperty(required=True, unique_index=True)
-    refresh_token = StringProperty(unique_index=True)
     token_type = StringProperty()
     creation = DateTimeProperty(required=True)
     expiration = DateTimeProperty()
@@ -49,7 +48,9 @@ class Role(StructuredNode):
 
 class ExternalAccounts(StructuredNode):
     username = StringProperty(required=True, unique_index=True)
+    account_type = StringProperty(required=True)
     token = StringProperty(required=True)
+    refresh_token = StringProperty()
     email = StringProperty()
     certificate_cn = StringProperty()
     proxyfile = StringProperty()

@@ -244,7 +244,8 @@ class Authentication(BaseAuthentication):
     #     log.debug("Removing all pending tokens")
     #     return self.cypher("MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a")
 
-    def store_oauth2_user(self, current_user, token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -276,6 +277,7 @@ class Authentication(BaseAuthentication):
             oauth2_external = self.db.ExternalAccounts(username=email)
         # update main info for this user
         oauth2_external.email = email
+        oauth2_external.account_type = account_type
         oauth2_external.token = token
         oauth2_external.refresh_token = refresh_token
         oauth2_external.certificate_cn = cn

@@ -63,6 +63,7 @@ class Token(MongoModel):
 
 class ExternalAccounts(MongoModel):
     username = fields.CharField(primary_key=True)
+    account_type = fields.CharField()
     token = fields.CharField()
     refresh_token = fields.CharField()
     token_expiration = fields.DateTimeField()

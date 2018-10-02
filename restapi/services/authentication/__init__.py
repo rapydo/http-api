@@ -584,7 +584,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def store_oauth2_user(self, current_user, token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user.
