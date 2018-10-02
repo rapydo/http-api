@@ -208,6 +208,9 @@ class IrodsPythonExt(BaseExtension):
                 u = obj.users.get(self.user, user_zone=default_zone)
             except iexceptions.CAT_INVALID_AUTHENTICATION:
                 raise IrodsException("CAT_INVALID_AUTHENTICATION")
+            except iexceptions.PAM_AUTH_PASSWORD_FAILED:
+                raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
+
             log.verbose("Tested session retrieving '%s'" % u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)
