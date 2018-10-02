@@ -277,7 +277,7 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, current_user, token):
+    def store_oauth2_user(self, current_user, token, refresh_token):
         # FIXME: b2access
         raise NotImplementedError("to do")
 

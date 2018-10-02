@@ -218,7 +218,7 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, current_user, token):
+    def store_oauth2_user(self, current_user, token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -235,33 +235,36 @@ class Authentication(BaseAuthentication):
 
         email = values.get('email')
         cn = values.get('cn')
+        dn = values.get('distinguishedName')
         ui = values.get('unity:persistent')
 
         # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
         # is it going to change?
-        dn = None
-        for key, _ in values.items():
-            if 'urn:oid' in key:
-                dn = values.get(key)
-        if dn is None:
-            return None, "Missing DN from authorized response..."
+        # dn = None
+        # for key, _ in values.items():
+        #     if 'urn:oid' in key:
+        #         dn = values.get(key)
+        # if dn is None:
+        #     return None, "Missing DN from authorized response..."
 
         # Check if a user already exists with this email
         internal_user = None
         internal_users = self.db.User.query.filter(
             self.db.User.email == email).all()
 
+        # Should never happen, please
+        if len(internal_users) > 1:
+            log.critical("Multiple users?")
+            return None, "Server misconfiguration"
+
         # If something found
         if len(internal_users) > 0:
-            # Should never happen, please
-            if len(internal_users) > 1:
-                log.critical("Multiple users?")
-                return None, "Server misconfiguration"
+
             internal_user = internal_users.pop()
             log.debug("Existing internal user: %s", internal_user)
             # A user already locally exists with another authmethod. Not good.
             if internal_user.authmethod != 'oauth2':
-                return None, "Creating a user which locally already exists"
+                return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
             # Create new one
@@ -290,6 +293,7 @@ class Authentication(BaseAuthentication):
         # Update external user data to latest info received
         external_user.email = email
         external_user.token = token
+        external_user.refresh_token = refresh_token
         external_user.certificate_cn = cn
         external_user.certificate_dn = dn
 
