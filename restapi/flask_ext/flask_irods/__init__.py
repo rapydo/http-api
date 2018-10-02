@@ -12,7 +12,9 @@ from restapi.flask_ext import BaseExtension, get_logger
 from restapi.flask_ext.flask_irods.session \
     import iRODSPickleSession as iRODSSession
 # from irods.session import iRODSSession
-from restapi.flask_ext.flask_irods.client import IrodsPythonClient
+from irods import exception as iexceptions
+from restapi.flask_ext.flask_irods.client \
+    import IrodsException, IrodsPythonClient
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -202,7 +204,10 @@ class IrodsPythonExt(BaseExtension):
 
         # Do a simple command to test this session
         if check_connection:
-            u = obj.users.get(self.user, user_zone=default_zone)
+            try:
+                u = obj.users.get(self.user, user_zone=default_zone)
+            except iexceptions.CAT_INVALID_AUTHENTICATION:
+                raise IrodsException("CAT_INVALID_AUTHENTICATION")
             log.verbose("Tested session retrieving '%s'" % u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)
