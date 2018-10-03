@@ -236,17 +236,18 @@ class Authentication(BaseAuthentication):
 
         email = values.get('email')
         cn = values.get('cn')
-        dn = values.get('distinguishedName')
         ui = values.get('unity:persistent')
 
+        # distinguishedName is only defined in prod, not in dev and staging
+        # dn = values.get('distinguishedName')
         # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
         # is it going to change?
-        # dn = None
-        # for key, _ in values.items():
-        #     if 'urn:oid' in key:
-        #         dn = values.get(key)
-        # if dn is None:
-        #     return None, "Missing DN from authorized response..."
+        dn = None
+        for key, _ in values.items():
+            if 'urn:oid' in key:
+                dn = values.get(key)
+        if dn is None:
+            return None, "Missing DN from authorized response..."
 
         # Check if a user already exists with this email
         internal_user = None
