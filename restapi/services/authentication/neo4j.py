@@ -257,7 +257,7 @@ class Authentication(BaseAuthentication):
         # A graph node for internal accounts associated to oauth2
         try:
             user_node = self.db.User.nodes.get(email=email)
-            if user_node.authmethod != 'oauth2':
+            if user_node.authmethod != account_type:
                 # The user already exist with another type of authentication
                 return None
         # TO BE VERIFIED
@@ -265,7 +265,7 @@ class Authentication(BaseAuthentication):
             user_node = self.create_user(userdata={
                 # 'uuid': getUUID(),
                 'email': email,
-                'authmethod': 'oauth2'
+                'authmethod': account_type
             })
         # NOTE: missing roles for this user?
 

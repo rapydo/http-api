@@ -264,13 +264,13 @@ class Authentication(BaseAuthentication):
             internal_user = internal_users.pop()
             log.debug("Existing internal user: %s", internal_user)
             # A user already locally exists with another authmethod. Not good.
-            if internal_user.authmethod != 'oauth2':
+            if internal_user.authmethod != account_type:
                 return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
             # Create new one
             internal_user = self.db.User(
-                uuid=getUUID(), email=email, authmethod='oauth2')
+                uuid=getUUID(), email=email, authmethod=account_type)
             # link default role into users
             internal_user.roles.append(
                 self.db.Role.query.filter_by(name=self.default_role).first())
