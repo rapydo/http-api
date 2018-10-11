@@ -202,6 +202,13 @@ class IrodsPythonExt(BaseExtension):
         # restapi verify SERVICE
         #########################
 
+        # Back-compatibility fix, remove-me after the prc PR
+        try:
+            PAM_EXCEPTION = iexceptions.PAM_AUTH_PASSWORD_FAILED
+        except AttributeError:
+            # An exception that should never occur since already tested
+            PAM_EXCEPTION = iexceptions.CAT_INVALID_AUTHENTICATION
+
         # Do a simple command to test this session
         if check_connection:
             catch_exceptions = kwargs.get('catch_exceptions', False)
@@ -214,7 +221,8 @@ class IrodsPythonExt(BaseExtension):
                 else:
                     raise e
 
-            except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
+            # except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
+            except PAM_EXCEPTION as e:
                 if catch_exceptions:
                     raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
                 else:
