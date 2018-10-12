@@ -58,10 +58,11 @@ class IrodsPythonExt(BaseExtension):
                 if admin:
                     user = self.variables.get('default_admin_user')
                     self.authscheme = GSI_AUTH_SCHEME
-                    # self.authscheme = self.variables.get('default_admin_auth')
                 else:
                     user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
+                        self.password = self.variables.get('password')
+                    elif self.authscheme == PAM_AUTH_SCHEME:
                         self.password = self.variables.get('password')
 
             log.very_verbose(
