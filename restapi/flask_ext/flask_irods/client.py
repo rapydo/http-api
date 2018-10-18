@@ -91,7 +91,8 @@ class IrodsPythonClient():
         return os.path.dirname(path)
 
     def list(self, path=None, recursive=False, detailed=False,
-             acl=False, removePrefix=None):
+             acl=False, removePrefix=None,
+             get_pid=False, get_checksum=False):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
@@ -109,7 +110,8 @@ class IrodsPythonClient():
 
                 row = {}
                 key = coll.name
-                row["PID"] = None
+                if get_pid:
+                    row["PID"] = None
                 row["name"] = coll.name
                 row["objects"] = {}
                 if recursive:
@@ -138,8 +140,12 @@ class IrodsPythonClient():
                 row["name"] = obj.name
                 row["path"] = self.getPath(obj.path, removePrefix)
                 row["object_type"] = "dataobject"
-                row["PID"] = None
-                row["checksum"] = None
+
+                if get_pid:
+                    row["PID"] = None
+
+                if get_checksum:
+                    row["checksum"] = None
 
                 if detailed:
                     row["owner"] = obj.owner_name
