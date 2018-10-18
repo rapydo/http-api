@@ -98,6 +98,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	echo "\n\nLogs from Backend:\n\n"
 	docker logs ${PROJECT}_backend_1
 
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
 	# Beware!! Cleaning DB before starting the tests
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced_clean'
 
