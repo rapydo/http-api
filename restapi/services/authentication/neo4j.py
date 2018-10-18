@@ -29,12 +29,16 @@ class Authentication(BaseAuthentication):
     def get_user_object(self, username=None, payload=None):
 
         from neomodel.exceptions import DeflateError
+        from neo4j.exceptions import ServiceUnavailable
         user = None
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
+        except ServiceUnavailable as e:
+            self.db.refresh_connection()
+            raise e
         except DeflateError:
             log.warning("Invalid username '%s'", username)
         except self.db.User.DoesNotExist:

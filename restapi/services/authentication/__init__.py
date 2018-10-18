@@ -108,7 +108,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # log.critical("Please reinitialize backend tables")
             from restapi.exceptions import RestApiException
             raise RestApiException(
-                "Server authentication misconfiguration",
+                "Unable to connect to auth backend",
                 status_code=hcodes.HTTP_SERVER_ERROR
             )
 
