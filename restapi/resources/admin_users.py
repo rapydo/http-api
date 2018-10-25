@@ -327,7 +327,7 @@ class AdminUsers(GraphBaseOperations):
             group = self.parse_group(v)
 
         if group is not None:
-            if not is_admin:
+            if not is_admin and group.shortname != "default":
                 current_user = self.get_current_user()
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
@@ -401,7 +401,7 @@ class AdminUsers(GraphBaseOperations):
 
             group = self.parse_group(v)
 
-            if not is_admin:
+            if not is_admin and group.shortname != "default":
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
                         "You are not allowed to assign users to this group")
