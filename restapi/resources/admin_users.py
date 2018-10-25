@@ -270,11 +270,13 @@ class AdminUsers(GraphBaseOperations):
                     default_group = self.graph.Group.nodes.get_or_none(
                         shortname="default")
 
+                    defg = None
                     if default_group is not None:
                         new_schema[idx]["enum"].append(
                             {default_group.uuid: default_group.shortname}
                         )
-                        new_schema[idx]["default"] = default_group.uuid
+                        # new_schema[idx]["default"] = default_group.uuid
+                        defg = default_group.uuid
 
                     for g in current_user.coordinator.all():
 
@@ -284,8 +286,12 @@ class AdminUsers(GraphBaseOperations):
                         new_schema[idx]["enum"].append(
                             {g.uuid: g.shortname}
                         )
-                        if new_schema[idx]["default"] is None:
-                            new_schema[idx]["default"] = g.uuid
+                        if defg is None:
+                            defg = g.uuid
+                        # if new_schema[idx]["default"] is None:
+                        #     new_schema[idx]["default"] = g.uuid
+                    if (len(new_schema[idx]["enum"])) == 1:
+                        new_schema[idx]["default"] = defg
 
             return self.force_response(new_schema)
 
