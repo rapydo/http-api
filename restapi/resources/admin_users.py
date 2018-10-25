@@ -261,10 +261,11 @@ class AdminUsers(GraphBaseOperations):
             for idx, val in enumerate(new_schema):
                 if val["name"] == "group":
                     new_schema[idx]["default"] = None
-                    new_schema[idx]["custom"] = {
-                        "htmltype": "select",
-                        "label": "Group"
-                    }
+                    if "custom" not in new_schema[idx]:
+                        new_schema[idx]["custom"] = {}
+
+                    new_schema[idx]["custom"]["htmltype"]: "select"
+                    new_schema[idx]["custom"]["label"]: "Group"
                     new_schema[idx]["enum"] = []
 
                     default_group = self.graph.Group.nodes.get_or_none(
@@ -284,7 +285,7 @@ class AdminUsers(GraphBaseOperations):
                             continue
 
                         new_schema[idx]["enum"].append(
-                            {g.uuid: g.shortname}
+                            {g.uuid: g.fullname}
                         )
                         if defg is None:
                             defg = g.uuid
