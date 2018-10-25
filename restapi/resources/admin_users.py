@@ -302,7 +302,7 @@ class AdminUsers(GraphBaseOperations):
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are allowed to assign users to this role")
+                        "You are not allowed to assign users to this role")
 
         if "password" in properties and properties["password"] == "":
             del properties["password"]
@@ -331,7 +331,7 @@ class AdminUsers(GraphBaseOperations):
                 current_user = self.get_current_user()
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are allowed to assign users to this group")
+                        "You are not allowed to assign users to this group")
 
             user.belongs_to.connect(group)
 
@@ -404,7 +404,7 @@ class AdminUsers(GraphBaseOperations):
             if not is_admin:
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are allowed to assign users to this group")
+                        "You are not allowed to assign users to this group")
 
             p = None
             for p in user.belongs_to.all():
@@ -426,7 +426,7 @@ class AdminUsers(GraphBaseOperations):
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are allowed to assign users to this role")
+                        "You are not allowed to assign users to this role")
 
         self.auth.link_roles(user, roles)
 
