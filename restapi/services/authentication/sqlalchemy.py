@@ -334,40 +334,45 @@ class Authentication(BaseAuthentication):
 
     def irods_user(self, username, session):
 
-        # create user
-        user = self.db.User(
-            email=username, name=username, surname='iCAT',
-            uuid=getUUID(), authmethod='irods', session=session,
-        )
-        # add role
-        user.roles.append(
-            self.db.Role.query.filter_by(name=self.default_role).first())
-
-        # save
-        self.db.session.add(user)
-        from sqlalchemy.exc import IntegrityError
-        try:
-            self.db.session.commit()
-            log.info('Cached iRODS user: %s', username)
-        except IntegrityError:
-            # rollback current commit
-            self.db.session.rollback()
-            log.warning("iRODS user already cached: %s", username)
-            # get the existing object
-            user = self.get_user_object(username)
-            # update only the session field
+        user = self.get_user_object(username)
+        if user is not None:
+            log.info("iRODS user already cached: %s", username)
             user.session = session
-        except BaseException as e:
-            log.error("Errors saving iRODS user: %s", username)
-            log.error(str(e))
-            log.error(type(e))
-            log.print_stack(e)
+        else:
 
-            user = self.get_user_object(username)
-            # Unable to do something...
-            if user is None:
-                raise e
-            user.session = session
+            # create user
+            user = self.db.User(
+                email=username, name=username, surname='iCAT',
+                uuid=getUUID(), authmethod='irods', session=session,
+            )
+            # add role
+            user.roles.append(
+                self.db.Role.query.filter_by(name=self.default_role).first())
+
+            # save
+            self.db.session.add(user)
+            try:
+                self.db.session.commit()
+                log.info('Cached iRODS user: %s', username)
+            # except sqlalchemy.exc.IntegrityError:
+            #     # rollback current commit
+            #     self.db.session.rollback()
+            #     log.warning("iRODS user already cached: %s", username)
+            #     # get the existing object
+            #     user = self.get_user_object(username)
+            #     # update only the session field
+            #     user.session = session
+            except BaseException as e:
+                log.error("Errors saving iRODS user: %s", username)
+                log.error(str(e))
+                log.error(type(e))
+                log.print_stack(e)
+
+                user = self.get_user_object(username)
+                # Unable to do something...
+                if user is None:
+                    raise e
+                user.session = session
 
         # token
         token, jti = self.create_token(self.fill_payload(user))
