@@ -111,7 +111,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# fi
 
 	# Sync the coverage file to S3, to be available for the next stage
-	rapydo dump
+	rapydo --development --project ${PROJECT} dump
 	backend_container=$(docker-compose ps -q backend)
 	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
