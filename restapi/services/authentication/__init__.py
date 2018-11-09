@@ -78,7 +78,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.warning(
             glom(
                 mem.customizer._configurations,
-                "variables.backend.preauthorized_users"
+                "variables.backend.preauthorized_users",
+                default=None
             )
         )
         # credentials = mem.customizer._configurations \
