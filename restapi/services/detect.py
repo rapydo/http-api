@@ -293,7 +293,7 @@ class Detector(object):
 
         # Only once in a lifetime
         if project_init:
-            self.project_initialization(instances)
+            self.project_initialization(instances, app=app)
 
         return self.extensions_instances
 
@@ -330,7 +330,7 @@ class Detector(object):
         return self.available_services.get(name)
 
     @classmethod
-    def project_initialization(self, instances):
+    def project_initialization(self, instances, app=None):
         """ Custom initialization of your project
 
         Please define your class Initializer in
@@ -354,7 +354,7 @@ class Detector(object):
                 log.debug("No custom init available")
             else:
                 try:
-                    Initializer(instances)
+                    Initializer(instances, app=app)
                 except BaseException as e:
                     log.error("Errors during custom initialization: %s", e)
                 else:
