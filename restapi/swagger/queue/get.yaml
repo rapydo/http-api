@@ -5,6 +5,9 @@ common:
     authentication: true
     authorized:
       - admin_root
+      - staff_user
+    required_roles: any
+
 
 list_queue:
   summary: List tasks in the queue
