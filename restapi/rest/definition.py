@@ -731,7 +731,10 @@ class EndpointResource(Resource):
         ask for authentication, but might want to do some extra behaviour
         when a valid token is presented
         """
-        user = None
+
+        user = self.auth.get_user()
+        if user is not None:
+            return user
 
         if request.method == 'OPTIONS':
             return user
