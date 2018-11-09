@@ -12,6 +12,7 @@ import hashlib
 import base64
 import pytz
 import socket
+from glom import glom
 
 from utilities import CUSTOM_PACKAGE
 from utilities.uuid import getUUID
@@ -69,10 +70,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # TODO: check if still necessary
         """
 
-        credentials = mem.customizer._configurations \
-            .get('variables', {}) \
-            .get('backend', {}) \
-            .get('credentials', {})
+        credentials = glom(
+            mem.customizer._configurations,
+            "variables.backend.credentials"
+        )
+        log.warning(credentials)
+        log.warning(
+            glom(
+                mem.customizer._configurations,
+                "variables.backend.preauthorized_users"
+            )
+        )
+        # credentials = mem.customizer._configurations \
+        #     .get('variables', {}) \
+        #     .get('backend', {}) \
+        #     .get('credentials', {})
 
         cls.default_user = credentials.get('username', None)
         cls.default_password = credentials.get('password', None)
