@@ -42,6 +42,8 @@ class Authentication(BaseAuthentication):
             user.roles.append(sqlrole)
         self.db.session.add(user)
 
+        return user
+
     def get_user_object(self, username=None, payload=None):
         user = None
         if username is not None:
@@ -269,13 +271,18 @@ class Authentication(BaseAuthentication):
                 return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
+            userdata = {
+                "uuid": getUUID(),
+                "email": email,
+                "authmethod": account_type
+            }
+            internal_user = self.create_user(userdata, [self.default_role])
             # Create new one
-            internal_user = self.db.User(
-                uuid=getUUID(), email=email, authmethod=account_type)
-            # link default role into users
-            internal_user.roles.append(
-                self.db.Role.query.filter_by(name=self.default_role).first())
-            self.db.session.add(internal_user)
+            # internal_user = self.db.User(
+            #     uuid=getUUID(), email=email, authmethod=account_type)
+            # internal_user.roles.append(
+            #     self.db.Role.query.filter_by(name=self.default_role).first())
+            # self.db.session.add(internal_user)
             self.db.session.commit()
             log.info("Created internal user %s", internal_user)
 
@@ -340,17 +347,27 @@ class Authentication(BaseAuthentication):
             user.session = session
         else:
 
-            # create user
-            user = self.db.User(
-                email=username, name=username, surname='iCAT',
-                uuid=getUUID(), authmethod='irods', session=session,
-            )
-            # add role
-            user.roles.append(
-                self.db.Role.query.filter_by(name=self.default_role).first())
+            userdata = {
+                "uuid": getUUID(),
+                "email": username,
+                "name": username,
+                "surname": 'iCAT',
+                "authmethod": 'irods',
+                "session": session
+            }
+            user = self.create_user(userdata, [self.default_role])
 
-            # save
-            self.db.session.add(user)
+            # # create user
+            # user = self.db.User(
+            #     email=username, name=username, surname='iCAT',
+            #     uuid=getUUID(), authmethod='irods', session=session,
+            # )
+            # # add role
+            # user.roles.append(
+            #     self.db.Role.query.filter_by(name=self.default_role).first())
+
+            # # save
+            # self.db.session.add(user)
             try:
                 self.db.session.commit()
                 log.info('Cached iRODS user: %s', username)
