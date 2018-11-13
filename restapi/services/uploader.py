@@ -246,8 +246,6 @@ class Uploader(object):
 
     def upload_chunked(self, destination, force=False, chunk_size=None):
 
-        destination = secure_filename(destination)
-
         # Default chunk size, put this somewhere
         if chunk_size is None:
             chunk_size = 1048576
