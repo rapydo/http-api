@@ -574,8 +574,7 @@ class EndpointResource(Resource):
             for e in relationships_expansion:
                 if e.startswith("%s." % relationship_name):
                     rel_name_len = len(relationship_name) + 1
-                    expansion_rel = relationships_expansion[rel_name_len:]
-                    log.error(type(expansion_rel))
+                    expansion_rel = e[rel_name_len:]
                     log.debug(
                         "Expanding %s relationship with %s",
                         relationship_name,
@@ -585,7 +584,6 @@ class EndpointResource(Resource):
 
         linked = {}
         for relationship in relationships:
-            log.error(type(relationship))
             subrelationship = []
             # log.debug("Investigate relationship %s" % relationship)
 
