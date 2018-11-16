@@ -504,7 +504,8 @@ class EndpointResource(Resource):
     def getJsonResponse(
         self, instance, fields=None, resource_type=None,
         skip_missing_ids=False, view_public_only=False,
-        relationship_depth=0, max_relationship_depth=1
+        relationship_depth=0, max_relationship_depth=1,
+        relationship_name="", relationships_expansion=None
     ):
         """
         Lots of meta introspection to guess the JSON specifications
@@ -549,9 +550,11 @@ class EndpointResource(Resource):
             instance, 'show_fields', view_public_only, fields)
 
         # Relationships
-        if relationship_depth < max_relationship_depth:
-            linked = {}
-            relationships = []
+        max_depth_reached = relationship_depth >= max_relationship_depth
+
+        relationships = []
+        log.critical(relationship_name)
+        if not max_depth_reached:
 
             function_name = 'follow_relationships'
             if hasattr(instance, function_name):
@@ -568,47 +571,56 @@ class EndpointResource(Resource):
                 if hasattr(instance, field_name):
                     log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
+        elif relationships_expansion is not None:
+            log.critical(relationships_expansion)
+            # further expansion?
+            pass
 
-            for relationship in relationships:
-                subrelationship = []
-                # log.debug("Investigate relationship %s" % relationship)
+        linked = {}
+        for relationship in relationships:
+            subrelationship = []
+            # log.debug("Investigate relationship %s" % relationship)
 
-                if hasattr(instance, relationship):
-                    rel = getattr(instance, relationship)
-                    for node in rel.all():
-                        subnode = self.getJsonResponse(
-                            node,
-                            view_public_only=view_public_only,
-                            skip_missing_ids=skip_missing_ids,
-                            relationship_depth=relationship_depth + 1,
-                            max_relationship_depth=max_relationship_depth)
+            if not hasattr(instance, relationship):
+                continue
+            rel = getattr(instance, relationship)
+            for node in rel.all():
+                rel_name = "%s.%s" % (relationship_name, relationship)
+                subnode = self.getJsonResponse(
+                    node,
+                    view_public_only=view_public_only,
+                    skip_missing_ids=skip_missing_ids,
+                    relationship_depth=relationship_depth + 1,
+                    max_relationship_depth=max_relationship_depth,
+                    relationship_name=rel_name,
+                    relationships_expansion=relationships_expansion)
 
-                        # Verify if instance and node are linked by a
-                        # relationship with a custom model with fields flagged
-                        # as show=True. In this case, append relationship
-                        # properties to the attribute model of the node
-                        r = rel.relationship(node)
-                        attrs = self.get_show_fields(
-                            r, 'show_fields', view_public_only)
+                # Verify if instance and node are linked by a
+                # relationship with a custom model with fields flagged
+                # as show=True. In this case, append relationship
+                # properties to the attribute model of the node
+                r = rel.relationship(node)
+                attrs = self.get_show_fields(
+                    r, 'show_fields', view_public_only)
 
-                        for k in attrs:
-                            if k in subnode['attributes']:
-                                log.warning(
-                                    "Name collision %s" % k +
-                                    " on node %s" % subnode +
-                                    " from both model %s" % type(node) +
-                                    " and property model %s" % type(r)
-                                )
-                            subnode['attributes'][k] = attrs[k]
+                for k in attrs:
+                    if k in subnode['attributes']:
+                        log.warning(
+                            "Name collision %s" % k +
+                            " on node %s" % subnode +
+                            " from both model %s" % type(node) +
+                            " and property model %s" % type(r)
+                        )
+                    subnode['attributes'][k] = attrs[k]
 
-                        # subnode['attributes']['pippo'] = 'boh'
-                        subrelationship.append(subnode)
+                # subnode['attributes']['pippo'] = 'boh'
+                subrelationship.append(subnode)
 
-                if len(subrelationship) > 0:
-                    linked[relationship] = subrelationship
+            if len(subrelationship) > 0:
+                linked[relationship] = subrelationship
 
-            if len(linked) > 0:
-                data['relationships'] = linked
+        if len(linked) > 0:
+            data['relationships'] = linked
 
         return data
 
