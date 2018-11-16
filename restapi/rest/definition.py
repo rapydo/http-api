@@ -571,8 +571,10 @@ class EndpointResource(Resource):
                     log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
         elif relationships_expansion is not None:
-            log.critical(relationship_name)
-            log.critical(relationships_expansion)
+            for e in relationships_expansion:
+                if e.startswith("%s." % relationship_name):
+                    log.critical(relationship_name)
+                    log.critical(relationships_expansion)
             # further expansion?
             pass
 
