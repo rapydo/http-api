@@ -573,10 +573,14 @@ class EndpointResource(Resource):
         elif relationships_expansion is not None:
             for e in relationships_expansion:
                 if e.startswith("%s." % relationship_name):
-                    log.critical(relationship_name)
-                    log.critical(relationships_expansion)
-            # further expansion?
-            pass
+                    rel_name_len = len(relationship_name) + 1
+                    expansion_rel = relationships_expansion[rel_name_len:]
+                    log.debug(
+                        "Expanding %s relationship with %s",
+                        relationship_name,
+                        expansion_rel
+                    )
+                    relationships.append(expansion_rel)
 
         linked = {}
         for relationship in relationships:
