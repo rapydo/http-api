@@ -553,7 +553,6 @@ class EndpointResource(Resource):
         max_depth_reached = relationship_depth >= max_relationship_depth
 
         relationships = []
-        log.critical(relationship_name)
         if not max_depth_reached:
 
             function_name = 'follow_relationships'
@@ -572,6 +571,7 @@ class EndpointResource(Resource):
                     log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
         elif relationships_expansion is not None:
+            log.critical(relationship_name)
             log.critical(relationships_expansion)
             # further expansion?
             pass
@@ -585,7 +585,10 @@ class EndpointResource(Resource):
                 continue
             rel = getattr(instance, relationship)
             for node in rel.all():
-                rel_name = "%s.%s" % (relationship_name, relationship)
+                if relationship_name == "":
+                    rel_name = relationship
+                else:
+                    rel_name = "%s.%s" % (relationship_name, relationship)
                 subnode = self.getJsonResponse(
                     node,
                     view_public_only=view_public_only,
