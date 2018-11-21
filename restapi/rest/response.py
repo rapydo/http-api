@@ -308,13 +308,6 @@ class ResponseMaker(object):
         # The client does not support any particular format, use the default
         return response
 
-        # if request_from_browser(request, accepted_formats):
-        #     # skip in case of errors, for now
-        #     if r.get('errors') is None:
-        #         return respond_to_browser(r)
-
-        # return response
-
     def get_errors_and_status(
             self, defined_content=None, code=None, errors=None):
         """

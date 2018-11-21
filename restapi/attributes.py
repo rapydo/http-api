@@ -13,6 +13,7 @@ from attr import (
 ALL_ROLES = 'all'
 ANY_ROLE = 'any'
 
+
 ########################
 # All attributes we use for a Flask Response
 ########################
