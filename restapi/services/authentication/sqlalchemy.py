@@ -44,13 +44,24 @@ class Authentication(BaseAuthentication):
 
         return user
 
-    def get_user_object(self, username=None, payload=None):
+    def get_user_object(self, username=None, payload=None, retry=0):
         user = None
-        if username is not None:
-            user = self.db.User.query.filter_by(email=username).first()
-        if payload is not None and 'user_id' in payload:
-            user = self.db.User.query.filter_by(
-                uuid=payload['user_id']).first()
+        try:
+            if username is not None:
+                user = self.db.User.query.filter_by(email=username).first()
+            if payload is not None and 'user_id' in payload:
+                user = self.db.User.query.filter_by(
+                    uuid=payload['user_id']).first()
+        except sqlalchemy.exc.DatabaseError as e:
+            if retry <= 0:
+                log.error(str(e))
+                log.warning("Errors retrieving user object, retrying...")
+                return self.get_user_object(
+                    username=username,
+                    payload=payload,
+                    retry=1
+                )
+            raise e
         return user
 
     def get_roles_from_user(self, userobj=None):
