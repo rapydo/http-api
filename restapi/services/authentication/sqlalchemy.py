@@ -238,29 +238,33 @@ class Authentication(BaseAuthentication):
         to be connected to internal local user
         """
 
-        try:
-            values = current_user.data
-        except BaseException:
-            return None, "Authorized response is invalid"
-
-        # print("TEST", values, type(values))
-        if not isinstance(values, dict) or len(values) < 1:
-            return None, "Authorized response is empty"
-
-        email = values.get('email')
-        cn = values.get('cn')
-        ui = values.get('unity:persistent')
-
-        # distinguishedName is only defined in prod, not in dev and staging
-        # dn = values.get('distinguishedName')
-        # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
-        # is it going to change?
+        cn = None
         dn = None
-        for key, _ in values.items():
-            if 'urn:oid' in key:
-                dn = values.get(key)
-        if dn is None:
-            return None, "Missing DN from authorized response..."
+        if isinstance(current_user, str):
+            email = current_user
+        else:
+            try:
+                values = current_user.data
+            except BaseException:
+                return None, "Authorized response is invalid"
+
+            # print("TEST", values, type(values))
+            if not isinstance(values, dict) or len(values) < 1:
+                return None, "Authorized response is empty"
+
+            email = values.get('email')
+            cn = values.get('cn')
+            ui = values.get('unity:persistent')
+
+            # distinguishedName is only defined in prod, not in dev and staging
+            # dn = values.get('distinguishedName')
+            # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
+            # is it going to change?
+            for key, _ in values.items():
+                if 'urn:oid' in key:
+                    dn = values.get(key)
+            if dn is None:
+                return None, "Missing DN from authorized response..."
 
         # Check if a user already exists with this email
         internal_user = None
@@ -315,8 +319,10 @@ class Authentication(BaseAuthentication):
         external_user.account_type = account_type
         external_user.token = token
         external_user.refresh_token = refresh_token
-        external_user.certificate_cn = cn
-        external_user.certificate_dn = dn
+        if cn is not None:
+            external_user.certificate_cn = cn
+        if dn is not None:
+            external_user.certificate_dn = dn
 
         self.db.session.add(external_user)
         self.db.session.commit()
