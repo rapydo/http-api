@@ -99,7 +99,7 @@ class IrodsPythonExt(BaseExtension):
                 kwargs.get("proxy_cert_name")
             )
 
-            Certificates().globus_proxy(
+            valid_cert = Certificates().globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
                 user_proxy=self.user,
                 cert_dir=self.variables.get("x509_cert_dir"),
@@ -107,6 +107,9 @@ class IrodsPythonExt(BaseExtension):
                 cert_name=proxy_cert_name,
                 cert_pwd=kwargs.get("proxy_pass"),
             )
+
+            if not valid_cert:
+                return False
 
         elif self.authscheme == PAM_AUTH_SCHEME:
             pass
