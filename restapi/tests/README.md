@@ -29,11 +29,12 @@ This collection of utilities is meant to simplify the writing of endpoints tests
 -   POST endpoints when successfull should return and created entity id. This id should be valid for further PUT and DELETE calls
 
 -   PUT and DELETE endpoints should respond on the same endpoints of POST method with the addition of the entity id, e.g.:
-   -   POST /api/myendpoint
 
-   -   PUT /api/myendpoint/_id_
+    -   POST /api/myendpoint
 
-   -   DELETE /api/myendpoint/_id_
+    -   PUT /api/myendpoint/_id_
+
+    -   DELETE /api/myendpoint/_id_
 
 -   Successfully should returns 200 OK (if GET or POST) and 204 NO CONTENT (if PUT and DELETE)
 
