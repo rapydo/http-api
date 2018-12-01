@@ -26,9 +26,9 @@ This collection of utilities is meant to simplify the writing of endpoints tests
 -   endpoint should accept GET/POST/PUT and DELETE calls with no parameters and return respectively 200 400 400 400 status codes
 -   POST endpoints when successfull should return and created entity id. This id should be valid for further PUT and DELETE calls
 -   PUT and DELETE endpoints should respond on the same endpoints of POST method with the addition of the entity id, e.g.:
-	-   POST /api/myendpoint
-	-   PUT /api/myendpoint/_id_
-	-   DELETE /api/myendpoint/_id_
+   -   POST /api/myendpoint
+   -   PUT /api/myendpoint/_id_
+   -   DELETE /api/myendpoint/_id_
 -   Successfully should returns 200 OK (if GET or POST) and 204 NO CONTENT (if PUT and DELETE)
 
 # OBSOLETE DOC # 
@@ -67,13 +67,13 @@ Your own test class should import and extend test utilities
 	)
 
 -   private=False -> test if the method exists
-	-   GET -> 200 OK
-	-   POST/PUT/DELETE -> 400 BAD REQUEST
+   -   GET -> 200 OK
+   -   POST/PUT/DELETE -> 400 BAD REQUEST
 -   private=True    -> test if the method exists and requires a token
-	-   no token -> 401 UNAUTHORIZED
-	-   with token -> 200 OK / 400 BAD REQUEST
+   -   no token -> 401 UNAUTHORIZED
+   -   with token -> 200 OK / 400 BAD REQUEST
 -   private=None    -> test if the method do not exist
-	-   all methods -> 405 NOT ALLOWED
+   -   all methods -> 405 NOT ALLOWED
 
 In the previous example GET is tested as public, POST and DELETE as private and PUT as not implemented.
 Expected returned status code are
