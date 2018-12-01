@@ -530,14 +530,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     def custom_user_properties(self, userdata):
-        meta = Meta()
         module_path = "%s.%s.%s" % \
             (CUSTOM_PACKAGE, 'initialization', 'initialization')
-        module = meta.get_module_from_string(
-            module_path,
-            debug_on_fail=False,
-        )
+        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
+        meta = Meta()
         Customizer = meta.get_class_from_string(
             'Customizer', module, skip_error=True
         )
@@ -555,14 +552,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        meta = Meta()
         module_path = "%s.%s.%s" % \
             (CUSTOM_PACKAGE, 'initialization', 'initialization')
-        module = meta.get_module_from_string(
-            module_path,
-            debug_on_fail=False,
-        )
+        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
+        meta = Meta()
         Customizer = meta.get_class_from_string(
             'Customizer', module, skip_error=True
         )

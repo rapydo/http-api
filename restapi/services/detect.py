@@ -168,7 +168,7 @@ class Detector(object):
             flaskext = '.' + service.get('extension')
 
         # Try inside our extensions
-        module = self.meta.get_module_from_string(
+        module = Meta.get_module_from_string(
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
             exit_on_fail=True
         )
@@ -340,13 +340,10 @@ class Detector(object):
         try:
             # NOTE: this might be a pattern
             # see in meta.py:get_customizer_class
-            meta = Meta()
             module_path = "%s.%s.%s" % \
                 (CUSTOM_PACKAGE, 'initialization', 'initialization')
-            module = meta.get_module_from_string(
-                module_path,
-                debug_on_fail=False,
-            )
+            module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+            meta = Meta()
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
