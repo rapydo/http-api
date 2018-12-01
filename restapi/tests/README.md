@@ -111,10 +111,10 @@ All methods take as input the endpoint, the headers (should be made optional, no
 Create and update also require a pre-built data dictionary.
 As option delete can take as input the data dictionary.
 
-This utility returns a response content (content['Response']['data'])3
+This utility returns a response content (`content['Response']['data']`)
 When parse_response=True, the returned response is parsed using self.parseResponse mnethod
 
-This utility tests the returned status code. If it matches and the response has a content (status != NO_CONTENT) and an error is provided, it is matched against content['Response']['errors']
+This utility tests the returned status code. If it matches and the response has a content (`status != NO_CONTENT`) and an error is provided, it is matched against `content['Response']['errors']`
 
 If requested the returned responses is parsed using the parseResponse utility
 
@@ -122,16 +122,16 @@ If requested the returned responses is parsed using the parseResponse utility
 
 To test and simplify the access to json-standard-responses (as described in <http://jsonapi.org>) thid method create an Object filled with attributes obtained by mapping json content
 
-```python
-    obj = ParsedResponse()
-    obj._id = response["id"]
-    obj._type = response["type"]
-    obj._links = response["links"]
-    obj.attributes.item1Key = response["attributes"][item1Key]
-    obj.attributes.item2Key = response["attributes"][item2Key]
-    obj._relatedItem1 = recursiveCallOnInnerElement(response["relationships"][relatedItem1]
-    obj._relatedItem2 = recursiveCallOnInnerElement(response["relationships"][relatedItem2]
-```
+    ```python
+        obj = ParsedResponse()
+        obj._id = response["id"]
+        obj._type = response["type"]
+        obj._links = response["links"]
+        obj.attributes.item1Key = response["attributes"][item1Key]
+        obj.attributes.item2Key = response["attributes"][item2Key]
+        obj._relatedItem1 = recursiveCallOnInnerElement(response["relationships"][relatedItem1]
+        obj._relatedItem2 = recursiveCallOnInnerElement(response["relationships"][relatedItem2]
+    ```
 
 Example:
 
