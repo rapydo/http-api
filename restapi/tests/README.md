@@ -123,6 +123,7 @@ If requested the returned responses is parsed using the parseResponse utility
 
 To test and simplify the access to json-standard-responses (as described in <http://jsonapi.org>) thid method create an Object filled with attributes obtained by mapping json content
 
+```
 obj = ParsedResponse()
 obj._id = response["id"]
 obj._type = response["type"]
@@ -131,6 +132,7 @@ obj.attributes.item1Key = response["attributes"][item1Key]
 obj.attributes.item2Key = response["attributes"][item2Key]
 obj._relatedItem1 = recursiveCallOnInnerElement(response["relationships"][relatedItem1]
 obj._relatedItem2 = recursiveCallOnInnerElement(response["relationships"][relatedItem2]
+```
 
 Example:
 
