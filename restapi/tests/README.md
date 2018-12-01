@@ -2,7 +2,7 @@
 
 This collection of utilities is meant to simplify the writing of endpoints tests with the assumption that the endpoints following some conventions:
 
-- endpoints accepting POST data should provide a json schema to describe the required information
+-   endpoints accepting POST data should provide a json schema to describe the required information
 
             schema = [
                 {
@@ -22,29 +22,24 @@ This collection of utilities is meant to simplify the writing of endpoints tests
                 ...
             ]
 
-- endpoints should return responses using a standard json as describe in http://jsonapi.org
-- endpoint should accept GET/POST/PUT and DELETE calls with no parameters and return respectively 200 400 400 400 status codes
-- POST endpoints when successfull should return and created entity id. This id should be valid for further PUT and DELETE calls
-- PUT and DELETE endpoints should respond on the same endpoints of POST method with the addition of the entity id, e.g.:
-	- POST /api/myendpoint
-	- PUT /api/myendpoint/_id_
-	- DELETE /api/myendpoint/_id_
-- Successfully should returns 200 OK (if GET or POST) and 204 NO CONTENT (if PUT and DELETE)
-
-
+-   endpoints should return responses using a standard json as describe in http://jsonapi.org
+-   endpoint should accept GET/POST/PUT and DELETE calls with no parameters and return respectively 200 400 400 400 status codes
+-   POST endpoints when successfull should return and created entity id. This id should be valid for further PUT and DELETE calls
+-   PUT and DELETE endpoints should respond on the same endpoints of POST method with the addition of the entity id, e.g.:
+	-   POST /api/myendpoint
+	-   PUT /api/myendpoint/_id_
+	-   DELETE /api/myendpoint/_id_
+-   Successfully should returns 200 OK (if GET or POST) and 204 NO CONTENT (if PUT and DELETE)
 
 # OBSOLETE DOC # 
 ## How to use the Test Utilities ##
 
 Your own test class should import and extend test utilities
 
-
 	from utilities.tests.utilities import TestUtilities
-
 
 		class YourTests(TestUtilities):
 			pass
-
 
 ### Save variables and re-use it in other tests of your class
 
@@ -71,21 +66,21 @@ Your own test class should import and extend test utilities
 		private_delete=True
 	)
 
-- private=False -> test if the method exists
-	- GET -> 200 OK
-	- POST/PUT/DELETE -> 400 BAD REQUEST
-- private=True    -> test if the method exists and requires a token
-	- no token -> 401 UNAUTHORIZED
-	- with token -> 200 OK / 400 BAD REQUEST
-- private=None    -> test if the method do not exist
-	- all methods -> 405 NOT ALLOWED
+-   private=False -> test if the method exists
+	-   GET -> 200 OK
+	-   POST/PUT/DELETE -> 400 BAD REQUEST
+-   private=True    -> test if the method exists and requires a token
+	-   no token -> 401 UNAUTHORIZED
+	-   with token -> 200 OK / 400 BAD REQUEST
+-   private=None    -> test if the method do not exist
+	-   all methods -> 405 NOT ALLOWED
 
 In the previous example GET is tested as public, POST and DELETE as private and PUT as not implemented.
 Expected returned status code are
-- GET: 200
-- POST: 401 without token and 400 with token
-- PUT: 405
-- DELETE: 401 without token and 400 with token
+-   GET: 200
+-   POST: 401 without token and 400 with token
+-   PUT: 405
+-   DELETE: 401 without token and 400 with token
 
 ### Build random data to test POST and PUT endpoints
 
@@ -102,10 +97,10 @@ This method takes as input both json schema and built data and remove one of the
 ### Test endpoints with specific conditions
 
 You can test your endpoints by simulating your own conditions by using the utility methods:
- - _test_get
- - _test_create
- - _test_update
- - _test_delete
+-   _test_get
+-   _test_create
+-   _test_update
+-   _test_delete
 
 All methods take as input the endpoint, the headers (should be made optional, now is a required input) and a return status. As optional a returned errors can also be provided.
 Create and update also require a pre-built data dictionary.
@@ -192,8 +187,6 @@ INPUT:
                 },
                 "type": "dataset"
         }
-
-
 
 OUTPUT:
 
