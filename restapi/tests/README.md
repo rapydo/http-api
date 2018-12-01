@@ -89,7 +89,7 @@ Expected returned status code are
 -   PUT: 405
 -   DELETE: 401 without token and 400 with token
 
-### Build random data to test POST and PUT endpoints
+### Build random data to test POST and PUT endpoints ###
 
 Your APIs should return a json schema as described above. Once you obtained the json schema you can build random data by using the buildData utility
 
@@ -101,7 +101,7 @@ To test endpoint behaviours when receiving partial data you can use the getParti
 
 This method takes as input both json schema and built data and remove one of the required fields
 
-### Test endpoints with specific conditions
+### Test endpoints with specific conditions ###
 
 You can test your endpoints by simulating your own conditions by using the utility methods:
 -   _test_get
@@ -120,19 +120,19 @@ This utility tests the returned status code. If it matches and the response has 
 
 If requested the returned responses is parsed using the parseResponse utility
 
-### Parsed response
+### Parsed response ###
 
 To test and simplify the access to json-standard-responses (as described in <http://jsonapi.org>) thid method create an Object filled with attributes obtained by mapping json content
 
-```
-obj = ParsedResponse()
-obj._id = response["id"]
-obj._type = response["type"]
-obj._links = response["links"]
-obj.attributes.item1Key = response["attributes"][item1Key]
-obj.attributes.item2Key = response["attributes"][item2Key]
-obj._relatedItem1 = recursiveCallOnInnerElement(response["relationships"][relatedItem1]
-obj._relatedItem2 = recursiveCallOnInnerElement(response["relationships"][relatedItem2]
+```python
+    obj = ParsedResponse()
+    obj._id = response["id"]
+    obj._type = response["type"]
+    obj._links = response["links"]
+    obj.attributes.item1Key = response["attributes"][item1Key]
+    obj.attributes.item2Key = response["attributes"][item2Key]
+    obj._relatedItem1 = recursiveCallOnInnerElement(response["relationships"][relatedItem1]
+    obj._relatedItem2 = recursiveCallOnInnerElement(response["relationships"][relatedItem2]
 ```
 
 Example:
@@ -230,7 +230,7 @@ OUTPUT:
 	obj._sample._organism.attributes.short_name = "mouse"
 	obj._sample._organism.attributes.taxon_id = 10090
 
-### Verify the content of the response
+### Verify the content of the response ###
 
 You can verify that the response returned by your endpoint, contains expected field and relationships by using the checkResponse utility (a parsed response is required as input)
 
@@ -239,7 +239,7 @@ You can verify that the response returned by your endpoint, contains expected fi
 	required_relationships = ['ownership', 'sample']
 	self.checkResponse(response, required_fields, required_relationships)
 
-### Automatic verification of troublesome conditions
+### Automatic verification of troublesome conditions ###
 
 Based on the input field type POST and PUT method can be can be overwhelmed by particular inputs (for example strings contained quotes or very long numbers)
 
