@@ -74,9 +74,11 @@ Your own test class should import and extend test utilities
 -   private=False -> test if the method exists
     -   GET -> 200 OK
     -   POST/PUT/DELETE -> 400 BAD REQUEST
+
 -   private=True    -> test if the method exists and requires a token
     -   no token -> 401 UNAUTHORIZED
     -   with token -> 200 OK / 400 BAD REQUEST
+
 -   private=None    -> test if the method do not exist
     -   all methods -> 405 NOT ALLOWED
 
