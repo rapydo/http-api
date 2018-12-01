@@ -22,16 +22,19 @@ This collection of utilities is meant to simplify the writing of endpoints tests
                 ...
             ]
 
--   endpoints should return responses using a standard json as describe in http://jsonapi.org
+-   endpoints should return responses using a standard json as describe in <http://jsonapi.org>
+
 -   endpoint should accept GET/POST/PUT and DELETE calls with no parameters and return respectively 200 400 400 400 status codes
+
 -   POST endpoints when successfull should return and created entity id. This id should be valid for further PUT and DELETE calls
+
 -   PUT and DELETE endpoints should respond on the same endpoints of POST method with the addition of the entity id, e.g.:
    -   POST /api/myendpoint
    -   PUT /api/myendpoint/_id_
    -   DELETE /api/myendpoint/_id_
 -   Successfully should returns 200 OK (if GET or POST) and 204 NO CONTENT (if PUT and DELETE)
 
-# OBSOLETE DOC # 
+# OBSOLETE DOC #
 ## How to use the Test Utilities ##
 
 Your own test class should import and extend test utilities
@@ -41,21 +44,21 @@ Your own test class should import and extend test utilities
 		class YourTests(TestUtilities):
 			pass
 
-### Save variables and re-use it in other tests of your class
+### Save variables and re-use it in other tests of your class ###
 
 	my_var = 'usefull information'
 	self.save("my-variable", my_var)
 	...
 	previous_info = self.get("my-variable")
 
-### Make login and save tokens and headers for further calls
+### Make login and save tokens and headers for further calls ###
 
 	from restapi.confs.config import USER, PWD
 	headers, token = self.do_login(USER, PWD)
 	self.save("headers", headers)
 	self.save("token", token)
 
-### Make basic test on endpoints
+### Make basic test on endpoints ###
 
 	self._test_endpoint(
 		your_endpoint,
@@ -115,7 +118,7 @@ If requested the returned responses is parsed using the parseResponse utility
 
 ### Parsed response
 
-To test and simplify the access to json-standard-responses (as described in http://jsonapi.org) thid method create an Object filled with attributes obtained by mapping json content
+To test and simplify the access to json-standard-responses (as described in <http://jsonapi.org>) thid method create an Object filled with attributes obtained by mapping json content
 
 obj = ParsedResponse()
 obj._id = response["id"]
