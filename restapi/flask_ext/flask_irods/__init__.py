@@ -99,7 +99,7 @@ class IrodsPythonExt(BaseExtension):
                 kwargs.get("proxy_cert_name")
             )
 
-            valid_cert = Certificates().globus_proxy(
+            valid_cert = Certificates.globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
                 user_proxy=self.user,
                 cert_dir=self.variables.get("x509_cert_dir"),
