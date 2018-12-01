@@ -10,6 +10,7 @@ from restapi.flask_ext import BaseExtension, get_logger
 from restapi.services.authentication import BaseAuthentication
 from utilities import htmlcodes as hcodes
 from restapi.exceptions import RestApiException
+from utilities.meta import Meta
 from utilities.globals import mem
 
 log = get_logger(__name__)
@@ -37,7 +38,7 @@ class Authenticator(BaseExtension):
 
         # What service will hold authentication?
         auth_service = self.variables.get('service')
-        auth_module = self.meta.get_authentication_module(auth_service)
+        auth_module = Meta.get_authentication_module(auth_service)
         custom_auth = auth_module.Authentication()
 
         if not Detector.get_global_var('AUTH_SKIP_OAUTH', default=False):
