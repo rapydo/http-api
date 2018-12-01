@@ -283,7 +283,7 @@ class Detector(object):
                 submodules = self.meta.import_submodules_from_package(
                     task_package, exit_on_fail=True)
                 for submodule in submodules:
-                    tasks = self.meta.get_celery_tasks_from_module(submodule)
+                    tasks = Meta.get_celery_tasks_from_module(submodule)
 
                     for func_name, funct in tasks.items():
                         setattr(ExtClass, func_name, funct)
