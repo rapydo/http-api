@@ -37,10 +37,12 @@ setup(
     install_requires=[
         # Rapydo framework
         "rapydo-utils==%s" % current_version,
-        # various utilities
+
+        # Utilities
         "attrs",
         "pyOpenSSL",
         "PyJWT",
+
         # Flask and plugins
         "flask==1.0.2",
         "Flask-Cors",
@@ -53,18 +55,15 @@ setup(
         # "injector==0.13.4",
         "injector==0.12",
         "flask_injector==0.10.1",
+
         # DB drivers
-        "neomodel==3.2.8",
-        # http://initd.org/psycopg/docs/install.html#binary-install-from-pypi
-        # "psycopg2",
+        "neomodel==3.3.0",
         "psycopg2-binary",
         "pymodm",
+
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
-        # # FS
-        # "python-irodsclient",
-        # "gssapi==1.5.0",
     ],
     classifiers=[
         'Programming Language :: Python',
