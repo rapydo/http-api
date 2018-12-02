@@ -1,4 +1,4 @@
-# Writing tests
+# Writing tests #
 
 Tests are performed using [nose2](https://github.com/nose-devs/nose2).
 The documentation is [here](http://nose2.readthedocs.io/en/latest/index.html)
@@ -24,8 +24,8 @@ discovered by nose2.
 See (http://nose2.readthedocs.io/en/latest/usage.html#naming-tests) for more details.
 
 ## Fixtures
-A test fixture represents the preparation needed to perform one or more tests, 
-and any associate cleanup actions. This may involve, for example, creating temporary 
+A test fixture represents the preparation needed to perform one or more tests,
+and any associate cleanup actions. This may involve, for example, creating temporary
 or proxy databases, directories, or starting a server process.
 Since we are testing services which run on a Flask server, we have to start
 a Flask instance before performing the tests.

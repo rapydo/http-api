@@ -236,7 +236,6 @@ class EndpointResource(Resource):
         ref = parameter.get('schema', {}).get('$ref')
         refname = ref.split('/').pop()
         # get body definition properties
-        from utilities.globals import mem
         definitions = mem.customizer._definitions.get('definitions')
         return definitions.get(refname).get('properties')
 

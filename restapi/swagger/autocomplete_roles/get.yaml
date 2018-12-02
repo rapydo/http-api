@@ -1,7 +1,5 @@
-
 all:
-  summary: List of existing roles 
-  # description: -
+  summary: List of existing roles
   custom:
     # publish: true
     authentication: true
@@ -11,7 +9,6 @@ all:
 
 query:
   summary: List of existing roles matching a substring query
-  # description: -
   custom:
     # publish: true
     authentication: true

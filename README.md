@@ -1,8 +1,8 @@
-Hello user, 
+Hello user,
 
 this repo is a Python **3** Flask HTTP server that tries to make automatic all the steps needed for developing an HTTP API `restful` services based on our `RAPyDo framework`.
 
-## documentation
+## documentation ##
 
 This is the index for the current documentation:
 

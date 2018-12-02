@@ -1,8 +1,7 @@
-
 ask:
   summary: Ask a new activation link
   custom:
-    authentication: false 
+    authentication: false
   responses:
     '200':
-      description: A new activation link has been sent 
+      description: A new activation link has been sent

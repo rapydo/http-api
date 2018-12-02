@@ -17,14 +17,14 @@ log = get_logger(__name__)
 # TODO To be added: Close connection - sigint, sigkill
 
 
-'''
-This class provides a (wrapper for a) RabbitMQ connection 
-in order to write log messages into a queue.
-
-This is used in SeaDataCloud, where the log
-queues are then consumed by Logstash / ElasticSearch.
-'''
 class RabbitExt(BaseExtension):
+    '''
+    This class provides a (wrapper for a) RabbitMQ connection
+    in order to write log messages into a queue.
+
+    This is used in SeaDataCloud, where the log
+    queues are then consumed by Logstash / ElasticSearch.
+    '''
 
     def custom_connection(self, **kwargs):
 
@@ -37,7 +37,7 @@ class RabbitExt(BaseExtension):
             dont_connect = True
             log.warning("Skipping Rabbit, logging to normal log instead.")
             # TODO: Have a TEST setting for testbeds, with different queue?
-            # TODO: Log into some file if Rabbit not available?        
+            # TODO: Log into some file if Rabbit not available?
 
         log.debug('Creating connection wrapper...')
         conn_wrapper = RabbitWrapper(self.variables, dont_connect)
@@ -54,7 +54,7 @@ class RabbitWrapper(object):
         self.__dont_connect = dont_connect
         self.__couldnt_connect = 0
         # TODO: Declare queue and exchange, just in case?
-        
+
         # Initial connection:
         if self.__dont_connect:
             log.warn('Will not connect to RabbitMQ (dont_connect = True).')
@@ -149,12 +149,12 @@ class RabbitWrapper(object):
             log.verbose('Trying to send message to RabbitMQ in try (%s/%s)' % ((i+1), max_publish))
 
             try:
-                
+
                 if self.__connection is None and self.__couldnt_connect <= max_reconnect:
                     self.__connect()
                 elif not self.__connection.is_open:
                     self.__connect()
-            
+
                 channel = self.__get_channel()
                 success = channel.basic_publish(
                     exchange=exchange,
@@ -168,7 +168,7 @@ class RabbitWrapper(object):
                     break
                 else:
                     log.warn('Log fail without clear reason.')
-                
+
             except pika.exceptions.ConnectionClosed as e:
                 # TODO: This happens often. Check if heartbeat solves problem.
                 log.info('Failed to send log message in try (%s/%s), because connection is dead (%s).'
@@ -203,7 +203,7 @@ class RabbitWrapper(object):
     '''
     Return existing channel (if healthy) or create and
     return new one.
-    
+
     :return: The channel, or None if connection is switched off.
     :raises: AttributeError if the connection is None.
     '''
@@ -219,7 +219,7 @@ class RabbitWrapper(object):
         elif self.__channel.is_closed or self.__channel.is_closing:
             log.verbose('Recreating channel.')
             self.__channel = self.__connection.channel()
-        
+
         return self.__channel
 
 
