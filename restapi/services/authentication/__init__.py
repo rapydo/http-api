@@ -50,9 +50,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ##########################
     _oauth2 = {}
 
-    longTTL = 2592000     # 1 month in seconds
-    shortTTL = 604800     # 1 week in seconds
-
     def __init__(self):
         # TODO: myinit is a class method for unittest could it be fixed?
         self.myinit()
@@ -60,8 +57,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
-        self.defaultTTL = float(Detector.get_global_var(
-            'TOKEN_DEFAULT_TTL', self.shortTTL))
+        # Default shortTTL = 2592000     # 1 month in seconds
+        self.longTTL = float(Detector.get_global_var(
+            'TOKEN_LONG_TTL', 2592000))
+        # Default shortTTL = 604800     # 1 week in seconds
+        self.shortTTL = float(Detector.get_global_var(
+            'TOKEN_SHORT_TTL', 604800))
 
     @classmethod
     def myinit(cls):

@@ -172,7 +172,7 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
         # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
-        exp = now + timedelta(seconds=self.defaultTTL)
+        exp = now + timedelta(seconds=self.shortTTL)
 
         if user is None:
             log.error("Trying to save an empty token")
@@ -199,7 +199,7 @@ class Authentication(BaseAuthentication):
             log.critical("This token is no longer valid")
             return False
 
-        exp = now + timedelta(seconds=self.defaultTTL)
+        exp = now + timedelta(seconds=self.shortTTL)
         token_entry.last_access = now
         token_entry.expiration = exp
 
