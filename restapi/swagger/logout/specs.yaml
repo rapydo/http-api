@@ -8,5 +8,4 @@ baseuri: "/auth"
 mapping:
   tologout: "/logout"
 labels:
-  - base
   - authentication

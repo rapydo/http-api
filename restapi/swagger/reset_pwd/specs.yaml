@@ -10,5 +10,4 @@ mapping:
   do_reset: "/reset/<token_id>"
 
 labels:
-  - base
   - authentication

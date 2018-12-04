@@ -10,5 +10,4 @@ mapping:
   tologin: "/login"
 
 labels:
-  - base
   - authentication

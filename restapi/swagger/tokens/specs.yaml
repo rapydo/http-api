@@ -32,5 +32,4 @@ ids:
 
 # OPTIONAL: internal label(s) for classification of endpoints (global tags)
 labels:
-  - base
-  - open_sessions
+  - authentication

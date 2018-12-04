@@ -5,5 +5,4 @@ baseuri: "/api"
 mapping:
   status: "/status"
 labels:
-  - base
   - helpers
