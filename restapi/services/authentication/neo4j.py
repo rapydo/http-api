@@ -29,12 +29,16 @@ class Authentication(BaseAuthentication):
     def get_user_object(self, username=None, payload=None):
 
         from neomodel.exceptions import DeflateError
+        from neo4j.exceptions import ServiceUnavailable
         user = None
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
+        except ServiceUnavailable as e:
+            self.db.refresh_connection()
+            raise e
         except DeflateError:
             log.warning("Invalid username '%s'", username)
         except self.db.User.DoesNotExist:
@@ -244,7 +248,8 @@ class Authentication(BaseAuthentication):
     #     log.debug("Removing all pending tokens")
     #     return self.cypher("MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a")
 
-    def store_oauth2_user(self, current_user, token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -256,7 +261,7 @@ class Authentication(BaseAuthentication):
         # A graph node for internal accounts associated to oauth2
         try:
             user_node = self.db.User.nodes.get(email=email)
-            if user_node.authmethod != 'oauth2':
+            if user_node.authmethod != account_type:
                 # The user already exist with another type of authentication
                 return None
         # TO BE VERIFIED
@@ -264,7 +269,7 @@ class Authentication(BaseAuthentication):
             user_node = self.create_user(userdata={
                 # 'uuid': getUUID(),
                 'email': email,
-                'authmethod': 'oauth2'
+                'authmethod': account_type
             })
         # NOTE: missing roles for this user?
 
@@ -276,7 +281,9 @@ class Authentication(BaseAuthentication):
             oauth2_external = self.db.ExternalAccounts(username=email)
         # update main info for this user
         oauth2_external.email = email
+        oauth2_external.account_type = account_type
         oauth2_external.token = token
+        oauth2_external.refresh_token = refresh_token
         oauth2_external.certificate_cn = cn
         oauth2_external.save()
 

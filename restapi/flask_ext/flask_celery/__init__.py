@@ -4,8 +4,10 @@
 Celery extension wrapper
 
 """
-from restapi.flask_ext import BaseExtension, get_logger
 from celery import Celery
+# from kombu import Exchange, Queue
+
+from restapi.flask_ext import BaseExtension, get_logger
 
 log = get_logger(__name__)
 
@@ -110,6 +112,27 @@ class CeleryExt(BaseExtension):
         celery_app.conf.accept_content = ['json']
         celery_app.conf.task_serializer = 'json'
         celery_app.conf.result_serializer = 'json'
+        # Max priority default value for all queues
+        # Required to be able to set priority parameter on apply_async calls
+        # celery_app.conf.task_queue_max_priority = 10
+
+        # default_exchange = Exchange('default', type='direct')
+        # priority_exchange = Exchange('priority', type='direct')
+        # celery_app.conf.task_queues = [
+        #     Queue(
+        #         'priority',
+        #         priority_exchange,
+        #         routing_key='priority',
+        #         queue_arguments={
+        #             'x-max-priority': 10
+        #         }
+        #     )
+        # ]
+        # If you want to apply a more strict priority to items
+        # probably prefetching should also be disabled:
+
+        # CELERY_ACKS_LATE = True
+        # CELERYD_PREFETCH_MULTIPLIER = 1
 
         """
         This is a workaround, please fix me!

@@ -111,24 +111,6 @@ class Detector(object):
             log.info("Authentication based on '%s' service"
                      % self.authentication_service)
 
-    def load_group(self, label):
-
-        variables = {}
-        for var, value in os.environ.items():
-            var = var.lower()
-            if var.startswith(label):
-                key = var[len(label):].strip('_')
-                value = value.strip('"').strip("'")
-                variables[key] = value
-        return variables
-
-    def output_service_variables(self, service_name):
-        service_class = self.services_classes.get(service_name, {})
-        try:
-            return service_class.variables
-        except BaseException:
-            return {}
-
     @staticmethod
     def load_group(label):
         from utilities.basher import detect_vargroup
@@ -186,7 +168,7 @@ class Detector(object):
             flaskext = '.' + service.get('extension')
 
         # Try inside our extensions
-        module = self.meta.get_module_from_string(
+        module = Meta.get_module_from_string(
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
             exit_on_fail=True
         )
@@ -289,7 +271,8 @@ class Detector(object):
             if name == self.authentication_service:
                 auth_backend = service_instance
 
-            self.extensions_instances[name] = ext_instance
+            # NOTE: commented, looks like a duplicate from try/expect above
+            # self.extensions_instances[name] = ext_instance
 
             # Injecting into the Celery Extension Class
             # all celery tasks found in *vanilla_package/tasks*
@@ -300,7 +283,7 @@ class Detector(object):
                 submodules = self.meta.import_submodules_from_package(
                     task_package, exit_on_fail=True)
                 for submodule in submodules:
-                    tasks = self.meta.get_celery_tasks_from_module(submodule)
+                    tasks = Meta.get_celery_tasks_from_module(submodule)
 
                     for func_name, funct in tasks.items():
                         setattr(ExtClass, func_name, funct)
@@ -310,7 +293,7 @@ class Detector(object):
 
         # Only once in a lifetime
         if project_init:
-            self.project_initialization(instances)
+            self.project_initialization(instances, app=app)
 
         return self.extensions_instances
 
@@ -347,21 +330,20 @@ class Detector(object):
         return self.available_services.get(name)
 
     @classmethod
-    def project_initialization(self, instances):
+    def project_initialization(self, instances, app=None):
         """ Custom initialization of your project
 
         Please define your class Initializer in
-        vanilla/project/initialization.py
+        project/YOURPROJECT/backend/initialization/initialization.py
         """
 
         try:
-            meta = Meta()
+            # NOTE: this might be a pattern
+            # see in meta.py:get_customizer_class
             module_path = "%s.%s.%s" % \
                 (CUSTOM_PACKAGE, 'initialization', 'initialization')
-            module = meta.get_module_from_string(
-                module_path,
-                debug_on_fail=False,
-            )
+            module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+            meta = Meta()
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
@@ -369,7 +351,7 @@ class Detector(object):
                 log.debug("No custom init available")
             else:
                 try:
-                    Initializer(instances)
+                    Initializer(instances, app=app)
                 except BaseException as e:
                     log.error("Errors during custom initialization: %s", e)
                 else:

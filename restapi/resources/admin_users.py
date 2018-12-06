@@ -261,20 +261,23 @@ class AdminUsers(GraphBaseOperations):
             for idx, val in enumerate(new_schema):
                 if val["name"] == "group":
                     new_schema[idx]["default"] = None
-                    new_schema[idx]["custom"] = {
-                        "htmltype": "select",
-                        "label": "Group"
-                    }
+                    if "custom" not in new_schema[idx]:
+                        new_schema[idx]["custom"] = {}
+
+                    new_schema[idx]["custom"]["htmltype"]: "select"
+                    new_schema[idx]["custom"]["label"]: "Group"
                     new_schema[idx]["enum"] = []
 
                     default_group = self.graph.Group.nodes.get_or_none(
                         shortname="default")
 
+                    defg = None
                     if default_group is not None:
                         new_schema[idx]["enum"].append(
                             {default_group.uuid: default_group.shortname}
                         )
-                        new_schema[idx]["default"] = default_group.uuid
+                        # new_schema[idx]["default"] = default_group.uuid
+                        defg = default_group.uuid
 
                     for g in current_user.coordinator.all():
 
@@ -282,10 +285,14 @@ class AdminUsers(GraphBaseOperations):
                             continue
 
                         new_schema[idx]["enum"].append(
-                            {g.uuid: g.shortname}
+                            {g.uuid: g.fullname}
                         )
-                        if new_schema[idx]["default"] is None:
-                            new_schema[idx]["default"] = g.uuid
+                        if defg is None:
+                            defg = g.uuid
+                        # if new_schema[idx]["default"] is None:
+                        #     new_schema[idx]["default"] = g.uuid
+                    if (len(new_schema[idx]["enum"])) == 1:
+                        new_schema[idx]["default"] = defg
 
             return self.force_response(new_schema)
 
@@ -302,7 +309,7 @@ class AdminUsers(GraphBaseOperations):
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are allowed to assign users to this role")
+                        "You are not allowed to assign users to this role")
 
         if "password" in properties and properties["password"] == "":
             del properties["password"]
@@ -314,16 +321,24 @@ class AdminUsers(GraphBaseOperations):
 
         user = self.auth.create_user(properties, roles)
 
+        # If created by admins, credentials
+        # must accept privacy at the login
+        if "privacy_accepted" in v:
+            if not v["privacy_accepted"]:
+                if hasattr(user, 'privacy_accepted'):
+                    user.privacy_accepted = False
+                    user.save()
+
         group = None
         if 'group' in v:
             group = self.parse_group(v)
 
         if group is not None:
-            if not is_admin:
+            if not is_admin and group.shortname != "default":
                 current_user = self.get_current_user()
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are allowed to assign users to this group")
+                        "You are not allowed to assign users to this group")
 
             user.belongs_to.connect(group)
 
@@ -393,10 +408,10 @@ class AdminUsers(GraphBaseOperations):
 
             group = self.parse_group(v)
 
-            if not is_admin:
+            if not is_admin and group.shortname != "default":
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are allowed to assign users to this group")
+                        "You are not allowed to assign users to this group")
 
             p = None
             for p in user.belongs_to.all():
@@ -418,7 +433,7 @@ class AdminUsers(GraphBaseOperations):
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are allowed to assign users to this role")
+                        "You are not allowed to assign users to this role")
 
         self.auth.link_roles(user, roles)
 

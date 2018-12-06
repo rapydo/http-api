@@ -57,12 +57,11 @@ class SqlAlchemy(BaseExtension):
             self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
 
         obj_name = 'db'
-        m = Meta()
         # search the original sqlalchemy object into models
-        db = m.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
+        db = Meta.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
         if db is None:
             log.warning("No sqlalchemy db imported in custom package")
-            db = m.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
+            db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
             log.critical_exit(
                 "Could not get %s within %s models" % (obj_name, self.name))

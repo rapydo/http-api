@@ -91,7 +91,8 @@ class IrodsPythonClient():
         return os.path.dirname(path)
 
     def list(self, path=None, recursive=False, detailed=False,
-             acl=False, removePrefix=None):
+             acl=False, removePrefix=None,
+             get_pid=False, get_checksum=False):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
@@ -109,7 +110,8 @@ class IrodsPythonClient():
 
                 row = {}
                 key = coll.name
-                row["PID"] = None
+                if get_pid:
+                    row["PID"] = None
                 row["name"] = coll.name
                 row["objects"] = {}
                 if recursive:
@@ -138,8 +140,12 @@ class IrodsPythonClient():
                 row["name"] = obj.name
                 row["path"] = self.getPath(obj.path, removePrefix)
                 row["object_type"] = "dataobject"
-                row["PID"] = None
-                row["checksum"] = None
+
+                if get_pid:
+                    row["PID"] = None
+
+                if get_checksum:
+                    row["checksum"] = None
 
                 if detailed:
                     row["owner"] = obj.owner_name
@@ -533,7 +539,8 @@ class IrodsPythonClient():
                 coll_or_obj = None
 
         if coll_or_obj is None:
-            raise IrodsException("Cannot get permission of a null object")
+            raise IrodsException(
+                "Cannot get permission: path not found: %s" % coll_or_obj)
 
         data = {}
         data["path"] = coll_or_obj.path
@@ -904,24 +911,20 @@ class IrodsPythonClient():
 
             return raw_out
 
-        """
-        # EXAMPLE FOR IRULE: #METADATA RULE
-        object_path = "/sdcCineca/home/httpadmin/tmp.txt"
-        test_name = 'paolo2'
-        inputs = {  # extra quotes for string literals
-            '*object': '"%s"' % object_path,
-            '*name': '"%s"' % test_name,
-            '*value': '"%s"' % test_name,
-        }
-        body = \"\"\"
-            # add metadata
-            *attribute.*name = *value;
-            msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
-        \"\"\"
-        output = imain.irule('test', body, inputs, 'ruleExecOut')
-        print("TEST", output)
-        # log.pp(output)
-        """
+        #  EXAMPLE FOR IRULE: METADATA RULE
+        # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
+        # test_name = 'paolo2'
+        # inputs = {  # extra quotes for string literals
+        #     '*object': '"%s"' % object_path,
+        #     '*name': '"%s"' % test_name,
+        #     '*value': '"%s"' % test_name,
+        # }
+        # body = \"\"\"
+        #     # add metadata
+        #     *attribute.*name = *value;
+        #     msiAssociateKeyValuePairsToObj(*attribute, *object, "-d")
+        # \"\"\"
+        # output = imain.irule('test', body, inputs, 'ruleExecOut')
 
     def ticket(self, path):
         ticket = Ticket(self.prc)

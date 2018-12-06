@@ -244,6 +244,37 @@ class Uploader(object):
             'meta': {'type': ftype, 'charset': fcharset}
         }, code=hcodes.HTTP_OK_BASIC)
 
+    def upload_chunked(self, destination, force=False, chunk_size=None):
+
+        # Default chunk size, put this somewhere
+        if chunk_size is None:
+            chunk_size = 1048576
+
+        if os.path.exists(destination):
+
+            log.warn("Already exists")
+            if force:
+                os.remove(destination)
+                log.debug("Forced removal")
+            else:
+                log.error("File '%s' already exists", destination)
+                return False
+
+        with open(destination, "ab") as f:
+            while True:
+                chunk = request.stream.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+
+        # Check exists
+        if not os.path.exists(destination):
+            log.error("Unable to recover the uploaded file: %s", destination)
+            return False
+
+        log.info("File uploaded: %s", destination)
+        return True
+
     def remove(self, filename, subfolder=None, skip_response=False):
         """ Remove the file if requested """
 

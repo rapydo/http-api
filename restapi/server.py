@@ -63,9 +63,30 @@ class Flask(OriginalFlask):
             return responder.get_original_response()
 
         # Note: jsonify gets done when calling the make_response,
-        # so make sure that the data is written in  the right format!
-        response = responder.generate_response()
-        return super().make_response(response)
+        # so make sure that the data is written in the right format!
+        r = responder.generate_response()
+        response = super().make_response(r)
+        # TOFIX: avoid duplicated Content-type
+        # the jsonify in respose.py#force_type force the content-type
+        # to be application/json. If content-type is already specified in headers
+        # the header will have a duplicated Content-type. We should fix by avoding
+        # jsonfy for more specific mimetypes
+        # For now I will simply remove the duplicates
+        content_type = None
+        for idx, val in enumerate(response.headers):
+            if val[0] != 'Content-Type':
+                continue
+            if content_type is None:
+                content_type = idx
+                continue
+            log.warning(
+                "Duplicated Content-Type, removing %s and keeping %s",
+                response.headers[content_type][1],
+                val[1]
+            )
+            response.headers.pop(content_type)
+            break
+        return response
 
 
 ########################

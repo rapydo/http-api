@@ -1,8 +1,7 @@
-
 activate:
-  summary: Activate account by verificate activation token 
+  summary: Activate account by verificate activation token
   custom:
-    authentication: false 
+    authentication: false
   responses:
     '200':
       description: Account has been successfully activated

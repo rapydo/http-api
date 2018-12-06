@@ -9,5 +9,4 @@ mapping:
 ids:
   task_id: uuid referring to the task you are selecting
 labels:
-  - base
   - tasks

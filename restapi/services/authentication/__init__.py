@@ -12,6 +12,7 @@ import hashlib
 import base64
 import pytz
 import socket
+from glom import glom
 
 from utilities import CUSTOM_PACKAGE
 from utilities.uuid import getUUID
@@ -49,9 +50,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ##########################
     _oauth2 = {}
 
-    longTTL = 2592000     # 1 month in seconds
-    shortTTL = 604800     # 1 week in seconds
-
     def __init__(self):
         # TODO: myinit is a class method for unittest could it be fixed?
         self.myinit()
@@ -59,8 +57,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
-        self.defaultTTL = float(Detector.get_global_var(
-            'TOKEN_DEFAULT_TTL', self.shortTTL))
+        # Default shortTTL = 2592000     # 1 month in seconds
+        self.longTTL = float(Detector.get_global_var(
+            'TOKEN_LONG_TTL', 2592000))
+        # Default shortTTL = 604800     # 1 week in seconds
+        self.shortTTL = float(Detector.get_global_var(
+            'TOKEN_SHORT_TTL', 604800))
 
     @classmethod
     def myinit(cls):
@@ -69,10 +71,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # TODO: check if still necessary
         """
 
-        credentials = mem.customizer._configurations \
-            .get('variables', {}) \
-            .get('backend', {}) \
-            .get('credentials', {})
+        credentials = glom(
+            mem.customizer._configurations,
+            "variables.backend.credentials"
+        )
+        # credentials = mem.customizer._configurations \
+        #     .get('variables', {}) \
+        #     .get('backend', {}) \
+        #     .get('credentials', {})
 
         cls.default_user = credentials.get('username', None)
         cls.default_password = credentials.get('password', None)
@@ -108,7 +114,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # log.critical("Please reinitialize backend tables")
             from restapi.exceptions import RestApiException
             raise RestApiException(
-                "Server authentication misconfiguration",
+                "Unable to connect to auth backend",
                 status_code=hcodes.HTTP_SERVER_ERROR
             )
 
@@ -525,14 +531,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     def custom_user_properties(self, userdata):
-        meta = Meta()
         module_path = "%s.%s.%s" % \
             (CUSTOM_PACKAGE, 'initialization', 'initialization')
-        module = meta.get_module_from_string(
-            module_path,
-            debug_on_fail=False,
-        )
+        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
+        meta = Meta()
         Customizer = meta.get_class_from_string(
             'Customizer', module, skip_error=True
         )
@@ -550,14 +553,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        meta = Meta()
         module_path = "%s.%s.%s" % \
             (CUSTOM_PACKAGE, 'initialization', 'initialization')
-        module = meta.get_module_from_string(
-            module_path,
-            debug_on_fail=False,
-        )
+        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
+        meta = Meta()
         Customizer = meta.get_class_from_string(
             'Customizer', module, skip_error=True
         )
@@ -584,7 +584,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def store_oauth2_user(self, current_user, token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user.

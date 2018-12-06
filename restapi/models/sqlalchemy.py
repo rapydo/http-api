@@ -77,7 +77,9 @@ class Token(db.Model):
 
 class ExternalAccounts(db.Model):
     username = db.Column(db.String(60), primary_key=True)
+    account_type = db.Column(db.String(16))
     token = db.Column(db.Text())
+    refresh_token = db.Column(db.Text())
     token_expiration = db.Column(db.DateTime)
     email = db.Column(db.String(255))
     certificate_cn = db.Column(db.String(255))

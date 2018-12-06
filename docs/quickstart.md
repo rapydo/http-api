@@ -1,7 +1,6 @@
+# Getting started #
 
-# Getting started
-
-## Code base/framework for modern RESTful HTTP API 
+## Code base/framework for modern RESTful HTTP API ##
 
 A Python **3** Flask HTTP server mapping custom classes into REST API endpoints;
 written with **the base** in mind for middleware APIs in our projects.

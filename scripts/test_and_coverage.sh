@@ -77,36 +77,44 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
+	rapydo --development --project ${PROJECT} init --no-build
+
+	rapydo --development --project ${PROJECT} pull
+
 	rapydo --development --project ${PROJECT} init
 
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
-	sleep 40
-	docker ps -a
-	if [ "$PROJECT" = "celerytest" ]; then
-		echo "\n\nLogs from Celery:\n\n"
-		docker logs ${PROJECT}_celery_1
-	fi
-	if [ "$PROJECT" = "irodstest" ]; then
-		echo "\n\nLogs from ICAT:\n\n"
-		docker logs ${PROJECT}_icat_1
-	fi
-	echo "\n\nLogs from Backend:\n\n"
-	docker logs ${PROJECT}_backend_1
+	# sleep 40
+	# docker ps -a
+	# if [ "$PROJECT" = "celerytest" ]; then
+	# 	echo "\n\nLogs from Celery:\n\n"
+	# 	docker logs ${PROJECT}_celery_1
+	# fi
+	# if [ "$PROJECT" = "irodstest" ]; then
+	# 	echo "\n\nLogs from ICAT:\n\n"
+	# 	docker logs ${PROJECT}_icat_1
+	# fi
+	# echo "\n\nLogs from Backend:\n\n"
+	# docker logs ${PROJECT}_backend_1
 
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced_clean'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi wait'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced-clean'
 
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
 
-	if [ "$PROJECT" = "celerytest" ]; then
-		echo "\n\nLogs from Celery:\n\n"
-		docker logs ${PROJECT}_celery_1
-	fi
+	# if [ "$PROJECT" = "celerytest" ]; then
+	# 	echo "\n\nLogs from Celery:\n\n"
+	# 	docker logs ${PROJECT}_celery_1
+	# fi
 
 	# Sync the coverage file to S3, to be available for the next stage
-	docker cp ${PROJECT}_backend_1:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
+	rapydo --development --project ${PROJECT} dump
+	backend_container=$(docker-compose ps -q backend)
+	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
@@ -118,6 +126,8 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
+	rapydo --development --project ${PROJECT} init --no-build
+	rapydo --development --project ${PROJECT} pull
 	rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a

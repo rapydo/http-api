@@ -67,7 +67,7 @@ def flask_cli(options=None):
     else:
         create_app(**options)
         # app.run(debug=False)
-    log.warning("Completed")
+    log.debug("cli execution completed")
 
 
 def starting_up():
@@ -220,7 +220,13 @@ def forced_clean():
 @click.option(
     '--core/--no-core', default=False,
     help='Test for core instead of vanilla code')
-def tests(wait, core):
+@click.option(
+    '--file', default=None,
+    help='Test a single file of tests')
+@click.option(
+    '--folder', default=None,
+    help='Test a single folder of tests')
+def tests(wait, core, file, folder):
     """Compute tests and coverage"""
 
     if wait:
@@ -246,6 +252,18 @@ def tests(wait, core):
     # basedir = helpers.latest_dir(helpers.current_fullpath())
     if core:
         parameters.append(current_package)
+    elif file is not None:
+        if not os.path.isfile(os.path.join("tests", file)):
+            log.exit("File not found: %s", file)
+        else:
+            parameters.append("default")
+            parameters.append(file)
+    elif folder is not None:
+        if not os.path.isdir(os.path.join("tests", folder)):
+            log.exit("Folder not found: %s", folder)
+        else:
+            parameters.append("default")
+            parameters.append(folder)
     # import glob
     # if 'template' in glob.glob('*'):
     #     from restapi import __package__ as current_package

@@ -11,5 +11,4 @@ mapping:
 # ids:
 #   uuid: uuid associated to the proile you want to access
 labels:
-  - base
   - profiles

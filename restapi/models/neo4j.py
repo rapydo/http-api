@@ -20,6 +20,7 @@ class User(IdentifiedNode):
     last_login = DateTimeProperty(show=True)
     last_password_change = DateTimeProperty(show=True)
     is_active = BooleanProperty(default=True, show=True)
+    privacy_accepted = BooleanProperty(default=True, show=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
     roles = RelationshipTo(
         'Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)
@@ -47,7 +48,9 @@ class Role(StructuredNode):
 
 class ExternalAccounts(StructuredNode):
     username = StringProperty(required=True, unique_index=True)
+    account_type = StringProperty(required=True)
     token = StringProperty(required=True)
+    refresh_token = StringProperty()
     email = StringProperty()
     certificate_cn = StringProperty()
     proxyfile = StringProperty()

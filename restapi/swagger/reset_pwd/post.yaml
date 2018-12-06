@@ -1,8 +1,7 @@
-
 ask_reset:
 
   summary: Request password reset via email
-  description: Request password reset via email 
+  description: Request password reset via email
 
   custom:
     authentication: false
@@ -13,4 +12,3 @@ ask_reset:
       description: Invalid reset email
     '200':
       description: Reset email is valid
-

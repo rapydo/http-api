@@ -8,5 +8,4 @@ class: Internal
 mapping:
   inter: "/internal"
 labels:
-  - base
   - helpers

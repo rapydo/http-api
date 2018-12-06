@@ -322,4 +322,5 @@ def get_debug_instance(MyClass):
     #######
     instance = MyClass()
     obj = instance.connect()
+    obj = instance.set_models_to_service(obj)
     return obj

@@ -12,7 +12,9 @@ from restapi.flask_ext import BaseExtension, get_logger
 from restapi.flask_ext.flask_irods.session \
     import iRODSPickleSession as iRODSSession
 # from irods.session import iRODSSession
-from restapi.flask_ext.flask_irods.client import IrodsPythonClient
+from irods import exception as iexceptions
+from restapi.flask_ext.flask_irods.client \
+    import IrodsException, IrodsPythonClient
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -20,6 +22,7 @@ irodslogger.setLevel(logging.INFO)
 
 NORMAL_AUTH_SCHEME = 'credentials'
 GSI_AUTH_SCHEME = 'GSI'
+PAM_AUTH_SCHEME = 'PAM'
 
 log = get_logger(__name__)
 
@@ -32,8 +35,12 @@ class IrodsPythonExt(BaseExtension):
 
         external = self.variables.get('external')
 
-        # Authentication scheme fallback to default (normal basic credentials)
-        self.authscheme = self.variables.get('authscheme')
+        # Retrieve authentication schema
+        self.authscheme = kwargs.get('authscheme')
+        # Authentication scheme fallback to default from project_configuration
+        if self.authscheme is None or self.authscheme.strip() == '':
+            self.authscheme = self.variables.get('authscheme')
+        # Authentication scheme fallback to default (credentials)
         if self.authscheme is None or self.authscheme.strip() == '':
             self.authscheme = NORMAL_AUTH_SCHEME
 
@@ -51,10 +58,11 @@ class IrodsPythonExt(BaseExtension):
                 if admin:
                     user = self.variables.get('default_admin_user')
                     self.authscheme = GSI_AUTH_SCHEME
-                    # self.authscheme = self.variables.get('default_admin_auth')
                 else:
                     user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
+                        self.password = self.variables.get('password')
+                    elif self.authscheme == PAM_AUTH_SCHEME:
                         self.password = self.variables.get('password')
 
             log.very_verbose(
@@ -91,7 +99,7 @@ class IrodsPythonExt(BaseExtension):
                 kwargs.get("proxy_cert_name")
             )
 
-            Certificates().globus_proxy(
+            valid_cert = Certificates.globus_proxy(
                 proxy_file=kwargs.get('proxy_file'),
                 user_proxy=self.user,
                 cert_dir=self.variables.get("x509_cert_dir"),
@@ -100,10 +108,15 @@ class IrodsPythonExt(BaseExtension):
                 cert_pwd=kwargs.get("proxy_pass"),
             )
 
-        ######################
-        # Normal credentials
+            if not valid_cert:
+                return False
+
+        elif self.authscheme == PAM_AUTH_SCHEME:
+            pass
+
         elif self.password is not None:
             self.authscheme = NORMAL_AUTH_SCHEME
+
         else:
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme")
@@ -160,9 +173,20 @@ class IrodsPythonExt(BaseExtension):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
+        elif self.authscheme == PAM_AUTH_SCHEME:
+
+            obj = iRODSSession(
+                user=self.user,
+                password=self.password,
+                authentication_scheme=self.authscheme,
+                host=self.variables.get('host'),
+                port=self.variables.get('port'),
+                zone=default_zone,
+            )
+
         else:
             raise NotImplementedError(
-                "Untested iRODS authentication scheme: %s" % self.authscheme)
+                "Invalid iRODS authentication scheme: %s" % self.authscheme)
 
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
@@ -182,9 +206,32 @@ class IrodsPythonExt(BaseExtension):
         # restapi verify SERVICE
         #########################
 
+        # Back-compatibility fix, remove-me after the prc PR
+        try:
+            PAM_EXCEPTION = iexceptions.PAM_AUTH_PASSWORD_FAILED
+        except AttributeError:
+            # An exception that should never occur since already tested
+            PAM_EXCEPTION = iexceptions.CAT_INVALID_AUTHENTICATION
+
         # Do a simple command to test this session
         if check_connection:
-            u = obj.users.get(self.user, user_zone=default_zone)
+            catch_exceptions = kwargs.get('catch_exceptions', False)
+            try:
+                u = obj.users.get(self.user, user_zone=default_zone)
+
+            except iexceptions.CAT_INVALID_AUTHENTICATION as e:
+                if catch_exceptions:
+                    raise IrodsException("CAT_INVALID_AUTHENTICATION")
+                else:
+                    raise e
+
+            # except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
+            except PAM_EXCEPTION as e:
+                if catch_exceptions:
+                    raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
+                else:
+                    raise e
+
             log.verbose("Tested session retrieving '%s'" % u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)

@@ -70,7 +70,7 @@ class Customizer(object):
         """ Schemas exposing, if requested """
 
         name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
-        module = self._meta.get_module_from_string(
+        module = Meta.get_module_from_string(
             name,
             exit_if_not_found=True, exit_on_fail=True
         )
@@ -211,7 +211,7 @@ class Customizer(object):
         file_name = conf.pop('file', default_uri)
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
-        module = self._meta.get_module_from_string(name, exit_on_fail=False)
+        module = Meta.get_module_from_string(name, exit_on_fail=False)
 
         # Error if unable to find the module in python
         if module is None:

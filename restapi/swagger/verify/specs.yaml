@@ -1,8 +1,8 @@
 
 file: endpoints
-class: Status
+class: Verify
 baseuri: "/api"
 mapping:
-  status: "/status"
+  verify: "/status/<service>"
 labels:
   - helpers

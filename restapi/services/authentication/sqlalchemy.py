@@ -42,13 +42,26 @@ class Authentication(BaseAuthentication):
             user.roles.append(sqlrole)
         self.db.session.add(user)
 
-    def get_user_object(self, username=None, payload=None):
+        return user
+
+    def get_user_object(self, username=None, payload=None, retry=0):
         user = None
-        if username is not None:
-            user = self.db.User.query.filter_by(email=username).first()
-        if payload is not None and 'user_id' in payload:
-            user = self.db.User.query.filter_by(
-                uuid=payload['user_id']).first()
+        try:
+            if username is not None:
+                user = self.db.User.query.filter_by(email=username).first()
+            if payload is not None and 'user_id' in payload:
+                user = self.db.User.query.filter_by(
+                    uuid=payload['user_id']).first()
+        except sqlalchemy.exc.DatabaseError as e:
+            if retry <= 0:
+                log.error(str(e))
+                log.warning("Errors retrieving user object, retrying...")
+                return self.get_user_object(
+                    username=username,
+                    payload=payload,
+                    retry=1
+                )
+            raise e
         return user
 
     def get_roles_from_user(self, userobj=None):
@@ -218,59 +231,73 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, current_user, token):
+    def store_oauth2_user(self, account_type, current_user,
+                          token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
         """
 
-        try:
-            values = current_user.data
-        except BaseException:
-            return None, "Authorized response is invalid"
-
-        # print("TEST", values, type(values))
-        if not isinstance(values, dict) or len(values) < 1:
-            return None, "Authorized response is empty"
-
-        email = values.get('email')
-        cn = values.get('cn')
-        ui = values.get('unity:persistent')
-
-        # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
-        # is it going to change?
+        cn = None
         dn = None
-        for key, _ in values.items():
-            if 'urn:oid' in key:
-                dn = values.get(key)
-        if dn is None:
-            return None, "Missing DN from authorized response..."
+        if isinstance(current_user, str):
+            email = current_user
+        else:
+            try:
+                values = current_user.data
+            except BaseException:
+                return None, "Authorized response is invalid"
+
+            # print("TEST", values, type(values))
+            if not isinstance(values, dict) or len(values) < 1:
+                return None, "Authorized response is empty"
+
+            email = values.get('email')
+            cn = values.get('cn')
+            ui = values.get('unity:persistent')
+
+            # distinguishedName is only defined in prod, not in dev and staging
+            # dn = values.get('distinguishedName')
+            # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
+            # is it going to change?
+            for key, _ in values.items():
+                if 'urn:oid' in key:
+                    dn = values.get(key)
+            if dn is None:
+                return None, "Missing DN from authorized response..."
 
         # Check if a user already exists with this email
         internal_user = None
         internal_users = self.db.User.query.filter(
             self.db.User.email == email).all()
 
+        # Should never happen, please
+        if len(internal_users) > 1:
+            log.critical("Multiple users?")
+            return None, "Server misconfiguration"
+
         # If something found
         if len(internal_users) > 0:
-            # Should never happen, please
-            if len(internal_users) > 1:
-                log.critical("Multiple users?")
-                return None, "Server misconfiguration"
+
             internal_user = internal_users.pop()
             log.debug("Existing internal user: %s", internal_user)
             # A user already locally exists with another authmethod. Not good.
-            if internal_user.authmethod != 'oauth2':
-                return None, "Creating a user which locally already exists"
+            if internal_user.authmethod != account_type:
+                return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
+            userdata = {
+                "uuid": getUUID(),
+                "email": email,
+                "authmethod": account_type
+            }
+            internal_user = self.create_user(userdata, [self.default_role])
             # Create new one
-            internal_user = self.db.User(
-                uuid=getUUID(), email=email, authmethod='oauth2')
-            # link default role into users
-            internal_user.roles.append(
-                self.db.Role.query.filter_by(name=self.default_role).first())
-            self.db.session.add(internal_user)
+            # internal_user = self.db.User(
+            #     uuid=getUUID(), email=email, authmethod=account_type)
+            # internal_user.roles.append(
+            #     self.db.Role.query.filter_by(name=self.default_role).first())
+            # self.db.session.add(internal_user)
             self.db.session.commit()
             log.info("Created internal user %s", internal_user)
 
@@ -289,9 +316,13 @@ class Authentication(BaseAuthentication):
 
         # Update external user data to latest info received
         external_user.email = email
+        external_user.account_type = account_type
         external_user.token = token
-        external_user.certificate_cn = cn
-        external_user.certificate_dn = dn
+        external_user.refresh_token = refresh_token
+        if cn is not None:
+            external_user.certificate_cn = cn
+        if dn is not None:
+            external_user.certificate_dn = dn
 
         self.db.session.add(external_user)
         self.db.session.commit()
@@ -327,29 +358,55 @@ class Authentication(BaseAuthentication):
 
     def irods_user(self, username, session):
 
-        # create user
-        user = self.db.User(
-            email=username, name=username, surname='iCAT',
-            uuid=getUUID(), authmethod='irods', session=session,
-        )
-        # add role
-        user.roles.append(
-            self.db.Role.query.filter_by(name=self.default_role).first())
-
-        # save
-        self.db.session.add(user)
-        from sqlalchemy.exc import IntegrityError
-        try:
-            self.db.session.commit()
-            log.info('Cached iRODS user: %s', username)
-        except IntegrityError:
-            # rollback current commit
-            self.db.session.rollback()
-            log.warning("iRODS user already cached: %s", username)
-            # get the existing object
-            user = self.get_user_object(username)
-            # update only the session field
+        user = self.get_user_object(username)
+        if user is not None:
+            log.info("iRODS user already cached: %s", username)
             user.session = session
+        else:
+
+            userdata = {
+                "uuid": getUUID(),
+                "email": username,
+                "name": username,
+                "surname": 'iCAT',
+                "authmethod": 'irods',
+                "session": session
+            }
+            user = self.create_user(userdata, [self.default_role])
+
+            # # create user
+            # user = self.db.User(
+            #     email=username, name=username, surname='iCAT',
+            #     uuid=getUUID(), authmethod='irods', session=session,
+            # )
+            # # add role
+            # user.roles.append(
+            #     self.db.Role.query.filter_by(name=self.default_role).first())
+
+            # # save
+            # self.db.session.add(user)
+            try:
+                self.db.session.commit()
+                log.info('Cached iRODS user: %s', username)
+            # except sqlalchemy.exc.IntegrityError:
+            #     # rollback current commit
+            #     self.db.session.rollback()
+            #     log.warning("iRODS user already cached: %s", username)
+            #     # get the existing object
+            #     user = self.get_user_object(username)
+            #     # update only the session field
+            #     user.session = session
+            except BaseException as e:
+                log.error("Errors saving iRODS user: %s", username)
+                log.error(str(e))
+                log.error(type(e))
+                log.print_stack(e)
+
+                user = self.get_user_object(username)
+                # Unable to do something...
+                if user is None:
+                    raise e
+                user.session = session
 
         # token
         token, jti = self.create_token(self.fill_payload(user))

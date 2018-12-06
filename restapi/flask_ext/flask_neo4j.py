@@ -16,6 +16,15 @@ class NeomodelClient():
     def __init__(self, db):
         self.db = db
 
+    def refresh_connection(self):
+        if self.db.url is None:
+            log.critical("Unable to refresh neo4j connection")
+            return False
+
+        log.info("Refreshing neo4j connection...")
+        self.db.set_connection(self.db.url)
+        return True
+
     def cypher(self, query):
         """ Execute normal neo4j queries """
         try:

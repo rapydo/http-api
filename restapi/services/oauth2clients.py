@@ -123,11 +123,6 @@ class ExternalLogins(object):
         b2access_url = "https://%s:%s" % (base_url, B2ACCESS_MAIN_PORT)
         b2access_ca = "https://%s:%s" % (base_url, B2ACCESS_CA_PORT)
 
-        # NOTE: this was used to understand if production or not
-        # from utilities import ENDPOINTS_CODE_DIR, CUSTOM_PACKAGE
-        # module = meta.get_module_from_string(
-        #     "%s.%s.%s" % (CUSTOM_PACKAGE, ENDPOINTS_CODE_DIR, 'commons'))
-
         # SET OTHER URLS
         token_url = b2access_url + '/oauth2/token'
         authorize_url = b2access_url + '/oauth2-as/oauth2-authz'
@@ -140,6 +135,7 @@ class ExternalLogins(object):
             'authorize_url': authorize_url,
             'request_token_params':
                 {'scope': ['USER_PROFILE', 'GENERATE_USER_CERTIFICATE']},
+            # request_token_url is for oauth1
             'request_token_url': None,
             'access_token_method': 'POST'
         }

@@ -175,15 +175,15 @@ class EndpointResource(Resource):
             if len(self._json_args) < 1:
                 self._json_args = request.form
 
-            # print("TEST\n\n\n", self._json_args)
             # NOTE: if JSON all parameters are just string at the moment...
             for key, value in self._json_args.items():
+
                 if value is None:
                     continue
-                # if isinstance(value, str) and value == 'None':
-                #     continue
+                # TODO: remove and check
+                # how to fix the `request.form` emptiness
+
                 if key in self._args and self._args[key] is not None:
-                    # print("Key", key, "Value", value, self._args[key])
                     key += '_json'
                 self._args[key] = value
 
@@ -224,6 +224,20 @@ class EndpointResource(Resource):
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
+
+    def get_input_properties(self):
+        """
+        NOTE: usefull to use for swagger validation?
+        """
+
+        # get body definition name
+        parameters = self.get_endpoint_custom_definition().copy()
+        parameter = parameters.pop()
+        ref = parameter.get('schema', {}).get('$ref')
+        refname = ref.split('/').pop()
+        # get body definition properties
+        definitions = mem.customizer._definitions.get('definitions')
+        return definitions.get(refname).get('properties')
 
     def explode_response(
         self, api_output, get_all=False,
@@ -489,7 +503,8 @@ class EndpointResource(Resource):
     def getJsonResponse(
         self, instance, fields=None, resource_type=None,
         skip_missing_ids=False, view_public_only=False,
-        relationship_depth=0, max_relationship_depth=1
+        relationship_depth=0, max_relationship_depth=1,
+        relationship_name="", relationships_expansion=None
     ):
         """
         Lots of meta introspection to guess the JSON specifications
@@ -534,9 +549,10 @@ class EndpointResource(Resource):
             instance, 'show_fields', view_public_only, fields)
 
         # Relationships
-        if relationship_depth < max_relationship_depth:
-            linked = {}
-            relationships = []
+        max_depth_reached = relationship_depth >= max_relationship_depth
+
+        relationships = []
+        if not max_depth_reached:
 
             function_name = 'follow_relationships'
             if hasattr(instance, function_name):
@@ -553,47 +569,66 @@ class EndpointResource(Resource):
                 if hasattr(instance, field_name):
                     log.warning("Obsolete use of %s into models", field_name)
                     relationships = getattr(instance, field_name)
+        elif relationships_expansion is not None:
+            for e in relationships_expansion:
+                if e.startswith("%s." % relationship_name):
+                    rel_name_len = len(relationship_name) + 1
+                    expansion_rel = e[rel_name_len:]
+                    log.debug(
+                        "Expanding %s relationship with %s",
+                        relationship_name,
+                        expansion_rel
+                    )
+                    relationships.append(expansion_rel)
 
-            for relationship in relationships:
-                subrelationship = []
-                # log.debug("Investigate relationship %s" % relationship)
+        linked = {}
+        for relationship in relationships:
+            subrelationship = []
+            # log.debug("Investigate relationship %s" % relationship)
 
-                if hasattr(instance, relationship):
-                    rel = getattr(instance, relationship)
-                    for node in rel.all():
-                        subnode = self.getJsonResponse(
-                            node,
-                            view_public_only=view_public_only,
-                            skip_missing_ids=skip_missing_ids,
-                            relationship_depth=relationship_depth + 1,
-                            max_relationship_depth=max_relationship_depth)
+            if not hasattr(instance, relationship):
+                continue
+            rel = getattr(instance, relationship)
+            for node in rel.all():
+                if relationship_name == "":
+                    rel_name = relationship
+                else:
+                    rel_name = "%s.%s" % (relationship_name, relationship)
+                subnode = self.getJsonResponse(
+                    node,
+                    view_public_only=view_public_only,
+                    skip_missing_ids=skip_missing_ids,
+                    relationship_depth=relationship_depth + 1,
+                    max_relationship_depth=max_relationship_depth,
+                    relationship_name=rel_name,
+                    relationships_expansion=relationships_expansion)
 
-                        # Verify if instance and node are linked by a
-                        # relationship with a custom model with fields flagged
-                        # as show=True. In this case, append relationship
-                        # properties to the attribute model of the node
-                        r = rel.relationship(node)
-                        attrs = self.get_show_fields(
-                            r, 'show_fields', view_public_only)
+                # Verify if instance and node are linked by a
+                # relationship with a custom model with fields flagged
+                # as show=True. In this case, append relationship
+                # properties to the attribute model of the node
+                r = rel.relationship(node)
+                attrs = self.get_show_fields(
+                    r, 'show_fields', view_public_only)
 
-                        for k in attrs:
-                            if k in subnode['attributes']:
-                                log.warning(
-                                    "Name collision %s" % k +
-                                    " on node %s" % subnode +
-                                    " from both model %s" % type(node) +
-                                    " and property model %s" % type(r)
-                                )
-                            subnode['attributes'][k] = attrs[k]
+                for k in attrs:
+                    if k in subnode['attributes']:
+                        log.warning(
+                            "Name collision %s" % k +
+                            " on node %s" % subnode +
+                            " from both model %s" % type(node) +
+                            " and property model %s" % type(r)
+                        )
+                    subnode['attributes'][k] = attrs[k]
 
-                        # subnode['attributes']['pippo'] = 'boh'
-                        subrelationship.append(subnode)
+                # subnode['attributes']['pippo'] = 'boh'
+                subrelationship.append(subnode)
 
-                if len(subrelationship) > 0:
-                    linked[relationship] = subrelationship
+            if len(subrelationship) > 0:
+                linked[relationship] = subrelationship
 
-            if len(linked) > 0:
-                data['relationships'] = linked
+        if len(linked) > 0:
+            data['relationships'] = linked
 
         return data
 
@@ -709,3 +744,29 @@ class EndpointResource(Resource):
             return roles
 
         return ids
+
+    def get_user_if_logged(self):
+        """
+        Helper to be used inside an endpoint that doesn't explicitly
+        ask for authentication, but might want to do some extra behaviour
+        when a valid token is presented
+        """
+
+        user = self.auth.get_user()
+        if user is not None:
+            return user
+
+        if request.method == 'OPTIONS':
+            return user
+
+        from restapi.protocols.bearer import HTTPTokenAuth
+        http = HTTPTokenAuth()
+        auth_type, token = http.get_auth_from_header()
+
+        if auth_type is not None:
+            if http.authenticate(self.auth.verify_token, token):
+                # we have a valid token in header
+                user = self.get_current_user()
+                log.warning("Logged user: %s", user.email)
+
+        return user
