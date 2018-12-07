@@ -57,6 +57,9 @@ setup(
         "flask_injector==0.10.1",
 
         # DB drivers
+
+        # Do not work with 3.3.0
+        # "neomodel==3.3.0",
         "neomodel==3.2.9",
         "psycopg2-binary",
         "pymodm",
