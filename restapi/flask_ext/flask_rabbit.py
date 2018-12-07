@@ -58,20 +58,22 @@ class RabbitWrapper(object):
         # Initial connection:
         if self.__dont_connect:
             log.warn('Will not connect to RabbitMQ (dont_connect = True).')
-            log.debug('Creating RabbitMQ connection wrapper... done. (without connection).')
+            log.debug(
+                'Creating RabbitMQ connection wrapper... done. (without connection).')
             return None
 
         try:
             self.__connect()
             log.debug('Creating RabbitMQ connection wrapper... done. (successful).')
 
-        except pika.exceptions.AMQPConnectionError as e:
+        except pika.exceptions.AMQPConnectionError:
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn('Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.')
-            log.debug('Creating RabbitMQ connection wrapper... done. (without connection).')
-
+            log.warn(
+                'Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.')
+            log.debug(
+                'Creating RabbitMQ connection wrapper... done. (without connection).')
 
     def __connect(self):
         log.info('Connecting to the Rabbit...')
@@ -84,17 +86,17 @@ class RabbitWrapper(object):
         if ssl_enabled is None:
             ssl_enabled = False
         else:
-            ssl_enabled = (ssl_enabled.lower() == 'true' or int(ssl_enabled)==1)
+            ssl_enabled = (ssl_enabled.lower() == 'true' or int(ssl_enabled) == 1)
         log.info('SSL enabled for RabbitMQ? %s' % ssl_enabled)
 
         try:
             self.__connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
-                    host = self.__variables.get('host'),
-                    port = int(self.__variables.get('port')),
-                    virtual_host = self.__variables.get('vhost'),
-                    credentials = credentials,
-                    ssl = ssl_enabled
+                    host=self.__variables.get('host'),
+                    port=int(self.__variables.get('port')),
+                    virtual_host=self.__variables.get('vhost'),
+                    credentials=credentials,
+                    ssl=ssl_enabled
                 )
             )
             self.__couldnt_connect = 0
@@ -106,10 +108,8 @@ class RabbitWrapper(object):
             '''
             log.warn('Connecting to the Rabbit... failed (%s)' % e)
             self.__connection = None
-            self.__couldnt_connect = self.__couldnt_connect+1
+            self.__couldnt_connect = self.__couldnt_connect + 1
             raise e
-
-
 
     '''
     Send a log message to the RabbitMQ queue, unless
@@ -123,19 +123,26 @@ class RabbitWrapper(object):
     :param exchange: RabbitMQ exchange where the message should be sent
     :param queue: RabbitMQ routing key.
     '''
+
     def log_json_to_queue(self, dictionary_message, app_name, exchange, queue):
-        log.verbose('Asked to log (%s, %s, %s): %s' % (exchange, queue, app_name, dictionary_message))
+        log.verbose(
+            'Asked to log (%s, %s, %s): %s',
+            exchange, queue, app_name, dictionary_message
+        )
         body = json.dumps(dictionary_message)
 
         # If no RabbitMQ connection, write into normal log:
         max_reconnect = 3
         if self.__dont_connect or self.__couldnt_connect > max_reconnect:
-            log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
+            log.info(
+                'RABBIT LOG MESSAGE (%s, %s, %s): %s',
+                app_name, exchange, queue, body
+            )
             return
 
         # Settings for the message:
-        filter_code = 'de.dkrz.seadata.filter_code.json' # TODO Add to variables!
-        permanent_delivery=2
+        filter_code = 'de.dkrz.seadata.filter_code.json'  # TODO Add to variables!
+        permanent_delivery = 2
         props = pika.BasicProperties(
             delivery_mode=permanent_delivery,
             headers={'app_name': app_name, 'filter_code': filter_code},
@@ -146,7 +153,10 @@ class RabbitWrapper(object):
         max_publish = 3
         e = None
         for i in range(max_publish):
-            log.verbose('Trying to send message to RabbitMQ in try (%s/%s)' % ((i+1), max_publish))
+            log.verbose(
+                'Trying to send message to RabbitMQ in try (%s/%s)',
+                (i + 1), max_publish
+            )
 
             try:
 
