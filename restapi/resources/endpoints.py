@@ -479,7 +479,10 @@ class Tokens(EndpointResource):
         if token_id is None:
             # NOTE: this is allowed only in removing tokens in unittests
             if not current_app.config['TESTING']:
-                raise KeyError("TESTING IS FALSE! Specify a valid token")
+                return self.send_errors(
+                    message="Unable to delete all tokens, specify a valid token id",
+                    code=hcodes.HTTP_BAD_REQUEST)
+
             self.auth.invalidate_all_tokens(user=user)
             return self.empty_response()
 
