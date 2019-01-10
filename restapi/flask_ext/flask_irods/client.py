@@ -1212,7 +1212,7 @@ def get_and_verify_irods_session(function, parameters):
         if str(e).strip() == '':
             error += e.__class__.__name__
         else:
-            error *= str(e)
+            error += str(e)
         raise IrodsException(error)
 
     return obj
