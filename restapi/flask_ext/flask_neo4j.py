@@ -4,7 +4,7 @@
 
 import socket
 import neo4j
-import shlex
+import re
 from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
@@ -44,12 +44,10 @@ class NeomodelClient():
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
     def fuzzy_tokenize(self, term):
-        tokens = shlex.split(term)
+        tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
-            t += "~"
-            if " " in t:
-                t = "\"%s\"" % t
-            tokens[index] = t
+            if not '"' in t:
+                tokens[index] = += "~"
 
         return ' '.join(tokens)
 
