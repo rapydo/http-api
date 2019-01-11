@@ -387,7 +387,9 @@ class IrodsPythonClient():
             return True
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")
+            raise IrodsException("Cannot read path: not found or permssion denied")
+        except iexceptions.CollectionDoesNotExist:
+            raise IrodsException("Cannot read path: not found or permssion denied")
         return False
 
     def read_in_chunks(self, file_object, chunk_size=None):
