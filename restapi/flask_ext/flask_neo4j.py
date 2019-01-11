@@ -46,8 +46,20 @@ class NeomodelClient():
     def fuzzy_tokenize(self, term):
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
-            if not '"' in t:
-                tokens[index] += "~1"
+
+            # Do not apply fuzzy search to quoted strings
+            if '"' in t:
+                continue
+
+            # Do not apply fuzzy search to special characters
+            if t == '+' or t == '!':
+                continue
+
+            # Do not apply fuzzy search to special operators
+            if t == 'AND' or t == 'OR' or t == 'NOT':
+                continue
+
+            tokens[index] += "~1"
 
         return ' '.join(tokens)
 
