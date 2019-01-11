@@ -47,7 +47,7 @@ class NeomodelClient():
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
             if not '"' in t:
-                tokens[index] = += "~"
+                tokens[index] += "~"
 
         return ' '.join(tokens)
 
