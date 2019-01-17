@@ -186,11 +186,11 @@ def send_errors_by_email(func):
             body += "\n"
             body = "Name: %s" % task_name
             body += "\n"
-            body = "Arguments: %s" % self.request.args
+            body = "Arguments: %s" % str(self.request.args)
             body += "\n"
-            body += "Args: %s" % args
+            body += "Args: %s" % str(args)
             body += "\n"
-            body += "Kwargs: %s" % kwargs
+            body += "Kwargs: %s" % str(kwargs)
             body += "\n"
             body += "Error: %s" % (traceback.format_exc())
 
