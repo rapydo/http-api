@@ -180,10 +180,11 @@ def send_errors_by_email(func):
         except BaseException as e:
 
             task_id = self.request.id
+            task_name = self.request.task
             log.error("Task %s failed, sending a report by email", task_id)
             body = "Celery task %s failed" % task_id
             body += "\n"
-            body = "Name: " % self.request.task
+            body = "Name: " % task_name
             body += "\n"
             body = "Arguments: " % self.request.args
             body += "\n"
@@ -197,7 +198,7 @@ def send_errors_by_email(func):
                 mem.customizer._configurations,
                 "project.title",
                 default='Unkown title')
-            subject = "Task failure from %s" % project
+            subject = "%s: task %s failed" % (project, task_name)
             send_mail(body, subject)
 
     return wrapper
