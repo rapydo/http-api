@@ -184,9 +184,9 @@ def send_errors_by_email(func):
             log.error("Task %s failed, sending a report by email", task_id)
             body = "Celery task %s failed" % task_id
             body += "\n"
-            body = "Name: " % task_name
+            body = "Name: %s" % task_name
             body += "\n"
-            body = "Arguments: " % self.request.args
+            body = "Arguments: %s" % self.request.args
             body += "\n"
             body += "Args: %s" % args
             body += "\n"
