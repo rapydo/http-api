@@ -90,9 +90,13 @@ class AdminUsers(GraphBaseOperations):
 
     def send_notification(self, user, unhashed_password, is_update=False):
 
-        title = mem.customizer._configurations \
-            .get('project', {}) \
-            .get('title', "Unkown title")
+        # title = mem.customizer._configurations \
+        #     .get('project', {}) \
+        #     .get('title', "Unkown title")
+        title = glom(
+            mem.customizer._configurations,
+            "project.title",
+            default='Unkown title')
 
         subject = "%s: " % title
         if is_update:
