@@ -5,9 +5,16 @@ Celery extension wrapper
 
 """
 from celery import Celery
+from functools import wraps
+import traceback
+from glom import glom
 # from kombu import Exchange, Queue
 
+from utilities.globals import mem
+
+from restapi.services.mail import send_mail
 from restapi.flask_ext import BaseExtension, get_logger
+
 
 log = get_logger(__name__)
 
@@ -157,3 +164,36 @@ class CeleryExt(BaseExtension):
             CeleryExt.celery_app = celery_app
 
         return celery_app
+
+
+def send_errors_by_email(func):
+    """
+    Send a notification email to a given recipient to the
+    system administrator with details about failure.
+    """
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        try:
+            return func(self, *args, **kwargs)
+
+        except BaseException as e:
+
+            task_id = self.request.id
+            log.error("Task %s failed, sending a report by email", task_id)
+            body = "Celery task %s failed" % task_id
+            body += "\n"
+            body += "Args: %s" % args
+            body += "\n"
+            body += "Kwargs: %s" % kwargs
+            body += "\n"
+            body += "Error: %s" % (traceback.format_exc())
+
+            project = glom(
+                mem.customizer._configurations,
+                "project.title",
+                default='Unkown title')
+            subject = "Task failure from %s" % project
+            send_mail(body, subject)
+
+    return wrapper
