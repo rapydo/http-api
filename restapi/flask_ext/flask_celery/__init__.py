@@ -12,7 +12,7 @@ from glom import glom
 
 from utilities.globals import mem
 
-from restapi.services.mail import send_mail
+from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.flask_ext import BaseExtension, get_logger
 
 
@@ -181,20 +181,26 @@ def send_errors_by_email(func):
 
             task_id = self.request.id
             task_name = self.request.task
-            log.error("Task %s failed, sending a report by email", task_id)
-            body = "Celery task %s failed" % task_id
-            body += "\n\n"
-            body += "Name: %s" % task_name
-            body += "\n\n"
-            body += "Arguments: %s" % str(self.request.args)
-            body += "\n\n"
-            body += "Error: %s" % (traceback.format_exc())
 
-            project = glom(
-                mem.customizer._configurations,
-                "project.title",
-                default='Unkown title')
-            subject = "%s: task %s failed" % (project, task_name)
-            send_mail(body, subject)
+            if send_mail_is_active():
+                log.error("Task %s failed, sending a report by email", task_id)
+                body = "Celery task %s failed" % task_id
+                body += "\n\n"
+                body += "Name: %s" % task_name
+                body += "\n\n"
+                body += "Arguments: %s" % str(self.request.args)
+                body += "\n\n"
+                body += "Error: %s" % (traceback.format_exc())
+
+                project = glom(
+                    mem.customizer._configurations,
+                    "project.title",
+                    default='Unkown title')
+                subject = "%s: task %s failed" % (project, task_name)
+                send_mail(body, subject)
+            else:
+                log.error("Celery task %s failed (%s)", task_id, task_name)
+                log.error("Failed task arguments: %s", str(self.request.args))
+                log.error("Task error: %s", traceback.format_exc())
 
     return wrapper
