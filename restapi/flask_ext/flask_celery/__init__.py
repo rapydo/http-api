@@ -182,8 +182,13 @@ def send_errors_by_email(func):
             task_id = self.request.id
             task_name = self.request.task
 
+            log.error("Celery task %s failed (%s)", task_id, task_name)
+            log.error("Failed task arguments: %s", str(self.request.args))
+            log.error("Task error: %s", traceback.format_exc())
+
             if send_mail_is_active():
-                log.error("Task %s failed, sending a report by email", task_id)
+                log.info("Sending error report by email", task_id, task_name)
+
                 body = "Celery task %s failed" % task_id
                 body += "\n\n"
                 body += "Name: %s" % task_name
@@ -198,9 +203,5 @@ def send_errors_by_email(func):
                     default='Unkown title')
                 subject = "%s: task %s failed" % (project, task_name)
                 send_mail(body, subject)
-            else:
-                log.error("Celery task %s failed (%s)", task_id, task_name)
-                log.error("Failed task arguments: %s", str(self.request.args))
-                log.error("Task error: %s", traceback.format_exc())
 
     return wrapper
