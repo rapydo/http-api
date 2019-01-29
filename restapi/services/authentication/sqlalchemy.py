@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.exceptions import RestApiException
+from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -53,8 +55,8 @@ class Authentication(BaseAuthentication):
                 user = self.db.User.query.filter_by(
                     uuid=payload['user_id']).first()
         except sqlalchemy.exc.StatementError as e:
-            log.critical(str(e))
-            return None
+            raise RestApiException(
+                str(e), status_code=hcodes.HTTP_SERVICE_UNAVAILABLE)
         except sqlalchemy.exc.DatabaseError as e:
             if retry <= 0:
                 log.error(str(e))
