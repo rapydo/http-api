@@ -52,6 +52,9 @@ class Authentication(BaseAuthentication):
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.query.filter_by(
                     uuid=payload['user_id']).first()
+        except sqlalchemy.exc.StatementError as e:
+            log.critical(str(e))
+            return None
         except sqlalchemy.exc.DatabaseError as e:
             if retry <= 0:
                 log.error(str(e))
