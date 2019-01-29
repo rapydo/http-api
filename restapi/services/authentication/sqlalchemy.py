@@ -54,18 +54,12 @@ class Authentication(BaseAuthentication):
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.query.filter_by(
                     uuid=payload['user_id']).first()
-        except sqlalchemy.exc.InvalidRequestError as e:
-            log.error("Backend database raised InvalidRequestError")
+        except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
             log.error(str(e))
-            error = str(e).split("\n")
             raise RestApiException(
-                error[0], status_code=hcodes.HTTP_SERVICE_UNAVAILABLE)
-        except sqlalchemy.exc.StatementError as e:
-            log.error("Backend database raised StatementError")
-            log.error(str(e))
-            error = str(e).split("\n")
-            raise RestApiException(
-                error[0], status_code=hcodes.HTTP_SERVICE_UNAVAILABLE)
+                "Backend database is unavailable",
+                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
+            )
         except sqlalchemy.exc.DatabaseError as e:
             if retry <= 0:
                 log.error(str(e))
