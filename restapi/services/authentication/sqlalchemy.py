@@ -363,7 +363,12 @@ class Authentication(BaseAuthentication):
 
     def irods_user(self, username, session):
 
-        user = self.get_user_object(username)
+        try:
+            user = self.get_user_object(username)
+        except BaseException as e:
+            log.critical("exception getting user")
+            raise e
+
         if user is not None:
             log.info("iRODS user already cached: %s", username)
             user.session = session
