@@ -60,13 +60,13 @@ class Customizer(object):
         # Reading configuration
 
         confs_path = helpers.current_dir(CONF_PATH)
-        self._configurations, self._from_project, self._from_path = \
+        self._configurations, self._extended_project, self._extended_path = \
             configuration.read(
                 default_file_path=confs_path,
                 base_project_path=confs_path,
                 projects_path=confs_path,
                 submodules_path=confs_path,
-                from_configuration_prefix="from_",
+                extended_configuration_prefix="extended",
                 do_exit=True
             )
 
