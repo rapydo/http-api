@@ -59,12 +59,16 @@ class Customizer(object):
         ##################
         # Reading configuration
 
-        default_file_path = helpers.current_dir(CONF_PATH)
-        project_file_path = helpers.current_dir(CONF_PATH)
-        self._configurations = configuration.read(
-            default_file_path,
-            project_path=project_file_path,
-        )
+        confs_path = helpers.current_dir(CONF_PATH)
+        self._configurations, self._from_project, self._from_path = \
+            configuration.read(
+                default_file_path=confs_path,
+                base_project_path=confs_path,
+                projects_path=confs_path,
+                submodules_path=confs_path,
+                from_configuration_prefix="from_",
+                do_exit=True
+            )
 
     def do_schema(self):
         """ Schemas exposing, if requested """
