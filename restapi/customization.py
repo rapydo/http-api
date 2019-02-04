@@ -66,7 +66,7 @@ class Customizer(object):
                 base_project_path=confs_path,
                 projects_path=confs_path,
                 submodules_path=confs_path,
-                extended_configuration_prefix="extended",
+                from_container=True,
                 do_exit=True
             )
 
@@ -104,21 +104,34 @@ class Customizer(object):
         ##################
         # Walk swagger directories looking for endpoints
 
-        # FIXME: how to do this?
-        # from utilities import helpers
-        # custom_dir = helpers.current_dir(CUSTOM_PACKAGE)
-        # base_dir = helpers.script_abspath(__file__)
+        swagger_folders = []
+        # base swagger dir (rapydo/http-api)
+        swagger_folders.append(helpers.script_abspath(__file__))
 
-        base_swagger_confdir = helpers.script_abspath(__file__)
-        custom_swagger_confdir = helpers.current_dir(CUSTOM_PACKAGE)
+        # swagger dir from extended project, if any
+        if self._extended_project is not None:
 
-        # for base_dir in [BACKEND_PACKAGE, CUSTOM_PACKAGE]:
-        for base_dir in [base_swagger_confdir, custom_swagger_confdir]:
+            swagger_folders.append(
+                helpers.current_dir(self._extended_project))
+
+        # custom swagger dir
+        swagger_folders.append(helpers.current_dir(CUSTOM_PACKAGE))
+
+        simple_override_check = {}
+        for base_dir in swagger_folders:
 
             swagger_dir = os.path.join(base_dir, 'swagger')
             log.verbose("Swagger dir: %s" % swagger_dir)
 
             for ep in os.listdir(swagger_dir):
+
+                if ep in simple_override_check:
+                    log.warning(
+                        "%s already loaded from %s",
+                        ep, simple_override_check.get(ep)
+                    )
+                    continue
+                simple_override_check[ep] = base_dir
 
                 swagger_endpoint_dir = os.path.join(swagger_dir, ep)
 
@@ -143,6 +156,7 @@ class Customizer(object):
 
                 current = self.lookup(
                     ep, apiclass_module, swagger_endpoint_dir, isbase)
+
                 if current is not None and current.exists:
                     # Add endpoint to REST mapping
                     self._endpoints.append(current)
