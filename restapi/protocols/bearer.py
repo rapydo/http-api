@@ -60,7 +60,7 @@ class HTTPTokenAuth(object):
                 roles, required_roles=required_roles)
         return False
 
-    def get_auth_from_header(self):
+    def get_authorization_token(self):
 
         # If token is unavailable, clearly state it in response to user
         token = "EMPTY"
@@ -84,7 +84,7 @@ class HTTPTokenAuth(object):
         def decorated(*args, **kwargs):
 
             # Recover the auth object
-            auth_type, token = self.get_auth_from_header()
+            auth_type, token = self.get_authorization_token()
             # Base header for errors
             headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
             # Internal API 'self' reference
