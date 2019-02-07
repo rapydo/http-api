@@ -14,6 +14,7 @@ there is no client id nor is client authentication required.
 
 from functools import wraps
 from flask import request
+from restapi.services.detect import Detector
 from utilities import htmlcodes as hcodes
 from utilities.meta import Meta
 from utilities.logs import get_logger
@@ -26,6 +27,11 @@ HTTPAUTH_DEFAULT_REALM = "Authentication Required"
 HTTPAUTH_TOKEN_KEY = 'Token'
 HTTPAUTH_AUTH_HEADER = 'WWW-Authenticate'
 HTTPAUTH_AUTH_FIELD = 'Authorization'
+
+ALLOW_ACCESS_TOKEN_PARAMETER = (
+    Detector.get_global_var(
+        'ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
+)
 
 
 class HTTPTokenAuth(object):
@@ -80,6 +86,17 @@ class HTTPTokenAuth(object):
             except ValueError:
                 # The Authorization header is either empty or has no token
                 pass
+
+        if not ALLOW_ACCESS_TOKEN_PARAMETER:
+            return auth_type, token
+
+        token = request.args.get("access_token")
+
+        if token is None:
+            return auth_type, token
+
+        # We are assuming that received access token is always Bearer
+        auth_type = 'Bearer'
 
         return auth_type, token
 
