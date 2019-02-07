@@ -6,6 +6,7 @@ We create all the internal flask components here.
 """
 
 import warnings
+from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from werkzeug.contrib.fixers import ProxyFix
@@ -269,7 +270,18 @@ def create_app(name=__name__,
             except Exception as e:
                 data = 'OTHER_UPLOAD'
 
-        log.info("%s %s %s %s", request.method, request.url, data, response)
+        # Obfuscating query parameters
+        url = urllib_parse.urlparse(request.url)
+        params = urllib_parse.unquote(
+            urllib_parse.urlencode(
+                handle_log_output(
+                    url.query
+                )
+            )
+        )
+        url = url._replace(query=params)
+        url = urllib_parse.urlunparse(url)
+        log.info("%s %s %s %s", request.method, url, data, response)
 
         return response
 
