@@ -67,11 +67,16 @@ class HTTPTokenAuth(object):
         auth_type = None
 
         auth = request.authorization
-        if auth is None and HTTPAUTH_AUTH_FIELD in request.headers:
+        if auth is not None:
+            # Basic authenticaton is now allowed
+            return auth_type, token
+
+        if HTTPAUTH_AUTH_FIELD in request.headers:
             # Flask/Werkzeug do not recognize any authentication types
             # other than Basic or Digest, so here we parse the header by hand
             try:
                 auth_type, token = self.get_authentication_from_headers()
+                return auth_type, token
             except ValueError:
                 # The Authorization header is either empty or has no token
                 pass
