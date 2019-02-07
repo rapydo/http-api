@@ -109,7 +109,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             obj = self.custom_connection(**kwargs)
         else:
             obj = self.retry()
-            log.debug("Connected! %s", self.name)
+            log.verbose("Connected! %s", self.name)
 
         # AFTER
         self.post_connection(obj, **kwargs)

@@ -150,7 +150,7 @@ class Authentication(BaseAuthentication):
         self.db.session.add(token_entry)
         self.db.session.commit()
 
-        log.debug("Token stored inside the DB")
+        log.verbose("Token stored inside the DB")
 
     def refresh_token(self, jti):
         now = datetime.now()
@@ -369,7 +369,7 @@ class Authentication(BaseAuthentication):
         user = self.get_user_object(username)
 
         if user is not None:
-            log.info("iRODS user already cached: %s", username)
+            log.debug("iRODS user already cached: %s", username)
             user.session = session
         else:
 
