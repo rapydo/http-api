@@ -646,11 +646,11 @@ class IrodsPythonClient():
                     "Cannot set inheritance: collection not found")
         return False
 
-    def get_user_home(self, user=None):
+    def get_user_home(self, user=None, append_user=True):
 
         zone = self.get_current_zone(prepend_slash=True)
 
-        if user is None:
+        if user is None and append_user:
             user = self.get_current_user()
 
         home = self.variables.get('home', 'home')
@@ -659,20 +659,6 @@ class IrodsPythonClient():
 
         path = os.path.join(zone, home.lstrip('/'), user)
         return path
-
-        # if user == self.variables.get('user'):
-        #     home = self.variables.get('home')
-        # else:
-        #     home = os.path.join('home', user)
-
-        # if home.startswith("/"):
-        #     if home.startswith(zone):
-        #         home = home[len(zone):]
-        #     else:
-        #         home = home[1:]
-
-        # path = os.path.join(zone, home.lstrip('/'))
-        # return path
 
     def get_current_user(self):
         return self.prc.username
