@@ -650,15 +650,17 @@ class IrodsPythonClient():
 
         zone = self.get_current_zone(prepend_slash=True)
 
-        if user is None and append_user:
-            user = self.get_current_user()
-
         home = self.variables.get('home', 'home')
         if home.startswith(zone):
             home = home[len(zone):]
+        home = home.lstrip('/')
 
-        path = os.path.join(zone, home.lstrip('/'), user)
-        return path
+        if not append_user:
+            user = ""
+        elif user is None:
+            user = self.get_current_user()
+
+        return os.path.join(zone, home, user)
 
     def get_current_user(self):
         return self.prc.username
