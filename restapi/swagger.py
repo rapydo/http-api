@@ -14,7 +14,7 @@ from bravado_core.spec import Spec
 # from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
 from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED 
+from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import htmlcodes as hcodes
 from utilities import helpers
 from utilities.myyaml import load_yaml_file

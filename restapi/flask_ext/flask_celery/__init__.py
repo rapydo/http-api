@@ -177,7 +177,7 @@ def send_errors_by_email(func):
         try:
             return func(self, *args, **kwargs)
 
-        except BaseException as e:
+        except BaseException:
 
             task_id = self.request.id
             task_name = self.request.task
