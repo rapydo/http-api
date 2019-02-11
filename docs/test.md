@@ -79,7 +79,7 @@ import unittest
 from restapi.server import create_app
 
 
-__author__ = 'Roberto Mucci (r.mucci@cineca.it)'
+__author__ = 'Roberto Mucci (m.dantonio@cineca.it)'
 
 
 class TestDataObjects(unittest.TestCase):

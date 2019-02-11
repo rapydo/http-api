@@ -14,6 +14,7 @@ there is no client id nor is client authentication required.
 
 from functools import wraps
 from flask import request
+from restapi.services.detect import Detector
 from utilities import htmlcodes as hcodes
 from utilities.meta import Meta
 from utilities.logs import get_logger
@@ -26,6 +27,11 @@ HTTPAUTH_DEFAULT_REALM = "Authentication Required"
 HTTPAUTH_TOKEN_KEY = 'Token'
 HTTPAUTH_AUTH_HEADER = 'WWW-Authenticate'
 HTTPAUTH_AUTH_FIELD = 'Authorization'
+
+ALLOW_ACCESS_TOKEN_PARAMETER = (
+    Detector.get_global_var(
+        'ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
+)
 
 
 class HTTPTokenAuth(object):
@@ -60,21 +66,37 @@ class HTTPTokenAuth(object):
                 roles, required_roles=required_roles)
         return False
 
-    def get_auth_from_header(self):
+    def get_authorization_token(self):
 
         # If token is unavailable, clearly state it in response to user
         token = "EMPTY"
         auth_type = None
 
         auth = request.authorization
-        if auth is None and HTTPAUTH_AUTH_FIELD in request.headers:
+        if auth is not None:
+            # Basic authenticaton is now allowed
+            return auth_type, token
+
+        if HTTPAUTH_AUTH_FIELD in request.headers:
             # Flask/Werkzeug do not recognize any authentication types
             # other than Basic or Digest, so here we parse the header by hand
             try:
                 auth_type, token = self.get_authentication_from_headers()
+                return auth_type, token
             except ValueError:
                 # The Authorization header is either empty or has no token
                 pass
+
+        if not ALLOW_ACCESS_TOKEN_PARAMETER:
+            return auth_type, token
+
+        token = request.args.get("access_token")
+
+        if token is None:
+            return auth_type, token
+
+        # We are assuming that received access token is always Bearer
+        auth_type = 'Bearer'
 
         return auth_type, token
 
@@ -84,7 +106,7 @@ class HTTPTokenAuth(object):
         def decorated(*args, **kwargs):
 
             # Recover the auth object
-            auth_type, token = self.get_auth_from_header()
+            auth_type, token = self.get_authorization_token()
             # Base header for errors
             headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
             # Internal API 'self' reference

@@ -10,6 +10,7 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 
 import os
 from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
+from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities.meta import Meta
 from utilities.myyaml import load_yaml_file
 from utilities import helpers
@@ -199,11 +200,19 @@ class Detector(object):
 
                 # Passing models
                 if service.get('load_models'):
-                    MyClass.set_models(
-                        self.meta.import_models(name, custom=False),
-                        self.meta.import_models(
-                            name, custom=True, exit_on_fail=False)
-                    )
+
+                    base_models = self.meta.import_models(
+                        name, BACKEND_PACKAGE, exit_on_fail=True)
+                    if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                        extended_models = {}
+                    else:
+                        extended_models = self.meta.import_models(
+                            name, EXTENDED_PACKAGE, exit_on_fail=False)
+
+                    custom_models = self.meta.import_models(
+                        name, CUSTOM_PACKAGE, exit_on_fail=False)
+
+                    MyClass.set_models(base_models, extended_models, custom_models)
                 else:
                     log.very_verbose("Skipping models")
 

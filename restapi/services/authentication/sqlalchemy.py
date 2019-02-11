@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.exceptions import RestApiException
+from utilities import htmlcodes as hcodes
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -52,6 +54,12 @@ class Authentication(BaseAuthentication):
             if payload is not None and 'user_id' in payload:
                 user = self.db.User.query.filter_by(
                     uuid=payload['user_id']).first()
+        except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
+            log.error(str(e))
+            raise RestApiException(
+                "Backend database is unavailable",
+                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
+            )
         except sqlalchemy.exc.DatabaseError as e:
             if retry <= 0:
                 log.error(str(e))
@@ -142,7 +150,7 @@ class Authentication(BaseAuthentication):
         self.db.session.add(token_entry)
         self.db.session.commit()
 
-        log.debug("Token stored inside the DB")
+        log.verbose("Token stored inside the DB")
 
     def refresh_token(self, jti):
         now = datetime.now()
@@ -359,8 +367,9 @@ class Authentication(BaseAuthentication):
     def irods_user(self, username, session):
 
         user = self.get_user_object(username)
+
         if user is not None:
-            log.info("iRODS user already cached: %s", username)
+            log.debug("iRODS user already cached: %s", username)
             user.session = session
         else:
 

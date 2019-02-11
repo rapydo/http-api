@@ -36,23 +36,24 @@ class BaseExtension(metaclass=abc.ABCMeta):
         log.very_verbose("Opening service instance of %s" % self.name)
 
     @classmethod
-    def set_models(cls, base_models, custom_models):
+    def set_models(cls, base_models, extended_models, custom_models):
 
         # Join models as described by issue #16
         cls.models = base_models
-        for key, model in custom_models.items():
+        for m in [extended_models, custom_models]:
+            for key, model in m.items():
 
-            # Verify if overriding
-            if key in base_models.keys():
-                original_model = base_models[key]
-                # Override
-                if issubclass(model, original_model):
-                    log.very_verbose("Overriding model %s" % key)
-                    cls.models[key] = model
-                    continue
+                # Verify if overriding
+                if key in base_models.keys():
+                    original_model = base_models[key]
+                    # Override
+                    if issubclass(model, original_model):
+                        log.very_verbose("Overriding model %s" % key)
+                        cls.models[key] = model
+                        continue
 
-            # Otherwise just append
-            cls.models[key] = model
+                # Otherwise just append
+                cls.models[key] = model
 
         if len(cls.models) > 0:
             log.verbose("Loaded models")
@@ -109,7 +110,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             obj = self.custom_connection(**kwargs)
         else:
             obj = self.retry()
-            log.info("Connected! %s", self.name)
+            log.verbose("Connected! %s", self.name)
 
         # AFTER
         self.post_connection(obj, **kwargs)

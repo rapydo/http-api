@@ -46,6 +46,10 @@ setup(
         # Flask and plugins
         "flask==1.0.2",
         "Flask-Cors",
+        # Version 1.2.0 depends on OAuthlib 3.0.0 and above
+        # It does not support versions of OAuthlib before 3.0.0
+        # But Flask-OAuthlib depends from OAuthlib < 3.0.0
+        "requests-oauthlib==1.1.0",
         "Flask-OAuthlib",
         "Flask-RESTful",
         "Flask-SQLAlchemy",
@@ -57,7 +61,10 @@ setup(
         "flask_injector==0.10.1",
 
         # DB drivers
-        "neomodel==3.3.0",
+
+        # Do not work with 3.3.0
+        # "neomodel==3.3.0",
+        "neomodel==3.2.9",
         "psycopg2-binary",
         "pymodm",
 

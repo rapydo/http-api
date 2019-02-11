@@ -14,6 +14,7 @@ from bravado_core.spec import Spec
 # from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
 from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
+from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import htmlcodes as hcodes
 from utilities import helpers
 from utilities.myyaml import load_yaml_file
@@ -400,13 +401,26 @@ class BeSwagger(object):
         path = helpers.script_abspath(__file__, SWAGGER_DIR)
         data = load_yaml_file(filename, path=path)
 
+        # EXTENDED definitions, if any
+        if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+            extended_models = {}
+        else:
+            path = helpers.current_dir(EXTENDED_PACKAGE, SWAGGER_DIR)
+            # NOTE: with logger=False I skip the warning if this file doesn't exist
+            extended_models = load_yaml_file(
+                filename, path=path, skip_error=True, logger=False)
+
         # CUSTOM definitions
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
-        override = load_yaml_file(
-            filename, path=path, skip_error=True, logger=False)
         # NOTE: with logger=False I skip the warning if this file doesn't exist
+        custom_models = load_yaml_file(
+            filename, path=path, skip_error=True, logger=False)
 
-        return mix(data, override)
+        if extended_models is None:
+            return mix(data, custom_models)
+
+        m1 = mix(data, extended_models)
+        return mix(m1, custom_models)
 
     def validation(self, swag_dict):
         """

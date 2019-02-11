@@ -387,7 +387,9 @@ class IrodsPythonClient():
             return True
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")
+            raise IrodsException("Cannot read path: not found or permssion denied")
+        except iexceptions.CollectionDoesNotExist:
+            raise IrodsException("Cannot read path: not found or permssion denied")
         return False
 
     def read_in_chunks(self, file_object, chunk_size=None):
@@ -644,33 +646,21 @@ class IrodsPythonClient():
                     "Cannot set inheritance: collection not found")
         return False
 
-    def get_user_home(self, user=None):
+    def get_user_home(self, user=None, append_user=True):
 
         zone = self.get_current_zone(prepend_slash=True)
-
-        if user is None:
-            user = self.get_current_user()
 
         home = self.variables.get('home', 'home')
         if home.startswith(zone):
             home = home[len(zone):]
+        home = home.lstrip('/')
 
-        path = os.path.join(zone, home.lstrip('/'), user)
-        return path
+        if not append_user:
+            user = ""
+        elif user is None:
+            user = self.get_current_user()
 
-        # if user == self.variables.get('user'):
-        #     home = self.variables.get('home')
-        # else:
-        #     home = os.path.join('home', user)
-
-        # if home.startswith("/"):
-        #     if home.startswith(zone):
-        #         home = home[len(zone):]
-        #     else:
-        #         home = home[1:]
-
-        # path = os.path.join(zone, home.lstrip('/'))
-        # return path
+        return os.path.join(zone, home, user)
 
     def get_current_user(self):
         return self.prc.username
@@ -1212,7 +1202,7 @@ def get_and_verify_irods_session(function, parameters):
         if str(e).strip() == '':
             error += e.__class__.__name__
         else:
-            error *= str(e)
+            error += str(e)
         raise IrodsException(error)
 
     return obj

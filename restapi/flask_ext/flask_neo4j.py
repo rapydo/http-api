@@ -4,6 +4,7 @@
 
 import socket
 import neo4j
+import re
 from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
@@ -40,7 +41,28 @@ class NeomodelClient():
         '''
         Strip and clean up term from special characters.
         '''
-        return term.strip().replace("*", "").replace("'", "\\'")
+        return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
+
+    def fuzzy_tokenize(self, term):
+        tokens = re.findall(r'[^"\s]\S*|".+?"', term)
+        for index, t in enumerate(tokens):
+
+            # Do not apply fuzzy search to quoted strings
+            if '"' in t:
+                continue
+
+            # Do not apply fuzzy search to special characters
+            if t == '+' or t == '!':
+                continue
+
+            # Do not apply fuzzy search to special operators
+            if t == 'AND' or t == 'OR' or t == 'NOT':
+                continue
+
+            tokens[index] += "~1"
+
+        return ' '.join(tokens)
+
 
 
 class NeoModel(BaseExtension):

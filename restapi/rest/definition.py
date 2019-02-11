@@ -17,7 +17,7 @@ from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 from utilities.time import string_from_timestamp
 from restapi.services.detect import detector
-from utilities.logs import get_logger
+from utilities.logs import get_logger, obfuscate_dict
 
 log = get_logger(__name__)
 
@@ -191,7 +191,7 @@ class EndpointResource(Resource):
             return self._args.get(single_parameter, default)
 
         if len(self._args) > 0:
-            log.verbose("Parameters %s" % self._args)
+            log.verbose("Parameters %s", obfuscate_dict(self._args))
         return self._args
 
     def set_method_id(self, name='myid', idtype='string'):
@@ -761,7 +761,7 @@ class EndpointResource(Resource):
 
         from restapi.protocols.bearer import HTTPTokenAuth
         http = HTTPTokenAuth()
-        auth_type, token = http.get_auth_from_header()
+        auth_type, token = http.get_authorization_token()
 
         if auth_type is not None:
             if http.authenticate(self.auth.verify_token, token):

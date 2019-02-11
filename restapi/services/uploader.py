@@ -52,24 +52,6 @@ class Uploader(object):
             return os.path.dirname(abs_file)
         return abs_file
 
-    def download(self, filename=None, subfolder=None, get=False):
-
-        log.warning("DEPRECATED: Use this function from the Downloader class")
-
-        if not get:
-            return self.force_response(
-                "No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED)
-
-        if filename is None:
-            return self.force_response(errors={
-                "Missing file": "No filename specified to download"})
-
-        path = self.absolute_upload_file(
-            filename, subfolder=subfolder, onlydir=True)
-        log.info("Provide '%s' from '%s'", filename, path)
-
-        return send_from_directory(path, filename)
-
     def ngflow_upload(self, filename, destination, content,
                       chunk_number, chunk_size, chunk_total,
                       overwrite=True
