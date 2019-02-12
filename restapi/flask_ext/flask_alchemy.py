@@ -12,6 +12,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import sqlalchemy
 from utilities.meta import Meta
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 
@@ -59,6 +60,11 @@ class SqlAlchemy(BaseExtension):
         obj_name = 'db'
         # search the original sqlalchemy object into models
         db = Meta.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
+
+        # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
+        if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            db = Meta.obj_from_models(obj_name, self.name, EXTENDED_PACKAGE)
+
         if db is None:
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
