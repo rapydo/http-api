@@ -384,7 +384,7 @@ class BeSwagger(object):
         tags = []
         for tag, desc in self._customizer._configurations['tags'].items():
             if tag not in self._used_swagger_tags:
-                log.warning("Skipping unsed tag: %s", tag)
+                log.debug("Skipping unsed tag: %s", tag)
                 continue
             tags.append({'name': tag, 'description': desc})
         output['tags'] = tags
