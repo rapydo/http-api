@@ -2,6 +2,7 @@
 import os
 
 from utilities.email import send_mail as send
+from utilities.email import get_smtp_client
 from utilities import helpers
 from utilities import MODELS_DIR, CUSTOM_PACKAGE
 from utilities.logs import get_logger
@@ -14,6 +15,19 @@ def send_mail_is_active():
     port = os.environ.get("SMTP_PORT")
 
     return host is not None and port is not None
+
+
+def test_smtp_client():
+    host = os.environ.get("SMTP_HOST")
+    port = os.environ.get("SMTP_PORT")
+    username = os.environ.get("SMTP_USERNAME")
+    password = os.environ.get("SMTP_PASSWORD")
+
+    smtp = get_smtp_client(host, port, username, password)
+    if smtp is None:
+        return False
+    smtp.quit()
+    return True
 
 
 def send_mail(
