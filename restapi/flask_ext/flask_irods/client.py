@@ -56,7 +56,14 @@ class IrodsPythonClient():
         return False
 
     def is_collection(self, path):
-        return self.prc.collections.exists(path)
+        try:
+            return self.prc.collections.exists(path)
+        except iexceptions.CAT_SQL_ERR as e:
+            log.error(
+                "is_collection(%s) raised CAT_SQL_ERR (%s)",
+                path, str(e)
+            )
+            return False
 
     def is_dataobject(self, path):
         try:
