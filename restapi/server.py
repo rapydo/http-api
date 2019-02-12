@@ -17,7 +17,7 @@ from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
 from restapi.protocols.restful import Api, farmer, create_endpoints
 from restapi.services.detect import detector
-from restapi.services.mail import send_mail_is_active
+from restapi.services.mail import send_mail_is_active, test_smtp_client
 from utilities.globals import mem
 from utilities.logs import \
     get_logger, \
@@ -286,8 +286,8 @@ def create_app(name=__name__,
 
         return response
 
-    if send_mail_is_active:
-        log.warning("Found SMTP configuration, should be checked")
+    if send_mail_is_active and not test_smtp_client():
+        log.exit("Bad SMTP configuration, unable to create a client")
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
