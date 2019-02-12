@@ -69,8 +69,7 @@ class IrodsPythonClient():
 
     def get_dataobject(self, path):
         try:
-            obj = self.prc.data_objects.get(path)
-            return obj
+            return self.prc.data_objects.get(path)
         except (
             iexceptions.CollectionDoesNotExist,
             iexceptions.DataObjectDoesNotExist
@@ -78,13 +77,8 @@ class IrodsPythonClient():
             raise IrodsException("%s not found or no permissions" % path)
 
     def getPath(self, path, prefix=None):
-        if prefix is None:
-            length = 0
-        else:
-            length = len(prefix)
-
-        if length > 0:
-            path = path[length:]
+        if prefix is not None and prefix != '':
+            path = path[len(prefix):]
             if path[0] == "/":
                 path = path[1:]
 
