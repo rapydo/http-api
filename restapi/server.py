@@ -287,7 +287,7 @@ def create_app(name=__name__,
         return response
 
     if send_mail_is_active and not test_smtp_client():
-        log.exit("Bad SMTP configuration, unable to create a client")
+        log.critical("Bad SMTP configuration, unable to create a client")
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
