@@ -5,6 +5,13 @@ from restapi.rest.definition import EndpointResource
 
 from utilities import htmlcodes as hcodes
 
+"""
+class Tokens
+    GET: get list of tokens for the current link
+    DELETE: invalidate a token
+
+"""
+
 
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
