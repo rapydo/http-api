@@ -1,10 +1,98 @@
 # -*- coding: utf-8 -*-
 
+from flask import jsonify
+
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.exceptions import RestApiException
+from restapi import decorators as decorate
+
+from utilities import htmlcodes as hcodes
+from utilities.globals import mem
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
+
+"""
+class Status
+    GET: return a standard message if API are reachable
+
+class Verify
+    GET: verify connection to a single service
+
+class SwaggerSpecifications
+    GET: return swagger specs
+
+class Internal
+    GET: return a standard message if user has role Internal
+
+class Admin
+    GET: return a standard message if user has role Admin
+
+class Queue
+    GET: get list of celery tasks
+    PUT: revoke a (not running) task
+    DELETE: terminate (if running) and revoke a task
+
+"""
+
+
+class Status(EndpointResource):
+    """ API online client testing """
+
+    @decorate.catch_error()
+    def get(self, service=None):
+
+        return 'Server is alive!'
+
+
+class Verify(EndpointResource):
+    """ Service connection testing """
+
+    @decorate.catch_error()
+    def get(self, service):
+
+        log.critical(detector.available_services)
+        if not detector.check_availability(service):
+            raise RestApiException(
+                "Unknown service: %s" % service,
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            )
+
+        service_instance = self.get_service_instance(
+            service, global_instance=False)
+        log.critical(service_instance)
+        return "Service is reachable: %s" % service
+
+
+class SwaggerSpecifications(EndpointResource):
+    """
+    Specifications output throught Swagger (open API) standards
+    """
+
+    def get(self):
+
+        # NOTE: swagger dictionary is read only once, at server init time
+        swagjson = mem.customizer._definitions
+
+        # NOTE: changing dinamically options, based on where the client lies
+        from restapi.confs import PRODUCTION
+        from flask import request
+        from utilities.helpers import get_api_url
+        api_url = get_api_url(request, PRODUCTION)
+        scheme, host = api_url.rstrip('/').split('://')
+        swagjson['host'] = host
+        swagjson['schemes'] = [scheme]
+
+        # Jsonify, so we skip custom response building
+        return jsonify(swagjson)
+
+
+class Internal(EndpointResource):
+    """ Token and Role authentication test """
+
+    def get(self):
+        return "I am internal"
 
 
 class Admin(EndpointResource):
