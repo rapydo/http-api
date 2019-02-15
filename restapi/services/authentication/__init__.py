@@ -594,11 +594,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return ('internal_user', 'external_user')
 
-    @abc.abstractmethod
-    def store_proxy_cert(self, external_user, proxy):
-        """ Save the proxy certificate name into oauth2 account """
-        return
-
     # ###########################
     # # Login attempts handling #
     # ###########################

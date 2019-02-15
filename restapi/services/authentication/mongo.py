@@ -282,9 +282,6 @@ class Authentication(BaseAuthentication):
         # FIXME: b2access
         raise NotImplementedError("to do")
 
-    def store_proxy_cert(self, external_user, proxy):
-        raise NotImplementedError("to do")
-
     def oauth_from_token(self, token):
         raise NotImplementedError("to do")
 

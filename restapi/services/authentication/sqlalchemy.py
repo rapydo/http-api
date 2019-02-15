@@ -336,17 +336,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         log.debug("Updated external user %s", external_user)
 
-        return internal_user, external_user
-
-    def store_proxy_cert(self, external_user, proxy):
-        if external_user is None:
-            return False
-        external_user.proxyfile = proxy
-        self.db.session.add(external_user)  # can be commented
-        self.db.session.commit()
-        return True
-
-# FIXME: make this methods below abstract for graph and others too?
+        return internal_user, external_use
 
     def oauth_from_token(self, token):
         extus = self.db.ExternalAccounts.query.filter_by(token=token).first()

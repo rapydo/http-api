@@ -44,8 +44,6 @@ class IrodsPythonExt(BaseExtension):
         if self.authscheme is None or self.authscheme.strip() == '':
             self.authscheme = NORMAL_AUTH_SCHEME
 
-        self.authscheme = self.authscheme.upper()
-
         if session is not None:
             user = session.email
         else:

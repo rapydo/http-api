@@ -291,11 +291,6 @@ class Authentication(BaseAuthentication):
 
         return user_node, oauth2_external
 
-    def store_proxy_cert(self, external_user, proxy):
-        # external_user = user_node.externals.all().pop()
-        external_user.proxyfile = proxy
-        external_user.save()
-
     # def associate_object_to_attribute(self, obj, key, value):
 
     #     # ##################################
