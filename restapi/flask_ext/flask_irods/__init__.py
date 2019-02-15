@@ -57,7 +57,7 @@ class IrodsPythonExt(BaseExtension):
             if user is None:
                 if admin:
                     user = self.variables.get('default_admin_user')
-                    self.authscheme = GSI_AUTH_SCHEME
+                    # self.authscheme = GSI_AUTH_SCHEME
                 else:
                     user = self.variables.get('user')
                     if self.authscheme == NORMAL_AUTH_SCHEME:
