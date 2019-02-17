@@ -286,7 +286,7 @@ def create_app(name=__name__,
 
         return response
 
-    if send_mail_is_active:
+    if send_mail_is_active():
         if not test_smtp_client():
             log.critical("Bad SMTP configuration, unable to create a client")
         else:
