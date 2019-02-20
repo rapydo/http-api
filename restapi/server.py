@@ -261,8 +261,16 @@ def create_app(name=__name__,
                 # Limit the parameters string size, sometimes it's too big
                 for k in data:
                     try:
-                        if not isinstance(data[k], str):
+                        if isinstance(data[k], dict):
+                            for kk in data[k]:
+                                v = str(data[k][kk])
+                                if len(v) > MAX_CHAR_LEN:
+                                    v = v[:MAX_CHAR_LEN] + "..."
+                                data[k][kk] = v
                             continue
+                        elif not isinstance(data[k], str):
+                            data[k] = str(data[k])
+
                         if len(data[k]) > MAX_CHAR_LEN:
                             data[k] = data[k][:MAX_CHAR_LEN] + "..."
                     except IndexError:
