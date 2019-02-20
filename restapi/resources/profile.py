@@ -144,6 +144,16 @@ class Profile(EndpointResource):
             roles.append(role.name)
         data["roles"] = roles
 
+        try:
+            for g in current_user.belongs_to.all():
+                data["group"] = {
+                    "uuid": g.uuid,
+                    "shortname": g.shortname,
+                    "fullname": g.fullname
+                }
+        except BaseException as e:
+            log.verbose(e)
+
         data["isAdmin"] = self.auth.verify_admin()
         data["isLocalAdmin"] = self.auth.verify_local_admin()
 
