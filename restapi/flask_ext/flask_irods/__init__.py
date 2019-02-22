@@ -55,15 +55,14 @@ class IrodsPythonExt(BaseExtension):
 
             admin = kwargs.get('be_admin', False)
             if user is None:
-                if admin:
-                    user = self.variables.get('default_admin_user')
-                    # self.authscheme = GSI_AUTH_SCHEME
-                else:
-                    user = self.variables.get('user')
-                    if self.authscheme == NORMAL_AUTH_SCHEME:
-                        self.password = self.variables.get('password')
-                    elif self.authscheme == PAM_AUTH_SCHEME:
-                        self.password = self.variables.get('password')
+                user_key = 'default_admin_user' if admin else 'user'
+                user = self.variables.get(user_key)
+
+            if self.password is None:
+                if self.authscheme == NORMAL_AUTH_SCHEME:
+                    self.password = self.variables.get('password')
+                elif self.authscheme == PAM_AUTH_SCHEME:
+                    self.password = self.variables.get('password')
 
             log.very_verbose(
                 "Check connection parameters:" +
