@@ -439,7 +439,9 @@ class IrodsPythonClient():
             )
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")
+            raise IrodsException("This path does not exist or permission denied")
+        except iexceptions.CollectionDoesNotExist:
+            raise IrodsException("This path does not exist or permission denied")
 
     def write_in_streaming(self, destination, force=False, resource=None):
         """
