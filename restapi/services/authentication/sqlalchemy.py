@@ -60,7 +60,7 @@ class Authentication(BaseAuthentication):
                 "Backend database is unavailable",
                 status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
             )
-        except sqlalchemy.exc.DatabaseError as e:
+        except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             if retry <= 0:
                 log.error(str(e))
                 log.warning("Errors retrieving user object, retrying...")
