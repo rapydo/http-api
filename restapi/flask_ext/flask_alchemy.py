@@ -76,8 +76,8 @@ class SqlAlchemy(BaseExtension):
         from sqlalchemy import create_engine
         from sqlalchemy.orm import scoped_session
         from sqlalchemy.orm import sessionmaker
-        db.engine = create_engine(uri)
-        db.session = scoped_session(sessionmaker(bind=db.engine))
+        db.engine_bis = create_engine(uri)
+        db.session = scoped_session(sessionmaker(bind=db.engine_bis))
 
         return db
 
