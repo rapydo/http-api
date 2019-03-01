@@ -54,8 +54,9 @@ class SqlAlchemy(BaseExtension):
         if pool_size is not None:
             # sqlalchemy docs: http://j.mp/2xT0GOc
             # defaults: overflow=10, pool_size=5
-            self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+            # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
             self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+            log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
 
         obj_name = 'db'
         # search the original sqlalchemy object into models
