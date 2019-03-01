@@ -47,16 +47,16 @@ class SqlAlchemy(BaseExtension):
         # }
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
-        # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        # self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-        # pool_size = self.variables.get('poolsize')
-        # if pool_size is not None:
-        #     # sqlalchemy docs: http://j.mp/2xT0GOc
-        #     # defaults: overflow=10, pool_size=5
-        #     # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
-        #     self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
-        #     log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
+        pool_size = self.variables.get('poolsize')
+        if pool_size is not None:
+            # sqlalchemy docs: http://j.mp/2xT0GOc
+            # defaults: overflow=10, pool_size=5
+            # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+            self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+            log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
 
         obj_name = 'db'
         # search the original sqlalchemy object into models
