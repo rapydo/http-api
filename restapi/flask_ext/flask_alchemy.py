@@ -75,11 +75,11 @@ class SqlAlchemy(BaseExtension):
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
-        # from sqlalchemy import create_engine
-        # from sqlalchemy.orm import scoped_session
-        # from sqlalchemy.orm import sessionmaker
-        # db.engine_bis = create_engine(uri)
-        # db.session = scoped_session(sessionmaker(bind=db.engine_bis))
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import scoped_session
+        from sqlalchemy.orm import sessionmaker
+        db.engine_bis = create_engine(uri)
+        db.session = scoped_session(sessionmaker(bind=db.engine_bis))
 
         return db
 
