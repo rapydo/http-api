@@ -73,6 +73,12 @@ class SqlAlchemy(BaseExtension):
             log.critical_exit(
                 "Could not get %s within %s models" % (obj_name, self.name))
 
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import scoped_session
+        from sqlalchemy.orm import sessionmaker
+        db.engine = create_engine(uri)
+        db.session = scoped_session(sessionmaker(bind=db.engine))
+
         return db
 
     def custom_init(self, pinit=False, pdestroy=False, **kwargs):
