@@ -3,7 +3,23 @@
 """ Models for the relational database """
 
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
+
+from flask import current_app
+
+from sqlalchemy import create_engine
+
+from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import sessionmaker
+
 db = OriginalAlchemy()
+host = current_app.config['SQLALCHEMY_DATABASE_URI']
+# self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+# self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+# self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+
+db.engine = create_engine(host)
+db.session = scoped_session(sessionmaker(bind=db.engine))
 
 
 ####################################
