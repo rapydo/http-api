@@ -45,18 +45,18 @@ class SqlAlchemy(BaseExtension):
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-
-        self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
-        pool_size = self.variables.get('poolsize')
-        if pool_size is not None:
-            # sqlalchemy docs: http://j.mp/2xT0GOc
-            # defaults: overflow=10, pool_size=5
-            # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
-            self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
-            log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
+        # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+        # self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+        # pool_size = self.variables.get('poolsize')
+        # if pool_size is not None:
+        #     # sqlalchemy docs: http://j.mp/2xT0GOc
+        #     # defaults: overflow=10, pool_size=5
+        #     # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+        #     self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+        #     log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
 
         obj_name = 'db'
         # search the original sqlalchemy object into models
@@ -73,11 +73,13 @@ class SqlAlchemy(BaseExtension):
             log.critical_exit(
                 "Could not get %s within %s models" % (obj_name, self.name))
 
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import scoped_session
-        from sqlalchemy.orm import sessionmaker
-        db.engine_bis = create_engine(uri)
-        db.session = scoped_session(sessionmaker(bind=db.engine_bis))
+        # Overwrite db.session created by flask_alchemy due to errors
+        # with transaction when concurrent requests...
+        # from sqlalchemy import create_engine
+        # from sqlalchemy.orm import scoped_session
+        # from sqlalchemy.orm import sessionmaker
+        # db.engine_bis = create_engine(uri)
+        # db.session = scoped_session(sessionmaker(bind=db.engine_bis))
 
         return db
 
