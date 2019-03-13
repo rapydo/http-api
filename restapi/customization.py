@@ -15,11 +15,14 @@ from utilities import configuration
 from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
+from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
 from utilities.logs import get_logger
 log = get_logger(__name__)
+
+CONF_FOLDERS = detector.load_group(label='PROJECT_CONFS')
 
 
 ########################
@@ -59,6 +62,7 @@ class Customizer(object):
         ##################
         # Reading configuration
 
+        log.critical(CONF_FOLDERS)
         confs_path = helpers.current_dir(CONF_PATH)
         self._configurations, self._extended_project, self._extended_path = \
             configuration.read(
@@ -237,8 +241,6 @@ class Customizer(object):
                 "Could not find module %s (in %s)" % (name, file_name))
 
         # Check for dependecies and skip if missing
-        from restapi.services.detect import detector
-
         for var in conf.pop('depends_on', []):
 
             negate = ''
