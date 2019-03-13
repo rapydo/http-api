@@ -360,9 +360,14 @@ class IrodsPythonClient():
             raise IrodsException("Cannot write to file: not found")
 
     def readable(self, path):
-        obj = self.prc.data_objects.get(path)
-        with obj.open('r+') as handle:
-            return handle.readable()
+        try:
+            obj = self.prc.data_objects.get(path)
+            with obj.open('r+') as handle:
+                return handle.readable()
+        except iexceptions.CollectionDoesNotExist:
+            return False
+        except iexceptions.DataObjectDoesNotExist:
+            return False
 
     def get_file_content(self, path):
         try:
