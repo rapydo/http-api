@@ -62,14 +62,34 @@ class Customizer(object):
         ##################
         # Reading configuration
 
-        log.critical(CONF_FOLDERS)
         confs_path = helpers.current_dir(CONF_PATH)
+
+        if 'defaults_path' in CONF_FOLDERS:
+            defaults_path = CONF_FOLDERS['defaults_path']
+        else:
+            defaults_path = confs_path
+
+        if 'base_path' in CONF_FOLDERS:
+            base_path = CONF_FOLDERS['base_path']
+        else:
+            base_path = confs_path
+
+        if 'projects_path' in CONF_FOLDERS:
+            projects_path = CONF_FOLDERS['projects_path']
+        else:
+            projects_path = confs_path
+
+        if 'submodules_path' in CONF_FOLDERS:
+            submodules_path = CONF_FOLDERS['submodules_path']
+        else:
+            submodules_path = confs_path
+
         self._configurations, self._extended_project, self._extended_path = \
             configuration.read(
-                default_file_path=confs_path,
-                base_project_path=confs_path,
-                projects_path=confs_path,
-                submodules_path=confs_path,
+                default_file_path=defaults_path,
+                base_project_path=base_path,
+                projects_path=projects_path,
+                submodules_path=submodules_path,
                 from_container=True,
                 do_exit=True
             )
