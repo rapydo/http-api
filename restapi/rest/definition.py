@@ -320,10 +320,8 @@ class EndpointResource(Resource):
             code = hcodes.HTTP_MULTIPLE_CHOICES
 
         if head_method:
-            defined_content = ""
+            defined_content = None
             errors = None
-
-        log.critical("%s %s %s %s", defined_content, errors, code, head_method)
 
         return self.force_response(
             defined_content=defined_content,
