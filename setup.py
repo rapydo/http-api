@@ -72,6 +72,9 @@ setup(
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
+
+        # Utilities
+        "glom",
     ],
     classifiers=[
         'Programming Language :: Python',
