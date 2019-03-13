@@ -323,6 +323,8 @@ class EndpointResource(Resource):
             defined_content = ""
             errors = None
 
+        log.critical("%s %s %s %s", defined_content, errors, code, head_method)
+
         return self.force_response(
             defined_content=defined_content,
             errors=errors,
