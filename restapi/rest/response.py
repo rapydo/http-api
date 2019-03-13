@@ -335,9 +335,10 @@ class ResponseMaker(object):
                 errors = [errors]
 
         # Decide code range
-        if errors is None and defined_content is None and not head_method:
-            log.warning("RESPONSE: Warning, no data and no errors")
-            code = hcodes.HTTP_OK_NORESPONSE
+        if errors is None and defined_content is None:
+            if not head_method or code is None:
+                log.warning("RESPONSE: Warning, no data and no errors")
+                code = hcodes.HTTP_OK_NORESPONSE
         elif errors is None:
             if code not in range(0, hcodes.HTTP_MULTIPLE_CHOICES):
                 code = hcodes.HTTP_OK_BASIC
