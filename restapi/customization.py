@@ -22,7 +22,7 @@ from restapi.swagger import BeSwagger
 from utilities.logs import get_logger
 log = get_logger(__name__)
 
-CONF_FOLDERS = detector.load_group(label='PROJECT_CONFS')
+CONF_FOLDERS = detector.load_group(label='project_confs')
 
 
 ########################
