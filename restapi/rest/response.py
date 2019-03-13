@@ -270,7 +270,7 @@ class ResponseMaker(object):
 
         # 3. Recover correct status and errors
         r['code'], r['errors'] = self.get_errors_and_status(
-            r['defined_content'], r['code'], r['errors'])
+            r['defined_content'], r['code'], r['errors'], r['head_method'])
 
         # 4. Encapsulate response and other things in a standard json obj:
         # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
@@ -309,7 +309,7 @@ class ResponseMaker(object):
         return response
 
     def get_errors_and_status(
-            self, defined_content=None, code=None, errors=None):
+            self, defined_content=None, code=None, errors=None, head_method=False):
         """
         Handle OUR standard response following criteria described in
         https://github.com/EUDAT-B2STAGE/http-api-base/issues/7
@@ -335,7 +335,7 @@ class ResponseMaker(object):
                 errors = [errors]
 
         # Decide code range
-        if errors is None and defined_content is None:
+        if errors is None and defined_content is None and not head_method:
             log.warning("RESPONSE: Warning, no data and no errors")
             code = hcodes.HTTP_OK_NORESPONSE
         elif errors is None:

@@ -324,7 +324,11 @@ class EndpointResource(Resource):
             errors = None
 
         return self.force_response(
-            defined_content=defined_content, errors=errors, code=code)
+            defined_content=defined_content,
+            errors=errors,
+            code=code,
+            head_method=head_method
+        )
 
     def send_errors(self,
                     message=None, errors=None,
@@ -351,7 +355,13 @@ class EndpointResource(Resource):
 
         if head_method:
             errors = None
-        return self.force_response(errors=errors, code=code, headers=headers)
+
+        return self.force_response(
+            errors=errors,
+            code=code,
+            headers=headers,
+            head_method=head_method
+        )
 
     def report_generic_error(
         self, message=None, current_response_available=True
