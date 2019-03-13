@@ -310,7 +310,7 @@ class EndpointResource(Resource):
         """ Empty response as defined by the protocol """
         return self.force_response("", code=hcodes.HTTP_OK_NORESPONSE)
 
-    def send_warnings(self, defined_content, errors, code=None):
+    def send_warnings(self, defined_content, errors, code=None, head_method=False):
         """
         Warnings when there is both data and errors in response.
         So 'defined_content' and 'errors' are required,
@@ -319,12 +319,17 @@ class EndpointResource(Resource):
         if code is None or code >= hcodes.HTTP_BAD_REQUEST:
             code = hcodes.HTTP_MULTIPLE_CHOICES
 
+        if head_method:
+            defined_content = ""
+            errors = None
+
         return self.force_response(
             defined_content=defined_content, errors=errors, code=code)
 
     def send_errors(self,
                     message=None, errors=None,
-                    code=None, headers=None
+                    code=None, headers=None,
+                    head_method=False
                     ):
         """ Setup an error message """
 
@@ -344,6 +349,8 @@ class EndpointResource(Resource):
         if errors is not None:
             log.error(errors)
 
+        if head_method:
+            errors = None
         return self.force_response(errors=errors, code=code, headers=headers)
 
     def report_generic_error(
