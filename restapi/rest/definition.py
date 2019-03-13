@@ -324,15 +324,9 @@ class EndpointResource(Resource):
 
     def send_errors(self,
                     message=None, errors=None,
-                    code=None, headers=None,
-                    label=None,  # TODO: to be DEPRECATED
+                    code=None, headers=None
                     ):
         """ Setup an error message """
-        if label is not None:
-            log.warning(
-                "Dictionary errors are deprecated, " +
-                "send errors as a list of strings instead"
-            )
 
         if errors is None:
             errors = []
@@ -767,6 +761,6 @@ class EndpointResource(Resource):
             if http.authenticate(self.auth.verify_token, token):
                 # we have a valid token in header
                 user = self.get_current_user()
-                log.warning("Logged user: %s", user.email)
+                log.debug("Logged user: %s", user.email)
 
         return user
