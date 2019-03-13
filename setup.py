@@ -76,6 +76,7 @@ setup(
         # Utilities
         "glom",
         "plumbum",
+        "psutil",
     ],
     classifiers=[
         'Programming Language :: Python',
