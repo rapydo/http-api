@@ -350,7 +350,7 @@ class EndpointResource(Resource):
             # default error
             code = hcodes.HTTP_SERVER_ERROR
 
-        if errors is not None:
+        if errors is not None and len(errors) > 0:
             log.error(errors)
 
         if head_method:
