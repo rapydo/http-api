@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from glom import glom
 from restapi import decorators as decorate
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
@@ -90,9 +91,6 @@ class AdminUsers(GraphBaseOperations):
 
     def send_notification(self, user, unhashed_password, is_update=False):
 
-        # title = mem.customizer._configurations \
-        #     .get('project', {}) \
-        #     .get('title', "Unkown title")
         title = glom(
             mem.customizer._configurations,
             "project.title",
