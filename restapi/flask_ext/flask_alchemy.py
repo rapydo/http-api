@@ -30,7 +30,7 @@ class SqlAlchemy(BaseExtension):
             print("TODO: use args for connection?", kwargs)
 
         uri = '%s://%s:%s@%s:%s/%s' % (
-            self.variables.get('dbtype'),
+            self.variables.get('dbtype', 'postgresql'),
             self.variables.get('user'),
             self.variables.get('password'),
             self.variables.get('host'),
