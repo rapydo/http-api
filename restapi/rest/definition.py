@@ -198,7 +198,10 @@ class EndpointResource(Resource):
         """ How to have api/method/:id route possible"""
         self.endtype = idtype + ':' + name
 
-    def get_paging(self):
+    def get_paging(self, force_read_parameters=False):
+
+        if force_read_parameters:
+            self.get_input()
         # NOTE: you have to call self.get_input prior to use this method
         limit = self._args.get(PERPAGE_KEY, DEFAULT_PERPAGE)
         current_page = self._args.get(CURRENTPAGE_KEY, DEFAULT_CURRENTPAGE)
