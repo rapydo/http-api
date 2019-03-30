@@ -15,6 +15,7 @@ from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
+from restapi.confs import SENTRY_URL
 from restapi.protocols.restful import Api, farmer, create_endpoints
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
@@ -303,5 +304,20 @@ def create_app(name=__name__,
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
+
+    if SENTRY_URL is not None:
+
+        if not PRODUCTION:
+            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
+        else:
+            import sentry_sdk
+            from sentry_sdk.integrations.flask import FlaskIntegration
+
+            sentry_sdk.init(
+                dsn=SENTRY_URL,
+                integrations=[FlaskIntegration()]
+            )
+            log.info("Enabled Sentry %s", SENTRY_URL)
+
     # return our flask app
     return microservice

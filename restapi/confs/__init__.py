@@ -36,3 +36,7 @@ SQLLITE_EXTENSION = 'db'
 SQLLITE_DBFILE = 'backend' + '.' + SQLLITE_EXTENSION
 dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + dbfile
+
+SENTRY_URL = os.environ.get('SENTRY_URL')
+if SENTRY_URL is not None and SENTRY_URL.strip() == '':
+    SENTRY_URL = None
