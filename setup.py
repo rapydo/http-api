@@ -68,7 +68,7 @@ setup(
         "neomodel==3.2.9",
         "psycopg2-binary",
         "pymodm",
-        "PyMySQL"
+        "PyMySQL",
 
         # Swagger
         "bravado-core",
