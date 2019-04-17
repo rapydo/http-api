@@ -224,8 +224,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
             else:
                 pass
 
-            log.very_verbose("Instance %s(%s)" % (ref.__class__.__name__, obj))
-
         obj = self.set_models_to_service(obj)
 
         return obj
