@@ -36,7 +36,7 @@ class EndpointResource(Resource):
     Implements a generic Resource for our Restful APIs model
     """
 
-    @inject(**detector.services_classes)
+    @inject.params(**detector.services_classes)
     def __init__(self, **services):
 
         if len(services) < 1:
