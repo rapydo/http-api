@@ -85,18 +85,6 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
-	# sleep 40
-	# docker ps -a
-	# if [ "$PROJECT" = "celerytest" ]; then
-	# 	echo "\n\nLogs from Celery:\n\n"
-	# 	docker logs ${PROJECT}_celery_1
-	# fi
-	# if [ "$PROJECT" = "irodstest" ]; then
-	# 	echo "\n\nLogs from ICAT:\n\n"
-	# 	docker logs ${PROJECT}_icat_1
-	# fi
-	# echo "\n\nLogs from Backend:\n\n"
-	# docker logs ${PROJECT}_backend_1
 
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
 	# Beware!! Cleaning DB before starting the tests

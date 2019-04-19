@@ -103,10 +103,14 @@ def launch():
 
 
 @cli.command()
-@click.option('--services', '-s', multiple=True, default=['postgres'])
+@click.option('--services', '-s', multiple=True, default=[])
 def verify(services):
     """Verify connected service"""
     from restapi.services.detect import detector
+
+    if len(services) == 0:
+        log.warning("Empty list of services, nothing to be verified.")
+        log.info("Provide list of services by using --services option")
 
     for service in services:
         myclass = detector.services_classes.get(service)
@@ -188,12 +192,12 @@ def mywait():
             host, port = get_service_address(
                 myclass.variables, 'broker_host', 'broker_port', name)
 
-            wait_socket(host, port, name)
+            wait_socket(host, port, "celery_broker")
 
             host, port = get_service_address(
                 myclass.variables, 'backend_host', 'backend_port', name)
 
-            wait_socket(host, port, name)
+            wait_socket(host, port, "celery_backend")
         else:
             host, port = get_service_address(
                 myclass.variables, 'host', 'port', name)

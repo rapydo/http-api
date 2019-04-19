@@ -1,5 +1,5 @@
 
-file: endpoints
+file: miscellaneous
 class: SwaggerSpecifications
 baseuri: "/api"
 mapping:

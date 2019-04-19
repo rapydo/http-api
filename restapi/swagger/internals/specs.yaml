@@ -2,7 +2,7 @@
 depends_on:
   - DEBUG_ENDPOINTS
 
-file: endpoints
+file: miscellaneous
 class: Internal
 # baseuri: "/api"
 mapping:

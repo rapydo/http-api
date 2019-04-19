@@ -15,8 +15,10 @@ from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
+from restapi.confs import SENTRY_URL
 from restapi.protocols.restful import Api, farmer, create_endpoints
 from restapi.services.detect import detector
+from restapi.services.mail import send_mail_is_active, test_smtp_client
 from utilities.globals import mem
 from utilities.logs import \
     get_logger, \
@@ -261,8 +263,17 @@ def create_app(name=__name__,
                 # Limit the parameters string size, sometimes it's too big
                 for k in data:
                     try:
-                        if not isinstance(data[k], str):
+                        if isinstance(data[k], dict):
+                            for kk in data[k]:
+                                v = str(data[k][kk])
+                                if len(v) > MAX_CHAR_LEN:
+                                    v = v[:MAX_CHAR_LEN] + "..."
+                                data[k][kk] = v
                             continue
+
+                        if not isinstance(data[k], str):
+                            data[k] = str(data[k])
+
                         if len(data[k]) > MAX_CHAR_LEN:
                             data[k] = data[k][:MAX_CHAR_LEN] + "..."
                     except IndexError:
@@ -285,8 +296,28 @@ def create_app(name=__name__,
 
         return response
 
+    if send_mail_is_active():
+        if not test_smtp_client():
+            log.critical("Bad SMTP configuration, unable to create a client")
+        else:
+            log.info("SMTP configuration verified")
     ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
+
+    if SENTRY_URL is not None:
+
+        if not PRODUCTION:
+            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
+        else:
+            import sentry_sdk
+            from sentry_sdk.integrations.flask import FlaskIntegration
+
+            sentry_sdk.init(
+                dsn=SENTRY_URL,
+                integrations=[FlaskIntegration()]
+            )
+            log.info("Enabled Sentry %s", SENTRY_URL)
+
     # return our flask app
     return microservice

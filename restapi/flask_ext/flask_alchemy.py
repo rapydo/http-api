@@ -12,6 +12,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import sqlalchemy
 from utilities.meta import Meta
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 
@@ -28,7 +29,8 @@ class SqlAlchemy(BaseExtension):
         if len(kwargs) > 0:
             print("TODO: use args for connection?", kwargs)
 
-        uri = 'postgresql://%s:%s@%s:%s/%s' % (
+        uri = '%s://%s:%s@%s:%s/%s' % (
+            self.variables.get('dbtype', 'postgresql'),
             self.variables.get('user'),
             self.variables.get('password'),
             self.variables.get('host'),
@@ -44,27 +46,41 @@ class SqlAlchemy(BaseExtension):
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-
-        self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
-        pool_size = self.variables.get('poolsize')
-        if pool_size is not None:
-            # sqlalchemy docs: http://j.mp/2xT0GOc
-            # defaults: overflow=10, pool_size=5
-            self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
-            self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+        # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+        # self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+        # pool_size = self.variables.get('poolsize')
+        # if pool_size is not None:
+        #     # sqlalchemy docs: http://j.mp/2xT0GOc
+        #     # defaults: overflow=10, pool_size=5
+        #     # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
+        #     self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
+        #     log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
 
         obj_name = 'db'
         # search the original sqlalchemy object into models
         db = Meta.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
+
+        # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
+        if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            db = Meta.obj_from_models(obj_name, self.name, EXTENDED_PACKAGE)
+
         if db is None:
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
             log.critical_exit(
                 "Could not get %s within %s models" % (obj_name, self.name))
+
+        # Overwrite db.session created by flask_alchemy due to errors
+        # with transaction when concurrent requests...
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import scoped_session
+        from sqlalchemy.orm import sessionmaker
+        db.engine_bis = create_engine(uri)
+        db.session = scoped_session(sessionmaker(bind=db.engine_bis))
 
         return db
 

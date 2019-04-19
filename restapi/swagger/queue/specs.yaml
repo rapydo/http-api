@@ -2,7 +2,7 @@
 depends_on:
   - CELERY_ENABLE
 class: Queue
-file: endpoints
+file: miscellaneous
 mapping:
   list_queue: "/queue"
   single_queue: "/queue/<task_id>"

@@ -56,7 +56,14 @@ class IrodsPythonClient():
         return False
 
     def is_collection(self, path):
-        return self.prc.collections.exists(path)
+        try:
+            return self.prc.collections.exists(path)
+        except iexceptions.CAT_SQL_ERR as e:
+            log.error(
+                "is_collection(%s) raised CAT_SQL_ERR (%s)",
+                path, str(e)
+            )
+            return False
 
     def is_dataobject(self, path):
         try:
@@ -69,8 +76,7 @@ class IrodsPythonClient():
 
     def get_dataobject(self, path):
         try:
-            obj = self.prc.data_objects.get(path)
-            return obj
+            return self.prc.data_objects.get(path)
         except (
             iexceptions.CollectionDoesNotExist,
             iexceptions.DataObjectDoesNotExist
@@ -78,13 +84,8 @@ class IrodsPythonClient():
             raise IrodsException("%s not found or no permissions" % path)
 
     def getPath(self, path, prefix=None):
-        if prefix is None:
-            length = 0
-        else:
-            length = len(prefix)
-
-        if length > 0:
-            path = path[length:]
+        if prefix is not None and prefix != '':
+            path = path[len(prefix):]
             if path[0] == "/":
                 path = path[1:]
 
@@ -358,6 +359,16 @@ class IrodsPythonClient():
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException("Cannot write to file: not found")
 
+    def readable(self, path):
+        try:
+            obj = self.prc.data_objects.get(path)
+            with obj.open('r+') as handle:
+                return handle.readable()
+        except iexceptions.CollectionDoesNotExist:
+            return False
+        except iexceptions.DataObjectDoesNotExist:
+            return False
+
     def get_file_content(self, path):
         try:
             data = []
@@ -438,7 +449,9 @@ class IrodsPythonClient():
             )
 
         except iexceptions.DataObjectDoesNotExist:
-            raise IrodsException("Cannot read file: not found")
+            raise IrodsException("This path does not exist or permission denied")
+        except iexceptions.CollectionDoesNotExist:
+            raise IrodsException("This path does not exist or permission denied")
 
     def write_in_streaming(self, destination, force=False, resource=None):
         """

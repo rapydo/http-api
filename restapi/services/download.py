@@ -82,7 +82,7 @@ class Downloader(object):
         if length > MAX_ALLOWED_LENGTH:
             length = MAX_ALLOWED_LENGTH
 
-        log.info(
+        log.debug(
             "Providing partial content (bytes %s-%s, len = %s bytes) from %s",
             byte1, byte2, length, path
         )

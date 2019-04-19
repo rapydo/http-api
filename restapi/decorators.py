@@ -19,6 +19,7 @@ I didn't manage so far to have it working in the way the documentation require.
 
 from functools import wraps
 from restapi.exceptions import RestApiException
+from restapi.confs import SENTRY_URL
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 from utilities.logs import get_logger
@@ -102,6 +103,7 @@ def catch_error(
             #     raise
             # Catch the single exception that the user requested
             except exception as e:
+
                 message = exception_label + str(e)
                 # It is already print by send_error, it is a duplicated msg
                 # log.warning(exception_label, exc_info=True)
@@ -122,6 +124,11 @@ def catch_error(
 
             # Catch any other exception
             except Exception as e:
+
+                if SENTRY_URL is not None:
+                    from sentry_sdk import capture_exception
+                    capture_exception(e)
+
                 excname = e.__class__.__name__
                 log.warning(
                     "Catched exception:\n\n[%s] %s\n",

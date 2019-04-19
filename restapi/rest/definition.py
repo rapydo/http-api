@@ -198,7 +198,10 @@ class EndpointResource(Resource):
         """ How to have api/method/:id route possible"""
         self.endtype = idtype + ':' + name
 
-    def get_paging(self):
+    def get_paging(self, force_read_parameters=False):
+
+        if force_read_parameters:
+            self.get_input()
         # NOTE: you have to call self.get_input prior to use this method
         limit = self._args.get(PERPAGE_KEY, DEFAULT_PERPAGE)
         current_page = self._args.get(CURRENTPAGE_KEY, DEFAULT_CURRENTPAGE)
@@ -310,7 +313,7 @@ class EndpointResource(Resource):
         """ Empty response as defined by the protocol """
         return self.force_response("", code=hcodes.HTTP_OK_NORESPONSE)
 
-    def send_warnings(self, defined_content, errors, code=None):
+    def send_warnings(self, defined_content, errors, code=None, head_method=False):
         """
         Warnings when there is both data and errors in response.
         So 'defined_content' and 'errors' are required,
@@ -319,20 +322,23 @@ class EndpointResource(Resource):
         if code is None or code >= hcodes.HTTP_BAD_REQUEST:
             code = hcodes.HTTP_MULTIPLE_CHOICES
 
+        if head_method:
+            defined_content = None
+            errors = None
+
         return self.force_response(
-            defined_content=defined_content, errors=errors, code=code)
+            defined_content=defined_content,
+            errors=errors,
+            code=code,
+            head_method=head_method
+        )
 
     def send_errors(self,
                     message=None, errors=None,
                     code=None, headers=None,
-                    label=None,  # TODO: to be DEPRECATED
+                    head_method=False
                     ):
         """ Setup an error message """
-        if label is not None:
-            log.warning(
-                "Dictionary errors are deprecated, " +
-                "send errors as a list of strings instead"
-            )
 
         if errors is None:
             errors = []
@@ -347,10 +353,18 @@ class EndpointResource(Resource):
             # default error
             code = hcodes.HTTP_SERVER_ERROR
 
-        if errors is not None:
+        if errors is not None and len(errors) > 0:
             log.error(errors)
 
-        return self.force_response(errors=errors, code=code, headers=headers)
+        if head_method:
+            errors = None
+
+        return self.force_response(
+            errors=errors,
+            code=code,
+            headers=headers,
+            head_method=head_method
+        )
 
     def report_generic_error(
         self, message=None, current_response_available=True
@@ -767,6 +781,6 @@ class EndpointResource(Resource):
             if http.authenticate(self.auth.verify_token, token):
                 # we have a valid token in header
                 user = self.get_current_user()
-                log.warning("Logged user: %s", user.email)
+                log.debug("Logged user: %s", user.email)
 
         return user

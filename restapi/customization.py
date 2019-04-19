@@ -15,11 +15,14 @@ from utilities import configuration
 from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
+from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
 from utilities.logs import get_logger
 log = get_logger(__name__)
+
+CONF_FOLDERS = detector.load_group(label='project_confs')
 
 
 ########################
@@ -60,12 +63,33 @@ class Customizer(object):
         # Reading configuration
 
         confs_path = helpers.current_dir(CONF_PATH)
+
+        if 'defaults_path' in CONF_FOLDERS:
+            defaults_path = CONF_FOLDERS['defaults_path']
+        else:
+            defaults_path = confs_path
+
+        if 'base_path' in CONF_FOLDERS:
+            base_path = CONF_FOLDERS['base_path']
+        else:
+            base_path = confs_path
+
+        if 'projects_path' in CONF_FOLDERS:
+            projects_path = CONF_FOLDERS['projects_path']
+        else:
+            projects_path = confs_path
+
+        if 'submodules_path' in CONF_FOLDERS:
+            submodules_path = CONF_FOLDERS['submodules_path']
+        else:
+            submodules_path = confs_path
+
         self._configurations, self._extended_project, self._extended_path = \
             configuration.read(
-                default_file_path=confs_path,
-                base_project_path=confs_path,
-                projects_path=confs_path,
-                submodules_path=confs_path,
+                default_file_path=defaults_path,
+                base_project_path=base_path,
+                projects_path=projects_path,
+                submodules_path=submodules_path,
                 from_container=True,
                 do_exit=True
             )
@@ -237,8 +261,6 @@ class Customizer(object):
                 "Could not find module %s (in %s)" % (name, file_name))
 
         # Check for dependecies and skip if missing
-        from restapi.services.detect import detector
-
         for var in conf.pop('depends_on', []):
 
             negate = ''
@@ -259,7 +281,7 @@ class Customizer(object):
             # Skip if not meeting the requirements of the dependency
             if not check:
                 if not self._testing:
-                    log.warning("Skip '%s': unmet %s", default_uri, dependency)
+                    log.debug("Skip '%s': unmet %s", default_uri, dependency)
                 return endpoint
 
         # Get the class from the module

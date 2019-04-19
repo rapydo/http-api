@@ -4,7 +4,7 @@ class: Tokens
 
 # OPTIONAL: The python file where your REST class is located
 # default is the same name of current file's directory holder
-file: endpoints
+file: tokens
 # This points to 'rapydo/core/resources/endpoints.py'
 # Custom files will be available in 'rapydo/custom/resources/endpoints.py'
 
