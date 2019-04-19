@@ -62,10 +62,8 @@ setup(
 
         # DB drivers
 
-        # Do not work with 3.3.0
-        # "neomodel==3.3.0",
-        # "neomodel==3.3.1",
-        "neomodel==3.2.9",
+        "neomodel==3.3.1",
+        # "neomodel==3.2.9",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
