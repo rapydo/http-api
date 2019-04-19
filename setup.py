@@ -57,8 +57,8 @@ setup(
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
         # "injector==0.13.0",
-        "injector==0.12.1",
-        "flask_injector==0.12.0",
+        "injector==0.12",
+        "flask_injector==0.10.1",
 
         # DB drivers
 
