@@ -58,7 +58,7 @@ setup(
         # annotations to declare dependencies. :/
         # "injector==0.13.4",
         # "injector==0.15",
-        # "flask_injector==0.12.0",
+        "flask_injector==0.12.0",
         "Inject==3.5.1",
 
         # DB drivers
