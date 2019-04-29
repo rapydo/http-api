@@ -153,9 +153,8 @@ class Authentication(BaseAuthentication):
         token_node.last_access = now
         token_node.expiration = exp
 
-        ip, hostname = self.get_host_info()
+        ip = self.get_remote_ip()
         token_node.IP = ip
-        token_node.hostname = hostname
 
         token_node.save()
         token_node.emitted_for.connect(user)

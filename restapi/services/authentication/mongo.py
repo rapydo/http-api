@@ -166,7 +166,7 @@ class Authentication(BaseAuthentication):
 
     def save_token(self, user, token, jti, token_type=None):
 
-        ip, hostname = self.get_host_info()
+        ip = self.get_remote_ip()
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -177,6 +177,7 @@ class Authentication(BaseAuthentication):
         if user is None:
             log.error("Trying to save an empty token")
         else:
+            hostname = ""
             self.db.Token(
                 jti=jti, token=token, token_type=token_type,
                 creation=now, last_access=now, expiration=exp,
