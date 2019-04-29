@@ -125,7 +125,7 @@ class Authentication(BaseAuthentication):
 
     def save_token(self, user, token, jti, token_type=None):
 
-        ip, hostname = self.get_host_info()
+        ip = self.get_remote_ip()
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -134,6 +134,7 @@ class Authentication(BaseAuthentication):
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
+        hostname = ""
         token_entry = self.db.Token(
             jti=jti,
             token=token,

@@ -11,7 +11,7 @@ import hmac
 import hashlib
 import base64
 import pytz
-import socket
+# import socket
 from glom import glom
 
 from utilities import CUSTOM_PACKAGE
@@ -223,41 +223,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @staticmethod
-    def get_host_info():
-
-        ###############
-        # Note: timeout do not work on dns lookup...
-        # also read:
-        # http://depier.re/attempts_to_speed_up_gethostbyaddr/
-
-        # # if getting slow when network is unreachable
-        # timer = 1
-        # if hasattr(socket, 'setdefaulttimeout'):
-        #     socket.setdefaulttimeout(timer)
-        # # socket.socket.settimeout(timer)
-
-        ###############
-        hostname = ""
+    def get_remote_ip():
 
         if 'X-Forwarded-For' in request.headers:
             forwarded_ips = request.headers['X-Forwarded-For']
             ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
-        else:
-            ip = request.remote_addr
-            if PRODUCTION:
-                log.warning(
-                    "Server in production X-Forwarded-For header is missing")
-
-        if current_app.config['TESTING'] and ip is None:
-            pass
+            return ip
         elif PRODUCTION:
-            try:
-                # note: this will return the ip if hostname is not available
-                # hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(ip)
-                hostname, _, _ = socket.gethostbyaddr(ip)
-            except Exception as e:
-                log.warning("Error resolving '%s': '%s'", ip, e)
-        return ip, hostname
+            log.warning("Server in production X-Forwarded-For header is missing")
+
+        ip = request.remote_addr
+        return ip
 
     # ###################
     # # Tokens handling #
