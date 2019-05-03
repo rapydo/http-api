@@ -74,6 +74,10 @@ setup(
         "glom",
         "plumbum",
         "psutil",
+
+        # Temporary requirements
+        # requests requires urllib3<1.25,>=1.21.1
+        "urllib3==1.24.3"
     ],
     classifiers=[
         'Programming Language :: Python',
