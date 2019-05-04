@@ -277,8 +277,10 @@ class Detector(object):
             )
             instances[name] = service_instance
 
+            do_init = False
             if name == self.authentication_service:
                 auth_backend = service_instance
+                do_init = True
 
             # NOTE: commented, looks like a duplicate from try/expect above
             # self.extensions_instances[name] = ext_instance
@@ -286,6 +288,7 @@ class Detector(object):
             # Injecting into the Celery Extension Class
             # all celery tasks found in *vanilla_package/tasks*
             if name == self.task_service_name:
+                do_init = True
 
                 task_package = "%s.tasks" % CUSTOM_PACKAGE
 
@@ -301,7 +304,7 @@ class Detector(object):
             raise KeyError("No instances available for modules")
 
         # Only once in a lifetime
-        if project_init:
+        if project_init and do_init:
             self.project_initialization(instances, app=app)
 
         return self.extensions_instances
