@@ -269,18 +269,17 @@ class Detector(object):
                 self.extensions_instances[name] = ext_instance
 
             # Initialize the real service getting the first service object
+            do_init = (name == self.authentication_service)
             log.debug("Initializing %s", name)
             service_instance = ext_instance.custom_init(
-                pinit=project_init,
+                pinit=project_init and do_init,
                 pdestroy=project_clean,
                 abackend=auth_backend
             )
             instances[name] = service_instance
 
-            do_init = False
             if name == self.authentication_service:
                 auth_backend = service_instance
-                do_init = True
 
             # NOTE: commented, looks like a duplicate from try/expect above
             # self.extensions_instances[name] = ext_instance
@@ -304,7 +303,7 @@ class Detector(object):
             raise KeyError("No instances available for modules")
 
         # Only once in a lifetime
-        if project_init and do_init:
+        if project_init:
             self.project_initialization(instances, app=app)
 
         return self.extensions_instances
