@@ -268,11 +268,19 @@ class Detector(object):
             else:
                 self.extensions_instances[name] = ext_instance
 
+            if not project_init:
+                do_init = False
+            elif name == self.authentication_service:
+                do_init = True
+            elif name == self.authentication_name:
+                do_init = True
+            else:
+                do_init = False
+
             # Initialize the real service getting the first service object
-            do_init = (name == self.authentication_service)
-            log.debug("Initializing %s", name)
+            log.debug("Initializing %s (pinit=%s)", name, do_init)
             service_instance = ext_instance.custom_init(
-                pinit=project_init and do_init,
+                pinit=do_init,
                 pdestroy=project_clean,
                 abackend=auth_backend
             )
