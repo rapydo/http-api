@@ -143,9 +143,9 @@ def create_app(name=__name__,
 
     ##############################
     # Cors
-    from restapi.protocols.cors import cors
-    cors.init_app(microservice)
-    log.verbose("FLASKING! Injected CORS")
+    # from restapi.protocols.cors import cors
+    # cors.init_app(microservice)
+    # log.verbose("FLASKING! Injected CORS")
 
     ##############################
     # Enabling our internal Flask customized response
