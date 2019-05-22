@@ -34,6 +34,7 @@ from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
 from utilities import htmlcodes as hcodes
 from restapi.attributes import ResponseElements
+from restapi import __version__
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -204,6 +205,8 @@ class ResponseMaker(object):
             # Anything that remains is just a content
             else:
                 elements['defined_content'] = response
+
+            elements['headers']["_RV"] = "%s" % __version__
 
         # POST-CHECK: is it a flask response?
         if self.is_internal_response(elements['defined_content']):
