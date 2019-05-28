@@ -6,6 +6,7 @@ Sql handling authentication process
 
 import pytz
 import sqlalchemy
+import pymysql.err.OperationalError as pymysql_OperationalError
 from datetime import datetime, timedelta
 from utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
@@ -61,6 +62,36 @@ class Authentication(BaseAuthentication):
                 status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
             )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
+            if retry <= 0:
+                log.error(str(e))
+                log.warning("Errors retrieving user object, retrying...")
+                return self.get_user_object(
+                    username=username,
+                    payload=payload,
+                    retry=1
+                )
+            raise e
+        except pymysql_OperationalError as e:
+            # If you catch an error that indicates the connection was closed during
+            # an operation, SQLAlchemy automatically reconnects on the next access.
+
+            # Pessimistic approach: Add pool_pre_ping=True when creating the engine
+            # The “pre ping” feature will normally emit SQL equivalent to “SELECT 1”
+            # each time a connection is checked out from the pool; if an error is raised
+            # that is detected as a “disconnect” situation, the connection will be
+            # immediately recycled, and all other pooled connections older than the
+            # current time are invalidated, so that the next time they are checked out,
+            # they will also be recycled before use.
+            # This add a little overhead to every connections
+            # https://docs.sqlalchemy.org/en/13/core/pooling.html#pool-disconnects-pessimistic
+
+            # Optimistic approach: try expect for connection errors. When the connection
+            # attempts to use a closed connection an exception is raised, then the
+            # connection calls the Pool.create() method, further connections will
+            # work again by using the refreshed connection. Only a single transaction
+            # will fail and it is enough to re-try the failed operation
+            # https://docs.sqlalchemy.org/en/13/core/pooling.html#disconnect-handling-optimistic
+
             if retry <= 0:
                 log.error(str(e))
                 log.warning("Errors retrieving user object, retrying...")
