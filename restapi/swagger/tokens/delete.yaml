@@ -3,10 +3,6 @@ common:
   # description: some
   # tags:
   #   - tokens
-  parameters:
-    - name: username
-      in: query
-      type: string
   custom:
     # publish: true
     authentication: true
