@@ -113,7 +113,7 @@ class BeSwagger(object):
                         'description': "Missing or invalid credentials or token"
                     }
 
-                log.criticla(specs['responses'])
+                log.critical(specs['responses'])
 
                 # Recover required roles
                 roles = custom.get('authorized', [])
