@@ -55,11 +55,47 @@ class Authentication(BaseAuthentication):
                 user = self.db.User.query.filter_by(
                     uuid=payload['user_id']).first()
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
-            log.error(str(e))
-            raise RestApiException(
-                "Backend database is unavailable",
-                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
-            )
+
+            # Unable to except pymysql.err.OperationalError because:
+            # ModuleNotFoundError: No module named 'pymysql.err.OperationalError';
+            # 'pymysql.err' is not a package
+            # Let's test exception name (OMG!)
+            if type(e).__name__ == 'pymysql.err.OperationalError':
+                # If you catch an error that indicates the connection was closed during
+                # an operation, SQLAlchemy automatically reconnects on the next access.
+
+                # Pessimistic approach: Add pool_pre_ping=True when creating the engine
+                # The “pre ping” feature will normally emit SQL equivalent to “SELECT 1”
+                # each time a connection is checked out from the pool; if an error is
+                # raised that is detected as a “disconnect” situation, the connection
+                # will be immediately recycled, and all other pooled connections older
+                # than the current time are invalidated, so that the next time they are
+                # checked out, they will also be recycled before use.
+                # This add a little overhead to every connections
+                # https://docs.sqlalchemy.org/en/13/core/pooling.html#pool-disconnects-pessimistic
+
+                # Optimistic approach: try expect for connection errors.
+                # When the connection attempts to use a closed connection an exception
+                # is raised, then the connection calls the Pool.create() method,
+                # further connections will work again by using the refreshed connection.
+                # Only a single transaction will fail -> retry the operation is enough
+                # https://docs.sqlalchemy.org/en/13/core/pooling.html#disconnect-handling-optimistic
+
+                if retry <= 0:
+                    log.error(str(e))
+                    log.warning("Errors retrieving user object, retrying...")
+                    return self.get_user_object(
+                        username=username,
+                        payload=payload,
+                        retry=1
+                    )
+                raise e
+            else:
+                log.error(str(e))
+                raise RestApiException(
+                    "Backend database is unavailable",
+                    status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
+                )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             if retry <= 0:
                 log.error(str(e))
@@ -70,6 +106,7 @@ class Authentication(BaseAuthentication):
                     retry=1
                 )
             raise e
+
         return user
 
     def get_roles_from_user(self, userobj=None):
