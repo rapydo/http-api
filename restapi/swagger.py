@@ -107,12 +107,11 @@ class BeSwagger(object):
                 specs['security'] = [{"Bearer": []}]
 
                 # Automatically add the response for Unauthorized in not already defined
-                if hcodes.HTTP_BAD_UNAUTHORIZED not in specs['responses']:
-                    specs['responses'][hcodes.HTTP_BAD_UNAUTHORIZED] = {
+                k = str(hcodes.HTTP_BAD_UNAUTHORIZED)
+                if k not in specs['responses']:
+                    specs['responses'][k] = {
                         'description': "Missing or invalid credentials or token"
                     }
-
-                log.critical(specs['responses'])
 
                 # Recover required roles
                 roles = custom.get('authorized', [])
