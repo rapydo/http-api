@@ -213,13 +213,17 @@ class BeSwagger(object):
                         endpoint.custom['params'][uri] = {}
                     endpoint.custom['params'][uri][method] = extrainfo
 
-                # enum [{key1: value1}, {key2: value2}] became enum [key1, ke2]
                 enum = param.pop("enum", None)
                 if enum is not None:
                     param["enum"] = []
                     for option in enum:
-                        for k in option:
-                            param["enum"].append(k)
+                        if isinstance(option, str):
+                            param["enum"].append(option)
+                        else:
+                            # enum [{key1: value1}, {key2: value2}]
+                            # became enum [key1, ke2]
+                            for k in option:
+                                param["enum"].append(k)
 
                 # handle parameters in URI for Flask
                 if param['in'] == 'query':
