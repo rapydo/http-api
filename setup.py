@@ -44,15 +44,15 @@ setup(
         "PyJWT",
 
         # Flask and plugins
-        "flask==1.0.3",
-        "Flask-Cors",
+        "flask==1.0.2",
+        "Flask-Cors==3.0.7",
         # Version 1.2.0 depends on OAuthlib 3.0.0 and above
         # It does not support versions of OAuthlib before 3.0.0
         # But Flask-OAuthlib depends from OAuthlib < 3.0.0
         "requests-oauthlib==1.1.0",
-        "Flask-OAuthlib",
-        "Flask-RESTful",
-        "Flask-SQLAlchemy",
+        "Flask-OAuthlib==0.9.4",
+        "Flask-RESTful==0.3.7",
+        "Flask-SQLAlchemy==2.3.2",
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
