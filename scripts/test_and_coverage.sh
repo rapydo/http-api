@@ -79,7 +79,9 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --no-build
 
-	rapydo --development --project ${PROJECT} pull
+	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
+		rapydo --development --project ${PROJECT} pull
+	fi
 
 	rapydo --development --project ${PROJECT} init
 
@@ -115,7 +117,9 @@ else
 
 	# Download sub-repos (build templates are required)
 	rapydo --development --project ${PROJECT} init --no-build
-	rapydo --development --project ${PROJECT} pull
+	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
+		rapydo --development --project ${PROJECT} pull
+	fi
 	rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
