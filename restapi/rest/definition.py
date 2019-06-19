@@ -792,4 +792,4 @@ class EndpointResource(Resource):
         try:
             return input_validation(json_parameters, definitionName)
         except ValidationError as e:
-            raise RestApiException(e.message)
+            raise RestApiException(e.message, status_code=hcodes.HTTP_BAD_REQUEST)

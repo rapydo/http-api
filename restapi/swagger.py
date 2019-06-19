@@ -29,7 +29,6 @@ JSON_APPLICATION = 'application/json'
 def input_validation(json_parameters, definitionName):
 
     definition = mem.customizer._definitions['definitions'][definitionName]
-    mem.customizer._definitions
     spec = mem.customizer._validated_spec
 
     # Can raise jsonschema.exceptions.ValidationError
