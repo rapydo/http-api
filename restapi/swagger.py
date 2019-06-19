@@ -11,18 +11,29 @@ import re
 import os
 import json
 from bravado_core.spec import Spec
-# from bravado_core.validate import validate_object
+from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
 from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
 from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import htmlcodes as hcodes
 from utilities import helpers
+from utilities.globals import mem
 from utilities.myyaml import load_yaml_file
 from utilities.configuration import mix
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
 JSON_APPLICATION = 'application/json'
+
+
+def input_validation(json_parameters, definitionName):
+
+    definition = mem.customizer._definitions['definitions'][definitionName]
+    mem.customizer._definitions
+    spec = mem.customizer._validated_spec
+
+    # Can raise jsonschema.exceptions.ValidationError
+    validate_object(spec, definition, json_parameters)
 
 
 class BeSwagger(object):
@@ -477,16 +488,3 @@ class BeSwagger(object):
             os.remove(filepath)
 
         return True
-
-    def input_validation(self):
-
-        # TODO: it works with body parameters,
-        # to be investigated with other types
-
-        # from utilities.globals import mem
-
-        # Car = mem.customizer._definitions['definitions']['Car']
-        # # self is rest/definitions.py:EndpointResource
-        # json = self.get_input()
-        # validate_object(mem.customizer._validated_spec, Car, json)
-        pass
