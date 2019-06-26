@@ -28,14 +28,15 @@ force_response (base.py)    or              simple return
 
 import attr
 import json
+from glom import glom
 from flask import Response, jsonify
 from werkzeug import exceptions as wsgi_exceptions
 from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
-from utilities import htmlcodes as hcodes
 from restapi.attributes import ResponseElements
 from restapi import __version__
-from restapi.confs import PROJECT_VERSION
+from utilities import htmlcodes as hcodes
+from utilities.globals import mem
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -208,6 +209,12 @@ class ResponseMaker(object):
                 elements['defined_content'] = response
 
             elements['headers']["_RV"] = "%s" % __version__
+
+            PROJECT_VERSION = glom(
+                mem.customizer._configurations,
+                "project.version",
+                default=None
+            )
             if PROJECT_VERSION is not None:
                 elements['headers']["Version"] = "%s" % PROJECT_VERSION
 

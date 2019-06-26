@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-from glom import glom
-from utilities.globals import mem
-
-PROJECT_VERSION = glom(
-    mem.customizer._configurations,
-    "project.version",
-    default=None)
 
 AVOID_COLORS_ENV_LABEL = 'TESTING_FLASK'
 STACKTRACE = False
