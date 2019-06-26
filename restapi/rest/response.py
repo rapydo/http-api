@@ -35,6 +35,7 @@ from restapi.decorators import get_response, set_response
 from utilities import htmlcodes as hcodes
 from restapi.attributes import ResponseElements
 from restapi import __version__
+from restapi.confs import PROJECT_VERSION
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -207,6 +208,8 @@ class ResponseMaker(object):
                 elements['defined_content'] = response
 
             elements['headers']["_RV"] = "%s" % __version__
+            if PROJECT_VERSION is not None:
+                elements['headers']["Version"] = "%s" % PROJECT_VERSION
 
         # POST-CHECK: is it a flask response?
         if self.is_internal_response(elements['defined_content']):
