@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import mem
 from glom import glom
+from utilities.globals import mem
 
 PROJECT_VERSION = glom(
     mem.customizer._configurations,
