@@ -114,6 +114,8 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
+	sleep 20
+
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
 	rapydo --mode production --project ${PROJECT} remove
