@@ -23,6 +23,9 @@ jobs:
   - script: scripts/test_and_coverage.sh
     env:
     - PROJECT=mongo
+  - script: scripts/test_and_coverage.sh
+    env:
+    - PROJECT=centos
   - stage: coverage
     script: scripts/test_and_coverage.sh
     env:
