@@ -9,6 +9,7 @@ import warnings
 from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
+from flask_cors import CORS
 from werkzeug.contrib.fixers import ProxyFix
 from restapi import confs as config
 from restapi.rest.response import InternalResponse
@@ -142,10 +143,15 @@ def create_app(name=__name__,
     microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
     ##############################
-    # Cors
-    from restapi.protocols.cors import cors
-    cors.init_app(microservice)
-    log.verbose("FLASKING! Injected CORS")
+    # CORS
+    if not PRODUCTION:
+        cors = CORS(
+            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+            supports_credentials=['true'],
+            methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
+
+        cors.init_app(microservice)
+        log.verbose("FLASKING! Injected CORS")
 
     ##############################
     # Enabling our internal Flask customized response

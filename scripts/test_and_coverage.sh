@@ -79,7 +79,9 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# Let's init and start the stack for the configured PROJECT
 	rapydo --development --project ${PROJECT} init --no-build
 
-	rapydo --development --project ${PROJECT} pull
+	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
+		rapydo --development --project ${PROJECT} pull
+	fi
 
 	rapydo --development --project ${PROJECT} init
 
@@ -107,6 +109,23 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
+	rapydo --development --project ${PROJECT} clean
+
+	echo "project_configuration:" > .projectrc
+	echo "  variables:" >> .projectrc
+	echo "    env:" >> .projectrc
+	echo "      DEFAULT_DHLEN: 256" >> .projectrc
+
+	rapydo --mode production --project ${PROJECT} pull
+	rapydo --mode production --project ${PROJECT} start
+
+	sleep 20
+
+	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
+
+	rapydo --mode production --project ${PROJECT} remove
+	rapydo --mode production --project ${PROJECT} clean
+
 else
 
 	# CURRENT DIR IS $CORE_DIR
@@ -115,7 +134,9 @@ else
 
 	# Download sub-repos (build templates are required)
 	rapydo --development --project ${PROJECT} init --no-build
-	rapydo --development --project ${PROJECT} pull
+	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
+		rapydo --development --project ${PROJECT} pull
+	fi
 	rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
@@ -137,7 +158,6 @@ else
 	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
 	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
 
+	cd $CORE_DIR
+	rapydo --development --project template clean
 fi
-
-cd $CORE_DIR
-rapydo --development --project template clean

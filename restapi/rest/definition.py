@@ -8,11 +8,12 @@ we could provide back then
 import pytz
 import dateutil.parser
 from datetime import datetime
-# from flask import g
 from injector import inject
 from flask_restful import request, Resource, reqparse
+from jsonschema.exceptions import ValidationError
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
+from restapi.swagger import input_validation
 from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 from utilities.time import string_from_timestamp
@@ -784,3 +785,11 @@ class EndpointResource(Resource):
                 log.debug("Logged user: %s", user.email)
 
         return user
+
+    # this is a simple wrapper of restapi.swagger.input_validation
+    def validate_input(self, json_parameters, definitionName):
+
+        try:
+            return input_validation(json_parameters, definitionName)
+        except ValidationError as e:
+            raise RestApiException(e.message, status_code=hcodes.HTTP_BAD_REQUEST)

@@ -268,10 +268,19 @@ class Detector(object):
             else:
                 self.extensions_instances[name] = ext_instance
 
+            if not project_init:
+                do_init = False
+            elif name == self.authentication_service:
+                do_init = True
+            elif name == self.authentication_name:
+                do_init = True
+            else:
+                do_init = False
+
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s", name)
+            log.debug("Initializing %s (pinit=%s)", name, do_init)
             service_instance = ext_instance.custom_init(
-                pinit=project_init,
+                pinit=do_init,
                 pdestroy=project_clean,
                 abackend=auth_backend
             )
@@ -286,6 +295,7 @@ class Detector(object):
             # Injecting into the Celery Extension Class
             # all celery tasks found in *vanilla_package/tasks*
             if name == self.task_service_name:
+                do_init = True
 
                 task_package = "%s.tasks" % CUSTOM_PACKAGE
 

@@ -71,6 +71,9 @@ class Login(EndpointResource):
 
         # ########## INIT ##########
         jargs = self.get_input()
+
+        # self.validate_input(jargs, 'Credentials')
+
         username = jargs.get('username')
         if username is None:
             username = jargs.get('email')
