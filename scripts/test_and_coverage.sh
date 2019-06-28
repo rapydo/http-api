@@ -111,10 +111,15 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	rapydo --development --project ${PROJECT} clean
 
+	echo "project_configuration:" > .projectrc
+	echo "  variables:" >> .projectrc
+	echo "    env:" >> .projectrc
+	echo "      DEFAULT_DHLEN: 256" >> .projectrc
+
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
-	sleep 60
+	sleep 20
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
