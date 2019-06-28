@@ -114,6 +114,11 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
+	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
+
+	rapydo --mode production --project ${PROJECT} remove
+	rapydo --mode production --project ${PROJECT} clean
+
 else
 
 	# CURRENT DIR IS $CORE_DIR
