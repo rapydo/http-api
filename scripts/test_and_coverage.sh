@@ -109,6 +109,11 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
+	rapydo --development --project ${PROJECT} clean
+
+	rapydo --mode production --project ${PROJECT} pull
+	rapydo --mode production --project ${PROJECT} start
+
 else
 
 	# CURRENT DIR IS $CORE_DIR
@@ -141,7 +146,6 @@ else
 	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
 	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
 
+	cd $CORE_DIR
+	rapydo --development --project template clean
 fi
-
-cd $CORE_DIR
-rapydo --development --project template clean
