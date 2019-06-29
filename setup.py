@@ -47,10 +47,13 @@ setup(
         "flask==1.0.3",
         "Flask-Cors==3.0.8",
 
+        # Latest requests-oauthlib [1.2.0] (required by Flask-OAuthlib)
+        # requires oauthlib<3.0.0,>=2.1.0
+        "oauthlib==2.1.0"
         # Version 1.2.0 depends on OAuthlib 3.0.0 and above
         # It does not support versions of OAuthlib before 3.0.0
         # But Flask-OAuthlib depends from OAuthlib < 3.0.0
-        # is not automaticalled from Flask-OAuthlib?
+        # is not automatically from Flask-OAuthlib?
         # "requests-oauthlib==1.1.0",
         "Flask-OAuthlib==0.9.5",
 
