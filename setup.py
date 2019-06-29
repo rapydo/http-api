@@ -65,14 +65,16 @@ setup(
         "injector==0.12",
         "flask_injector==0.10.1",
 
+        # Already installed from utils, ma forcing here since bravado-core install 5.1,
+        # not compatible with docker-compose 1.24
+        "PyYAML==3.13",
+
         # DB drivers
         # "neomodel==3.3.1",
         "neomodel>=3.2.9",
         "psycopg2-binary",
         "pymodm",
-        # Already installed from utils, ma forcing here since bravado-core install 5.1,
-        # not compatible with docker-compose 1.24
-        "PyMySQL==3.13",
+        "PyMySQL",
 
         # Swagger
         "bravado-core",
