@@ -49,7 +49,7 @@ setup(
 
         # Latest requests-oauthlib [1.2.0] (required by Flask-OAuthlib)
         # requires oauthlib<3.0.0,>=2.1.0
-        "oauthlib==2.1.0"
+        "oauthlib==2.1.0",
         # Version 1.2.0 depends on OAuthlib 3.0.0 and above
         # It does not support versions of OAuthlib before 3.0.0
         # But Flask-OAuthlib depends from OAuthlib < 3.0.0
