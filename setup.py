@@ -44,7 +44,7 @@ setup(
         "PyJWT",
 
         # Flask and plugins
-        "flask==1.0.2",
+        "flask==1.0.3",
         "Flask-Cors==3.0.7",
         # Version 1.2.0 depends on OAuthlib 3.0.0 and above
         # It does not support versions of OAuthlib before 3.0.0
