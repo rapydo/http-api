@@ -56,20 +56,16 @@ mkdir -p data
 
 # Pull requests
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-	if [ "$TRAVIS_PULL_REQUEST_BRANCH" != "master" ]; then
-	    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
-	    git checkout $TRAVIS_PULL_REQUEST_BRANCH
+    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
+    git checkout $TRAVIS_PULL_REQUEST_BRANCH
 
-	    echo "pulling $TRAVIS_BRANCH"
-	    git pull origin $TRAVIS_BRANCH
-	fi
+    echo "pulling $TRAVIS_BRANCH"
+    git pull origin $TRAVIS_BRANCH
 # Normal commits
 else
 
-	if [ "$TRAVIS_BRANCH" != "master" ]; then
-	    echo "checkout $TRAVIS_BRANCH"
-	    git checkout $TRAVIS_BRANCH
-	fi
+    echo "checkout $TRAVIS_BRANCH"
+    git checkout $TRAVIS_BRANCH
 fi
 
 if [ "$PROJECT" != "COVERAGE" ]; then
