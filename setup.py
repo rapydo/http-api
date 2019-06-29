@@ -70,7 +70,9 @@ setup(
         "neomodel>=3.2.9",
         "psycopg2-binary",
         "pymodm",
-        "PyMySQL",
+        # Already installed from utils, ma forcing here since bravado-core install 5.1,
+        # not compatible with docker-compose 1.24
+        "PyMySQL==3.13",
 
         # Swagger
         "bravado-core",
