@@ -207,8 +207,8 @@ class AdminUsers(GraphBaseOperations):
                         if "custom" not in new_schema[idx]:
                             new_schema[idx]["custom"] = {}
 
-                        new_schema[idx]["custom"]["htmltype"]: "select"
-                        new_schema[idx]["custom"]["label"]: "Group"
+                        new_schema[idx]["custom"]["htmltype"] = "select"
+                        new_schema[idx]["custom"]["label"] = "Group"
 
                         new_schema[idx]["enum"] = []
 
