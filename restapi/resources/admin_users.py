@@ -209,7 +209,6 @@ class AdminUsers(GraphBaseOperations):
 
                         new_schema[idx]["custom"]["htmltype"] = "select"
                         new_schema[idx]["custom"]["label"] = "Group"
-
                         new_schema[idx]["enum"] = []
 
                         for g in self.graph.Group.nodes.all():
@@ -266,8 +265,8 @@ class AdminUsers(GraphBaseOperations):
                     if "custom" not in new_schema[idx]:
                         new_schema[idx]["custom"] = {}
 
-                    new_schema[idx]["custom"]["htmltype"]: "select"
-                    new_schema[idx]["custom"]["label"]: "Group"
+                    new_schema[idx]["custom"]["htmltype"] = "select"
+                    new_schema[idx]["custom"]["label"] = "Group"
                     new_schema[idx]["enum"] = []
 
                     default_group = self.graph.Group.nodes.get_or_none(
