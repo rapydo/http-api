@@ -681,10 +681,16 @@ class EndpointResource(Resource):
             method = request.method
         method = method.lower()
 
+        if url not in mem.customizer._parameter_schemas:
+            raise RestApiException(
+                "No parameters schema defined for %s" % url,
+                status_code=hcodes.HTTP_BAD_NOTFOUND)
         if method not in mem.customizer._parameter_schemas[url]:
+            raise RestApiException(
+                "No parameters schema defined for method %s in %s" % (method, url),
+                status_code=hcodes.HTTP_BAD_NOTFOUND)
             return None
-        else:
-            return mem.customizer._parameter_schemas[url][method]
+        return mem.customizer._parameter_schemas[url][method]
 
     # HANDLE INPUT PARAMETERS
     def read_properties(self, schema, values, checkRequired=True):
