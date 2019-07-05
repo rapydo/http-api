@@ -201,7 +201,6 @@ class BeSwagger(object):
 
             # cycle parameters and add them to the endpoint class
             query_params = []
-            log.critical(specs['parameters'])
             for param in specs['parameters']:
 
                 if param["in"] != 'path':
