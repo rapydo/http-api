@@ -44,7 +44,7 @@ setup(
         "PyJWT",
 
         # Flask and plugins
-        "flask==1.0.3",
+        "Flask==1.1.1",
         "Flask-Cors==3.0.8",
 
         # Latest requests-oauthlib [1.2.0] (required by Flask-OAuthlib)
@@ -90,8 +90,8 @@ setup(
         'Intended Audience :: Developers',
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ]
 )
