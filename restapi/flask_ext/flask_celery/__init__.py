@@ -203,9 +203,9 @@ class CeleryExt(BaseExtension):
 
     # period = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
     @classmethod
-    def save_periodic_task(cls, name, task,
-                           every, period,
-                           args=[], kwargs={}):
+    def create_periodic_task(cls, name, task,
+                             every, period,
+                             args=[], kwargs={}):
         PeriodicTask(
             name=name,
             task=task,
@@ -219,9 +219,9 @@ class CeleryExt(BaseExtension):
         ).save()
 
     @classmethod
-    def save_crontab_task(cls, name, task,
-                          minute, hour, day_of_week, day_of_month, month_of_year,
-                          args=[], kwargs={}):
+    def create_crontab_task(cls, name, task,
+                            minute, hour, day_of_week, day_of_month, month_of_year,
+                            args=[], kwargs={}):
         PeriodicTask(
             name=name,
             task=task,
