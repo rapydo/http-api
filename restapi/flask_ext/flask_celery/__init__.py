@@ -8,6 +8,7 @@ from celery import Celery
 from functools import wraps
 import traceback
 from glom import glom
+from celerybeatmongo.models import PeriodicTask, DoesNotExist
 # from kombu import Exchange, Queue
 
 from utilities.globals import mem
@@ -160,10 +161,81 @@ class CeleryExt(BaseExtension):
         """
         # celery_app.conf.broker_pool_limit = None
 
+        # from https://github.com/zmap/celerybeat-mongo
+        # CELERY_MONGODB_SCHEDULER_DB = "celery"
+        # CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
+        # CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
+
+        if self.variables.get("beat_enabled", False):
+            log.info("Enabling Celery Beat")
+            if backend != 'MONGODB':
+                log.warning("Cannot configure mongodb celery beat scheduler")
+            else:
+                SCHEDULER_DB = 'celery'
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_DB'] = SCHEDULER_DB
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_COLLECTION'] = "schedules"
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_URL'] = BACKEND_URL
+
+                import mongoengine
+                m = mongoengine.connect(SCHEDULER_DB, host=BACKEND_URL)
+                log.info("Connected to MongoDB: %s", m)
+
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
 
         return celery_app
+
+    @classmethod
+    def get_periodic_task(cls, name):
+
+        try:
+            return PeriodicTask.objects.get(name=name)
+        except DoesNotExist:
+            return None
+
+    @classmethod
+    def delete_periodic_task(cls, name):
+        t = cls.get_periodic_task(name)
+        if t is None:
+            return False
+        t.delete()
+        return True
+
+    # period = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
+    @classmethod
+    def save_periodic_task(cls, name, task,
+                           every, period,
+                           args=[], kwargs={}):
+        PeriodicTask(
+            name=name,
+            task=task,
+            enabled=True,
+            args=args,
+            kwargs=kwargs,
+            interval=PeriodicTask.Interval(
+                every=every,
+                period=period
+            )
+        ).save()
+
+    @classmethod
+    def save_crontab_task(cls, name, task,
+                          minute, hour, day_of_week, day_of_month, month_of_year,
+                          args=[], kwargs={}):
+        PeriodicTask(
+            name=name,
+            task=task,
+            enabled=True,
+            args=args,
+            kwargs=kwargs,
+            crontab=PeriodicTask.Cronjob(
+                minute=minute,
+                hour=hour,
+                day_of_week=day_of_week,
+                day_of_month=day_of_month,
+                month_of_year=month_of_year,
+            )
+        ).save()
 
 
 def send_errors_by_email(func):
