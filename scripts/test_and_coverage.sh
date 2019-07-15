@@ -73,7 +73,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init --no-build
+	rapydo --development --project ${PROJECT} init
 
 	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
 		rapydo --development --project ${PROJECT} pull
@@ -129,7 +129,7 @@ else
 	PROJECT="template"
 
 	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --no-build
+	rapydo --development --project ${PROJECT} init
 	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
 		rapydo --development --project ${PROJECT} pull
 	fi
