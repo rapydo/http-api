@@ -123,7 +123,7 @@ class AdminUsers(GraphBaseOperations):
 
     @decorate.catch_error()
     @catch_graph_exceptions
-    def get(self, id=None):
+    def get(self, user_id=None):
 
         data = []
         if not detector.check_availability('neo4j'):
@@ -140,9 +140,19 @@ class AdminUsers(GraphBaseOperations):
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         current_user = self.get_current_user()
-        nodeset = self.graph.User.nodes
 
-        for n in nodeset.all():
+        if user_id is None:
+            nodeset = self.graph.User.nodes
+            users = nodeset.all()
+        else:
+            user = self.graph.User.nodes.get_or_none(uuid=user_id)
+            if user is None:
+                raise RestApiException(
+                    "This user cannot be found or you are not authorized")
+
+            users = [user]
+
+        for n in users:
 
             is_authorized = self.check_permissions(
                 current_user, n, is_admin, is_local_admin
@@ -377,7 +387,7 @@ class AdminUsers(GraphBaseOperations):
         v = self.get_input()
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
-        # user = self.getNode(self.graph.User, user_id, field='uuid')
+        
         if user is None:
             raise RestApiException(
                 "This user cannot be found or you are not authorized")
@@ -469,7 +479,7 @@ class AdminUsers(GraphBaseOperations):
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
-        # user = self.getNode(self.graph.User, user_id, field='uuid')
+        
         if user is None:
             raise RestApiException(
                 "This user cannot be found or you are not authorized")

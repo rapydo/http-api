@@ -217,11 +217,11 @@ class TestApp(BaseTests):
         from restapi.services.detect import detector
         if not detector.check_availability(service):
             return True
-        else:
-            log.debug("Testing admin users for %s", service)
+        log.debug("Testing admin users for %s", service)
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
+        url = API_URI + "/" + endpoint
         get_r, _, _, _ = self._test_endpoint(
             client, endpoint, headers,
             hcodes.HTTP_OK_BASIC,
@@ -232,23 +232,26 @@ class TestApp(BaseTests):
 
         self.checkResponse(get_r, [], [])
 
-        # users_def = self.get("def.users")
-        # user_def = self.get("def.user")
+        r = client.get(url, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
 
-        # user, user_pwd = self.create_user('tester_user1@none.it')
+        schema = self.getDynamicInputSchema(client, endpoint, headers)
+        data = self.buildData(schema)
+        r = client.post(url, data=data, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        uuid = self.get_content(r)
 
-        # user_headers, user_token = self.do_login(user, user_pwd)
+        r = client.get(url + "/" + uuid, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
 
-        # data = {}
-        # data['name'] = "A new name"
-        # data['password'] = self.randomString()
-        # self._test_update(
-        #     user_def, 'admin/users/' + user,
-        #     headers, data, hcodes.HTTP_OK_NORESPONSE)
+        r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
-        # self._test_delete(
-        #     user_def, 'admin/users/' + user,
-        #     headers, hcodes.HTTP_OK_NORESPONSE)
+        r = client.delete(url + "/" + uuid, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+
+        r = client.get(url + "/" + uuid, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
         endpoint = AUTH_URI + '/logout'
 
