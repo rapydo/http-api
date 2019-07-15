@@ -133,7 +133,7 @@ else
 	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
 		rapydo --development --project ${PROJECT} pull
 	fi
-	rapydo --development --project ${PROJECT} init
+	# rapydo --development --project ${PROJECT} init
 	rapydo --development --project ${PROJECT} --services backend start
 	docker ps -a
 
@@ -145,6 +145,9 @@ else
     # Combine all coverage files to compute the final coverage
 	cd $COV_DIR
 	ls .coverage*
+	echo "x"
+	echo $COVERALLS_REPO_TOKEN
+	echo "y"
 	coverage combine
 	cp $COV_DIR/.coverage $WORK_DIR/
 
