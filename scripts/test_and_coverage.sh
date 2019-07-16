@@ -109,33 +109,6 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
-	# CURRENT DIR IS $CORE_DIR
-
-	PROJECT="template"
-
-	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --no-build
-	rapydo --development --project ${PROJECT} pull
-	rapydo --development --project ${PROJECT} init
-	rapydo --development --project ${PROJECT} --services backend start
-	docker ps -a
-	# Build the backend image and execute coveralls
-	# rapydo --services backend --project ${PROJECT} build
-
-	cd $WORK_DIR
-
-	# Sync coverage files from previous stages
-	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
-
-    # Combine all coverage files to compute thefinal coverage
-	cd $COV_DIR
-	ls .coverage*
-	coverage combine
-	cp $COV_DIR/.coverage $WORK_DIR/
-
-	cd $WORK_DIR
-	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
-	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
 
 fi
 
