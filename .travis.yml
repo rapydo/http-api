@@ -28,10 +28,10 @@ jobs:
     - PROJECT=centos
   - stage: coverage
     script:
-      scripts/test_and_coverage.sh
-      cd coverage_files
-      coverage combine
-      git branch
+      scripts/test_and_coverage.sh &&
+      cd coverage_files &&
+      coverage combine &&
+      git branch &&
       coveralls
     env:
     - PROJECT=COVERAGE
