@@ -28,6 +28,7 @@ jobs:
     - PROJECT=centos
   - stage: coverage
     script:
+      python3 -c "import sys; print(sys.path)"
       scripts/test_and_coverage.sh &&
       cd coverage_files &&
       ls .coverage* &&
