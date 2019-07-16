@@ -77,8 +77,6 @@ else
 		rapydo --development --project ${PROJECT} pull
 	fi
 
-	rapydo --development --project ${PROJECT} init
-
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
 
