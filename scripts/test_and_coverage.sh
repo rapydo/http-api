@@ -108,7 +108,9 @@ else
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
-	sleep 15
+	echo "Backend server is starting"
+	sleep 20
+	echo "Backend server should be ready now!"
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
