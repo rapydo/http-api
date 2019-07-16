@@ -78,9 +78,9 @@ if [[ "$PROJECT" == "COVERAGE" ]]; then
 	# The other values can be file patterns to match against the paths of collected
 	# data, or they can be absolute or relative file paths on the current machine.      
 	echo '    /usr/local/lib/python3.5/dist-packages/restapi/' >> $COV_DIR/.coveragerc
-	echo '    /usr/local/lib/python3.6/site-packages/restapi/' >> $COV_DIR/.coveragerc
-	echo '    /usr/local/lib/python3.7/site-packages/restapi/' >> $COV_DIR/.coveragerc
-	echo '    /usr/local/lib/python3.8/site-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.6/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.7/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.8/dist-packages/restapi/' >> $COV_DIR/.coveragerc
 
 
 else
