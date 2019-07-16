@@ -108,7 +108,7 @@ else
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
-	sleep 20
+	sleep 15
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
