@@ -109,6 +109,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 else
 
+	echo "COVERAGE report disabled"
 
 fi
 
