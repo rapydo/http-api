@@ -119,11 +119,13 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
+	cd $CORE_DIR
+	rapydo --development --project template clean
+
 else
 
        echo "Disabled COVERAGE report"
 
 fi
 
-cd $CORE_DIR
-rapydo --development --project template clean
+
