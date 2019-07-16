@@ -27,7 +27,11 @@ jobs:
     env:
     - PROJECT=centos
   - stage: coverage
-    script: scripts/test_and_coverage.sh
+    script:
+      scripts/test_and_coverage.sh
+      cd coverage_files
+      coverage combine
+      coveralls
     env:
     - PROJECT=COVERAGE
   - stage: deploy
