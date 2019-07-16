@@ -66,6 +66,8 @@ if [[ "$PROJECT" == "COVERAGE" ]]; then
 	# Sync coverage files from previous stages
 	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
 
+	# Verify if this path exists:
+	ls -d /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/restapi/
 	# The entries in this section are lists of file paths that should be considered
 	# equivalent when combining data from different machines:
 	echo '[paths]' > $COV_DIR/.coveragerc
@@ -77,6 +79,8 @@ if [[ "$PROJECT" == "COVERAGE" ]]; then
 	# data, or they can be absolute or relative file paths on the current machine.      
 	echo '    /usr/local/lib/python3.5/dist-packages/restapi/' >> $COV_DIR/.coveragerc
 	echo '    /usr/local/lib/python3.6/site-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.7/site-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.8/site-packages/restapi/' >> $COV_DIR/.coveragerc
 
 
 else
