@@ -31,6 +31,7 @@ jobs:
       scripts/test_and_coverage.sh
       cd coverage_files
       coverage combine
+      git branch
       coveralls
     env:
     - PROJECT=COVERAGE

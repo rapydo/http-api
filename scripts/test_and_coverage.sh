@@ -3,19 +3,13 @@ set -e
 
 WORK_DIR=`pwd`
 
-# PROJECT=$1
-
 if [ -z $PROJECT ]; then
     echo "Missing the current testing project."
     echo "Use the magic variable COVERAGE for the final step"
     exit 1
 fi
 
-# PIP10 DEBUG
-# pip install --upgrade pip
-
 # install requirements in listed order
-# ./dev-requirements.py
 for package in `cat dev-requirements.txt`;
 do
     echo "adding: $package";
@@ -42,7 +36,6 @@ echo "CORE_DIR = ${CORE_DIR}"
 echo "COVERAGE_DIR = ${COV_DIR}"
 
 # Save credentials for S3 storage
-# echo "TEST *${S3_USER}* *${S3_PWD}*"
 aws configure set aws_access_key_id $S3_USER
 aws configure set aws_secret_access_key $S3_PWD
 
@@ -68,7 +61,12 @@ else
     git checkout $TRAVIS_BRANCH
 fi
 
-if [ "$PROJECT" != "COVERAGE" ]; then
+if [[ "$PROJECT" == "COVERAGE" ]]; then
+
+	# Sync coverage files from previous stages
+	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
+
+else
 
 	# CURRENT DIR IS $CORE_DIR
 
@@ -91,11 +89,6 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
-
-	# if [ "$PROJECT" = "celerytest" ]; then
-	# 	echo "\n\nLogs from Celery:\n\n"
-	# 	docker logs ${PROJECT}_celery_1
-	# fi
 
 	# Sync the coverage file to S3, to be available for the next stage
 	rapydo --development --project ${PROJECT} dump
@@ -122,44 +115,4 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	rapydo --mode production --project ${PROJECT} remove
 	rapydo --mode production --project ${PROJECT} clean
 
-else
-
-	# cd $WORK_DIR
-
-	# Sync coverage files from previous stages
-	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
-
- #    # Combine all coverage files to compute the final coverage
-	# cd $COV_DIR
-	# ls .coverage*
-	# echo "x"
-	# echo $COVERALLS_REPO_TOKEN
-	# echo "y"
-	# echo $TRAVIS
-	# echo "z"
-	# coverage combine
-	# cp $COV_DIR/.coverage $WORK_DIR/
-
-	# cd $WORK_DIR
-
-	# # CURRENT DIR IS $CORE_DIR
-
-	# PROJECT="template"
-
-	# # Download sub-repos (build templates are required)
-	# rapydo --development --project ${PROJECT} init
-	# if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
-	# 	rapydo --development --project ${PROJECT} pull
-	# fi
-	# # rapydo --development --project ${PROJECT} init
-	# rapydo --development --project ${PROJECT} --services backend start
-	# docker ps -a
-
-
-	# # docker run -it -v $(pwd):/repo -e COVERALLS_REPO_TOKEN:$COVERALLS_REPO_TOKEN -w /repo rapydo/backend:$CURRENT_VERSION coveralls
-
-	# coveralls
-
-	# cd $CORE_DIR
-	# rapydo --development --project template clean
 fi
