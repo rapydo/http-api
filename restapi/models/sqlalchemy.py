@@ -5,7 +5,6 @@
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 db = OriginalAlchemy()
 
-
 ####################################
 # Define multi-multi relation
 roles_users = db.Table(

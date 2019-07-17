@@ -63,6 +63,14 @@ class SqlAlchemy(BaseExtension):
         # search the original sqlalchemy object into models
         db = Meta.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
 
+        try:
+            from flask_migrate import Migrate
+            # migrate = Migrate(self.app, db)
+            Migrate(self.app, db)
+        except BaseException as e:
+            log.warning("Flask Migrate not enabled")
+            log.error(str(e))
+
         # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
         if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
             db = Meta.obj_from_models(obj_name, self.name, EXTENDED_PACKAGE)
