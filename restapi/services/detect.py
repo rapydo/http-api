@@ -216,11 +216,9 @@ class Detector(object):
                 else:
                     log.very_verbose("Skipping models")
 
-            except AttributeError:
-                log.critical_exit(
-                    'Extension class %s ' % ext_name +
-                    'not compliant: missing method(s)' +
-                    'Did you extend "%s"?' % 'BaseExtension')
+            except AttributeError as e:
+                log.error(str(e))
+                log.critical_exit('Invalid Extension class: %s', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
