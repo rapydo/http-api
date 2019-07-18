@@ -65,8 +65,10 @@ class SqlAlchemy(BaseExtension):
 
         try:
             from flask_migrate import Migrate
-            # migrate = Migrate(self.app, db)
-            Migrate(self.app, db)
+            # The Alembic package, which handles the migration work, does not recognize
+            # type changes in columns by default. If you want that fine level of
+            # detection you need to enable the compare_type option
+            Migrate(self.app, db, compare_type=True)
         except BaseException as e:
             log.warning("Flask Migrate not enabled")
             log.error(str(e))
