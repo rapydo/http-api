@@ -384,14 +384,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-# FIXME payload should be some basic part + custom payload from the developer
-    def fill_custom_payload(self, userobj, payload):
-        """
-            This method can be implemented by specific Authentication Methods
-            to add more specific payload content
-        """
-        return payload
-
     def fill_payload(self, userobj, expiration=None, token_type=None):
         """ Informations to store inside the JWT token,
         starting from the user obtained from the current service
@@ -428,7 +420,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             payload['nbf'] = nbf
             payload['exp'] = exp
 
-        return self.fill_custom_payload(userobj, payload)
+        return payload
 
     # ##################
     # # Roles handling #

@@ -59,10 +59,6 @@ class Authentication(BaseAuthentication):
             roles.append(role.name)
         return roles
 
-    def fill_custom_payload(self, userobj, payload):
-        # FIXME: should be implemented in vanilla, not here
-        return payload
-
     # Also used by POST user
     def create_user(self, userdata, roles):
 

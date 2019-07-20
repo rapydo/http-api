@@ -32,12 +32,6 @@ class Authentication(BaseAuthentication):
         extension = detector.services_classes.get(name)
         self.db = extension().get_instance(dbname=AUTH_DB)
 
-    def fill_custom_payload(self, userobj, payload):
-        """
-        FIXME: should probably be implemented inside vanilla
-        """
-        return payload
-
     def custom_user_properties(self, userdata):
         new_userdata = super(
             Authentication, self).custom_user_properties(userdata)

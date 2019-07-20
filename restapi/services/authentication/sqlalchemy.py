@@ -22,10 +22,6 @@ if not detector.check_availability(__name__):
 
 class Authentication(BaseAuthentication):
 
-    def fill_custom_payload(self, userobj, payload):
-        # FIXME: this should be implemented as vanilla instead of here
-        return payload
-
     # Also used by POST user
     def create_user(self, userdata, roles):
 
