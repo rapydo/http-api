@@ -139,9 +139,11 @@ class Profile(EndpointResource):
             'email': current_user.email
         }
 
-        roles = []
+        # roles = []
+        roles = {}
         for role in current_user.roles:
-            roles.append(role.name)
+            # roles.append(role.name)
+            roles[role.name] = role.description
         data["roles"] = roles
 
         try:
