@@ -228,7 +228,7 @@ class CeleryExt(BaseExtension):
             enabled=True,
             args=args,
             kwargs=kwargs,
-            crontab=PeriodicTask.Cronjob(
+            crontab=PeriodicTask.Crontab(
                 minute=minute,
                 hour=hour,
                 day_of_week=day_of_week,
