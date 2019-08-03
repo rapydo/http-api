@@ -20,9 +20,8 @@ log = get_logger(__name__)
 
 
 class SqlAlchemy(BaseExtension):
-
     def set_connection_exception(self):
-        return (sqlalchemy.exc.OperationalError, )
+        return (sqlalchemy.exc.OperationalError,)
 
     def custom_connection(self, **kwargs):
 
@@ -35,7 +34,7 @@ class SqlAlchemy(BaseExtension):
             self.variables.get('password'),
             self.variables.get('host'),
             self.variables.get('port'),
-            self.variables.get('db')
+            self.variables.get('db'),
         )
 
         log.very_verbose("URI IS %s" % re_obscure_pattern(uri))
@@ -65,6 +64,7 @@ class SqlAlchemy(BaseExtension):
 
         try:
             from flask_migrate import Migrate
+
             # The Alembic package, which handles the migration work, does not recognize
             # type changes in columns by default. If you want that fine level of
             # detection you need to enable the compare_type option
@@ -82,13 +82,15 @@ class SqlAlchemy(BaseExtension):
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
             log.critical_exit(
-                "Could not get %s within %s models" % (obj_name, self.name))
+                "Could not get %s within %s models" % (obj_name, self.name)
+            )
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
         from sqlalchemy import create_engine
         from sqlalchemy.orm import scoped_session
         from sqlalchemy.orm import sessionmaker
+
         db.engine_bis = create_engine(uri)
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
 
@@ -108,6 +110,7 @@ class SqlAlchemy(BaseExtension):
 
             # check connection
             from sqlalchemy import text
+
             sql = text('SELECT 1')
             db.engine.execute(sql)
 

@@ -14,16 +14,14 @@ from utilities import htmlcodes as hcodes
 class Login(EndpointResource):
     """ Let a user login with the developer chosen method """
 
-    def verify_information(
-            self, user, security, totp_auth, totp_code, now=None):
+    def verify_information(self, user, security, totp_auth, totp_code, now=None):
 
         message_body = {}
         message_body['actions'] = []
         error_message = None
 
         if totp_auth and totp_code is None:
-            message_body['actions'].append(
-                self.auth.SECOND_FACTOR_AUTHENTICATION)
+            message_body['actions'].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
             error_message = "You do not provided a valid second factor"
 
         epoch = datetime.fromtimestamp(0, pytz.utc)
@@ -47,13 +45,13 @@ class Login(EndpointResource):
             if last_pwd_change == epoch:
                 expired = True
             else:
-                valid_until = \
-                    last_pwd_change + timedelta(
-                        days=self.auth.MAX_PASSWORD_VALIDITY)
+                valid_until = last_pwd_change + timedelta(
+                    days=self.auth.MAX_PASSWORD_VALIDITY
+                )
 
                 if now is None:
                     now = datetime.now(pytz.utc)
-                expired = (valid_until < now)
+                expired = valid_until < now
 
             if expired:
 
@@ -64,7 +62,8 @@ class Login(EndpointResource):
             return None
 
         return self.force_response(
-            message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN)
+            message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN
+        )
 
     @decorate.catch_error()
     def post(self):
@@ -86,8 +85,7 @@ class Login(EndpointResource):
         # Now credentials are checked at every request
         if username is None or password is None:
             msg = "Missing username or password"
-            raise RestApiException(
-                msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
 
         username = username.lower()
         now = datetime.now(pytz.utc)
@@ -96,8 +94,8 @@ class Login(EndpointResource):
         password_confirm = jargs.get('password_confirm')
 
         totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
-            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
+            self.auth.SECOND_FACTOR_AUTHENTICATION is not None
+            and self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
         )
 
         if totp_authentication:
@@ -123,7 +121,8 @@ class Login(EndpointResource):
         if new_password is not None and password_confirm is not None:
 
             pwd_changed = security.change_password(
-                user, password, new_password, password_confirm)
+                user, password, new_password, password_confirm
+            )
 
             if pwd_changed:
                 password = new_password
@@ -132,7 +131,8 @@ class Login(EndpointResource):
         # ##################################################
         # Something is missing in the authentication, asking action to user
         ret = self.verify_information(
-            user, security, totp_authentication, totp_code, now)
+            user, security, totp_authentication, totp_code, now
+        )
         if ret is not None:
             return ret
 

@@ -67,6 +67,7 @@ def request_from_browser():
 
 def get_accepted_formats():
     from flask import request
+
     for val in request.headers:
         if val[0] == "Accept":
             return [x.strip() for x in val[1].split(',')]
@@ -101,14 +102,16 @@ def respond_to_browser(r):
         data = html_content
 
     from restapi.protocols.restful import output_html
+
     return output_html(
-        data=data, array=array,
-        code=r.get('code'), headers=r.get('headers'))
+        data=data, array=array, code=r.get('code'), headers=r.get('headers')
+    )
 
 
 ########################
 # Flask custom response
 ########################
+
 
 class InternalResponse(Response):
     """
@@ -211,9 +214,7 @@ class ResponseMaker(object):
             elements['headers']["_RV"] = "%s" % __version__
 
             PROJECT_VERSION = glom(
-                mem.customizer._configurations,
-                "project.version",
-                default=None
+                mem.customizer._configurations, "project.version", default=None
             )
             if PROJECT_VERSION is not None:
                 elements['headers']["Version"] = "%s" % PROJECT_VERSION
@@ -283,18 +284,20 @@ class ResponseMaker(object):
 
         # 3. Recover correct status and errors
         r['code'], r['errors'] = self.get_errors_and_status(
-            r['defined_content'], r['code'], r['errors'], r['head_method'])
+            r['defined_content'], r['code'], r['errors'], r['head_method']
+        )
 
         # 4. Encapsulate response and other things in a standard json obj:
         # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
         final_content = self.standard_response_content(
-            r['defined_content'], r['elements'],
-            r['code'], r['errors'], r['meta'])
+            r['defined_content'], r['elements'], r['code'], r['errors'], r['meta']
+        )
 
         if r['extra'] is not None:
             log.warning(
-                "NOT IMPLEMENTED YET: " +
-                "what to do with extra field?\n%s" % r['extra'])
+                "NOT IMPLEMENTED YET: "
+                + "what to do with extra field?\n%s" % r['extra']
+            )
 
         # 5. Return what is necessary to build a standard flask response
         # from all that was gathered so far
@@ -322,7 +325,8 @@ class ResponseMaker(object):
         return response
 
     def get_errors_and_status(
-            self, defined_content=None, code=None, errors=None, head_method=False):
+        self, defined_content=None, code=None, errors=None, head_method=False
+    ):
         """
         Handle OUR standard response following criteria described in
         https://github.com/EUDAT-B2STAGE/http-api-base/issues/7
@@ -344,7 +348,7 @@ class ResponseMaker(object):
         if errors is not None:
             if not isinstance(errors, list):
                 # if not isinstance(errors, dict):
-                    # errors = {'Generic error': errors}
+                # errors = {'Generic error': errors}
                 errors = [errors]
 
         # Decide code range
@@ -367,8 +371,9 @@ class ResponseMaker(object):
         return code, errors
 
     @staticmethod
-    def standard_response_content(defined_content=None, elements=None,
-                                  code=None, errors=None, custom_metas=None):
+    def standard_response_content(
+        defined_content=None, elements=None, code=None, errors=None, custom_metas=None
+    ):
         """
         Try conversions and compute types and length
         """
@@ -401,7 +406,7 @@ class ResponseMaker(object):
         except Exception as e:
             log.critical("Could not build response!\n%s", e)
             # Revert to defaults
-            defined_content = None,
+            defined_content = (None,)
             data_type = str(type(defined_content))
             elements = 0
             # Also set the error
@@ -409,16 +414,13 @@ class ResponseMaker(object):
             errors = [{'Failed to build response': str(e)}]
             total_errors = len(errors)
 
-        contents = {
-            'data': defined_content,
-            'errors': errors,
-        }
+        contents = {'data': defined_content, 'errors': errors}
 
         metas = {
             'data_type': data_type,
             'elements': elements,
             'errors': total_errors,
-            'status': code
+            'status': code,
         }
 
         if custom_metas is not None:
@@ -427,13 +429,15 @@ class ResponseMaker(object):
 
         return {
             ResponseMaker._content_key: contents,
-            ResponseMaker._content_meta: metas
+            ResponseMaker._content_meta: metas,
         }
 
     @staticmethod
     def flask_response(data, status=hcodes.HTTP_OK_BASIC, headers=None):
 
         raise DeprecationWarning("Useless mimic of Flask response")
+
+
 #         Was inspired by
 #         http://blog.miguelgrinberg.com/
 #             post/customizing-the-flask-response-class
@@ -446,7 +450,8 @@ set_response(
     # Note: original here means the Flask simple response
     original=False,
     first_call=True,
-    custom_method=ResponseMaker.default_response)
+    custom_method=ResponseMaker.default_response,
+)
 
 
 ########################
@@ -462,8 +467,9 @@ def get_content_from_response(http_out):
         except Exception as e:
             log.critical("Failed to load response:\n%s", e)
             raise ValueError(
-                "Trying to recover informations" +
-                " from a malformed response:\n%s" % http_out)
+                "Trying to recover informations"
+                + " from a malformed response:\n%s" % http_out
+            )
     # Or convert an half-way made response
     elif isinstance(http_out, ResponseElements):
         tmp = ResponseMaker(http_out).generate_response()
@@ -473,8 +479,9 @@ def get_content_from_response(http_out):
     # Should be {Response: DATA, Meta: RESPONSE_METADATA}
     if not isinstance(response, dict) or len(response) != 2:
         raise ValueError(
-            "Trying to recover informations" +
-            " from a malformed response:\n%s" % response)
+            "Trying to recover informations"
+            + " from a malformed response:\n%s" % response
+        )
 
     # Split
     content = response.get(ResponseMaker._content_key, {}).get('data')

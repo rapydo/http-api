@@ -90,7 +90,8 @@ class BeSwagger(object):
             if label not in endpoint.uris:
                 raise KeyError(
                     "Invalid label '%s' found.\nAvailable labels: %s"
-                    % (label, list(endpoint.uris.keys())))
+                    % (label, list(endpoint.uris.keys()))
+                )
             uri = endpoint.uris[label]
 
             ################################
@@ -134,8 +135,7 @@ class BeSwagger(object):
 
                 # If everything is fine set the roles to be required by Flask
                 extra.auth = roles
-                extra.required_roles = custom.get(
-                    'required_roles', ALL_ROLES).lower()
+                extra.required_roles = custom.get('required_roles', ALL_ROLES).lower()
             else:
                 extra.auth = None
 
@@ -188,8 +188,10 @@ class BeSwagger(object):
                     paramtype = 'string'
 
                 path_parameter = {
-                    'name': paramname, 'type': paramtype,
-                    'in': 'path', 'required': True
+                    'name': paramname,
+                    'type': paramtype,
+                    'in': 'path',
+                    'required': True,
                 }
                 if paramname in endpoint.ids:
                     path_parameter['description'] = endpoint.ids[paramname]
@@ -241,7 +243,8 @@ class BeSwagger(object):
 
             if len(query_params) > 0:
                 self.query_parameters(
-                    endpoint.cls, method=method, uri=uri, params=query_params)
+                    endpoint.cls, method=method, uri=uri, params=query_params
+                )
 
             # Swagger does not like empty arrays
             if len(specs['parameters']) < 1:
@@ -315,19 +318,12 @@ class BeSwagger(object):
         # A template base
         output = {
             "swagger": "2.0",  # TODO: update to 3.0.1?
-            "info": {
-                "version": "0.0.1",
-                "title": "Your application name",
-            },
+            "info": {"version": "0.0.1", "title": "Your application name"},
             "schemes": schemes,
             # "host": "localhost"  # chosen dinamically
             "basePath": "/",
             "securityDefinitions": {
-                "Bearer": {
-                    "type": "apiKey",
-                    "name": "Authorization",
-                    "in": "header"
-                }
+                "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
                 # "OauthSecurity": {
                 #     "type": "oauth2",
                 #     "tokenUrl": "https://oauth.simple.api/token",
@@ -340,11 +336,7 @@ class BeSwagger(object):
                 # }
                 # TODO: check about scopes (roles?)
             },
-            "security": [
-                {
-                    "Bearer": []
-                }
-            ]
+            "security": [{"Bearer": []}],
         }
 
         ###################
@@ -370,8 +362,8 @@ class BeSwagger(object):
         # Please remove me in the future
         if not key_found:
             log.warning(
-                "Your swagger model file is obsolete, " +
-                "please add *definitions* key")
+                "Your swagger model file is obsolete, " + "please add *definitions* key"
+            )
             log.info("Follow issue #59 for details")
             output['definitions'] = models
         #####################################################
@@ -388,8 +380,7 @@ class BeSwagger(object):
 
             for method, file in endpoint.methods.items():
                 # add the custom part to the endpoint
-                self._endpoints[key] = \
-                    self.read_my_swagger(file, method, endpoint)
+                self._endpoints[key] = self.read_my_swagger(file, method, endpoint)
 
         ###################
         # Save query parameters globally
@@ -425,13 +416,15 @@ class BeSwagger(object):
             path = helpers.current_dir(EXTENDED_PACKAGE, SWAGGER_DIR)
             # NOTE: with logger=False I skip the warning if this file doesn't exist
             extended_models = load_yaml_file(
-                filename, path=path, skip_error=True, logger=False)
+                filename, path=path, skip_error=True, logger=False
+            )
 
         # CUSTOM definitions
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
         # NOTE: with logger=False I skip the warning if this file doesn't exist
         custom_models = load_yaml_file(
-            filename, path=path, skip_error=True, logger=False)
+            filename, path=path, skip_error=True, logger=False
+        )
 
         if extended_models is None:
             return mix(data, custom_models)
@@ -476,7 +469,8 @@ class BeSwagger(object):
 
         try:
             self._customizer._validated_spec = Spec.from_dict(
-                swag_dict, config=bravado_config)
+                swag_dict, config=bravado_config
+            )
             log.debug("Swagger configuration is validated")
         except Exception as e:
             # raise e

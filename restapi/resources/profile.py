@@ -43,12 +43,10 @@ class RecoverPassword
 def send_activation_link(auth, user):
 
     title = glom(
-        mem.customizer._configurations,
-        "project.title",
-        default='Unkown title')
+        mem.customizer._configurations, "project.title", default='Unkown title'
+    )
 
-    activation_token, jti = auth.create_reset_token(
-        user, auth.ACTIVATE_ACCOUNT)
+    activation_token, jti = auth.create_reset_token(user, auth.ACTIVATE_ACCOUNT)
 
     domain = os.environ.get("DOMAIN")
     if PRODUCTION:
@@ -88,12 +86,12 @@ def send_activation_link(auth, user):
         except BaseException as e:
             log.error(
                 "Could not send email with custom service:\n%s: %s",
-                e.__class__.__name__, e)
+                e.__class__.__name__,
+                e,
+            )
             raise
 
-    auth.save_token(
-        user, activation_token, jti,
-        token_type=auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, activation_token, jti, token_type=auth.ACTIVATE_ACCOUNT)
 
 
 def notify_registration(user):
@@ -101,9 +99,8 @@ def notify_registration(user):
     if detector.get_bool_from_os(var):
         # Sending an email to the administrator
         title = glom(
-            mem.customizer._configurations,
-            "project.title",
-            default='Unkown title')
+            mem.customizer._configurations, "project.title", default='Unkown title'
+        )
         subject = "%s New credentials requested" % title
         body = "New credentials request from %s" % user.email
 
@@ -120,11 +117,15 @@ def custom_extra_registration(variables):
         try:
             obj.new_member(
                 email=variables['email'],
-                name=variables['name'], surname=variables['surname'])
+                name=variables['name'],
+                surname=variables['surname'],
+            )
         except BaseException as e:
             log.error(
                 "Could not register your custom profile:\n%s: %s",
-                e.__class__.__name__, e)
+                e.__class__.__name__,
+                e,
+            )
 
 
 class Profile(EndpointResource):
@@ -136,7 +137,7 @@ class Profile(EndpointResource):
         data = {
             'uuid': current_user.uuid,
             'status': "Valid user",
-            'email': current_user.email
+            'email': current_user.email,
         }
 
         # roles = []
@@ -151,7 +152,7 @@ class Profile(EndpointResource):
                 data["group"] = {
                     "uuid": g.uuid,
                     "shortname": g.shortname,
-                    "fullname": g.fullname
+                    "fullname": g.fullname,
                 }
         except BaseException as e:
             log.verbose(e)
@@ -186,15 +187,14 @@ class Profile(EndpointResource):
 
         if not send_mail_is_active():
             raise RestApiException(
-                'Server misconfiguration, unable to reset password. ' +
-                'Please report this error to adminstrators',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Server misconfiguration, unable to reset password. '
+                + 'Please report this error to adminstrators',
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         v = self.get_input()
         if len(v) == 0:
-            raise RestApiException(
-                'Empty input',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
 
         # INIT #
         # schema = self.get_endpoint_custom_definition()
@@ -202,29 +202,30 @@ class Profile(EndpointResource):
 
         if 'password' not in v:
             raise RestApiException(
-                "Missing input: password",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Missing input: password", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if 'email' not in v:
             raise RestApiException(
-                "Missing input: email",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Missing input: email", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if 'name' not in v:
             raise RestApiException(
-                "Missing input: name",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Missing input: name", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if 'surname' not in v:
             raise RestApiException(
-                "Missing input: surname",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Missing input: surname", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         user = self.auth.get_user_object(username=v['email'])
         if user is not None:
             raise RestApiException(
                 "This user already exists: %s" % v['email'],
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         v['is_active'] = False
         user = self.auth.create_user(v, [self.auth.default_role])
@@ -233,8 +234,10 @@ class Profile(EndpointResource):
             self.auth.custom_post_handle_user_input(user, v)
             send_activation_link(self.auth, user)
             notify_registration(user)
-            msg = "We are sending an email to your email address where " + \
-                "you will find the link to activate your account"
+            msg = (
+                "We are sending an email to your email address where "
+                + "you will find the link to activate your account"
+            )
 
         except BaseException as e:
             log.error("Errors during account registration: %s" % str(e))
@@ -251,8 +254,8 @@ class Profile(EndpointResource):
         password_confirm = data.get('password_confirm')
 
         totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
-            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
+            self.auth.SECOND_FACTOR_AUTHENTICATION is not None
+            and self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
         )
         if totp_authentication:
             totp_code = data.get('totp_code')
@@ -271,8 +274,7 @@ class Profile(EndpointResource):
             token, _ = self.auth.make_login(user.email, password)
             security.verify_token(user.email, token)
 
-        security.change_password(
-            user, password, new_password, password_confirm)
+        security.change_password(user, password, new_password, password_confirm)
 
         # NOTE already in change_password
         # but if removed new pwd is not saved
@@ -281,9 +283,7 @@ class Profile(EndpointResource):
     def update_profile(self, user, data):
 
         # log.pp(data)
-        avoid_update = [
-            'uuid', 'authmethod', 'is_active', 'roles'
-        ]
+        avoid_update = ['uuid', 'authmethod', 'is_active', 'roles']
 
         try:
             for key, value in data.items():
@@ -292,10 +292,7 @@ class Profile(EndpointResource):
                 log.debug("Profile new value: %s=%s", key, value)
                 setattr(user, key, value)
         except BaseException as e:
-            log.error(
-                "Failed to update profile:\n%s: %s",
-                e.__class__.__name__, e
-            )
+            log.error("Failed to update profile:\n%s: %s", e.__class__.__name__, e)
         else:
             log.info("Profile updated")
 
@@ -324,7 +321,6 @@ class Profile(EndpointResource):
 
 
 class ProfileActivate(EndpointResource):
-
     @decorate.catch_error()
     def put(self, token_id):
 
@@ -333,41 +329,43 @@ class ProfileActivate(EndpointResource):
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token_id, raiseErrors=True,
-                token_type=self.auth.ACTIVATE_ACCOUNT)
+                token_id, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
+            )
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError as e:
             raise RestApiException(
                 'Invalid activation token: this request is expired',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         # if token is not yet active
         except jwt.exceptions.ImmatureSignatureError as e:
             raise RestApiException(
-                'Invalid activation token',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         # if token does not exist (or other generic errors)
         except Exception as e:
             raise RestApiException(
-                'Invalid activation token',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         # Recovering token object from jti
         token = self.auth.get_tokens(token_jti=self.auth._jti)
         if len(token) == 0:
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         # If user logged is already active, invalidate the token
-        if self.auth._user.is_active is not None and \
-                self.auth._user.is_active:
+        if self.auth._user.is_active is not None and self.auth._user.is_active:
             self.auth.invalidate_token(token_id)
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         # The activation token is valid, do something
 
@@ -384,14 +382,12 @@ class ProfileActivate(EndpointResource):
 
         v = self.get_input()
         if len(v) == 0:
-            raise RestApiException(
-                'Empty input',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
 
         if 'username' not in v:
             raise RestApiException(
-                'Missing required input: username',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Missing required input: username', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         user = self.auth.get_user_object(username=v['username'])
 
@@ -400,8 +396,10 @@ class ProfileActivate(EndpointResource):
         # => security to avoid user guessing
         if user is not None:
             send_activation_link(self.auth, user)
-        msg = "We are sending an email to your email address where " + \
-            "you will find the link to activate your account"
+        msg = (
+            "We are sending an email to your email address where "
+            + "you will find the link to activate your account"
+        )
         return msg
 
 
@@ -422,22 +420,22 @@ def send_internal_password_reset(uri, title, reset_email):
 
 
 class RecoverPassword(EndpointResource):
-
     @decorate.catch_error()
     def post(self):
 
         if not send_mail_is_active():
             raise RestApiException(
-                'Server misconfiguration, unable to reset password. ' +
-                'Please report this error to adminstrators',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Server misconfiguration, unable to reset password. '
+                + 'Please report this error to adminstrators',
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         reset_email = self.get_input(single_parameter='reset_email')
 
         if reset_email is None:
             raise RestApiException(
-                'Invalid reset email',
-                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+                'Invalid reset email', status_code=hcodes.HTTP_BAD_FORBIDDEN
+            )
 
         reset_email = reset_email.lower()
 
@@ -445,28 +443,28 @@ class RecoverPassword(EndpointResource):
 
         if user is None:
             raise RestApiException(
-                'Sorry, %s ' % reset_email +
-                'is not recognized as a valid username or email address',
-                status_code=hcodes.HTTP_BAD_FORBIDDEN)
+                'Sorry, %s ' % reset_email
+                + 'is not recognized as a valid username or email address',
+                status_code=hcodes.HTTP_BAD_FORBIDDEN,
+            )
 
         if user.is_active is not None and not user.is_active:
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )
 
         # title = mem.customizer._configurations \
         #     .get('project', {}) \
         #     .get('title', "Unkown title")
 
         title = glom(
-            mem.customizer._configurations,
-            "project.title",
-            default='Unkown title')
+            mem.customizer._configurations, "project.title", default='Unkown title'
+        )
 
-        reset_token, jti = self.auth.create_reset_token(
-            user, self.auth.PWD_RESET)
+        reset_token, jti = self.auth.create_reset_token(user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
         if PRODUCTION:
@@ -492,11 +490,12 @@ class RecoverPassword(EndpointResource):
 
         ##################
         # Completing the reset task
-        self.auth.save_token(
-            user, reset_token, jti, token_type=self.auth.PWD_RESET)
+        self.auth.save_token(user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
-        msg = "We are sending an email to your email address where " + \
-            "you will find the link to enter a new password"
+        msg = (
+            "We are sending an email to your email address where "
+            + "you will find the link to enter a new password"
+        )
         return msg
 
     @decorate.catch_error()
@@ -507,32 +506,35 @@ class RecoverPassword(EndpointResource):
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token_id, raiseErrors=True, token_type=self.auth.PWD_RESET)
+                token_id, raiseErrors=True, token_type=self.auth.PWD_RESET
+            )
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError as e:
             raise RestApiException(
                 'Invalid reset token: this request is expired',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         # if token is not yet active
         except jwt.exceptions.ImmatureSignatureError as e:
             raise RestApiException(
-                'Invalid reset token',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Invalid reset token', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         # if token does not exist (or other generic errors)
         except Exception as e:
             raise RestApiException(
-                'Invalid reset token',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Invalid reset token', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         # Recovering token object from jti
         token = self.auth.get_tokens(token_jti=self.auth._jti)
         if len(token) == 0:
             raise RestApiException(
                 'Invalid reset token: this request is no longer valid',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         token = token.pop(0)
         emitted = timestamp_from_string(token["emitted"])
@@ -560,7 +562,8 @@ class RecoverPassword(EndpointResource):
                 self.auth.invalidate_token(token_id)
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
-                    status_code=hcodes.HTTP_BAD_REQUEST)
+                    status_code=hcodes.HTTP_BAD_REQUEST,
+                )
 
         # The reset token is valid, do something
         data = self.get_input()
@@ -574,18 +577,18 @@ class RecoverPassword(EndpointResource):
         # Something is missing
         if new_password is None or password_confirm is None:
             raise RestApiException(
-                'Invalid password',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                'Invalid password', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if new_password != password_confirm:
             raise RestApiException(
                 'New password does not match with confirmation',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
 
         security = HandleSecurity(self.auth)
 
-        security.change_password(
-            self.auth._user, None, new_password, password_confirm)
+        security.change_password(self.auth._user, None, new_password, password_confirm)
         # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
         self.auth._user.save()

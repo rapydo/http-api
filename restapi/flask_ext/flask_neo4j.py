@@ -12,8 +12,7 @@ from utilities.logs import re_obscure_pattern
 log = get_logger(__name__)
 
 
-class NeomodelClient():
-
+class NeomodelClient:
     def __init__(self, db):
         self.db = db
 
@@ -32,8 +31,7 @@ class NeomodelClient():
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
         except Exception as e:
-            raise Exception(
-                "Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
+            raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
         # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
 
@@ -64,14 +62,12 @@ class NeomodelClient():
         return ' '.join(tokens)
 
 
-
 class NeoModel(BaseExtension):
-
     def set_connection_exception(self):
         return (
             socket.gaierror,
             neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
-            neo4j.exceptions.ServiceUnavailable  # neo4j 3.2.2+
+            neo4j.exceptions.ServiceUnavailable,  # neo4j 3.2.2+
         )
 
     def custom_connection(self, **kwargs):
@@ -81,15 +77,14 @@ class NeoModel(BaseExtension):
         else:
             variables = self.variables
 
-        self.uri = "bolt://%s:%s@%s:%s" % \
-            (
-                # User:Password
-                variables.get('user', 'neo4j'),
-                variables.get('password'),
-                # Host:Port
-                variables.get('host'),
-                variables.get('port'),
-            )
+        self.uri = "bolt://%s:%s@%s:%s" % (
+            # User:Password
+            variables.get('user', 'neo4j'),
+            variables.get('password'),
+            # Host:Port
+            variables.get('host'),
+            variables.get('port'),
+        )
         log.very_verbose("URI IS %s" % re_obscure_pattern(self.uri))
 
         config.DATABASE_URL = self.uri
@@ -117,6 +112,7 @@ class NeoModel(BaseExtension):
             if pdestroy:
                 log.critical("Destroy current Neo4j data")
                 from neomodel import clear_neo4j_database
+
                 clear_neo4j_database(graph.db)
 
             if pinit:

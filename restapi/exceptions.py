@@ -11,7 +11,6 @@ from utilities import htmlcodes as hcodes
 
 
 class RestApiException(Exception):
-
     def __init__(self, exception, status_code=None):
 
         if status_code is None:

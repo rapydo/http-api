@@ -6,6 +6,7 @@ App specifications
 
 # Little hack to avoid printing unwanted logs when cli is asking usage
 from restapi import FLASK_HELP
+
 if FLASK_HELP:
     raise LookupError
 else:
@@ -13,24 +14,26 @@ else:
     from restapi.rest import farmer, response
     from utilities.globals import mem
     from utilities.logs import get_logger
+
     log = get_logger(__name__)
 
 
 def output_html(data, code, headers=None, array=False):
 
     from flask import Response, render_template
+
     html_data = {'body_content': data, 'array': array}
     html_page = render_template('index.html', **html_data)
     return Response(
-        html_page,
-        mimetype=response.MIMETYPE_HTML, status=code, headers=headers)
+        html_page, mimetype=response.MIMETYPE_HTML, status=code, headers=headers
+    )
 
 
 # def output_json(data, code, headers=None):
-    # from flask import make_response
-    # resp = make_response(data, code)
-    # resp.headers.extend(headers or {})
-    # return resp
+# from flask import make_response
+# resp = make_response(data, code)
+# resp.headers.extend(headers or {})
+# return resp
 
 
 class Api(RestFulApi):
@@ -89,7 +92,4 @@ def create_endpoints(epo):
 
 
 # REST to be activated inside the app factory
-log.verbose(
-    "Endpoints w/ %s-%s",
-    Api.__name__, farmer.EndpointsFarmer.__name__
-)
+log.verbose("Endpoints w/ %s-%s", Api.__name__, farmer.EndpointsFarmer.__name__)

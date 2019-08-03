@@ -12,6 +12,7 @@ from neomodel import JSONProperty as originalJSONProperty
 from neomodel import ArrayProperty as originalArrayProperty
 from neomodel import EmailProperty as originalEmailProperty
 from neomodel import AliasProperty as originalAliasProperty
+
 # from neomodel import UniqueIdProperty as originalUniqueIdProperty
 from neomodel import StructuredNode as originalStructuredNode
 from neomodel import StructuredRel as originalStructuredRel
@@ -23,10 +24,7 @@ from neomodel.relationship_manager import RelationshipDefinition
 from utilities.uuid import getUUID
 
 
-def RelationshipTo(
-        cls_name, rel_type,
-        show=None, is_restricted=False,
-        *args, **kwargs):
+def RelationshipTo(cls_name, rel_type, show=None, is_restricted=False, *args, **kwargs):
     """
     Ovveride of the RelationshipTo function from neomodel
     It call the original function and save into the returned object
@@ -41,9 +39,8 @@ def RelationshipTo(
 
 
 def RelationshipFrom(
-        cls_name, rel_type,
-        show=None, is_restricted=False,
-        *args, **kwargs):
+    cls_name, rel_type, show=None, is_restricted=False, *args, **kwargs
+):
     """
     Ovveride of the RelationshipFrom function from neomodel
     It call the original function and save into the returned object
@@ -64,6 +61,7 @@ class myAttribProperty(object):
     This class name is also used in the method above to filter out attributes
     not customized
     """
+
     show = False
     is_restricted = False
 
@@ -144,8 +142,9 @@ class ArrayProperty(originalArrayProperty, myAttribProperty):
     # BUG FIX: added base_property, as done in the original neomodel class
     # with commit c4faec6 on 14 Mar 2017
     # Releted issue: https://github.com/robinedwards/neomodel/issues/237
-    def __init__(self, base_property=None, show=None, is_restricted=False,
-                 *args, **kwargs):
+    def __init__(
+        self, base_property=None, show=None, is_restricted=False, *args, **kwargs
+    ):
 
         self.save_extra_info(show, is_restricted)
         super(ArrayProperty, self).__init__(base_property, *args, **kwargs)

@@ -48,9 +48,8 @@ class TestApp(BaseTests):
 
         # Check HTML response to status if agent/request is text/html
         from restapi.rest.response import MIMETYPE_HTML
-        headers = {
-            "Accept": MIMETYPE_HTML
-        }
+
+        headers = {"Accept": MIMETYPE_HTML}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         output = r.data.decode('utf-8')
@@ -97,8 +96,8 @@ class TestApp(BaseTests):
 
         # Off course PWD cannot be upper :D
         self.do_login(
-            client, USER, PWD.upper(),
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            client, USER, PWD.upper(), status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+        )
 
         log.info("*** VERIFY valid credentials")
         headers, _ = self.do_login(client, None, None)
@@ -108,16 +107,22 @@ class TestApp(BaseTests):
         log.info("*** VERIFY invalid credentials")
 
         self.do_login(
-            client, 'ABC-Random-User-XYZ', 'ABC-Random-Pass-XYZ',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            client,
+            'ABC-Random-User-XYZ',
+            'ABC-Random-Pass-XYZ',
+            status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+        )
 
         # this check verifies a BUG with neo4j causing crash of auth module
         # when using a non-email-username to authenticate
         log.info("*** VERIFY with a non-email-username")
 
         self.do_login(
-            client, 'notanemail', '[A-Za-z0-9]+',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            client,
+            'notanemail',
+            '[A-Za-z0-9]+',
+            status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+        )
 
     def test_04_GET_profile(self, client):
         """ Check if you can use your token for protected endpoints """
@@ -215,6 +220,7 @@ class TestApp(BaseTests):
 
         service = 'neo4j'
         from restapi.services.detect import detector
+
         if not detector.check_availability(service):
             return True
         log.debug("Testing admin users for %s", service)
@@ -223,11 +229,13 @@ class TestApp(BaseTests):
         endpoint = "admin/users"
         url = API_URI + "/" + endpoint
         get_r, _, _, _ = self._test_endpoint(
-            client, endpoint, headers,
+            client,
+            endpoint,
+            headers,
             hcodes.HTTP_OK_BASIC,
             hcodes.HTTP_BAD_REQUEST,
             hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
-            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED
+            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
         )
 
         self.checkResponse(get_r, [], [])

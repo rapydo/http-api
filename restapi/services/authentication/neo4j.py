@@ -25,11 +25,11 @@ if not detector.check_availability(__name__):
 
 
 class Authentication(BaseAuthentication):
-
     def get_user_object(self, username=None, payload=None):
 
         from neomodel.exceptions import DeflateError
         from neo4j.exceptions import ServiceUnavailable
+
         user = None
         try:
             if username is not None:
@@ -118,20 +118,25 @@ class Authentication(BaseAuthentication):
 
         # FIXME: Create some users for testing
         from flask import current_app
+
         if current_app.config['TESTING']:
             pass
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
             log.warning("No users inside graphdb. Injecting default.")
-            self.create_user({
-                # 'uuid': getUUID(),
-                'email': self.default_user,
-                # 'authmethod': 'credentials',
-                'name': 'Default', 'surname': 'User',
-                # 'password': self.hash_password(self.default_password)
-                'password': self.default_password
-            }, roles=self.default_roles)
+            self.create_user(
+                {
+                    # 'uuid': getUUID(),
+                    'email': self.default_user,
+                    # 'authmethod': 'credentials',
+                    'name': 'Default',
+                    'surname': 'User',
+                    # 'password': self.hash_password(self.default_password)
+                    'password': self.default_password,
+                },
+                roles=self.default_roles,
+            )
 
     def save_token(self, user, token, jti, token_type=None):
 
@@ -243,8 +248,7 @@ class Authentication(BaseAuthentication):
     #     log.debug("Removing all pending tokens")
     #     return self.cypher("MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a")
 
-    def store_oauth2_user(self, account_type, current_user,
-                          token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -261,17 +265,18 @@ class Authentication(BaseAuthentication):
                 return None
         # TO BE VERIFIED
         except self.db.User.DoesNotExist:
-            user_node = self.create_user(userdata={
-                # 'uuid': getUUID(),
-                'email': email,
-                'authmethod': account_type
-            })
+            user_node = self.create_user(
+                userdata={
+                    # 'uuid': getUUID(),
+                    'email': email,
+                    'authmethod': account_type,
+                }
+            )
         # NOTE: missing roles for this user?
 
         # A self.db node for external oauth2 account
         try:
-            oauth2_external = \
-                self.db.ExternalAccounts.nodes.get(username=email)
+            oauth2_external = self.db.ExternalAccounts.nodes.get(username=email)
         except self.db.ExternalAccounts.DoesNotExist:
             oauth2_external = self.db.ExternalAccounts(username=email)
         # update main info for this user

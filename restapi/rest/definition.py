@@ -61,17 +61,14 @@ class EndpointResource(Resource):
     def load_authentication(self):
         # Authentication instance is always needed at each request
         self.auth = self.get_service_instance(
-            detector.authentication_name,
-            authenticator=True
+            detector.authentication_name, authenticator=True
         )
-        auth_backend = self.get_service_instance(
-            detector.authentication_service)
+        auth_backend = self.get_service_instance(detector.authentication_service)
         self.auth.db = auth_backend
 
         # Set parameters to be used
 
-    def get_service_instance(self, service_name,
-                             global_instance=True, **kwargs):
+    def get_service_instance(self, service_name, global_instance=True, **kwargs):
         farm = self.services.get(service_name)
         if farm is None:
             raise AttributeError("Service %s not found" % service_name)
@@ -95,8 +92,9 @@ class EndpointResource(Resource):
 
         # FIXME: this works only for 'query' parameters
         # recover from the global mem parameters query parameters
-        current_params = mem.customizer._query_params \
-            .get(classname, {}).get(uri, {}).get(method, {})
+        current_params = (
+            mem.customizer._query_params.get(classname, {}).get(uri, {}).get(method, {})
+        )
 
         if len(current_params) > 0:
 
@@ -123,10 +121,14 @@ class EndpointResource(Resource):
                     act = 'append'
 
                 self._parser.add_argument(
-                    param, type=mytype,
+                    param,
+                    type=mytype,
                     default=data.get('default', None),
                     required=data.get('required', False),
-                    trim=trim, action=act, location=loc)
+                    trim=trim,
+                    action=act,
+                    location=loc,
+                )
                 log.very_verbose("Accept param '%s' type %s" % (param, mytype))
 
         # TODO: should I check body parameters?
@@ -164,8 +166,7 @@ class EndpointResource(Resource):
 
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
-        if len(self._json_args) < 1 and \
-           request.mimetype != 'application/octet-stream':
+        if len(self._json_args) < 1 and request.mimetype != 'application/octet-stream':
             try:
                 self._json_args = request.get_json(force=forcing)
             except Exception:  # as e:
@@ -215,16 +216,15 @@ class EndpointResource(Resource):
         try:
             limit = int(limit)
         except ValueError:
-            log.warning(
-                "%s is expected to be an int, not %s", PERPAGE_KEY, limit)
+            log.warning("%s is expected to be an int, not %s", PERPAGE_KEY, limit)
             limit = DEFAULT_PERPAGE
 
         try:
             current_page = int(current_page)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s",
-                CURRENTPAGE_KEY, current_page)
+                "%s is expected to be an int, not %s", CURRENTPAGE_KEY, current_page
+            )
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
@@ -244,11 +244,16 @@ class EndpointResource(Resource):
         return definitions.get(refname).get('properties')
 
     def explode_response(
-        self, api_output, get_all=False,
-        get_error=False, get_status=False, get_meta=False
+        self,
+        api_output,
+        get_all=False,
+        get_error=False,
+        get_status=False,
+        get_meta=False,
     ):
 
         from restapi.rest.response import get_content_from_response
+
         content, err, meta, code = get_content_from_response(api_output)
 
         if get_error:
@@ -331,14 +336,12 @@ class EndpointResource(Resource):
             defined_content=defined_content,
             errors=errors,
             code=code,
-            head_method=head_method
+            head_method=head_method,
         )
 
-    def send_errors(self,
-                    message=None, errors=None,
-                    code=None, headers=None,
-                    head_method=False
-                    ):
+    def send_errors(
+        self, message=None, errors=None, code=None, headers=None, head_method=False
+    ):
         """ Setup an error message """
 
         if errors is None:
@@ -361,15 +364,10 @@ class EndpointResource(Resource):
             errors = None
 
         return self.force_response(
-            errors=errors,
-            code=code,
-            headers=headers,
-            head_method=head_method
+            errors=errors, code=code, headers=headers, head_method=head_method
         )
 
-    def report_generic_error(
-        self, message=None, current_response_available=True
-    ):
+    def report_generic_error(self, message=None, current_response_available=True):
 
         if message is None:
             message = "Something BAD happened somewhere..."
@@ -446,11 +444,7 @@ class EndpointResource(Resource):
 
         json_data = {}
         endpoint = request.url
-        json_data["links"] = {
-            "self": endpoint,
-            "next": None,
-            "last": None,
-        }
+        json_data["links"] = {"self": endpoint, "next": None, "last": None}
 
         json_data["content"] = []
         if not isinstance(instances, list):
@@ -469,8 +463,7 @@ class EndpointResource(Resource):
 
         return json_data
 
-    def get_show_fields(self, obj, function_name,
-                        view_public_only, fields=None):
+    def get_show_fields(self, obj, function_name, view_public_only, fields=None):
         if fields is None:
             fields = []
         if len(fields) < 1:
@@ -507,19 +500,22 @@ class EndpointResource(Resource):
                         fn = getattr(obj, choice_function)
                         description = fn()
 
-                        attribute = {
-                            "key": attribute,
-                            "description": description
-                        }
+                        attribute = {"key": attribute, "description": description}
                     attributes[key] = attribute
 
         return attributes
 
     def getJsonResponse(
-        self, instance, fields=None, resource_type=None,
-        skip_missing_ids=False, view_public_only=False,
-        relationship_depth=0, max_relationship_depth=1,
-        relationship_name="", relationships_expansion=None
+        self,
+        instance,
+        fields=None,
+        resource_type=None,
+        skip_missing_ids=False,
+        view_public_only=False,
+        relationship_depth=0,
+        max_relationship_depth=1,
+        relationship_name="",
+        relationships_expansion=None,
     ):
         """
         Lots of meta introspection to guess the JSON specifications
@@ -561,7 +557,8 @@ class EndpointResource(Resource):
             data["links"] = {"self": self_uri}
 
         data["attributes"] = self.get_show_fields(
-            instance, 'show_fields', view_public_only, fields)
+            instance, 'show_fields', view_public_only, fields
+        )
 
         # Relationships
         max_depth_reached = relationship_depth >= max_relationship_depth
@@ -592,7 +589,7 @@ class EndpointResource(Resource):
                     log.debug(
                         "Expanding %s relationship with %s",
                         relationship_name,
-                        expansion_rel
+                        expansion_rel,
                     )
                     relationships.append(expansion_rel)
 
@@ -616,23 +613,23 @@ class EndpointResource(Resource):
                     relationship_depth=relationship_depth + 1,
                     max_relationship_depth=max_relationship_depth,
                     relationship_name=rel_name,
-                    relationships_expansion=relationships_expansion)
+                    relationships_expansion=relationships_expansion,
+                )
 
                 # Verify if instance and node are linked by a
                 # relationship with a custom model with fields flagged
                 # as show=True. In this case, append relationship
                 # properties to the attribute model of the node
                 r = rel.relationship(node)
-                attrs = self.get_show_fields(
-                    r, 'show_fields', view_public_only)
+                attrs = self.get_show_fields(r, 'show_fields', view_public_only)
 
                 for k in attrs:
                     if k in subnode['attributes']:
                         log.warning(
-                            "Name collision %s" % k +
-                            " on node %s" % subnode +
-                            " from both model %s" % type(node) +
-                            " and property model %s" % type(r)
+                            "Name collision %s" % k
+                            + " on node %s" % subnode
+                            + " from both model %s" % type(node)
+                            + " and property model %s" % type(r)
                         )
                     subnode['attributes'][k] = attrs[k]
 
@@ -647,8 +644,7 @@ class EndpointResource(Resource):
 
         return data
 
-    def get_endpoint_definition(self, key=None,
-                                is_schema_url=False, method=None):
+    def get_endpoint_definition(self, key=None, is_schema_url=False, method=None):
 
         url = request.url_rule.rule
         if is_schema_url:
@@ -684,11 +680,13 @@ class EndpointResource(Resource):
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(
                 "No parameters schema defined for %s" % url,
-                status_code=hcodes.HTTP_BAD_NOTFOUND)
+                status_code=hcodes.HTTP_BAD_NOTFOUND,
+            )
         if method not in mem.customizer._parameter_schemas[url]:
             raise RestApiException(
                 "No parameters schema defined for method %s in %s" % (method, url),
-                status_code=hcodes.HTTP_BAD_NOTFOUND)
+                status_code=hcodes.HTTP_BAD_NOTFOUND,
+            )
             return None
         return mem.customizer._parameter_schemas[url][method]
 
@@ -709,8 +707,8 @@ class EndpointResource(Resource):
             # this field is missing but required!
             elif checkRequired and field["required"]:
                 raise RestApiException(
-                    'Missing field: %s' % k,
-                    status_code=hcodes.HTTP_BAD_REQUEST)
+                    'Missing field: %s' % k, status_code=hcodes.HTTP_BAD_REQUEST
+                )
 
         return properties
 
@@ -725,8 +723,7 @@ class EndpointResource(Resource):
             if key in properties:
                 instance.__dict__[key] = properties[key]
 
-    def parseAutocomplete(
-            self, properties, key, id_key='value', split_char=None):
+    def parseAutocomplete(self, properties, key, id_key='value', split_char=None):
         value = properties.get(key, None)
 
         ids = []
@@ -758,8 +755,7 @@ class EndpointResource(Resource):
     def get_roles(self, properties):
 
         roles = []
-        ids = self.parseAutocomplete(
-            properties, 'roles', id_key='name', split_char=',')
+        ids = self.parseAutocomplete(properties, 'roles', id_key='name', split_char=',')
 
         if ids is None:
             return roles
@@ -781,6 +777,7 @@ class EndpointResource(Resource):
             return user
 
         from restapi.protocols.bearer import HTTPTokenAuth
+
         http = HTTPTokenAuth()
         auth_type, token = http.get_authorization_token()
 

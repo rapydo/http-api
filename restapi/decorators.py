@@ -38,6 +38,7 @@ def identity(*args, **kwargs):
 #################################
 # Decide what is the response method for every endpoint
 
+
 def set_response(original=False, custom_method=None, first_call=False):
 
     # Use identity if requested
@@ -74,11 +75,13 @@ def send_error(self, e, code=None):
 
 
 def catch_error(
-        exception=None, catch_generic=True,
-        exception_label=None,
-        # FIXME: where have this gone??
-        # error_code=None,
-        **kwargs):
+    exception=None,
+    catch_generic=True,
+    exception_label=None,
+    # FIXME: where have this gone??
+    # error_code=None,
+    **kwargs,
+):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
@@ -127,12 +130,13 @@ def catch_error(
 
                 if SENTRY_URL is not None:
                     from sentry_sdk import capture_exception
+
                     capture_exception(e)
 
                 excname = e.__class__.__name__
                 log.warning(
-                    "Catched exception:\n\n[%s] %s\n",
-                    excname, e, exc_info=True)
+                    "Catched exception:\n\n[%s] %s\n", excname, e, exc_info=True
+                )
                 if catch_generic:
                     if excname in ['AttributeError', 'ValueError', 'KeyError']:
                         error = 'Server failure; please contact admin.'
@@ -143,5 +147,7 @@ def catch_error(
                     raise e
 
             return out
+
         return wrapper
+
     return decorator

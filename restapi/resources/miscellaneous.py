@@ -56,11 +56,10 @@ class Verify(EndpointResource):
         if not detector.check_availability(service):
             raise RestApiException(
                 "Unknown service: %s" % service,
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
-        service_instance = self.get_service_instance(
-            service, global_instance=False)
+        service_instance = self.get_service_instance(service, global_instance=False)
         log.critical(service_instance)
         return "Service is reachable: %s" % service
 
@@ -79,6 +78,7 @@ class SwaggerSpecifications(EndpointResource):
         from restapi.confs import PRODUCTION
         from flask import request
         from utilities.helpers import get_api_url
+
         api_url = get_api_url(request, PRODUCTION)
         scheme, host = api_url.rstrip('/').split('://')
         swagjson['host'] = host
@@ -108,7 +108,6 @@ class Admin(EndpointResource):
 if detector.check_availability('celery'):
 
     class Queue(EndpointResource):
-
         def get(self, task_id=None):
 
             data = []
@@ -196,8 +195,7 @@ if detector.check_availability('celery'):
 
             for worker, tasks in scheduled_tasks.items():
                 for task in tasks:
-                    if task_id is not None and \
-                       task["request"]["id"] != task_id:
+                    if task_id is not None and task["request"]["id"] != task_id:
                         continue
 
                     row = {}
@@ -212,19 +210,20 @@ if detector.check_availability('celery'):
 
             for worker, tasks in reserved_tasks.items():
                 for task in tasks:
-                    if task_id is not None and \
-                       task["id"] != task_id:
+                    if task_id is not None and task["id"] != task_id:
                         continue
 
-                    data.append({
-                        'status': 'SCHEDULED',
-                        'worker': worker,
-                        'ETA': task['time_start'],
-                        'task_id': task["id"],
-                        'priority': task['delivery_info']["priority"],
-                        'task': task["name"],
-                        'args': task["args"],
-                    })
+                    data.append(
+                        {
+                            'status': 'SCHEDULED',
+                            'worker': worker,
+                            'ETA': task['time_start'],
+                            'task_id': task["id"],
+                            'priority': task['delivery_info']["priority"],
+                            'task': task["name"],
+                            'args': task["args"],
+                        }
+                    )
 
             # from celery.task.control import inspect
             # tasks = inspect()

@@ -26,13 +26,15 @@ class MongoExt(BaseExtension):
         ##################
         # connect for authentication if required
         uri = "mongodb://%s:%s/%s" % (
-            variables.get('host'), variables.get('port'), AUTH_DB)
+            variables.get('host'),
+            variables.get('port'),
+            AUTH_DB,
+        )
         mongodb.connect(uri, alias=AUTH_DB)
 
         ##################
         db = variables.get('database', 'UNKNOWN')
-        uri = "mongodb://%s:%s/%s" % (
-            variables.get('host'), variables.get('port'), db)
+        uri = "mongodb://%s:%s/%s" % (variables.get('host'), variables.get('port'), db)
 
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)
@@ -54,9 +56,9 @@ class MongoExt(BaseExtension):
             client = db.connection.database
 
             from pymongo import MongoClient
+
             client = MongoClient(
-                self.variables.get('host'),
-                int(self.variables.get('port'))
+                self.variables.get('host'), int(self.variables.get('port'))
             )
 
             system_dbs = ['admin', 'local', 'config']
@@ -72,14 +74,11 @@ class MongoExt(BaseExtension):
 
 
 class Converter(object):
-
     def __init__(self, mongo_model):
         self._model = mongo_model
 
     @classmethod
-    def recursive_inspect(
-        cls, obj, **kwargs
-    ):
+    def recursive_inspect(cls, obj, **kwargs):
 
         from bson import ObjectId
         from datetime import datetime
@@ -108,9 +107,7 @@ class Converter(object):
                 elif isinstance(value, list):
                     newvalue = []
                     for element in value:
-                        newvalue.append(
-                            cls.recursive_inspect(element, **kwargs)
-                        )
+                        newvalue.append(cls.recursive_inspect(element, **kwargs))
                 else:
                     newvalue = value
 
@@ -122,5 +119,6 @@ class Converter(object):
     def asdict(self, *args, **kwargs):
         return self.recursive_inspect(
             # src: https://jira.mongodb.org/browse/PYMODM-105
-            dict(self._model.to_son()), **kwargs
+            dict(self._model.to_son()),
+            **kwargs,
         )

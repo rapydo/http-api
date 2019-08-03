@@ -3,6 +3,7 @@
 import pika
 import json
 from restapi.flask_ext import BaseExtension, get_logger
+
 # from utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
@@ -33,6 +34,7 @@ class RabbitExt(BaseExtension):
         # Only used in production
         dont_connect = False
         from restapi.confs import PRODUCTION
+
         if not PRODUCTION:
             dont_connect = True
             log.warning("Skipping Rabbit, logging to normal log instead.")
@@ -44,8 +46,8 @@ class RabbitExt(BaseExtension):
         log.debug('Creating connection wrapper... done.')
         return conn_wrapper
 
-class RabbitWrapper(object):
 
+class RabbitWrapper(object):
     def __init__(self, variables, dont_connect=False):
         log.debug('Creating RabbitMQ connection wrapper with variables %s' % variables)
         self.__variables = variables
@@ -59,7 +61,8 @@ class RabbitWrapper(object):
         if self.__dont_connect:
             log.warn('Will not connect to RabbitMQ (dont_connect = True).')
             log.debug(
-                'Creating RabbitMQ connection wrapper... done. (without connection).')
+                'Creating RabbitMQ connection wrapper... done. (without connection).'
+            )
             return None
 
         try:
@@ -71,22 +74,23 @@ class RabbitWrapper(object):
             ProbableAccessDeniedError, ConnectionClosed...
             '''
             log.warn(
-                'Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.')
+                'Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.'
+            )
             log.debug(
-                'Creating RabbitMQ connection wrapper... done. (without connection).')
+                'Creating RabbitMQ connection wrapper... done. (without connection).'
+            )
 
     def __connect(self):
         log.info('Connecting to the Rabbit...')
 
         credentials = pika.PlainCredentials(
-            self.__variables.get('user'),
-            self.__variables.get('password')
+            self.__variables.get('user'), self.__variables.get('password')
         )
         ssl_enabled = self.__variables.get('ssl_enabled')
         if ssl_enabled is None:
             ssl_enabled = False
         else:
-            ssl_enabled = (ssl_enabled.lower() == 'true' or int(ssl_enabled) == 1)
+            ssl_enabled = ssl_enabled.lower() == 'true' or int(ssl_enabled) == 1
         log.info('SSL enabled for RabbitMQ? %s' % ssl_enabled)
 
         try:
@@ -96,7 +100,7 @@ class RabbitWrapper(object):
                     port=int(self.__variables.get('port')),
                     virtual_host=self.__variables.get('vhost'),
                     credentials=credentials,
-                    ssl=ssl_enabled
+                    ssl=ssl_enabled,
                 )
             )
             self.__couldnt_connect = 0
@@ -127,7 +131,10 @@ class RabbitWrapper(object):
     def log_json_to_queue(self, dictionary_message, app_name, exchange, queue):
         log.verbose(
             'Asked to log (%s, %s, %s): %s',
-            exchange, queue, app_name, dictionary_message
+            exchange,
+            queue,
+            app_name,
+            dictionary_message,
         )
         body = json.dumps(dictionary_message)
 
@@ -135,8 +142,7 @@ class RabbitWrapper(object):
         max_reconnect = 3
         if self.__dont_connect or self.__couldnt_connect > max_reconnect:
             log.info(
-                'RABBIT LOG MESSAGE (%s, %s, %s): %s',
-                app_name, exchange, queue, body
+                'RABBIT LOG MESSAGE (%s, %s, %s): %s', app_name, exchange, queue, body
             )
             return
 
@@ -155,12 +161,16 @@ class RabbitWrapper(object):
         for i in range(max_publish):
             log.verbose(
                 'Trying to send message to RabbitMQ in try (%s/%s)',
-                (i + 1), max_publish
+                (i + 1),
+                max_publish,
             )
 
             try:
 
-                if self.__connection is None and self.__couldnt_connect <= max_reconnect:
+                if (
+                    self.__connection is None
+                    and self.__couldnt_connect <= max_reconnect
+                ):
                     self.__connect()
                 elif not self.__connection.is_open:
                     self.__connect()
@@ -171,44 +181,59 @@ class RabbitWrapper(object):
                     routing_key=queue,
                     properties=props,
                     body=body,
-                    mandatory=True
+                    mandatory=True,
                 )
                 if success:
-                    log.verbose('Succeeded to send message to RabbitMQ in try (%s/%s)' % ((i+1), max_publish))
+                    log.verbose(
+                        'Succeeded to send message to RabbitMQ in try (%s/%s)'
+                        % ((i + 1), max_publish)
+                    )
                     break
                 else:
                     log.warn('Log fail without clear reason.')
 
             except pika.exceptions.ConnectionClosed as e:
                 # TODO: This happens often. Check if heartbeat solves problem.
-                log.info('Failed to send log message in try (%s/%s), because connection is dead (%s).'
-                    % ((i+1), max_publish, e))
+                log.info(
+                    'Failed to send log message in try (%s/%s), because connection is dead (%s).'
+                    % ((i + 1), max_publish, e)
+                )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPConnectionError as e:
-                log.info('Failed to send log message in try (%s/%s) because connection failed (%s).'
-                    % ((i+1), max_publish, e))
+                log.info(
+                    'Failed to send log message in try (%s/%s) because connection failed (%s).'
+                    % ((i + 1), max_publish, e)
+                )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPChannelError as e:
-                log.info('Failed to send log message in try (%s/%s), because channel is dead (%s).'
-                    % ((i+1), max_publish, e))
+                log.info(
+                    'Failed to send log message in try (%s/%s), because channel is dead (%s).'
+                    % ((i + 1), max_publish, e)
+                )
                 self.__channel = None
                 continue
 
             except AttributeError as e:
-                log.info('Failed to send log message in try (%s/%s) (%s).' % ((i+1), max_publish, e))
+                log.info(
+                    'Failed to send log message in try (%s/%s) (%s).'
+                    % ((i + 1), max_publish, e)
+                )
                 self.__connection = None
                 continue
 
             # If failed each time:
-            if i+1 >= max_publish:
-                log.warning('Could not log to RabbitMQ (%s), logging here instead...' % e)
-                log.info('RABBIT LOG MESSAGE (%s, %s, %s): %s' % (app_name, exchange, queue, body))
-
-
+            if i + 1 >= max_publish:
+                log.warning(
+                    'Could not log to RabbitMQ (%s), logging here instead...' % e
+                )
+                log.info(
+                    'RABBIT LOG MESSAGE (%s, %s, %s): %s'
+                    % (app_name, exchange, queue, body)
+                )
 
     '''
     Return existing channel (if healthy) or create and
@@ -217,6 +242,7 @@ class RabbitWrapper(object):
     :return: The channel, or None if connection is switched off.
     :raises: AttributeError if the connection is None.
     '''
+
     def __get_channel(self):
 
         if self.__dont_connect:
@@ -232,10 +258,10 @@ class RabbitWrapper(object):
 
         return self.__channel
 
-
     '''
     Cleanly close the connection.
     '''
+
     def close_connection(self):
         # TODO: This must be called!
         if self.__dont_connect:

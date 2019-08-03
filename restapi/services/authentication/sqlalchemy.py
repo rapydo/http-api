@@ -48,8 +48,7 @@ class Authentication(BaseAuthentication):
             if username is not None:
                 user = self.db.User.query.filter_by(email=username).first()
             if payload is not None and 'user_id' in payload:
-                user = self.db.User.query.filter_by(
-                    uuid=payload['user_id']).first()
+                user = self.db.User.query.filter_by(uuid=payload['user_id']).first()
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
 
             # Unable to except pymysql.err.OperationalError because:
@@ -81,26 +80,20 @@ class Authentication(BaseAuthentication):
                     log.error(str(e))
                     log.warning("Errors retrieving user object, retrying...")
                     return self.get_user_object(
-                        username=username,
-                        payload=payload,
-                        retry=1
+                        username=username, payload=payload, retry=1
                     )
                 raise e
             else:
                 log.error(str(e))
                 raise RestApiException(
                     "Backend database is unavailable",
-                    status_code=hcodes.HTTP_SERVICE_UNAVAILABLE
+                    status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
                 )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             if retry <= 0:
                 log.error(str(e))
                 log.warning("Errors retrieving user object, retrying...")
-                return self.get_user_object(
-                    username=username,
-                    payload=payload,
-                    retry=1
-                )
+                return self.get_user_object(username=username, payload=payload, retry=1)
             raise e
 
         return user
@@ -119,9 +112,8 @@ class Authentication(BaseAuthentication):
             roles.append(role.name)
         return roles
 
-
-# TODO: (IMPORTANT) developer should be able to specify a custom init
-# which would replace this function below
+    # TODO: (IMPORTANT) developer should be able to specify a custom init
+    # which would replace this function below
     def init_users_and_roles(self):
 
         missing_role = missing_user = False
@@ -139,22 +131,28 @@ class Authentication(BaseAuthentication):
             missing_user = not self.db.User.query.first()
             if missing_user:
                 log.warning("No users inside db. Injected default.")
-                self.create_user({
-                    'uuid': getUUID(),
-                    'email': self.default_user,
-                    # 'authmethod': 'credentials',
-                    'name': 'Default', 'surname': 'User',
-                    # 'password': self.hash_password(self.default_password)
-                    'password': self.default_password
-                }, roles=self.default_roles)
+                self.create_user(
+                    {
+                        'uuid': getUUID(),
+                        'email': self.default_user,
+                        # 'authmethod': 'credentials',
+                        'name': 'Default',
+                        'surname': 'User',
+                        # 'password': self.hash_password(self.default_password)
+                        'password': self.default_password,
+                    },
+                    roles=self.default_roles,
+                )
 
             if missing_user or missing_role:
                 self.db.session.commit()
         except sqlalchemy.exc.OperationalError:
             self.db.session.rollback()
-            raise AttributeError("Existing SQL tables are not consistent " +
-                                 "to existing models. Please consider " +
-                                 "rebuilding your DB.")
+            raise AttributeError(
+                "Existing SQL tables are not consistent "
+                + "to existing models. Please consider "
+                + "rebuilding your DB."
+            )
 
     def save_token(self, user, token, jti, token_type=None):
 
@@ -176,7 +174,7 @@ class Authentication(BaseAuthentication):
             last_access=now,
             expiration=exp,
             IP=ip,
-            hostname=hostname
+            hostname=hostname,
         )
 
         token_entry.emitted_for = user
@@ -289,8 +287,7 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, account_type, current_user,
-                          token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user
@@ -326,8 +323,7 @@ class Authentication(BaseAuthentication):
 
         # Check if a user already exists with this email
         internal_user = None
-        internal_users = self.db.User.query.filter(
-            self.db.User.email == email).all()
+        internal_users = self.db.User.query.filter(self.db.User.email == email).all()
 
         # Should never happen, please
         if len(internal_users) > 1:
@@ -344,11 +340,7 @@ class Authentication(BaseAuthentication):
                 return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
-            userdata = {
-                "uuid": getUUID(),
-                "email": email,
-                "authmethod": account_type
-            }
+            userdata = {"uuid": getUUID(), "email": email, "authmethod": account_type}
             try:
                 internal_user = self.create_user(userdata, [self.default_role])
                 self.db.session.commit()
@@ -359,8 +351,7 @@ class Authentication(BaseAuthentication):
                 return None, "Server error"
 
         # Get ExternalAccount for the oauth2 data if exists
-        external_user = self.db.ExternalAccounts \
-            .query.filter_by(username=email).first()
+        external_user = self.db.ExternalAccounts.query.filter_by(username=email).first()
         # or create it otherwise
         if external_user is None:
             external_user = self.db.ExternalAccounts(username=email, unity=ui)
@@ -410,7 +401,8 @@ class Authentication(BaseAuthentication):
     def oauth_from_local(self, internal_user):
         accounts = self.db.ExternalAccounts
         return accounts.query.filter(
-            accounts.main_user.has(id=internal_user.id)).first()
+            accounts.main_user.has(id=internal_user.id)
+        ).first()
 
     def irods_user(self, username, session):
 
@@ -427,7 +419,7 @@ class Authentication(BaseAuthentication):
                 "name": username,
                 "surname": 'iCAT',
                 "authmethod": 'irods',
-                "session": session
+                "session": session,
             }
             user = self.create_user(userdata, [self.default_role])
             try:

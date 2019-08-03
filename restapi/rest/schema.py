@@ -12,7 +12,6 @@ log = get_logger(__name__)
 
 
 class RecoverSchema(EndpointResource):
-
     @catch_error()
     def get(self, **kwargs):
         """ Expose schemas for UIs automatic form building """
@@ -24,6 +23,7 @@ class RecoverSchema(EndpointResource):
         #     key='parameters', is_schema_url=True, method=method)
 
         custom_definition = self.get_endpoint_custom_definition(
-            method=method, is_schema_url=True)
+            method=method, is_schema_url=True
+        )
 
         return self.force_response(custom_definition)

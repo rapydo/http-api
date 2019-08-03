@@ -40,10 +40,14 @@ def test_smtp_client():
 
 
 def send_mail(
-        body, subject,
-        to_address=None, from_address=None,
-        cc=None, bcc=None,
-        plain_body=None):
+    body,
+    subject,
+    to_address=None,
+    from_address=None,
+    cc=None,
+    bcc=None,
+    plain_body=None,
+):
 
     try:
         host = os.environ.get("SMTP_HOST")
@@ -61,22 +65,29 @@ def send_mail(
 
         if plain_body is None:
             return send(
-                body, subject, to_address, from_address,
+                body,
+                subject,
+                to_address,
+                from_address,
                 smtp_host=host,
                 smtp_port=port,
                 username=username,
-                cc=cc, bcc=bcc,
-                password=password
+                cc=cc,
+                bcc=bcc,
+                password=password,
             )
         else:
             return send(
-                body, subject, to_address, from_address,
+                body,
+                subject,
+                to_address,
+                from_address,
                 smtp_host=host,
                 smtp_port=port,
                 username=username,
                 password=password,
                 html=True,
-                plain_body=plain_body
+                plain_body=plain_body,
             )
 
     except BaseException as e:

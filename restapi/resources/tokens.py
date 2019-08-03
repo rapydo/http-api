@@ -33,7 +33,8 @@ class Tokens(EndpointResource):
         user = self.get_user()
         if user is None:
             return self.send_errors(
-                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST)
+                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST
+            )
 
         tokens = self.auth.get_tokens(user=user)
         if token_id is None:
@@ -46,8 +47,7 @@ class Tokens(EndpointResource):
         errorMessage = """Either this token was not emitted for your account
                           or it does not exist"""
 
-        return self.send_errors(
-            message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
+        return self.send_errors(message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
 
     def delete(self, token_id=None):
         """
@@ -58,7 +58,8 @@ class Tokens(EndpointResource):
         user = self.get_user()
         if user is None:
             return self.send_errors(
-                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST)
+                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if token_id is None:
             # NOTE: this is allowed only in removing tokens in unittests
@@ -75,9 +76,9 @@ class Tokens(EndpointResource):
             if not self.auth.invalidate_token(token=token["token"], user=user):
                 return self.send_errors(
                     message="Failed token invalidation: '%s'" % token,
-                    code=hcodes.HTTP_BAD_REQUEST)
+                    code=hcodes.HTTP_BAD_REQUEST,
+                )
             return self.empty_response()
 
         message = "Token not emitted for your account or does not exist"
-        return self.send_errors(
-            message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
+        return self.send_errors(message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)

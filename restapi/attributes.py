@@ -5,10 +5,7 @@ Classes to mimic structured objects
 defined with the help of the cool library @attr.s
 """
 
-from attr import (
-    s as ClassOfAttributes,
-    ib as attribute
-)
+from attr import s as ClassOfAttributes, ib as attribute
 
 ALL_ROLES = 'all'
 ANY_ROLE = 'any'

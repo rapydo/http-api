@@ -28,8 +28,7 @@ log = get_logger(__name__)
 app = Flask("beat")
 
 app.extensions = detector.init_services(
-    app=app, worker_mode=True,
-    project_init=False, project_clean=False
+    app=app, worker_mode=True, project_init=False, project_clean=False
 )
 
 celery_app = app.extensions.get('celery').celery_app

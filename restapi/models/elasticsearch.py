@@ -5,6 +5,7 @@
 """ Models for elastic search """
 
 from elasticsearch_dsl import DocType, String, Completion
+
 # Date, Nested, Boolean, \
 # analyzer, InnerObjectWrapper,
 
