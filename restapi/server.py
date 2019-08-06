@@ -105,7 +105,7 @@ def create_app(
     worker_mode=False,
     testing_mode=False,
     skip_endpoint_mapping=False,
-    **kwargs,
+    **kwargs
 ):
     """ Create the server istance for Flask application """
 
