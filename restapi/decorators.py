@@ -78,9 +78,7 @@ def catch_error(
     exception=None,
     catch_generic=True,
     exception_label=None,
-    # FIXME: where have this gone??
-    # error_code=None,
-    **kwargs,
+    **kwargs
 ):
     """
     A decorator to preprocess an API class method,
@@ -101,14 +99,11 @@ def catch_error(
 
             try:
                 out = func(self, *args, **kwargs)
-            # DEBUGGING
-            # except Exception:
-            #     raise
-            # Catch the single exception that the user requested
+            # Catch the exception requested by the user
             except exception as e:
 
                 message = exception_label + str(e)
-                # It is already print by send_error, it is a duplicated msg
+                # Already print by send_error, it is a duplicated message
                 # log.warning(exception_label, exc_info=True)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
