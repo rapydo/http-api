@@ -317,7 +317,9 @@ class BeSwagger(object):
 
         # A template base
         output = {
-            "swagger": "2.0",  # TODO: update to 3.0.1?
+            # TODO: update to 3.0.1? Replace bravado with something else?
+            # https://github.com/Yelp/bravado/issues/306
+            "swagger": "2.0",
             "info": {"version": "0.0.1", "title": "Your application name"},
             "schemes": schemes,
             # "host": "localhost"  # chosen dinamically
