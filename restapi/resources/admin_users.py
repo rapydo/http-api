@@ -111,8 +111,8 @@ class AdminUsers(GraphBaseOperations):
         html = get_html_template(template, replaces)
 
         body = """
-            Username: %s"
-            Password: %s"
+Username: "%s"
+Password: "%s"
         """ % (
             user.email,
             unhashed_password,
