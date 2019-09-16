@@ -295,10 +295,15 @@ def create_app(
 
         # Obfuscating query parameters
         url = urllib_parse.urlparse(request.url)
-        params = urllib_parse.unquote(
-            urllib_parse.urlencode(handle_log_output(url.query))
-        )
-        url = url._replace(query=params)
+        try:
+            params = urllib_parse.unquote(
+                urllib_parse.urlencode(handle_log_output(url.query))
+            )
+            url = url._replace(query=params)
+        except TypeError:
+            log.error("Unable to url encode the following parameters:")
+            print(url.query)
+
         url = urllib_parse.urlunparse(url)
         log.info("%s %s %s %s", request.method, url, data, response)
 
