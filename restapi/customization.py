@@ -131,18 +131,36 @@ class Customizer(object):
 
         swagger_folders = []
         # base swagger dir (rapydo/http-api)
-        swagger_folders.append(helpers.script_abspath(__file__))
+        swagger_folders.append(
+            {
+                'path': helpers.script_abspath(__file__),
+                'isbase': True
+            }
+        )
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
-            swagger_folders.append(helpers.current_dir(self._extended_project))
+            swagger_folders.append(
+                {
+                    'path': helpers.current_dir(self._extended_project),
+                    'isbase': False
+                }
+            )
 
         # custom swagger dir
-        swagger_folders.append(helpers.current_dir(CUSTOM_PACKAGE))
+        swagger_folders.append(
+            {
+                'path': helpers.current_dir(CUSTOM_PACKAGE),
+                'isbase': False
+            }
+        )
 
         simple_override_check = {}
-        for base_dir in swagger_folders:
+        for swag_folder in swagger_folders:
+
+            base_dir = swag_folder.get('path')
+            isbase = swag_folder.get('isbase')
 
             swagger_dir = os.path.join(base_dir, 'swagger')
             log.verbose("Swagger dir: %s" % swagger_dir)
@@ -166,8 +184,6 @@ class Customizer(object):
                         )
                     continue
 
-                # isbase = base_dir == BACKEND_PACKAGE
-                isbase = base_dir.startswith('/usr/local')
                 base_module = helpers.last_dir(base_dir)
                 from utilities import ENDPOINTS_CODE_DIR
 
