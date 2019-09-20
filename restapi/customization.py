@@ -213,11 +213,6 @@ class Customizer(object):
 
         self._definitions = swag_dict
 
-    def read_frameworks(self):
-
-        file = os.path.join("config", "frameworks.yaml")
-        self._frameworks = load_yaml_file(file)
-
     def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, isbase):
 
         log.verbose("Found endpoint dir: '%s'" % endpoint)
