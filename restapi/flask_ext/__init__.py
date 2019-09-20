@@ -306,7 +306,9 @@ def get_debug_instance(MyClass):
     """
     Obtain a debug instance from any flask ext we have in the app
 
-    e.g. from restapi.flask_ext.flask_celery import CeleryExt
+    e.g.
+    from restapi.flask_ext import get_debug_instance
+    from restapi.flask_ext.flask_celery import CeleryExt
     obj = get_debug_instance(CeleryExt)
     """
 
