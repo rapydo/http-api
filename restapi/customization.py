@@ -9,9 +9,10 @@ import re
 import glob
 from utilities import CONF_PATH
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
+
 # from utilities import PROJECT_CONF_FILENAME, DEFAULT_FILENAME, UTILS_PKGNAME
 from utilities import helpers
-from utilities import configuration
+from utilities import configuration as conf
 from restapi.confs import API_URL, BASE_URLS
 from utilities.meta import Meta
 from utilities.myyaml import YAML_EXT, load_yaml_file
@@ -20,6 +21,7 @@ from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 CONF_FOLDERS = detector.load_group(label='project_confs')
@@ -28,6 +30,7 @@ CONF_FOLDERS = detector.load_group(label='project_confs')
 ########################
 # Customization on the table
 ########################
+
 
 class Customizer(object):
     """
@@ -84,23 +87,21 @@ class Customizer(object):
         else:
             submodules_path = confs_path
 
-        self._configurations, self._extended_project, self._extended_path = \
-            configuration.read(
-                default_file_path=defaults_path,
-                base_project_path=base_path,
-                projects_path=projects_path,
-                submodules_path=submodules_path,
-                from_container=True,
-                do_exit=True
-            )
+        self._configurations, self._extended_project, self._extended_path = conf.read(
+            default_file_path=defaults_path,
+            base_project_path=base_path,
+            projects_path=projects_path,
+            submodules_path=submodules_path,
+            from_container=True,
+            do_exit=True,
+        )
 
     def do_schema(self):
         """ Schemas exposing, if requested """
 
         name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
         module = Meta.get_module_from_string(
-            name,
-            exit_if_not_found=True, exit_on_fail=True
+            name, exit_if_not_found=True, exit_on_fail=True
         )
         schema_class = getattr(module, 'RecoverSchema')
 
@@ -114,7 +115,7 @@ class Customizer(object):
                     # 'post': ExtraAttributes(auth=None)
                 }
             },
-            methods={}
+            methods={},
         )
 
         # TODO: find a way to map authentication
@@ -130,19 +131,36 @@ class Customizer(object):
 
         swagger_folders = []
         # base swagger dir (rapydo/http-api)
-        swagger_folders.append(helpers.script_abspath(__file__))
+        swagger_folders.append(
+            {
+                'path': helpers.script_abspath(__file__),
+                'isbase': True
+            }
+        )
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
             swagger_folders.append(
-                helpers.current_dir(self._extended_project))
+                {
+                    'path': helpers.current_dir(self._extended_project),
+                    'isbase': False
+                }
+            )
 
         # custom swagger dir
-        swagger_folders.append(helpers.current_dir(CUSTOM_PACKAGE))
+        swagger_folders.append(
+            {
+                'path': helpers.current_dir(CUSTOM_PACKAGE),
+                'isbase': False
+            }
+        )
 
         simple_override_check = {}
-        for base_dir in swagger_folders:
+        for swag_folder in swagger_folders:
+
+            base_dir = swag_folder.get('path')
+            isbase = swag_folder.get('isbase')
 
             swagger_dir = os.path.join(base_dir, 'swagger')
             log.verbose("Swagger dir: %s" % swagger_dir)
@@ -151,8 +169,7 @@ class Customizer(object):
 
                 if ep in simple_override_check:
                     log.warning(
-                        "%s already loaded from %s",
-                        ep, simple_override_check.get(ep)
+                        "%s already loaded from %s", ep, simple_override_check.get(ep)
                     )
                     continue
                 simple_override_check[ep] = base_dir
@@ -163,23 +180,19 @@ class Customizer(object):
                     exception = '%s.yaml' % SWAGGER_MODELS_FILE
                     if not swagger_endpoint_dir.endswith('/' + exception):
                         log.debug(
-                            "Found a file instead of a folder: %s",
-                            swagger_endpoint_dir
+                            "Found a file instead of a folder: %s", swagger_endpoint_dir
                         )
                     continue
 
-                # isbase = base_dir == BACKEND_PACKAGE
-                isbase = base_dir.startswith('/usr/local')
                 base_module = helpers.last_dir(base_dir)
                 from utilities import ENDPOINTS_CODE_DIR
+
                 if isbase:
                     apiclass_module = '%s.%s' % (base_module, 'resources')
                 else:
-                    apiclass_module = '%s.%s' % (
-                        base_module, ENDPOINTS_CODE_DIR)
+                    apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
 
-                current = self.lookup(
-                    ep, apiclass_module, swagger_endpoint_dir, isbase)
+                current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, isbase)
 
                 if current is not None and current.exists:
                     # Add endpoint to REST mapping
@@ -199,11 +212,6 @@ class Customizer(object):
             log.critical_exit("Current swagger definition is invalid")
 
         self._definitions = swag_dict
-
-    def read_frameworks(self):
-
-        file = os.path.join("config", "frameworks.yaml")
-        self._frameworks = load_yaml_file(file)
 
     def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, isbase):
 
@@ -257,8 +265,7 @@ class Customizer(object):
 
         # Error if unable to find the module in python
         if module is None:
-            log.critical_exit(
-                "Could not find module %s (in %s)" % (name, file_name))
+            log.critical_exit("Could not find module %s (in %s)" % (name, file_name))
 
         # Check for dependecies and skip if missing
         for var in conf.pop('depends_on', []):
@@ -319,7 +326,7 @@ class Customizer(object):
         endpoint.uris = {}  # attrs python lib bug?
         endpoint.custom['schema'] = {
             'expose': schema.get('expose', False),
-            'publish': {}
+            'publish': {},
         }
         for label, uri in mappings.items():
 
@@ -335,8 +342,9 @@ class Customizer(object):
                 p = hex(id(endpoint.cls))
                 self._schema_endpoint.uris[label + p] = schema_uri
 
-                endpoint.custom['schema']['publish'][label] = \
-                    schema.get('publish', False)
+                endpoint.custom['schema']['publish'][label] = schema.get(
+                    'publish', False
+                )
 
                 self._schemas_map[schema_uri] = total_uri
 

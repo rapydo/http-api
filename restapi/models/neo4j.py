@@ -2,10 +2,16 @@
 
 """ Models for graph database """
 
-from restapi.services.neo4j.models import \
-    StructuredNode, IdentifiedNode, \
-    StringProperty, DateTimeProperty, EmailProperty, BooleanProperty, \
-    RelationshipTo, RelationshipFrom
+from restapi.services.neo4j.models import (
+    StructuredNode,
+    IdentifiedNode,
+    StringProperty,
+    DateTimeProperty,
+    EmailProperty,
+    BooleanProperty,
+    RelationshipTo,
+    RelationshipFrom,
+)
 from neomodel import OneOrMore, ZeroOrMore, ZeroOrOne
 
 
@@ -22,10 +28,10 @@ class User(IdentifiedNode):
     is_active = BooleanProperty(default=True, show=True)
     privacy_accepted = BooleanProperty(default=True, show=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
-    roles = RelationshipTo(
-        'Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)
+    roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)
     externals = RelationshipTo(
-        'ExternalAccounts', 'HAS_AUTHORIZATION', cardinality=OneOrMore)
+        'ExternalAccounts', 'HAS_AUTHORIZATION', cardinality=OneOrMore
+    )
 
 
 class Token(StructuredNode):
@@ -55,5 +61,4 @@ class ExternalAccounts(StructuredNode):
     certificate_cn = StringProperty()
     proxyfile = StringProperty()
     description = StringProperty(default='No description')
-    main_user = RelationshipFrom(
-        User, 'HAS_AUTHORIZATION', cardinality=OneOrMore)
+    main_user = RelationshipFrom(User, 'HAS_AUTHORIZATION', cardinality=OneOrMore)

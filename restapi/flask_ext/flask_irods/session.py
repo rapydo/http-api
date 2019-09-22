@@ -24,7 +24,6 @@ TypeError: Cannot serialize socket object
 
 
 class iRODSPickleSession(iRODSSession):
-
     def __getstate__(self):
         attrs = {}
         for attr in self.__dict__:

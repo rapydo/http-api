@@ -15,18 +15,19 @@ from utilities import htmlcodes as hcodes
 from utilities.globals import mem
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 
 class AdminUsers(GraphBaseOperations):
-
     def parse_roles(self, properties):
 
         if 'roles' in properties:
             return self.parseAutocomplete(
-                properties, 'roles', id_key='name', split_char=',')
+                properties, 'roles', id_key='name', split_char=','
+            )
         else:
             roles = []
             for p in properties:
@@ -40,14 +41,16 @@ class AdminUsers(GraphBaseOperations):
 
         if groups is None:
             raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
+                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         group_id = groups.pop()
         group = self.graph.Group.nodes.get_or_none(uuid=group_id)
 
         if group is None:
             raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST)
+                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         return group
 
@@ -92,9 +95,8 @@ class AdminUsers(GraphBaseOperations):
     def send_notification(self, user, unhashed_password, is_update=False):
 
         title = glom(
-            mem.customizer._configurations,
-            "project.title",
-            default='Unkown title')
+            mem.customizer._configurations, "project.title", default='Unkown title'
+        )
 
         subject = "%s: " % title
         if is_update:
@@ -104,17 +106,17 @@ class AdminUsers(GraphBaseOperations):
             subject += "new credentials"
             template = "new_credentials.html"
 
-        replaces = {
-            "username": user.email,
-            "password": unhashed_password
-        }
+        replaces = {"username": user.email, "password": unhashed_password}
 
         html = get_html_template(template, replaces)
 
         body = """
-            Username: %s"
-            Password: %s"
-        """ % (user.email, unhashed_password)
+Username: "%s"
+Password: "%s"
+        """ % (
+            user.email,
+            unhashed_password,
+        )
 
         if html is None:
             send_mail(body, subject, user.email)
@@ -123,7 +125,7 @@ class AdminUsers(GraphBaseOperations):
 
     @decorate.catch_error()
     @catch_graph_exceptions
-    def get(self, id=None):
+    def get(self, user_id=None):
 
         data = []
         if not detector.check_availability('neo4j'):
@@ -137,12 +139,24 @@ class AdminUsers(GraphBaseOperations):
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )
 
         current_user = self.get_current_user()
-        nodeset = self.graph.User.nodes
 
-        for n in nodeset.all():
+        if user_id is None:
+            nodeset = self.graph.User.nodes
+            users = nodeset.all()
+        else:
+            user = self.graph.User.nodes.get_or_none(uuid=user_id)
+            if user is None:
+                raise RestApiException(
+                    "This user cannot be found or you are not authorized"
+                )
+
+            users = [user]
+
+        for n in users:
 
             is_authorized = self.check_permissions(
                 current_user, n, is_admin, is_local_admin
@@ -162,9 +176,7 @@ class AdminUsers(GraphBaseOperations):
 
         v = self.get_input()
         if len(v) == 0:
-            raise RestApiException(
-                'Empty input',
-                status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
 
         if not detector.check_availability('neo4j'):
             log.warning("This endpoint is implemented only for neo4j")
@@ -177,7 +189,8 @@ class AdminUsers(GraphBaseOperations):
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )
 
         schema = self.get_endpoint_custom_definition()
 
@@ -194,8 +207,8 @@ class AdminUsers(GraphBaseOperations):
                         "default": False,
                         "custom": {
                             "htmltype": "checkbox",
-                            "label": "Notify password by email"
-                        }
+                            "label": "Notify password by email",
+                        },
                     }
                 )
 
@@ -207,15 +220,12 @@ class AdminUsers(GraphBaseOperations):
                         if "custom" not in new_schema[idx]:
                             new_schema[idx]["custom"] = {}
 
-                        new_schema[idx]["custom"]["htmltype"]: "select"
-                        new_schema[idx]["custom"]["label"]: "Group"
-
+                        new_schema[idx]["custom"]["htmltype"] = "select"
+                        new_schema[idx]["custom"]["label"] = "Group"
                         new_schema[idx]["enum"] = []
 
                         for g in self.graph.Group.nodes.all():
-                            new_schema[idx]["enum"].append(
-                                {g.uuid: g.fullname}
-                            )
+                            new_schema[idx]["enum"].append({g.uuid: g.fullname})
                             if new_schema[idx]["default"] is None:
                                 new_schema[idx]["default"] = g.uuid
 
@@ -224,10 +234,11 @@ class AdminUsers(GraphBaseOperations):
 
                         cypher = "MATCH (r:Role)"
                         if not self.auth.verify_admin():
-                            allowed_roles = mem.customizer._configurations \
-                                .get('variables', {}) \
-                                .get('backend', {}) \
+                            allowed_roles = (
+                                mem.customizer._configurations.get('variables', {})
+                                .get('backend', {})
                                 .get('allowed_roles', [])
+                            )
                             cypher += " WHERE r.name in %s" % allowed_roles
                         # Admin only
                         else:
@@ -247,9 +258,7 @@ class AdminUsers(GraphBaseOperations):
                                 # "name": "roles[%s]" % r.name,
                                 "name": "roles_%s" % r.name,
                                 # "name": r.name,
-                                "custom": {
-                                    "label": r.description
-                                }
+                                "custom": {"label": r.description},
                             }
 
                             new_schema.insert(idx, role)
@@ -266,12 +275,13 @@ class AdminUsers(GraphBaseOperations):
                     if "custom" not in new_schema[idx]:
                         new_schema[idx]["custom"] = {}
 
-                    new_schema[idx]["custom"]["htmltype"]: "select"
-                    new_schema[idx]["custom"]["label"]: "Group"
+                    new_schema[idx]["custom"]["htmltype"] = "select"
+                    new_schema[idx]["custom"]["label"] = "Group"
                     new_schema[idx]["enum"] = []
 
                     default_group = self.graph.Group.nodes.get_or_none(
-                        shortname="default")
+                        shortname="default"
+                    )
 
                     defg = None
                     if default_group is not None:
@@ -286,9 +296,7 @@ class AdminUsers(GraphBaseOperations):
                         if g == default_group:
                             continue
 
-                        new_schema[idx]["enum"].append(
-                            {g.uuid: g.fullname}
-                        )
+                        new_schema[idx]["enum"].append({g.uuid: g.fullname})
                         if defg is None:
                             defg = g.uuid
                         # if new_schema[idx]["default"] is None:
@@ -303,15 +311,17 @@ class AdminUsers(GraphBaseOperations):
 
         roles = self.parse_roles(v)
         if not is_admin:
-            allowed_roles = mem.customizer._configurations \
-                .get('variables', {}) \
-                .get('backend', {}) \
+            allowed_roles = (
+                mem.customizer._configurations.get('variables', {})
+                .get('backend', {})
                 .get('allowed_roles', [])
+            )
 
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are not allowed to assign users to this role")
+                        "You are not allowed to assign users to this role"
+                    )
 
         if "password" in properties and properties["password"] == "":
             del properties["password"]
@@ -340,7 +350,8 @@ class AdminUsers(GraphBaseOperations):
                 current_user = self.get_current_user()
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are not allowed to assign users to this group")
+                        "You are not allowed to assign users to this group"
+                    )
 
             user.belongs_to.connect(group)
 
@@ -358,8 +369,8 @@ class AdminUsers(GraphBaseOperations):
         if user_id is None:
 
             raise RestApiException(
-                "Please specify a user id",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if not detector.check_availability('neo4j'):
             log.warning("This endpoint is implemented only for neo4j")
@@ -373,15 +384,17 @@ class AdminUsers(GraphBaseOperations):
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )
 
         v = self.get_input()
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
-        # user = self.getNode(self.graph.User, user_id, field='uuid')
+
         if user is None:
             raise RestApiException(
-                "This user cannot be found or you are not authorized")
+                "This user cannot be found or you are not authorized"
+            )
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
@@ -389,7 +402,8 @@ class AdminUsers(GraphBaseOperations):
         )
         if not is_authorized:
             raise RestApiException(
-                "This user cannot be found or you are not authorized")
+                "This user cannot be found or you are not authorized"
+            )
 
         if "password" in v and v["password"] == "":
             del v["password"]
@@ -413,7 +427,8 @@ class AdminUsers(GraphBaseOperations):
             if not is_admin and group.shortname != "default":
                 if not group.coordinator.is_connected(current_user):
                     raise RestApiException(
-                        "You are not allowed to assign users to this group")
+                        "You are not allowed to assign users to this group"
+                    )
 
             p = None
             for p in user.belongs_to.all():
@@ -427,15 +442,17 @@ class AdminUsers(GraphBaseOperations):
 
         roles = self.parse_roles(v)
         if not is_admin:
-            allowed_roles = mem.customizer._configurations \
-                .get('variables', {}) \
-                .get('backend', {}) \
+            allowed_roles = (
+                mem.customizer._configurations.get('variables', {})
+                .get('backend', {})
                 .get('allowed_roles', [])
+            )
 
             for r in roles:
                 if r not in allowed_roles:
                     raise RestApiException(
-                        "You are not allowed to assign users to this role")
+                        "You are not allowed to assign users to this role"
+                    )
 
         self.auth.link_roles(user, roles)
 
@@ -453,8 +470,8 @@ class AdminUsers(GraphBaseOperations):
         if user_id is None:
 
             raise RestApiException(
-                "Please specify a user id",
-                status_code=hcodes.HTTP_BAD_REQUEST)
+                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
+            )
 
         if not detector.check_availability('neo4j'):
             log.warning("This endpoint is implemented only for neo4j")
@@ -467,13 +484,15 @@ class AdminUsers(GraphBaseOperations):
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )
 
         user = self.graph.User.nodes.get_or_none(uuid=user_id)
-        # user = self.getNode(self.graph.User, user_id, field='uuid')
+
         if user is None:
             raise RestApiException(
-                "This user cannot be found or you are not authorized")
+                "This user cannot be found or you are not authorized"
+            )
 
         current_user = self.get_current_user()
         is_authorized = self.check_permissions(
@@ -481,7 +500,8 @@ class AdminUsers(GraphBaseOperations):
         )
         if not is_authorized:
             raise RestApiException(
-                "This user cannot be found or you are not authorized")
+                "This user cannot be found or you are not authorized"
+            )
 
         user.delete()
 
@@ -499,16 +519,17 @@ class UserRole(GraphBaseOperations):
 
         cypher = "MATCH (r:Role)"
         if not self.auth.verify_admin():
-            allowed_roles = mem.customizer._configurations \
-                .get('variables', {}) \
-                .get('backend', {}) \
+            allowed_roles = (
+                mem.customizer._configurations.get('variables', {})
+                .get('backend', {})
                 .get('allowed_roles', [])
+            )
             # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
             cypher += " WHERE r.name in %s" % allowed_roles
         # Admin only
         elif query is not None:
-                cypher += " WHERE r.description <> 'automatic'"
-                cypher += " AND r.name =~ '(?i).*%s.*'" % query
+            cypher += " WHERE r.description <> 'automatic'"
+            cypher += " AND r.name =~ '(?i).*%s.*'" % query
 
         cypher += " RETURN r ORDER BY r.name ASC"
 

@@ -82,6 +82,7 @@ class RestTestsBase(unittest.TestCase):
 
     def get_service_handler(self, service_name):
         from restapi.services.detect import detector
+
         ExtClass = detector.services_classes.get(service_name)
         return ExtClass().get_instance()
 
@@ -106,7 +107,6 @@ class RestTestsBase(unittest.TestCase):
 
 #####################
 class RestTestsAuthenticatedBase(RestTestsBase):
-
     def save_token(self, bearer_token, suffix=None):
 
         if suffix is None:
@@ -118,10 +118,7 @@ class RestTestsAuthenticatedBase(RestTestsBase):
         setattr(self.__class__, key, bearer_token)
 
         key = 'auth_header' + suffix
-        setattr(
-            self.__class__, key,
-            {'Authorization': 'Bearer %s' % bearer_token}
-        )
+        setattr(self.__class__, key, {'Authorization': 'Bearer %s' % bearer_token})
 
         # self.__class__.bearer_token = bearer_token
         # self.__class__.auth_header = {
@@ -136,7 +133,8 @@ class RestTestsAuthenticatedBase(RestTestsBase):
         log.info("### Creating a test token ###")
         endpoint = self._auth_uri + '/login'
         credentials = json.dumps(
-            {'username': self._username, 'password': self._password})
+            {'username': self._username, 'password': self._password}
+        )
         r = self.app.post(endpoint, data=credentials)
         self.assertEqual(r.status_code, self._hcodes.HTTP_OK_BASIC)
         content = self.get_content(r)
@@ -157,8 +155,7 @@ class RestTestsAuthenticatedBase(RestTestsBase):
                 # delete only current token
                 ep += '/' + element.get('id')
                 rdel = self.app.delete(ep, headers=self.__class__.auth_header)
-                self.assertEqual(
-                    rdel.status_code, self._hcodes.HTTP_OK_NORESPONSE)
+                self.assertEqual(rdel.status_code, self._hcodes.HTTP_OK_NORESPONSE)
 
         # The end
         super().tearDown()

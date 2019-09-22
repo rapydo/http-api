@@ -11,6 +11,7 @@ import hmac
 import hashlib
 import base64
 import pytz
+
 # import socket
 from glom import glom
 
@@ -58,11 +59,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._jti = None
         self._user = None
         # Default shortTTL = 2592000     # 1 month in seconds
-        self.longTTL = float(Detector.get_global_var(
-            'TOKEN_LONG_TTL', 2592000))
+        self.longTTL = float(Detector.get_global_var('TOKEN_LONG_TTL', 2592000))
         # Default shortTTL = 604800     # 1 week in seconds
-        self.shortTTL = float(Detector.get_global_var(
-            'TOKEN_SHORT_TTL', 604800))
+        self.shortTTL = float(Detector.get_global_var('TOKEN_SHORT_TTL', 604800))
 
     @classmethod
     def myinit(cls):
@@ -72,8 +71,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
 
         credentials = glom(
-            mem.customizer._configurations,
-            "variables.backend.credentials"
+            mem.customizer._configurations, "variables.backend.credentials"
         )
         # credentials = mem.customizer._configurations \
         #     .get('variables', {}) \
@@ -88,11 +86,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         roles = credentials.get('roles', {})
         cls.default_role = roles.get('default')
         cls.role_admin = roles.get('admin')
-        cls.default_roles = [
-            roles.get('user'),
-            roles.get('internal'),
-            cls.role_admin
-        ]
+        cls.default_roles = [roles.get('user'), roles.get('internal'), cls.role_admin]
         if cls.default_role is None or None in cls.default_roles:
             raise AttributeError("Default roles are not available!")
 
@@ -113,9 +107,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.error("Unable to connect to auth backend\n[%s] %s", type(e), e)
             # log.critical("Please reinitialize backend tables")
             from restapi.exceptions import RestApiException
+
             raise RestApiException(
                 "Unable to connect to auth backend",
-                status_code=hcodes.HTTP_SERVER_ERROR
+                status_code=hcodes.HTTP_SERVER_ERROR,
             )
 
         if user is None:
@@ -150,10 +145,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
         except IOError:
-            log.warning(
-                "Jwt secret file %s not found, using default", abs_filename)
-            log.info("To create your own secret file:\n" +
-                     "head -c 24 /dev/urandom > %s" % abs_filename)
+            log.warning("Jwt secret file %s not found, using default", abs_filename)
+            log.info(
+                "To create your own secret file:\n"
+                + "head -c 24 /dev/urandom > %s" % abs_filename
+            )
 
         return self.JWT_SECRET
 
@@ -182,7 +178,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         h = hmac.new(
             BaseAuthentication.encode_string(salt),
             BaseAuthentication.encode_string(password),
-            hashlib.sha512)
+            hashlib.sha512,
+        )
         return base64.b64encode(h.digest()).decode('ascii')
 
     @staticmethod
@@ -241,15 +238,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def create_token(self, payload):
         """ Generate a byte token with JWT library to encrypt the payload """
         self._user = self.get_user_object(payload=payload)
-        encode = jwt.encode(
-            payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode('ascii')
+        encode = jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
+            'ascii'
+        )
 
         return encode, payload['jti']
 
     def create_temporary_token(self, user, duration=300, token_type=None):
         expiration = timedelta(seconds=duration)
-        payload = self.fill_payload(
-            user, expiration=expiration, token_type=token_type)
+        payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
         return self.create_token(payload)
 
     def create_reset_token(self, user, type, duration=86400):
@@ -268,7 +265,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # Generate a new reset token
         new_token, jti = self.create_temporary_token(
-            user, duration=duration, token_type=type)
+            user, duration=duration, token_type=type
+        )
 
         return new_token, jti
 
@@ -292,24 +290,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         payload = None
         try:
-            payload = jwt.decode(
-                token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
+            payload = jwt.decode(token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
         # now > exp
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
             if raiseErrors:
-                raise(e)
+                raise (e)
             else:
                 log.warning("Unable to decode JWT token. %s", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
             if raiseErrors:
-                raise(e)
+                raise (e)
             else:
                 log.warning("Unable to decode JWT token. %s", e)
         except Exception as e:
             if raiseErrors:
-                raise(e)
+                raise (e)
             else:
                 log.warning("Unable to decode JWT token. %s", e)
 
@@ -337,9 +334,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             token_type = self.FULL_TOKEN
 
         if token_type != payload_type:
-            log.error(
-                "Invalid token type %s, required: %s",
-                payload_type, token_type)
+            log.error("Invalid token type %s, required: %s", payload_type, token_type)
             return False
 
         # Get the user from payload
@@ -348,8 +343,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False
 
         if not self.verify_token_custom(
-           user=self._user,
-           jti=payload['jti'], payload=payload):
+            user=self._user, jti=payload['jti'], payload=payload
+        ):
             return False
         # e.g. for graph: verify the (token <- user) link
 
@@ -384,14 +379,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-# FIXME payload should be some basic part + custom payload from the developer
-    def fill_custom_payload(self, userobj, payload):
-        """
-            This method can be implemented by specific Authentication Methods
-            to add more specific payload content
-        """
-        return payload
-
     def fill_payload(self, userobj, expiration=None, token_type=None):
         """ Informations to store inside the JWT token,
         starting from the user obtained from the current service
@@ -405,30 +392,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if expiration is None:
             expiration = timedelta(seconds=self.longTTL)
 
-        payload = {
-            'user_id': userobj.uuid,
-            'jti': getUUID()
-        }
+        payload = {'user_id': userobj.uuid, 'jti': getUUID()}
 
-        short_jwt = \
-            Detector.get_global_var('AUTH_FULL_JWT_PAYLOAD', '') \
-            .lower() == 'false'
+        short_jwt = (
+            Detector.get_global_var('AUTH_FULL_JWT_PAYLOAD', '').lower() == 'false'
+        )
 
         if token_type is not None:
-            if token_type == self.PWD_RESET or \
-               token_type == self.ACTIVATE_ACCOUNT:
+            if token_type == self.PWD_RESET or token_type == self.ACTIVATE_ACCOUNT:
                 short_jwt = True
                 payload["t"] = token_type
 
         if not short_jwt:
             now = datetime.now(pytz.utc)
-            nbf = now   # you can add a timedelta
+            nbf = now  # you can add a timedelta
             exp = now + expiration
             payload['iat'] = now
             payload['nbf'] = nbf
             payload['exp'] = exp
 
-        return self.fill_custom_payload(userobj, payload)
+        return payload
 
     # ##################
     # # Roles handling #
@@ -454,8 +437,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     return True
             return False
 
-        log.critical(
-            "Unknown role authorization requirement: %s", required_roles)
+        log.critical("Unknown role authorization requirement: %s", required_roles)
         return False
 
     def verify_admin(self):
@@ -507,14 +489,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     def custom_user_properties(self, userdata):
-        module_path = "%s.%s.%s" % \
-            (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module_path = "%s.%s.%s" % (CUSTOM_PACKAGE, 'initialization', 'initialization')
         module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
         meta = Meta()
-        Customizer = meta.get_class_from_string(
-            'Customizer', module, skip_error=True
-        )
+        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
         if Customizer is None:
             log.debug("No user properties customizer available")
         else:
@@ -529,21 +508,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        module_path = "%s.%s.%s" % \
-            (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module_path = "%s.%s.%s" % (CUSTOM_PACKAGE, 'initialization', 'initialization')
         module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
         meta = Meta()
-        Customizer = meta.get_class_from_string(
-            'Customizer', module, skip_error=True
-        )
+        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
         if Customizer is None:
             log.debug("No user properties customizer available")
         else:
             try:
-                Customizer().custom_post_handle_user_input(
-                    self, user_node, input_data
-                )
+                Customizer().custom_post_handle_user_input(self, user_node, input_data)
             except BaseException as e:
                 log.error("Unable to customize user properties: %s", e)
 
@@ -560,8 +534,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def store_oauth2_user(self, account_type, current_user,
-                          token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
         """
         Allow external accounts (oauth2 credentials)
         to be connected to internal local user.

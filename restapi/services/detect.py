@@ -21,7 +21,6 @@ log = get_logger(__name__)
 
 
 class Detector(object):
-
     def __init__(self, config_file_name='services'):
 
         self.authentication_service = None
@@ -68,21 +67,16 @@ class Detector(object):
     @staticmethod
     # @lru_cache(maxsize=None)
     def prefix_name(service):
-        return \
-            service.get('name'), \
-            service.get('prefix').lower() + '_'
+        return service.get('name'), service.get('prefix').lower() + '_'
 
     def check_configuration(self, config_file_name):
 
         self.services_configuration = load_yaml_file(
             file=config_file_name,
             path=os.path.join(
-                helpers.script_abspath(__file__),
-                '..',
-                '..',
-                CORE_CONFIG_PATH
+                helpers.script_abspath(__file__), '..', '..', CORE_CONFIG_PATH
             ),
-            logger=True
+            logger=True,
         )
 
         for service in self.services_configuration:
@@ -109,12 +103,14 @@ class Detector(object):
             log.warning("no service defined behind authentication")
             # raise AttributeError("no service defined behind authentication")
         else:
-            log.info("Authentication based on '%s' service"
-                     % self.authentication_service)
+            log.info(
+                "Authentication based on '%s' service" % self.authentication_service
+            )
 
     @staticmethod
     def load_group(label):
         from utilities.basher import detect_vargroup
+
         return detect_vargroup(label)
 
     def output_service_variables(self, service_name):
@@ -142,7 +138,7 @@ class Detector(object):
             if var.startswith(prefix):
 
                 # Fix key and value before saving
-                key = var[len(prefix):]
+                key = var[len(prefix) :]
                 # One thing that we must avoid is any quote around our value
                 value = value.strip('"').strip("'")
                 # save
@@ -157,7 +153,8 @@ class Detector(object):
             if not host.endswith('dockerized.io'):
                 variables['external'] = True
                 log.very_verbose(
-                    "Service %s detected as external:\n%s" % (service, host))
+                    "Service %s detected as external:\n%s" % (service, host)
+                )
 
         return variables
 
@@ -170,8 +167,7 @@ class Detector(object):
 
         # Try inside our extensions
         module = Meta.get_module_from_string(
-            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
-            exit_on_fail=True
+            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
             log.critical_exit("Missing %s for %s" % (flaskext, service))
@@ -202,25 +198,26 @@ class Detector(object):
                 if service.get('load_models'):
 
                     base_models = self.meta.import_models(
-                        name, BACKEND_PACKAGE, exit_on_fail=True)
+                        name, BACKEND_PACKAGE, exit_on_fail=True
+                    )
                     if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
                         extended_models = {}
                     else:
                         extended_models = self.meta.import_models(
-                            name, EXTENDED_PACKAGE, exit_on_fail=False)
+                            name, EXTENDED_PACKAGE, exit_on_fail=False
+                        )
 
                     custom_models = self.meta.import_models(
-                        name, CUSTOM_PACKAGE, exit_on_fail=False)
+                        name, CUSTOM_PACKAGE, exit_on_fail=False
+                    )
 
                     MyClass.set_models(base_models, extended_models, custom_models)
                 else:
                     log.very_verbose("Skipping models")
 
-            except AttributeError:
-                log.critical_exit(
-                    'Extension class %s ' % ext_name +
-                    'not compliant: missing method(s)' +
-                    'Did you extend "%s"?' % 'BaseExtension')
+            except AttributeError as e:
+                log.error(str(e))
+                log.critical_exit('Invalid Extension class: %s', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
@@ -231,8 +228,9 @@ class Detector(object):
 
         return self.services_classes
 
-    def init_services(self, app, worker_mode=False,
-                      project_init=False, project_clean=False):
+    def init_services(
+        self, app, worker_mode=False, project_init=False, project_clean=False
+    ):
 
         instances = {}
         auth_backend = None
@@ -263,8 +261,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.critical_exit(
-                    'Your class %s is not compliant:\n%s' % (name, e))
+                log.critical_exit('Your class %s is not compliant:\n%s' % (name, e))
             else:
                 self.extensions_instances[name] = ext_instance
 
@@ -280,9 +277,7 @@ class Detector(object):
             # Initialize the real service getting the first service object
             log.debug("Initializing %s (pinit=%s)", name, do_init)
             service_instance = ext_instance.custom_init(
-                pinit=do_init,
-                pdestroy=project_clean,
-                abackend=auth_backend
+                pinit=do_init, pdestroy=project_clean, abackend=auth_backend
             )
             instances[name] = service_instance
 
@@ -300,7 +295,8 @@ class Detector(object):
                 task_package = "%s.tasks" % CUSTOM_PACKAGE
 
                 submodules = self.meta.import_submodules_from_package(
-                    task_package, exit_on_fail=True)
+                    task_package, exit_on_fail=True
+                )
                 for submodule in submodules:
                     tasks = Meta.get_celery_tasks_from_module(submodule)
 
@@ -327,8 +323,7 @@ class Detector(object):
             # Module for injection
             ModuleBaseClass = self.load_class_from_module()
             # Create modules programmatically 8)
-            MyModule = self.meta.metaclassing(
-                ModuleBaseClass, service.get('injector'))
+            MyModule = self.meta.metaclassing(ModuleBaseClass, service.get('injector'))
 
             # Recover class
             MyClass = self.services_classes.get(name)
@@ -359,8 +354,11 @@ class Detector(object):
         try:
             # NOTE: this might be a pattern
             # see in meta.py:get_customizer_class
-            module_path = "%s.%s.%s" % \
-                (CUSTOM_PACKAGE, 'initialization', 'initialization')
+            module_path = "%s.%s.%s" % (
+                CUSTOM_PACKAGE,
+                'initialization',
+                'initialization',
+            )
             module = Meta.get_module_from_string(module_path, debug_on_fail=False)
             meta = Meta()
             Initializer = meta.get_class_from_string(

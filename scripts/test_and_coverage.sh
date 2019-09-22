@@ -3,19 +3,13 @@ set -e
 
 WORK_DIR=`pwd`
 
-# PROJECT=$1
-
 if [ -z $PROJECT ]; then
     echo "Missing the current testing project."
     echo "Use the magic variable COVERAGE for the final step"
     exit 1
 fi
 
-# PIP10 DEBUG
-# pip install --upgrade pip
-
 # install requirements in listed order
-# ./dev-requirements.py
 for package in `cat dev-requirements.txt`;
 do
     echo "adding: $package";
@@ -42,7 +36,6 @@ echo "CORE_DIR = ${CORE_DIR}"
 echo "COVERAGE_DIR = ${COV_DIR}"
 
 # Save credentials for S3 storage
-# echo "TEST *${S3_USER}* *${S3_PWD}*"
 aws configure set aws_access_key_id $S3_USER
 aws configure set aws_secret_access_key $S3_PWD
 
@@ -56,34 +49,50 @@ mkdir -p data
 
 # Pull requests
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-	if [ "$TRAVIS_PULL_REQUEST_BRANCH" != "master" ]; then
-	    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
-	    git checkout $TRAVIS_PULL_REQUEST_BRANCH
+    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
+    git checkout $TRAVIS_PULL_REQUEST_BRANCH
 
-	    echo "pulling $TRAVIS_BRANCH"
-	    git pull origin $TRAVIS_BRANCH
-	fi
+    echo "pulling $TRAVIS_BRANCH"
+    git pull origin $TRAVIS_BRANCH
 # Normal commits
 else
 
-	if [ "$TRAVIS_BRANCH" != "master" ]; then
-	    echo "checkout $TRAVIS_BRANCH"
-	    git checkout $TRAVIS_BRANCH
-	fi
+    echo "checkout $TRAVIS_BRANCH"
+    git checkout $TRAVIS_BRANCH
 fi
 
-if [ "$PROJECT" != "COVERAGE" ]; then
+if [[ "$PROJECT" == "COVERAGE" ]]; then
+
+	# Sync coverage files from previous stages
+	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
+
+	# Verify if this path exists:
+	ls -d /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/restapi/
+	# The entries in this section are lists of file paths that should be considered
+	# equivalent when combining data from different machines:
+	echo '[paths]' > $COV_DIR/.coveragerc
+	echo 'source =' >> $COV_DIR/.coveragerc
+	# The first value must be an actual file path on the machine where the reporting
+	# will happen, so that source code can be found.
+	echo '    /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/restapi/' >> $COV_DIR/.coveragerc
+	# The other values can be file patterns to match against the paths of collected
+	# data, or they can be absolute or relative file paths on the current machine.      
+	echo '    /usr/local/lib/python3.5/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.6/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.7/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+	echo '    /usr/local/lib/python3.8/dist-packages/restapi/' >> $COV_DIR/.coveragerc
+
+
+else
 
 	# CURRENT DIR IS $CORE_DIR
 
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init --no-build
+	rapydo --development --project ${PROJECT} init
 
 	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
 		rapydo --development --project ${PROJECT} pull
 	fi
-
-	rapydo --development --project ${PROJECT} init
 
 	rapydo --development --project ${PROJECT} start
 	docker ps -a
@@ -95,11 +104,6 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
-
-	# if [ "$PROJECT" = "celerytest" ]; then
-	# 	echo "\n\nLogs from Celery:\n\n"
-	# 	docker logs ${PROJECT}_celery_1
-	# fi
 
 	# Sync the coverage file to S3, to be available for the next stage
 	rapydo --development --project ${PROJECT} dump
@@ -119,45 +123,13 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	rapydo --mode production --project ${PROJECT} pull
 	rapydo --mode production --project ${PROJECT} start
 
+	echo "Backend server is starting"
 	sleep 20
+	echo "Backend server should be ready now!"
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
 	rapydo --mode production --project ${PROJECT} remove
 	rapydo --mode production --project ${PROJECT} clean
 
-else
-
-	# CURRENT DIR IS $CORE_DIR
-
-	PROJECT="template"
-
-	# Download sub-repos (build templates are required)
-	rapydo --development --project ${PROJECT} init --no-build
-	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
-		rapydo --development --project ${PROJECT} pull
-	fi
-	rapydo --development --project ${PROJECT} init
-	rapydo --development --project ${PROJECT} --services backend start
-	docker ps -a
-	# Build the backend image and execute coveralls
-	# rapydo --services backend --project ${PROJECT} build
-
-	cd $WORK_DIR
-
-	# Sync coverage files from previous stages
-	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
-
-    # Combine all coverage files to compute thefinal coverage
-	cd $COV_DIR
-	ls .coverage*
-	coverage combine
-	cp $COV_DIR/.coverage $WORK_DIR/
-
-	cd $WORK_DIR
-	# docker run -it -v $(pwd):/repo -w /repo template/backend:template coveralls
-	docker run -it -v $(pwd):/repo -w /repo rapydo/backend:$CURRENT_VERSION coveralls
-
-	cd $CORE_DIR
-	rapydo --development --project template clean
 fi

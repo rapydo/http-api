@@ -7,17 +7,18 @@ from restapi.rest.definition import EndpointResource
 from utilities import htmlcodes as hcodes
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 
 class GraphBaseOperations(EndpointResource):
-
     def initGraph(self):
         log.warning(
-            "This method is deprecated, use get_service_instance and " +
-            "get_current_user instead")
+            "This method is deprecated, use get_service_instance and "
+            + "get_current_user instead"
+        )
         self.graph = self.get_service_instance('neo4j')
         self._current_user = self.get_current_user()
 
@@ -31,8 +32,7 @@ class GraphBaseOperations(EndpointResource):
 
     def getNode(self, Model, identifier, field='accession'):
 
-        log.warning(
-            "This method is deprecated. use Model.get_or_none() instead")
+        log.warning("This method is deprecated. use Model.get_or_none() instead")
 
         try:
             filter = {field: identifier}
@@ -52,6 +52,7 @@ def graph_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         from neomodel import db as transaction
+
         try:
 
             transaction.begin()
@@ -78,6 +79,7 @@ def graph_nestable_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         from neomodel import db as transaction
+
         transaction_open = True
         try:
 
@@ -110,6 +112,7 @@ def graph_nestable_transactions(func):
 
     return wrapper
 
+
 def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -132,10 +135,7 @@ def catch_graph_exceptions(func):
             else:
                 error = str(e)
 
-            raise RestApiException(
-                error,
-                status_code=hcodes.HTTP_BAD_CONFLICT
-            )
+            raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
         except (RequiredProperty) as e:
             raise RestApiException(str(e))
 

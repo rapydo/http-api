@@ -7,14 +7,14 @@ iRODS file-system flask connector
 # import os
 import logging
 from utilities.certificates import Certificates
+
 # from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
-from restapi.flask_ext.flask_irods.session \
-    import iRODSPickleSession as iRODSSession
+from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSession
+
 # from irods.session import iRODSSession
 from irods import exception as iexceptions
-from restapi.flask_ext.flask_irods.client \
-    import IrodsException, IrodsPythonClient
+from restapi.flask_ext.flask_irods.client import IrodsException, IrodsPythonClient
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -28,7 +28,6 @@ log = get_logger(__name__)
 
 
 class IrodsPythonExt(BaseExtension):
-
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')
@@ -65,9 +64,12 @@ class IrodsPythonExt(BaseExtension):
                     self.password = self.variables.get('password')
 
             log.very_verbose(
-                "Check connection parameters:" +
-                "\nexternal[%s], auth[%s], user[%s], admin[%s]",
-                external, self.authscheme, user, admin
+                "Check connection parameters:"
+                + "\nexternal[%s], auth[%s], user[%s], admin[%s]",
+                external,
+                self.authscheme,
+                user,
+                admin,
             )
 
             # Check if the user requested for GSI explicitely
@@ -95,7 +97,7 @@ class IrodsPythonExt(BaseExtension):
 
             proxy_cert_name = "%s%s" % (
                 self.variables.get('certificates_prefix', ""),
-                kwargs.get("proxy_cert_name")
+                kwargs.get("proxy_cert_name"),
             )
 
             valid_cert = Certificates.globus_proxy(
@@ -118,7 +120,8 @@ class IrodsPythonExt(BaseExtension):
 
         else:
             raise NotImplementedError(
-                "Unable to create session: invalid iRODS-auth scheme")
+                "Unable to create session: invalid iRODS-auth scheme"
+            )
         # log.pp(self.variables)
 
         return True
@@ -154,7 +157,8 @@ class IrodsPythonExt(BaseExtension):
                 host_dn = None
             if host_dn is None:
                 host_dn = Certificates.get_dn_from_cert(
-                    certdir='host', certfilename='hostcert')
+                    certdir='host', certfilename='hostcert'
+                )
             else:
                 log.verbose("Existing DN:\n\"%s\"" % host_dn)
 
@@ -185,7 +189,8 @@ class IrodsPythonExt(BaseExtension):
 
         else:
             raise NotImplementedError(
-                "Invalid iRODS authentication scheme: %s" % self.authscheme)
+                "Invalid iRODS authentication scheme: %s" % self.authscheme
+            )
 
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
@@ -255,8 +260,10 @@ class IrodsPythonExt(BaseExtension):
         if self.variables.get('external') and self.variables.get(user):
             if not session.query_user_exists(user):
                 log.exit(
-                    "Cannot find '%s' inside " +
-                    "the currently connected iRODS instance", user)
+                    "Cannot find '%s' inside "
+                    + "the currently connected iRODS instance",
+                    user,
+                )
 
         return session
 

@@ -9,7 +9,6 @@ log = get_logger(__name__)
 
 ########################
 class Devnull(object):
-
     def write(self, _):
         pass
 
@@ -28,11 +27,12 @@ def nostderr():
         yield
     finally:
         sys.stderr = savestderr
+
+
 ########################
 
 
 class ElasticPythonExt(BaseExtension):
-
     def custom_connection(self, **kwargs):
 
         # mix kwargs with variables
@@ -93,11 +93,13 @@ class ElasticPythonExt(BaseExtension):
 
     #     return db
 
+
 # ElasticInjector
 
 
 def today():
     from datetime import datetime
+
     return datetime.today().strftime("%Y.%m.%d")
 
 
@@ -121,7 +123,5 @@ def get_logs(elastic, day=None):
     index = 'log-%s' % today()
 
     # search all
-    out = elastic.search(
-        index=index, size=10000, body={"query": {'match_all': {}}}
-    )
+    out = elastic.search(index=index, size=10000, body={"query": {'match_all': {}}})
     return generator(out)

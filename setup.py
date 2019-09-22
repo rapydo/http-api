@@ -44,21 +44,30 @@ setup(
         "PyJWT",
 
         # Flask and plugins
-        "flask==1.0.2",
-        "Flask-Cors==3.0.7",
+        "Flask==1.1.1",
+        "Flask-Cors==3.0.8",
+
+        # Latest requests-oauthlib [1.2.0] (required by Flask-OAuthlib)
+        # requires oauthlib<3.0.0,>=2.1.0
+        "oauthlib==2.1.0",
         # Version 1.2.0 depends on OAuthlib 3.0.0 and above
         # It does not support versions of OAuthlib before 3.0.0
         # But Flask-OAuthlib depends from OAuthlib < 3.0.0
         "requests-oauthlib==1.1.0",
-        "Flask-OAuthlib==0.9.4",
+        "Flask-OAuthlib==0.9.5",
+
         "Flask-RESTful==0.3.7",
-        "Flask-SQLAlchemy==2.3.2",
+        "Flask-SQLAlchemy==2.4.0",
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
         # "injector==0.13.0",
         "injector==0.12",
         "flask_injector==0.10.1",
+
+        # Already installed from utils, ma forcing here since bravado-core install 5.1,
+        # not compatible with docker-compose 1.24
+        "PyYAML==3.13",
 
         # DB drivers
         # "neomodel==3.3.1",
@@ -81,8 +90,8 @@ setup(
         'Intended Audience :: Developers',
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ]
 )

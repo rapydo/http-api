@@ -9,6 +9,7 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 import os
 from base64 import b64encode
 from restapi.protocols.oauth import oauth
+
 # from restapi.confs import PRODUCTION
 from utilities.globals import mem
 from utilities.meta import Meta
@@ -100,12 +101,13 @@ class ExternalLogins(object):
             request_token_url=None,
             access_token_method='POST',
             access_token_url='https://github.com/login/oauth/access_token',
-            authorize_url='https://github.com/login/oauth/authorize'
+            authorize_url='https://github.com/login/oauth/authorize',
         )
 
     def b2access(self):
 
         from restapi.services.detect import Detector as detect
+
         b2access_vars = detect.load_variables({'prefix': 'b2access'})
         selected_b2access = b2access_vars.get('env')
         if selected_b2access is None:
@@ -133,11 +135,12 @@ class ExternalLogins(object):
             'consumer_secret': secret,
             'access_token_url': token_url,
             'authorize_url': authorize_url,
-            'request_token_params':
-                {'scope': ['USER_PROFILE', 'GENERATE_USER_CERTIFICATE']},
+            'request_token_params': {
+                'scope': ['USER_PROFILE', 'GENERATE_USER_CERTIFICATE']
+            },
             # request_token_url is for oauth1
             'request_token_url': None,
-            'access_token_method': 'POST'
+            'access_token_method': 'POST',
         }
 
         # B2ACCESS main app
@@ -154,12 +157,13 @@ class ExternalLogins(object):
         @b2accessCA.tokengetter
         def get_b2access_oauth_token():
             from flask import session
+
             return session.get('b2access_token')
 
         return {
             'b2access': b2access_oauth,
             'b2accessCA': b2accessCA,
-            'prod': selected_b2access == 'production'
+            'prod': selected_b2access == 'production',
         }
 
 
@@ -182,8 +186,7 @@ def decorate_http_request(remote):
                 str.encode("%s:%s" % (client_id, client_secret))
             ).decode("ascii")
             headers.update({'Authorization': 'Basic %s' % (userpass,)})
-        response = old_http_request(
-            uri, headers=headers, data=data, method=method)
+        response = old_http_request(uri, headers=headers, data=data, method=method)
 
         # TODO: check if we may handle failed B2ACCESS response here
         return response

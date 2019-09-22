@@ -19,14 +19,17 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     try:
         import pyotp
         import pyqrcode
+
         # import base64
         from io import BytesIO
     # FIXME: cannot use the proper exception (available in python 3.6+)
     # because we are stuck on python 3.5 con IMC
     # except ModuleNotFoundError:
     except BaseException:
-        log.critical_exit("You enabled TOTP 2FA authentication" +
-                          ", but related libraries are not installed")
+        log.critical_exit(
+            "You enabled TOTP 2FA authentication"
+            + ", but related libraries are not installed"
+        )
 
 
 class Authenticator(BaseExtension):
@@ -45,35 +48,42 @@ class Authenticator(BaseExtension):
 
             # If oauth services are available, set them before every request
             from restapi.services.oauth2clients import ExternalLogins as oauth2
+
             ext_auth = oauth2()
             custom_auth.set_oauth2_services(ext_auth._available_services)
-            secret = str(
-                custom_auth.import_secret(self.app.config['SECRET_KEY_FILE'])
-            )
+            secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 
             # Install self.app secret for oauth2
             self.app.secret_key = secret + '_app'
 
             # Enabling also OAUTH library
             from restapi.protocols.oauth import oauth
+
             oauth.init_app(self.app)
 
             custom_auth.TOTP = 'TOTP'
 
-            custom_auth.REGISTER_FAILED_LOGIN = \
+            custom_auth.REGISTER_FAILED_LOGIN = (
                 self.variables.get("register_failed_login", False) == 'True'
-            custom_auth.FORCE_FIRST_PASSWORD_CHANGE = \
+            )
+            custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
                 self.variables.get("force_first_password_change", False) == 'True'
-            custom_auth.VERIFY_PASSWORD_STRENGTH = \
+            )
+            custom_auth.VERIFY_PASSWORD_STRENGTH = (
                 self.variables.get("verify_password_strength", False) == 'True'
-            custom_auth.MAX_PASSWORD_VALIDITY = \
-                int(self.variables.get("max_password_validity", 0))
-            custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = \
-                int(self.variables.get("disable_unused_credentials_after", 0))
-            custom_auth.MAX_LOGIN_ATTEMPTS = \
-                int(self.variables.get("max_login_attempts", 0))
-            custom_auth.SECOND_FACTOR_AUTHENTICATION = \
-                self.variables.get("second_factor_authentication", None)
+            )
+            custom_auth.MAX_PASSWORD_VALIDITY = int(
+                self.variables.get("max_password_validity", 0)
+            )
+            custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
+                self.variables.get("disable_unused_credentials_after", 0)
+            )
+            custom_auth.MAX_LOGIN_ATTEMPTS = int(
+                self.variables.get("max_login_attempts", 0)
+            )
+            custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
+                "second_factor_authentication", None
+            )
 
             if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
                 custom_auth.SECOND_FACTOR_AUTHENTICATION = None
@@ -106,7 +116,6 @@ class Authenticator(BaseExtension):
 
 
 class HandleSecurity(object):
-
     def __init__(self, auth):
         self.auth = auth
 
@@ -209,14 +218,15 @@ class HandleSecurity(object):
             check = True
             if password is not None:
                 check, msg = self.verify_password_strength(
-                    new_password, old_pwd=password)
+                    new_password, old_pwd=password
+                )
             else:
                 check, msg = self.verify_password_strength(
-                    new_password, old_hash=user.password)
+                    new_password, old_hash=user.password
+                )
 
             if not check:
-                raise RestApiException(
-                    msg, status_code=hcodes.HTTP_BAD_CONFLICT)
+                raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
 
         if new_password is not None and password_confirm is not None:
             now = datetime.now(pytz.utc)
@@ -241,16 +251,17 @@ class HandleSecurity(object):
             # We register failed login, but we do not put a max num of failures
             pass
             # FIXME: implement get_failed_login
-        elif self.auth.get_failed_login(username) < \
-                self.auth.MAX_LOGIN_ATTEMPTS:
+        elif self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
             # We register and put a max, but user does not reached it yet
             pass
         else:
             # Dear user, you have exceeded the limit
-            msg = """
+            msg = (
+                """
                 Sorry, this account is temporarily blocked due to
-                more than %d failed login attempts. Try again later"""\
+                more than %d failed login attempts. Try again later"""
                 % self.auth.MAX_LOGIN_ATTEMPTS
+            )
             code = hcodes.HTTP_BAD_UNAUTHORIZED
             raise RestApiException(msg, status_code=code)
 
@@ -262,8 +273,7 @@ class HandleSecurity(object):
             code = hcodes.HTTP_BAD_UNAUTHORIZED
             if last_login is not None:
 
-                inactivity = timedelta(
-                    days=self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER)
+                inactivity = timedelta(days=self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER)
                 valid_until = last_login + inactivity
 
                 if valid_until < now:
@@ -279,4 +289,5 @@ class HandleSecurity(object):
             # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            )

@@ -44,15 +44,18 @@ class EndpointsFarmer(object):
             # there is another similar piece of code in swagger.py
             original = getattr(resource.cls, method)
             decorated = authentication.authorization_required(
-                original, roles=roles, from_swagger=True,
-                required_roles=attributes.required_roles
+                original,
+                roles=roles,
+                from_swagger=True,
+                required_roles=attributes.required_roles,
             )
             setattr(resource.cls, method, decorated)
 
             if len(roles) < 1:
                 roles = "'DEFAULT'"
-            log.very_verbose("Auth on %s.%s for %s"
-                             % (resource.cls.__name__, method, roles))
+            log.very_verbose(
+                "Auth on %s.%s for %s" % (resource.cls.__name__, method, roles)
+            )
 
         urls = [uri for _, uri in resource.uris.items()]
 

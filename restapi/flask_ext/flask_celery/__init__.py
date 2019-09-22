@@ -8,6 +8,8 @@ from celery import Celery
 from functools import wraps
 import traceback
 from glom import glom
+from celerybeatmongo.models import PeriodicTask, DoesNotExist
+
 # from kombu import Exchange, Queue
 
 from utilities.globals import mem
@@ -52,8 +54,7 @@ class CeleryExt(BaseExtension):
         BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
         BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
         BACKEND_USER = self.variables.get("backend_user", BROKER_USER)
-        BACKEND_PASSWORD = self.variables.get(
-            "backend_password", BROKER_PASSWORD)
+        BACKEND_PASSWORD = self.variables.get("backend_password", BROKER_PASSWORD)
 
         if BACKEND_USER == "":
             BACKEND_USER = None
@@ -67,15 +68,20 @@ class CeleryExt(BaseExtension):
 
         if broker == 'RABBIT':
             BROKER_URL = 'amqp://%s%s%s' % (
-                BROKER_CREDENTIALS, BROKER_HOST, BROKER_VHOST)
+                BROKER_CREDENTIALS,
+                BROKER_HOST,
+                BROKER_VHOST,
+            )
             log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
             BROKER_URL = 'redis://%s%s:%s/0' % (
-                BROKER_CREDENTIALS, BROKER_HOST, BROKER_PORT)
+                BROKER_CREDENTIALS,
+                BROKER_HOST,
+                BROKER_PORT,
+            )
             log.info("Configured Redis as Celery broker %s", BROKER_URL)
         else:
-            log.error(
-                "Unable to start Celery unknown broker service: %s" % broker)
+            log.error("Unable to start Celery unknown broker service: %s" % broker)
             celery_app = None
             return celery_app
 
@@ -86,31 +92,36 @@ class CeleryExt(BaseExtension):
 
         if backend == 'RABBIT':
             BACKEND_URL = 'rpc://%s%s:%s/0' % (
-                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
+                BACKEND_CREDENTIALS,
+                BACKEND_HOST,
+                BACKEND_PORT,
+            )
             log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
         elif backend == 'REDIS':
             BACKEND_URL = 'redis://%s%s:%s/0' % (
-                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
+                BACKEND_CREDENTIALS,
+                BACKEND_HOST,
+                BACKEND_PORT,
+            )
             log.info("Configured Redis as Celery backend %s", BACKEND_URL)
         elif backend == 'MONGODB':
             BACKEND_URL = 'mongodb://%s%s:%s' % (
-                BACKEND_CREDENTIALS, BACKEND_HOST, BACKEND_PORT)
+                BACKEND_CREDENTIALS,
+                BACKEND_HOST,
+                BACKEND_PORT,
+            )
             log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
         else:
-            log.exit(
-                "Unable to start Celery unknown backend service: %s" % backend)
+            log.exit("Unable to start Celery unknown backend service: %s" % backend)
             # celery_app = None
             # return celery_app
 
-        celery_app = Celery(
-            'RestApiQueue',
-            broker=BROKER_URL,
-            backend=BACKEND_URL
-        )
+        celery_app = Celery('RestApiQueue', broker=BROKER_URL, backend=BACKEND_URL)
 
         if not worker_mode:
 
             from celery.task.control import inspect
+
             insp = inspect()
             if not insp.stats():
                 log.warning("No running Celery workers were found")
@@ -160,10 +171,86 @@ class CeleryExt(BaseExtension):
         """
         # celery_app.conf.broker_pool_limit = None
 
+        # from https://github.com/zmap/celerybeat-mongo
+        # CELERY_MONGODB_SCHEDULER_DB = "celery"
+        # CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
+        # CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
+
+        if self.variables.get("beat_enabled", False):
+            log.info("Enabling Celery Beat")
+            if backend != 'MONGODB':
+                log.warning("Cannot configure mongodb celery beat scheduler")
+            else:
+                SCHEDULER_DB = 'celery'
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_DB'] = SCHEDULER_DB
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_COLLECTION'] = "schedules"
+                celery_app.conf['CELERY_MONGODB_SCHEDULER_URL'] = BACKEND_URL
+
+                import mongoengine
+
+                m = mongoengine.connect(SCHEDULER_DB, host=BACKEND_URL)
+                log.info("Connected to MongoDB: %s", m)
+
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
 
         return celery_app
+
+    @classmethod
+    def get_periodic_task(cls, name):
+
+        try:
+            return PeriodicTask.objects.get(name=name)
+        except DoesNotExist:
+            return None
+
+    @classmethod
+    def delete_periodic_task(cls, name):
+        t = cls.get_periodic_task(name)
+        if t is None:
+            return False
+        t.delete()
+        return True
+
+    # period = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
+    @classmethod
+    def create_periodic_task(cls, name, task, every, period, args=[], kwargs={}):
+        PeriodicTask(
+            name=name,
+            task=task,
+            enabled=True,
+            args=args,
+            kwargs=kwargs,
+            interval=PeriodicTask.Interval(every=every, period=period),
+        ).save()
+
+    @classmethod
+    def create_crontab_task(
+        cls,
+        name,
+        task,
+        minute,
+        hour,
+        day_of_week="*",
+        day_of_month="*",
+        month_of_year="*",
+        args=[],
+        kwargs={},
+    ):
+        PeriodicTask(
+            name=name,
+            task=task,
+            enabled=True,
+            args=args,
+            kwargs=kwargs,
+            crontab=PeriodicTask.Crontab(
+                minute=minute,
+                hour=hour,
+                day_of_week=day_of_week,
+                day_of_month=day_of_month,
+                month_of_year=month_of_year,
+            ),
+        ).save()
 
 
 def send_errors_by_email(func):
@@ -171,6 +258,7 @@ def send_errors_by_email(func):
     Send a notification email to a given recipient to the
     system administrator with details about failure.
     """
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
@@ -200,7 +288,8 @@ def send_errors_by_email(func):
                 project = glom(
                     mem.customizer._configurations,
                     "project.title",
-                    default='Unkown title')
+                    default='Unkown title',
+                )
                 subject = "%s: task %s failed" % (project, task_name)
                 send_mail(body, subject)
 

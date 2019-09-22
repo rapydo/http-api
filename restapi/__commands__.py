@@ -33,10 +33,7 @@ def main(args, another_app=None):
             os.environ[APP] = '%s.__main__' % current_package
 
     cli = FlaskGroup()
-    options = {
-        'prog_name': 'restapi',
-        'args': args,
-    }
+    options = {'prog_name': 'restapi', 'args': args}
 
     # cannot catch for CTRL+c
     cli.main(**options)
@@ -59,6 +56,7 @@ def main(args, another_app=None):
 def flask_cli(options=None):
     log.info("Launching the app")
     from restapi.server import create_app
+
     # log.warning("TEST")
     if options is None:
         options = {'name': 'RESTful HTTP API server'}
@@ -72,11 +70,8 @@ def flask_cli(options=None):
 
 def starting_up():
     from utilities import processes
-    return processes.find(
-        current_package,
-        suffixes=['wait', 'init'],
-        local_bin=True
-    )
+
+    return processes.find(current_package, suffixes=['wait', 'init'], local_bin=True)
 
 
 @cli.command()
@@ -87,12 +82,14 @@ def launch():
     """Launch the RAPyDo-based HTTP API server"""
     args = [
         'run',
-        '--host', '0.0.0.0',
-        '--port', os.environ.get(PORT),
+        '--host',
+        '0.0.0.0',
+        '--port',
+        os.environ.get(PORT),
         '--reload',
         '--no-debugger',
         '--eager-loading',
-        '--with-threads'
+        '--with-threads',
     ]
 
     if starting_up():
@@ -117,8 +114,7 @@ def verify(services):
         if myclass is None:
             log.exit("Service \"%s\" was NOT detected" % service)
         log.info("Verifying service: %s", service)
-        host, port = get_service_address(
-            myclass.variables, 'host', 'port', service)
+        host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
 
     log.info("Completed successfully")
@@ -152,8 +148,7 @@ def get_service_address(variables, host_var, port_var, service):
     #             host = myclass.variables.get(k)
     #             log.info("Using %s as HOST variable for %s", k, service)
     if host is None:
-        log.exit(
-            "Cannot find any variable matching %s for %s", host_var, service)
+        log.exit("Cannot find any variable matching %s for %s", host_var, service)
 
     port = variables.get(port_var)
     # if port is None:
@@ -164,8 +159,7 @@ def get_service_address(variables, host_var, port_var, service):
     #             log.info("Using %s as PORT variable for %s", k, service)
 
     if port is None:
-        log.exit(
-            "Cannot find any variable matching %s  for %s", port_var, service)
+        log.exit("Cannot find any variable matching %s  for %s", port_var, service)
 
     log.debug("Checking address: %s:%s", host, port)
 
@@ -190,17 +184,18 @@ def mywait():
 
         if name == 'celery':
             host, port = get_service_address(
-                myclass.variables, 'broker_host', 'broker_port', name)
+                myclass.variables, 'broker_host', 'broker_port', name
+            )
 
             wait_socket(host, port, "celery_broker")
 
             host, port = get_service_address(
-                myclass.variables, 'backend_host', 'backend_port', name)
+                myclass.variables, 'backend_host', 'backend_port', name
+            )
 
             wait_socket(host, port, "celery_backend")
         else:
-            host, port = get_service_address(
-                myclass.variables, 'host', 'port', name)
+            host, port = get_service_address(myclass.variables, 'host', 'port', name)
 
             wait_socket(host, port, name)
 
@@ -219,17 +214,12 @@ def forced_clean():
 
 
 @cli.command()
+@click.option('--wait/--no-wait', default=False, help='Wait for startup to finish')
 @click.option(
-    '--wait/--no-wait', default=False, help='Wait for startup to finish')
-@click.option(
-    '--core/--no-core', default=False,
-    help='Test for core instead of vanilla code')
-@click.option(
-    '--file', default=None,
-    help='Test a single file of tests')
-@click.option(
-    '--folder', default=None,
-    help='Test a single folder of tests')
+    '--core/--no-core', default=False, help='Test for core instead of vanilla code'
+)
+@click.option('--file', default=None, help='Test a single file of tests')
+@click.option('--folder', default=None, help='Test a single folder of tests')
 def tests(wait, core, file, folder):
     """Compute tests and coverage"""
 
@@ -243,10 +233,10 @@ def tests(wait, core, file, folder):
     # launch unittests and also compute coverage
     # TODO: convert the `pyunittests` script from the docker image into python
     from utilities.basher import BashCommands
+
     bash = BashCommands()
     log.warning(
-        "Running all tests and computing coverage.\n" +
-        "This might take some minutes."
+        "Running all tests and computing coverage.\n" + "This might take some minutes."
     )
 
     # FIXME: does not work
@@ -274,7 +264,7 @@ def tests(wait, core, file, folder):
     #     parameters.append(current_package)
 
     output = bash.execute_command(
-        "pyunittests",
-        parameters=parameters, catchException=True, error_max_len=-1)
+        "pyunittests", parameters=parameters, catchException=True, error_max_len=-1
+    )
 
     log.info("Completed:\n%s", output)

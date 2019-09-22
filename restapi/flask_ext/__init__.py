@@ -6,6 +6,7 @@
 
 import abc
 from datetime import datetime, timedelta
+
 # import time
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
@@ -140,7 +141,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
         # Get the exception which will signal a missing connection
         exceptions = self.set_connection_exception()
         if exceptions is None:
-            exceptions = (BaseException, )
+            exceptions = (BaseException,)
 
         while max_retries != 0 or retry_count < max_retries:
 
@@ -277,13 +278,13 @@ class BaseInjector(Module):
     @classmethod
     def set_extension_class(cls, ExtensionClass):
         if hasattr(cls, '_extClass'):
-            raise("Extension class was already set")
+            raise ("Extension class was already set")
         cls._extClass = ExtensionClass
 
     @classmethod
     def get_extension_class(cls):
         if not hasattr(cls, '_extClass'):
-            raise("Extension class was not set at 'service detection' time")
+            raise ("Extension class was not set at 'service detection' time")
         return cls._extClass
 
     # @provider
@@ -305,7 +306,9 @@ def get_debug_instance(MyClass):
     """
     Obtain a debug instance from any flask ext we have in the app
 
-    e.g. from restapi.flask_ext.flask_celery import CeleryExt
+    e.g.
+    from restapi.flask_ext import get_debug_instance
+    from restapi.flask_ext.flask_celery import CeleryExt
     obj = get_debug_instance(CeleryExt)
     """
 
@@ -313,6 +316,7 @@ def get_debug_instance(MyClass):
     # NOTE: impors are needed here for logging to work correctly
     from utilities.logs import get_logger
     from restapi.services.detect import detector
+
     detector  # avoid PEP complaints
     get_logger
     # FIXME: e.g. importing-programmatically

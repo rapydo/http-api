@@ -29,8 +29,7 @@ HTTPAUTH_AUTH_HEADER = 'WWW-Authenticate'
 HTTPAUTH_AUTH_FIELD = 'Authorization'
 
 ALLOW_ACCESS_TOKEN_PARAMETER = (
-    Detector.get_global_var(
-        'ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
+    Detector.get_global_var('ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
 )
 
 
@@ -62,8 +61,7 @@ class HTTPTokenAuth(object):
 
     def authenticate_roles(self, verify_roles_callback, roles, required_roles):
         if verify_roles_callback:
-            return verify_roles_callback(
-                roles, required_roles=required_roles)
+            return verify_roles_callback(roles, required_roles=required_roles)
         return False
 
     def get_authorization_token(self):
@@ -100,8 +98,7 @@ class HTTPTokenAuth(object):
 
         return auth_type, token
 
-    def authorization_required(self, f, roles,
-                               from_swagger=False, required_roles=None):
+    def authorization_required(self, f, roles, from_swagger=False, required_roles=None):
         @wraps(f)
         def decorated(*args, **kwargs):
 
@@ -114,14 +111,18 @@ class HTTPTokenAuth(object):
 
             if auth_type is None or auth_type.lower() != self._scheme.lower():
                 # Wrong authentication string
-                msg = "Valid credentials have to be provided " + \
-                      "inside Headers, e.g. %s: '%s %s'" % \
-                      (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
+                msg = (
+                    "Valid credentials have to be provided "
+                    + "inside Headers, e.g. %s: '%s %s'"
+                    % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
+                )
                 #
                 return decorated_self.send_errors(
                     # label="No authentication schema",
-                    message=msg, headers=headers,
-                    code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                    message=msg,
+                    headers=headers,
+                    code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                )
 
             # Handling OPTIONS forwarded to our application:
             # ignore headers and let go, avoid unwanted interactions with CORS
@@ -136,7 +137,9 @@ class HTTPTokenAuth(object):
                     # To use the same standards
                     return decorated_self.send_errors(
                         message="Invalid token received '%s'" % token,
-                        headers=headers, code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                        headers=headers,
+                        code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                    )
 
             # Check roles
             if len(roles) > 0:
@@ -144,7 +147,8 @@ class HTTPTokenAuth(object):
                 if not self.authenticate_roles(roles_fn, roles, required_roles):
                     return decorated_self.send_errors(
                         message="You are not authorized: missing privileges",
-                        code=hcodes.HTTP_BAD_UNAUTHORIZED)
+                        code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                    )
 
             return f(*args, **kwargs)
 

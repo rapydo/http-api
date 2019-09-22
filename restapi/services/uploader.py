@@ -13,6 +13,7 @@ http://stackoverflow.com/a/9533843/2114395
 """
 
 import os
+
 # import shutil
 from flask import request, send_from_directory
 from werkzeug import secure_filename
@@ -20,6 +21,7 @@ from utilities import htmlcodes as hcodes
 from restapi.confs import UPLOAD_FOLDER
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 
@@ -37,8 +39,9 @@ class Uploader(object):
     def allowed_file(self, filename):
         if len(self.allowed_exts) < 1:
             return True
-        return '.' in filename \
-            and filename.rsplit('.', 1)[1].lower() in self.allowed_exts
+        return (
+            '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_exts
+        )
 
     @staticmethod
     def absolute_upload_file(filename, subfolder=None, onlydir=False):
@@ -52,10 +55,16 @@ class Uploader(object):
             return os.path.dirname(abs_file)
         return abs_file
 
-    def ngflow_upload(self, filename, destination, content,
-                      chunk_number, chunk_size, chunk_total,
-                      overwrite=True
-                      ):
+    def ngflow_upload(
+        self,
+        filename,
+        destination,
+        content,
+        chunk_number,
+        chunk_size,
+        chunk_total,
+        overwrite=True,
+    ):
 
         chunk_number = int(chunk_number)
         chunk_size = int(chunk_size)
@@ -63,12 +72,12 @@ class Uploader(object):
         sec_filename = secure_filename(filename)
         abs_fname = os.path.join(destination, sec_filename)
 
-# FIXME: what happens if chunk 2 arrives before chunk 1?
+        # FIXME: what happens if chunk 2 arrives before chunk 1?
         if overwrite and chunk_number == 1:
             if os.path.exists(abs_fname):
                 os.remove(abs_fname)
 
-# FIXME: file is saved as data, not as ASCII/TEXT
+        # FIXME: file is saved as data, not as ASCII/TEXT
         # with open(abs_fname, "wb") as f:
         with open(abs_fname, "ab") as f:
             # log.critical("Copying chunk %d" % chunk_number)
@@ -85,8 +94,9 @@ class Uploader(object):
 
         # Check file extension?
         if not self.allowed_file(filename):
-            return self.force_response(errors=[
-                "Wrong extension, file extension not allowed"])
+            return self.force_response(
+                errors=["Wrong extension, file extension not allowed"]
+            )
 
         content = request.data
 
@@ -101,9 +111,9 @@ class Uploader(object):
                 log.debug("Forced removal")
             else:
                 return self.force_response(
-                    errors=[
-                        "File '" + filename + "' already exists",
-                    ], code=hcodes.HTTP_BAD_REQUEST)
+                    errors=["File '" + filename + "' already exists"],
+                    code=hcodes.HTTP_BAD_REQUEST,
+                )
 
         with open(abs_file, "ab") as f:
             f.write(content)
@@ -111,9 +121,10 @@ class Uploader(object):
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.force_response(errors=[
-                "Server error: unable to recover the uploaded file"],
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL)
+            return self.force_response(
+                errors=["Server error: unable to recover the uploaded file"],
+                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            )
 
         # Extra info
         ftype = None
@@ -121,6 +132,7 @@ class Uploader(object):
         try:
             # Check the type
             from plumbum.cmd import file
+
             out = file["-ib", abs_file]()
             tmp = out.split(';')
             ftype = tmp[0].strip()
@@ -135,10 +147,10 @@ class Uploader(object):
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
-        return self.force_response({
-            'filename': filename,
-            'meta': {'type': ftype, 'charset': fcharset}
-        }, code=hcodes.HTTP_OK_BASIC)
+        return self.force_response(
+            {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
+            code=hcodes.HTTP_OK_BASIC,
+        )
 
     def upload(self, subfolder=None, force=False):
 
@@ -151,16 +163,18 @@ class Uploader(object):
             #     f.write(request.stream.read())
             # # print("TEST", request.data)
 
-            return self.force_response(errors={
-                "Missing file": "No files specified"},
-                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
+            return self.force_response(
+                errors={"Missing file": "No files specified"},
+                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+            )
 
         myfile = request.files['file']
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
-            return self.force_response(errors={
-                "Wrong extension": "File extension not allowed"})
+            return self.force_response(
+                errors={"Wrong extension": "File extension not allowed"}
+            )
 
         # Check file name
         filename = secure_filename(myfile.filename)
@@ -182,24 +196,29 @@ class Uploader(object):
             else:
                 return self.force_response(
                     errors={
-                        "File '" + filename + "' already exists.":
-                        "Change file name or use the force parameter",
-                    }, code=hcodes.HTTP_BAD_REQUEST)
+                        "File '"
+                        + filename
+                        + "' already exists.": "Change file name or use the force parameter"
+                    },
+                    code=hcodes.HTTP_BAD_REQUEST,
+                )
 
         # Save the file
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '%s'", abs_file)
         except Exception:
-            return self.force_response(errors={
-                "Permissions": "Failed to write uploaded file"},
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL)
+            return self.force_response(
+                errors={"Permissions": "Failed to write uploaded file"},
+                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            )
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.force_response(errors={
-                "Server file system": "Unable to recover the uploaded file"},
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL)
+            return self.force_response(
+                errors={"Server file system": "Unable to recover the uploaded file"},
+                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            )
 
         # Extra info
         ftype = None
@@ -207,6 +226,7 @@ class Uploader(object):
         try:
             # Check the type
             from plumbum.cmd import file
+
             out = file["-ib", abs_file]()
             tmp = out.split(';')
             ftype = tmp[0].strip()
@@ -221,10 +241,10 @@ class Uploader(object):
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
-        return self.force_response({
-            'filename': filename,
-            'meta': {'type': ftype, 'charset': fcharset}
-        }, code=hcodes.HTTP_OK_BASIC)
+        return self.force_response(
+            {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
+            code=hcodes.HTTP_OK_BASIC,
+        )
 
     def upload_chunked(self, destination, force=False, chunk_size=None):
 
@@ -265,18 +285,20 @@ class Uploader(object):
         # Check file existence
         if not os.path.exists(abs_file):
             log.critical("File '%s' not found", abs_file)
-            return self.force_response(errors={
-                "File missing": "File requested does not exists"},
-                code=hcodes.HTTP_BAD_NOTFOUND)
+            return self.force_response(
+                errors={"File missing": "File requested does not exists"},
+                code=hcodes.HTTP_BAD_NOTFOUND,
+            )
 
         # Remove the real file
         try:
             os.remove(abs_file)
         except Exception:
             log.critical("Cannot remove local file %s", abs_file)
-            return self.force_response(errors={
-                "Permissions": "Failed to remove file"},
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL)
+            return self.force_response(
+                errors={"Permissions": "Failed to remove file"},
+                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            )
         log.warn("Removed '%s'", abs_file)
 
         if skip_response:

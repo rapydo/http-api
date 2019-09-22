@@ -10,23 +10,24 @@ from flask import request, send_from_directory, stream_with_context, Response
 from utilities import htmlcodes as hcodes
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 
 class Downloader(object):
-
     def download(self, filename=None, subfolder=None, get=False):
 
         if not get:
             return self.force_response(
-                "No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED)
+                "No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED
+            )
 
         if filename is None:
-            return self.force_response(errors={
-                "Missing file": "No filename specified to download"})
+            return self.force_response(
+                errors={"Missing file": "No filename specified to download"}
+            )
 
-        path = self.absolute_upload_file(
-            filename, subfolder=subfolder, onlydir=True)
+        path = self.absolute_upload_file(filename, subfolder=subfolder, onlydir=True)
         log.info("Provide '%s' from '%s'", filename, path)
 
         return send_from_directory(path, filename)
@@ -46,9 +47,7 @@ class Downloader(object):
         log.info("Providing streamed content from %s", path)
 
         f = open(path, "rb")
-        return Response(
-            stream_with_context(self.read_in_chunks(f)),
-            mimetype=mime)
+        return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
 
     def send_file_partial(self, path, mime):
         """
@@ -84,7 +83,10 @@ class Downloader(object):
 
         log.debug(
             "Providing partial content (bytes %s-%s, len = %s bytes) from %s",
-            byte1, byte2, length, path
+            byte1,
+            byte2,
+            length,
+            path,
         )
 
         data = None
@@ -93,13 +95,10 @@ class Downloader(object):
             data = f.read(length)
 
         rv = Response(
-            data, hcodes.HTTP_PARTIAL_CONTENT,
-            mimetype=mime,
-            direct_passthrough=True
+            data, hcodes.HTTP_PARTIAL_CONTENT, mimetype=mime, direct_passthrough=True
         )
         rv.headers.add(
-            'Content-Range', 'bytes %d-%d/%d'
-            % (byte1, byte1 + length - 1, size)
+            'Content-Range', 'bytes %d-%d/%d' % (byte1, byte1 + length - 1, size)
         )
         rv.headers.add('Accept-Ranges', 'bytes')
 

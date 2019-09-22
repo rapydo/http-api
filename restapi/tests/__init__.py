@@ -4,6 +4,7 @@ import pytest
 import json
 import string
 import random
+
 # import os
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
@@ -21,7 +22,6 @@ AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
 
 
 class BaseTests(object):
-
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests
@@ -30,9 +30,7 @@ class BaseTests(object):
         if hasattr(self.__class__, variable):
             data = getattr(self.__class__, variable)
             if "read_only" in data and data["read_only"]:
-                pytest.fail(
-                    "Cannot overwrite a read_only variable [%s]" % variable
-                )
+                pytest.fail("Cannot overwrite a read_only variable [%s]" % variable)
 
         data = {'value': value, 'read_only': read_only}
         setattr(self.__class__, variable, data)
@@ -84,10 +82,7 @@ class BaseTests(object):
         """
 
         data = {"get_schema": 1}
-        r = client.post(
-            "%s/%s" % (API_URI, endpoint),
-            data=data,
-            headers=headers)
+        r = client.post("%s/%s" % (API_URI, endpoint), data=data, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
@@ -110,9 +105,9 @@ class BaseTests(object):
         else:
             return content
 
-    def do_login(self, client, USER, PWD,
-                 status_code=hcodes.HTTP_OK_BASIC,
-                 error=None, **kwargs):
+    def do_login(
+        self, client, USER, PWD, status_code=hcodes.HTTP_OK_BASIC, error=None, **kwargs
+    ):
         """
             Make login and return both token and authorization header
         """
@@ -239,6 +234,7 @@ class BaseTests(object):
 
         from restapi.flask_ext.flask_celery import CeleryExt
         from restapi.services.detect import detector
+
         celery = detector.extensions_instances.get('celery')
         celery.celery_app.app = app
         CeleryExt.celery_app = celery.celery_app
@@ -352,10 +348,17 @@ class BaseTests(object):
 
         return True
 
-    def _test_endpoint(self, client, endpoint, headers=None,
-                       get_status=None, post_status=None,
-                       put_status=None, del_status=None,
-                       post_data=None):
+    def _test_endpoint(
+        self,
+        client,
+        endpoint,
+        headers=None,
+        get_status=None,
+        post_status=None,
+        put_status=None,
+        del_status=None,
+        post_data=None,
+    ):
 
         endpoint = "%s/%s" % (API_URI, endpoint)
 

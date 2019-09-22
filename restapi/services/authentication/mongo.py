@@ -20,7 +20,6 @@ if not detector.check_availability(__name__):
 
 
 class Authentication(BaseAuthentication):
-
     def __init__(self):
 
         # Read init credentials and configuration
@@ -29,18 +28,12 @@ class Authentication(BaseAuthentication):
         # Get the instance for mongodb
         name = __name__.split('.')[::-1][0]  # returns 'mongo'
         from restapi.services.detect import detector
+
         extension = detector.services_classes.get(name)
         self.db = extension().get_instance(dbname=AUTH_DB)
 
-    def fill_custom_payload(self, userobj, payload):
-        """
-        FIXME: should probably be implemented inside vanilla
-        """
-        return payload
-
     def custom_user_properties(self, userdata):
-        new_userdata = super(
-            Authentication, self).custom_user_properties(userdata)
+        new_userdata = super(Authentication, self).custom_user_properties(userdata)
         if not new_userdata.get('uuid'):
             new_userdata['uuid'] = getUUID()
         return new_userdata
@@ -81,15 +74,12 @@ class Authentication(BaseAuthentication):
         if payload is not None:
             if payload.get('user_id'):  # skip: '', None
                 try:
-                    user = self.db.User.objects.get(
-                        {'uuid': payload['user_id']})
+                    user = self.db.User.objects.get({'uuid': payload['user_id']})
                 except self.db.User.DoesNotExist:
                     pass
             elif payload.get('jti'):  # skip: '', None
                 try:
-                    user = self.db.Token.objects.get(
-                        {'jti': payload['jti']}
-                    ).user_id
+                    user = self.db.Token.objects.get({'jti': payload['jti']}).user_id
                 except self.db.Token.DoesNotExist:
                     pass
 
@@ -127,8 +117,7 @@ class Authentication(BaseAuthentication):
                 log.warning("No roles inside mongo. Injected defaults.")
                 for role in self.default_roles:
                     roles.append(
-                        self.db.Role(
-                            name=role, description="automatic").save().name
+                        self.db.Role(name=role, description="automatic").save().name
                     )
                     # if missing_role:
                     #     transactions.append(role)
@@ -144,14 +133,18 @@ class Authentication(BaseAuthentication):
 
             if missing_user:
 
-                self.create_user({
-                    'email': self.default_user,
-                    # 'authmethod': 'credentials',
-                    'name': 'Default', 'surname': 'User',
-                    # 'password': self.hash_password(self.default_password)
-                    'password': self.default_password,
-                    'last_password_change': datetime.now(utc),
-                }, roles=roles)
+                self.create_user(
+                    {
+                        'email': self.default_user,
+                        # 'authmethod': 'credentials',
+                        'name': 'Default',
+                        'surname': 'User',
+                        # 'password': self.hash_password(self.default_password)
+                        'password': self.default_password,
+                        'last_password_change': datetime.now(utc),
+                    },
+                    roles=roles,
+                )
 
                 log.warning("No users inside mongo. Injected default one.")
 
@@ -179,10 +172,15 @@ class Authentication(BaseAuthentication):
         else:
             hostname = ""
             self.db.Token(
-                jti=jti, token=token, token_type=token_type,
-                creation=now, last_access=now, expiration=exp,
-                IP=ip, hostname=hostname,
-                user_id=user
+                jti=jti,
+                token=token,
+                token_type=token_type,
+                creation=now,
+                last_access=now,
+                expiration=exp,
+                IP=ip,
+                hostname=hostname,
+                user_id=user,
             ).save()
 
             log.debug("Token stored inside mongo")
@@ -214,14 +212,12 @@ class Authentication(BaseAuthentication):
 
         if user is not None:
             try:
-                tokens = self.db.Token.objects.raw(
-                    {'user_id': user.email}).all()
+                tokens = self.db.Token.objects.raw({'user_id': user.email}).all()
             except self.db.Token.DoesNotExist:
                 pass
         elif token_jti is not None:
             try:
-                tokens.append(self.db.Token.objects.
-                              raw({'jti': token_jti}).first())
+                tokens.append(self.db.Token.objects.raw({'jti': token_jti}).first())
             except self.db.Token.DoesNotExist:
                 pass
 
@@ -278,8 +274,7 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def store_oauth2_user(self, account_type, current_user,
-                          token, refresh_token):
+    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
         # FIXME: b2access
         raise NotImplementedError("to do")
 
@@ -295,7 +290,8 @@ class Authentication(BaseAuthentication):
         accounts = self.db.ExternalAccounts
         try:
             external_user = accounts.objects.raw(
-                {'user_id': internal_user.email}).first()
+                {'user_id': internal_user.email}
+            ).first()
         except self.db.ExternalAccounts.DoesNotExist:
             external_user = None
         return external_user

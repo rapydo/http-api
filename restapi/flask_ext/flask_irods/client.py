@@ -13,6 +13,7 @@ from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
 
 from utilities.logs import get_logger
+
 log = get_logger(__name__)
 
 
@@ -20,7 +21,7 @@ class IrodsException(RestApiException):
     pass
 
 
-class IrodsPythonClient():
+class IrodsPythonClient:
 
     anonymous_user = 'anonymous'
 
@@ -42,11 +43,11 @@ class IrodsPythonClient():
             root = '/'
         return os.path.join(root, *args)
 
-# ##################################
-# ##################################
-# Re-implemented wrappers
-# ##################################
-# ##################################
+    # ##################################
+    # ##################################
+    # Re-implemented wrappers
+    # ##################################
+    # ##################################
 
     def exists(self, path):
         if self.is_collection(path):
@@ -59,10 +60,7 @@ class IrodsPythonClient():
         try:
             return self.prc.collections.exists(path)
         except iexceptions.CAT_SQL_ERR as e:
-            log.error(
-                "is_collection(%s) raised CAT_SQL_ERR (%s)",
-                path, str(e)
-            )
+            log.error("is_collection(%s) raised CAT_SQL_ERR (%s)", path, str(e))
             return False
 
     def is_dataobject(self, path):
@@ -77,31 +75,34 @@ class IrodsPythonClient():
     def get_dataobject(self, path):
         try:
             return self.prc.data_objects.get(path)
-        except (
-            iexceptions.CollectionDoesNotExist,
-            iexceptions.DataObjectDoesNotExist
-        ):
+        except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
             raise IrodsException("%s not found or no permissions" % path)
 
     def getPath(self, path, prefix=None):
         if prefix is not None and prefix != '':
-            path = path[len(prefix):]
+            path = path[len(prefix) :]
             if path[0] == "/":
                 path = path[1:]
 
         return os.path.dirname(path)
 
-    def list(self, path=None, recursive=False, detailed=False,
-             acl=False, removePrefix=None,
-             get_pid=False, get_checksum=False):
+    def list(
+        self,
+        path=None,
+        recursive=False,
+        detailed=False,
+        acl=False,
+        removePrefix=None,
+        get_pid=False,
+        get_checksum=False,
+    ):
         """ List the files inside an iRODS path/collection """
 
         if path is None:
             path = self.get_user_home()
 
         if self.is_dataobject(path):
-            raise IrodsException(
-                "Cannot list a Data Object; you may get it instead.")
+            raise IrodsException("Cannot list a Data Object; you may get it instead.")
 
         try:
             data = {}
@@ -121,7 +122,7 @@ class IrodsPythonClient():
                         recursive=recursive,
                         detailed=detailed,
                         acl=acl,
-                        removePrefix=removePrefix
+                        removePrefix=removePrefix,
                     )
                 row["path"] = self.getPath(coll.path, removePrefix)
                 row["object_type"] = "collection"
@@ -181,8 +182,7 @@ class IrodsPythonClient():
         # print("TEST", path, ignore_existing)
         try:
 
-            ret = self.prc.collections.create(
-                path, recurse=ignore_existing)
+            ret = self.prc.collections.create(path, recurse=ignore_existing)
             log.debug("Created irods collection: %s", path)
             return ret
 
@@ -193,14 +193,12 @@ class IrodsPythonClient():
             if not ignore_existing:
                 raise IrodsException(
                     "Irods collection already exists",
-                    status_code=hcodes.HTTP_BAD_REQUEST)
+                    status_code=hcodes.HTTP_BAD_REQUEST,
+                )
             else:
                 log.debug("Irods collection already exists: %s", path)
 
-        except (
-            iexceptions.CAT_NO_ACCESS_PERMISSION,
-            iexceptions.SYS_NO_API_PRIV
-        ):
+        except (iexceptions.CAT_NO_ACCESS_PERMISSION, iexceptions.SYS_NO_API_PRIV):
             raise IrodsException("You have no permissions on path %s" % path)
 
         return None
@@ -222,8 +220,8 @@ class IrodsPythonClient():
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods object already exists",
-                    status_code=hcodes.HTTP_BAD_REQUEST)
+                    "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
+                )
             log.debug("Irods object already exists: %s", path)
 
         return False
@@ -233,6 +231,7 @@ class IrodsPythonClient():
         # Replace 'copy'
 
         from irods.manager.data_object_manager import DataObjectManager
+
         dm = DataObjectManager(self.prc)
         if warning is None:
             warning = 'Irods object already exists'
@@ -242,8 +241,8 @@ class IrodsPythonClient():
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods object already exists",
-                    status_code=hcodes.HTTP_BAD_REQUEST)
+                    "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
+                )
             log.warning("%s: %s", warning, destpath)
         else:
             log.debug("Copied: %s -> %s", sourcepath, destpath)
@@ -252,9 +251,15 @@ class IrodsPythonClient():
         # NOTE: this action always overwrite
         return self.prc.data_objects.put(local_path, irods_path)
 
-    def copy(self, sourcepath, destpath,
-             recursive=False, force=False,
-             compute_checksum=False, compute_and_verify_checksum=False):
+    def copy(
+        self,
+        sourcepath,
+        destpath,
+        recursive=False,
+        force=False,
+        compute_checksum=False,
+        compute_and_verify_checksum=False,
+    ):
 
         if recursive:
             log.error("Recursive flag not implemented for copy")
@@ -263,21 +268,17 @@ class IrodsPythonClient():
             raise IrodsException("Copy directory not supported")
 
         if compute_checksum:
-            raise IrodsException(
-                "Compute_checksum not supported in copy")
+            raise IrodsException("Compute_checksum not supported in copy")
 
         if compute_and_verify_checksum:
-            raise IrodsException(
-                "Compute_and_verify_checksum not supported in copy")
+            raise IrodsException("Compute_and_verify_checksum not supported in copy")
 
         if sourcepath == destpath:
-            raise IrodsException(
-                "Source and destination path are the same")
+            raise IrodsException("Source and destination path are the same")
         try:
             log.verbose("Copy %s into %s" % (sourcepath, destpath))
             source = self.prc.data_objects.get(sourcepath)
-            self.create_empty(
-                destpath, directory=False, ignore_existing=force)
+            self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
             with source.open('r+') as f:
                 with target.open('w') as t:
@@ -286,10 +287,12 @@ class IrodsPythonClient():
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException(
-                "DataObject not found (or no permission): %s" % sourcepath)
+                "DataObject not found (or no permission): %s" % sourcepath
+            )
         except iexceptions.CollectionDoesNotExist:
             raise IrodsException(
-                "Collection not found (or no permission): %s" % sourcepath)
+                "Collection not found (or no permission): %s" % sourcepath
+            )
 
     def move(self, src_path, dest_path):
 
@@ -316,8 +319,7 @@ class IrodsPythonClient():
     def remove(self, path, recursive=False, force=False, resource=None):
         try:
             if self.is_collection(path):
-                self.prc.collections.remove(
-                    path, recurse=recursive, force=force)
+                self.prc.collections.remove(path, recurse=recursive, force=force)
                 log.debug("Removed irods collection: %s", path)
             else:
                 self.prc.data_objects.unlink(path, force=force)
@@ -325,11 +327,11 @@ class IrodsPythonClient():
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
 
             if recursive:
-                raise IrodsException(
-                    "Error deleting non empty directory")
+                raise IrodsException("Error deleting non empty directory")
             else:
                 raise IrodsException(
-                    "Cannot delete non empty directory without recursive flag")
+                    "Cannot delete non empty directory without recursive flag"
+                )
         except iexceptions.CAT_NO_ROWS_FOUND:
             raise IrodsException("Irods delete error: path not found")
 
@@ -433,8 +435,11 @@ class IrodsPythonClient():
         Reads obj from iRODS without saving a local copy
         """
 
-        log.info("Downloading file %s in streaming with chunk size %s",
-                 absolute_path, self.chunk_size)
+        log.info(
+            "Downloading file %s in streaming with chunk size %s",
+            absolute_path,
+            self.chunk_size,
+        )
         try:
             obj = self.prc.data_objects.get(absolute_path)
 
@@ -443,8 +448,7 @@ class IrodsPythonClient():
             if headers is None:
                 headers = {}
             return Response(
-                stream_with_context(
-                    self.read_in_chunks(handle, self.chunk_size)),
+                stream_with_context(self.read_in_chunks(handle, self.chunk_size)),
                 headers=headers,
             )
 
@@ -464,14 +468,19 @@ class IrodsPythonClient():
         if not force and self.is_dataobject(destination):
             log.warn("Already exists")
             raise IrodsException(
-                "File '" + destination + "' already exists. " +
-                "Change file name or use the force parameter")
+                "File '"
+                + destination
+                + "' already exists. "
+                + "Change file name or use the force parameter"
+            )
 
-        log.info("Uploading file in streaming to %s with chunk size %s",
-                 destination, self.chunk_size)
+        log.info(
+            "Uploading file in streaming to %s with chunk size %s",
+            destination,
+            self.chunk_size,
+        )
         try:
-            self.create_empty(
-                destination, directory=False, ignore_existing=force)
+            self.create_empty(destination, directory=False, ignore_existing=force)
             obj = self.prc.data_objects.get(destination)
 
             try:
@@ -498,8 +507,7 @@ class IrodsPythonClient():
 
         return False
 
-    def save(self,
-             path, destination, force=False, resource=None, chunk_size=None):
+    def save(self, path, destination, force=False, resource=None, chunk_size=None):
 
         if chunk_size is None:
             chunk_size = self.chunk_size
@@ -510,8 +518,7 @@ class IrodsPythonClient():
         try:
             with open(path, "rb") as handle:
 
-                self.create_empty(
-                    destination, directory=False, ignore_existing=force)
+                self.create_empty(destination, directory=False, ignore_existing=force)
 
                 obj = self.prc.data_objects.get(destination)
 
@@ -555,7 +562,8 @@ class IrodsPythonClient():
 
         if coll_or_obj is None:
             raise IrodsException(
-                "Cannot get permission: path not found: %s" % coll_or_obj)
+                "Cannot get permission: path not found: %s" % coll_or_obj
+            )
 
         data = {}
         data["path"] = coll_or_obj.path
@@ -563,11 +571,7 @@ class IrodsPythonClient():
         acl_list = self.prc.permissions.get(coll_or_obj)
 
         for acl in acl_list:
-            data["ACL"].append([
-                acl.user_name,
-                acl.user_zone,
-                acl.access_name
-            ])
+            data["ACL"].append([acl.user_name, acl.user_zone, acl.access_name])
 
         # FIXME: how to retrieve inheritance?
         data["inheritance"] = "N/A"
@@ -598,13 +602,13 @@ class IrodsPythonClient():
         # Create the directory
         self.create_empty(ipath, directory=True, ignore_existing=True)
         # This user will own the directory
-        self.set_permissions(
-            ipath, permission=permissions, userOrGroup=user)
+        self.set_permissions(ipath, permission=permissions, userOrGroup=user)
         # Let the permissions scale to subelements
         self.enable_inheritance(ipath)
 
-    def set_permissions(self, path, permission=None, userOrGroup=None,
-                        zone=None, recursive=False):
+    def set_permissions(
+        self, path, permission=None, userOrGroup=None, zone=None, recursive=False
+    ):
 
         if zone is None:
             zone = self.get_current_zone()
@@ -616,10 +620,8 @@ class IrodsPythonClient():
         try:
 
             ACL = iRODSAccess(
-                access_name=permission,
-                path=path,
-                user_name=userOrGroup,
-                user_zone=zone)
+                access_name=permission, path=path, user_name=userOrGroup, user_zone=zone
+            )
             self.prc.permissions.set(ACL, recursive=recursive)
 
             log.debug("Grant %s=%s to %s", userOrGroup, permission, path)
@@ -644,10 +646,8 @@ class IrodsPythonClient():
                 permission = "noinherit"
 
             ACL = iRODSAccess(
-                access_name=permission,
-                path=path,
-                user_name='',
-                user_zone='')
+                access_name=permission, path=path, user_name='', user_zone=''
+            )
             self.prc.permissions.set(ACL, recursive=recursive)
             log.debug("Set inheritance %r to %s", inheritance, path)
             return True
@@ -655,8 +655,7 @@ class IrodsPythonClient():
             if self.is_dataobject(path):
                 raise IrodsException("Cannot set inheritance to a data object")
             else:
-                raise IrodsException(
-                    "Cannot set inheritance: collection not found")
+                raise IrodsException("Cannot set inheritance: collection not found")
         return False
 
     def get_user_home(self, user=None, append_user=True):
@@ -665,7 +664,7 @@ class IrodsPythonClient():
 
         home = self.variables.get('home', 'home')
         if home.startswith(zone):
-            home = home[len(zone):]
+            home = home[len(zone) :]
         home = home.lstrip('/')
 
         if not append_user:
@@ -706,8 +705,11 @@ class IrodsPythonClient():
             # data["modify time"] = ""
             data["account"] = user.manager.sess.pool.account.__dict__
 
-            results = self.prc.query(UserGroup.name).filter(
-                User.name == user.name).get_results()
+            results = (
+                self.prc.query(UserGroup.name)
+                .filter(User.name == user.name)
+                .get_results()
+            )
             groups = []
             for obj in results:
                 for _, grp in obj.items():
@@ -726,15 +728,14 @@ class IrodsPythonClient():
             return False
         return groupname in info['groups']
 
-# TODO: merge the two following 'user_exists'
+    # TODO: merge the two following 'user_exists'
     def check_user_exists(self, username, checkGroup=None):
         userdata = self.get_user_info(username)
         if userdata is None:
             return False, "User %s does not exist" % username
         if checkGroup is not None:
             if checkGroup not in userdata['groups']:
-                return False, "User %s is not in group %s" %\
-                    (username, checkGroup)
+                return False, "User %s is not in group %s" % (username, checkGroup)
         return True, "OK"
 
     def query_user_exists(self, user):
@@ -750,7 +751,7 @@ class IrodsPythonClient():
     def get_metadata(self, path):
 
         try:
-            if (self.is_collection(path)):
+            if self.is_collection(path):
                 obj = self.prc.collections.get(path)
             else:
                 obj = self.prc.data_objects.get(path)
@@ -763,14 +764,11 @@ class IrodsPythonClient():
                 units[name] = meta.units
 
             return data, units
-        except (
-            iexceptions.CollectionDoesNotExist,
-            iexceptions.DataObjectDoesNotExist
-        ):
+        except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
             raise IrodsException("Cannot extract metadata, object not found")
 
     def remove_metadata(self, path, key):
-        if (self.is_collection(path)):
+        if self.is_collection(path):
             obj = self.prc.collections.get(path)
         else:
             obj = self.prc.data_objects.get(path)
@@ -785,7 +783,7 @@ class IrodsPythonClient():
 
     def set_metadata(self, path, **meta):
         try:
-            if (self.is_collection(path)):
+            if self.is_collection(path):
                 obj = self.prc.collections.get(path)
             else:
                 obj = self.prc.data_objects.get(path)
@@ -798,8 +796,11 @@ class IrodsPythonClient():
             raise IrodsException("Cannot set metadata, object not found")
 
     def get_user_from_dn(self, dn):
-        results = self.prc.query(User.name, UserAuth.user_dn) \
-            .filter(UserAuth.user_dn == dn).first()
+        results = (
+            self.prc.query(User.name, UserAuth.user_dn)
+            .filter(UserAuth.user_dn == dn)
+            .first()
+        )
         if results is not None:
             return results.get(User.name)
         else:
@@ -836,16 +837,20 @@ class IrodsPythonClient():
     def list_user_attributes(self, user):
 
         try:
-            data = self.prc.query(
-                User.id, User.name, User.type, User.zone
-            ).filter(User.name == user).one()
+            data = (
+                self.prc.query(User.id, User.name, User.type, User.zone)
+                .filter(User.name == user)
+                .one()
+            )
         except iexceptions.NoResultFound:
             return None
 
         try:
-            auth_data = self.prc.query(
-                UserAuth.user_dn
-            ).filter(UserAuth.user_id == data[User.id]).one()
+            auth_data = (
+                self.prc.query(UserAuth.user_dn)
+                .filter(UserAuth.user_id == data[User.id])
+                .one()
+            )
             dn = auth_data.get(UserAuth.user_dn)
         except iexceptions.NoResultFound:
             dn = None
@@ -854,7 +859,7 @@ class IrodsPythonClient():
             'name': data[User.name],
             'type': data[User.type],
             'zone': data[User.zone],
-            'dn': dn
+            'dn': dn,
         }
 
     def modify_user_dn(self, user, dn, zone):
@@ -867,10 +872,13 @@ class IrodsPythonClient():
 
         import textwrap
 
-        rule_body = textwrap.dedent('''\
+        rule_body = textwrap.dedent(
+            '''\
             %s {{
                 %s
-        }}''' % (name, body))
+        }}'''
+            % (name, body)
+        )
 
         outname = None
         if output:
@@ -893,6 +901,7 @@ class IrodsPythonClient():
                 # print("out array", out_array)
 
                 import re
+
                 file_coding = 'utf-8'
 
                 buf = out_array.stdoutBuf.buf
@@ -954,19 +963,23 @@ class IrodsPythonClient():
     def stream_ticket(self, path, headers=None):
         obj = self.prc.data_objects.open(path, 'r')
         return Response(
-            stream_with_context(
-                self.read_in_chunks(obj, self.chunk_size)),
+            stream_with_context(self.read_in_chunks(obj, self.chunk_size)),
             headers=headers,
         )
 
     def list_tickets(self, user=None):
         from irods.models import Ticket, DataObject
+
         try:
             data = self.prc.query(
                 # Ticket.id,
-                Ticket.string, Ticket.type, User.name, DataObject.name,
-                Ticket.uses_limit, Ticket.uses_count,
-                Ticket.expiration
+                Ticket.string,
+                Ticket.type,
+                User.name,
+                DataObject.name,
+                Ticket.uses_limit,
+                Ticket.uses_count,
+                Ticket.expiration,
             ).all()
             # ).filter(User.name == user).one()
 
@@ -979,10 +992,11 @@ class IrodsPythonClient():
         else:
             return data
 
+
 # ####################################################
 # ####################################################
 # ####################################################
-    # FROM old client.py:
+# FROM old client.py:
 # ####################################################
 # ####################################################
 # ####################################################
@@ -1209,9 +1223,7 @@ def get_and_verify_irods_session(function, parameters):
     #         "User %s belonging to multiple iRODS zones" % username)
     except BaseException as e:
         log.warning("Failed with unknown reason:\n[%s] \"%s\"", type(e), e)
-        error = \
-            'Failed to verify credentials against B2SAFE. ' + \
-            'Unknown error: '
+        error = 'Failed to verify credentials against B2SAFE. ' + 'Unknown error: '
         if str(e).strip() == '':
             error += e.__class__.__name__
         else:

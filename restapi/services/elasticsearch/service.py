@@ -97,9 +97,15 @@ class BeElastic(ServiceObject):
 
         return obj
 
-    def get_or_create_suggestion(self, DocumentClass, text,
-                                 attribute='suggestme', output=None,
-                                 weight=1, payload=None):
+    def get_or_create_suggestion(
+        self,
+        DocumentClass,
+        text,
+        attribute='suggestme',
+        output=None,
+        weight=1,
+        payload=None,
+    ):
 
         input = [text]
         text_lower = text.lower()
@@ -109,11 +115,7 @@ class BeElastic(ServiceObject):
         if output is None:
             output = text
 
-        suggestion = {
-            "input": input,
-            "output": output,
-            "payload": payload,
-        }
+        suggestion = {"input": input, "output": output, "payload": payload}
 
         if weight > 1:
             suggestion["weight"] = weight
@@ -121,8 +123,7 @@ class BeElastic(ServiceObject):
         # force the new id with the subnested dictionary
         id = getUUIDfromString(self.dict2ordered_string(suggestion))
 
-        return self.get_or_create(
-            DocumentClass, {attribute: suggestion}, forced_id=id)
+        return self.get_or_create(DocumentClass, {attribute: suggestion}, forced_id=id)
 
     def clean_all(self):
         log.warning("Removing all data")
@@ -176,14 +177,17 @@ class BeElastic(ServiceObject):
         results = DocumentClass.search().query(m).execute().to_dict()
         for element in results['hits']['hits']:
             # print("TEST", element)
-            output.append({
-                '_data': element['_source'],
-                '_meta': {'id': element['_id'], 'score': element['_score']}
-            })
+            output.append(
+                {
+                    '_data': element['_source'],
+                    '_meta': {'id': element['_id'], 'score': element['_score']},
+                }
+            )
         return output
 
-    def search_suggestion(self, DocumentClass, keyword,
-                          manipulate_output=None, attribute='suggestme'):
+    def search_suggestion(
+        self, DocumentClass, keyword, manipulate_output=None, attribute='suggestme'
+    ):
         """
         A search for a suggestion field
         """
@@ -191,9 +195,11 @@ class BeElastic(ServiceObject):
         output = []
         suggest = None
         try:
-            suggest = DocumentClass.search() \
-                .suggest('data', keyword, completion={'field': attribute}) \
+            suggest = (
+                DocumentClass.search()
+                .suggest('data', keyword, completion={'field': attribute})
                 .execute_suggest()
+            )
 
         except Exception as e:
             log.warning("Suggestion error:\n%s", e)

@@ -3,15 +3,15 @@
 """ Models for the relational database """
 
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
-db = OriginalAlchemy()
 
+db = OriginalAlchemy()
 
 ####################################
 # Define multi-multi relation
 roles_users = db.Table(
     'roles_users',
     db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+    db.Column('role_id', db.Integer(), db.ForeignKey('role.id')),
 )
 
 
@@ -41,12 +41,17 @@ class User(db.Model):
     last_login = db.Column(db.DateTime)
     last_password_change = db.Column(db.DateTime)
     is_active = db.Column(db.Boolean, default=True)
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship(
+        'Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic')
+    )
 
     def __str__(self):
         return "db.%s(%s, type=%s) {%s}" % (
-            self.__class__.__name__, self.email, self.authmethod, self.roles)
+            self.__class__.__name__,
+            self.email,
+            self.authmethod,
+            self.roles,
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -64,12 +69,10 @@ class Token(db.Model):
     IP = db.Column(db.String(46))
     hostname = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    emitted_for = db.relationship(
-        'User', backref=db.backref('tokens', lazy='dynamic'))
+    emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
 
     def __str__(self):
-        return "db.%s(%s){%s}" \
-            % (self.__class__.__name__, self.token, self.emitted_for)
+        return "db.%s(%s){%s}" % (self.__class__.__name__, self.token, self.emitted_for)
 
     def __repr__(self):
         return self.__str__()
@@ -90,11 +93,16 @@ class ExternalAccounts(db.Model):
     # Note: for pre-production release
     # we allow only one external account per local user
     main_user = db.relationship(
-        'User', backref=db.backref('authorization', lazy='dynamic'))
+        'User', backref=db.backref('authorization', lazy='dynamic')
+    )
 
     def __str__(self):
         return "db.%s(%s, %s){%s}" % (
-            self.__class__.__name__, self.username, self.email, self.main_user)
+            self.__class__.__name__,
+            self.username,
+            self.email,
+            self.main_user,
+        )
 
     def __repr__(self):
         return self.__str__()
