@@ -183,7 +183,7 @@ class Profile(EndpointResource):
 
     @decorate.catch_error()
     def post(self):
-        """ Create new user """
+        """ Register new user """
 
         if not send_mail_is_active():
             raise RestApiException(
