@@ -1,20 +1,11 @@
 
 whoami:
-  summary: Create new user
-  # description: Mah
-  # tags:
-  #   # - logout
-  #   - authentication
+  summary: Register new user
   custom:
     # publish: true
     authentication: false
   custom_parameters:
     - User
-  # parameters:
-  #   - name: credentials
-  #     in: body
-  #     schema:
-  #       $ref: "#/definitions/User"
   responses:
     '200':
       description: ID of new user
