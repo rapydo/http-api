@@ -71,7 +71,7 @@ setup(
 
         # DB drivers
         # "neomodel==3.3.1",
-        "neomodel>=3.2.9",
+        "neomodel>=3.2.9, <=3.3.1",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
