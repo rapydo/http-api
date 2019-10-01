@@ -61,8 +61,8 @@ setup(
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
-        # "injector==0.13.0",
-        "injector==0.12",
+        "injector==0.17",
+        # "injector==0.12",
         "flask_injector==0.10.1",
 
         # Already installed from utils, ma forcing here since bravado-core install 5.1,
