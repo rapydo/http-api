@@ -125,13 +125,15 @@ def catch_graph_exceptions(func):
 
         except (UniqueProperty) as e:
 
-            prefix = "Node [0-9]+ already exists with label"
-            regExpr = "%s (.+) and property (.+)" % prefix
+            regExpr = "Node\\([0-9]+\\) already exists with " + \
+                      "label `(.+)` and property `(.+)` = (.+)"
+
             m = re.search(regExpr, str(e))
             if m:
                 node = m.group(1)
                 prop = m.group(2)
-                error = "A %s already exist with %s" % (node, prop)
+                val = m.group(3)
+                error = "A %s already exists with %s = %s" % (node, prop, val)
             else:
                 error = str(e)
 

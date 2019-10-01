@@ -181,16 +181,16 @@ class HandleSecurity(object):
         qr_url.svg(qr_stream, scale=5)
         return qr_stream.getvalue()
 
-    # FIXME: check password strength, if required
     def verify_password_strength(self, pwd, old_pwd=None, old_hash=None):
 
         if old_pwd is not None and pwd == old_pwd:
-            return False, "Password cannot match the previous password"
+            return False, "The new password cannot match the previous password"
         if old_hash is not None:
             new_hash = BaseAuthentication.hash_password(pwd)
             if old_hash == new_hash:
-                return False, "Password cannot match the previous password"
+                return False, "The new password cannot match the previous password"
 
+        # FIXME: min length should configurable?
         if len(pwd) < 8:
             return False, "Password is too short, use at least 8 characters"
 
