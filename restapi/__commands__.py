@@ -265,13 +265,12 @@ def tests(wait, core, file, folder):
 
     try:
         output = bash.execute_command(
-            "pyunittests", parameters=parameters, catchException=True, error_max_len=-1
+            "pyunittests",
+            parameters=parameters,
+            catchException=False,
+            error_max_len=-1
         )
-    except BaseException as e:
-        log.error(str(e))
-        log.info("Not completed:\n%s", output)
-        raise e
-    except SystemExit as e:
+    except Exception as e:
         log.error(str(e))
         log.info("Not completed:\n%s", output)
         raise e
