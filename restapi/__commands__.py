@@ -263,8 +263,13 @@ def tests(wait, core, file, folder):
     #     from restapi import __package__ as current_package
     #     parameters.append(current_package)
 
-    output = bash.execute_command(
-        "pyunittests", parameters=parameters, catchException=True, error_max_len=-1
-    )
+    try:
+        output = bash.execute_command(
+            "pyunittests", parameters=parameters, catchException=True, error_max_len=-1
+        )
+    except BaseException as e:
+        log.error(str(e))
+        log.info("Not completed:\n%s", output)
+        raise e
 
     log.info("Completed:\n%s", output)
