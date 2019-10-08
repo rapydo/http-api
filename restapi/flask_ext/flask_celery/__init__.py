@@ -171,11 +171,6 @@ class CeleryExt(BaseExtension):
         """
         # celery_app.conf.broker_pool_limit = None
 
-        # from https://github.com/zmap/celerybeat-mongo
-        # CELERY_MONGODB_SCHEDULER_DB = "celery"
-        # CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
-        # CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
-
         if self.variables.get("beat_enabled", False):
             log.info("Enabling Celery Beat")
             if backend != 'MONGODB':
@@ -197,12 +192,24 @@ class CeleryExt(BaseExtension):
         return celery_app
 
     @classmethod
-    def get_periodic_task(cls, name):
+    def get_periodic_task(cls, name, retries=0, max_retries=1):
 
         try:
             return PeriodicTask.objects.get(name=name)
         except DoesNotExist:
             return None
+        except ConnectionResetError as e:
+            if retries < max_retries:
+                log.warning(str(e))
+                return cls.get_periodic_task(
+                    name,
+                    retries=retries + 1,
+                    max_retries=max_retries
+                )
+            else:
+                log.error(str(e))
+                return None
+
 
     @classmethod
     def delete_periodic_task(cls, name):
