@@ -3,8 +3,8 @@
 """ Neo4j GraphDB flask connector """
 
 import re
-
-from neomodel import db, config, remove_all_labels, install_all_labels
+# remove_all_labels, 
+from neomodel import db, config, install_all_labels
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 
@@ -125,7 +125,7 @@ class NeoModel(BaseExtension):
                 clear_neo4j_database(graph.db)
 
             if pinit:
-                remove_all_labels()
+                # remove_all_labels()
                 install_all_labels()
 
         return graph
