@@ -271,5 +271,9 @@ def tests(wait, core, file, folder):
         log.error(str(e))
         log.info("Not completed:\n%s", output)
         raise e
+    except SystemExit as e:
+        log.error(str(e))
+        log.info("Not completed:\n%s", output)
+        raise e
 
     log.info("Completed:\n%s", output)
