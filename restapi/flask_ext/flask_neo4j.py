@@ -4,7 +4,7 @@
 
 import re
 
-from neomodel import db, config, remove_all_labels, install_all_labels
+from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 
@@ -127,10 +127,15 @@ class NeoModel(BaseExtension):
             if pinit:
 
                 try:
+                    from neomodel import remove_all_labels
                     remove_all_labels()
                 except BaseException as e:
                     log.error(str(e))
 
-                install_all_labels()
+                try:
+                    from neomodel import install_all_labels
+                    install_all_labels()
+                except BaseException as e:
+                    log.exit(str(e))
 
         return graph
