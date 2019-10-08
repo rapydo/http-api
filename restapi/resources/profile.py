@@ -493,9 +493,9 @@ class RecoverPassword(EndpointResource):
         self.auth.save_token(user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
         msg = (
-            "We are sending an email to your email address where "
-            + "you will find the link to enter a new password"
+            "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
         )
+
         return msg
 
     @decorate.catch_error()
