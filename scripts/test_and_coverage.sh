@@ -87,41 +87,43 @@ else
 
 	# CURRENT DIR IS $CORE_DIR
 
+	echo "project: ${PROJECT}" > .projectrc
+	echo "development: True" >> .projectrc
+	echo "project_configuration:" >> .projectrc
+	echo "  variables:" >> .projectrc
+	echo "    env:" >> .projectrc
+	echo "      DEFAULT_DHLEN: 256" >> .projectrc
+
 	# Let's init and start the stack for the configured PROJECT
-	rapydo --development --project ${PROJECT} init
+	rapydo init
 
 	if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
-		rapydo --development --project ${PROJECT} pull
+		rapydo pull
 	fi
 
-	rapydo --development --project ${PROJECT} start
+	rapydo start
 	docker ps -a
 
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
+	rapydo shell backend --command 'restapi --help'
 	# Beware!! Cleaning DB before starting the tests
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi wait'
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced-clean'
+	rapydo shell backend --command 'restapi wait'
+	rapydo shell backend --command 'restapi forced-clean'
 
 	# Test API and calculate coverage
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
+	rapydo shell backend --command 'restapi tests --core'
 
 	# Sync the coverage file to S3, to be available for the next stage
-	rapydo --development --project ${PROJECT} dump
+	rapydo dump
 	backend_container=$(docker-compose ps -q backend)
 	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
-	rapydo --development --project ${PROJECT} clean
+	rapydo clean
 
-	echo "project_configuration:" > .projectrc
-	echo "  variables:" >> .projectrc
-	echo "    env:" >> .projectrc
-	echo "      DEFAULT_DHLEN: 256" >> .projectrc
-
-	rapydo --mode production --project ${PROJECT} pull
-	rapydo --mode production --project ${PROJECT} start
+	rapydo --mode production pull
+	rapydo --mode production start
 
 	echo "Backend server is starting"
 	sleep 30
@@ -129,7 +131,7 @@ else
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-	rapydo --mode production --project ${PROJECT} remove
-	rapydo --mode production --project ${PROJECT} clean
+	rapydo --mode production remove
+	rapydo --mode production clean
 
 fi
