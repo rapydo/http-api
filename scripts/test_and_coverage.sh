@@ -82,7 +82,6 @@ if [[ "$PROJECT" == "COVERAGE" ]]; then
 	echo '    /usr/local/lib/python3.7/dist-packages/restapi/' >> $COV_DIR/.coveragerc
 	echo '    /usr/local/lib/python3.8/dist-packages/restapi/' >> $COV_DIR/.coveragerc
 
-
 else
 
 	# CURRENT DIR IS $CORE_DIR

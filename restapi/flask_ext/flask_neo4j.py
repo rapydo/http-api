@@ -126,7 +126,7 @@ class NeoModel(BaseExtension):
 
             if pinit:
 
-                auto_index = self.variables.get("autoindexing", True)
+                auto_index = self.variables.get("autoindexing", 'True') == 'True'
 
                 if auto_index:
                     try:
