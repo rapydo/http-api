@@ -127,10 +127,10 @@ class NeoModel(BaseExtension):
             if pinit:
 
                 try:
-                    from neomodel import drop_constraints
-                    drop_constraints()
-                    # from neomodel import drop_indexes
-                    # drop_indexes()
+                    # from neomodel import drop_constraints
+                    # drop_constraints()
+                    from neomodel import drop_indexes
+                    drop_indexes()
                     # from neomodel import remove_all_labels
                     # remove_all_labels()
                 except BaseException as e:
