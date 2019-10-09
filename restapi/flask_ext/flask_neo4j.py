@@ -126,20 +126,14 @@ class NeoModel(BaseExtension):
 
             if pinit:
 
-                try:
-                    from neomodel import drop_constraints
-                    drop_constraints(quiet=False)
-                    from neomodel import drop_indexes
-                    drop_indexes(quiet=False)
-                    # from neomodel import remove_all_labels
-                    # remove_all_labels()
-                except BaseException as e:
-                    log.error(str(e))
+                auto_index = self.variables.get("autoindexing", True)
 
-                try:
-                    from neomodel import install_all_labels
-                    install_all_labels()
-                except BaseException as e:
-                    log.exit(str(e))
+                if auto_index:
+                    try:
+                        from neomodel import remove_all_labels, install_all_labels
+                        remove_all_labels()
+                        install_all_labels()
+                    except BaseException as e:
+                        log.exit(str(e))
 
         return graph
