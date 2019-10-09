@@ -127,8 +127,9 @@ class NeoModel(BaseExtension):
             if pinit:
 
                 try:
+                    import sys
                     from neomodel import remove_all_labels
-                    remove_all_labels()
+                    remove_all_labels(stdout=sys.stdout)
                 except BaseException as e:
                     log.error(str(e))
 
