@@ -127,9 +127,12 @@ class NeoModel(BaseExtension):
             if pinit:
 
                 try:
-                    import sys
-                    from neomodel import remove_all_labels
-                    remove_all_labels(stdout=sys.stdout)
+                    from neomodel import drop_constraints
+                    drop_constraints()
+                    from neomodel import drop_indexes
+                    drop_indexes()
+                    # from neomodel import remove_all_labels
+                    # remove_all_labels()
                 except BaseException as e:
                     log.error(str(e))
 
