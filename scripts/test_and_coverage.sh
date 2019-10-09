@@ -93,6 +93,7 @@ else
 	echo "  variables:" >> .projectrc
 	echo "    env:" >> .projectrc
 	echo "      DEFAULT_DHLEN: 256" >> .projectrc
+	echo "      GRAPHDB_AUTOINDEXING: False" >> .projectrc
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo init
