@@ -241,9 +241,10 @@ class Customizer(object):
                         schema = ep_class.SPECS.pop('schema', {})
                         mappings = ep_class.SPECS.pop('mapping', [])
                         if len(mappings) < 1:
-                            raise KeyError(
-                                "Missing 'mapping' section in %s" % class_name
-                            )
+                            log.critical("Missing 'mapping' section in %s", class_name)
+                            # raise KeyError(
+                            #     "Missing 'mapping' section in %s" % class_name
+                            # )
 
                         endpoint.uris = {}  # attrs python lib bug?
                         endpoint.custom['schema'] = {
