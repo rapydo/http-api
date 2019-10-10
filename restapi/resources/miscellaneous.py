@@ -34,7 +34,6 @@ class Queue
 
 class Status(EndpointResource):
     """ API online client testing """
-    # baseuri = "/api"
     labels = ['helpers']
     SPECS = {
         'mapping': {

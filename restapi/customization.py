@@ -194,7 +194,6 @@ class Customizer(object):
 
                         import copy
                         specs = copy.deepcopy(ep_class.SPECS)
-                        # specs = ep_class.SPECS.copy()
 
                         if not self._testing:
                             for var in ep_class.depends_on:
@@ -239,9 +238,7 @@ class Customizer(object):
                             base = API_URL
                         base = base.strip('/')
 
-                        #####################
                         # MAPPING
-                        schema = specs.pop('schema', {})
                         mappings = specs.pop('mapping', [])
                         if len(mappings) < 1:
                             raise KeyError(
@@ -250,7 +247,7 @@ class Customizer(object):
 
                         endpoint.uris = {}  # attrs python lib bug?
                         endpoint.custom['schema'] = {
-                            'expose': schema.get('expose', False),
+                            'expose': ep_class.expose_schema,
                             'publish': {},
                         }
                         for label, uri in mappings.items():
@@ -289,7 +286,6 @@ class Customizer(object):
                                 log.critical("%s dict not defined in %s", m, class_name)
                                 continue
                             endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
-                            # endpoint.methods[m.lower()] = getattr(ep_class, m).copy()
 
                         self._endpoints.append(endpoint)
 

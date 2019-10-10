@@ -26,11 +26,9 @@ class AdminUsers(GraphBaseOperations):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
+    expose_schema = True
 
     SPECS = {
-        "schema": {
-            "expose": True
-        },
         "mapping": {
             "users": "/admin/users",
             "user": "/admin/users/<user_id>"
@@ -584,10 +582,9 @@ class UserRole(GraphBaseOperations):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["miscellaneous"]
+    expose_schema = True
+
     SPECS = {
-        "schema": {
-            "expose": True
-        },
         "mapping": {
             "all": "/role",
             "query": "/role/<query>"
