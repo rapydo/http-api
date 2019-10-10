@@ -28,12 +28,8 @@ class AdminUsers(GraphBaseOperations):
     labels = ["admin"]
     expose_schema = True
 
-    mapping = {
-        "users": "/admin/users",
-        "user": "/admin/users/<user_id>"
-    }
     GET = {
-        "users": {
+        "/admin/users": {
             "summary": "List of users",
             "responses": {
                 "200": {
@@ -41,7 +37,7 @@ class AdminUsers(GraphBaseOperations):
                 }
             }
         },
-        "user": {
+        "/admin/users/<user_id>": {
             "summary": "Obtain information on a single user",
             "responses": {
                 "200": {
@@ -51,7 +47,7 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     POST = {
-        "users": {
+        "/admin/users": {
             "summary": "Create a new user",
             "custom_parameters": [
                 "AdminUsers"
@@ -64,7 +60,7 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     PUT = {
-        "user": {
+        "/admin/users/<user_id>": {
             "summary": "Modify a user",
             "custom_parameters": [
                 "AdminUsers"
@@ -77,7 +73,7 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     DELETE = {
-        "user": {
+        "/admin/users/<user_id>": {
             "summary": "Delete a user",
             "responses": {
                 "200": {
@@ -582,12 +578,8 @@ class UserRole(GraphBaseOperations):
     labels = ["miscellaneous"]
     expose_schema = True
 
-    mapping = {
-        "all": "/role",
-        "query": "/role/<query>"
-    }
     GET = {
-        "all": {
+        "/role": {
             "summary": "List of existing roles",
             "responses": {
                 "200": {
@@ -595,7 +587,7 @@ class UserRole(GraphBaseOperations):
                 }
             }
         },
-        "query": {
+        "/role/<query>": {
             "summary": "List of existing roles matching a substring query",
             "responses": {
                 "200": {

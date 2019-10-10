@@ -61,7 +61,10 @@ class BeSwagger(object):
     def read_my_swagger(self, method, endpoint, file=None, mapping=None):
 
         if mapping is None:
+            old_version = True
             mapping = load_yaml_file(file)
+        else:
+            old_version = False
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -69,6 +72,8 @@ class BeSwagger(object):
 
         # read common
         commons = mapping.pop('common', {})
+        if commons:
+            log.warning("Commons specs are deprecated")
 
         # Check if there is at least one except for common
         if len(mapping) < 1:
@@ -87,12 +92,19 @@ class BeSwagger(object):
 
         for label, specs in mapping.items():
 
-            if label not in endpoint.uris:
-                raise KeyError(
-                    "Invalid label '%s' found.\nAvailable labels: %s"
-                    % (label, list(endpoint.uris.keys()))
-                )
-            uri = endpoint.uris[label]
+            if old_version:
+                if label not in endpoint.uris:
+                    raise KeyError(
+                        "Invalid label '%s' found.\nAvailable labels: %s"
+                        % (label, list(endpoint.uris.keys()))
+                    )
+                uri = endpoint.uris[label]
+                log.warning("Deprecated mapping-label endpoint definition: %s", uri)
+            else:
+                uri = '/%s%s' % (endpoint.base_uri, label)
+                # This will be used by farmer.py
+                if uri not in endpoint.uris:
+                    endpoint.uris[uri] = uri
 
             ################################
             # add common elements to all specs

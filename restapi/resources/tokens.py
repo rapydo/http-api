@@ -20,12 +20,8 @@ class Tokens(EndpointResource):
     baseuri = "/auth"
     labels = ["authentication"]
 
-    mapping = {
-        "tokenizers": "/tokens",
-        "tokenizer": "/tokens/<token_id>"
-    }
     GET = {
-        "tokenizers": {
+        "/tokens": {
             "summary": "Show all tokens emitted for logged user",
             "custom": {
                 "publish": True,
@@ -36,7 +32,7 @@ class Tokens(EndpointResource):
                 }
             }
         },
-        "tokenizer": {
+        "/tokens/<token_id>": {
             "summary": "Show specified token if available for logged user",
             "custom": {
                 "publish": True,
@@ -49,7 +45,7 @@ class Tokens(EndpointResource):
         }
     }
     DELETE = {
-        "tokenizers": {
+        "/tokens": {
             "summary": "Remove all tokens emitted for logged user",
             "description": "Note: allowed only for testing",
             "responses": {
@@ -58,7 +54,7 @@ class Tokens(EndpointResource):
                 }
             }
         },
-        "tokenizer": {
+        "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
             "responses": {
                 "200": {

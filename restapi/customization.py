@@ -190,8 +190,6 @@ class Customizer(object):
                             continue
                         if ep_class.methods is None:
                             continue
-                        if not hasattr(ep_class, "mapping"):
-                            continue
 
                         if not self._testing:
                             for var in ep_class.depends_on:
@@ -235,33 +233,29 @@ class Customizer(object):
                             log.warning("Invalid base %s", base)
                             base = API_URL
                         base = base.strip('/')
-
-                        if len(ep_class.mapping) < 1:
-                            raise KeyError(
-                                "Missing 'mapping' section in %s" % class_name
-                            )
+                        endpoint.base_uri = base
 
                         endpoint.uris = {}  # attrs python lib bug?
                         endpoint.custom['schema'] = {
                             'expose': ep_class.expose_schema,
                             'publish': {},
                         }
-                        for label, uri in ep_class.mapping.items():
+                        # for label, uri in ep_class.mapping.items():
 
-                            # BUILD URI
-                            total_uri = '/%s%s' % (base, uri)
-                            endpoint.uris[label] = total_uri
+                        #     # BUILD URI
+                        #     total_uri = '/%s%s' % (base, uri)
+                        #     endpoint.uris[label] = total_uri
 
-                            # If SCHEMA requested create
-                            if endpoint.custom['schema']['expose']:
+                        #     # If SCHEMA requested create
+                        #     if endpoint.custom['schema']['expose']:
 
-                                schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+                        #         schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
 
-                                p = hex(id(endpoint.cls))
-                                self._schema_endpoint.uris[label + p] = schema_uri
+                        #         p = hex(id(endpoint.cls))
+                        #         self._schema_endpoint.uris[label + p] = schema_uri
 
-                                endpoint.custom['schema']['publish'][label] = ep_class.publish
-                                self._schemas_map[schema_uri] = total_uri
+                        #         endpoint.custom['schema']['publish'][label] = ep_class.publish
+                        #         self._schemas_map[schema_uri] = total_uri
 
                         endpoint.methods = {}
 

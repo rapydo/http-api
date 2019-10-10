@@ -135,11 +135,8 @@ class Profile(EndpointResource):
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profiles"]
 
-    mapping = {
-        "whoami": "/profile"
-    }
     GET = {
-        "whoami": {
+        "/profile": {
             "summary": "List profile attributes",
             "responses": {
                 "200": {
@@ -149,7 +146,7 @@ class Profile(EndpointResource):
         }
     }
     POST = {
-        "whoami": {
+        "/profile": {
             "summary": "Register new user",
             "custom_parameters": [
                 "User"
@@ -162,7 +159,7 @@ class Profile(EndpointResource):
         }
     }
     PUT = {
-        "whoami": {
+        "/profile": {
             "summary": "Update profile attributes",
             "parameters": [
                 {
@@ -286,8 +283,8 @@ class Profile(EndpointResource):
             send_activation_link(self.auth, user)
             notify_registration(user)
             msg = (
-                "We are sending an email to your email address where "
-                + "you will find the link to activate your account"
+                "We are sending an email to your email address where " +
+                "you will find the link to activate your account"
             )
 
         except BaseException as e:
@@ -305,8 +302,8 @@ class Profile(EndpointResource):
         password_confirm = data.get('password_confirm')
 
         totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None
-            and self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
+            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
+            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
         )
         if totp_authentication:
             totp_code = data.get('totp_code')
@@ -377,12 +374,8 @@ class ProfileActivate(EndpointResource):
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
-    mapping = {
-        "activate": "/profile/activate/<token_id>",
-        "ask": "/profile/activate"
-    }
     POST = {
-        "ask": {
+        "/profile/activate": {
             "summary": "Ask a new activation link",
             "responses": {
                 "200": {
@@ -392,7 +385,7 @@ class ProfileActivate(EndpointResource):
         }
     }
     PUT = {
-        "activate": {
+        "/profile/activate/<token_id>": {
             "summary": "Activate account by verificate activation token",
             "responses": {
                 "200": {
@@ -414,20 +407,20 @@ class ProfileActivate(EndpointResource):
             )
 
         # If token is expired
-        except jwt.exceptions.ExpiredSignatureError as e:
+        except jwt.exceptions.ExpiredSignatureError:
             raise RestApiException(
                 'Invalid activation token: this request is expired',
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
         # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError as e:
+        except jwt.exceptions.ImmatureSignatureError:
             raise RestApiException(
                 'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
             )
 
         # if token does not exist (or other generic errors)
-        except Exception as e:
+        except Exception:
             raise RestApiException(
                 'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
             )
@@ -506,12 +499,8 @@ class RecoverPassword(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    mapping = {
-        "ask_reset": "/reset",
-        "do_reset": "/reset/<token_id>"
-    }
     POST = {
-        "ask_reset": {
+        "/reset": {
             "summary": "Request password reset via email",
             "description": "Request password reset via email",
             "custom": {
@@ -528,7 +517,7 @@ class RecoverPassword(EndpointResource):
         }
     }
     PUT = {
-        "do_reset": {
+        "/reset/<token_id>": {
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",
             "custom": {
@@ -550,8 +539,8 @@ class RecoverPassword(EndpointResource):
 
         if not send_mail_is_active():
             raise RestApiException(
-                'Server misconfiguration, unable to reset password. '
-                + 'Please report this error to adminstrators',
+                'Server misconfiguration, unable to reset password. ' +
+                'Please report this error to adminstrators',
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
@@ -568,8 +557,8 @@ class RecoverPassword(EndpointResource):
 
         if user is None:
             raise RestApiException(
-                'Sorry, %s ' % reset_email
-                + 'is not recognized as a valid username or email address',
+                'Sorry, %s ' % reset_email +
+                'is not recognized as a valid username or email address',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN,
             )
 

@@ -17,11 +17,8 @@ class Login(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    mapping = {
-        "tologin": "/login"
-    }
     POST = {
-        "tologin": {
+        "/login": {
             "summary": "Login with basic credentials",
             "description": "Normal credentials (username and password) login endpoint",
             "custom": {

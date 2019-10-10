@@ -50,3 +50,4 @@ class EndpointElements(object):
     methods = attribute(default=[])
     custom = attribute(default=ExtraAttributes())
     tags = attribute(default=[])
+    base_uri = attribute(default='')

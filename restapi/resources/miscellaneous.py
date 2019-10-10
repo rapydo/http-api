@@ -35,12 +35,9 @@ class Queue
 class Status(EndpointResource):
     """ API online client testing """
     labels = ['helpers']
-    mapping = {
-        'status': "/status"
-    }
 
     GET = {
-        "status": {
+        "/status": {
             "summary": "Check if the API server is currently reachable",
             "description": "You may use this URI to monitor network or server problems.",
             "responses": {
@@ -61,11 +58,8 @@ class Verify(EndpointResource):
     """ Service connection testing """
 
     labels = ["helpers"]
-    mapping = {
-        "verify": "/status/<service>"
-    }
     GET = {
-        "verify": {
+        "/status/<service>": {
             "summary": "Check if the API server is able to reach the given service",
             "description": "You may use this URI to monitor the network link between API server and a given service",
             "responses": {
@@ -99,11 +93,8 @@ class SwaggerSpecifications(EndpointResource):
 
     labels = ["specifications"]
 
-    mapping = {
-        "status": "/specs"
-    }
     GET = {
-        "status": {
+        "/specs": {
             "summary": "Specifications output throught Swagger (open API) standards",
             "custom": {
                 "publish": True
@@ -144,12 +135,8 @@ if detector.check_availability('celery'):
 
         depends_on = ["CELERY_ENABLE"]
         labels = ["tasks"]
-        mapping = {
-            "list_queue": "/queue",
-            "single_queue": "/queue/<task_id>"
-        }
         GET = {
-            "list_queue": {
+            "/queue": {
                 "summary": "List tasks in the queue",
                 "description": "Base implementation of a CELERY queue.",
                 "responses": {
@@ -158,7 +145,7 @@ if detector.check_availability('celery'):
                     }
                 }
             },
-            "single_queue": {
+            "/queue/<task_id>": {
                 "summary": "Information about a single task",
                 "responses": {
                     "200": {
@@ -168,7 +155,7 @@ if detector.check_availability('celery'):
             }
         }
         PUT = {
-            "single_queue": {
+            "/queue/<task_id>": {
                 "summary": "Revoke a task from its id",
                 "responses": {
                     "204": {
@@ -178,7 +165,7 @@ if detector.check_availability('celery'):
             }
         }
         DELETE = {
-            "single_queue": {
+            "/queue/<task_id>": {
                 "summary": "Delete a task",
                 "responses": {
                     "204": {
