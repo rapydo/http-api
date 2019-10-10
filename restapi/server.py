@@ -21,6 +21,7 @@ from restapi.protocols.restful import Api, farmer, create_endpoints
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from utilities.globals import mem
+from utilities import helpers
 from utilities.logs import (
     get_logger,
     handle_log_output,
@@ -112,17 +113,12 @@ def create_app(
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
 
-    #############################
     # Initialize reading of all files
     mem.customizer = Customizer(testing_mode, PRODUCTION, init_mode)
     # FIXME: try to remove mem. from everywhere...
 
-    #############################
     # Add template dir for output in HTML
-    from utilities import helpers
-
-    tp = helpers.script_abspath(__file__, 'templates')
-    kwargs['template_folder'] = tp
+    kwargs['template_folder'] = helpers.script_abspath(__file__, 'templates')
 
     #################################################
     # Flask app instance
@@ -130,7 +126,6 @@ def create_app(
 
     microservice = Flask(name, **kwargs)
 
-    ##############################
     # Add commands to 'flask' binary
     if init_mode:
         microservice.config['INIT_MODE'] = init_mode
@@ -169,21 +164,10 @@ def create_app(
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
-    # log.pp(microservice.__dict__)
 
     ##############################
     if PRODUCTION:
-
         log.info("Production server mode is ON")
-
-        # FIXME: random secrety key in production
-        # # Check and use a random file a secret key.
-        # install_secret_key(microservice)
-
-        # # To enable exceptions printing inside uWSGI
-        # # http://stackoverflow.com/a/17839750/2114395
-        # from werkzeug.debug import DebuggedApplication
-        # app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 
     ##############################
     # Find services and try to connect to the ones available
