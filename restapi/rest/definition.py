@@ -39,6 +39,7 @@ class EndpointResource(Resource):
     labels = []
     depends_on = []
     expose_schema = False
+    publish = True
     """
     Implements a generic Resource for our Restful APIs model
     """

@@ -264,10 +264,7 @@ class Customizer(object):
                                 p = hex(id(endpoint.cls))
                                 self._schema_endpoint.uris[label + p] = schema_uri
 
-                                endpoint.custom['schema']['publish'][label] = schema.get(
-                                    'publish', False
-                                )
-
+                                endpoint.custom['schema']['publish'][label] = ep_class.publish
                                 self._schemas_map[schema_uri] = total_uri
 
                         # Check if something strange is still in configuration
