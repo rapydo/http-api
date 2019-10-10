@@ -48,15 +48,15 @@ class Status(EndpointResource):
     }
 
     GET = {
-        'status': {
-            'summary': 'Check if the API server is currently reachable',
-            'description': 'You may use this URI to monitor network or server problems.',
-            'custom': {
-                'authentication': False
+        "status": {
+            "summary": "Check if the API server is currently reachable",
+            "description": "You may use this URI to monitor network or server problems.",
+            "custom": {
+                "authentication": False
             },
-            'responses': {
-                '200': {
-                    'description': 'Server is alive!'
+            "responses": {
+                "200": {
+                    "description": "Server is alive!"
                 }
             }
         }
@@ -108,20 +108,6 @@ class SwaggerSpecifications(EndpointResource):
 
         # Jsonify, so we skip custom response building
         return jsonify(swagjson)
-
-
-class Internal(EndpointResource):
-    """ Token and Role authentication test """
-
-    def get(self):
-        return "I am internal"
-
-
-class Admin(EndpointResource):
-    """ Token and Role authentication test """
-
-    def get(self):
-        return "I am admin!"
 
 
 ###########################
