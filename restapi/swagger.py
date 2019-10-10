@@ -59,9 +59,10 @@ class BeSwagger(object):
         self._parameter_schemas = {}
         self._used_swagger_tags = {}
 
-    def read_my_swagger(self, file, method, endpoint):
+    def read_my_swagger(self, method, endpoint, file=None, mapping=None):
 
-        mapping = load_yaml_file(file)
+        if mapping is None:
+            mapping = load_yaml_file(file)
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -382,7 +383,20 @@ class BeSwagger(object):
 
             for method, file in endpoint.methods.items():
                 # add the custom part to the endpoint
-                self._endpoints[key] = self.read_my_swagger(file, method, endpoint)
+
+                # In this case we are passing the config dictionary, not the yaml file
+                if isinstance(file, dict):
+                    self._endpoints[key] = self.read_my_swagger(
+                        method,
+                        endpoint,
+                        mapping=file
+                    )
+                else:
+                    self._endpoints[key] = self.read_my_swagger(
+                        method,
+                        endpoint,
+                        file=file
+                    )
 
         ###################
         # Save query parameters globally

@@ -39,6 +39,28 @@ class Queue
 
 class Status(EndpointResource):
     """ API online client testing """
+    # baseuri = "/api"
+    labels = ['helpers']
+    SPECS = {
+        'mapping': {
+            'status': "/status"
+        }
+    }
+
+    GET = {
+        'status': {
+            'summary': 'Check if the API server is currently reachable',
+            'description': 'You may use this URI to monitor network or server problems.',
+            'custom': {
+                'authentication': False
+            },
+            'responses': {
+                '200': {
+                    'description': 'Server is alive!'
+                }
+            }
+        }
+    }
 
     @decorate.catch_error()
     def get(self, service=None):

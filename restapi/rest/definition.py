@@ -11,6 +11,7 @@ from datetime import datetime
 from injector import inject
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
+from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from restapi.swagger import input_validation
@@ -33,6 +34,9 @@ DEFAULT_PERPAGE = 10
 ###################
 # Extending the concept of rest generic resource
 class EndpointResource(Resource):
+
+    baseuri = API_URL
+    labels = []
     """
     Implements a generic Resource for our Restful APIs model
     """

@@ -7,18 +7,19 @@ Customization based on configuration 'blueprint' files
 import os
 import re
 import glob
-from utilities import CONF_PATH
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
 
-# from utilities import PROJECT_CONF_FILENAME, DEFAULT_FILENAME, UTILS_PKGNAME
-from utilities import helpers
-from utilities import configuration as conf
 from restapi.confs import API_URL, BASE_URLS
-from utilities.meta import Meta
-from utilities.myyaml import YAML_EXT, load_yaml_file
 from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
+
+from utilities import CONF_PATH, ENDPOINTS_CODE_DIR
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
+from utilities import helpers
+from utilities import configuration as conf
+from utilities.meta import Meta
+from utilities.myyaml import YAML_EXT, load_yaml_file
+
 
 from utilities.logs import get_logger
 
@@ -127,40 +128,139 @@ class Customizer(object):
     def find_endpoints(self):
 
         ##################
-        # Walk swagger directories looking for endpoints
+        # Walk folders looking for endpoints
 
-        swagger_folders = []
+        endpoints_folders = []
         # base swagger dir (rapydo/http-api)
-        swagger_folders.append(
+        endpoints_folders.append(
             {
                 'path': helpers.script_abspath(__file__),
-                'isbase': True
+                'iscore': True
             }
         )
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
-            swagger_folders.append(
+            endpoints_folders.append(
                 {
                     'path': helpers.current_dir(self._extended_project),
-                    'isbase': False
+                    'iscore': False
                 }
             )
 
         # custom swagger dir
-        swagger_folders.append(
+        endpoints_folders.append(
             {
                 'path': helpers.current_dir(CUSTOM_PACKAGE),
-                'isbase': False
+                'iscore': False
             }
         )
 
         simple_override_check = {}
-        for swag_folder in swagger_folders:
+        for folder in endpoints_folders:
 
-            base_dir = swag_folder.get('path')
-            isbase = swag_folder.get('isbase')
+            base_dir = folder.get('path')
+            iscore = folder.get('iscore')
+            base_module = helpers.last_dir(base_dir)
+
+            if iscore:
+                apis_dir = os.path.join(base_dir, 'resources')
+                apiclass_module = '%s.%s' % (base_module, 'resources')
+            else:
+                apis_dir = os.path.join(base_dir, ENDPOINTS_CODE_DIR)
+                apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
+
+            # Looking for all file in apis folder
+            for epfiles in os.listdir(apis_dir):
+
+                # get module name (es: apis.filename)
+                module_file = os.path.splitext(epfiles)[0]
+                module_name = "%s.%s" % (apiclass_module, module_file)
+                # Convert module name into a module
+                module = Meta.get_module_from_string(module_name)
+                # Extract classes from the module
+                classes = self._meta.get_classes_from_module(module)
+                for class_name in classes:
+                    ep_class = classes.get(class_name)
+                    # Filtering out classes without required data
+                    if not hasattr(ep_class, "methods"):
+                        continue
+                    if ep_class.methods is None:
+                        continue
+                    if not hasattr(ep_class, "SPECS"):
+                        continue
+
+                    # Building endpoint
+                    endpoint = EndpointElements(custom={})
+
+                    endpoint.cls = ep_class
+                    endpoint.exists = True
+                    endpoint.iscore = iscore
+
+                    # Global tags to be applied to all methods
+                    endpoint.tags = ep_class.labels
+
+                    # base URI
+                    base = ep_class.baseuri
+                    if base not in BASE_URLS:
+                        log.warning("Invalid base %s", base)
+                        base = API_URL
+                    base = base.strip('/')
+
+                    #####################
+                    # MAPPING
+                    schema = ep_class.SPECS.pop('schema', {})
+                    mappings = ep_class.SPECS.pop('mapping', [])
+                    if len(mappings) < 1:
+                        raise KeyError("Missing 'mapping' section")
+
+                    endpoint.uris = {}  # attrs python lib bug?
+                    endpoint.custom['schema'] = {
+                        'expose': schema.get('expose', False),
+                        'publish': {},
+                    }
+                    for label, uri in mappings.items():
+
+                        # BUILD URI
+                        total_uri = '/%s%s' % (base, uri)
+                        endpoint.uris[label] = total_uri
+
+                        # If SCHEMA requested create
+                        if endpoint.custom['schema']['expose']:
+
+                            schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+
+                            p = hex(id(endpoint.cls))
+                            self._schema_endpoint.uris[label + p] = schema_uri
+
+                            endpoint.custom['schema']['publish'][label] = schema.get(
+                                'publish', False
+                            )
+
+                            self._schemas_map[schema_uri] = total_uri
+
+                    # Description for path parameters
+                    endpoint.ids = ep_class.SPECS.pop('ids', {})
+
+                    # Check if something strange is still in configuration
+                    if len(ep_class.SPECS) > 0:
+                        raise KeyError(
+                            "Unwanted keys in %s: %s" % (
+                                class_name,
+                                list(ep_class.SPECS.keys())
+                            )
+                        )
+
+                    endpoint.methods = {}
+
+                    for m in ep_class.methods:
+                        if not hasattr(ep_class, m):
+                            log.critical("%s dict not defined in %s", m, class_name)
+                            continue
+                        endpoint.methods[m.lower()] = getattr(ep_class, m)
+
+                    self._endpoints.append(endpoint)
 
             swagger_dir = os.path.join(base_dir, 'swagger')
             log.verbose("Swagger dir: %s" % swagger_dir)
@@ -185,14 +285,13 @@ class Customizer(object):
                     continue
 
                 base_module = helpers.last_dir(base_dir)
-                from utilities import ENDPOINTS_CODE_DIR
 
-                if isbase:
+                if iscore:
                     apiclass_module = '%s.%s' % (base_module, 'resources')
                 else:
                     apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
 
-                current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, isbase)
+                current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, iscore)
 
                 if current is not None and current.exists:
                     # Add endpoint to REST mapping
@@ -213,7 +312,7 @@ class Customizer(object):
 
         self._definitions = swag_dict
 
-    def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, isbase):
+    def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, iscore):
 
         log.verbose("Found endpoint dir: '%s'" % endpoint)
 
@@ -242,18 +341,11 @@ class Customizer(object):
         if conf is None or 'class' not in conf:
             raise ValueError("No 'class' defined for '%s'" % endpoint)
 
-        current = self.load_endpoint(apiclass_module, conf, isbase)
+        current = self.load_endpoint(apiclass_module, conf, iscore)
         current.methods = yaml_files
         return current
 
-    # def read_complex_config(self, configfile):
-    #     """ A more complex configuration is available in JSON format """
-    #     content = {}
-    #     with open(configfile) as fp:
-    #         content = json.load(fp)
-    #     return content
-
-    def load_endpoint(self, apiclass_module, conf, isbase):
+    def load_endpoint(self, apiclass_module, conf, iscore):
 
         endpoint = EndpointElements(custom={})
 
@@ -300,7 +392,7 @@ class Customizer(object):
             endpoint.exists = True
 
         # Is this a base or a custom class?
-        endpoint.isbase = isbase
+        endpoint.iscore = iscore
 
         # DEPRECATED
         # endpoint.instance = endpoint.cls()
