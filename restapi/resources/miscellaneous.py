@@ -2,6 +2,7 @@
 
 from flask import jsonify
 
+from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
@@ -45,9 +46,6 @@ class Status(EndpointResource):
         "status": {
             "summary": "Check if the API server is currently reachable",
             "description": "You may use this URI to monitor network or server problems.",
-            "custom": {
-                "authentication": False
-            },
             "responses": {
                 "200": {
                     "description": "Server is alive!"
@@ -75,12 +73,6 @@ class Verify(EndpointResource):
         "verify": {
             "summary": "Check if the API server is able to reach the given service",
             "description": "You may use this URI to monitor the network link between API server and a given service",
-            "custom": {
-                "authentication": True,
-                "authorized": [
-                    "admin_root"
-                ]
-            },
             "responses": {
                 "200": {
                     "description": "Server is able to reach the service!"
@@ -88,7 +80,9 @@ class Verify(EndpointResource):
             }
         }
     }
+
     @decorate.catch_error()
+    @authentication.required(roles=['admin_root'])
     def get(self, service):
 
         log.critical(detector.available_services)
@@ -119,7 +113,6 @@ class SwaggerSpecifications(EndpointResource):
         "status": {
             "summary": "Specifications output throught Swagger (open API) standards",
             "custom": {
-                "authentication": False,
                 "publish": True
             },
             "responses": {
@@ -168,16 +161,6 @@ if detector.check_availability('celery'):
             }
         }
         GET = {
-            "common": {
-                "custom": {
-                    "authentication": True,
-                    "authorized": [
-                        "admin_root",
-                        "staff_user"
-                    ],
-                    "required_roles": "any"
-                }
-            },
             "list_queue": {
                 "summary": "List tasks in the queue",
                 "description": "Base implementation of a CELERY queue.",
@@ -199,12 +182,6 @@ if detector.check_availability('celery'):
         PUT = {
             "single_queue": {
                 "summary": "Revoke a task from its id",
-                "custom": {
-                    "authentication": True,
-                    "authorized": [
-                        "admin_root"
-                    ]
-                },
                 "responses": {
                     "204": {
                         "description": "The task was revoked"
@@ -215,12 +192,6 @@ if detector.check_availability('celery'):
         DELETE = {
             "single_queue": {
                 "summary": "Delete a task",
-                "custom": {
-                    "authentication": True,
-                    "authorized": [
-                        "admin_root"
-                    ]
-                },
                 "responses": {
                     "204": {
                         "description": "The task with specified id was succesfully deleted"
@@ -228,6 +199,8 @@ if detector.check_availability('celery'):
                 }
             }
         }
+
+        @authentication.required(roles=['admin_root', 'staff_user'], required_roles='any')
         def get(self, task_id=None):
 
             data = []
@@ -351,11 +324,13 @@ if detector.check_availability('celery'):
 
             return self.force_response(data)
 
+        @authentication.required(roles=['admin_root'])
         def put(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id)
             return self.empty_response()
 
+        @authentication.required(roles=['admin_root'])
         def delete(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id, terminate=True)

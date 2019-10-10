@@ -2,6 +2,7 @@
 
 from flask import current_app
 from restapi.rest.definition import EndpointResource
+from restapi.protocols.bearer import authentication
 
 from utilities import htmlcodes as hcodes
 
@@ -32,7 +33,6 @@ class Tokens(EndpointResource):
         "common": {
             "custom": {
                 "publish": True,
-                "authentication": True
             }
         },
         "tokenizers": {
@@ -53,11 +53,6 @@ class Tokens(EndpointResource):
         }
     }
     DELETE = {
-        "common": {
-            "custom": {
-                "authentication": True
-            }
-        },
         "tokenizers": {
             "summary": "Remove all tokens emitted for logged user",
             "description": "Note: allowed only for testing",
@@ -88,6 +83,7 @@ class Tokens(EndpointResource):
 
         return self.get_current_user()
 
+    @authentication.required()
     def get(self, token_id=None):
 
         user = self.get_user()
@@ -109,6 +105,7 @@ class Tokens(EndpointResource):
 
         return self.send_errors(message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
 
+    @authentication.required()
     def delete(self, token_id=None):
         """
             For additional security, tokens are invalidated both

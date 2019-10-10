@@ -98,7 +98,65 @@ class HTTPTokenAuth(object):
 
         return auth_type, token
 
-    def authorization_required(self, f, roles, required_roles=None):
+    def required(self, roles=[], required_roles=None):
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                # Recover the auth object
+                auth_type, token = self.get_authorization_token()
+                # Base header for errors
+                headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
+                # Internal API 'self' reference
+                decorated_self = Meta.get_self_reference_from_args(*args)
+
+                if auth_type is None or auth_type.lower() != self._scheme.lower():
+                    # Wrong authentication string
+                    msg = (
+                        "Valid credentials have to be provided " +
+                        "inside Headers, e.g. %s: '%s %s'"
+                        % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
+                    )
+                    #
+                    return decorated_self.send_errors(
+                        # label="No authentication schema",
+                        message=msg,
+                        headers=headers,
+                        code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                    )
+
+                # Handling OPTIONS forwarded to our application:
+                # ignore headers and let go, avoid unwanted interactions with CORS
+                if request.method != 'OPTIONS':
+
+                    # Check authentication
+                    token_fn = decorated_self.auth.verify_token
+                    if not self.authenticate(token_fn, token):
+                        # Clear TCP receive buffer of any pending data
+                        request.data
+                        # Mimic the response from a normal endpoint
+                        # To use the same standards
+                        return decorated_self.send_errors(
+                            message="Invalid token received '%s'" % token,
+                            headers=headers,
+                            code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                        )
+
+                # Check roles
+                if len(roles) > 0:
+                    roles_fn = decorated_self.auth.verify_roles
+                    if not self.authenticate_roles(roles_fn, roles, required_roles):
+                        return decorated_self.send_errors(
+                            message="You are not authorized: missing privileges",
+                            code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                        )
+
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
+
+    def authorization_required(self, f, roles=[], required_roles=None):
         @wraps(f)
         def decorated(*args, **kwargs):
 
@@ -112,8 +170,8 @@ class HTTPTokenAuth(object):
             if auth_type is None or auth_type.lower() != self._scheme.lower():
                 # Wrong authentication string
                 msg = (
-                    "Valid credentials have to be provided "
-                    + "inside Headers, e.g. %s: '%s %s'"
+                    "Valid credentials have to be provided " +
+                    "inside Headers, e.g. %s: '%s %s'"
                     % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
                 )
                 #

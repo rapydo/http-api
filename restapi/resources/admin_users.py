@@ -2,6 +2,7 @@
 
 from glom import glom
 from restapi import decorators as decorate
+from restapi.protocols.bearer import authentication
 from restapi.services.neo4j.graph_endpoints import GraphBaseOperations
 from restapi.exceptions import RestApiException
 from restapi.services.neo4j.graph_endpoints import graph_transactions
@@ -36,11 +37,6 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     GET = {
-        "common": {
-            "custom": {
-                "authentication": True
-            }
-        },
         "users": {
             "summary": "List of users",
             "responses": {
@@ -60,9 +56,6 @@ class AdminUsers(GraphBaseOperations):
     }
     POST = {
         "common": {
-            "custom": {
-                "authentication": True
-            },
             "custom_parameters": [
                 "AdminUsers"
             ]
@@ -78,9 +71,6 @@ class AdminUsers(GraphBaseOperations):
     }
     PUT = {
         "common": {
-            "custom": {
-                "authentication": True
-            },
             "custom_parameters": [
                 "AdminUsers"
             ]
@@ -95,11 +85,6 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     DELETE = {
-        "common": {
-            "custom": {
-                "authentication": True
-            }
-        },
         "user": {
             "summary": "Delete a user",
             "responses": {
@@ -212,6 +197,7 @@ Password: "%s"
 
     @decorate.catch_error()
     @catch_graph_exceptions
+    @authentication.required()
     def get(self, user_id=None):
 
         data = []
@@ -259,6 +245,7 @@ Password: "%s"
     @decorate.catch_error()
     @catch_graph_exceptions
     @graph_transactions
+    @authentication.required()
     def post(self):
 
         v = self.get_input()
@@ -451,6 +438,7 @@ Password: "%s"
     @decorate.catch_error()
     @catch_graph_exceptions
     @graph_transactions
+    @authentication.required()
     def put(self, user_id=None):
 
         if user_id is None:
@@ -552,6 +540,7 @@ Password: "%s"
     @decorate.catch_error()
     @catch_graph_exceptions
     @graph_transactions
+    @authentication.required()
     def delete(self, user_id=None):
 
         if user_id is None:
@@ -611,9 +600,6 @@ class UserRole(GraphBaseOperations):
     GET = {
         "all": {
             "summary": "List of existing roles",
-            "custom": {
-                "authentication": True
-            },
             "responses": {
                 "200": {
                     "description": "List of roles successfully retrieved"
@@ -622,9 +608,6 @@ class UserRole(GraphBaseOperations):
         },
         "query": {
             "summary": "List of existing roles matching a substring query",
-            "custom": {
-                "authentication": True
-            },
             "responses": {
                 "200": {
                     "description": "Matching roles successfully retrieved"
@@ -632,8 +615,10 @@ class UserRole(GraphBaseOperations):
             }
         }
     }
+
     @decorate.catch_error(exception=Exception, catch_generic=True)
     @catch_graph_exceptions
+    @authentication.required()
     def get(self, query=None):
 
         self.graph = self.get_service_instance('neo4j')

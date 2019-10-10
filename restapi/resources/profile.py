@@ -6,6 +6,7 @@ import pytz
 from glom import glom
 
 from restapi.rest.definition import EndpointResource
+from restapi.protocols.bearer import authentication
 from restapi import decorators as decorate
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
@@ -142,9 +143,6 @@ class Profile(EndpointResource):
     GET = {
         "whoami": {
             "summary": "List profile attributes",
-            "custom": {
-                "authentication": True
-            },
             "responses": {
                 "200": {
                     "description": "Dictionary with all profile attributes"
@@ -155,9 +153,6 @@ class Profile(EndpointResource):
     POST = {
         "whoami": {
             "summary": "Register new user",
-            "custom": {
-                "authentication": False
-            },
             "custom_parameters": [
                 "User"
             ],
@@ -171,9 +166,6 @@ class Profile(EndpointResource):
     PUT = {
         "whoami": {
             "summary": "Update profile attributes",
-            "custom": {
-                "authentication": True
-            },
             "parameters": [
                 {
                     "name": "credentials",
@@ -191,6 +183,7 @@ class Profile(EndpointResource):
         }
     }
 
+    @authentication.required()
     def get(self):
 
         current_user = self.get_current_user()
@@ -359,6 +352,7 @@ class Profile(EndpointResource):
         return user.save()
 
     @decorate.catch_error()
+    @authentication.required()
     def put(self):
         """ Update profile for current user """
 
@@ -394,9 +388,6 @@ class ProfileActivate(EndpointResource):
     POST = {
         "ask": {
             "summary": "Ask a new activation link",
-            "custom": {
-                "authentication": False
-            },
             "responses": {
                 "200": {
                     "description": "A new activation link has been sent"
@@ -407,9 +398,6 @@ class ProfileActivate(EndpointResource):
     PUT = {
         "activate": {
             "summary": "Activate account by verificate activation token",
-            "custom": {
-                "authentication": False
-            },
             "responses": {
                 "200": {
                     "description": "Account has been successfully activated"
@@ -533,7 +521,6 @@ class RecoverPassword(EndpointResource):
             "summary": "Request password reset via email",
             "description": "Request password reset via email",
             "custom": {
-                "authentication": False,
                 "publish": True
             },
             "responses": {
@@ -551,7 +538,6 @@ class RecoverPassword(EndpointResource):
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",
             "custom": {
-                "authentication": False,
                 "publish": True
             },
             "responses": {

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from restapi.rest.definition import EndpointResource
+from restapi.protocols.bearer import authentication
 
 
 class Logout(EndpointResource):
@@ -18,9 +19,6 @@ class Logout(EndpointResource):
         "tologout": {
             "summary": "Logout from current credentials",
             "description": "Invalidate current registered token",
-            "custom": {
-                "authentication": True
-            },
             "responses": {
                 "200": {
                     "description": "Token correctly removed"
@@ -29,6 +27,7 @@ class Logout(EndpointResource):
         }
     }
 
+    @authentication.required()
     def get(self):
         self.auth.invalidate_token(token=self.auth.get_token())
         return self.empty_response()
