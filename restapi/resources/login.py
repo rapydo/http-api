@@ -12,7 +12,43 @@ from utilities import htmlcodes as hcodes
 
 
 class Login(EndpointResource):
-    """ Let a user login with the developer chosen method """
+    """ Let a user login by using the configured method """
+    baseuri = "/auth"
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["authentication"]
+
+    SPECS = {
+        "mapping": {
+            "tologin": "/login"
+        }
+    }
+    POST = {
+        "tologin": {
+            "summary": "Login with basic credentials",
+            "description": "Normal credentials (username and password) login endpoint",
+            "custom": {
+                "authentication": False,
+                "publish": True
+            },
+            "parameters": [
+                {
+                    "name": "credentials",
+                    "in": "body",
+                    "schema": {
+                        "$ref": "#/definitions/Credentials"
+                    }
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Credentials are valid",
+                },
+                "401": {
+                    "description": "Invalid username or password"
+                }
+            }
+        }
+    }
 
     def verify_information(self, user, security, totp_auth, totp_code, now=None):
 
