@@ -301,8 +301,7 @@ class Customizer(object):
                         apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
 
                     log.warning(
-                        "Deprecated endpoint configuration from yaml: %s",
-                        apiclass_module
+                        "Deprecated endpoint configuration from yaml: %s", ep
                     )
 
                     current = self.lookup(
