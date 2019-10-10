@@ -241,7 +241,10 @@ class Customizer(object):
                     }
 
                     if endpoint.custom['schema']['expose']:
-                        log.critical("Schema expose not implemented yet")
+                        log.critical(
+                            "Schema expose not implemented yet and required by %s",
+                            class_name
+                        )
                     # for label, uri in ep_class.mapping.items():
 
                     #     # BUILD URI
@@ -263,7 +266,7 @@ class Customizer(object):
 
                     for m in ep_class.methods:
                         if not hasattr(ep_class, m):
-                            log.critical("%s dict not defined in %s", m, class_name)
+                            log.warning("%s configuration not found in %s", m, class_name)
                             continue
                         endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
 
