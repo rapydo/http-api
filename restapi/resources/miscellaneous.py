@@ -65,6 +65,29 @@ class Status(EndpointResource):
 class Verify(EndpointResource):
     """ Service connection testing """
 
+    labels = ["helpers"]
+    SPECS = {
+        "mapping": {
+            "verify": "/status/<service>"
+        }
+    }
+    GET = {
+        "verify": {
+            "summary": "Check if the API server is able to reach the given service",
+            "description": "You may use this URI to monitor the network link between API server and a given service",
+            "custom": {
+                "authentication": True,
+                "authorized": [
+                    "admin_root"
+                ]
+            },
+            "responses": {
+                "200": {
+                    "description": "Server is able to reach the service!"
+                }
+            }
+        }
+    }
     @decorate.catch_error()
     def get(self, service):
 
