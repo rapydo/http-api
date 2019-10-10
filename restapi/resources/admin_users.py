@@ -623,7 +623,7 @@ class UserRole(GraphBaseOperations):
         "query": {
             "summary": "List of existing roles matching a substring query",
             "custom": {
-                "authentication": true
+                "authentication": True
             },
             "responses": {
                 "200": {
