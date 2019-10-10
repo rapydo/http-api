@@ -121,6 +121,8 @@ class BeSwagger(object):
             # Publish the specs on the final Swagger JSON
             # Default is to do it if not otherwise specified
             extra.publish = custom.get('publish', True)
+            if not extra.publish:
+                log.warning("Publish setting is deprecated")
 
             # Authentication
             if custom.get('authentication', False):
