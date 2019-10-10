@@ -1,8 +1,0 @@
-
-file: miscellaneous
-class: Status
-baseuri: "/api"
-mapping:
-  status: "/status"
-labels:
-  - helpers
