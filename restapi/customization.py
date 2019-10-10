@@ -272,8 +272,8 @@ class Customizer(object):
 
                     self._endpoints.append(endpoint)
 
-            if not iscore:
-                swagger_dir = os.path.join(base_dir, 'swagger')
+            swagger_dir = os.path.join(base_dir, 'swagger')
+            if not iscore and os.path.exists(swagger_dir):
                 log.verbose("Swagger dir: %s" % swagger_dir)
 
                 for ep in os.listdir(swagger_dir):
