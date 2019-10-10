@@ -13,8 +13,7 @@ import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
-from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from utilities import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import htmlcodes as hcodes
 from utilities import helpers
 from utilities.globals import mem
@@ -419,11 +418,11 @@ class BeSwagger(object):
     def get_models(self):
         """ Read models from base/custom yaml files """
 
-        filename = SWAGGER_MODELS_FILE
+        from utilities import MODELS_DIR, SWAGGER_DIR
 
         # BASE definitions
-        path = helpers.script_abspath(__file__, SWAGGER_DIR)
-        data = load_yaml_file(filename, path=path)
+        path = helpers.script_abspath(__file__, MODELS_DIR)
+        data = load_yaml_file('swagger', path=path)
 
         # EXTENDED definitions, if any
         if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
@@ -432,14 +431,14 @@ class BeSwagger(object):
             path = helpers.current_dir(EXTENDED_PACKAGE, SWAGGER_DIR)
             # NOTE: with logger=False I skip the warning if this file doesn't exist
             extended_models = load_yaml_file(
-                filename, path=path, skip_error=True, logger=False
+                'models', path=path, skip_error=True, logger=False
             )
 
         # CUSTOM definitions
         path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
         # NOTE: with logger=False I skip the warning if this file doesn't exist
         custom_models = load_yaml_file(
-            filename, path=path, skip_error=True, logger=False
+            'models', path=path, skip_error=True, logger=False
         )
 
         if extended_models is None:

@@ -14,7 +14,7 @@ from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
 from utilities import CONF_PATH, ENDPOINTS_CODE_DIR
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE, SWAGGER_MODELS_FILE
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import helpers
 from utilities import configuration as conf
 from utilities.meta import Meta
@@ -306,11 +306,9 @@ class Customizer(object):
                     swagger_endpoint_dir = os.path.join(swagger_dir, ep)
 
                     if os.path.isfile(swagger_endpoint_dir):
-                        exception = '%s.yaml' % SWAGGER_MODELS_FILE
-                        if not swagger_endpoint_dir.endswith('/' + exception):
-                            log.debug(
-                                "Found a file instead of a folder: %s", swagger_endpoint_dir
-                            )
+                        log.debug(
+                            "Found a file instead of a folder: %s", swagger_endpoint_dir
+                        )
                         continue
 
                     base_module = helpers.last_dir(base_dir)
