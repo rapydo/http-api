@@ -273,9 +273,6 @@ class Customizer(object):
 
                                 self._schemas_map[schema_uri] = total_uri
 
-                        # Description for path parameters
-                        endpoint.ids = specs.pop('ids', {})
-
                         # Check if something strange is still in configuration
                         if len(specs) > 0:
                             raise KeyError(
@@ -472,9 +469,6 @@ class Customizer(object):
                 )
 
                 self._schemas_map[schema_uri] = total_uri
-
-        # Description for path parameters
-        endpoint.ids = conf.pop('ids', {})
 
         # Check if something strange is still in configuration
         if len(conf) > 0:

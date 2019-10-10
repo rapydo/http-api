@@ -155,9 +155,6 @@ if detector.check_availability('celery'):
             "mapping": {
                 "list_queue": "/queue",
                 "single_queue": "/queue/<task_id>"
-            },
-            "ids": {
-                "task_id": "uuid referring to the task you are selecting"
             }
         }
         GET = {
@@ -200,6 +197,7 @@ if detector.check_availability('celery'):
             }
         }
 
+        # task_id = uuid referring to the task you are selecting
         @authentication.required(roles=['admin_root', 'staff_user'], required_roles='any')
         def get(self, task_id=None):
 
@@ -324,12 +322,14 @@ if detector.check_availability('celery'):
 
             return self.force_response(data)
 
+        # task_id = uuid referring to the task you are selecting
         @authentication.required(roles=['admin_root'])
         def put(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id)
             return self.empty_response()
 
+        # task_id = uuid referring to the task you are selecting
         @authentication.required(roles=['admin_root'])
         def delete(self, task_id):
             celery = self.get_service_instance('celery')

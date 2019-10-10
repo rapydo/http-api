@@ -193,8 +193,6 @@ class BeSwagger(object):
                     'in': 'path',
                     'required': True,
                 }
-                if paramname in endpoint.ids:
-                    path_parameter['description'] = endpoint.ids[paramname]
 
                 specs['parameters'].append(path_parameter)
 

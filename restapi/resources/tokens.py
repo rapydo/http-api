@@ -24,9 +24,6 @@ class Tokens(EndpointResource):
         "mapping": {
             "tokenizers": "/tokens",
             "tokenizer": "/tokens/<token_id>"
-        },
-        "ids": {
-            "token_id": "uuid associated to the token you want to select"
         }
     }
     GET = {
@@ -72,6 +69,7 @@ class Tokens(EndpointResource):
             }
         }
     }
+
     def get_user(self):
 
         iamadmin = self.auth.verify_admin()
@@ -84,6 +82,7 @@ class Tokens(EndpointResource):
 
         return self.get_current_user()
 
+    # token_id = uuid associated to the token you want to select
     @authentication.required()
     def get(self, token_id=None):
 
@@ -106,6 +105,7 @@ class Tokens(EndpointResource):
 
         return self.send_errors(message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
 
+    # token_id = uuid associated to the token you want to select
     @authentication.required()
     def delete(self, token_id=None):
         """
