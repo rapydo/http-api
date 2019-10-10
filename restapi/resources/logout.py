@@ -9,12 +9,9 @@ class Logout(EndpointResource):
     baseuri = "/auth"
     labels = ["authentication"]
 
-    SPECS = {
-        "mapping": {
-            "tologout": "/logout"
-        }
+    mapping = {
+        "tologout": "/logout"
     }
-
     GET = {
         "tologout": {
             "summary": "Logout from current credentials",

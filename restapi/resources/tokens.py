@@ -20,11 +20,9 @@ class Tokens(EndpointResource):
     baseuri = "/auth"
     labels = ["authentication"]
 
-    SPECS = {
-        "mapping": {
-            "tokenizers": "/tokens",
-            "tokenizer": "/tokens/<token_id>"
-        }
+    mapping = {
+        "tokenizers": "/tokens",
+        "tokenizer": "/tokens/<token_id>"
     }
     GET = {
         "tokenizers": {

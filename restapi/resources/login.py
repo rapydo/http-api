@@ -17,10 +17,8 @@ class Login(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    SPECS = {
-        "mapping": {
-            "tologin": "/login"
-        }
+    mapping = {
+        "tologin": "/login"
     }
     POST = {
         "tologin": {

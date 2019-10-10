@@ -7,6 +7,7 @@ Customization based on configuration 'blueprint' files
 import os
 import re
 import glob
+import copy
 
 from restapi.confs import API_URL, BASE_URLS
 from restapi.services.detect import detector
@@ -189,11 +190,8 @@ class Customizer(object):
                             continue
                         if ep_class.methods is None:
                             continue
-                        if not hasattr(ep_class, "SPECS"):
+                        if not hasattr(ep_class, "mapping"):
                             continue
-
-                        import copy
-                        specs = copy.deepcopy(ep_class.SPECS)
 
                         if not self._testing:
                             for var in ep_class.depends_on:
@@ -238,9 +236,7 @@ class Customizer(object):
                             base = API_URL
                         base = base.strip('/')
 
-                        # MAPPING
-                        mappings = specs.pop('mapping', [])
-                        if len(mappings) < 1:
+                        if len(ep_class.mapping) < 1:
                             raise KeyError(
                                 "Missing 'mapping' section in %s" % class_name
                             )
@@ -250,7 +246,7 @@ class Customizer(object):
                             'expose': ep_class.expose_schema,
                             'publish': {},
                         }
-                        for label, uri in mappings.items():
+                        for label, uri in ep_class.mapping.items():
 
                             # BUILD URI
                             total_uri = '/%s%s' % (base, uri)
@@ -266,15 +262,6 @@ class Customizer(object):
 
                                 endpoint.custom['schema']['publish'][label] = ep_class.publish
                                 self._schemas_map[schema_uri] = total_uri
-
-                        # Check if something strange is still in configuration
-                        if len(specs) > 0:
-                            raise KeyError(
-                                "Unwanted keys in %s: %s" % (
-                                    class_name,
-                                    list(specs.keys())
-                                )
-                            )
 
                         endpoint.methods = {}
 

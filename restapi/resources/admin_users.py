@@ -28,11 +28,9 @@ class AdminUsers(GraphBaseOperations):
     labels = ["admin"]
     expose_schema = True
 
-    SPECS = {
-        "mapping": {
-            "users": "/admin/users",
-            "user": "/admin/users/<user_id>"
-        }
+    mapping = {
+        "users": "/admin/users",
+        "user": "/admin/users/<user_id>"
     }
     GET = {
         "users": {
@@ -584,11 +582,9 @@ class UserRole(GraphBaseOperations):
     labels = ["miscellaneous"]
     expose_schema = True
 
-    SPECS = {
-        "mapping": {
-            "all": "/role",
-            "query": "/role/<query>"
-        }
+    mapping = {
+        "all": "/role",
+        "query": "/role/<query>"
     }
     GET = {
         "all": {

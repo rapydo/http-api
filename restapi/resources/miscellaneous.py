@@ -35,10 +35,8 @@ class Queue
 class Status(EndpointResource):
     """ API online client testing """
     labels = ['helpers']
-    SPECS = {
-        'mapping': {
-            'status': "/status"
-        }
+    mapping = {
+        'status': "/status"
     }
 
     GET = {
@@ -63,10 +61,8 @@ class Verify(EndpointResource):
     """ Service connection testing """
 
     labels = ["helpers"]
-    SPECS = {
-        "mapping": {
-            "verify": "/status/<service>"
-        }
+    mapping = {
+        "verify": "/status/<service>"
     }
     GET = {
         "verify": {
@@ -103,10 +99,8 @@ class SwaggerSpecifications(EndpointResource):
 
     labels = ["specifications"]
 
-    SPECS = {
-        "mapping": {
-            "status": "/specs"
-        }
+    mapping = {
+        "status": "/specs"
     }
     GET = {
         "status": {
@@ -150,11 +144,9 @@ if detector.check_availability('celery'):
 
         depends_on = ["CELERY_ENABLE"]
         labels = ["tasks"]
-        SPECS = {
-            "mapping": {
-                "list_queue": "/queue",
-                "single_queue": "/queue/<task_id>"
-            }
+        mapping = {
+            "list_queue": "/queue",
+            "single_queue": "/queue/<task_id>"
         }
         GET = {
             "list_queue": {

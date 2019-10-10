@@ -135,10 +135,8 @@ class Profile(EndpointResource):
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profiles"]
 
-    SPECS = {
-        "mapping": {
-            "whoami": "/profile"
-        }
+    mapping = {
+        "whoami": "/profile"
     }
     GET = {
         "whoami": {
@@ -375,15 +373,13 @@ class Profile(EndpointResource):
 
 
 class ProfileActivate(EndpointResource):
-    depends_on =  ["not PROFILE_DISABLED"]
+    depends_on = ["not PROFILE_DISABLED"]
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
-    SPECS = {
-        "mapping": {
-            "activate": "/profile/activate/<token_id>",
-            "ask": "/profile/activate"
-        }
+    mapping = {
+        "activate": "/profile/activate/<token_id>",
+        "ask": "/profile/activate"
     }
     POST = {
         "ask": {
@@ -510,11 +506,9 @@ class RecoverPassword(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    SPECS = {
-        "mapping": {
-            "ask_reset": "/reset",
-            "do_reset": "/reset/<token_id>"
-        }
+    mapping = {
+        "ask_reset": "/reset",
+        "do_reset": "/reset/<token_id>"
     }
     POST = {
         "ask_reset": {
