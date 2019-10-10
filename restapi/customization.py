@@ -175,97 +175,99 @@ class Customizer(object):
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
 
-                if iscore:
-                    # get module name (es: apis.filename)
-                    module_file = os.path.splitext(epfiles)[0]
-                    module_name = "%s.%s" % (apiclass_module, module_file)
-                    # Convert module name into a module
-                    module = Meta.get_module_from_string(module_name)
-                    # Extract classes from the module
-                    classes = self._meta.get_classes_from_module(module)
-                    for class_name in classes:
-                        ep_class = classes.get(class_name)
-                        # Filtering out classes without required data
-                        if not hasattr(ep_class, "methods"):
-                            continue
-                        if ep_class.methods is None:
-                            continue
+                # get module name (es: apis.filename)
+                module_file = os.path.splitext(epfiles)[0]
+                module_name = "%s.%s" % (apiclass_module, module_file)
+                # Convert module name into a module
+                module = Meta.get_module_from_string(module_name)
+                # Extract classes from the module
+                classes = self._meta.get_classes_from_module(module)
+                for class_name in classes:
+                    ep_class = classes.get(class_name)
+                    # Filtering out classes without required data
+                    if not hasattr(ep_class, "methods"):
+                        continue
+                    if ep_class.methods is None:
+                        continue
 
-                        if not self._testing:
-                            for var in ep_class.depends_on:
-                                pieces = var.strip().split(' ')
-                                pieces_num = len(pieces)
-                                if pieces_num == 1:
-                                    dependency = pieces.pop()
-                                    negate = False
-                                elif pieces_num == 2:
-                                    negate, dependency = pieces
-                                    negate = negate.lower() == 'not'
-                                else:
-                                    log.exit('Wrong parameter: %s', var)
+                    if not self._testing:
+                        for var in ep_class.depends_on:
+                            pieces = var.strip().split(' ')
+                            pieces_num = len(pieces)
+                            if pieces_num == 1:
+                                dependency = pieces.pop()
+                                negate = False
+                            elif pieces_num == 2:
+                                negate, dependency = pieces
+                                negate = negate.lower() == 'not'
+                            else:
+                                log.exit('Wrong parameter: %s', var)
 
-                                check = detector.get_bool_from_os(dependency)
-                                if negate:
-                                    check = not check
+                            check = detector.get_bool_from_os(dependency)
+                            if negate:
+                                check = not check
 
-                                # Skip if not meeting the requirements of the dependency
-                                if not check:
-                                    log.debug(
-                                        "Skip '%s': unmet %s",
-                                        apiclass_module,
-                                        dependency
-                                    )
-                                    continue
-
-                        # Building endpoint
-                        endpoint = EndpointElements(custom={})
-
-                        endpoint.cls = ep_class
-                        endpoint.exists = True
-                        endpoint.iscore = iscore
-
-                        # Global tags to be applied to all methods
-                        endpoint.tags = ep_class.labels
-
-                        # base URI
-                        base = ep_class.baseuri
-                        if base not in BASE_URLS:
-                            log.warning("Invalid base %s", base)
-                            base = API_URL
-                        base = base.strip('/')
-                        endpoint.base_uri = base
-
-                        endpoint.uris = {}  # attrs python lib bug?
-                        endpoint.custom['schema'] = {
-                            'expose': ep_class.expose_schema,
-                            'publish': {},
-                        }
-                        # for label, uri in ep_class.mapping.items():
-
-                        #     # BUILD URI
-                        #     total_uri = '/%s%s' % (base, uri)
-                        #     endpoint.uris[label] = total_uri
-
-                        #     # If SCHEMA requested create
-                        #     if endpoint.custom['schema']['expose']:
-
-                        #         schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
-
-                        #         p = hex(id(endpoint.cls))
-                        #         self._schema_endpoint.uris[label + p] = schema_uri
-
-                        #         endpoint.custom['schema']['publish'][label] = ep_class.publish
-                        #         self._schemas_map[schema_uri] = total_uri
-
-                        endpoint.methods = {}
-
-                        for m in ep_class.methods:
-                            if not hasattr(ep_class, m):
-                                log.critical("%s dict not defined in %s", m, class_name)
+                            # Skip if not meeting the requirements of the dependency
+                            if not check:
+                                log.debug(
+                                    "Skip '%s': unmet %s",
+                                    apiclass_module,
+                                    dependency
+                                )
                                 continue
-                            endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
 
-                        self._endpoints.append(endpoint)
+                    # Building endpoint
+                    endpoint = EndpointElements(custom={})
+
+                    endpoint.cls = ep_class
+                    endpoint.exists = True
+                    endpoint.iscore = iscore
+
+                    # Global tags to be applied to all methods
+                    endpoint.tags = ep_class.labels
+
+                    # base URI
+                    base = ep_class.baseuri
+                    if base not in BASE_URLS:
+                        log.warning("Invalid base %s", base)
+                        base = API_URL
+                    base = base.strip('/')
+                    endpoint.base_uri = base
+
+                    endpoint.uris = {}  # attrs python lib bug?
+                    endpoint.custom['schema'] = {
+                        'expose': ep_class.expose_schema,
+                        'publish': {},
+                    }
+
+                    if endpoint.custom['schema']['expose']:
+                        log.critical("Schema expose not implemented yet")
+                    # for label, uri in ep_class.mapping.items():
+
+                    #     # BUILD URI
+                    #     total_uri = '/%s%s' % (base, uri)
+                    #     endpoint.uris[label] = total_uri
+
+                    #     # If SCHEMA requested create
+                    #     if endpoint.custom['schema']['expose']:
+
+                    #         schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+
+                    #         p = hex(id(endpoint.cls))
+                    #         self._schema_endpoint.uris[label + p] = schema_uri
+
+                    #         endpoint.custom['schema']['publish'][label] = ep_class.publish
+                    #         self._schemas_map[schema_uri] = total_uri
+
+                    endpoint.methods = {}
+
+                    for m in ep_class.methods:
+                        if not hasattr(ep_class, m):
+                            log.critical("%s dict not defined in %s", m, class_name)
+                            continue
+                        endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
+
+                    self._endpoints.append(endpoint)
 
             if not iscore:
                 swagger_dir = os.path.join(base_dir, 'swagger')
@@ -295,7 +297,17 @@ class Customizer(object):
                     else:
                         apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
 
-                    current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, iscore)
+                    log.warning(
+                        "Deprecated endpoint configuration from yaml: %s",
+                        apiclass_module
+                    )
+
+                    current = self.lookup(
+                        ep,
+                        apiclass_module,
+                        swagger_endpoint_dir,
+                        iscore
+                    )
 
                     if current is not None and current.exists:
                         # Add endpoint to REST mapping
