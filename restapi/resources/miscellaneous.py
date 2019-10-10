@@ -108,6 +108,28 @@ class SwaggerSpecifications(EndpointResource):
     Specifications output throught Swagger (open API) standards
     """
 
+    labels = ["specifications"]
+
+    SPECS = {
+        "mapping": {
+            "status": "/specs"
+        }
+    }
+    GET = {
+        "status": {
+            "summary": "Specifications output throught Swagger (open API) standards",
+            "custom": {
+                "authentication": False,
+                "publish": True
+            },
+            "responses": {
+                "200": {
+                    "description": "a JSON with all endpoint defined with Swagger standards"
+                }
+            }
+        }
+    }
+
     def get(self):
 
         # NOTE: swagger dictionary is read only once, at server init time

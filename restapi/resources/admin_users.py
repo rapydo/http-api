@@ -22,6 +22,93 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 
 class AdminUsers(GraphBaseOperations):
+
+    depends_on = ["not ADMINER_DISABLED"]
+    labels = ["admin"]
+
+    SPECS = {
+        "schema": {
+            "expose": True
+        },
+        "mapping": {
+            "users": "/admin/users",
+            "user": "/admin/users/<user_id>"
+        }
+    }
+    GET = {
+        "common": {
+            "custom": {
+                "authentication": True
+            }
+        },
+        "users": {
+            "summary": "List of users",
+            "responses": {
+                "200": {
+                    "description": "List of users successfully retrieved"
+                }
+            }
+        },
+        "user": {
+            "summary": "Obtain information on a single user",
+            "responses": {
+                "200": {
+                    "description": "User information successfully retrieved"
+                }
+            }
+        }
+    }
+    POST = {
+        "common": {
+            "custom": {
+                "authentication": True
+            },
+            "custom_parameters": [
+                "AdminUsers"
+            ]
+        },
+        "users": {
+            "summary": "Create a new user",
+            "responses": {
+                "200": {
+                    "description": "The uuid of the new user is returned"
+                }
+            }
+        }
+    }
+    PUT = {
+        "common": {
+            "custom": {
+                "authentication": True
+            },
+            "custom_parameters": [
+                "AdminUsers"
+            ]
+        },
+        "user": {
+            "summary": "Modify a user",
+            "responses": {
+                "200": {
+                    "description": "User successfully modified"
+                }
+            }
+        }
+    }
+    DELETE = {
+        "common": {
+            "custom": {
+                "authentication": True
+            }
+        },
+        "user": {
+            "summary": "Delete a user",
+            "responses": {
+                "200": {
+                    "description": "User successfully deleted"
+                }
+            }
+        }
+    }
     def parse_roles(self, properties):
 
         if 'roles' in properties:
@@ -509,6 +596,42 @@ Password: "%s"
 
 
 class UserRole(GraphBaseOperations):
+
+    depends_on = ["not ADMINER_DISABLED"]
+    labels = ["miscellaneous"]
+    SPECS = {
+        "schema": {
+            "expose": True
+        },
+        "mapping": {
+            "all": "/role",
+            "query": "/role/<query>"
+        }
+    }
+    GET = {
+        "all": {
+            "summary": "List of existing roles",
+            "custom": {
+                "authentication": True
+            },
+            "responses": {
+                "200": {
+                    "description": "List of roles successfully retrieved"
+                }
+            }
+        },
+        "query": {
+            "summary": "List of existing roles matching a substring query",
+            "custom": {
+                "authentication": true
+            },
+            "responses": {
+                "200": {
+                    "description": "Matching roles successfully retrieved"
+                }
+            }
+        }
+    }
     @decorate.catch_error(exception=Exception, catch_generic=True)
     @catch_graph_exceptions
     def get(self, query=None):
