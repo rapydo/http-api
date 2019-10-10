@@ -37,6 +37,7 @@ class EndpointResource(Resource):
 
     baseuri = API_URL
     labels = []
+    depends_on = []
     """
     Implements a generic Resource for our Restful APIs model
     """

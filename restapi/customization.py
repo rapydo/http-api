@@ -174,128 +174,157 @@ class Customizer(object):
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
 
-                # get module name (es: apis.filename)
-                module_file = os.path.splitext(epfiles)[0]
-                module_name = "%s.%s" % (apiclass_module, module_file)
-                # Convert module name into a module
-                module = Meta.get_module_from_string(module_name)
-                # Extract classes from the module
-                classes = self._meta.get_classes_from_module(module)
-                for class_name in classes:
-                    ep_class = classes.get(class_name)
-                    # Filtering out classes without required data
-                    if not hasattr(ep_class, "methods"):
-                        continue
-                    if ep_class.methods is None:
-                        continue
-                    if not hasattr(ep_class, "SPECS"):
-                        continue
-
-                    # Building endpoint
-                    endpoint = EndpointElements(custom={})
-
-                    endpoint.cls = ep_class
-                    endpoint.exists = True
-                    endpoint.iscore = iscore
-
-                    # Global tags to be applied to all methods
-                    endpoint.tags = ep_class.labels
-
-                    # base URI
-                    base = ep_class.baseuri
-                    if base not in BASE_URLS:
-                        log.warning("Invalid base %s", base)
-                        base = API_URL
-                    base = base.strip('/')
-
-                    #####################
-                    # MAPPING
-                    schema = ep_class.SPECS.pop('schema', {})
-                    mappings = ep_class.SPECS.pop('mapping', [])
-                    if len(mappings) < 1:
-                        raise KeyError("Missing 'mapping' section")
-
-                    endpoint.uris = {}  # attrs python lib bug?
-                    endpoint.custom['schema'] = {
-                        'expose': schema.get('expose', False),
-                        'publish': {},
-                    }
-                    for label, uri in mappings.items():
-
-                        # BUILD URI
-                        total_uri = '/%s%s' % (base, uri)
-                        endpoint.uris[label] = total_uri
-
-                        # If SCHEMA requested create
-                        if endpoint.custom['schema']['expose']:
-
-                            schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
-
-                            p = hex(id(endpoint.cls))
-                            self._schema_endpoint.uris[label + p] = schema_uri
-
-                            endpoint.custom['schema']['publish'][label] = schema.get(
-                                'publish', False
-                            )
-
-                            self._schemas_map[schema_uri] = total_uri
-
-                    # Description for path parameters
-                    endpoint.ids = ep_class.SPECS.pop('ids', {})
-
-                    # Check if something strange is still in configuration
-                    if len(ep_class.SPECS) > 0:
-                        raise KeyError(
-                            "Unwanted keys in %s: %s" % (
-                                class_name,
-                                list(ep_class.SPECS.keys())
-                            )
-                        )
-
-                    endpoint.methods = {}
-
-                    for m in ep_class.methods:
-                        if not hasattr(ep_class, m):
-                            log.critical("%s dict not defined in %s", m, class_name)
-                            continue
-                        endpoint.methods[m.lower()] = getattr(ep_class, m)
-
-                    self._endpoints.append(endpoint)
-
-            swagger_dir = os.path.join(base_dir, 'swagger')
-            log.verbose("Swagger dir: %s" % swagger_dir)
-
-            for ep in os.listdir(swagger_dir):
-
-                if ep in simple_override_check:
-                    log.warning(
-                        "%s already loaded from %s", ep, simple_override_check.get(ep)
-                    )
-                    continue
-                simple_override_check[ep] = base_dir
-
-                swagger_endpoint_dir = os.path.join(swagger_dir, ep)
-
-                if os.path.isfile(swagger_endpoint_dir):
-                    exception = '%s.yaml' % SWAGGER_MODELS_FILE
-                    if not swagger_endpoint_dir.endswith('/' + exception):
-                        log.debug(
-                            "Found a file instead of a folder: %s", swagger_endpoint_dir
-                        )
-                    continue
-
-                base_module = helpers.last_dir(base_dir)
-
                 if iscore:
-                    apiclass_module = '%s.%s' % (base_module, 'resources')
-                else:
-                    apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
+                    # get module name (es: apis.filename)
+                    module_file = os.path.splitext(epfiles)[0]
+                    module_name = "%s.%s" % (apiclass_module, module_file)
+                    # Convert module name into a module
+                    module = Meta.get_module_from_string(module_name)
+                    # Extract classes from the module
+                    classes = self._meta.get_classes_from_module(module)
+                    for class_name in classes:
+                        ep_class = classes.get(class_name)
+                        # Filtering out classes without required data
+                        if not hasattr(ep_class, "methods"):
+                            continue
+                        if ep_class.methods is None:
+                            continue
+                        if not hasattr(ep_class, "SPECS"):
+                            continue
 
-                current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, iscore)
+                        if not self._testing:
+                            for var in ep_class.depends_on:
+                                pieces = var.strip().split(' ')
+                                pieces_num = len(pieces)
+                                if pieces_num == 1:
+                                    dependency = pieces.pop()
+                                    negate = False
+                                elif pieces_num == 2:
+                                    negate, dependency = pieces
+                                    negate = negate.lower() == 'not'
+                                else:
+                                    log.exit('Wrong parameter: %s', var)
 
-                if current is not None and current.exists:
-                    # Add endpoint to REST mapping
-                    self._endpoints.append(current)
+                                check = detector.get_bool_from_os(dependency)
+                                # Enable the possibility to depend on not having a variable
+                                if negate:
+                                    check = not check
+
+                                # Skip if not meeting the requirements of the dependency
+                                if not check:
+                                    log.debug(
+                                        "Skip '%s': unmet %s",
+                                        apiclass_module,
+                                        dependency
+                                    )
+                                    continue
+
+                        # Building endpoint
+                        endpoint = EndpointElements(custom={})
+
+                        endpoint.cls = ep_class
+                        endpoint.exists = True
+                        endpoint.iscore = iscore
+
+                        # Global tags to be applied to all methods
+                        endpoint.tags = ep_class.labels
+
+                        # base URI
+                        base = ep_class.baseuri
+                        if base not in BASE_URLS:
+                            log.warning("Invalid base %s", base)
+                            base = API_URL
+                        base = base.strip('/')
+
+                        #####################
+                        # MAPPING
+                        schema = ep_class.SPECS.pop('schema', {})
+                        mappings = ep_class.SPECS.pop('mapping', [])
+                        if len(mappings) < 1:
+                            raise KeyError("Missing 'mapping' section")
+
+                        endpoint.uris = {}  # attrs python lib bug?
+                        endpoint.custom['schema'] = {
+                            'expose': schema.get('expose', False),
+                            'publish': {},
+                        }
+                        for label, uri in mappings.items():
+
+                            # BUILD URI
+                            total_uri = '/%s%s' % (base, uri)
+                            endpoint.uris[label] = total_uri
+
+                            # If SCHEMA requested create
+                            if endpoint.custom['schema']['expose']:
+
+                                schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+
+                                p = hex(id(endpoint.cls))
+                                self._schema_endpoint.uris[label + p] = schema_uri
+
+                                endpoint.custom['schema']['publish'][label] = schema.get(
+                                    'publish', False
+                                )
+
+                                self._schemas_map[schema_uri] = total_uri
+
+                        # Description for path parameters
+                        endpoint.ids = ep_class.SPECS.pop('ids', {})
+
+                        # Check if something strange is still in configuration
+                        if len(ep_class.SPECS) > 0:
+                            raise KeyError(
+                                "Unwanted keys in %s: %s" % (
+                                    class_name,
+                                    list(ep_class.SPECS.keys())
+                                )
+                            )
+
+                        endpoint.methods = {}
+
+                        for m in ep_class.methods:
+                            if not hasattr(ep_class, m):
+                                log.critical("%s dict not defined in %s", m, class_name)
+                                continue
+                            endpoint.methods[m.lower()] = getattr(ep_class, m)
+
+                        self._endpoints.append(endpoint)
+
+            if not iscore:
+                swagger_dir = os.path.join(base_dir, 'swagger')
+                log.verbose("Swagger dir: %s" % swagger_dir)
+
+                for ep in os.listdir(swagger_dir):
+
+                    if ep in simple_override_check:
+                        log.warning(
+                            "%s already loaded from %s", ep, simple_override_check.get(ep)
+                        )
+                        continue
+                    simple_override_check[ep] = base_dir
+
+                    swagger_endpoint_dir = os.path.join(swagger_dir, ep)
+
+                    if os.path.isfile(swagger_endpoint_dir):
+                        exception = '%s.yaml' % SWAGGER_MODELS_FILE
+                        if not swagger_endpoint_dir.endswith('/' + exception):
+                            log.debug(
+                                "Found a file instead of a folder: %s", swagger_endpoint_dir
+                            )
+                        continue
+
+                    base_module = helpers.last_dir(base_dir)
+
+                    if iscore:
+                        apiclass_module = '%s.%s' % (base_module, 'resources')
+                    else:
+                        apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
+
+                    current = self.lookup(ep, apiclass_module, swagger_endpoint_dir, iscore)
+
+                    if current is not None and current.exists:
+                        # Add endpoint to REST mapping
+                        self._endpoints.append(current)
 
     def do_swagger(self):
 
