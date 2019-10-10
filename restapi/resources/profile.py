@@ -503,9 +503,6 @@ class RecoverPassword(EndpointResource):
         "/reset": {
             "summary": "Request password reset via email",
             "description": "Request password reset via email",
-            "custom": {
-                "publish": True
-            },
             "responses": {
                 "200": {
                     "description": "Reset email is valid"
@@ -520,9 +517,6 @@ class RecoverPassword(EndpointResource):
         "/reset/<token_id>": {
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",
-            "custom": {
-                "publish": True
-            },
             "responses": {
                 "200": {
                     "description": "Reset token is valid, password changed"

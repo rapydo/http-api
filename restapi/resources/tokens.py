@@ -23,9 +23,6 @@ class Tokens(EndpointResource):
     GET = {
         "/tokens": {
             "summary": "Show all tokens emitted for logged user",
-            "custom": {
-                "publish": True,
-            },
             "responses": {
                 "200": {
                     "description": "List of tokens"
@@ -34,9 +31,6 @@ class Tokens(EndpointResource):
         },
         "/tokens/<token_id>": {
             "summary": "Show specified token if available for logged user",
-            "custom": {
-                "publish": True,
-            },
             "responses": {
                 "200": {
                     "description": "Details on the specified token"

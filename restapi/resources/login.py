@@ -21,9 +21,6 @@ class Login(EndpointResource):
         "/login": {
             "summary": "Login with basic credentials",
             "description": "Normal credentials (username and password) login endpoint",
-            "custom": {
-                "publish": True
-            },
             "parameters": [
                 {
                     "name": "credentials",

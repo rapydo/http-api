@@ -96,9 +96,6 @@ class SwaggerSpecifications(EndpointResource):
     GET = {
         "/specs": {
             "summary": "Specifications output throught Swagger (open API) standards",
-            "custom": {
-                "publish": True
-            },
             "responses": {
                 "200": {
                     "description": "a JSON with all endpoint defined with Swagger standards"
