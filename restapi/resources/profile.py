@@ -130,6 +130,66 @@ def custom_extra_registration(variables):
 
 class Profile(EndpointResource):
     """ Current user informations """
+    baseuri = "/auth"
+    depends_on = ["not PROFILE_DISABLED"]
+    labels = ["profiles"]
+
+    SPECS = {
+        "mapping": {
+            "whoami": "/profile"
+        }
+    }
+    GET = {
+        "whoami": {
+            "summary": "List profile attributes",
+            "custom": {
+                "authentication": True
+            },
+            "responses": {
+                "200": {
+                    "description": "Dictionary with all profile attributes"
+                }
+            }
+        }
+    }
+    POST = {
+        "whoami": {
+            "summary": "Register new user",
+            "custom": {
+                "authentication": False
+            },
+            "custom_parameters": [
+                "User"
+            ],
+            "responses": {
+                "200": {
+                    "description": "ID of new user"
+                }
+            }
+        }
+    }
+    PUT = {
+        "whoami": {
+            "summary": "Update profile attributes",
+            "custom": {
+                "authentication": True
+            },
+            "parameters": [
+                {
+                    "name": "credentials",
+                    "in": "body",
+                    "schema": {
+                        "$ref": "#/definitions/ProfileUpdate"
+                    }
+                }
+            ],
+            "responses": {
+                "204": {
+                    "description": "Updated has been successful"
+                }
+            }
+        }
+    }
 
     def get(self):
 
