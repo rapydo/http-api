@@ -480,6 +480,54 @@ def send_internal_password_reset(uri, title, reset_email):
 
 
 class RecoverPassword(EndpointResource):
+
+    baseuri = "/auth"
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["authentication"]
+
+    SPECS = {
+        "mapping": {
+            "ask_reset": "/reset",
+            "do_reset": "/reset/<token_id>"
+        }
+    }
+    POST = {
+        "ask_reset": {
+            "summary": "Request password reset via email",
+            "description": "Request password reset via email",
+            "custom": {
+                "authentication": False,
+                "publish": True
+            },
+            "responses": {
+                "200": {
+                    "description": "Reset email is valid"
+                },
+                "401": {
+                    "description": "Invalid reset email"
+                }
+            }
+        }
+    }
+    PUT = {
+        "do_reset": {
+            "summary": "Change password as conseguence of a reset request",
+            "description": "Change password as conseguence of a reset request",
+            "custom": {
+                "authentication": False,
+                "publish": True
+            },
+            "responses": {
+                "200": {
+                    "description": "Reset token is valid, password changed"
+                },
+                "401": {
+                    "description": "Invalid reset token"
+                }
+            }
+        }
+    }
+
     @decorate.catch_error()
     def post(self):
 
