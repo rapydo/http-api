@@ -242,7 +242,7 @@ class Customizer(object):
         if conf is None or 'class' not in conf:
             raise ValueError("No 'class' defined for '%s'" % endpoint)
 
-        current = self.load_endpoint(endpoint, apiclass_module, conf, isbase)
+        current = self.load_endpoint(apiclass_module, conf, isbase)
         current.methods = yaml_files
         return current
 
@@ -253,12 +253,12 @@ class Customizer(object):
     #         content = json.load(fp)
     #     return content
 
-    def load_endpoint(self, default_uri, apiclass_module, conf, isbase):
+    def load_endpoint(self, apiclass_module, conf, isbase):
 
         endpoint = EndpointElements(custom={})
 
         # Load the endpoint class defined in the YAML file
-        file_name = conf.pop('file', default_uri)
+        file_name = conf.pop('file')
         class_name = conf.pop('class')
         name = '%s.%s' % (apiclass_module, file_name)
         module = Meta.get_module_from_string(name, exit_on_fail=False)

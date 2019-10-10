@@ -46,7 +46,6 @@ class EndpointsFarmer(object):
             decorated = authentication.authorization_required(
                 original,
                 roles=roles,
-                from_swagger=True,
                 required_roles=attributes.required_roles,
             )
             setattr(resource.cls, method, decorated)
