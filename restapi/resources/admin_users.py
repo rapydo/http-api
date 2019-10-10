@@ -55,13 +55,11 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     POST = {
-        "common": {
-            "custom_parameters": [
-                "AdminUsers"
-            ]
-        },
         "users": {
             "summary": "Create a new user",
+            "custom_parameters": [
+                "AdminUsers"
+            ],
             "responses": {
                 "200": {
                     "description": "The uuid of the new user is returned"
@@ -70,13 +68,11 @@ class AdminUsers(GraphBaseOperations):
         }
     }
     PUT = {
-        "common": {
-            "custom_parameters": [
-                "AdminUsers"
-            ]
-        },
         "user": {
             "summary": "Modify a user",
+            "custom_parameters": [
+                "AdminUsers"
+            ],
             "responses": {
                 "200": {
                     "description": "User successfully modified"

@@ -30,13 +30,11 @@ class Tokens(EndpointResource):
         }
     }
     GET = {
-        "common": {
-            "custom": {
-                "publish": True,
-            }
-        },
         "tokenizers": {
             "summary": "Show all tokens emitted for logged user",
+            "custom": {
+                "publish": True,
+            },
             "responses": {
                 "200": {
                     "description": "List of tokens"
@@ -45,6 +43,9 @@ class Tokens(EndpointResource):
         },
         "tokenizer": {
             "summary": "Show specified token if available for logged user",
+            "custom": {
+                "publish": True,
+            },
             "responses": {
                 "200": {
                     "description": "Details on the specified token"
