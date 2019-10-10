@@ -155,6 +155,79 @@ class SwaggerSpecifications(EndpointResource):
 if detector.check_availability('celery'):
 
     class Queue(EndpointResource):
+
+        depends_on = ["CELERY_ENABLE"]
+        labels = ["tasks"]
+        SPECS = {
+            "mapping": {
+                "list_queue": "/queue",
+                "single_queue": "/queue/<task_id>"
+            },
+            "ids": {
+                "task_id": "uuid referring to the task you are selecting"
+            }
+        }
+        GET = {
+            "common": {
+                "custom": {
+                    "authentication": True,
+                    "authorized": [
+                        "admin_root",
+                        "staff_user"
+                    ],
+                    "required_roles": "any"
+                }
+            },
+            "list_queue": {
+                "summary": "List tasks in the queue",
+                "description": "Base implementation of a CELERY queue.",
+                "responses": {
+                    "200": {
+                        "description": "A list of tasks"
+                    }
+                }
+            },
+            "single_queue": {
+                "summary": "Information about a single task",
+                "responses": {
+                    "200": {
+                        "description": "task information"
+                    }
+                }
+            }
+        }
+        PUT = {
+            "single_queue": {
+                "summary": "Revoke a task from its id",
+                "custom": {
+                    "authentication": True,
+                    "authorized": [
+                        "admin_root"
+                    ]
+                },
+                "responses": {
+                    "204": {
+                        "description": "The task was revoked"
+                    }
+                }
+            }
+        }
+        DELETE = {
+            "single_queue": {
+                "summary": "Delete a task",
+                "custom": {
+                    "authentication": True,
+                    "authorized": [
+                        "admin_root"
+                    ]
+                },
+                "responses": {
+                    "204": {
+                        "description": "The task with specified id was succesfully deleted"
+                    }
+                }
+            }
+        }
         def get(self, task_id=None):
 
             data = []
