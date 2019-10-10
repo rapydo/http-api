@@ -26,7 +26,7 @@ class AdminUsers(GraphBaseOperations):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
-    expose_schema = True
+    # expose_schema = True
 
     GET = {
         "/admin/users": {
@@ -576,7 +576,7 @@ class UserRole(GraphBaseOperations):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["miscellaneous"]
-    expose_schema = True
+    # expose_schema = True
 
     GET = {
         "/role": {
