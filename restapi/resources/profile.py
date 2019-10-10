@@ -381,6 +381,43 @@ class Profile(EndpointResource):
 
 
 class ProfileActivate(EndpointResource):
+    depends_on =  ["not PROFILE_DISABLED"]
+    baseuri = "/auth"
+    labels = ["base", "profiles"]
+
+    SPECS = {
+        "mapping": {
+            "activate": "/profile/activate/<token_id>",
+            "ask": "/profile/activate"
+        }
+    }
+    POST = {
+        "ask": {
+            "summary": "Ask a new activation link",
+            "custom": {
+                "authentication": False
+            },
+            "responses": {
+                "200": {
+                    "description": "A new activation link has been sent"
+                }
+            }
+        }
+    }
+    PUT = {
+        "activate": {
+            "summary": "Activate account by verificate activation token",
+            "custom": {
+                "authentication": False
+            },
+            "responses": {
+                "200": {
+                    "description": "Account has been successfully activated"
+                }
+            }
+        }
+    }
+
     @decorate.catch_error()
     def put(self, token_id):
 
