@@ -16,6 +16,66 @@ class Tokens
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
+    baseuri = "/auth"
+    labels = ["authentication"]
+
+    SPECS = {
+        "mapping": {
+            "tokenizers": "/tokens",
+            "tokenizer": "/tokens/<token_id>"
+        },
+        "ids": {
+            "token_id": "uuid associated to the token you want to select"
+        }
+    }
+    GET = {
+        "common": {
+            "custom": {
+                "publish": True,
+                "authentication": True
+            }
+        },
+        "tokenizers": {
+            "summary": "Show all tokens emitted for logged user",
+            "responses": {
+                "200": {
+                    "description": "List of tokens"
+                }
+            }
+        },
+        "tokenizer": {
+            "summary": "Show specified token if available for logged user",
+            "responses": {
+                "200": {
+                    "description": "Details on the specified token"
+                }
+            }
+        }
+    }
+    DELETE = {
+        "common": {
+            "custom": {
+                "authentication": True
+            }
+        },
+        "tokenizers": {
+            "summary": "Remove all tokens emitted for logged user",
+            "description": "Note: allowed only for testing",
+            "responses": {
+                "200": {
+                    "description": "Tokens have been erased"
+                }
+            }
+        },
+        "tokenizer": {
+            "summary": "Remove specified token and make it invalid from now on",
+            "responses": {
+                "200": {
+                    "description": "Token has been invalidated"
+                }
+            }
+        }
+    }
     def get_user(self):
 
         iamadmin = self.auth.verify_admin()
