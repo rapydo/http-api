@@ -1,7 +1,4 @@
 
-# depends_on:
-#   - MAIN_LOGIN_ENABLE
-
 file: logout
 class: Logout
 baseuri: "/auth"

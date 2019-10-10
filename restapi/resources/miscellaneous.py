@@ -23,12 +23,6 @@ class Verify
 class SwaggerSpecifications
     GET: return swagger specs
 
-class Internal
-    GET: return a standard message if user has role Internal
-
-class Admin
-    GET: return a standard message if user has role Admin
-
 class Queue
     GET: get list of celery tasks
     PUT: revoke a (not running) task
