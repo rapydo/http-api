@@ -192,6 +192,10 @@ class Customizer(object):
                         if not hasattr(ep_class, "SPECS"):
                             continue
 
+                        import copy
+                        specs = copy.deepcopy(ep_class.SPECS)
+                        # specs = ep_class.SPECS.copy()
+
                         if not self._testing:
                             for var in ep_class.depends_on:
                                 pieces = var.strip().split(' ')
@@ -206,7 +210,6 @@ class Customizer(object):
                                     log.exit('Wrong parameter: %s', var)
 
                                 check = detector.get_bool_from_os(dependency)
-                                # Enable the possibility to depend on not having a variable
                                 if negate:
                                     check = not check
 
@@ -238,8 +241,8 @@ class Customizer(object):
 
                         #####################
                         # MAPPING
-                        schema = ep_class.SPECS.pop('schema', {})
-                        mappings = ep_class.SPECS.pop('mapping', [])
+                        schema = specs.pop('schema', {})
+                        mappings = specs.pop('mapping', [])
                         if len(mappings) < 1:
                             raise KeyError(
                                 "Missing 'mapping' section in %s" % class_name
@@ -271,14 +274,14 @@ class Customizer(object):
                                 self._schemas_map[schema_uri] = total_uri
 
                         # Description for path parameters
-                        endpoint.ids = ep_class.SPECS.pop('ids', {})
+                        endpoint.ids = specs.pop('ids', {})
 
                         # Check if something strange is still in configuration
-                        if len(ep_class.SPECS) > 0:
+                        if len(specs) > 0:
                             raise KeyError(
                                 "Unwanted keys in %s: %s" % (
                                     class_name,
-                                    list(ep_class.SPECS.keys())
+                                    list(specs.keys())
                                 )
                             )
 
@@ -288,7 +291,8 @@ class Customizer(object):
                             if not hasattr(ep_class, m):
                                 log.critical("%s dict not defined in %s", m, class_name)
                                 continue
-                            endpoint.methods[m.lower()] = getattr(ep_class, m)
+                            endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
+                            # endpoint.methods[m.lower()] = getattr(ep_class, m).copy()
 
                         self._endpoints.append(endpoint)
 
