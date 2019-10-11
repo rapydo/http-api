@@ -271,7 +271,8 @@ def send_errors_by_email(func):
             task_name = self.request.task
 
             log.error("Celery task %s failed (%s)", task_id, task_name)
-            log.error("Failed task arguments: %s", str(self.request.args))
+            arguments = str(self.request.args)
+            log.error("Failed task arguments: %s", arguments[0:256])
             log.error("Task error: %s", traceback.format_exc())
 
             if send_mail_is_active():
