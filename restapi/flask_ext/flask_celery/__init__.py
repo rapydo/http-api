@@ -12,11 +12,11 @@ from celerybeatmongo.models import PeriodicTask, DoesNotExist
 
 # from kombu import Exchange, Queue
 
-from utilities.globals import mem
-
 from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.flask_ext import BaseExtension, get_logger
+from restapi.services.detect import Detector
 
+from utilities.globals import mem
 
 log = get_logger(__name__)
 
@@ -176,7 +176,7 @@ class CeleryExt(BaseExtension):
         # CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
         # CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
 
-        if self.variables.get("beat_enabled", False):
+        if Detector.get_bool_from_os('CELERY_BEAT_ENABLED'):
             log.info("Enabling Celery Beat")
             if backend != 'MONGODB':
                 log.warning("Cannot configure mongodb celery beat scheduler")
