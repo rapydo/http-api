@@ -188,9 +188,9 @@ class Detector(object):
             ext_name = service.get('class')
 
             # Get the existing class
-            MyClass = self.load_class_from_module(ext_name, service=service)
-
             try:
+                MyClass = self.load_class_from_module(ext_name, service=service)
+
                 # Passing variables
                 MyClass.set_variables(variables)
 
