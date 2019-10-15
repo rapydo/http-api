@@ -53,7 +53,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                     log.exit("Found unexpected key: %s", j)
 
                 if schema:
-                    conf_output += "\nschema_expose = True"
+                    conf_output += "\n# schema_expose = True"
                 conf_output += "\nlabels = %s" % labels
             else:
                 common = j.pop('common', {})

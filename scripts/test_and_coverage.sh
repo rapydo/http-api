@@ -127,6 +127,8 @@ else
 	sleep 30
 	echo "Backend server should be ready now!"
 
+	rapydo -s backend logs
+
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
 	rapydo --mode production --project ${PROJECT} remove

@@ -40,11 +40,11 @@ class Tokens(EndpointResource):
     }
     DELETE = {
         "/tokens": {
-            "summary": "Remove all tokens emitted for logged user",
-            "description": "Note: allowed only for testing",
+            "summary": "Remove all tokens emitted for a user",
+            "description": "Note: only allowed for testing",
             "responses": {
                 "200": {
-                    "description": "Tokens have been erased"
+                    "description": "All tokens have been invalidated"
                 }
             }
         },
