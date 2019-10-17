@@ -120,18 +120,18 @@ else
 	echo "    env:" >> .projectrc
 	echo "      DEFAULT_DHLEN: 256" >> .projectrc
 
-	rapydo --mode production --project ${PROJECT} pull
-	rapydo --mode production --project ${PROJECT} start
+	rapydo --development --mode production --project ${PROJECT} pull
+	rapydo --development --mode production --project ${PROJECT} start
 
 	echo "Backend server is starting"
 	sleep 30
 	echo "Backend server should be ready now!"
 
-	rapydo --mode production --project ${PROJECT} -s backend logs
+	rapydo --development --mode production --project ${PROJECT} -s backend logs
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-	rapydo --mode production --project ${PROJECT} remove
-	rapydo --mode production --project ${PROJECT} clean
+	rapydo --development --mode production --project ${PROJECT} remove
+	rapydo --development --mode production --project ${PROJECT} clean
 
 fi
