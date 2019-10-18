@@ -99,6 +99,7 @@ class HTTPTokenAuth(object):
         return auth_type, token
 
     def required(self, roles=[], required_roles=None):
+        # required_roles = 'all', 'any'
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):

@@ -71,13 +71,19 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                     if 'custom' in conf:
                         auth = conf['custom'].pop('authentication', False)
                         roles = conf['custom'].pop('authorized', None)
+                        req_roles = conf['custom'].pop('required_roles', None)
+
                         if auth:
-                            if roles is None:
-                                decorators_output += "\n@authentication.required()"
-                                decorators_output += "\ndef %s(self...\n" % y
-                            else:
-                                decorators_output += "\n@authentication.required(roles=%s)" % roles
-                                decorators_output += "\ndef %s(self...\n" % y
+                            decorators_output += "\n@authentication.required("
+                            if roles is not None:
+                                decorators_output += "roles=%s" % roles
+                            if req_roles is not None:
+                                if roles is not None:
+                                    decorators_output += ", "
+                                decorators_output += "required_roles='%s'" % req_roles
+                            decorators_output += ")"
+
+                            decorators_output += "\ndef %s(self...\n" % y
                     data[u] = conf
 
                 if len(j) > 0:
