@@ -34,17 +34,14 @@ class Queue
 
 class Status(EndpointResource):
     """ API online client testing """
+
     labels = ['helpers']
 
     GET = {
         "/status": {
             "summary": "Check if the API server is currently reachable",
             "description": "You may use this URI to monitor network or server problems.",
-            "responses": {
-                "200": {
-                    "description": "Server is alive!"
-                }
-            }
+            "responses": {"200": {"description": "Server is alive!"}},
         }
     }
 
@@ -63,10 +60,8 @@ class Verify(EndpointResource):
             "summary": "Check if the API server is able to reach the given service",
             "description": "You may use this URI to monitor the network link between API server and a given service",
             "responses": {
-                "200": {
-                    "description": "Server is able to reach the service!"
-                }
-            }
+                "200": {"description": "Server is able to reach the service!"}
+            },
         }
     }
 
@@ -100,7 +95,7 @@ class SwaggerSpecifications(EndpointResource):
                 "200": {
                     "description": "a JSON with all endpoint defined with Swagger standards"
                 }
-            }
+            },
         }
     }
 
@@ -136,29 +131,17 @@ if detector.check_availability('celery'):
             "/queue": {
                 "summary": "List tasks in the queue",
                 "description": "Base implementation of a CELERY queue.",
-                "responses": {
-                    "200": {
-                        "description": "A list of tasks"
-                    }
-                }
+                "responses": {"200": {"description": "A list of tasks"}},
             },
             "/queue/<task_id>": {
                 "summary": "Information about a single task",
-                "responses": {
-                    "200": {
-                        "description": "task information"
-                    }
-                }
-            }
+                "responses": {"200": {"description": "task information"}},
+            },
         }
         PUT = {
             "/queue/<task_id>": {
                 "summary": "Revoke a task from its id",
-                "responses": {
-                    "204": {
-                        "description": "The task was revoked"
-                    }
-                }
+                "responses": {"204": {"description": "The task was revoked"}},
             }
         }
         DELETE = {
@@ -168,12 +151,14 @@ if detector.check_availability('celery'):
                     "204": {
                         "description": "The task with specified id was succesfully deleted"
                     }
-                }
+                },
             }
         }
 
         # task_id = uuid referring to the task you are selecting
-        @authentication.required(roles=['admin_root', 'staff_user'], required_roles='any')
+        @authentication.required(
+            roles=['admin_root', 'staff_user'], required_roles='any'
+        )
         def get(self, task_id=None):
 
             data = []

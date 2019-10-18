@@ -106,7 +106,7 @@ def create_app(
     worker_mode=False,
     testing_mode=False,
     skip_endpoint_mapping=False,
-    **kwargs
+    **kwargs,
 ):
     """ Create the server istance for Flask application """
 
@@ -187,6 +187,8 @@ def create_app(
         # Triggering automatic mapping of REST endpoints
         current_endpoints = create_endpoints(farmer.EndpointsFarmer(Api))
         # Restful init of the app
+
+        # HERE all endpoints will be registered by using FlaskRestful
         current_endpoints.rest_api.init_app(microservice)
 
         ##############################

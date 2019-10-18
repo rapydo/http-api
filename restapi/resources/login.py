@@ -13,6 +13,7 @@ from utilities import htmlcodes as hcodes
 
 class Login(EndpointResource):
     """ Let a user login by using the configured method """
+
     baseuri = "/auth"
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
@@ -25,19 +26,13 @@ class Login(EndpointResource):
                 {
                     "name": "credentials",
                     "in": "body",
-                    "schema": {
-                        "$ref": "#/definitions/Credentials"
-                    }
+                    "schema": {"$ref": "#/definitions/Credentials"},
                 }
             ],
             "responses": {
-                "200": {
-                    "description": "Credentials are valid",
-                },
-                "401": {
-                    "description": "Invalid username or password"
-                }
-            }
+                "200": {"description": "Credentials are valid"},
+                "401": {"description": "Invalid username or password"},
+            },
         }
     }
 

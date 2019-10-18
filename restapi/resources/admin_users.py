@@ -32,56 +32,39 @@ class AdminUsers(GraphBaseOperations):
         "/admin/users": {
             "summary": "List of users",
             "responses": {
-                "200": {
-                    "description": "List of users successfully retrieved"
-                }
-            }
+                "200": {"description": "List of users successfully retrieved"}
+            },
         },
         "/admin/users/<user_id>": {
             "summary": "Obtain information on a single user",
             "responses": {
-                "200": {
-                    "description": "User information successfully retrieved"
-                }
-            }
-        }
+                "200": {"description": "User information successfully retrieved"}
+            },
+        },
     }
     POST = {
         "/admin/users": {
             "summary": "Create a new user",
-            "custom_parameters": [
-                "AdminUsers"
-            ],
+            "custom_parameters": ["AdminUsers"],
             "responses": {
-                "200": {
-                    "description": "The uuid of the new user is returned"
-                }
-            }
+                "200": {"description": "The uuid of the new user is returned"}
+            },
         }
     }
     PUT = {
         "/admin/users/<user_id>": {
             "summary": "Modify a user",
-            "custom_parameters": [
-                "AdminUsers"
-            ],
-            "responses": {
-                "200": {
-                    "description": "User successfully modified"
-                }
-            }
+            "custom_parameters": ["AdminUsers"],
+            "responses": {"200": {"description": "User successfully modified"}},
         }
     }
     DELETE = {
         "/admin/users/<user_id>": {
             "summary": "Delete a user",
-            "responses": {
-                "200": {
-                    "description": "User successfully deleted"
-                }
-            }
+            "responses": {"200": {"description": "User successfully deleted"}},
         }
     }
+
     def parse_roles(self, properties):
 
         if 'roles' in properties:
@@ -582,19 +565,15 @@ class UserRole(GraphBaseOperations):
         "/role": {
             "summary": "List of existing roles",
             "responses": {
-                "200": {
-                    "description": "List of roles successfully retrieved"
-                }
-            }
+                "200": {"description": "List of roles successfully retrieved"}
+            },
         },
         "/role/<query>": {
             "summary": "List of existing roles matching a substring query",
             "responses": {
-                "200": {
-                    "description": "Matching roles successfully retrieved"
-                }
-            }
-        }
+                "200": {"description": "Matching roles successfully retrieved"}
+            },
+        },
     }
 
     @decorate.catch_error(exception=Exception, catch_generic=True)

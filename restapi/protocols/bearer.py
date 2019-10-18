@@ -113,8 +113,8 @@ class HTTPTokenAuth(object):
                 if auth_type is None or auth_type.lower() != self._scheme.lower():
                     # Wrong authentication string
                     msg = (
-                        "Valid credentials have to be provided " +
-                        "inside Headers, e.g. %s: '%s %s'"
+                        "Valid credentials have to be provided "
+                        + "inside Headers, e.g. %s: '%s %s'"
                         % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
                     )
                     #
@@ -171,8 +171,8 @@ class HTTPTokenAuth(object):
             if auth_type is None or auth_type.lower() != self._scheme.lower():
                 # Wrong authentication string
                 msg = (
-                    "Valid credentials have to be provided " +
-                    "inside Headers, e.g. %s: '%s %s'"
+                    "Valid credentials have to be provided "
+                    + "inside Headers, e.g. %s: '%s %s'"
                     % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
                 )
                 #

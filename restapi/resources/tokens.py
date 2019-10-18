@@ -23,39 +23,23 @@ class Tokens(EndpointResource):
     GET = {
         "/tokens": {
             "summary": "Show all tokens emitted for logged user",
-            "responses": {
-                "200": {
-                    "description": "List of tokens"
-                }
-            }
+            "responses": {"200": {"description": "List of tokens"}},
         },
         "/tokens/<token_id>": {
             "summary": "Show specified token if available for logged user",
-            "responses": {
-                "200": {
-                    "description": "Details on the specified token"
-                }
-            }
-        }
+            "responses": {"200": {"description": "Details on the specified token"}},
+        },
     }
     DELETE = {
         "/tokens": {
             "summary": "Remove all tokens emitted for a user",
             "description": "Note: only allowed for testing",
-            "responses": {
-                "200": {
-                    "description": "All tokens have been invalidated"
-                }
-            }
+            "responses": {"200": {"description": "All tokens have been invalidated"}},
         },
         "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
-            "responses": {
-                "200": {
-                    "description": "Token has been invalidated"
-                }
-            }
-        }
+            "responses": {"200": {"description": "Token has been invalidated"}},
+        },
     }
 
     def get_user(self):

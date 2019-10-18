@@ -177,6 +177,7 @@ class CeleryExt(BaseExtension):
 
         # Do not import before loading the ext!
         from restapi.services.detect import Detector
+
         if Detector.get_bool_from_os('CELERY_BEAT_ENABLED'):
             log.info("Enabling Celery Beat")
             if backend != 'MONGODB':

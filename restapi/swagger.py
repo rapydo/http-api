@@ -399,15 +399,11 @@ class BeSwagger(object):
                 # In this case we are passing the config dictionary, not the yaml file
                 if isinstance(file, dict):
                     self._endpoints[key] = self.read_my_swagger(
-                        method,
-                        endpoint,
-                        mapping=file
+                        method, endpoint, mapping=file
                     )
                 else:
                     self._endpoints[key] = self.read_my_swagger(
-                        method,
-                        endpoint,
-                        file=file
+                        method, endpoint, file=file
                     )
 
         ###################

@@ -131,6 +131,7 @@ def custom_extra_registration(variables):
 
 class Profile(EndpointResource):
     """ Current user informations """
+
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profiles"]
@@ -139,23 +140,15 @@ class Profile(EndpointResource):
         "/profile": {
             "summary": "List profile attributes",
             "responses": {
-                "200": {
-                    "description": "Dictionary with all profile attributes"
-                }
-            }
+                "200": {"description": "Dictionary with all profile attributes"}
+            },
         }
     }
     POST = {
         "/profile": {
             "summary": "Register new user",
-            "custom_parameters": [
-                "User"
-            ],
-            "responses": {
-                "200": {
-                    "description": "ID of new user"
-                }
-            }
+            "custom_parameters": ["User"],
+            "responses": {"200": {"description": "ID of new user"}},
         }
     }
     PUT = {
@@ -165,16 +158,10 @@ class Profile(EndpointResource):
                 {
                     "name": "credentials",
                     "in": "body",
-                    "schema": {
-                        "$ref": "#/definitions/ProfileUpdate"
-                    }
+                    "schema": {"$ref": "#/definitions/ProfileUpdate"},
                 }
             ],
-            "responses": {
-                "204": {
-                    "description": "Updated has been successful"
-                }
-            }
+            "responses": {"204": {"description": "Updated has been successful"}},
         }
     }
 
@@ -283,8 +270,8 @@ class Profile(EndpointResource):
             send_activation_link(self.auth, user)
             notify_registration(user)
             msg = (
-                "We are sending an email to your email address where " +
-                "you will find the link to activate your account"
+                "We are sending an email to your email address where "
+                + "you will find the link to activate your account"
             )
 
         except BaseException as e:
@@ -302,8 +289,8 @@ class Profile(EndpointResource):
         password_confirm = data.get('password_confirm')
 
         totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None and
-            self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
+            self.auth.SECOND_FACTOR_AUTHENTICATION is not None
+            and self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
         )
         if totp_authentication:
             totp_code = data.get('totp_code')
@@ -378,20 +365,16 @@ class ProfileActivate(EndpointResource):
         "/profile/activate": {
             "summary": "Ask a new activation link",
             "responses": {
-                "200": {
-                    "description": "A new activation link has been sent"
-                }
-            }
+                "200": {"description": "A new activation link has been sent"}
+            },
         }
     }
     PUT = {
         "/profile/activate/<token_id>": {
             "summary": "Activate account by verificate activation token",
             "responses": {
-                "200": {
-                    "description": "Account has been successfully activated"
-                }
-            }
+                "200": {"description": "Account has been successfully activated"}
+            },
         }
     }
 
@@ -504,13 +487,9 @@ class RecoverPassword(EndpointResource):
             "summary": "Request password reset via email",
             "description": "Request password reset via email",
             "responses": {
-                "200": {
-                    "description": "Reset email is valid"
-                },
-                "401": {
-                    "description": "Invalid reset email"
-                }
-            }
+                "200": {"description": "Reset email is valid"},
+                "401": {"description": "Invalid reset email"},
+            },
         }
     }
     PUT = {
@@ -518,13 +497,9 @@ class RecoverPassword(EndpointResource):
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",
             "responses": {
-                "200": {
-                    "description": "Reset token is valid, password changed"
-                },
-                "401": {
-                    "description": "Invalid reset token"
-                }
-            }
+                "200": {"description": "Reset token is valid, password changed"},
+                "401": {"description": "Invalid reset token"},
+            },
         }
     }
 
@@ -533,8 +508,8 @@ class RecoverPassword(EndpointResource):
 
         if not send_mail_is_active():
             raise RestApiException(
-                'Server misconfiguration, unable to reset password. ' +
-                'Please report this error to adminstrators',
+                'Server misconfiguration, unable to reset password. '
+                + 'Please report this error to adminstrators',
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
@@ -551,8 +526,8 @@ class RecoverPassword(EndpointResource):
 
         if user is None:
             raise RestApiException(
-                'Sorry, %s ' % reset_email +
-                'is not recognized as a valid username or email address',
+                'Sorry, %s ' % reset_email
+                + 'is not recognized as a valid username or email address',
                 status_code=hcodes.HTTP_BAD_FORBIDDEN,
             )
 

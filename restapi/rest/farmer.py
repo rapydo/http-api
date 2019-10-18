@@ -44,9 +44,7 @@ class EndpointsFarmer(object):
             # there is another similar piece of code in swagger.py
             original = getattr(resource.cls, method)
             decorated = authentication.authorization_required(
-                original,
-                roles=roles,
-                required_roles=attributes.required_roles,
+                original, roles=roles, required_roles=attributes.required_roles
             )
             setattr(resource.cls, method, decorated)
 

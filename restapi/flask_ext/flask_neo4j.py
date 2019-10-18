@@ -68,6 +68,7 @@ class NeoModel(BaseExtension):
             # neomodel 3.3.1-
             import socket
             import neo4j
+
             return (
                 socket.gaierror,
                 neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
@@ -77,7 +78,8 @@ class NeoModel(BaseExtension):
             # neomodel 3.3.2
             from neobolt.addressing import AddressError
             from neobolt.exceptions import ServiceUnavailable
-            return (ServiceUnavailable, AddressError,)
+
+            return (ServiceUnavailable, AddressError)
 
     def custom_connection(self, **kwargs):
 

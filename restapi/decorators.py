@@ -74,12 +74,7 @@ def send_error(self, e, code=None):
     return self.send_errors(message=error, code=code)
 
 
-def catch_error(
-    exception=None,
-    catch_generic=True,
-    exception_label=None,
-    **kwargs
-):
+def catch_error(exception=None, catch_generic=True, exception_label=None, **kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
