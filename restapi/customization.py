@@ -134,31 +134,23 @@ class Customizer(object):
         endpoints_folders = []
         # base swagger dir (rapydo/http-api)
         endpoints_folders.append(
-            {
-                'path': helpers.script_abspath(__file__),
-                'iscore': True
-            }
+            {'path': helpers.script_abspath(__file__), 'iscore': True}
         )
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
             endpoints_folders.append(
-                {
-                    'path': helpers.current_dir(self._extended_project),
-                    'iscore': False
-                }
+                {'path': helpers.current_dir(self._extended_project), 'iscore': False}
             )
 
         # custom swagger dir
         endpoints_folders.append(
-            {
-                'path': helpers.current_dir(CUSTOM_PACKAGE),
-                'iscore': False
-            }
+            {'path': helpers.current_dir(CUSTOM_PACKAGE), 'iscore': False}
         )
 
         simple_override_check = {}
+        already_loaded = {}
         for folder in endpoints_folders:
 
             base_dir = folder.get('path')
@@ -190,6 +182,19 @@ class Customizer(object):
                     if ep_class.methods is None:
                         continue
 
+                    if class_name in already_loaded:
+                        log.warning(
+                            "Skipping import of %s from %s.%s, already loded from %s",
+                            class_name,
+                            apis_dir,
+                            module_file,
+                            already_loaded[class_name],
+                        )
+                        continue
+                    already_loaded[class_name] = "%s.%s" % (apis_dir, module_file)
+                    log.debug(
+                        "Importing %s from %s", class_name, already_loaded[class_name]
+                    )
                     if not self._testing:
                         for var in ep_class.depends_on:
                             pieces = var.strip().split(' ')
@@ -210,9 +215,7 @@ class Customizer(object):
                             # Skip if not meeting the requirements of the dependency
                             if not check:
                                 log.debug(
-                                    "Skip '%s': unmet %s",
-                                    apiclass_module,
-                                    dependency
+                                    "Skip '%s': unmet %s", apiclass_module, dependency
                                 )
                                 continue
 
@@ -240,35 +243,30 @@ class Customizer(object):
                         'publish': {},
                     }
 
-                    if endpoint.custom['schema']['expose']:
-                        log.critical(
-                            "Schema expose not implemented yet and required by %s",
-                            class_name
-                        )
-                    # for label, uri in ep_class.mapping.items():
-
-                    #     # BUILD URI
-                    #     total_uri = '/%s%s' % (base, uri)
-                    #     endpoint.uris[label] = total_uri
-
-                    #     # If SCHEMA requested create
-                    #     if endpoint.custom['schema']['expose']:
-
-                    #         schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
-
-                    #         p = hex(id(endpoint.cls))
-                    #         self._schema_endpoint.uris[label + p] = schema_uri
-
-                    #         endpoint.custom['schema']['publish'][label] = ep_class.publish
-                    #         self._schemas_map[schema_uri] = total_uri
-
                     endpoint.methods = {}
 
+                    mapping_lists = []
                     for m in ep_class.methods:
                         if not hasattr(ep_class, m):
-                            log.warning("%s configuration not found in %s", m, class_name)
+                            log.warning(
+                                "%s configuration not found in %s", m, class_name
+                            )
                             continue
-                        endpoint.methods[m.lower()] = copy.deepcopy(getattr(ep_class, m))
+                        conf = getattr(ep_class, m)
+                        kk = conf.keys()
+                        mapping_lists.extend(kk)
+                        endpoint.methods[m.lower()] = copy.deepcopy(conf)
+
+                    if endpoint.custom['schema']['expose']:
+                        for uri in mapping_lists:
+                            total_uri = '/%s%s' % (endpoint.base_uri, uri)
+                            schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+
+                            p = hex(id(endpoint.cls))
+                            self._schema_endpoint.uris[uri + p] = schema_uri
+
+                            # endpoint.custom['schema']['publish'][uri] = ep_class.publish
+                            self._schemas_map[schema_uri] = total_uri
 
                     self._endpoints.append(endpoint)
 
@@ -280,7 +278,9 @@ class Customizer(object):
 
                     if ep in simple_override_check:
                         log.warning(
-                            "%s already loaded from %s", ep, simple_override_check.get(ep)
+                            "%s already loaded from %s",
+                            ep,
+                            simple_override_check.get(ep),
                         )
                         continue
                     simple_override_check[ep] = base_dir
@@ -300,15 +300,10 @@ class Customizer(object):
                     else:
                         apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
 
-                    log.warning(
-                        "Deprecated endpoint configuration from yaml: %s", ep
-                    )
+                    log.warning("Deprecated endpoint configuration from yaml: %s", ep)
 
                     current = self.lookup(
-                        ep,
-                        apiclass_module,
-                        swagger_endpoint_dir,
-                        iscore
+                        ep, apiclass_module, swagger_endpoint_dir, iscore
                     )
 
                     if current is not None and current.exists:
