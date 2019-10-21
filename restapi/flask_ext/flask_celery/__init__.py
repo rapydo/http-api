@@ -170,11 +170,6 @@ class CeleryExt(BaseExtension):
         """
         # celery_app.conf.broker_pool_limit = None
 
-        # from https://github.com/zmap/celerybeat-mongo
-        # CELERY_MONGODB_SCHEDULER_DB = "celery"
-        # CELERY_MONGODB_SCHEDULER_COLLECTION = "schedules"
-        # CELERY_MONGODB_SCHEDULER_URL = "mongodb://userid:password@hostname:port"
-
         # Do not import before loading the ext!
         from restapi.services.detect import Detector
 
@@ -199,12 +194,24 @@ class CeleryExt(BaseExtension):
         return celery_app
 
     @classmethod
-    def get_periodic_task(cls, name):
+    def get_periodic_task(cls, name, retries=0, max_retries=1):
 
         try:
             return PeriodicTask.objects.get(name=name)
         except DoesNotExist:
             return None
+        except ConnectionResetError as e:
+            if retries < max_retries:
+                log.warning(str(e))
+                return cls.get_periodic_task(
+                    name,
+                    retries=retries + 1,
+                    max_retries=max_retries
+                )
+            else:
+                log.error(str(e))
+                return None
+
 
     @classmethod
     def delete_periodic_task(cls, name):
@@ -273,7 +280,8 @@ def send_errors_by_email(func):
             task_name = self.request.task
 
             log.error("Celery task %s failed (%s)", task_id, task_name)
-            log.error("Failed task arguments: %s", str(self.request.args))
+            arguments = str(self.request.args)
+            log.error("Failed task arguments: %s", arguments[0:256])
             log.error("Task error: %s", traceback.format_exc())
 
             if send_mail_is_active():

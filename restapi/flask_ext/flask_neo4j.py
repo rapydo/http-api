@@ -4,7 +4,7 @@
 
 import re
 
-from neomodel import db, config, install_all_labels
+from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 
@@ -127,6 +127,15 @@ class NeoModel(BaseExtension):
                 clear_neo4j_database(graph.db)
 
             if pinit:
-                install_all_labels()
+
+                auto_index = self.variables.get("autoindexing", 'True') == 'True'
+
+                if auto_index:
+                    try:
+                        from neomodel import remove_all_labels, install_all_labels
+                        remove_all_labels()
+                        install_all_labels()
+                    except BaseException as e:
+                        log.exit(str(e))
 
         return graph
