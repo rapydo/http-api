@@ -6,7 +6,6 @@ from restapi import \
     __version__ as current_version
 
 
-swagger_dir = 'swagger'
 app = '%s.__commands__' % main_package
 
 setup(
@@ -25,8 +24,7 @@ setup(
     package_data={
         main_package: [
             'confs/services.yaml',
-            '%s/*.yaml' % swagger_dir,
-            '%s/*/*.yaml' % swagger_dir,
+            'models/swagger.yaml',
             'templates/index.html',
         ],
     },
