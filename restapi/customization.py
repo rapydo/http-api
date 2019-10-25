@@ -215,7 +215,10 @@ class Customizer(object):
                             # Skip if not meeting the requirements of the dependency
                             if not check:
                                 log.debug(
-                                    "Skip '%s': unmet %s", apiclass_module, dependency
+                                    "Skip '%s %s': unmet %s",
+                                    module_name,
+                                    class_name,
+                                    dependency
                                 )
                                 continue
 

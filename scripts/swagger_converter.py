@@ -22,7 +22,7 @@ if not os.path.exists(PROJECT_DIR):
 if not os.path.isdir(PROJECT_DIR):
     log.exit("%s is not a folder", PROJECT_DIR)
 
-yamls = ["specs", "get", "post", "put", "patch", "delete"]
+yamls = ["specs", "get", "post", "put", "patch", "delete", "head"]
 for swagger_folder in os.listdir(PROJECT_DIR):
 
     conf_output = ""
@@ -55,7 +55,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                     log.exit("Found unexpected key: %s", j)
 
                 if baseuri is not None:
-                    conf_output += "\nbaseuri = %s" % baseuri
+                    conf_output += "\nbaseuri = '%s'" % baseuri
 
                 if schema:
                     conf_output += "\n# schema_expose = True"
