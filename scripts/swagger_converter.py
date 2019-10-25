@@ -44,6 +44,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                 pfile = j.pop('file')
                 pclass = j.pop('class')
                 schema = j.pop('schema', None)
+                baseuri = j.pop('baseuri', None)
                 if schema is not None:
                     schema = schema.get('expose', False)
                 labels = j.pop('labels', [])
@@ -52,6 +53,9 @@ for swagger_folder in os.listdir(PROJECT_DIR):
 
                 if len(j) > 0:
                     log.exit("Found unexpected key: %s", j)
+
+                if baseuri is not None:
+                    conf_output += "\nbaseuri = %s" % baseuri
 
                 if schema:
                     conf_output += "\n# schema_expose = True"
