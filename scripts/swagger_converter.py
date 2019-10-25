@@ -43,10 +43,11 @@ for swagger_folder in os.listdir(PROJECT_DIR):
             if y == 'specs':
                 pfile = j.pop('file')
                 pclass = j.pop('class')
-                schema = j.pop('schema')
+                schema = j.pop('schema', None)
                 if schema is not None:
-                    schema = schema.get('expose')
+                    schema = schema.get('expose', False)
                 labels = j.pop('labels', [])
+                depends_on = j.pop('depends_on', [])
                 mappings = j.pop("mapping")
 
                 if len(j) > 0:
@@ -54,7 +55,11 @@ for swagger_folder in os.listdir(PROJECT_DIR):
 
                 if schema:
                     conf_output += "\n# schema_expose = True"
+
                 conf_output += "\nlabels = %s" % labels
+
+                if len(depends_on) > 0:
+                    conf_output += "\ndepends_on = %s" % depends_on
             else:
                 common = j.pop('common', {})
                 # log.critical(common)

@@ -65,7 +65,7 @@ setup(
         "injector==0.12",
         "flask_injector==0.10.1",
 
-        # Already installed from utils, ma forcing here since bravado-core install 5.1,
+        # Already installed from utils, forcing here since bravado-core install 5.1,
         # not compatible with docker-compose 1.24
         "PyYAML==3.13",
 
