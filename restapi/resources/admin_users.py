@@ -187,7 +187,8 @@ Password: "%s"
             raise RestApiException(
                 "This user cannot be found or you are not authorized"
             )
-        # self.graph = self.get_service_instance('neo4j')
+        if self.neo4j_enabled:
+            self.graph = self.get_service_instance('neo4j')
 
         current_user = self.get_current_user()
         for n in users:
@@ -226,7 +227,8 @@ Password: "%s"
         if len(v) == 0:
             raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
 
-        # self.graph = self.get_service_instance('neo4j')
+        if self.neo4j_enabled:
+            self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
@@ -422,7 +424,8 @@ Password: "%s"
             )
 
         schema = self.get_endpoint_custom_definition()
-        # self.graph = self.get_service_instance('neo4j')
+        if self.neo4j_enabled:
+            self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
@@ -533,7 +536,8 @@ Password: "%s"
                 "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
             )
 
-        # self.graph = self.get_service_instance('neo4j')
+        if self.neo4j_enabled:
+            self.graph = self.get_service_instance('neo4j')
 
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
@@ -601,7 +605,8 @@ class UserRole(EndpointResource):
     @authentication.required()
     def get(self, query=None):
 
-        # self.graph = self.get_service_instance('neo4j')
+        if self.neo4j_enabled:
+            self.graph = self.get_service_instance('neo4j')
 
         data = []
 
