@@ -10,7 +10,7 @@ from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from flask_cors import CORS
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 from restapi import confs as config
 from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
