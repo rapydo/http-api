@@ -45,6 +45,19 @@ class Authentication(BaseAuthentication):
             log.warning("Could not find user for '%s'", username)
         return user
 
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.nodes.all()
+
+        # Retrieve one
+        user = self.db.User.nodes.get_or_none(uuid=user_id)
+        if user is None:
+            return None
+
+        return [user]
+
     def get_roles_from_user(self, userobj=None):
 
         roles = []
@@ -82,7 +95,7 @@ class Authentication(BaseAuthentication):
 
         return user_node
 
-    # Also usre by PUT user
+    # Also used by PUT user
     def link_roles(self, user, roles):
 
         # if self.default_role not in roles:

@@ -652,6 +652,76 @@ class EndpointResource(Resource):
 
         return data
 
+    def getJsonResponseFromSql(self, instance):
+
+        resource_type = type(instance).__name__.lower()
+
+        # Get id
+        verify_attribute = hasattr
+        if isinstance(instance, dict):
+            verify_attribute = dict.get
+        if verify_attribute(instance, "uuid"):
+            id = str(instance.uuid)
+        elif verify_attribute(instance, "id"):
+            id = str(instance.id)
+        else:
+            id = "-"
+
+        if id is None:
+            id = "-"
+
+        data = {
+            "id": id,
+            "type": resource_type,
+            "attributes": {}
+            # "links": {"self": request.url + '/' + id},
+        }
+        for c in instance.__table__.columns._data:
+            if c == 'password':
+                continue
+
+            data["attributes"][c] = getattr(instance, c)
+
+        return data
+
+    def getJsonResponseFromMongo(self, instance):
+
+        resource_type = type(instance).__name__.lower()
+
+        # Get id
+        verify_attribute = hasattr
+        if isinstance(instance, dict):
+            verify_attribute = dict.get
+        if verify_attribute(instance, "uuid"):
+            id = str(instance.uuid)
+        elif verify_attribute(instance, "id"):
+            id = str(instance.id)
+        else:
+            id = "-"
+
+        if id is None:
+            id = "-"
+
+        data = {
+            "id": id,
+            "type": resource_type,
+            "attributes": {}
+            # "links": {"self": request.url + '/' + id},
+        }
+        # log.critical(instance._data._members)
+        for c in instance._data._members:
+            if c == 'password':
+                continue
+
+            attribute = getattr(instance, c)
+
+            if isinstance(attribute, list):
+                continue
+
+            data["attributes"][c] = attribute
+
+        return data
+
     def get_endpoint_definition(self, key=None, is_schema_url=False, method=None):
 
         url = request.url_rule.rule
@@ -728,8 +798,34 @@ class EndpointResource(Resource):
                     if field['custom']['islink']:
                         continue
             key = field["name"]
+
             if key in properties:
                 instance.__dict__[key] = properties[key]
+
+    def update_sql_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+            from sqlalchemy.orm.attributes import set_attribute
+            if key in properties:
+                set_attribute(instance, key, properties[key])
+
+    def update_mongo_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+            if key in properties:
+                setattr(instance, key, properties[key])
 
     def parseAutocomplete(self, properties, key, id_key='value', split_char=None):
         value = properties.get(key, None)

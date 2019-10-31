@@ -218,13 +218,6 @@ class TestApp(BaseTests):
 
     def test_08_admin_users(self, client):
 
-        service = 'neo4j'
-        from restapi.services.detect import detector
-
-        if not detector.check_availability(service):
-            return True
-        log.debug("Testing admin users for %s", service)
-
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
         url = API_URI + "/" + endpoint

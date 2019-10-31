@@ -47,17 +47,24 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        userdata = self.custom_user_properties(userdata)
+        user = self.db.User(**userdata)
+
+        self.link_roles(user, roles)
+
+        user.save()
+        return user
+
+    def link_roles(self, user, roles):
+
+        if roles is None or len(roles) == 0:
+            roles = self.default_roles
+
         roles_obj = []
         for role_name in roles:
             role_obj = self.db.Role.objects.get({'_id': role_name})
             roles_obj.append(role_obj)
-
-        userdata = self.custom_user_properties(userdata)
-        userdata['roles'] = roles_obj
-        user = self.db.User(**userdata)
-
-        user.save()
-        return user
+        user.roles = roles_obj
 
     def get_user_object(self, username=None, payload=None):
 
@@ -84,6 +91,23 @@ class Authentication(BaseAuthentication):
                     pass
 
         return user
+
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.objects.all()
+
+        # Retrieve one
+        try:
+            user = self.db.User.objects.get({'uuid': user_id})
+        except self.db.User.DoesNotExist:
+            return None
+
+        if user is None:
+            return None
+
+        return [user]
 
     def get_roles_from_user(self, userobj=None):
 

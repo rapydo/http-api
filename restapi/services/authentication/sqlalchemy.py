@@ -31,16 +31,23 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        if "uuid" not in userdata:
+            userdata["uuid"] = getUUID()
+
         userdata = self.custom_user_properties(userdata)
 
         user = self.db.User(**userdata)
+        self.link_roles(user, roles)
+
+        self.db.session.add(user)
+
+        return user
+
+    def link_roles(self, user, roles):
         # link roles into users
         for role in roles:
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
-        self.db.session.add(user)
-
-        return user
 
     def get_user_object(self, username=None, payload=None, retry=0):
         user = None
@@ -98,6 +105,19 @@ class Authentication(BaseAuthentication):
 
         return user
 
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.query.all()
+
+        # Retrieve one
+        user = self.db.User.query.filter_by(uuid=user_id).first()
+        if user is None:
+            return None
+
+        return [user]
+
     def get_roles_from_user(self, userobj=None):
 
         roles = []
@@ -133,7 +153,7 @@ class Authentication(BaseAuthentication):
                 log.warning("No users inside db. Injected default.")
                 self.create_user(
                     {
-                        'uuid': getUUID(),
+                        # 'uuid': getUUID(),
                         'email': self.default_user,
                         # 'authmethod': 'credentials',
                         'name': 'Default',
@@ -340,7 +360,11 @@ class Authentication(BaseAuthentication):
                 return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
-            userdata = {"uuid": getUUID(), "email": email, "authmethod": account_type}
+            userdata = {
+                # "uuid": getUUID(),
+                "email": email,
+                "authmethod": account_type
+            }
             try:
                 internal_user = self.create_user(userdata, [self.default_role])
                 self.db.session.commit()
@@ -414,7 +438,7 @@ class Authentication(BaseAuthentication):
         else:
 
             userdata = {
-                "uuid": getUUID(),
+                # "uuid": getUUID(),
                 "email": username,
                 "name": username,
                 "surname": 'iCAT',

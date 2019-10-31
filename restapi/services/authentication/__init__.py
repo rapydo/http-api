@@ -213,6 +213,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
+    def get_users(self, user_id=None):
+        """
+        How to retrieve users list from the current service,
+        Optionally filter by the unique uuid given
+        """
+        return
+
+    @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None):
         """
             Return the list of all active tokens
@@ -530,6 +538,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role
         - More to come
+        """
+        return
+
+    @abc.abstractmethod
+    def link_roles(self, user, roles):
+        """
+        A method to assign roles to a user
         """
         return
 
