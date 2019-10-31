@@ -48,7 +48,7 @@ class SqlAlchemy(BaseExtension):
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
         # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        # self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
         # pool_size = self.variables.get('poolsize')
         # if pool_size is not None:
