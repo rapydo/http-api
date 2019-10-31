@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from glom import glom
+from sqlalchemy.exc import IntegrityError
+
 from restapi import decorators as decorate
 from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
@@ -23,9 +25,10 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 class AdminUsers(EndpointResource):
 
-    neo4j_enabled = detector.check_availability('neo4j')
-    sql_enabled = detector.check_availability('sql')
-    mongo_enabled = detector.check_availability('mongo')
+    auth_service = detector.authentication_service
+    neo4j_enabled = (auth_service == 'neo4j')
+    sql_enabled = (auth_service == 'sqlalchemy')
+    mongo_enabled = (auth_service == 'mongo')
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
@@ -191,24 +194,27 @@ Password: "%s"
             self.graph = self.get_service_instance('neo4j')
 
         current_user = self.get_current_user()
-        for n in users:
+        for u in users:
 
             is_authorized = self.check_permissions(
-                current_user, n, is_admin, is_local_admin
+                current_user, u, is_admin, is_local_admin
             )
             if not is_authorized:
                 continue
 
             if self.neo4j_enabled:
-                user = self.getJsonResponse(n, max_relationship_depth=1)
+                user = self.getJsonResponse(u, max_relationship_depth=1)
             elif self.sql_enabled:
-                user = self.getJsonResponseFromSql(n)
+                user = self.getJsonResponseFromSql(u)
                 user['relationships'] = {}
-                user['relationships']['roles'] = self.auth.get_roles_from_user(n)
+                user['relationships']['roles'] = []
+                for role in u.roles:
+                    r = self.getJsonResponseFromSql(role)
+                    user['relationships']['roles'].append(r)
             elif self.mongo_enabled:
-                user = self.getJsonResponseFromMongo(n)
+                user = self.getJsonResponseFromMongo(u)
                 user['relationships'] = {}
-                user['relationships']['roles'] = self.auth.get_roles_from_user(n)
+                user['relationships']['roles'] = self.auth.get_roles_from_user(u)
             else:
                 raise RestApiException(
                     "Invalid auth backend, all known db are disabled"
@@ -278,30 +284,25 @@ Password: "%s"
                                 new_schema[idx]["default"] = g.uuid
 
                     # Roles as multi checkbox
-
-                    # FIXME: roles retrieve is only implemented for neo4j
                     if val["name"] == "roles":
 
-                        cypher = "MATCH (r:Role)"
-                        if not self.auth.verify_admin():
-                            allowed_roles = (
-                                mem.customizer._configurations.get('variables', {})
-                                .get('backend', {})
-                                .get('allowed_roles', [])
-                            )
-                            cypher += " WHERE r.name in %s" % allowed_roles
-                        # Admin only
-                        else:
-                            cypher += " WHERE r.description <> 'automatic'"
-
-                        cypher += " RETURN r ORDER BY r.name ASC"
-
-                        result = self.graph.cypher(cypher)
-
+                        roles = self.auth.get_roles()
+                        is_admin = self.auth.verify_admin()
+                        allowed_roles = glom(
+                            mem.customizer._configurations,
+                            "variables.backend.allowed_roles",
+                            default=[]
+                        )
                         del new_schema[idx]
 
-                        for row in result:
-                            r = self.graph.Role.inflate(row[0])
+                        for r in roles:
+
+                            if is_admin:
+                                if r.description == 'automatic':
+                                    continue
+                            else:
+                                if r.name not in allowed_roles:
+                                    continue
 
                             role = {
                                 "type": "checkbox",
@@ -361,10 +362,10 @@ Password: "%s"
 
         roles = self.parse_roles(v)
         if not is_admin:
-            allowed_roles = (
-                mem.customizer._configurations.get('variables', {})
-                .get('backend', {})
-                .get('allowed_roles', [])
+            allowed_roles = glom(
+                mem.customizer._configurations,
+                "variables.backend.allowed_roles",
+                default=[]
             )
 
             for r in roles:
@@ -382,6 +383,14 @@ Password: "%s"
             unhashed_password = None
 
         user = self.auth.create_user(properties, roles)
+
+        if self.sql_enabled:
+
+            try:
+                self.auth.db.session.commit()
+            except IntegrityError:
+                self.auth.db.session.rollback()
+                raise RestApiException("This user already exists")
 
         # If created by admins, credentials
         # must accept privacy at the login
@@ -467,6 +476,23 @@ Password: "%s"
         if "email" in v:
             v["email"] = v["email"].lower()
 
+
+        roles = self.parse_roles(v)
+        if not is_admin:
+            allowed_roles = glom(
+                mem.customizer._configurations,
+                "variables.backend.allowed_roles",
+                default=[]
+            )
+
+            for r in roles:
+                if r not in allowed_roles:
+                    raise RestApiException(
+                        "You are not allowed to assign users to this role"
+                    )
+
+        self.auth.link_roles(user, roles)
+
         if self.neo4j_enabled:
             self.update_properties(user, schema, v)
             user.save()
@@ -503,21 +529,6 @@ Password: "%s"
             else:
                 user.belongs_to.connect(group)
 
-        roles = self.parse_roles(v)
-        if not is_admin:
-            allowed_roles = (
-                mem.customizer._configurations.get('variables', {})
-                .get('backend', {})
-                .get('allowed_roles', [])
-            )
-
-            for r in roles:
-                if r not in allowed_roles:
-                    raise RestApiException(
-                        "You are not allowed to assign users to this role"
-                    )
-
-        self.auth.link_roles(user, roles)
 
         email_notification = v.get('email_notification', False)
         if email_notification and unhashed_password is not None:

@@ -456,6 +456,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(["local_admin"], warnings=False)
 
     @abc.abstractmethod
+    def get_roles(self):
+        """
+        How to retrieve all the roles
+        """
+        return
+
+    @abc.abstractmethod
     def get_roles_from_user(self, userobj=None):
         """
         How to retrieve the role of a user from the current service,

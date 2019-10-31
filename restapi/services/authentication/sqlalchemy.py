@@ -45,6 +45,7 @@ class Authentication(BaseAuthentication):
 
     def link_roles(self, user, roles):
         # link roles into users
+        user.roles = []
         for role in roles:
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
@@ -117,6 +118,14 @@ class Authentication(BaseAuthentication):
             return None
 
         return [user]
+
+    def get_roles(self):
+        roles = []
+        for role_name in self.default_roles:
+            role = self.db.Role.query.filter_by(name=role_name).first()
+            roles.append(role)
+
+        return roles
 
     def get_roles_from_user(self, userobj=None):
 

@@ -109,6 +109,14 @@ class Authentication(BaseAuthentication):
 
         return [user]
 
+    def get_roles(self):
+        roles = []
+        for role_name in self.default_roles:
+            role = self.db.Role.objects.get({'name': role_name})
+            roles.append(role)
+
+        return roles
+
     def get_roles_from_user(self, userobj=None):
 
         roles = []
