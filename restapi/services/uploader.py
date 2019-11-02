@@ -15,10 +15,12 @@ http://stackoverflow.com/a/9533843/2114395
 import os
 
 # import shutil
-from flask import request, send_from_directory
+from flask import request  # , send_from_directory
 from werkzeug import secure_filename
+from werkzeug.http import parse_content_range_header
 from utilities import htmlcodes as hcodes
-from restapi.confs import UPLOAD_FOLDER
+from restapi.confs import UPLOAD_FOLDER, PRODUCTION
+from restapi.services.detect import detector
 
 from utilities.logs import get_logger
 
@@ -105,7 +107,7 @@ class Uploader(object):
 
         if os.path.exists(abs_file):
 
-            log.warn("Already exists")
+            log.warn("File already exists")
             if force:
                 os.remove(abs_file)
                 log.debug("Forced removal")
@@ -305,3 +307,93 @@ class Uploader(object):
             return
 
         return self.force_response("Deleted", code=hcodes.HTTP_OK_BASIC)
+
+    # Compatible with
+    # https://developers.google.com/drive/api/v3/manage-uploads#resumable
+    # and with https://www.npmjs.com/package/ngx-uploadx and with
+    def init_chunk_upload(self, upload_dir, filename, force=True):
+
+        if not os.path.exists(upload_dir):
+            os.mkdir(upload_dir)
+
+        filename = secure_filename(filename)
+
+        file_path = os.path.join(upload_dir, filename)
+
+        if os.path.exists(file_path):
+            log.warning("File already exists")
+            if force:
+                os.remove(file_path)
+                log.debug("Forced removal")
+            else:
+                return self.force_response(
+                    errors=["File '" + filename + "' already exists"],
+                    code=hcodes.HTTP_BAD_REQUEST,
+                )
+
+        domain = detector.get_global_var('DOMAIN')
+        if PRODUCTION:
+            host = "https://%s" % domain
+        else:
+            host = "http://%s:8080" % domain
+        url = "%s%s/%s" % (host, request.path, filename)
+
+        log.info("Upload initialized on url: %s", url)
+
+        return self.force_response(
+            "",
+            headers={
+                "Access-Control-Expose-Headers": "Location",
+                "Location": url
+            },
+            code=201
+        )
+
+    def chunk_upload(self, upload_dir, filename, chunk_size=None):
+        filename = secure_filename(filename)
+
+        # content_length = request.headers.get("Content-Length")
+        content_range = parse_content_range_header(request.headers.get("Content-Range"))
+
+        if content_range is None:
+            h = request.headers.get("Content-Range")
+            log.error("Unable to parse Content-Range: %s", h)
+            completed = True
+            start = 0
+            total_length = int(h.split("/")[0])
+            stop = int(total_length)
+        else:
+            # log.warning(content_range)
+            start = int(content_range.start)
+            stop = int(content_range.stop)
+            total_length = int(content_range.length)
+            # log.critical(content_range.start)
+            # log.critical(content_range.stop)
+            # log.critical(content_range.length)
+            # log.critical(content_range.units)
+            completed = (stop >= total_length)
+
+        # Default chunk size, put this somewhere
+        if chunk_size is None:
+            chunk_size = 1048576
+
+        file_path = os.path.join(upload_dir, filename)
+        with open(file_path, "ab") as f:
+            while True:
+                chunk = request.stream.read(chunk_size)
+                if not chunk:
+                    break
+                f.seek(start)
+                f.write(chunk)
+
+        if completed:
+            return completed, self.force_response("completed", code=200)
+
+        return completed, self.force_response(
+            "partial",
+            headers={
+                "Access-Control-Expose-Headers": "Range",
+                "Range": "0-%s" % (stop - 1)
+            },
+            code=206
+        )
