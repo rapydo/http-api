@@ -352,26 +352,30 @@ class Uploader(object):
     def chunk_upload(self, upload_dir, filename, chunk_size=None):
         filename = secure_filename(filename)
 
-        # content_length = request.headers.get("Content-Length")
-        content_range = parse_content_range_header(request.headers.get("Content-Range"))
+        try:
+            range_header = request.headers.get("Content-Range")
+            # content_length = request.headers.get("Content-Length")
+            content_range = parse_content_range_header(range_header)
 
-        if content_range is None:
-            h = request.headers.get("Content-Range")
-            log.error("Unable to parse Content-Range: %s", h)
-            completed = True
-            start = 0
-            total_length = int(h.split("/")[0])
-            stop = int(total_length)
-        else:
-            # log.warning(content_range)
-            start = int(content_range.start)
-            stop = int(content_range.stop)
-            total_length = int(content_range.length)
-            # log.critical(content_range.start)
-            # log.critical(content_range.stop)
-            # log.critical(content_range.length)
-            # log.critical(content_range.units)
-            completed = (stop >= total_length)
+            if content_range is None:
+                log.error("Unable to parse Content-Range: %s", range_header)
+                completed = True
+                start = 0
+                total_length = int(range_header.split("/")[0])
+                stop = int(total_length)
+            else:
+                # log.warning(content_range)
+                start = int(content_range.start)
+                stop = int(content_range.stop)
+                total_length = int(content_range.length)
+                # log.critical(content_range.start)
+                # log.critical(content_range.stop)
+                # log.critical(content_range.length)
+                # log.critical(content_range.units)
+                completed = (stop >= total_length)
+        except BaseException as e:
+            log.error("Unable to parse Content-Range: %s", range_header)
+            log.error(str(e))
 
         # Default chunk size, put this somewhere
         if chunk_size is None:
@@ -387,7 +391,25 @@ class Uploader(object):
                 f.write(chunk)
 
         if completed:
-            return completed, self.force_response("completed", code=200)
+
+            # Extra info
+            ftype = None
+            fcharset = None
+            try:
+                # Check the type
+                from plumbum.cmd import file
+
+                out = file["-ib", file_path]()
+                tmp = out.split(';')
+                ftype = tmp[0].strip()
+                fcharset = tmp[1].split('=')[1].strip()
+            except Exception:
+                log.warning("Unknown type for '%s'", file_path)
+
+            return completed, self.force_response({
+                    'filename': filename,
+                    'meta': {'type': ftype, 'charset': fcharset}
+                }, code=200)
 
         return completed, self.force_response(
             "partial",
