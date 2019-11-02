@@ -148,7 +148,7 @@ def create_app(
     # CORS
     if not PRODUCTION:
         cors = CORS(
-            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'x-upload-content-length', 'x-upload-content-type', 'content-range'],
             supports_credentials=['true'],
             methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         )

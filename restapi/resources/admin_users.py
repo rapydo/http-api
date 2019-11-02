@@ -476,7 +476,6 @@ Password: "%s"
         if "email" in v:
             v["email"] = v["email"].lower()
 
-
         roles = self.parse_roles(v)
         if not is_admin:
             allowed_roles = glom(
