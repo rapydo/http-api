@@ -60,8 +60,7 @@ class Authentication(BaseAuthentication):
 
     def get_roles(self):
         roles = []
-        for role_name in self.default_roles:
-            role = self.db.Role.nodes.get_or_none(name=role_name)
+        for role in self.db.Role.nodes.all():
             roles.append(role)
 
         return roles
