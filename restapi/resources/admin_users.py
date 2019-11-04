@@ -491,6 +491,8 @@ Password: "%s"
                     )
 
         self.auth.link_roles(user, roles)
+        # Cannot update email address (unique username used to login-in)
+        v.pop('email', None)
 
         if self.neo4j_enabled:
             self.update_properties(user, schema, v)
@@ -498,7 +500,11 @@ Password: "%s"
         elif self.sql_enabled:
             self.update_sql_properties(user, schema, v)
             self.auth.db.session.add(user)
-            self.auth.db.session.commit()
+            try:
+                self.auth.db.session.commit()
+            except IntegrityError:
+                self.auth.db.session.rollback()
+                raise RestApiException("This user already exists")
         elif self.mongo_enabled:
             self.update_mongo_properties(user, schema, v)
             user.save()
