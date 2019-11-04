@@ -195,16 +195,16 @@ class HandleSecurity(object):
             return False, "Password is too short, use at least 8 characters"
 
         if not re.search("[a-z]", pwd):
-            return False, "Password is too simple, missing lower case letters"
+            return False, "Password is too weak, missing lower case letters"
         if not re.search("[A-Z]", pwd):
-            return False, "Password is too simple, missing upper case letters"
+            return False, "Password is too weak, missing upper case letters"
         if not re.search("[0-9]", pwd):
-            return False, "Password is too simple, missing numbers"
+            return False, "Password is too weak, missing numbers"
 
         # special_characters = "['\s!#$%&\"(),*+,-./:;<=>?@[\\]^_`{|}~']"
         special_characters = "[^a-zA-Z0-9]"
         if not re.search(special_characters, pwd):
-            return False, "Password is too simple, missing special characters"
+            return False, "Password is too weak, missing special characters"
 
         return True, None
 
