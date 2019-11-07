@@ -180,8 +180,11 @@ Password: "%s"
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
         if not is_admin and not is_local_admin:
+            extra_debug = "is_admin = %s; " % is_admin
+            extra_debug = "is_local_admin = %s; " % is_local_admin
+            extra_debug = "roles = %s; " % self.auth.get_roles_from_user()
             raise RestApiException(
-                "You are not authorized: missing privileges",
+                "You are not authorized: missing privileges. %s" % extra_debug,
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
