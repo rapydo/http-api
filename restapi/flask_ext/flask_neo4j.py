@@ -3,7 +3,7 @@
 """ Neo4j GraphDB flask connector """
 
 import re
-
+from functools import wraps
 from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
@@ -33,6 +33,20 @@ class NeomodelClient:
             raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
         # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
+
+    @staticmethod
+    def getSingleLinkedNode(relation):
+
+        nodes = relation.all()
+        if len(nodes) <= 0:
+            return None
+        return nodes[0]
+
+    @staticmethod
+    def createUniqueIndex(*var):
+
+        separator = "#_#"
+        return separator.join(var)
 
     def sanitize_input(self, term):
         '''
@@ -139,3 +153,68 @@ class NeoModel(BaseExtension):
                         log.exit(str(e))
 
         return graph
+
+
+def graph_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
+
+        try:
+
+            transaction.begin()
+            log.verbose("Neomodel transaction BEGIN")
+
+            out = func(self, *args, **kwargs)
+
+            transaction.commit()
+            log.verbose("Neomodel transaction COMMIT")
+
+            return out
+        except Exception as e:
+            log.verbose("Neomodel transaction ROLLBACK")
+            try:
+                transaction.rollback()
+            except Exception as sub_ex:
+                log.warning("Exception raised during rollback: %s", sub_ex)
+            raise e
+
+    return wrapper
+
+
+def graph_nestable_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
+
+        transaction_open = True
+        try:
+
+            try:
+                transaction.begin()
+                log.verbose("Neomodel transaction BEGIN2")
+            except SystemError:
+                transaction_open = False
+                log.debug("Neomodel transaction is already in progress")
+
+            out = func(self, *args, **kwargs)
+
+            if transaction_open:
+                transaction.commit()
+                log.verbose("Neomodel transaction COMMIT2")
+            else:
+                log.debug("Skipping neomodel transaction commit")
+
+            return out
+        except Exception as e:
+            if not transaction_open:
+                log.debug("Skipping neomodel transaction rollback")
+            else:
+                try:
+                    log.verbose("Neomodel transaction ROLLBACK")
+                    transaction.rollback()
+                except Exception as sub_ex:
+                    log.warning("Exception raised during rollback: %s", sub_ex)
+            raise e
+
+    return wrapper

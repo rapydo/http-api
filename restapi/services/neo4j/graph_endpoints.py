@@ -14,36 +14,38 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 
 class GraphBaseOperations(EndpointResource):
-    def initGraph(self):
-        log.warning(
-            "This method is deprecated, use get_service_instance and "
-            + "get_current_user instead"
-        )
-        self.graph = self.get_service_instance('neo4j')
-        self._current_user = self.get_current_user()
+    # def initGraph(self):
+    #     log.warning(
+    #         "This method is deprecated, use get_service_instance and "
+    #         + "get_current_user instead"
+    #     )
+    #     self.graph = self.get_service_instance('neo4j')
+    #     self._current_user = self.get_current_user()
 
     @staticmethod
     def getSingleLinkedNode(relation):
 
+        log.warning("This method is deprecated, use getSingleLinkedNode from neo ext")
         nodes = relation.all()
         if len(nodes) <= 0:
             return None
         return nodes[0]
 
-    def getNode(self, Model, identifier, field='accession'):
+    # def getNode(self, Model, identifier, field='accession'):
 
-        log.warning("This method is deprecated. use Model.get_or_none() instead")
+    #     log.warning("This method is deprecated. use Model.get_or_none() instead")
 
-        try:
-            filter = {field: identifier}
-            return Model.nodes.get(**filter)
+    #     try:
+    #         filter = {field: identifier}
+    #         return Model.nodes.get(**filter)
 
-        except Model.DoesNotExist:
-            return None
+    #     except Model.DoesNotExist:
+    #         return None
 
     @staticmethod
     def createUniqueIndex(*var):
 
+        log.warning("This method is deprecated, use createUniqueIndex from neo ext")
         separator = "#_#"
         return separator.join(var)
 
@@ -51,6 +53,7 @@ class GraphBaseOperations(EndpointResource):
 def graph_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        log.warning("This method is deprecated, use graph_transactions from neo ext")
         from neomodel import db as transaction
 
         try:
@@ -78,6 +81,8 @@ def graph_transactions(func):
 def graph_nestable_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        log.warning(
+            "This method is deprecated, use graph_nestable_transactions from neo ext")
         from neomodel import db as transaction
 
         transaction_open = True
@@ -86,7 +91,7 @@ def graph_nestable_transactions(func):
             try:
                 transaction.begin()
                 log.verbose("Neomodel transaction BEGIN2")
-            except SystemError as e:
+            except SystemError:
                 transaction_open = False
                 log.debug("Neomodel transaction is already in progress")
 
@@ -117,6 +122,8 @@ def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
+        log.warning(
+            "This method is deprecated, use catch_graph_exceptions from decorators")
         from neomodel.exceptions import RequiredProperty
         from neomodel.exceptions import UniqueProperty
 

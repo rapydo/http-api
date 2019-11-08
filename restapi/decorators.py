@@ -17,6 +17,7 @@ I didn't manage so far to have it working in the way the documentation require.
 
 """
 
+import re
 from functools import wraps
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
@@ -141,3 +142,37 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
         return wrapper
 
     return decorator
+
+
+def catch_graph_exceptions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        from neomodel.exceptions import RequiredProperty
+        from neomodel.exceptions import UniqueProperty
+
+        try:
+            return func(self, *args, **kwargs)
+
+        except (UniqueProperty) as e:
+
+            prefix = "Node [0-9]+ already exists with label"
+            m = re.search("%s (.+) and property (.+)" % prefix, str(e))
+
+            if m:
+                node = m.group(1)
+                prop = m.group(2)
+                val = m.group(3)
+                error = "A %s already exists with %s = %s" % (node, prop, val)
+            else:
+                error = str(e)
+
+            raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
+        except (RequiredProperty) as e:
+            raise RestApiException(str(e))
+
+        # FIXME: to be specified with new neomodel exceptions
+        # except ConstraintViolation as e:
+        # except UniqueProperty as e:
+
+    return wrapper
