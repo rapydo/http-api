@@ -136,12 +136,6 @@ class Authentication(BaseAuthentication):
             if role not in current_roles:
                 self.create_role(role)
 
-        # FIXME: Create some users for testing
-        from flask import current_app
-
-        if current_app.config['TESTING']:
-            pass
-
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
             log.warning("No users inside graphdb. Injecting default.")

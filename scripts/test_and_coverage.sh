@@ -108,6 +108,7 @@ else
 	# Beware!! Cleaning DB before starting the tests
 	rapydo shell backend --command 'restapi wait'
 	rapydo shell backend --command 'restapi forced-clean'
+	rapydo shell backend --command 'restapi init'
 
 	# Test API and calculate coverage
 	rapydo shell backend --command 'restapi tests --core'
