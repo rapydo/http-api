@@ -25,6 +25,7 @@ from utilities.myyaml import YAML_EXT, load_yaml_file
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
+meta = Meta()
 
 CONF_FOLDERS = detector.load_group(label='project_confs')
 
@@ -32,20 +33,16 @@ CONF_FOLDERS = detector.load_group(label='project_confs')
 ########################
 # Customization on the table
 ########################
-
-
 class Customizer(object):
     """
     Customize your BACKEND:
     Read all of available configurations and definitions.
     """
 
-    def __init__(self, testing=False, production=False, init=False):
+    def __init__(self, testing=False, init=False):
 
         # Input
         self._testing = testing
-        self._production = production
-        self._initiliazing = init
 
         # Some initialization
         self._endpoints = []
@@ -53,12 +50,11 @@ class Customizer(object):
         self._configurations = {}
         self._query_params = {}
         self._schemas_map = {}
-        self._meta = Meta()
 
         # Do things
         self.read_configuration()
 
-        if not self._initiliazing:
+        if not init:
             self.do_schema()
             self.find_endpoints()
             self.do_swagger()
@@ -173,7 +169,7 @@ class Customizer(object):
                 # Convert module name into a module
                 module = Meta.get_module_from_string(module_name)
                 # Extract classes from the module
-                classes = self._meta.get_classes_from_module(module)
+                classes = meta.get_classes_from_module(module)
                 for class_name in classes:
                     ep_class = classes.get(class_name)
                     # Filtering out classes without required data
@@ -400,7 +396,7 @@ class Customizer(object):
                 return endpoint
 
         # Get the class from the module
-        endpoint.cls = self._meta.get_class_from_string(class_name, module)
+        endpoint.cls = meta.get_class_from_string(class_name, module)
         if endpoint.cls is None:
             log.critical("Could not extract python class '%s'", class_name)
             return endpoint

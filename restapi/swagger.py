@@ -13,6 +13,7 @@ import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
+from restapi.confs import PRODUCTION
 from utilities import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import MODELS_DIR
 from utilities import htmlcodes as hcodes
@@ -103,7 +104,7 @@ class BeSwagger(object):
                 log.warning("Deprecated mapping-label endpoint definition: %s", uri)
             else:
                 uri = '/%s%s' % (endpoint.base_uri, label)
-                # This will be used by farmer.py
+                # This will be used by server.py.add
                 if uri not in endpoint.uris:
                     endpoint.uris[uri] = uri
 
@@ -325,7 +326,7 @@ class BeSwagger(object):
 
         # Better chosen dinamically from endpoint.py
         schemes = ['http']
-        if self._customizer._production:
+        if PRODUCTION:
             schemes = ['https']
 
         # A template base

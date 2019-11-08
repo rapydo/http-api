@@ -29,7 +29,7 @@ force_response (base.py)    or              simple return
 import attr
 import json
 from glom import glom
-from flask import Response, jsonify
+from flask import Response, jsonify, render_template
 from werkzeug import exceptions as wsgi_exceptions
 from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
@@ -83,6 +83,8 @@ def add_to_dict(mydict, content, key='content'):
     return mydict
 
 
+
+
 def respond_to_browser(r):
     log.debug("Request from a browser: reply with HTML.")
 
@@ -101,10 +103,13 @@ def respond_to_browser(r):
     else:
         data = html_content
 
-    from restapi.protocols.restful import output_html
-
-    return output_html(
-        data=data, array=array, code=r.get('code'), headers=r.get('headers')
+    html_data = {'body_content': data, 'array': array}
+    html_page = render_template('index.html', **html_data)
+    return Response(
+        html_page,
+        mimetype=MIMETYPE_HTML,
+        status=r.get('code'),
+        headers=r.get('headers')
     )
 
 

@@ -17,7 +17,7 @@ from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
 from restapi.confs import SENTRY_URL
-from restapi.protocols.restful import Api, farmer, create_endpoints
+from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from utilities.globals import mem
@@ -96,6 +96,49 @@ class Flask(OriginalFlask):
         return response
 
 
+def add(rest_api, resource):
+    """ Adding a single restpoint from a Resource Class """
+
+    from restapi.protocols.bearer import authentication
+
+    # Apply authentication: if required from yaml configuration
+    # Done per each method
+    for method, attributes in resource.custom['methods'].items():
+
+        # If auth has some role, they have been validated
+        # and authentication has been requested
+        # if len(attributes.auth) < 1:
+        #     continue
+        # else:
+        #     roles = attributes.auth
+
+        roles = attributes.auth
+        if roles is None:
+            continue
+
+        log.warning("Deprecated authentication decorator")
+        # Programmatically applying the authentication decorator
+        # Note: there is another similar piece of code in swagger.py
+        original = getattr(resource.cls, method)
+        decorated = authentication.authorization_required(
+            original, roles=roles, required_roles=attributes.required_roles
+        )
+        setattr(resource.cls, method, decorated)
+
+        if len(roles) < 1:
+            roles = "'DEFAULT'"
+        log.very_verbose(
+            "Auth on %s.%s for %s" % (resource.cls.__name__, method, roles)
+        )
+
+    urls = [uri for _, uri in resource.uris.items()]
+
+    # Create the restful resource with it;
+    # this method is from RESTful plugin
+    rest_api.add_resource(resource.cls, *urls)
+    log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
+
+
 ########################
 # Flask App factory    #
 ########################
@@ -114,7 +157,7 @@ def create_app(
         log.exit("Unable to execute tests in production")
 
     # Initialize reading of all files
-    mem.customizer = Customizer(testing_mode, PRODUCTION, init_mode)
+    mem.customizer = Customizer(testing_mode, init_mode)
     # FIXME: try to remove mem. from everywhere...
 
     # Add template dir for output in HTML
@@ -136,7 +179,6 @@ def create_app(
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
         init_mode = True
-        # microservice.config['INIT_MODE'] = init_mode
     elif worker_mode:
         skip_endpoint_mapping = True
 
@@ -185,11 +227,24 @@ def create_app(
     # Restful plugin
     if not skip_endpoint_mapping:
         # Triggering automatic mapping of REST endpoints
-        current_endpoints = create_endpoints(farmer.EndpointsFarmer(Api))
-        # Restful init of the app
+        rest_api = Api(catch_all_404s=True)
+
+        # Basic configuration (simple): from example class
+        if len(mem.customizer._endpoints) < 1:
+            log.error("No endpoints found!")
+
+            raise AttributeError("Follow the docs and define your endpoints")
+
+        for resource in mem.customizer._endpoints:
+            add(rest_api, resource)
+
+        # Enable all schema endpoints to be mapped with this extra step
+        if len(mem.customizer._schema_endpoint.uris) > 0:
+            log.debug("Found one or more schema to expose")
+            add(rest_api, mem.customizer._schema_endpoint)
 
         # HERE all endpoints will be registered by using FlaskRestful
-        current_endpoints.rest_api.init_app(microservice)
+        rest_api.init_app(microservice)
 
         ##############################
         # Injection!
@@ -202,13 +257,6 @@ def create_app(
         warnings.filterwarnings("ignore")
 
         FlaskInjector(app=microservice, modules=modules)
-
-        # otherwise...
-        # Catch warnings from Flask Injector
-        # try:
-        #     FlaskInjector(app=microservice, modules=modules)
-        # except RuntimeWarning:
-        #     pass
 
     ##############################
     # Clean app routes
@@ -236,11 +284,6 @@ def create_app(
                 log.verbose("Removed method %s.%s from mapping" % (rulename, verb))
 
         rule.methods = newmethods
-
-        # FIXME: SOLVE CELERY INJECTION
-        # # Set global objects for celery workers
-        # if worker_mode:
-        #     mem.services = internal_services
 
     ##############################
     # Logging responses
