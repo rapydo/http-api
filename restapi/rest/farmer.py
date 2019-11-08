@@ -39,6 +39,7 @@ class EndpointsFarmer(object):
             if roles is None:
                 continue
 
+            log.warning("Deprecated authentication decorator")
             # Programmatically applying the authentication decorator
             # TODO: should this be moved to Meta class?
             # there is another similar piece of code in swagger.py

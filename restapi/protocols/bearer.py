@@ -161,6 +161,7 @@ class HTTPTokenAuth(object):
         @wraps(f)
         def decorated(*args, **kwargs):
 
+            log.warning("Deprecated authentication decorator")
             # Recover the auth object
             auth_type, token = self.get_authorization_token()
             # Base header for errors
