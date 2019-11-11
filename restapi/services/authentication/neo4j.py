@@ -154,11 +154,13 @@ class Authentication(BaseAuthentication):
 
     def save_token(self, user, token, jti, token_type=None):
 
-        now = datetime.now(pytz.utc)
-        exp = now + timedelta(seconds=self.shortTTL)
+        ip = self.get_remote_ip()
 
         if token_type is None:
             token_type = self.FULL_TOKEN
+
+        now = datetime.now(pytz.utc)
+        exp = now + timedelta(seconds=self.shortTTL)
 
         token_node = self.db.Token()
         token_node.jti = jti
@@ -167,11 +169,11 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-
-        ip = self.get_remote_ip()
         token_node.IP = ip
 
         token_node.save()
+        # Save user updated in profile endpoint
+        user.save()
         token_node.emitted_for.connect(user)
 
         log.very_verbose("Token stored in graphDB")

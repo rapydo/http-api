@@ -195,14 +195,13 @@ class Authentication(BaseAuthentication):
 
         if token_type is None:
             token_type = self.FULL_TOKEN
-        # FIXME: generate a token that never expires for admin tests
+
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
         if user is None:
             log.error("Trying to save an empty token")
         else:
-            hostname = ""
             self.db.Token(
                 jti=jti,
                 token=token,
@@ -211,9 +210,12 @@ class Authentication(BaseAuthentication):
                 last_access=now,
                 expiration=exp,
                 IP=ip,
-                hostname=hostname,
+                hostname="",
                 user_id=user,
             ).save()
+
+            # Save user updated in profile endpoint
+            user.save()
 
             log.debug("Token stored inside mongo")
 

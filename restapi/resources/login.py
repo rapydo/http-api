@@ -166,7 +166,7 @@ class Login(EndpointResource):
         user.last_login = now
         # Should be saved inside save_token...
         # user.save()
-        self.auth.save_token(self.auth._user, token, jti)
+        self.auth.save_token(user, token, jti)
 
         # FIXME: split response as above in access_token and token_type?
         # # The right response should be the following

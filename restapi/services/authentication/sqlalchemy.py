@@ -190,11 +190,9 @@ class Authentication(BaseAuthentication):
         if token_type is None:
             token_type = self.FULL_TOKEN
 
-        # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
-        hostname = ""
         token_entry = self.db.Token(
             jti=jti,
             token=token,
@@ -203,13 +201,15 @@ class Authentication(BaseAuthentication):
             last_access=now,
             expiration=exp,
             IP=ip,
-            hostname=hostname,
+            hostname="",
         )
 
         token_entry.emitted_for = user
 
         try:
             self.db.session.add(token_entry)
+            # Save user updated in profile endpoint
+            self.db.session.add(user)
             self.db.session.commit()
 
             log.verbose("Token stored inside the DB")
