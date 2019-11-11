@@ -192,6 +192,7 @@ class Customizer(object):
                         "Importing %s from %s", class_name, already_loaded[class_name]
                     )
                     if not self._testing:
+                        skip = False
                         for var in ep_class.depends_on:
                             pieces = var.strip().split(' ')
                             pieces_num = len(pieces)
@@ -210,13 +211,17 @@ class Customizer(object):
 
                             # Skip if not meeting the requirements of the dependency
                             if not check:
-                                log.debug(
-                                    "Skip '%s %s': unmet %s",
-                                    module_name,
-                                    class_name,
-                                    dependency
-                                )
-                                continue
+                                skip = True
+                                break
+
+                        if skip:
+                            log.debug(
+                                "Skip '%s %s': unmet %s",
+                                module_name,
+                                class_name,
+                                dependency
+                            )
+                            continue
 
                     # Building endpoint
                     endpoint = EndpointElements(custom={})
