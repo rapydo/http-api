@@ -64,7 +64,7 @@ class HTTPTokenAuth(object):
             return verify_roles_callback(roles, required_roles=required_roles)
         return False
 
-    def get_authorization_token(self):
+    def get_authorization_token(self, allow_access_token_parameter=False):
 
         # If token is unavailable, clearly state it in response to user
         token = "EMPTY"
@@ -85,26 +85,26 @@ class HTTPTokenAuth(object):
                 # The Authorization header is either empty or has no token
                 pass
 
-        if not ALLOW_ACCESS_TOKEN_PARAMETER:
-            return auth_type, token
-
-        token = request.args.get("access_token")
+        if ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
+            token = request.args.get("access_token")
+            # We are assuming that received access token is always Bearer
+            auth_type = 'Bearer'
 
         if token is None:
+            auth_type = None
             return auth_type, token
-
-        # We are assuming that received access token is always Bearer
-        auth_type = 'Bearer'
 
         return auth_type, token
 
-    def required(self, roles=[], required_roles=None):
+    def required(
+            self, roles=[], required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 # Recover the auth object
-                auth_type, token = self.get_authorization_token()
+                auth_type, token = self.get_authorization_token(
+                    allow_access_token_parameter=allow_access_token_parameter)
                 # Base header for errors
                 headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
                 # Internal API 'self' reference
