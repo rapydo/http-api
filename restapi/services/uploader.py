@@ -361,7 +361,7 @@ class Uploader(object):
                 log.error("Unable to parse Content-Range: %s", range_header)
                 completed = True
                 start = 0
-                total_length = int(range_header.split("/")[0])
+                total_length = int(range_header.split("/")[1])
                 stop = int(total_length)
             else:
                 # log.warning(content_range)
