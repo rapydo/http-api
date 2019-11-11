@@ -575,9 +575,7 @@ class RecoverPassword(EndpointResource):
         # Completing the reset task
         self.auth.save_token(user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
-        msg = (
-            "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
-        )
+        msg = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
 
         return msg
 
