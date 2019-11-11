@@ -7,6 +7,7 @@ from restapi import decorators as decorate
 from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
+
 # from restapi.services.neo4j.graph_endpoints import graph_transactions
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
@@ -26,9 +27,9 @@ __author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 class AdminUsers(EndpointResource):
 
     auth_service = detector.authentication_service
-    neo4j_enabled = (auth_service == 'neo4j')
-    sql_enabled = (auth_service == 'sqlalchemy')
-    mongo_enabled = (auth_service == 'mongo')
+    neo4j_enabled = auth_service == 'neo4j'
+    sql_enabled = auth_service == 'sqlalchemy'
+    mongo_enabled = auth_service == 'mongo'
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
@@ -294,7 +295,7 @@ Password: "%s"
                         allowed_roles = glom(
                             mem.customizer._configurations,
                             "variables.backend.allowed_roles",
-                            default=[]
+                            default=[],
                         )
                         del new_schema[idx]
 
@@ -368,7 +369,7 @@ Password: "%s"
             allowed_roles = glom(
                 mem.customizer._configurations,
                 "variables.backend.allowed_roles",
-                default=[]
+                default=[],
             )
 
             for r in roles:
@@ -484,7 +485,7 @@ Password: "%s"
             allowed_roles = glom(
                 mem.customizer._configurations,
                 "variables.backend.allowed_roles",
-                default=[]
+                default=[],
             )
 
             for r in roles:
@@ -512,9 +513,7 @@ Password: "%s"
             self.update_mongo_properties(user, schema, v)
             user.save()
         else:
-            raise RestApiException(
-                "Invalid auth backend, all known db are disabled"
-            )
+            raise RestApiException("Invalid auth backend, all known db are disabled")
 
         # FIXME: groups management is only implemented for neo4j
         if 'group' in v:
@@ -536,7 +535,6 @@ Password: "%s"
                 user.belongs_to.reconnect(p, group)
             else:
                 user.belongs_to.connect(group)
-
 
         email_notification = v.get('email_notification', False)
         if email_notification and unhashed_password is not None:
@@ -592,9 +590,7 @@ Password: "%s"
         elif self.mongo_enabled:
             user.delete()
         else:
-            raise RestApiException(
-                "Invalid auth backend, all known db are disabled"
-            )
+            raise RestApiException("Invalid auth backend, all known db are disabled")
 
         return self.empty_response()
 
