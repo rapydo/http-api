@@ -73,6 +73,7 @@ class PushpinClient:
         item = Item(WebSocketMessageFormat(message, binary=False))
         if not sync:
             self.pub.publish(channel, item, callback=self.callback)
+            return True
 
         try:
             self.pub.publish(channel, item, blocking=True)
