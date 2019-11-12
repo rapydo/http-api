@@ -146,11 +146,14 @@ class Authentication(BaseAuthentication):
                     # 'authmethod': 'credentials',
                     'name': 'Default',
                     'surname': 'User',
-                    # 'password': self.hash_password(self.default_password)
                     'password': self.default_password,
                 },
                 roles=self.default_roles,
             )
+
+    def save_user(self, user):
+        if user is not None:
+            user.save()
 
     def save_token(self, user, token, jti, token_type=None):
 

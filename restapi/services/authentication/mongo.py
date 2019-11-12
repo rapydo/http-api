@@ -171,7 +171,6 @@ class Authentication(BaseAuthentication):
                         # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
-                        # 'password': self.hash_password(self.default_password)
                         'password': self.default_password,
                         'last_password_change': datetime.now(utc),
                     },
@@ -188,6 +187,10 @@ class Authentication(BaseAuthentication):
         #     for transaction in transactions:
         #         transaction.save()
         #     log.info("Saved init transactions")
+
+    def save_user(self, user):
+        if user is not None:
+            user.save()
 
     def save_token(self, user, token, jti, token_type=None):
 

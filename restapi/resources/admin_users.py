@@ -402,7 +402,7 @@ Password: "%s"
             if not v["privacy_accepted"]:
                 if hasattr(user, 'privacy_accepted'):
                     user.privacy_accepted = False
-                    user.save()
+                    self.auth.save_user(user)
 
         # FIXME: groups management is only implemented for neo4j
         group = None
@@ -500,20 +500,14 @@ Password: "%s"
 
         if self.neo4j_enabled:
             self.update_properties(user, schema, v)
-            user.save()
         elif self.sql_enabled:
             self.update_sql_properties(user, schema, v)
-            self.auth.db.session.add(user)
-            try:
-                self.auth.db.session.commit()
-            except IntegrityError:
-                self.auth.db.session.rollback()
-                raise RestApiException("This user already exists")
         elif self.mongo_enabled:
             self.update_mongo_properties(user, schema, v)
-            user.save()
         else:
             raise RestApiException("Invalid auth backend, all known db are disabled")
+
+        self.auth.save_user(user)
 
         # FIXME: groups management is only implemented for neo4j
         if 'group' in v:

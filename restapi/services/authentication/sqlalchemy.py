@@ -167,7 +167,6 @@ class Authentication(BaseAuthentication):
                         # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
-                        # 'password': self.hash_password(self.default_password)
                         'password': self.default_password,
                     },
                     roles=self.default_roles,
@@ -182,6 +181,15 @@ class Authentication(BaseAuthentication):
                 + "to existing models. Please consider "
                 + "rebuilding your DB."
             )
+
+    def save_user(self, user):
+        if user is not None:
+            self.db.session.add(user)
+            # try:
+            self.db.session.commit()
+            # except IntegrityError:
+            #     self.auth.db.session.rollback()
+            #     raise RestApiException("This user already exists")
 
     def save_token(self, user, token, jti, token_type=None):
 

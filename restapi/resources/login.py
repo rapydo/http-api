@@ -164,8 +164,7 @@ class Login(EndpointResource):
         if user.first_login is None:
             user.first_login = now
         user.last_login = now
-        # Should be saved inside save_token...
-        # user.save()
+        # User should be saved inside save_token...
         self.auth.save_token(user, token, jti)
 
         # FIXME: split response as above in access_token and token_type?

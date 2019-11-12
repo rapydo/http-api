@@ -313,7 +313,7 @@ class Profile(EndpointResource):
 
         # NOTE already in change_password
         # but if removed new pwd is not saved
-        return user.save()
+        return self.auth.save_user(user)
 
     def update_profile(self, user, data):
 
@@ -331,7 +331,7 @@ class Profile(EndpointResource):
         else:
             log.info("Profile updated")
 
-        return user.save()
+        self.auth.save_user(user)
 
     @decorate.catch_error()
     @authentication.required()
@@ -425,9 +425,8 @@ class ProfileActivate(EndpointResource):
             )
 
         # The activation token is valid, do something
-
         self.auth._user.is_active = True
-        self.auth._user.save()
+        self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset activation are valid only once)
         self.auth.invalidate_token(token_id)
@@ -672,7 +671,7 @@ class RecoverPassword(EndpointResource):
         security.change_password(self.auth._user, None, new_password, password_confirm)
         # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
-        self.auth._user.save()
+        self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset tokens are valid only once)
         self.auth.invalidate_token(token_id)

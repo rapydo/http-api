@@ -167,13 +167,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return string
 
     @staticmethod
-    def hash_password(password):
+    def hash_password(password, salt="Unknown"):
         """ Original source:
         # https://github.com/mattupstate/flask-security
         #    /blob/develop/flask_security/utils.py#L110
         """
-
-        salt = "Unknown"
 
         h = hmac.new(
             BaseAuthentication.encode_string(salt),
@@ -184,8 +182,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def check_passwords(hashed_password, password):
-        proposed_password = BaseAuthentication.hash_password(password)
-        return hashed_password == proposed_password
+        return hashed_password == BaseAuthentication.hash_password(password)
 
     # ########################
     # # Retrieve information #
@@ -370,6 +367,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def save_token(self, user, token, jti, token_type=None):
         log.debug("Token is not saved in base authentication")
+
+    @abc.abstractmethod
+    def save_user(self, user):
+        log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
     def invalidate_all_tokens(self, user=None):

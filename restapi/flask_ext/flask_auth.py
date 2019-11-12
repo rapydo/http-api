@@ -232,7 +232,7 @@ class HandleSecurity(object):
             now = datetime.now(pytz.utc)
             user.password = BaseAuthentication.hash_password(new_password)
             user.last_password_change = now
-            user.save()
+            self.auth.save_user(user)
 
             tokens = self.auth.get_tokens(user=user)
             for token in tokens:
@@ -248,11 +248,11 @@ class HandleSecurity(object):
             # We do not register failed login
             pass
         elif self.auth.MAX_LOGIN_ATTEMPTS <= 0:
-            # We register failed login, but we do not put a max num of failures
+            # We register failed login, but we do not set a max num of failures
             pass
             # FIXME: implement get_failed_login
         elif self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
-            # We register and put a max, but user does not reached it yet
+            # We register and set a max, but user does not reached it yet
             pass
         else:
             # Dear user, you have exceeded the limit
