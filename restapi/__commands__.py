@@ -239,11 +239,7 @@ def tests(wait, core, file, folder):
         "Running all tests and computing coverage.\n" + "This might take some minutes."
     )
 
-    # FIXME: does not work
-    # use the 'template' dir found in /code
     parameters = []
-    # from utilities import helpers
-    # basedir = helpers.latest_dir(helpers.current_fullpath())
     if core:
         parameters.append(current_package)
     elif file is not None:
@@ -258,10 +254,6 @@ def tests(wait, core, file, folder):
         else:
             parameters.append("default")
             parameters.append(folder)
-    # import glob
-    # if 'template' in glob.glob('*'):
-    #     from restapi import __package__ as current_package
-    #     parameters.append(current_package)
 
     try:
         output = bash.execute_command(
