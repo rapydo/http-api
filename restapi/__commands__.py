@@ -5,9 +5,9 @@ import time
 import click
 import better_exceptions as be
 from flask.cli import FlaskGroup
-from utilities.logs import get_logger
-from utilities.processes import wait_socket
+from restapi.processes import wait_socket
 from restapi import __package__ as current_package
+from utilities.logs import get_logger
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
@@ -69,9 +69,9 @@ def flask_cli(options=None):
 
 
 def starting_up():
-    from utilities import processes
+    from restapi.processes import find as find_process
 
-    return processes.find(current_package, suffixes=['wait', 'init'], local_bin=True)
+    return find_process(current_package, suffixes=['wait', 'init'], local_bin=True)
 
 
 @cli.command()
