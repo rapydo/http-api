@@ -6,7 +6,6 @@ iRODS file-system flask connector
 
 # import os
 import logging
-from utilities.certificates import Certificates
 
 # from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
@@ -15,6 +14,7 @@ from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSes
 # from irods.session import iRODSSession
 from irods import exception as iexceptions
 from restapi.flask_ext.flask_irods.client import IrodsException, IrodsPythonClient
+from restapi.flask_ext.flask_irods.certificates import Certificates
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
