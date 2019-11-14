@@ -10,7 +10,8 @@ from smtplib import SMTPException, SMTPAuthenticationError
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from utilities import MODELS_DIR, CUSTOM_PACKAGE
+from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
+
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

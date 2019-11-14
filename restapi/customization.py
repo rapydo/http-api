@@ -9,13 +9,12 @@ import re
 import glob
 import copy
 
-from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH
+from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
+from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
-from utilities import CONF_PATH, ENDPOINTS_CODE_DIR
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import configuration as conf
 from utilities.meta import Meta
 from utilities.configuration import load_yaml_file
@@ -161,8 +160,8 @@ class Customizer(object):
                 apis_dir = os.path.join(base_dir, 'resources')
                 apiclass_module = '%s.%s' % (base_module, 'resources')
             else:
-                apis_dir = os.path.join(base_dir, ENDPOINTS_CODE_DIR)
-                apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
+                apis_dir = os.path.join(base_dir, 'apis')
+                apiclass_module = '%s.%s' % (base_module, 'apis')
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
@@ -308,7 +307,7 @@ class Customizer(object):
                     if iscore:
                         apiclass_module = '%s.%s' % (base_module, 'resources')
                     else:
-                        apiclass_module = '%s.%s' % (base_module, ENDPOINTS_CODE_DIR)
+                        apiclass_module = '%s.%s' % (base_module, 'apis')
 
                     log.warning("Deprecated endpoint configuration from yaml: %s", ep)
 

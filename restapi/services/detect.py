@@ -11,10 +11,8 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 import os
 from functools import lru_cache
 
-from restapi.confs import ABS_RESTAPI_CONFSPATH
-
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
+from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from utilities.meta import Meta
 from utilities.configuration import load_yaml_file
 from utilities.logs import get_logger

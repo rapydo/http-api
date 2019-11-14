@@ -11,8 +11,8 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 
 import sqlalchemy
 from utilities.meta import Meta
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
+from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
 from utilities.logs import re_obscure_pattern
 

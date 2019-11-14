@@ -11,16 +11,13 @@ import hmac
 import hashlib
 import base64
 import pytz
-
-# import socket
 from glom import glom
 
-from utilities import CUSTOM_PACKAGE
 from utilities.uuid import getUUID
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
-from restapi.confs import PRODUCTION
+from restapi.confs import PRODUCTION, CUSTOM_PACKAGE
 from restapi.attributes import ALL_ROLES, ANY_ROLE
 from utilities.meta import Meta
 from utilities.globals import mem

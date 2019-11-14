@@ -10,7 +10,7 @@ http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.h
 import pkgutil
 import inspect
 from importlib import import_module
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

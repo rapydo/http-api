@@ -24,13 +24,17 @@ UPLOAD_FOLDER = os.environ.get('UPLOAD_PATH', '/uploads')
 SECRET_KEY_FILE = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
 
 #################
-PRODUCTION = False
-# DEBUG = False
-if os.environ.get('APP_MODE', '') == 'production':
-    PRODUCTION = True
-# elif os.environ.get('APP_MODE', '') == 'debug':
-#     DEBUG = True
+PRODUCTION = os.environ.get('APP_MODE', '') == 'production'
 
+SWAGGER_DIR = 'swagger'
+MODELS_DIR = 'models'
+CONF_PATH = 'confs'
+# Also configured in controller
+EXTENDED_PROJECT_DISABLED = "no_extended_project"
+BACKEND_PACKAGE = 'restapi'  # package inside rapydo-http
+
+CUSTOM_PACKAGE = os.environ.get('VANILLA_PACKAGE', 'custom')
+EXTENDED_PACKAGE = os.environ.get('EXTENDED_PACKAGE', None)
 #################
 # SQLALCHEMY
 BASE_DB_DIR = '/dbs'

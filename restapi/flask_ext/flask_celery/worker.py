@@ -12,7 +12,7 @@ So we made some improvement along the code.
 """
 
 from restapi.server import create_app
-from utilities import CUSTOM_PACKAGE
+from restapi.confs import CUSTOM_PACKAGE
 from utilities.meta import Meta
 from utilities.logs import get_logger
 
