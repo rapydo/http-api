@@ -19,7 +19,7 @@ from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import helpers
 from utilities import configuration as conf
 from utilities.meta import Meta
-from utilities.myyaml import YAML_EXT, load_yaml_file
+from utilities.myyaml import load_yaml_file
 
 
 from utilities.logs import get_logger
@@ -340,15 +340,15 @@ class Customizer(object):
         # Find yaml files
         conf = None
         yaml_files = {}
-        yaml_listing = os.path.join(swagger_endpoint_dir, "*.%s" % YAML_EXT)
+        yaml_listing = os.path.join(swagger_endpoint_dir, "*.yaml")
 
         for file in glob.glob(yaml_listing):
-            if file.endswith('specs.%s' % YAML_EXT):
+            if file.endswith('specs.yaml'):
                 # load configuration and find file and class
                 conf = load_yaml_file(file)
             else:
                 # add file to be loaded from swagger extension
-                p = re.compile(r'\/([^\.\/]+)\.' + YAML_EXT + '$')
+                p = re.compile(r'\/([^\.\/]+)\.yaml$')
                 match = p.search(file)
                 method = match.groups()[0]
                 yaml_files[method] = file
