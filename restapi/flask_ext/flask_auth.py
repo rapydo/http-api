@@ -8,7 +8,7 @@ from restapi.services.detect import Detector
 # from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
 from restapi.services.authentication import BaseAuthentication
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from restapi.exceptions import RestApiException
 from utilities.meta import Meta
 from utilities.globals import mem

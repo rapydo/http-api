@@ -4,7 +4,7 @@ import os
 from functools import lru_cache
 from flask import request, stream_with_context, Response
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from irods.access import iRODSAccess
 from irods.rule import Rule
 from irods.ticket import Ticket

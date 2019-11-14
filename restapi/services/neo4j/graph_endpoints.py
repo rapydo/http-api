@@ -4,7 +4,7 @@ import re
 from functools import wraps
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 from utilities.logs import get_logger
 

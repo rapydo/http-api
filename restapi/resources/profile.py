@@ -14,11 +14,11 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION
 from restapi.services.mail import get_html_template
 from restapi.flask_ext.flask_auth import HandleSecurity
+from restapi.utilities.htmlcodes import hcodes
 
 from utilities.globals import mem
-from utilities import htmlcodes as hcodes
-from utilities.time import timestamp_from_string
-from utilities.meta import Meta
+from restapi.utilities.time import timestamp_from_string
+from restapi.utilities.meta import Meta
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

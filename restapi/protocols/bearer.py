@@ -15,7 +15,7 @@ there is no client id nor is client authentication required.
 from functools import wraps
 from flask import request
 from restapi.services.detect import Detector
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.meta import Meta
 from utilities.logs import get_logger
 

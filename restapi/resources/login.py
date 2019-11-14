@@ -8,7 +8,7 @@ from restapi.exceptions import RestApiException
 from restapi.flask_ext.flask_auth import HandleSecurity
 from restapi import decorators as decorate
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 
 class Login(EndpointResource):

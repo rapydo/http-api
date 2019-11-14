@@ -7,7 +7,7 @@ Download data from APIs.
 import os
 import re
 from flask import request, send_from_directory, stream_with_context, Response
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 from utilities.logs import get_logger
 

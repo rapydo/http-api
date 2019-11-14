@@ -13,7 +13,7 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.services.mail import get_html_template
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 from utilities.globals import mem
 

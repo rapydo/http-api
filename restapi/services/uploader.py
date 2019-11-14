@@ -18,7 +18,7 @@ import os
 from flask import request  # , send_from_directory
 from werkzeug import secure_filename
 from werkzeug.http import parse_content_range_header
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from restapi.confs import UPLOAD_FOLDER, PRODUCTION
 from restapi.services.detect import detector
 

@@ -4,7 +4,7 @@ from flask import current_app
 from restapi.rest.definition import EndpointResource
 from restapi.protocols.bearer import authentication
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 """
 class Tokens

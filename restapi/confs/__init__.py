@@ -4,6 +4,17 @@ import os
 import re
 from urllib.parse import urlparse
 
+
+class mem:
+    """
+    Source:
+    https://pythonconquerstheuniverse.wordpress.com/
+        2010/10/20/a-globals-class-pattern-for-python/
+    """
+
+    pass
+
+
 AVOID_COLORS_ENV_LABEL = 'TESTING_FLASK'
 STACKTRACE = False
 REMOVE_DATA_AT_INIT_TIME = False

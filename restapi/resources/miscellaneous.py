@@ -8,7 +8,7 @@ from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi import decorators as decorate
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.globals import mem
 from utilities.logs import get_logger
 

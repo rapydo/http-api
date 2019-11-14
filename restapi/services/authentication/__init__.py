@@ -21,7 +21,7 @@ from restapi.confs import PRODUCTION, CUSTOM_PACKAGE
 from restapi.attributes import ALL_ROLES, ANY_ROLE
 from utilities.meta import Meta
 from utilities.globals import mem
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

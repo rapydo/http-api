@@ -11,7 +11,7 @@ from utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

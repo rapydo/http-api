@@ -35,7 +35,7 @@ from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
 from restapi.attributes import ResponseElements
 from restapi import __version__
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.globals import mem
 from utilities.logs import get_logger
 

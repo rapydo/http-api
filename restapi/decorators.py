@@ -21,7 +21,7 @@ import re
 from functools import wraps
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.globals import mem
 from utilities.logs import get_logger
 

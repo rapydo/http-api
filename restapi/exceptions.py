@@ -7,7 +7,7 @@ to handle services known errors
 
 """
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 
 class RestApiException(Exception):

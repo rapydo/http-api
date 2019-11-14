@@ -7,14 +7,12 @@ import unittest
 import random
 import json
 
-# import string
 import logging
 import os
 
-# from restapi.server import create_app
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
+from restapi.utilities.htmlcodes import hcodes
 from utilities.logs import get_logger
-from utilities import htmlcodes as hcodes
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)
