@@ -257,7 +257,7 @@ def tests(wait, core, file, folder):
         # Pattern in plumbum library for executing a shell command
         from plumbum import local
         command = local["pyunittests"]
-        log.verbose("Executing command pyunittests %s" % (command, parameters))
+        log.verbose("Executing command pyunittests %s", parameters)
         output = command(parameters)
 
     except Exception as e:
