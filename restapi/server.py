@@ -4,7 +4,7 @@
 The Main server factory.
 We create all the internal flask components here.
 """
-
+import os
 import warnings
 from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
@@ -12,6 +12,7 @@ from flask_injector import FlaskInjector
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from restapi import confs as config
+from restapi.confs import ABS_RESTAPI_PATH
 from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
@@ -21,7 +22,6 @@ from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from utilities.globals import mem
-from utilities import helpers
 from utilities.logs import (
     get_logger,
     handle_log_output,
@@ -161,7 +161,7 @@ def create_app(
     # FIXME: try to remove mem. from everywhere...
 
     # Add template dir for output in HTML
-    kwargs['template_folder'] = helpers.script_abspath(__file__, 'templates')
+    kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
 
     #################################################
     # Flask app instance

@@ -9,12 +9,14 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 """
 
 import os
-from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
+from functools import lru_cache
+
+from restapi.confs import ABS_RESTAPI_CONFSPATH
+
+from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities.meta import Meta
 from utilities.configuration import load_yaml_file
-from utilities import helpers
-from functools import lru_cache
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -65,7 +67,6 @@ class Detector(object):
         return False
 
     @staticmethod
-    # @lru_cache(maxsize=None)
     def prefix_name(service):
         return service.get('name'), service.get('prefix').lower() + '_'
 
@@ -73,9 +74,7 @@ class Detector(object):
 
         self.services_configuration = load_yaml_file(
             file=config_file_name,
-            path=os.path.join(
-                helpers.script_abspath(__file__), '..', '..', CORE_CONFIG_PATH
-            ),
+            path=ABS_RESTAPI_CONFSPATH,
             logger=True,
         )
 

@@ -9,15 +9,15 @@ https://raw.githubusercontent.com/gangverk/flask-swagger/master/flask_swagger.py
 
 import re
 import os
+import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
-from restapi.confs import PRODUCTION
+from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH
 from utilities import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities import MODELS_DIR
 from utilities import htmlcodes as hcodes
-from utilities import helpers
 from utilities.globals import mem
 from utilities.configuration import load_yaml_file
 from utilities.configuration import mix
@@ -429,21 +429,21 @@ class BeSwagger(object):
         """ Read models from base/custom yaml files """
 
         # BASE definitions
-        path = helpers.script_abspath(__file__, MODELS_DIR)
+        path = os.path.join(ABS_RESTAPI_PATH, MODELS_DIR)
         data = load_yaml_file('swagger', path=path)
 
         # EXTENDED definitions, if any
         if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
             extended_models = {}
         else:
-            path = helpers.current_dir(EXTENDED_PACKAGE, MODELS_DIR)
+            path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
             # NOTE: with logger=False I skip the warning if this file doesn't exist
             extended_models = load_yaml_file(
                 'swagger', path=path, skip_error=True, logger=False
             )
 
         # CUSTOM definitions
-        path = helpers.current_dir(CUSTOM_PACKAGE, MODELS_DIR)
+        path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
         # NOTE: with logger=False I skip the warning if this file doesn't exist
         custom_models = load_yaml_file(
             'swagger', path=path, skip_error=True, logger=False
@@ -463,12 +463,8 @@ class BeSwagger(object):
 
         if len(swag_dict['paths']) < 1:
             raise AttributeError("Swagger 'paths' definition is empty")
-        # else:
-        #     log.pp(swag_dict)
 
-        tmp_dir = 'tmp'
-        file_name = 'test.json'
-        filepath = helpers.root_path(tmp_dir, file_name)
+        filepath = os.path.join(tempfile.gettempdir(), 'test.json')
 
         try:
             # Fix jsonschema validation problem

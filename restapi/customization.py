@@ -9,14 +9,13 @@ import re
 import glob
 import copy
 
-from restapi.confs import API_URL, BASE_URLS
+from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH
 from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 
 from utilities import CONF_PATH, ENDPOINTS_CODE_DIR
 from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from utilities import helpers
 from utilities import configuration as conf
 from utilities.meta import Meta
 from utilities.configuration import load_yaml_file
@@ -63,7 +62,7 @@ class Customizer(object):
         ##################
         # Reading configuration
 
-        confs_path = helpers.current_dir(CONF_PATH)
+        confs_path = os.path.join(os.curdir, CONF_PATH)
 
         if 'defaults_path' in CONF_FOLDERS:
             defaults_path = CONF_FOLDERS['defaults_path']
@@ -128,21 +127,24 @@ class Customizer(object):
         # Walk folders looking for endpoints
 
         endpoints_folders = []
-        # base swagger dir (rapydo/http-api)
+        # base swagger dir (rapydo/http-ap)
         endpoints_folders.append(
-            {'path': helpers.script_abspath(__file__), 'iscore': True}
+            {'path': ABS_RESTAPI_PATH, 'iscore': True}
         )
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
             endpoints_folders.append(
-                {'path': helpers.current_dir(self._extended_project), 'iscore': False}
+                {
+                    'path': os.path.join(os.curdir, self._extended_project),
+                    'iscore': False
+                }
             )
 
         # custom swagger dir
         endpoints_folders.append(
-            {'path': helpers.current_dir(CUSTOM_PACKAGE), 'iscore': False}
+            {'path': os.path.join(os.curdir, CUSTOM_PACKAGE), 'iscore': False}
         )
 
         simple_override_check = {}
@@ -151,7 +153,9 @@ class Customizer(object):
 
             base_dir = folder.get('path')
             iscore = folder.get('iscore')
-            base_module = helpers.last_dir(base_dir)
+            # get last item of the path
+            # normapath is required to strip final / is any
+            base_module = os.path.basename(os.path.normpath(base_dir))
 
             if iscore:
                 apis_dir = os.path.join(base_dir, 'resources')
@@ -297,7 +301,9 @@ class Customizer(object):
                         )
                         continue
 
-                    base_module = helpers.last_dir(base_dir)
+                    # get last item of the path
+                    # normapath is required to strip final / is any
+                    base_module = os.path.basename(os.path.normpath(base_dir))
 
                     if iscore:
                         apiclass_module = '%s.%s' % (base_module, 'resources')

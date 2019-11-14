@@ -10,7 +10,6 @@ from smtplib import SMTPException, SMTPAuthenticationError
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from utilities import helpers
 from utilities import MODELS_DIR, CUSTOM_PACKAGE
 from utilities.logs import get_logger
 
@@ -245,7 +244,7 @@ def get_html_template(template_file, replaces):
     """
     # FIXME: use jinja2 instead :)
     """
-    path = helpers.current_dir(CUSTOM_PACKAGE, MODELS_DIR)
+    path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
     template = os.path.join(path, "emails", template_file)
 
     html = None
