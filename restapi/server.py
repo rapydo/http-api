@@ -21,7 +21,7 @@ from restapi.confs import SENTRY_URL
 from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
-from utilities.globals import mem
+from restapi.utilities.globals import mem
 from utilities.logs import (
     get_logger,
     handle_log_output,

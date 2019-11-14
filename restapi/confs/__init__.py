@@ -2,18 +2,10 @@
 
 import os
 import re
+from glom import glom
 from urllib.parse import urlparse
 
-
-class mem:
-    """
-    Source:
-    https://pythonconquerstheuniverse.wordpress.com/
-        2010/10/20/a-globals-class-pattern-for-python/
-    """
-
-    pass
-
+from restapi.utilities.globals import mem
 
 AVOID_COLORS_ENV_LABEL = 'TESTING_FLASK'
 STACKTRACE = False
@@ -60,6 +52,12 @@ if SENTRY_URL is not None and SENTRY_URL.strip() == '':
 
 ABS_RESTAPI_CONFSPATH = os.path.dirname(os.path.realpath(__file__))
 ABS_RESTAPI_PATH = os.path.dirname(ABS_RESTAPI_CONFSPATH)
+
+
+def get_project_configuration(key=None, default=None):
+    if key is None:
+        return mem.customizer._configurations
+    return glom(mem.customizer._configurations, key, default=default)
 
 
 def get_api_url(request_object, production=False):

@@ -7,10 +7,9 @@
 import abc
 from datetime import datetime, timedelta
 
-# import time
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
-from utilities.meta import Meta
+from restapi.utilities.meta import Meta
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

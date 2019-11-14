@@ -9,7 +9,7 @@ from restapi.exceptions import RestApiException
 from restapi import decorators as decorate
 
 from restapi.utilities.htmlcodes import hcodes
-from utilities.globals import mem
+from restapi.utilities.globals import mem
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

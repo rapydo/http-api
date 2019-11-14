@@ -7,15 +7,12 @@ Celery extension wrapper
 from celery import Celery
 from functools import wraps
 import traceback
-from glom import glom
-
-# from kombu import Exchange, Queue
 
 from restapi.services.mail import send_mail_is_active, send_mail
-from restapi.flask_ext import BaseExtension, get_logger
+from restapi.flask_ext import BaseExtension
+from restapi.confs import get_project_configuration
 
-from utilities.globals import mem
-
+from utilities.logs import get_logger
 log = get_logger(__name__)
 
 
@@ -361,8 +358,7 @@ def send_errors_by_email(func):
                 body += "\n\n"
                 body += "Error: %s" % (traceback.format_exc())
 
-                project = glom(
-                    mem.customizer._configurations,
+                project = get_project_configuration(
                     "project.title",
                     default='Unkown title',
                 )

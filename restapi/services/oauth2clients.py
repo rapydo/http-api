@@ -9,10 +9,9 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 import os
 from base64 import b64encode
 from restapi.protocols.oauth import oauth
+from restapi.utilities.globals import mem
+from restapi.utilities.meta import Meta
 
-# from restapi.confs import PRODUCTION
-from utilities.globals import mem
-from utilities.meta import Meta
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

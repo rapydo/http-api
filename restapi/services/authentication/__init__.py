@@ -11,17 +11,16 @@ import hmac
 import hashlib
 import base64
 import pytz
-from glom import glom
 
-from utilities.uuid import getUUID
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
-from restapi.confs import PRODUCTION, CUSTOM_PACKAGE
+from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
 from restapi.attributes import ALL_ROLES, ANY_ROLE
-from utilities.meta import Meta
-from utilities.globals import mem
+from restapi.utilities.meta import Meta
 from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.uuid import getUUID
+
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -67,13 +66,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # TODO: check if still necessary
         """
 
-        credentials = glom(
-            mem.customizer._configurations, "variables.backend.credentials"
+        credentials = get_project_configuration(
+            "variables.backend.credentials"
         )
-        # credentials = mem.customizer._configurations \
-        #     .get('variables', {}) \
-        #     .get('backend', {}) \
-        #     .get('credentials', {})
 
         cls.default_user = credentials.get('username', None)
         cls.default_password = credentials.get('password', None)

@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from glom import glom
 from sqlalchemy.exc import IntegrityError
 
 from restapi import decorators as decorate
 from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-
-# from restapi.services.neo4j.graph_endpoints import graph_transactions
+from restapi.confs import get_project_configuration
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.services.mail import get_html_template
 from restapi.utilities.htmlcodes import hcodes
-
-from utilities.globals import mem
 
 from utilities.logs import get_logger
 
@@ -143,8 +139,8 @@ class AdminUsers(EndpointResource):
 
     def send_notification(self, user, unhashed_password, is_update=False):
 
-        title = glom(
-            mem.customizer._configurations, "project.title", default='Unkown title'
+        title = get_project_configuration(
+            "project.title", default='Unkown title'
         )
 
         subject = "%s: " % title
@@ -229,7 +225,6 @@ Password: "%s"
         return self.force_response(data)
 
     @decorate.catch_error()
-    # @graph_transactions
     @authentication.required()
     def post(self):
 
@@ -292,8 +287,7 @@ Password: "%s"
 
                         roles = self.auth.get_roles()
                         is_admin = self.auth.verify_admin()
-                        allowed_roles = glom(
-                            mem.customizer._configurations,
+                        allowed_roles = get_project_configuration(
                             "variables.backend.allowed_roles",
                             default=[],
                         )
@@ -366,8 +360,7 @@ Password: "%s"
 
         roles = self.parse_roles(v)
         if not is_admin:
-            allowed_roles = glom(
-                mem.customizer._configurations,
+            allowed_roles = get_project_configuration(
                 "variables.backend.allowed_roles",
                 default=[],
             )
@@ -426,7 +419,6 @@ Password: "%s"
         return self.force_response(user.uuid)
 
     @decorate.catch_error()
-    # @graph_transactions
     @authentication.required()
     def put(self, user_id=None):
 
@@ -482,8 +474,7 @@ Password: "%s"
 
         roles = self.parse_roles(v)
         if not is_admin:
-            allowed_roles = glom(
-                mem.customizer._configurations,
+            allowed_roles = get_project_configuration(
                 "variables.backend.allowed_roles",
                 default=[],
             )
@@ -537,7 +528,6 @@ Password: "%s"
         return self.empty_response()
 
     @decorate.catch_error()
-    # @graph_transactions
     @authentication.required()
     def delete(self, user_id=None):
 
@@ -621,10 +611,9 @@ class UserRole(EndpointResource):
 
         cypher = "MATCH (r:Role)"
         if not self.auth.verify_admin():
-            allowed_roles = (
-                mem.customizer._configurations.get('variables', {})
-                .get('backend', {})
-                .get('allowed_roles', [])
+            allowed_roles = get_project_configuration(
+                "variables.backend.allowed_roles",
+                default=[],
             )
             # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
             cypher += " WHERE r.name in %s" % allowed_roles

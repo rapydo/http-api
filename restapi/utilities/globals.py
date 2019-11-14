@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-If you need things globally,
-come here and take.
+If you need things globally, come here and take.
+
+Used to save:
+- current_response
+- customizer
+- oauth2_services
 """
 
 

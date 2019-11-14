@@ -17,9 +17,9 @@ from restapi.attributes import ExtraAttributes, ALL_ROLES
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.utilities.htmlcodes import hcodes
-from utilities.globals import mem
-from utilities.configuration import load_yaml_file
-from utilities.configuration import mix
+from restapi.utilities.globals import mem
+
+from utilities.configuration import load_yaml_file, mix
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

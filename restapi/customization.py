@@ -14,12 +14,10 @@ from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.services.detect import detector
 from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
+from restapi.utilities.meta import Meta
 
 from utilities import configuration as conf
-from utilities.meta import Meta
 from utilities.configuration import load_yaml_file
-
-
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

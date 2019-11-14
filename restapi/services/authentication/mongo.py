@@ -8,7 +8,7 @@ from pytz import utc
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
 from restapi.flask_ext.flask_mongo import AUTH_DB
-from utilities.uuid import getUUID
+from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
 from utilities.logs import get_logger
 

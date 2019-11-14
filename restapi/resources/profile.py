@@ -3,7 +3,6 @@
 import os
 import jwt
 import pytz
-from glom import glom
 
 from restapi.rest.definition import EndpointResource
 from restapi.protocols.bearer import authentication
@@ -11,14 +10,13 @@ from restapi import decorators as decorate
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.confs import PRODUCTION
+from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.services.mail import get_html_template
 from restapi.flask_ext.flask_auth import HandleSecurity
 from restapi.utilities.htmlcodes import hcodes
-
-from utilities.globals import mem
 from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
+
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -43,8 +41,8 @@ class RecoverPassword
 
 def send_activation_link(auth, user):
 
-    title = glom(
-        mem.customizer._configurations, "project.title", default='Unkown title'
+    title = get_project_configuration(
+        "project.title", default='Unkown title'
     )
 
     activation_token, jti = auth.create_reset_token(user, auth.ACTIVATE_ACCOUNT)
@@ -99,8 +97,8 @@ def notify_registration(user):
     var = "REGISTRATION_NOTIFICATIONS"
     if detector.get_bool_from_os(var):
         # Sending an email to the administrator
-        title = glom(
-            mem.customizer._configurations, "project.title", default='Unkown title'
+        title = get_project_configuration(
+            "project.title", default='Unkown title'
         )
         subject = "%s New credentials requested" % title
         body = "New credentials request from %s" % user.email
@@ -538,12 +536,8 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
-        # title = mem.customizer._configurations \
-        #     .get('project', {}) \
-        #     .get('title', "Unkown title")
-
-        title = glom(
-            mem.customizer._configurations, "project.title", default='Unkown title'
+        title = get_project_configuration(
+            "project.title", default='Unkown title'
         )
 
         reset_token, jti = self.auth.create_reset_token(user, self.auth.PWD_RESET)

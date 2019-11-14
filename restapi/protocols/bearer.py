@@ -16,7 +16,7 @@ from functools import wraps
 from flask import request
 from restapi.services.detect import Detector
 from restapi.utilities.htmlcodes import hcodes
-from utilities.meta import Meta
+from restapi.utilities.meta import Meta
 from utilities.logs import get_logger
 
 log = get_logger(__name__)

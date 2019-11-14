@@ -16,19 +16,21 @@ import os
 import logging
 
 from collections import OrderedDict
-from utilities.logs import get_logger
 from restapi.services import ServiceFarm, ServiceObject
-from utilities.uuid import getUUIDfromString
+from restapi.utilities.uuid import getUUIDfromString
 from elasticsearch_dsl import Index
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl.query import MultiMatch
+
+from utilities.logs import get_logger
+
+log = get_logger(__name__)
 
 HOST = os.environ['EL_NAME'].split('/').pop()
 PORT = os.environ['EL_PORT'].split(':').pop()
 
 ES_SERVICE = {"hosts": [{'host': HOST, 'port': PORT}], 'timeout': 5}
 
-log = get_logger(__name__)
 
 
 #######################

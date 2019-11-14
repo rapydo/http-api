@@ -16,7 +16,7 @@ from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from restapi.swagger import input_validation
 from restapi.utilities.htmlcodes import hcodes
-from utilities.globals import mem
+from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
 from utilities.logs import get_logger, obfuscate_dict

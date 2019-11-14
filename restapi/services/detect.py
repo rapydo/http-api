@@ -13,7 +13,7 @@ from functools import lru_cache
 
 from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from utilities.meta import Meta
+from restapi.utilities.meta import Meta
 from utilities.configuration import load_yaml_file
 from utilities.logs import get_logger
 

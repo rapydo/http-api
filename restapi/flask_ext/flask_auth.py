@@ -5,13 +5,12 @@ import pytz
 from datetime import datetime, timedelta
 from restapi.services.detect import Detector
 
-# from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
 from restapi.services.authentication import BaseAuthentication
-from restapi.utilities.htmlcodes import hcodes
 from restapi.exceptions import RestApiException
-from utilities.meta import Meta
-from utilities.globals import mem
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.meta import Meta
+from restapi.confs import get_project_configuration
 
 log = get_logger(__name__)
 
@@ -171,9 +170,7 @@ class HandleSecurity(object):
         secret = self.get_secret(user)
         totp = pyotp.TOTP(secret)
 
-        global_conf = mem.customizer._configurations
-        project_conf = global_conf.get('project', {})
-        project_name = project_conf.get('title', "No project name")
+        project_name = get_project_configuration('project.title', "No project name")
 
         otpauth_url = totp.provisioning_uri(project_name)
         qr_url = pyqrcode.create(otpauth_url)
