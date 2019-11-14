@@ -109,9 +109,15 @@ class Detector(object):
 
     @staticmethod
     def load_group(label):
-        from utilities.basher import detect_vargroup
 
-        return detect_vargroup(label)
+        variables = {}
+        for var, value in os.environ.items():
+            var = var.lower()
+            if var.startswith(label):
+                key = var[len(label):].strip('_')
+                value = value.strip('"').strip("'")
+                variables[key] = value
+        return variables
 
     def output_service_variables(self, service_name):
         service_class = self.services_classes.get(service_name, {})
