@@ -80,8 +80,8 @@ setup(
 
         # Utilities
         "glom",
-        "plumbum",
         "psutil",
+        "plumbum",
     ],
     classifiers=[
         'Programming Language :: Python',

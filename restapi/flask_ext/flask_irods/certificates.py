@@ -5,11 +5,11 @@ Using x509 certificates
 """
 
 import os
+import pwd
 import re
 import pytz
 from datetime import datetime, timedelta
 
-from utilities.basher import BashCommands
 from utilities.logs import get_logger
 
 log = get_logger(__name__)
@@ -164,11 +164,15 @@ class Certificates(object):
         return True
 
     @staticmethod
+    def path_is_readable(filepath):
+        return (os.path.isfile(filepath) or os.path.isdir(filepath)) and os.access(
+            filepath, os.R_OK
+        )
+
+    @staticmethod
     def check_x509_permissions():
 
-        from utilities import basher
-
-        os_user = basher.current_os_user()
+        os_user = pwd.getpwuid(os.getuid()).pw_name
         failed = False
 
         # Check up with X509 variables
@@ -181,13 +185,13 @@ class Certificates(object):
             # check if current HTTP API user can read needed certificates
             if key.lower().endswith('cert_dir'):
                 # here it has been proven to work even if not readable...
-                if not basher.path_is_readable(filepath):
+                if not Certificates.path_is_readable(filepath):
                     failed = True
                     log.error(
                         "%s variable (%s) not readable by %s", key, filepath, os_user
                     )
             else:
-                os_owner = basher.file_os_owner(filepath)
+                os_owner = pwd.getpwuid(os.stat(filepath).st_uid).pw_name
                 if os_user != os_owner:
                     failed = True
                     log.error(
@@ -205,10 +209,20 @@ class Certificates(object):
     def check_cert_validity(certfile, validity_interval=1):
         args = ["x509", "-in", certfile, "-text"]
 
-        bash = BashCommands()
         # TODO: change the openssl bash command with the pyOpenSSL API
         # if so we may remove 'plumbum' from requirements of rapydo-http repo
-        output = bash.execute_command("openssl", args)
+
+        from plumbum import local
+        from plumbum.commands.processes import ProcessExecutionError
+        try:
+
+            # Pattern in plumbum library for executing a shell command
+            command = local["openssl"]
+            log.verbose("Executing command openssl %s" % (command, args))
+            output = command(args)
+
+        except ProcessExecutionError as e:
+            raise e
 
         pattern = re.compile(
             r"Validity.*\n\s*Not Before: (.*)\n" + r"\s*Not After *: (.*)"

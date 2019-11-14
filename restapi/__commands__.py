@@ -231,10 +231,6 @@ def tests(wait, core, file, folder):
     log.debug("Starting unit tests: %s", be)
 
     # launch unittests and also compute coverage
-    # TODO: convert the `pyunittests` script from the docker image into python
-    from utilities.basher import BashCommands
-
-    bash = BashCommands()
     log.warning(
         "Running all tests and computing coverage.\n" + "This might take some minutes."
     )
@@ -256,12 +252,14 @@ def tests(wait, core, file, folder):
             parameters.append(folder)
 
     try:
-        output = bash.execute_command(
-            "pyunittests",
-            parameters=parameters,
-            catchException=False,
-            error_max_len=-1
-        )
+
+        # TODO: convert the `pyunittests` script from the docker image into python
+        # Pattern in plumbum library for executing a shell command
+        from plumbum import local
+        command = local["pyunittests"]
+        log.verbose("Executing command pyunittests %s" % (command, parameters))
+        output = command(parameters)
+
     except Exception as e:
         log.error(str(e))
         raise e
