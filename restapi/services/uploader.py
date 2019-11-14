@@ -49,9 +49,9 @@ class Uploader(object):
     def absolute_upload_file(filename, subfolder=None, onlydir=False):
         if subfolder is not None:
             filename = os.path.join(subfolder, filename)
-            dir = os.path.join(UPLOAD_FOLDER, subfolder)
-            if not os.path.exists(dir):
-                os.mkdir(dir)
+            subdir = os.path.join(UPLOAD_FOLDER, subfolder)
+            if not os.path.exists(subdir):
+                os.mkdir(subdir)
         abs_file = os.path.join(UPLOAD_FOLDER, filename)  # filename.lower())
         if onlydir:
             return os.path.dirname(abs_file)
