@@ -6,7 +6,7 @@ Tests for http api base (mostly authentication)
 
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from utilities.logs import get_logger
 
 __author__ = "Paolo D'Onorio De Meo"
