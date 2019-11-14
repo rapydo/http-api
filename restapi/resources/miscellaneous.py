@@ -106,8 +106,8 @@ class SwaggerSpecifications(EndpointResource):
 
         # NOTE: changing dinamically options, based on where the client lies
         from restapi.confs import PRODUCTION
+        from restapi.confs import get_api_url
         from flask import request
-        from utilities.helpers import get_api_url
 
         api_url = get_api_url(request, PRODUCTION)
         scheme, host = api_url.rstrip('/').split('://')
