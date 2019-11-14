@@ -19,7 +19,7 @@ from utilities import MODELS_DIR
 from utilities import htmlcodes as hcodes
 from utilities import helpers
 from utilities.globals import mem
-from utilities.myyaml import load_yaml_file
+from utilities.configuration import load_yaml_file
 from utilities.configuration import mix
 from utilities.logs import get_logger
 

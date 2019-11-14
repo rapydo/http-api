@@ -12,7 +12,7 @@ import os
 from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from utilities.meta import Meta
-from utilities.myyaml import load_yaml_file
+from utilities.configuration import load_yaml_file
 from utilities import helpers
 from functools import lru_cache
 from utilities.logs import get_logger

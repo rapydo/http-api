@@ -19,7 +19,7 @@ from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from utilities import helpers
 from utilities import configuration as conf
 from utilities.meta import Meta
-from utilities.myyaml import load_yaml_file
+from utilities.configuration import load_yaml_file
 
 
 from utilities.logs import get_logger
