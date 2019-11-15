@@ -12,7 +12,7 @@ from restapi.protocols.oauth import oauth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 meta = Meta()

@@ -12,7 +12,7 @@ import os
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.utilities.htmlcodes import hcodes
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)

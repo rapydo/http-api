@@ -16,9 +16,9 @@ from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 from restapi.utilities.meta import Meta
 
-from utilities import configuration as conf
-from utilities.configuration import load_yaml_file
-from utilities.logs import get_logger
+from restapi.utilities import configuration as conf
+from restapi.utilities.configuration import load_yaml_file
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 meta = Meta()

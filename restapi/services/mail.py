@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 
 from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

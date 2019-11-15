@@ -14,7 +14,7 @@ from restapi.utilities.meta import Meta
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
-from utilities.logs import re_obscure_pattern
+from restapi.utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
 

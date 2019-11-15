@@ -17,7 +17,7 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 meta = Meta()

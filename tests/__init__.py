@@ -13,7 +13,7 @@ from restapi.server import create_app
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
 from restapi.utilities.htmlcodes import hcodes
-from utilities.logs import get_logger, set_global_log_level
+from restapi.utilities.logs import get_logger, set_global_log_level
 from restapi.tests import API_URI, AUTH_URI
 
 __author__ = "Paolo D'Onorio De Meo (m.dantonio@cineca.it)"

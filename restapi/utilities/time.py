@@ -4,7 +4,7 @@ import pytz
 from datetime import datetime
 import dateutil.parser
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

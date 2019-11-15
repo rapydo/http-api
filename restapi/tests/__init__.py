@@ -12,7 +12,7 @@ from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

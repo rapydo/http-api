@@ -22,7 +22,7 @@ from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
-from utilities.logs import (
+from restapi.utilities.logs import (
     get_logger,
     handle_log_output,
     MAX_CHAR_LEN,

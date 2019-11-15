@@ -5,7 +5,7 @@ Oauth handling
 """
 
 from flask_oauthlib.client import OAuth
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

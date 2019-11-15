@@ -24,7 +24,7 @@ from restapi.confs import SENTRY_URL
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

@@ -22,7 +22,7 @@ from elasticsearch_dsl import Index
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl.query import MultiMatch
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

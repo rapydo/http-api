@@ -14,8 +14,8 @@ from functools import lru_cache
 from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.utilities.meta import Meta
-from utilities.configuration import load_yaml_file
-from utilities.logs import get_logger
+from restapi.utilities.configuration import load_yaml_file
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

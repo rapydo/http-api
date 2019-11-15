@@ -36,7 +36,7 @@ from restapi.attributes import ResponseElements
 from restapi import __version__
 from restapi.confs import get_project_configuration
 from restapi.utilities.htmlcodes import hcodes
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

@@ -6,7 +6,7 @@ import re
 from functools import wraps
 from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
-from utilities.logs import re_obscure_pattern
+from restapi.utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
 

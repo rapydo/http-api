@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
 from restapi.utilities.meta import Meta
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -313,7 +313,7 @@ def get_debug_instance(MyClass):
 
     #######
     # NOTE: impors are needed here for logging to work correctly
-    from utilities.logs import get_logger
+    from restapi.utilities.logs import get_logger
     from restapi.services.detect import detector
 
     detector  # avoid PEP complaints

@@ -7,7 +7,7 @@ import better_exceptions as be
 from flask.cli import FlaskGroup
 from restapi.processes import wait_socket
 from restapi import __package__ as current_package
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
