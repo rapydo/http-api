@@ -132,8 +132,11 @@ class Authentication(BaseAuthentication):
         for role in current_roles_objs:
             current_roles.append(role.name)
 
+        log.info("Current roles: %s", current_roles)
+
         for role in self.default_roles:
             if role not in current_roles:
+                log.info("Creating role: %s", role)
                 self.create_role(role)
 
         # Default user (if no users yet available)
@@ -150,6 +153,8 @@ class Authentication(BaseAuthentication):
                 },
                 roles=self.default_roles,
             )
+        else:
+            log.debug("Users already created")
 
     def save_user(self, user):
         if user is not None:
