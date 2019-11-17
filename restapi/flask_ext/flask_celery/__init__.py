@@ -115,13 +115,13 @@ class CeleryExt(BaseExtension):
 
         celery_app = Celery('RestApiQueue', broker=BROKER_URL, backend=BACKEND_URL)
 
-        if not worker_mode:
+        # if not worker_mode:
 
-            from celery.task.control import inspect
+        #     from celery.task.control import inspect
 
-            insp = inspect()
-            if not insp.stats():
-                log.warning("No running Celery workers were found")
+        #     insp = inspect()
+        #     if not insp.stats():
+        #         log.warning("No running Celery workers were found")
 
         # Skip initial warnings, avoiding pickle format (deprecated)
         celery_app.conf.accept_content = ['json']
