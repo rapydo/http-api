@@ -20,7 +20,7 @@ except ImportError:
 #######################
 # DEBUG level is 10 (https://docs.python.org/3/howto/logging.html)
 CRITICAL_EXIT = 60
-PRINT_STACK = 59
+# PRINT_STACK = 59
 PRINT = 9
 VERBOSE = 5
 VERY_VERBOSE = 1
@@ -243,10 +243,10 @@ class LogMe(object):
                 "\033[4;33;41m%s\033[1;0m"
                 % logging.getLevelName(logging.CRITICAL_EXIT),
             )
-            logging.addLevelName(
-                logging.PRINT_STACK,
-                "\033[5;37;41m%s\033[1;0m" % logging.getLevelName(logging.PRINT_STACK),
-            )
+            # logging.addLevelName(
+            #     logging.PRINT_STACK,
+            #     "\033[5;37;41m%s\033[1;0m" % logging.getLevelName(logging.PRINT_STACK),
+            # )
             logging.addLevelName(
                 logging.CRITICAL,
                 "\033[5;37;41m%s\033[1;0m" % logging.getLevelName(logging.CRITICAL),
