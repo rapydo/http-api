@@ -57,8 +57,6 @@ class ExternalLogins(object):
         # For each defined internal service
         for key, func in meta.get_methods_inside_instance(self).items():
 
-            # log.info("META %s-%s" % (key, func))
-
             # Check if credentials are enabled inside docker env
             var1 = key.upper() + '_APPNAME'
             var2 = key.upper() + '_APPKEY'

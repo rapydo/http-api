@@ -127,9 +127,7 @@ def add(rest_api, resource):
 
         if len(roles) < 1:
             roles = "'DEFAULT'"
-        log.very_verbose(
-            "Auth on %s.%s for %s" % (resource.cls.__name__, method, roles)
-        )
+        log.verbose("Auth on %s.%s for %s", resource.cls.__name__, method, roles)
 
     urls = [uri for _, uri in resource.uris.items()]
 
@@ -281,7 +279,7 @@ def create_app(
                 # to allow 405 response
                 newmethods.add(verb)
             else:
-                log.verbose("Removed method %s.%s from mapping" % (rulename, verb))
+                log.verbose("Removed method %s.%s from mapping", rulename, verb)
 
         rule.methods = newmethods
 

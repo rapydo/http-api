@@ -137,7 +137,7 @@ class EndpointResource(Resource):
                     action=act,
                     location=loc,
                 )
-                log.very_verbose("Accept param '%s' type %s" % (param, mytype))
+                log.verbose("Accept param '%s' type %s", param, mytype)
 
         # TODO: should I check body parameters?
 
@@ -306,8 +306,6 @@ class EndpointResource(Resource):
 
         Build a ResponseElements instance.
         """
-        # log.debug("Force response:\nargs[%s] kwargs[%s]" % (args, kwargs))
-
         # If args has something, it should be one simple element
         # That element is the content and nothing else
         if isinstance(args, tuple) and len(args) > 0:

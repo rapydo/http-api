@@ -218,7 +218,7 @@ class Certificates(object):
 
             # Pattern in plumbum library for executing a shell command
             command = local["openssl"]
-            log.verbose("Executing command openssl %s" % (command, args))
+            log.verbose("Executing command openssl %s", command, args)
             output = command(args)
 
         except ProcessExecutionError as e:

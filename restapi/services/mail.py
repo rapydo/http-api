@@ -36,7 +36,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
     ###################
     smtp.set_debuglevel(0)
-    log.verbose("Connecting to %s:%s" % (smtp_host, smtp_port))
+    log.verbose("Connecting to %s:%s", smtp_host, smtp_port)
     try:
         smtp.connect(smtp_host, smtp_port)
         smtp.ehlo()

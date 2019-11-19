@@ -155,9 +155,7 @@ class Detector(object):
         if isinstance(host, str):  # and host.count('.') > 2:
             if not host.endswith('dockerized.io'):
                 variables['external'] = True
-                log.very_verbose(
-                    "Service %s detected as external:\n%s" % (service, host)
-                )
+                log.verbose("Service %s detected as external: %s", service, host)
 
         return variables
 
@@ -173,7 +171,7 @@ class Detector(object):
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
-            log.exit("Missing %s for %s" % (flaskext, service))
+            log.exit("Missing %s for %s", flaskext, service)
 
         return getattr(module, classname)
 
@@ -264,7 +262,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.exit('Your class %s is not compliant:\n%s' % (name, e))
+                log.exit('Your class %s is not compliant:\n%s', name, e)
             else:
                 self.extensions_instances[name] = ext_instance
 

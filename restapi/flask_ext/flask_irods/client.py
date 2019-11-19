@@ -276,7 +276,7 @@ class IrodsPythonClient:
         if sourcepath == destpath:
             raise IrodsException("Source and destination path are the same")
         try:
-            log.verbose("Copy %s into %s" % (sourcepath, destpath))
+            log.verbose("Copy %s into %s", sourcepath, destpath)
             source = self.prc.data_objects.get(sourcepath)
             self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
@@ -1005,7 +1005,7 @@ class IrodsPythonClient:
 #         com = 'iquest'
 #         args = ["%s" % query]
 #         output = self.basic_icom(com, args)
-#         log.debug("%s query: [%s]\n%s" % (com, query, output))
+#         log.debug("%s query: [%s]\n%s", com, query, output)
 #         if 'CAT_NO_ROWS_FOUND' in output:
 #             return None
 #         return output.split('\n')[0].lstrip("%s = " % key)
@@ -1047,7 +1047,7 @@ class IrodsPythonClient:
 #                 continue
 #             resources.append(elements[2])
 
-#         log.debug("%s: found resources %s" % (filepath, resources))
+#         log.debug("%s: found resources %s",  filepath, resources)
 #         return resources
 
 #     def admin(self, command, user=None, extra=None):

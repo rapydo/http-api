@@ -292,7 +292,7 @@ class BeSwagger(object):
                 self._paths[newuri] = {}
             self._paths[newuri][method] = specs
 
-            log.verbose("Built definition '%s:%s'" % (method.upper(), newuri))
+            log.verbose("Built definition '%s:%s'", method.upper(), newuri)
 
         endpoint.custom['methods'][method] = extra
         return endpoint

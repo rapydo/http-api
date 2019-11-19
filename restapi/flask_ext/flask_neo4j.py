@@ -31,7 +31,6 @@ class NeomodelClient:
             results, _ = db.cypher_query(query)
         except Exception as e:
             raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
-        # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
 
     @staticmethod

@@ -81,9 +81,7 @@ class SqlAlchemy(BaseExtension):
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
-            log.exit(
-                "Could not get %s within %s models" % (obj_name, self.name)
-            )
+            log.exit("Could not get %s within %s models", obj_name, self.name)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...

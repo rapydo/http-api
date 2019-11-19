@@ -48,7 +48,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
     import errno
     import socket
 
-    log.verbose("Waiting for %s (%s:%s)" % (service_name, host, port))
+    log.verbose("Waiting for %s (%s:%s)", service_name, host, port)
 
     counter = 0
     while True:

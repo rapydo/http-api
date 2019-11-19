@@ -211,9 +211,9 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 exp = timedelta(seconds=cache_expiration)
 
                 if now < obj.connection_time + exp:
-                    log.very_verbose("Cache still fresh for %s" % (self))
+                    log.verbose("Cache is still valid for %s", self)
                 else:
-                    log.warning("Cache expired for %s", (self))
+                    log.warning("Cache expired for %s", self)
                     obj = None
 
             if obj is None:
