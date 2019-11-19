@@ -98,12 +98,12 @@ def fail_exit(self, message, *args, **kws):
 #         print("\n\n")
 
 
-def myprint(self, message, *args, **kws):
-    # if self.isEnabledFor(PRINT):
-    if self.isEnabledFor(logging.DEBUG):
-        message = "\033[33;5m%s" % message
-        print(message, *args, **kws)
-        print("\033[1;0m", end='')
+# def myprint(self, message, *args, **kws):
+#     # if self.isEnabledFor(PRINT):
+#     if self.isEnabledFor(logging.DEBUG):
+#         message = "\033[33;5m%s" % message
+#         print(message, *args, **kws)
+#         print("\033[1;0m", end='')
 
 
 def verbose(self, message, *args, **kws):
@@ -176,9 +176,9 @@ logging.CRITICAL_EXIT = CRITICAL_EXIT
 # logging.Logger.print_stack = print_stack
 # logging.PRINT_STACK = PRINT_STACK
 
-logging.addLevelName(PRINT, "PRINT")
-logging.Logger.print = myprint
-logging.PRINT = PRINT
+# logging.addLevelName(PRINT, "PRINT")
+# logging.Logger.print = myprint
+# logging.PRINT = PRINT
 
 logging.addLevelName(VERBOSE, "VERBOSE")
 logging.Logger.verbose = verbose
