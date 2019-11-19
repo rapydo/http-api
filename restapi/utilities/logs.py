@@ -144,26 +144,26 @@ def very_verbose(self, message, *args, **kws):
 #     return self
 
 
-def checked(self, message, *args, **kws):
+# def checked(self, message, *args, **kws):
 
-    level = logging.INFO
+#     level = logging.INFO
 
-    if self.isEnabledFor(level):
-        # Yes, logger takes its '*args' as 'args'.
-        # message = "\u2713 %s" % message
+#     if self.isEnabledFor(level):
+#         # Yes, logger takes its '*args' as 'args'.
+#         # message = "\u2713 %s" % message
 
-        if self.disable_unicode:
-            message = "(CHECKED) %s" % message
-        elif self.colors_enabled:
-            message = "\033[0;32m\u2713\033[0m %s" % message
-        else:
-            message = "\u2713 %s" % message
-        self._log(level, message, args, **kws)  # pylint:disable=protected-access
+#         if self.disable_unicode:
+#             message = "(CHECKED) %s" % message
+#         elif self.colors_enabled:
+#             message = "\033[0;32m\u2713\033[0m %s" % message
+#         else:
+#             message = "\u2713 %s" % message
+#         self._log(level, message, args, **kws)  # pylint:disable=protected-access
 
 
-@staticmethod
-def clear_screen():
-    sys.stderr.write("\x1b[2J\x1b[H")
+# @staticmethod
+# def clear_screen():
+#     sys.stderr.write("\x1b[2J\x1b[H")
 
 
 logging.addLevelName(CRITICAL_EXIT, "EXIT")
@@ -190,8 +190,8 @@ logging.VERY_VERBOSE = VERY_VERBOSE
 
 # logging.Logger.pp = beeprint_print
 # logging.Logger.app = prettyprinter_print
-logging.Logger.checked = checked
-logging.Logger.clear_screen = clear_screen
+# logging.Logger.checked = checked
+# logging.Logger.clear_screen = clear_screen
 
 
 class LogMe(object):
