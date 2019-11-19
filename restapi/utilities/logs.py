@@ -6,7 +6,7 @@ import sys
 import json
 import urllib
 import logging
-import traceback
+# import traceback
 from contextlib import contextmanager
 from logging.config import fileConfig
 
@@ -90,12 +90,12 @@ def fail_exit(self, message, *args, **kws):
     return self.error(message, *args, **kws)
 
 
-def print_stack(self, message, *args, **kws):
-    if self.isEnabledFor(PRINT_STACK):
-        print("")
-        self._log(PRINT_STACK, message, args, **kws)  # pylint:disable=protected-access
-        traceback.print_stack()
-        print("\n\n")
+# def print_stack(self, message, *args, **kws):
+#     if self.isEnabledFor(PRINT_STACK):
+#         print("")
+#         self._log(PRINT_STACK, message, args, **kws)  # pylint:disable=protected-access
+#         traceback.print_stack()
+#         print("\n\n")
 
 
 def myprint(self, message, *args, **kws):
@@ -172,9 +172,9 @@ logging.Logger.exit = critical_exit
 # logging.Logger.fail = fail_exit
 logging.CRITICAL_EXIT = CRITICAL_EXIT
 
-logging.addLevelName(PRINT_STACK, "PRINT_STACK")
-logging.Logger.print_stack = print_stack
-logging.PRINT_STACK = PRINT_STACK
+# logging.addLevelName(PRINT_STACK, "PRINT_STACK")
+# logging.Logger.print_stack = print_stack
+# logging.PRINT_STACK = PRINT_STACK
 
 logging.addLevelName(PRINT, "PRINT")
 logging.Logger.print = myprint
