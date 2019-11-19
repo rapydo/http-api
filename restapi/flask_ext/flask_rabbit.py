@@ -49,7 +49,7 @@ class RabbitExt(BaseExtension):
 
 class RabbitWrapper(object):
     def __init__(self, variables, dont_connect=False):
-        log.debug('Creating RabbitMQ connection wrapper with variables %s' % variables)
+        log.debug('Creating RabbitMQ connection wrapper with variables %s', variables)
         self.__variables = variables
         self.__connection = None
         self.__channel = None
@@ -91,7 +91,7 @@ class RabbitWrapper(object):
             ssl_enabled = False
         else:
             ssl_enabled = ssl_enabled.lower() == 'true' or int(ssl_enabled) == 1
-        log.info('SSL enabled for RabbitMQ? %s' % ssl_enabled)
+        log.info('SSL enabled for RabbitMQ? %s', ssl_enabled)
 
         try:
             self.__connection = pika.BlockingConnection(
@@ -110,7 +110,7 @@ class RabbitWrapper(object):
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn('Connecting to the Rabbit... failed (%s)' % e)
+            log.warn('Connecting to the Rabbit... failed (%s)', e)
             self.__connection = None
             self.__couldnt_connect = self.__couldnt_connect + 1
             raise e
@@ -228,11 +228,11 @@ class RabbitWrapper(object):
             # If failed each time:
             if i + 1 >= max_publish:
                 log.warning(
-                    'Could not log to RabbitMQ (%s), logging here instead...' % e
+                    'Could not log to RabbitMQ (%s), logging here instead...', e
                 )
                 log.info(
-                    'RABBIT LOG MESSAGE (%s, %s, %s): %s'
-                    % (app_name, exchange, queue, body)
+                    'RABBIT LOG MESSAGE (%s, %s, %s): %s',
+                    app_name, exchange, queue, body
                 )
 
     '''

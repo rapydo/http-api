@@ -128,7 +128,6 @@ def mix(base, custom):
     for key, elements in custom.items():
 
         if key not in base:
-            # log.info("Adding %s to configuration" % key)
             base[key] = custom[key]
             continue
 
@@ -144,7 +143,6 @@ def mix(base, custom):
             for e in elements:
                 base[key].append(e)
         else:
-            # log.info("Replacing default %s in configuration" % key)
             base[key] = elements
 
     return base
@@ -232,7 +230,7 @@ def load_yaml_file(
     filepath = get_yaml_path(path, file, extension)
 
     if not return_path and logger:
-        log.very_verbose("Reading file %s" % filepath)
+        log.verbose("Reading file %s", filepath)
 
     # load from this file
     error = None

@@ -109,7 +109,7 @@ class NeoModel(BaseExtension):
             variables.get('host'),
             variables.get('port'),
         )
-        log.very_verbose("URI IS %s" % re_obscure_pattern(self.uri))
+        log.verbose("URI IS %s", re_obscure_pattern(self.uri))
 
         config.DATABASE_URL = self.uri
         # Ensure all DateTimes are provided with a timezone

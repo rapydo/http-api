@@ -216,7 +216,7 @@ class Meta(object):
     def get_authentication_module(auth_service):
 
         module_name = "%s.%s.%s" % ('services', 'authentication', auth_service)
-        log.verbose("Loading auth extension: %s" % module_name)
+        log.verbose("Loading auth extension: %s", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )

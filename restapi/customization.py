@@ -277,7 +277,7 @@ class Customizer(object):
 
             swagger_dir = os.path.join(base_dir, 'swagger')
             if not iscore and os.path.exists(swagger_dir):
-                log.verbose("Swagger dir: %s" % swagger_dir)
+                log.verbose("Swagger dir: %s", swagger_dir)
 
                 for ep in os.listdir(swagger_dir):
 
@@ -334,7 +334,7 @@ class Customizer(object):
 
     def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, iscore):
 
-        log.verbose("Found endpoint dir: '%s'" % endpoint)
+        log.verbose("Found endpoint dir: '%s'", endpoint)
 
         if os.path.exists(os.path.join(swagger_endpoint_dir, 'SKIP')):
             log.info("Skipping: %s", endpoint)

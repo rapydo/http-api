@@ -283,7 +283,7 @@ class ResponseMaker(object):
         # (strictly to the sole content)
         method = get_response()
         # TODO: check why this is often called twice from flask
-        log.very_verbose("Response method: %s" % method.__name__)
+        log.verbose("Response method: %s", method.__name__)
         r['defined_content'] = method(r['defined_content'])
 
         # 3. Recover correct status and errors

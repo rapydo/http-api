@@ -36,7 +36,7 @@ def find(prefix, suffixes=None, local_bin=False):
                 if not check:
                     continue
 
-            log.warning('Already existing')  # : %s' % cmd)
+            log.warning('Already existing')
             return True
 
     return False

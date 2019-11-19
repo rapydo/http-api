@@ -53,7 +53,6 @@ class Flask(OriginalFlask):
             out = str(rv)
             if len(out) > response_log_max_len:
                 out = out[:response_log_max_len] + ' ...'
-            # log.very_verbose("Custom response built: %s" % out)
         except BaseException:
             log.debug("Response: [UNREADABLE OBJ]")
         responder = ResponseMaker(rv)

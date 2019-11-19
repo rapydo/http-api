@@ -54,7 +54,7 @@ def send_activation_link(auth, user):
         protocol = "http"
 
     rt = activation_token.replace(".", "+")
-    log.debug("Activation token: %s" % rt)
+    log.debug("Activation token: %s", rt)
     url = "%s://%s/public/register/%s" % (protocol, domain, rt)
     body = "Follow this link to activate your account: %s" % url
 
@@ -273,7 +273,7 @@ class Profile(EndpointResource):
             )
 
         except BaseException as e:
-            log.error("Errors during account registration: %s" % str(e))
+            log.error("Errors during account registration: %s", str(e))
             user.delete()
             raise RestApiException(str(e))
         else:

@@ -50,7 +50,7 @@ def main(args, another_app=None):
     #     # do not let flask close the application
     #     # so we can do more code after closing
     #     log.error(e)
-    #     log.warning('error type: %s' % type(e))
+    #     log.warning('error type: %s', type(e))
 
 
 def flask_cli(options=None):
@@ -112,7 +112,7 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"%s\" was NOT detected" % service)
+            log.exit("Service \"%s\" was NOT detected", service)
         log.info("Verifying service: %s", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)

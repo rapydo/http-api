@@ -101,7 +101,8 @@ class Detector(object):
             # raise AttributeError("no service defined behind authentication")
         else:
             log.info(
-                "Authentication based on '%s' service" % self.authentication_service
+                "Authentication based on '%s' service",
+                self.authentication_service
             )
 
     @staticmethod
@@ -183,7 +184,7 @@ class Detector(object):
 
             if not self.available_services.get(name):
                 continue
-            log.very_verbose("Looking for class %s" % name)
+            log.verbose("Looking for class %s", name)
 
             variables = service.get('variables')
             ext_name = service.get('class')

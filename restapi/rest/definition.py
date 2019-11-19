@@ -178,7 +178,6 @@ class EndpointResource(Resource):
             try:
                 self._json_args = request.get_json(force=forcing)
             except Exception:  # as e:
-                # log.critical("Cannot get JSON for req: '%s'" % e)
                 pass
 
             # json payload and formData cannot co-exist
@@ -602,7 +601,6 @@ class EndpointResource(Resource):
         linked = {}
         for relationship in relationships:
             subrelationship = []
-            # log.debug("Investigate relationship %s" % relationship)
 
             if not hasattr(instance, relationship):
                 continue
@@ -632,10 +630,8 @@ class EndpointResource(Resource):
                 for k in attrs:
                     if k in subnode['attributes']:
                         log.warning(
-                            "Name collision %s" % k
-                            + " on node %s" % subnode
-                            + " from both model %s" % type(node)
-                            + " and property model %s" % type(r)
+                            "Name collision %s on node %s, model %s, property model=%s",
+                            k, subnode, type(node), type(r)
                         )
                     subnode['attributes'][k] = attrs[k]
 

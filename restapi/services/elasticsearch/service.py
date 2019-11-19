@@ -246,7 +246,6 @@ class ElasticFarm(ServiceFarm):
         # CHECK 1: verify the library
 
         # self._instance = BeElastic()
-        # log.debug("Plugging '%s' service" % name)
         self.get_instance()
 
         self._instance._connection.ping()

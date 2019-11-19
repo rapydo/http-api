@@ -62,7 +62,7 @@ class ExternalLogins(object):
             var2 = key.upper() + '_APPKEY'
 
             if var1 not in os.environ or var2 not in os.environ:
-                log.verbose("Skipping Oauth2 service %s" % key)
+                log.verbose("Skipping Oauth2 service %s", key)
                 continue
 
             # Call the service and save it

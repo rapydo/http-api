@@ -171,7 +171,7 @@ class BeSwagger(object):
 
                     params = self._fdp.get(fdp)
                     if params is None:
-                        log.exit("No custom form data '%s'" % fdp)
+                        log.exit("No custom form data '%s'", fdp)
                     else:
                         # Unable to extend with list by using extends() because
                         # it add references to the original object and do not

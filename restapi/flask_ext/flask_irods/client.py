@@ -1017,7 +1017,7 @@ class IrodsPythonClient:
 #     def get_base_dir(self):
 #         com = "ipwd"
 #         iout = self.basic_icom(com).strip()
-#         log.very_verbose("Base dir is %s" % iout)
+#         log.verbose("Base dir is %s", iout)
 #         return iout
 
 #     ############################################
@@ -1029,7 +1029,7 @@ class IrodsPythonClient:
 #     def list_resources(self):
 #         com = 'ilsresc'
 #         iout = self.basic_icom(com).strip()
-#         log.debug("Resources %s" % iout)
+#         log.debug("Resources %s", iout)
 #         return iout.split("\n")
 
 #     def get_base_resource(self):
@@ -1062,7 +1062,7 @@ class IrodsPythonClient:
 #             args.append(user)
 #         if extra is not None:
 #             args.append(extra)
-#         log.debug("iRODS admininistration command '%s'" % command)
+#         log.debug("iRODS admininistration command '%s'", command)
 #         return self.basic_icom(com, args)
 
 #     def admin_list(self):
@@ -1167,7 +1167,7 @@ class IrodsPythonClient:
 #         com = "ilocate"
 #         if like:
 #             path += '%'
-#         log.debug("iRODS search for %s" % path)
+#         log.debug("iRODS search for %s", path)
 #         # Execute
 #         out = self.execute_command(com, path)
 #         content = out.strip().split('\n')

@@ -78,7 +78,7 @@ class CeleryExt(BaseExtension):
             )
             log.info("Configured Redis as Celery broker %s", BROKER_URL)
         else:
-            log.error("Unable to start Celery unknown broker service: %s" % broker)
+            log.error("Unable to start Celery unknown broker service: %s", broker)
             celery_app = None
             return celery_app
 
@@ -109,7 +109,7 @@ class CeleryExt(BaseExtension):
             )
             log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
         else:
-            log.exit("Unable to start Celery unknown backend service: %s" % backend)
+            log.exit("Unable to start Celery unknown backend service: %s", backend)
             # celery_app = None
             # return celery_app
 
