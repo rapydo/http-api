@@ -173,7 +173,7 @@ class Detector(object):
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
-            log.critical_exit("Missing %s for %s" % (flaskext, service))
+            log.exit("Missing %s for %s" % (flaskext, service))
 
         return getattr(module, classname)
 
@@ -220,7 +220,7 @@ class Detector(object):
 
             except AttributeError as e:
                 log.error(str(e))
-                log.critical_exit('Invalid Extension class: %s', ext_name)
+                log.exit('Invalid Extension class: %s', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
@@ -264,7 +264,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.critical_exit('Your class %s is not compliant:\n%s' % (name, e))
+                log.exit('Your class %s is not compliant:\n%s' % (name, e))
             else:
                 self.extensions_instances[name] = ext_instance
 

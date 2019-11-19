@@ -21,7 +21,7 @@ from restapi.utilities.logs import get_logger
 log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
-    log.critical_exit("No neo4j GraphDB service found for auth")
+    log.exit("No neo4j GraphDB service found for authentication")
 
 
 class Authentication(BaseAuthentication):

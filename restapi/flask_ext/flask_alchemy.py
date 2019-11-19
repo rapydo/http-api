@@ -81,7 +81,7 @@ class SqlAlchemy(BaseExtension):
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
-            log.critical_exit(
+            log.exit(
                 "Could not get %s within %s models" % (obj_name, self.name)
             )
 

@@ -103,7 +103,7 @@ class Meta(object):
         except import_exceptions as e:  # pylint:disable=catching-non-exception
             args = {'msg': "Failed to load module:\n%s" % e, 'exc_info': True}
             if exit_if_not_found:
-                log.critical_exit(**args)
+                log.exit(**args)
             else:
                 if debug_on_fail:
                     log.warning(**args)
@@ -111,7 +111,7 @@ class Meta(object):
             if exit_on_fail:
                 raise e
             else:
-                log.warning("Module %s not found.\nError: %s", modulestring, e)
+                log.error("Module %s not found.\nError: %s", modulestring, e)
 
         return module
 

@@ -61,7 +61,7 @@ def read(
     for key in variables:
         if project.get(key) is None:
 
-            log.critical_exit(
+            log.exit(
                 "Project not configured, missing key '%s' in file %s/%s.yaml",
                 key,
                 base_project_path,
@@ -106,7 +106,7 @@ def read(
         extend_path = os.path.join(extend_path, extended_project)
 
     if not os.path.exists(extend_path):
-        log.critical_exit("From project not found: %s", extend_path)
+        log.exit("From project not found: %s", extend_path)
 
     # on backend is mounted with `extended_` prefix
     if from_container:

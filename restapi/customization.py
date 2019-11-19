@@ -328,7 +328,7 @@ class Customizer(object):
 
         # SWAGGER validation
         if not swag.validation(swag_dict):
-            log.critical_exit("Current swagger definition is invalid")
+            log.exit("Current swagger definition is invalid")
 
         self._definitions = swag_dict
 
@@ -377,7 +377,7 @@ class Customizer(object):
 
         # Error if unable to find the module in python
         if module is None:
-            log.critical_exit("Could not find module %s (in %s)" % (name, file_name))
+            log.exit("Could not find module %s (in %s)", name, file_name)
 
         # Check for dependecies and skip if missing
         for var in conf.pop('depends_on', []):

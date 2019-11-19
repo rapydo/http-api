@@ -152,7 +152,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 obj = self.custom_connection()
             except exceptions as e:
                 log.error("Catched: %s(%s)", e.__class__.__name__, e)
-                # NOTE: if you critical_exit uwsgi will not show this line
+                # NOTE: if you directly exit, uwsgi will not show this line
                 log.critical("Service '%s' not available", self.name)
                 log.exit()
                 # raise e

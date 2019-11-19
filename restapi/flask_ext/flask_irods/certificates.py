@@ -19,7 +19,7 @@ try:
     from plumbum import local
     import dateutil.parser
 except ImportError as e:
-    log.critical_exit("\nThis module requires an extra package:\n%s", e)
+    log.exit("\nThis module requires an extra package:\n%s", e)
 
 
 class Certificates(object):

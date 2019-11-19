@@ -25,9 +25,8 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     # because we are stuck on python 3.5 con IMC
     # except ModuleNotFoundError:
     except BaseException:
-        log.critical_exit(
-            "You enabled TOTP 2FA authentication"
-            + ", but related libraries are not installed"
+        log.exit(
+            "Missing libraries for TOTP 2FA authentication"
         )
 
 

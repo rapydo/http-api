@@ -169,7 +169,7 @@ def clear_screen():
 logging.addLevelName(CRITICAL_EXIT, "EXIT")
 logging.Logger.critical_exit = critical_exit
 logging.Logger.exit = critical_exit
-logging.Logger.fail = fail_exit
+# logging.Logger.fail = fail_exit
 logging.CRITICAL_EXIT = CRITICAL_EXIT
 
 logging.addLevelName(PRINT_STACK, "PRINT_STACK")
