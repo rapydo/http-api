@@ -94,8 +94,6 @@ class Detector(object):
                 if name == self.authentication_name:
                     self.authentication_service = variables.get('service')
 
-        # log.pp(self.services_configuration)
-
         if self.authentication_service is None:
             log.warning("no service defined behind authentication")
             # raise AttributeError("no service defined behind authentication")

@@ -315,7 +315,6 @@ class Profile(EndpointResource):
 
     def update_profile(self, user, data):
 
-        # log.pp(data)
         avoid_update = ['uuid', 'authmethod', 'is_active', 'roles']
 
         try:

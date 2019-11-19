@@ -21,7 +21,6 @@ class MongoExt(BaseExtension):
         variables = self.variables
         for key, value in kwargs.items():
             variables[key] = value
-        # log.pp(variables)
 
         ##################
         # connect for authentication if required

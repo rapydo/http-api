@@ -323,7 +323,6 @@ class Authentication(BaseAuthentication):
 
     def oauth_from_local(self, internal_user):
 
-        # log.pp(internal_user, prefix_line="internal")
         accounts = self.db.ExternalAccounts
         try:
             external_user = accounts.objects.raw(

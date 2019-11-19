@@ -60,7 +60,6 @@ def request_from_browser():
     from flask import request
 
     # agent = request.headers.get('User-Agent')
-    # log.pp(request.user_agent.__dict__)
     return request.user_agent.browser is not None
 
 
@@ -144,7 +143,8 @@ class InternalResponse(Response):
                 rv = jsonify(rv)
             except BaseException:
                 log.error("Cannot jsonify rv:")
-                log.pp(rv)
+                from prettyprinter import pprint
+                pprint(rv)
 
         return super(InternalResponse, cls).force_type(rv, environ)
 
@@ -274,7 +274,6 @@ class ResponseMaker(object):
 
         # 1. Use response elements
         r = self._response
-        # log.pp(r)
 
         if self.already_converted():
             return r

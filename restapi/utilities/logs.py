@@ -118,30 +118,30 @@ def very_verbose(self, message, *args, **kws):
         self._log(VERY_VERBOSE, message, args, **kws)  # pylint:disable=protected-access
 
 
-def beeprint_print(self, myobject, prefix_line=None):
-    """
-    Make object(s) and structure(s) clearer to debug
-    """
+# def beeprint_print(self, myobject, prefix_line=None):
+#     """
+#     Make object(s) and structure(s) clearer to debug
+#     """
 
-    if prefix_line is not None:
-        print("PRETTY PRINT [%s]" % prefix_line)
-    from beeprint import pp
+#     if prefix_line is not None:
+#         print("PRETTY PRINT [%s]" % prefix_line)
+#     from beeprint import pp
 
-    pp(myobject)
-    return self
+#     pp(myobject)
+#     return self
 
 
-def prettyprinter_print(self, myobject, prefix_line=None):
-    """
-    Make object(s) and structure(s) clearer to debug
-    """
+# def prettyprinter_print(self, myobject, prefix_line=None):
+#     """
+#     Make object(s) and structure(s) clearer to debug
+#     """
 
-    if prefix_line is not None:
-        print("PRETTY PRINT [%s]" % prefix_line)
-    from prettyprinter import pprint as pp
+#     if prefix_line is not None:
+#         print("PRETTY PRINT [%s]" % prefix_line)
+#     from prettyprinter import pprint as pp
 
-    pp(myobject)
-    return self
+#     pp(myobject)
+#     return self
 
 
 def checked(self, message, *args, **kws):
@@ -188,8 +188,8 @@ logging.addLevelName(VERY_VERBOSE, "VERY_VERBOSE")
 logging.Logger.very_verbose = very_verbose
 logging.VERY_VERBOSE = VERY_VERBOSE
 
-logging.Logger.pp = beeprint_print
-logging.Logger.app = prettyprinter_print
+# logging.Logger.pp = beeprint_print
+# logging.Logger.app = prettyprinter_print
 logging.Logger.checked = checked
 logging.Logger.clear_screen = clear_screen
 
