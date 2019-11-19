@@ -184,8 +184,6 @@ class Authentication(BaseAuthentication):
         user.save()
         token_node.emitted_for.connect(user)
 
-        log.very_verbose("Token stored in graphDB")
-
     def verify_token_custom(self, jti, user, payload):
         try:
             token_node = self.db.Token.nodes.get(jti=jti)

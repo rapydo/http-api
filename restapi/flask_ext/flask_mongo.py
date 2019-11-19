@@ -37,7 +37,7 @@ class MongoExt(BaseExtension):
 
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)
-        log.very_verbose("Connected to db %s", db)
+        log.verbose("Connected to db %s", db)
 
         class obj:
             connection = link

@@ -61,7 +61,6 @@ class Flask(OriginalFlask):
         # or the make_response replica.
         # This happens with Flask exceptions
         if responder.already_converted():
-            log.very_verbose("Response was already converted")
             # # Note: this response could be a class ResponseElements
             # return rv
 

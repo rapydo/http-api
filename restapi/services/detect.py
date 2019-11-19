@@ -213,7 +213,7 @@ class Detector(object):
 
                     MyClass.set_models(base_models, extended_models, custom_models)
                 else:
-                    log.very_verbose("Skipping models")
+                    log.verbose("Skipping models for %s", service)
 
             except AttributeError as e:
                 log.error(str(e))

@@ -33,8 +33,6 @@ class Meta(object):
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
                 self._submodules.append(modname)
-                pname = package.__name__
-                log.very_verbose("Found %s submodule inside %s", modname, pname)
         return self._submodules
 
     def get_classes_from_module(self, module):

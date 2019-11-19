@@ -63,7 +63,7 @@ class IrodsPythonExt(BaseExtension):
                 elif self.authscheme == PAM_AUTH_SCHEME:
                     self.password = self.variables.get('password')
 
-            log.very_verbose(
+            log.verbose(
                 "Check connection parameters:"
                 + "\nexternal[%s], auth[%s], user[%s], admin[%s]",
                 external,
