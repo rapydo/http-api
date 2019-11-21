@@ -168,7 +168,11 @@ class Customizer(object):
                 module_file = os.path.splitext(epfiles)[0]
                 module_name = "%s.%s" % (apiclass_module, module_file)
                 # Convert module name into a module
-                module = Meta.get_module_from_string(module_name)
+                try:
+                    module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+                except BaseException as e:
+                    log.exit("Cannot import %s\nError: %s", module_name, e)
+
                 # Extract classes from the module
                 classes = meta.get_classes_from_module(module)
                 for class_name in classes:
