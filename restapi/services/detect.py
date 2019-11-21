@@ -194,7 +194,6 @@ class Detector(object):
                 # Passing variables
                 MyClass.set_variables(variables)
 
-                # Passing models
                 if service.get('load_models'):
 
                     base_models = self.meta.import_models(
@@ -212,8 +211,6 @@ class Detector(object):
                     )
 
                     MyClass.set_models(base_models, extended_models, custom_models)
-                else:
-                    log.verbose("Skipping models for %s", service)
 
             except AttributeError as e:
                 log.error(str(e))

@@ -9,8 +9,6 @@ from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import get_logger
 
-__author__ = "Paolo D'Onorio De Meo"
-__author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 log = get_logger(__name__)
 

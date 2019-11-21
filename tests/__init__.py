@@ -16,8 +16,6 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import get_logger, set_global_log_level
 from restapi.tests import API_URI, AUTH_URI
 
-__author__ = "Paolo D'Onorio De Meo (m.dantonio@cineca.it)"
-
 # To change UNITTEST debugging level
 TEST_DEBUGGING_LEVEL = logging.DEBUG
 

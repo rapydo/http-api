@@ -37,8 +37,6 @@ class SqlAlchemy(BaseExtension):
             self.variables.get('db'),
         )
 
-        log.verbose("URI IS %s", re_obscure_pattern(uri))
-
         # TODO: in case we need different connection binds
         # (multiple connections with sql) then:
         # SQLALCHEMY_BINDS = {

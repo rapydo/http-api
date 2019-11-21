@@ -17,8 +17,6 @@ from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
-__author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
-
 
 class AdminUsers(EndpointResource):
 
