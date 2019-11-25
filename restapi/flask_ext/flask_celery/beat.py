@@ -11,13 +11,11 @@ So we made some improvement along the code.
 
 """
 
-# from restapi.server import create_app
-from utilities import CUSTOM_PACKAGE
-from utilities.meta import Meta
-from utilities.logs import get_logger
+from flask import Flask
+
 from restapi.services.detect import detector
 
-from flask import Flask
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -44,11 +42,5 @@ def get_service(service, **kwargs):
 
 
 celery_app.get_service = get_service
-
-################################################
-# Import tasks modules to make sure all tasks are available
-
-# meta = Meta()
-# submodules = meta.import_submodules_from_package("%s.tasks" % CUSTOM_PACKAGE)
 
 log.debug("Celery beat is ready %s", celery_app)

@@ -9,13 +9,13 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 """
 
 import os
-from utilities import CORE_CONFIG_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
-from utilities.meta import Meta
-from utilities.myyaml import load_yaml_file
-from utilities import helpers
 from functools import lru_cache
-from utilities.logs import get_logger
+
+from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
+from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
+from restapi.utilities.meta import Meta
+from restapi.utilities.configuration import load_yaml_file
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -65,7 +65,6 @@ class Detector(object):
         return False
 
     @staticmethod
-    # @lru_cache(maxsize=None)
     def prefix_name(service):
         return service.get('name'), service.get('prefix').lower() + '_'
 
@@ -73,9 +72,7 @@ class Detector(object):
 
         self.services_configuration = load_yaml_file(
             file=config_file_name,
-            path=os.path.join(
-                helpers.script_abspath(__file__), '..', '..', CORE_CONFIG_PATH
-            ),
+            path=ABS_RESTAPI_CONFSPATH,
             logger=True,
         )
 
@@ -97,21 +94,26 @@ class Detector(object):
                 if name == self.authentication_name:
                     self.authentication_service = variables.get('service')
 
-        # log.pp(self.services_configuration)
-
         if self.authentication_service is None:
             log.warning("no service defined behind authentication")
             # raise AttributeError("no service defined behind authentication")
         else:
             log.info(
-                "Authentication based on '%s' service" % self.authentication_service
+                "Authentication based on '%s' service",
+                self.authentication_service
             )
 
     @staticmethod
     def load_group(label):
-        from utilities.basher import detect_vargroup
 
-        return detect_vargroup(label)
+        variables = {}
+        for var, value in os.environ.items():
+            var = var.lower()
+            if var.startswith(label):
+                key = var[len(label):].strip('_')
+                value = value.strip('"').strip("'")
+                variables[key] = value
+        return variables
 
     def output_service_variables(self, service_name):
         service_class = self.services_classes.get(service_name, {})
@@ -152,9 +154,7 @@ class Detector(object):
         if isinstance(host, str):  # and host.count('.') > 2:
             if not host.endswith('dockerized.io'):
                 variables['external'] = True
-                log.very_verbose(
-                    "Service %s detected as external:\n%s" % (service, host)
-                )
+                log.verbose("Service %s detected as external: %s", service, host)
 
         return variables
 
@@ -170,7 +170,7 @@ class Detector(object):
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
-            log.critical_exit("Missing %s for %s" % (flaskext, service))
+            log.exit("Missing %s for %s", flaskext, service)
 
         return getattr(module, classname)
 
@@ -182,19 +182,18 @@ class Detector(object):
 
             if not self.available_services.get(name):
                 continue
-            log.very_verbose("Looking for class %s" % name)
+            log.verbose("Looking for class %s", name)
 
             variables = service.get('variables')
             ext_name = service.get('class')
 
             # Get the existing class
-            MyClass = self.load_class_from_module(ext_name, service=service)
-
             try:
+                MyClass = self.load_class_from_module(ext_name, service=service)
+
                 # Passing variables
                 MyClass.set_variables(variables)
 
-                # Passing models
                 if service.get('load_models'):
 
                     base_models = self.meta.import_models(
@@ -212,12 +211,10 @@ class Detector(object):
                     )
 
                     MyClass.set_models(base_models, extended_models, custom_models)
-                else:
-                    log.very_verbose("Skipping models")
 
             except AttributeError as e:
                 log.error(str(e))
-                log.critical_exit('Invalid Extension class: %s', ext_name)
+                log.exit('Invalid Extension class: %s', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
@@ -261,7 +258,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.critical_exit('Your class %s is not compliant:\n%s' % (name, e))
+                log.exit('Your class %s is not compliant:\n%s', name, e)
             else:
                 self.extensions_instances[name] = ext_instance
 

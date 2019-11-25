@@ -4,17 +4,14 @@
     I'm moving what is need for py.test in restapi/tests/__init__.py
 """
 import unittest
-import random
 import json
 
-# import string
 import logging
 import os
 
-# from restapi.server import create_app
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
-from utilities.logs import get_logger
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)
@@ -166,9 +163,8 @@ class TestUtilities(unittest.TestCase):
 
         for data in content['Response']['data']:
             if data["token"] == token:
-                id = data["id"]
-                log.info("Destroying token %s" % id)
-                uri = '%s/tokens/%s' % (AUTH_URI, id)
+                log.info("Destroying token %s", data["id"])
+                uri = '%s/tokens/%s' % (AUTH_URI, data["id"])
                 r = self.app.delete(uri, headers=headers)
                 self.assertEqual(r.status_code, NO_CONTENT)
                 break

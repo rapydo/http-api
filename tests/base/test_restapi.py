@@ -6,11 +6,9 @@ Tests for http api base (mostly authentication)
 
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
-from utilities import htmlcodes as hcodes
-from utilities.logs import get_logger
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import get_logger
 
-__author__ = "Paolo D'Onorio De Meo"
-__author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
 
 log = get_logger(__name__)
 
@@ -217,13 +215,6 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
     def test_08_admin_users(self, client):
-
-        service = 'neo4j'
-        from restapi.services.detect import detector
-
-        if not detector.check_availability(service):
-            return True
-        log.debug("Testing admin users for %s", service)
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"

@@ -9,7 +9,6 @@
 - name: sqlalchemy
   load_models: 1
   prefix: alchemy
-  library: Flask-SQLalchemy
   extension: flask_alchemy
   class: SqlAlchemy
   injector: SqlInjector
@@ -18,7 +17,6 @@
 - name: neo4j
   load_models: 1
   prefix: graphdb
-  library: neomodel # would this really be usefull??
   extension: flask_neo4j
   class: NeoModel
   injector: NeoInjector
@@ -27,7 +25,6 @@
 - name: celery
   load_models: 0
   prefix: celery
-  library: Celery
   extension: flask_celery
   class: CeleryExt
   injector: CeleryInjector
@@ -52,7 +49,6 @@
 - name: irods
   load_models: 0
   prefix: irods
-  library: python-irodsclient
   extension: flask_irods
   class: IrodsPythonExt
   injector: RPCInjector
@@ -61,10 +57,17 @@
 - name: elastic
   load_models: 0
   prefix: elastic
-  library: elasticsearch
   extension: flask_elastic
   class: ElasticPythonExt
   injector: ElasticInjector
+
+  # pushpin websockets and HTTP stream
+- name: pushpin
+  load_models: 0
+  prefix: pushpin
+  extension: flask_pushpin
+  class: PushpinExt
+  injector: PushpinInjector
 
 ##############################
 # # OTHERS?
@@ -79,7 +82,6 @@
 - name: authentication
   load_models: 0
   prefix: auth
-  library: null
   extension: flask_auth
   class: Authenticator
   injector: AuthInjector

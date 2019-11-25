@@ -9,18 +9,18 @@ https://raw.githubusercontent.com/gangverk/flask-swagger/master/flask_swagger.py
 
 import re
 import os
+import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 from restapi.attributes import ExtraAttributes, ALL_ROLES
-from utilities import SWAGGER_DIR, SWAGGER_MODELS_FILE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
-from utilities import htmlcodes as hcodes
-from utilities import helpers
-from utilities.globals import mem
-from utilities.myyaml import load_yaml_file
-from utilities.configuration import mix
-from utilities.logs import get_logger
+from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
+from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.globals import mem
+
+from restapi.utilities.configuration import load_yaml_file, mix
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 JSON_APPLICATION = 'application/json'
@@ -59,9 +59,13 @@ class BeSwagger(object):
         self._parameter_schemas = {}
         self._used_swagger_tags = {}
 
-    def read_my_swagger(self, file, method, endpoint):
+    def read_my_swagger(self, method, endpoint, file=None, mapping=None):
 
-        mapping = load_yaml_file(file)
+        if mapping is None:
+            old_version = True
+            mapping = load_yaml_file(file)
+        else:
+            old_version = False
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
@@ -69,6 +73,8 @@ class BeSwagger(object):
 
         # read common
         commons = mapping.pop('common', {})
+        if commons:
+            log.warning("Commons specs are deprecated")
 
         # Check if there is at least one except for common
         if len(mapping) < 1:
@@ -87,12 +93,19 @@ class BeSwagger(object):
 
         for label, specs in mapping.items():
 
-            if label not in endpoint.uris:
-                raise KeyError(
-                    "Invalid label '%s' found.\nAvailable labels: %s"
-                    % (label, list(endpoint.uris.keys()))
-                )
-            uri = endpoint.uris[label]
+            if old_version:
+                if label not in endpoint.uris:
+                    raise KeyError(
+                        "Invalid label '%s' found.\nAvailable labels: %s"
+                        % (label, list(endpoint.uris.keys()))
+                    )
+                uri = endpoint.uris[label]
+                log.warning("Deprecated mapping-label endpoint definition: %s", uri)
+            else:
+                uri = '/%s%s' % (endpoint.base_uri, label)
+                # This will be used by server.py.add
+                if uri not in endpoint.uris:
+                    endpoint.uris[uri] = uri
 
             ################################
             # add common elements to all specs
@@ -109,6 +122,8 @@ class BeSwagger(object):
             # Publish the specs on the final Swagger JSON
             # Default is to do it if not otherwise specified
             extra.publish = custom.get('publish', True)
+            if not extra.publish:
+                log.warning("Publish setting is deprecated")
 
             # Authentication
             if custom.get('authentication', False):
@@ -156,7 +171,7 @@ class BeSwagger(object):
 
                     params = self._fdp.get(fdp)
                     if params is None:
-                        log.critical_exit("No custom form data '%s'" % fdp)
+                        log.exit("No custom form data '%s'", fdp)
                     else:
                         # Unable to extend with list by using extends() because
                         # it add references to the original object and do not
@@ -193,8 +208,6 @@ class BeSwagger(object):
                     'in': 'path',
                     'required': True,
                 }
-                if paramname in endpoint.ids:
-                    path_parameter['description'] = endpoint.ids[paramname]
 
                 specs['parameters'].append(path_parameter)
 
@@ -279,7 +292,7 @@ class BeSwagger(object):
                 self._paths[newuri] = {}
             self._paths[newuri][method] = specs
 
-            log.verbose("Built definition '%s:%s'" % (method.upper(), newuri))
+            log.verbose("Built definition '%s:%s'", method.upper(), newuri)
 
         endpoint.custom['methods'][method] = extra
         return endpoint
@@ -312,7 +325,7 @@ class BeSwagger(object):
 
         # Better chosen dinamically from endpoint.py
         schemes = ['http']
-        if self._customizer._production:
+        if PRODUCTION:
             schemes = ['https']
 
         # A template base
@@ -382,7 +395,16 @@ class BeSwagger(object):
 
             for method, file in endpoint.methods.items():
                 # add the custom part to the endpoint
-                self._endpoints[key] = self.read_my_swagger(file, method, endpoint)
+
+                # In this case we are passing the config dictionary, not the yaml file
+                if isinstance(file, dict):
+                    self._endpoints[key] = self.read_my_swagger(
+                        method, endpoint, mapping=file
+                    )
+                else:
+                    self._endpoints[key] = self.read_my_swagger(
+                        method, endpoint, file=file
+                    )
 
         ###################
         # Save query parameters globally
@@ -405,27 +427,25 @@ class BeSwagger(object):
     def get_models(self):
         """ Read models from base/custom yaml files """
 
-        filename = SWAGGER_MODELS_FILE
-
         # BASE definitions
-        path = helpers.script_abspath(__file__, SWAGGER_DIR)
-        data = load_yaml_file(filename, path=path)
+        path = os.path.join(ABS_RESTAPI_PATH, MODELS_DIR)
+        data = load_yaml_file('swagger', path=path)
 
         # EXTENDED definitions, if any
         if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
             extended_models = {}
         else:
-            path = helpers.current_dir(EXTENDED_PACKAGE, SWAGGER_DIR)
+            path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
             # NOTE: with logger=False I skip the warning if this file doesn't exist
             extended_models = load_yaml_file(
-                filename, path=path, skip_error=True, logger=False
+                'swagger', path=path, skip_error=True, logger=False
             )
 
         # CUSTOM definitions
-        path = helpers.current_dir(CUSTOM_PACKAGE, SWAGGER_DIR)
+        path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
         # NOTE: with logger=False I skip the warning if this file doesn't exist
         custom_models = load_yaml_file(
-            filename, path=path, skip_error=True, logger=False
+            'swagger', path=path, skip_error=True, logger=False
         )
 
         if extended_models is None:
@@ -442,12 +462,8 @@ class BeSwagger(object):
 
         if len(swag_dict['paths']) < 1:
             raise AttributeError("Swagger 'paths' definition is empty")
-        # else:
-        #     log.pp(swag_dict)
 
-        tmp_dir = 'tmp'
-        file_name = 'test.json'
-        filepath = helpers.root_path(tmp_dir, file_name)
+        filepath = os.path.join(tempfile.gettempdir(), 'test.json')
 
         try:
             # Fix jsonschema validation problem

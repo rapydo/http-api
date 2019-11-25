@@ -10,11 +10,11 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 """
 
 import sqlalchemy
-from utilities.meta import Meta
-from utilities import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from utilities import EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.utilities.meta import Meta
+from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
+from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.flask_ext import BaseExtension, get_logger
-from utilities.logs import re_obscure_pattern
+from restapi.utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
 
@@ -37,8 +37,6 @@ class SqlAlchemy(BaseExtension):
             self.variables.get('db'),
         )
 
-        log.very_verbose("URI IS %s" % re_obscure_pattern(uri))
-
         # TODO: in case we need different connection binds
         # (multiple connections with sql) then:
         # SQLALCHEMY_BINDS = {
@@ -48,7 +46,7 @@ class SqlAlchemy(BaseExtension):
         self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
         # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        # self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
         # pool_size = self.variables.get('poolsize')
         # if pool_size is not None:
@@ -81,9 +79,7 @@ class SqlAlchemy(BaseExtension):
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
-            log.critical_exit(
-                "Could not get %s within %s models" % (obj_name, self.name)
-            )
+            log.exit("Could not get %s within %s models", obj_name, self.name)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...

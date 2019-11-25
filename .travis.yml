@@ -25,7 +25,7 @@ jobs:
     - PROJECT=mongo
   - script: scripts/test_and_coverage.sh
     env:
-    - PROJECT=centos
+    - PROJECT=pushpin
   - stage: coverage
     script:
       scripts/test_and_coverage.sh &&

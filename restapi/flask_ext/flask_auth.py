@@ -5,13 +5,12 @@ import pytz
 from datetime import datetime, timedelta
 from restapi.services.detect import Detector
 
-# from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
 from restapi.services.authentication import BaseAuthentication
-from utilities import htmlcodes as hcodes
 from restapi.exceptions import RestApiException
-from utilities.meta import Meta
-from utilities.globals import mem
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.meta import Meta
+from restapi.confs import get_project_configuration
 
 log = get_logger(__name__)
 
@@ -26,9 +25,8 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     # because we are stuck on python 3.5 con IMC
     # except ModuleNotFoundError:
     except BaseException:
-        log.critical_exit(
-            "You enabled TOTP 2FA authentication"
-            + ", but related libraries are not installed"
+        log.exit(
+            "Missing libraries for TOTP 2FA authentication"
         )
 
 
@@ -171,9 +169,7 @@ class HandleSecurity(object):
         secret = self.get_secret(user)
         totp = pyotp.TOTP(secret)
 
-        global_conf = mem.customizer._configurations
-        project_conf = global_conf.get('project', {})
-        project_name = project_conf.get('title', "No project name")
+        project_name = get_project_configuration('project.title', "No project name")
 
         otpauth_url = totp.provisioning_uri(project_name)
         qr_url = pyqrcode.create(otpauth_url)
@@ -181,30 +177,30 @@ class HandleSecurity(object):
         qr_url.svg(qr_stream, scale=5)
         return qr_stream.getvalue()
 
-    # FIXME: check password strength, if required
     def verify_password_strength(self, pwd, old_pwd=None, old_hash=None):
 
         if old_pwd is not None and pwd == old_pwd:
-            return False, "Password cannot match the previous password"
+            return False, "The new password cannot match the previous password"
         if old_hash is not None:
             new_hash = BaseAuthentication.hash_password(pwd)
             if old_hash == new_hash:
-                return False, "Password cannot match the previous password"
+                return False, "The new password cannot match the previous password"
 
+        # FIXME: min length should configurable?
         if len(pwd) < 8:
             return False, "Password is too short, use at least 8 characters"
 
         if not re.search("[a-z]", pwd):
-            return False, "Password is too simple, missing lower case letters"
+            return False, "Password is too weak, missing lower case letters"
         if not re.search("[A-Z]", pwd):
-            return False, "Password is too simple, missing upper case letters"
+            return False, "Password is too weak, missing upper case letters"
         if not re.search("[0-9]", pwd):
-            return False, "Password is too simple, missing numbers"
+            return False, "Password is too weak, missing numbers"
 
         # special_characters = "['\s!#$%&\"(),*+,-./:;<=>?@[\\]^_`{|}~']"
         special_characters = "[^a-zA-Z0-9]"
         if not re.search(special_characters, pwd):
-            return False, "Password is too simple, missing special characters"
+            return False, "Password is too weak, missing special characters"
 
         return True, None
 
@@ -232,7 +228,7 @@ class HandleSecurity(object):
             now = datetime.now(pytz.utc)
             user.password = BaseAuthentication.hash_password(new_password)
             user.last_password_change = now
-            user.save()
+            self.auth.save_user(user)
 
             tokens = self.auth.get_tokens(user=user)
             for token in tokens:
@@ -248,11 +244,11 @@ class HandleSecurity(object):
             # We do not register failed login
             pass
         elif self.auth.MAX_LOGIN_ATTEMPTS <= 0:
-            # We register failed login, but we do not put a max num of failures
+            # We register failed login, but we do not set a max num of failures
             pass
             # FIXME: implement get_failed_login
         elif self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
-            # We register and put a max, but user does not reached it yet
+            # We register and set a max, but user does not reached it yet
             pass
         else:
             # Dear user, you have exceeded the limit

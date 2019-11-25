@@ -9,11 +9,10 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 import os
 from base64 import b64encode
 from restapi.protocols.oauth import oauth
+from restapi.utilities.globals import mem
+from restapi.utilities.meta import Meta
 
-# from restapi.confs import PRODUCTION
-from utilities.globals import mem
-from utilities.meta import Meta
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 meta = Meta()
@@ -58,14 +57,12 @@ class ExternalLogins(object):
         # For each defined internal service
         for key, func in meta.get_methods_inside_instance(self).items():
 
-            # log.info("META %s-%s" % (key, func))
-
             # Check if credentials are enabled inside docker env
             var1 = key.upper() + '_APPNAME'
             var2 = key.upper() + '_APPKEY'
 
             if var1 not in os.environ or var2 not in os.environ:
-                log.verbose("Skipping Oauth2 service %s" % key)
+                log.verbose("Skipping Oauth2 service %s", key)
                 continue
 
             # Call the service and save it

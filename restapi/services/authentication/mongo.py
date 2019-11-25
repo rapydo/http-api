@@ -8,15 +8,15 @@ from pytz import utc
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
 from restapi.flask_ext.flask_mongo import AUTH_DB
-from utilities.uuid import getUUID
+from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 
 log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
-    log.critical_exit("No mongodb service found available currently for auth")
+    log.exit("No mongodb service available for authentication")
 
 
 class Authentication(BaseAuthentication):
@@ -47,17 +47,24 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        userdata = self.custom_user_properties(userdata)
+        user = self.db.User(**userdata)
+
+        self.link_roles(user, roles)
+
+        user.save()
+        return user
+
+    def link_roles(self, user, roles):
+
+        if roles is None or len(roles) == 0:
+            roles = self.default_roles
+
         roles_obj = []
         for role_name in roles:
             role_obj = self.db.Role.objects.get({'_id': role_name})
             roles_obj.append(role_obj)
-
-        userdata = self.custom_user_properties(userdata)
-        userdata['roles'] = roles_obj
-        user = self.db.User(**userdata)
-
-        user.save()
-        return user
+        user.roles = roles_obj
 
     def get_user_object(self, username=None, payload=None):
 
@@ -84,6 +91,31 @@ class Authentication(BaseAuthentication):
                     pass
 
         return user
+
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.objects.all()
+
+        # Retrieve one
+        try:
+            user = self.db.User.objects.get({'uuid': user_id})
+        except self.db.User.DoesNotExist:
+            return None
+
+        if user is None:
+            return None
+
+        return [user]
+
+    def get_roles(self):
+        roles = []
+        for role_name in self.default_roles:
+            role = self.db.Role.objects.get({'name': role_name})
+            roles.append(role)
+
+        return roles
 
     def get_roles_from_user(self, userobj=None):
 
@@ -139,7 +171,6 @@ class Authentication(BaseAuthentication):
                         # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
-                        # 'password': self.hash_password(self.default_password)
                         'password': self.default_password,
                         'last_password_change': datetime.now(utc),
                     },
@@ -157,20 +188,23 @@ class Authentication(BaseAuthentication):
         #         transaction.save()
         #     log.info("Saved init transactions")
 
+    def save_user(self, user):
+        if user is not None:
+            user.save()
+
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
 
         if token_type is None:
             token_type = self.FULL_TOKEN
-        # FIXME: generate a token that never expires for admin tests
+
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
         if user is None:
             log.error("Trying to save an empty token")
         else:
-            hostname = ""
             self.db.Token(
                 jti=jti,
                 token=token,
@@ -179,9 +213,12 @@ class Authentication(BaseAuthentication):
                 last_access=now,
                 expiration=exp,
                 IP=ip,
-                hostname=hostname,
+                hostname="",
                 user_id=user,
             ).save()
+
+            # Save user updated in profile endpoint
+            user.save()
 
             log.debug("Token stored inside mongo")
 
@@ -286,7 +323,6 @@ class Authentication(BaseAuthentication):
 
     def oauth_from_local(self, internal_user):
 
-        # log.pp(internal_user, prefix_line="internal")
         accounts = self.db.ExternalAccounts
         try:
             external_user = accounts.objects.raw(

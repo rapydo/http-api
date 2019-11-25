@@ -28,16 +28,15 @@ force_response (base.py)    or              simple return
 
 import attr
 import json
-from glom import glom
-from flask import Response, jsonify
+from flask import Response, jsonify, render_template
 from werkzeug import exceptions as wsgi_exceptions
 from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
 from restapi.attributes import ResponseElements
 from restapi import __version__
-from utilities import htmlcodes as hcodes
-from utilities.globals import mem
-from utilities.logs import get_logger
+from restapi.confs import get_project_configuration
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -61,7 +60,6 @@ def request_from_browser():
     from flask import request
 
     # agent = request.headers.get('User-Agent')
-    # log.pp(request.user_agent.__dict__)
     return request.user_agent.browser is not None
 
 
@@ -83,6 +81,8 @@ def add_to_dict(mydict, content, key='content'):
     return mydict
 
 
+
+
 def respond_to_browser(r):
     log.debug("Request from a browser: reply with HTML.")
 
@@ -101,10 +101,13 @@ def respond_to_browser(r):
     else:
         data = html_content
 
-    from restapi.protocols.restful import output_html
-
-    return output_html(
-        data=data, array=array, code=r.get('code'), headers=r.get('headers')
+    html_data = {'body_content': data, 'array': array}
+    html_page = render_template('index.html', **html_data)
+    return Response(
+        html_page,
+        mimetype=MIMETYPE_HTML,
+        status=r.get('code'),
+        headers=r.get('headers')
     )
 
 
@@ -140,7 +143,8 @@ class InternalResponse(Response):
                 rv = jsonify(rv)
             except BaseException:
                 log.error("Cannot jsonify rv:")
-                log.pp(rv)
+                from prettyprinter import pprint
+                pprint(rv)
 
         return super(InternalResponse, cls).force_type(rv, environ)
 
@@ -213,8 +217,8 @@ class ResponseMaker(object):
 
             elements['headers']["_RV"] = "%s" % __version__
 
-            PROJECT_VERSION = glom(
-                mem.customizer._configurations, "project.version", default=None
+            PROJECT_VERSION = get_project_configuration(
+                "project.version", default=None
             )
             if PROJECT_VERSION is not None:
                 elements['headers']["Version"] = "%s" % PROJECT_VERSION
@@ -270,7 +274,6 @@ class ResponseMaker(object):
 
         # 1. Use response elements
         r = self._response
-        # log.pp(r)
 
         if self.already_converted():
             return r
@@ -279,7 +282,7 @@ class ResponseMaker(object):
         # (strictly to the sole content)
         method = get_response()
         # TODO: check why this is often called twice from flask
-        log.very_verbose("Response method: %s" % method.__name__)
+        log.verbose("Response method: %s", method.__name__)
         r['defined_content'] = method(r['defined_content'])
 
         # 3. Recover correct status and errors

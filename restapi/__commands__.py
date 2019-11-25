@@ -5,9 +5,9 @@ import time
 import click
 import better_exceptions as be
 from flask.cli import FlaskGroup
-from utilities.logs import get_logger
-from utilities.processes import wait_socket
+from restapi.processes import wait_socket
 from restapi import __package__ as current_package
+from restapi.utilities.logs import get_logger
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
@@ -50,7 +50,7 @@ def main(args, another_app=None):
     #     # do not let flask close the application
     #     # so we can do more code after closing
     #     log.error(e)
-    #     log.warning('error type: %s' % type(e))
+    #     log.warning('error type: %s', type(e))
 
 
 def flask_cli(options=None):
@@ -69,9 +69,9 @@ def flask_cli(options=None):
 
 
 def starting_up():
-    from utilities import processes
+    from restapi.processes import find as find_process
 
-    return processes.find(current_package, suffixes=['wait', 'init'], local_bin=True)
+    return find_process(current_package, suffixes=['wait', 'init'], local_bin=True)
 
 
 @cli.command()
@@ -112,7 +112,7 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"%s\" was NOT detected" % service)
+            log.exit("Service \"%s\" was NOT detected", service)
         log.info("Verifying service: %s", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
@@ -231,19 +231,11 @@ def tests(wait, core, file, folder):
     log.debug("Starting unit tests: %s", be)
 
     # launch unittests and also compute coverage
-    # TODO: convert the `pyunittests` script from the docker image into python
-    from utilities.basher import BashCommands
-
-    bash = BashCommands()
     log.warning(
         "Running all tests and computing coverage.\n" + "This might take some minutes."
     )
 
-    # FIXME: does not work
-    # use the 'template' dir found in /code
     parameters = []
-    # from utilities import helpers
-    # basedir = helpers.latest_dir(helpers.current_fullpath())
     if core:
         parameters.append(current_package)
     elif file is not None:
@@ -258,13 +250,18 @@ def tests(wait, core, file, folder):
         else:
             parameters.append("default")
             parameters.append(folder)
-    # import glob
-    # if 'template' in glob.glob('*'):
-    #     from restapi import __package__ as current_package
-    #     parameters.append(current_package)
 
-    output = bash.execute_command(
-        "pyunittests", parameters=parameters, catchException=True, error_max_len=-1
-    )
+    try:
+
+        # TODO: convert the `pyunittests` script from the docker image into python
+        # Pattern in plumbum library for executing a shell command
+        from plumbum import local
+        command = local["pyunittests"]
+        log.verbose("Executing command pyunittests %s", parameters)
+        output = command(parameters)
+
+    except Exception as e:
+        log.error(str(e))
+        raise e
 
     log.info("Completed:\n%s", output)

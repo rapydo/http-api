@@ -2,14 +2,15 @@
 
 from flask import jsonify
 
+from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi import decorators as decorate
 
-from utilities import htmlcodes as hcodes
-from utilities.globals import mem
-from utilities.logs import get_logger
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.globals import mem
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -23,12 +24,6 @@ class Verify
 class SwaggerSpecifications
     GET: return swagger specs
 
-class Internal
-    GET: return a standard message if user has role Internal
-
-class Admin
-    GET: return a standard message if user has role Admin
-
 class Queue
     GET: get list of celery tasks
     PUT: revoke a (not running) task
@@ -40,6 +35,16 @@ class Queue
 class Status(EndpointResource):
     """ API online client testing """
 
+    labels = ['helpers']
+
+    GET = {
+        "/status": {
+            "summary": "Check if the API server is currently reachable",
+            "description": "You may use this URI to monitor network or server problems.",
+            "responses": {"200": {"description": "Server is alive!"}},
+        }
+    }
+
     @decorate.catch_error()
     def get(self, service=None):
 
@@ -49,7 +54,19 @@ class Status(EndpointResource):
 class Verify(EndpointResource):
     """ Service connection testing """
 
+    labels = ["helpers"]
+    GET = {
+        "/status/<service>": {
+            "summary": "Check if the API server is able to reach the given service",
+            "description": "You may use this URI to monitor the network link between API server and a given service",
+            "responses": {
+                "200": {"description": "Server is able to reach the service!"}
+            },
+        }
+    }
+
     @decorate.catch_error()
+    @authentication.required(roles=['admin_root'])
     def get(self, service):
 
         log.critical(detector.available_services)
@@ -69,6 +86,19 @@ class SwaggerSpecifications(EndpointResource):
     Specifications output throught Swagger (open API) standards
     """
 
+    labels = ["specifications"]
+
+    GET = {
+        "/specs": {
+            "summary": "Specifications output throught Swagger (open API) standards",
+            "responses": {
+                "200": {
+                    "description": "a JSON with all endpoint defined with Swagger standards"
+                }
+            },
+        }
+    }
+
     def get(self):
 
         # NOTE: swagger dictionary is read only once, at server init time
@@ -76,8 +106,8 @@ class SwaggerSpecifications(EndpointResource):
 
         # NOTE: changing dinamically options, based on where the client lies
         from restapi.confs import PRODUCTION
+        from restapi.confs import get_api_url
         from flask import request
-        from utilities.helpers import get_api_url
 
         api_url = get_api_url(request, PRODUCTION)
         scheme, host = api_url.rstrip('/').split('://')
@@ -88,26 +118,47 @@ class SwaggerSpecifications(EndpointResource):
         return jsonify(swagjson)
 
 
-class Internal(EndpointResource):
-    """ Token and Role authentication test """
-
-    def get(self):
-        return "I am internal"
-
-
-class Admin(EndpointResource):
-    """ Token and Role authentication test """
-
-    def get(self):
-        return "I am admin!"
-
-
 ###########################
 # In case you have celery queue,
 # you get a queue endpoint for free
 if detector.check_availability('celery'):
 
     class Queue(EndpointResource):
+
+        depends_on = ["CELERY_ENABLE"]
+        labels = ["tasks"]
+        GET = {
+            "/queue": {
+                "summary": "List tasks in the queue",
+                "description": "Base implementation of a CELERY queue.",
+                "responses": {"200": {"description": "A list of tasks"}},
+            },
+            "/queue/<task_id>": {
+                "summary": "Information about a single task",
+                "responses": {"200": {"description": "task information"}},
+            },
+        }
+        PUT = {
+            "/queue/<task_id>": {
+                "summary": "Revoke a task from its id",
+                "responses": {"204": {"description": "The task was revoked"}},
+            }
+        }
+        DELETE = {
+            "/queue/<task_id>": {
+                "summary": "Delete a task",
+                "responses": {
+                    "204": {
+                        "description": "The task with specified id was succesfully deleted"
+                    }
+                },
+            }
+        }
+
+        # task_id = uuid referring to the task you are selecting
+        @authentication.required(
+            roles=['admin_root', 'staff_user'], required_roles='any'
+        )
         def get(self, task_id=None):
 
             data = []
@@ -231,11 +282,15 @@ if detector.check_availability('celery'):
 
             return self.force_response(data)
 
+        # task_id = uuid referring to the task you are selecting
+        @authentication.required(roles=['admin_root'])
         def put(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id)
             return self.empty_response()
 
+        # task_id = uuid referring to the task you are selecting
+        @authentication.required(roles=['admin_root'])
         def delete(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id, terminate=True)

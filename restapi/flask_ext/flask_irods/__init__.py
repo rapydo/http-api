@@ -6,7 +6,6 @@ iRODS file-system flask connector
 
 # import os
 import logging
-from utilities.certificates import Certificates
 
 # from restapi.confs import PRODUCTION
 from restapi.flask_ext import BaseExtension, get_logger
@@ -15,6 +14,7 @@ from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSes
 # from irods.session import iRODSSession
 from irods import exception as iexceptions
 from restapi.flask_ext.flask_irods.client import IrodsException, IrodsPythonClient
+from restapi.flask_ext.flask_irods.certificates import Certificates
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -63,7 +63,7 @@ class IrodsPythonExt(BaseExtension):
                 elif self.authscheme == PAM_AUTH_SCHEME:
                     self.password = self.variables.get('password')
 
-            log.very_verbose(
+            log.verbose(
                 "Check connection parameters:"
                 + "\nexternal[%s], auth[%s], user[%s], admin[%s]",
                 external,
@@ -92,7 +92,7 @@ class IrodsPythonExt(BaseExtension):
         elif gss:
 
             if self.authscheme != GSI_AUTH_SCHEME:
-                log.debug("Forcing %s authscheme" % GSI_AUTH_SCHEME)
+                log.debug("Forcing %s authscheme", GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
             proxy_cert_name = "%s%s" % (
@@ -122,7 +122,6 @@ class IrodsPythonExt(BaseExtension):
             raise NotImplementedError(
                 "Unable to create session: invalid iRODS-auth scheme"
             )
-        # log.pp(self.variables)
 
         return True
 
@@ -160,7 +159,7 @@ class IrodsPythonExt(BaseExtension):
                     certdir='host', certfilename='hostcert'
                 )
             else:
-                log.verbose("Existing DN:\n\"%s\"" % host_dn)
+                log.verbose("Existing DN:\n\"%s\"", host_dn)
 
             obj = iRODSSession(
                 user=self.user,
@@ -195,10 +194,10 @@ class IrodsPythonExt(BaseExtension):
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
         #     timer = conn.socket.gettimeout()
-        #     log.debug("Current timeout: %s" % timer)
+        #     log.debug("Current timeout: %s", timer)
         #     conn.socket.settimeout(10.0)
         #     timer = conn.socket.gettimeout()
-        #     log.debug("New timeout: %s" % timer)
+        #     log.debug("New timeout: %s", timer)
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
@@ -236,7 +235,7 @@ class IrodsPythonExt(BaseExtension):
                 else:
                     raise e
 
-            log.verbose("Tested session retrieving '%s'" % u.name)
+            log.verbose("Tested session retrieving '%s'", u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client

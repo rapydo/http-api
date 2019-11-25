@@ -8,11 +8,33 @@ from restapi.exceptions import RestApiException
 from restapi.flask_ext.flask_auth import HandleSecurity
 from restapi import decorators as decorate
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 
 class Login(EndpointResource):
-    """ Let a user login with the developer chosen method """
+    """ Let a user login by using the configured method """
+
+    baseuri = "/auth"
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["authentication"]
+
+    POST = {
+        "/login": {
+            "summary": "Login with basic credentials",
+            "description": "Normal credentials (username and password) login endpoint",
+            "parameters": [
+                {
+                    "name": "credentials",
+                    "in": "body",
+                    "schema": {"$ref": "#/definitions/Credentials"},
+                }
+            ],
+            "responses": {
+                "200": {"description": "Credentials are valid"},
+                "401": {"description": "Invalid username or password"},
+            },
+        }
+    }
 
     def verify_information(self, user, security, totp_auth, totp_code, now=None):
 
@@ -142,9 +164,8 @@ class Login(EndpointResource):
         if user.first_login is None:
             user.first_login = now
         user.last_login = now
-        # Should be saved inside save_token...
-        # user.save()
-        self.auth.save_token(self.auth._user, token, jti)
+        # User should be saved inside save_token...
+        self.auth.save_token(user, token, jti)
 
         # FIXME: split response as above in access_token and token_type?
         # # The right response should be the following

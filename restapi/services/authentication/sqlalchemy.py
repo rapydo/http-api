@@ -7,17 +7,17 @@ Sql handling authentication process
 import pytz
 import sqlalchemy
 from datetime import datetime, timedelta
-from utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from utilities import htmlcodes as hcodes
-from utilities.logs import get_logger
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.uuid import getUUID
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
-    log.critical_exit("No sqlalchemy service available for auth")
+    log.exit("No sqlalchemy service available for authentication")
 
 
 class Authentication(BaseAuthentication):
@@ -31,16 +31,24 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.hash_password(userdata["password"])
 
+        if "uuid" not in userdata:
+            userdata["uuid"] = getUUID()
+
         userdata = self.custom_user_properties(userdata)
 
         user = self.db.User(**userdata)
-        # link roles into users
-        for role in roles:
-            sqlrole = self.db.Role.query.filter_by(name=role).first()
-            user.roles.append(sqlrole)
+        self.link_roles(user, roles)
+
         self.db.session.add(user)
 
         return user
+
+    def link_roles(self, user, roles):
+        # link roles into users
+        user.roles = []
+        for role in roles:
+            sqlrole = self.db.Role.query.filter_by(name=role).first()
+            user.roles.append(sqlrole)
 
     def get_user_object(self, username=None, payload=None, retry=0):
         user = None
@@ -98,6 +106,27 @@ class Authentication(BaseAuthentication):
 
         return user
 
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.query.all()
+
+        # Retrieve one
+        user = self.db.User.query.filter_by(uuid=user_id).first()
+        if user is None:
+            return None
+
+        return [user]
+
+    def get_roles(self):
+        roles = []
+        for role_name in self.default_roles:
+            role = self.db.Role.query.filter_by(name=role_name).first()
+            roles.append(role)
+
+        return roles
+
     def get_roles_from_user(self, userobj=None):
 
         roles = []
@@ -133,12 +162,11 @@ class Authentication(BaseAuthentication):
                 log.warning("No users inside db. Injected default.")
                 self.create_user(
                     {
-                        'uuid': getUUID(),
+                        # 'uuid': getUUID(),
                         'email': self.default_user,
                         # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
-                        # 'password': self.hash_password(self.default_password)
                         'password': self.default_password,
                     },
                     roles=self.default_roles,
@@ -154,6 +182,15 @@ class Authentication(BaseAuthentication):
                 + "rebuilding your DB."
             )
 
+    def save_user(self, user):
+        if user is not None:
+            self.db.session.add(user)
+            # try:
+            self.db.session.commit()
+            # except IntegrityError:
+            #     self.auth.db.session.rollback()
+            #     raise RestApiException("This user already exists")
+
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
@@ -161,11 +198,9 @@ class Authentication(BaseAuthentication):
         if token_type is None:
             token_type = self.FULL_TOKEN
 
-        # FIXME: generate a token that never expires for admin tests
         now = datetime.now()
         exp = now + timedelta(seconds=self.shortTTL)
 
-        hostname = ""
         token_entry = self.db.Token(
             jti=jti,
             token=token,
@@ -174,13 +209,15 @@ class Authentication(BaseAuthentication):
             last_access=now,
             expiration=exp,
             IP=ip,
-            hostname=hostname,
+            hostname="",
         )
 
         token_entry.emitted_for = user
 
         try:
             self.db.session.add(token_entry)
+            # Save user updated in profile endpoint
+            self.db.session.add(user)
             self.db.session.commit()
 
             log.verbose("Token stored inside the DB")
@@ -340,7 +377,11 @@ class Authentication(BaseAuthentication):
                 return None, "User already exists, cannot store oauth2 data"
         # If missing, add it locally
         else:
-            userdata = {"uuid": getUUID(), "email": email, "authmethod": account_type}
+            userdata = {
+                # "uuid": getUUID(),
+                "email": email,
+                "authmethod": account_type
+            }
             try:
                 internal_user = self.create_user(userdata, [self.default_role])
                 self.db.session.commit()
@@ -414,7 +455,6 @@ class Authentication(BaseAuthentication):
         else:
 
             userdata = {
-                "uuid": getUUID(),
                 "email": username,
                 "name": username,
                 "surname": 'iCAT',
@@ -431,7 +471,6 @@ class Authentication(BaseAuthentication):
                 log.error("Errors saving iRODS user: %s", username)
                 log.error(str(e))
                 log.error(type(e))
-                log.print_stack(e)
 
                 user = self.get_user_object(username)
                 # Unable to do something...

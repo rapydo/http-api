@@ -21,7 +21,7 @@ from neomodel import RelationshipFrom as originalRelationshipFrom
 
 from neomodel.relationship_manager import RelationshipDefinition
 
-from utilities.uuid import getUUID
+from restapi.utilities.uuid import getUUID
 
 
 def RelationshipTo(cls_name, rel_type, show=None, is_restricted=False, *args, **kwargs):

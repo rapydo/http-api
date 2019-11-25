@@ -46,9 +46,8 @@ class EndpointElements(object):
     exists = attribute(default=False)
     isbase = attribute(default=False)
     cls = attribute(default=None)
-    # instance = attribute(default=None)  # became useless
     uris = attribute(default={})
-    ids = attribute(default={})
     methods = attribute(default=[])
     custom = attribute(default=ExtraAttributes())
     tags = attribute(default=[])
+    base_uri = attribute(default='')

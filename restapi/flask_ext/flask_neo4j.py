@@ -2,12 +2,11 @@
 
 """ Neo4j GraphDB flask connector """
 
-import socket
-import neo4j
 import re
+from functools import wraps
 from neomodel import db, config
 from restapi.flask_ext import BaseExtension, get_logger
-from utilities.logs import re_obscure_pattern
+from restapi.utilities.logs import re_obscure_pattern
 
 log = get_logger(__name__)
 
@@ -32,8 +31,21 @@ class NeomodelClient:
             results, _ = db.cypher_query(query)
         except Exception as e:
             raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
-        # log.debug("Graph query.\nResults: %s\nMeta: %s" % (results, meta))
         return results
+
+    @staticmethod
+    def getSingleLinkedNode(relation):
+
+        nodes = relation.all()
+        if len(nodes) <= 0:
+            return None
+        return nodes[0]
+
+    @staticmethod
+    def createUniqueIndex(*var):
+
+        separator = "#_#"
+        return separator.join(var)
 
     def sanitize_input(self, term):
         '''
@@ -64,11 +76,23 @@ class NeomodelClient:
 
 class NeoModel(BaseExtension):
     def set_connection_exception(self):
-        return (
-            socket.gaierror,
-            neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
-            neo4j.exceptions.ServiceUnavailable,  # neo4j 3.2.2+
-        )
+
+        try:
+            # neomodel 3.3.1-
+            import socket
+            import neo4j
+
+            return (
+                socket.gaierror,
+                neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
+                neo4j.exceptions.ServiceUnavailable,  # neo4j 3.2.2+
+            )
+        except AttributeError:
+            # neomodel 3.3.2
+            from neobolt.addressing import AddressError
+            from neobolt.exceptions import ServiceUnavailable
+
+            return (ServiceUnavailable, AddressError)
 
     def custom_connection(self, **kwargs):
 
@@ -85,8 +109,6 @@ class NeoModel(BaseExtension):
             variables.get('host'),
             variables.get('port'),
         )
-        log.very_verbose("URI IS %s" % re_obscure_pattern(self.uri))
-
         config.DATABASE_URL = self.uri
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
@@ -116,6 +138,80 @@ class NeoModel(BaseExtension):
                 clear_neo4j_database(graph.db)
 
             if pinit:
-                pass
+
+                auto_index = self.variables.get("autoindexing", 'True') == 'True'
+
+                if auto_index:
+                    try:
+                        from neomodel import remove_all_labels, install_all_labels
+                        remove_all_labels()
+                        install_all_labels()
+                    except BaseException as e:
+                        log.exit(str(e))
 
         return graph
+
+
+def graph_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
+
+        try:
+
+            transaction.begin()
+            log.verbose("Neomodel transaction BEGIN")
+
+            out = func(self, *args, **kwargs)
+
+            transaction.commit()
+            log.verbose("Neomodel transaction COMMIT")
+
+            return out
+        except Exception as e:
+            log.verbose("Neomodel transaction ROLLBACK")
+            try:
+                transaction.rollback()
+            except Exception as sub_ex:
+                log.warning("Exception raised during rollback: %s", sub_ex)
+            raise e
+
+    return wrapper
+
+
+def graph_nestable_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        from neomodel import db as transaction
+
+        transaction_open = True
+        try:
+
+            try:
+                transaction.begin()
+                log.verbose("Neomodel transaction BEGIN2")
+            except SystemError:
+                transaction_open = False
+                log.debug("Neomodel transaction is already in progress")
+
+            out = func(self, *args, **kwargs)
+
+            if transaction_open:
+                transaction.commit()
+                log.verbose("Neomodel transaction COMMIT2")
+            else:
+                log.debug("Skipping neomodel transaction commit")
+
+            return out
+        except Exception as e:
+            if not transaction_open:
+                log.debug("Skipping neomodel transaction rollback")
+            else:
+                try:
+                    log.verbose("Neomodel transaction ROLLBACK")
+                    transaction.rollback()
+                except Exception as sub_ex:
+                    log.warning("Exception raised during rollback: %s", sub_ex)
+            raise e
+
+    return wrapper

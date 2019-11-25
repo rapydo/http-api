@@ -4,46 +4,46 @@ import re
 from functools import wraps
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
-__author__ = "Mattia D'Antonio (m.dantonio@cineca.it)"
-
 
 class GraphBaseOperations(EndpointResource):
-    def initGraph(self):
-        log.warning(
-            "This method is deprecated, use get_service_instance and "
-            + "get_current_user instead"
-        )
-        self.graph = self.get_service_instance('neo4j')
-        self._current_user = self.get_current_user()
+    # def initGraph(self):
+    #     log.warning(
+    #         "This method is deprecated, use get_service_instance and "
+    #         + "get_current_user instead"
+    #     )
+    #     self.graph = self.get_service_instance('neo4j')
+    #     self._current_user = self.get_current_user()
 
     @staticmethod
     def getSingleLinkedNode(relation):
 
+        log.warning("This method is deprecated, use getSingleLinkedNode from neo ext")
         nodes = relation.all()
         if len(nodes) <= 0:
             return None
         return nodes[0]
 
-    def getNode(self, Model, identifier, field='accession'):
+    # def getNode(self, Model, identifier, field='accession'):
 
-        log.warning("This method is deprecated. use Model.get_or_none() instead")
+    #     log.warning("This method is deprecated. use Model.get_or_none() instead")
 
-        try:
-            filter = {field: identifier}
-            return Model.nodes.get(**filter)
+    #     try:
+    #         filter = {field: identifier}
+    #         return Model.nodes.get(**filter)
 
-        except Model.DoesNotExist:
-            return None
+    #     except Model.DoesNotExist:
+    #         return None
 
     @staticmethod
     def createUniqueIndex(*var):
 
+        log.warning("This method is deprecated, use createUniqueIndex from neo ext")
         separator = "#_#"
         return separator.join(var)
 
@@ -51,6 +51,7 @@ class GraphBaseOperations(EndpointResource):
 def graph_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        log.warning("This method is deprecated, use graph_transactions from neo ext")
         from neomodel import db as transaction
 
         try:
@@ -78,6 +79,8 @@ def graph_transactions(func):
 def graph_nestable_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        log.warning(
+            "This method is deprecated, use graph_nestable_transactions from neo ext")
         from neomodel import db as transaction
 
         transaction_open = True
@@ -86,7 +89,7 @@ def graph_nestable_transactions(func):
             try:
                 transaction.begin()
                 log.verbose("Neomodel transaction BEGIN2")
-            except SystemError as e:
+            except SystemError:
                 transaction_open = False
                 log.debug("Neomodel transaction is already in progress")
 
@@ -117,6 +120,8 @@ def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
+        log.warning(
+            "This method is deprecated, use catch_graph_exceptions from decorators")
         from neomodel.exceptions import RequiredProperty
         from neomodel.exceptions import UniqueProperty
 
@@ -126,12 +131,13 @@ def catch_graph_exceptions(func):
         except (UniqueProperty) as e:
 
             prefix = "Node [0-9]+ already exists with label"
-            regExpr = "%s (.+) and property (.+)" % prefix
-            m = re.search(regExpr, str(e))
+            m = re.search("%s (.+) and property (.+)" % prefix, str(e))
+
             if m:
                 node = m.group(1)
                 prop = m.group(2)
-                error = "A %s already exist with %s" % (node, prop)
+                val = m.group(3)
+                error = "A %s already exists with %s = %s" % (node, prop, val)
             else:
                 error = str(e)
 

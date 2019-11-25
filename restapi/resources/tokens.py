@@ -2,8 +2,9 @@
 
 from flask import current_app
 from restapi.rest.definition import EndpointResource
+from restapi.protocols.bearer import authentication
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
 """
 class Tokens
@@ -15,6 +16,31 @@ class Tokens
 
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
+
+    baseuri = "/auth"
+    labels = ["authentication"]
+
+    GET = {
+        "/tokens": {
+            "summary": "Show all tokens emitted for logged user",
+            "responses": {"200": {"description": "List of tokens"}},
+        },
+        "/tokens/<token_id>": {
+            "summary": "Show specified token if available for logged user",
+            "responses": {"200": {"description": "Details on the specified token"}},
+        },
+    }
+    DELETE = {
+        "/tokens": {
+            "summary": "Remove all tokens emitted for a user",
+            "description": "Note: only allowed for testing",
+            "responses": {"200": {"description": "All tokens have been invalidated"}},
+        },
+        "/tokens/<token_id>": {
+            "summary": "Remove specified token and make it invalid from now on",
+            "responses": {"200": {"description": "Token has been invalidated"}},
+        },
+    }
 
     def get_user(self):
 
@@ -28,6 +54,8 @@ class Tokens(EndpointResource):
 
         return self.get_current_user()
 
+    # token_id = uuid associated to the token you want to select
+    @authentication.required()
     def get(self, token_id=None):
 
         user = self.get_user()
@@ -44,11 +72,13 @@ class Tokens(EndpointResource):
             if token["id"] == token_id:
                 return token
 
-        errorMessage = """Either this token was not emitted for your account
-                          or it does not exist"""
+        return self.send_errors(
+            message="This token was not emitted for your account or it does not exist",
+            code=hcodes.HTTP_BAD_NOTFOUND
+        )
 
-        return self.send_errors(message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
-
+    # token_id = uuid associated to the token you want to select
+    @authentication.required()
     def delete(self, token_id=None):
         """
             For additional security, tokens are invalidated both

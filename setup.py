@@ -6,7 +6,6 @@ from restapi import \
     __version__ as current_version
 
 
-swagger_dir = 'swagger'
 app = '%s.__commands__' % main_package
 
 setup(
@@ -25,9 +24,10 @@ setup(
     package_data={
         main_package: [
             'confs/services.yaml',
-            '%s/*.yaml' % swagger_dir,
-            '%s/*/*.yaml' % swagger_dir,
+            'models/swagger.yaml',
             'templates/index.html',
+            'utilities/logging.ini',
+            'utilities/logging_tests.ini'
         ],
     },
     entry_points='''
@@ -57,15 +57,15 @@ setup(
         "Flask-OAuthlib==0.9.5",
 
         "Flask-RESTful==0.3.7",
-        "Flask-SQLAlchemy==2.4.0",
+        "Flask-SQLAlchemy==2.4.1",
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
-        # "injector==0.13.0",
+        # "injector==0.17",
         "injector==0.12",
         "flask_injector==0.10.1",
 
-        # Already installed from utils, ma forcing here since bravado-core install 5.1,
+        # Already installed from utils, forcing here since bravado-core install 5.1,
         # not compatible with docker-compose 1.24
         "PyYAML==3.13",
 
@@ -82,8 +82,8 @@ setup(
 
         # Utilities
         "glom",
-        "plumbum",
         "psutil",
+        "plumbum",
     ],
     classifiers=[
         'Programming Language :: Python',

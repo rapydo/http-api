@@ -10,9 +10,9 @@ import random
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 

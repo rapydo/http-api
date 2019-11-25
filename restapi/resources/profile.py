@@ -3,22 +3,21 @@
 import os
 import jwt
 import pytz
-from glom import glom
 
 from restapi.rest.definition import EndpointResource
+from restapi.protocols.bearer import authentication
 from restapi import decorators as decorate
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.confs import PRODUCTION
+from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.services.mail import get_html_template
 from restapi.flask_ext.flask_auth import HandleSecurity
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.time import timestamp_from_string
+from restapi.utilities.meta import Meta
 
-from utilities.globals import mem
-from utilities import htmlcodes as hcodes
-from utilities.time import timestamp_from_string
-from utilities.meta import Meta
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 meta = Meta()
@@ -42,8 +41,8 @@ class RecoverPassword
 
 def send_activation_link(auth, user):
 
-    title = glom(
-        mem.customizer._configurations, "project.title", default='Unkown title'
+    title = get_project_configuration(
+        "project.title", default='Unkown title'
     )
 
     activation_token, jti = auth.create_reset_token(user, auth.ACTIVATE_ACCOUNT)
@@ -55,7 +54,7 @@ def send_activation_link(auth, user):
         protocol = "http"
 
     rt = activation_token.replace(".", "+")
-    log.debug("Activation token: %s" % rt)
+    log.debug("Activation token: %s", rt)
     url = "%s://%s/public/register/%s" % (protocol, domain, rt)
     body = "Follow this link to activate your account: %s" % url
 
@@ -98,8 +97,8 @@ def notify_registration(user):
     var = "REGISTRATION_NOTIFICATIONS"
     if detector.get_bool_from_os(var):
         # Sending an email to the administrator
-        title = glom(
-            mem.customizer._configurations, "project.title", default='Unkown title'
+        title = get_project_configuration(
+            "project.title", default='Unkown title'
         )
         subject = "%s New credentials requested" % title
         body = "New credentials request from %s" % user.email
@@ -131,6 +130,40 @@ def custom_extra_registration(variables):
 class Profile(EndpointResource):
     """ Current user informations """
 
+    baseuri = "/auth"
+    depends_on = ["not PROFILE_DISABLED"]
+    labels = ["profiles"]
+
+    GET = {
+        "/profile": {
+            "summary": "List profile attributes",
+            "responses": {
+                "200": {"description": "Dictionary with all profile attributes"}
+            },
+        }
+    }
+    POST = {
+        "/profile": {
+            "summary": "Register new user",
+            "custom_parameters": ["User"],
+            "responses": {"200": {"description": "ID of new user"}},
+        }
+    }
+    PUT = {
+        "/profile": {
+            "summary": "Update profile attributes",
+            "parameters": [
+                {
+                    "name": "credentials",
+                    "in": "body",
+                    "schema": {"$ref": "#/definitions/ProfileUpdate"},
+                }
+            ],
+            "responses": {"204": {"description": "Updated has been successful"}},
+        }
+    }
+
+    @authentication.required()
     def get(self):
 
         current_user = self.get_current_user()
@@ -183,7 +216,7 @@ class Profile(EndpointResource):
 
     @decorate.catch_error()
     def post(self):
-        """ Create new user """
+        """ Register new user """
 
         if not send_mail_is_active():
             raise RestApiException(
@@ -240,7 +273,7 @@ class Profile(EndpointResource):
             )
 
         except BaseException as e:
-            log.error("Errors during account registration: %s" % str(e))
+            log.error("Errors during account registration: %s", str(e))
             user.delete()
             raise RestApiException(str(e))
         else:
@@ -278,11 +311,10 @@ class Profile(EndpointResource):
 
         # NOTE already in change_password
         # but if removed new pwd is not saved
-        return user.save()
+        return self.auth.save_user(user)
 
     def update_profile(self, user, data):
 
-        # log.pp(data)
         avoid_update = ['uuid', 'authmethod', 'is_active', 'roles']
 
         try:
@@ -296,9 +328,10 @@ class Profile(EndpointResource):
         else:
             log.info("Profile updated")
 
-        return user.save()
+        self.auth.save_user(user)
 
     @decorate.catch_error()
+    @authentication.required()
     def put(self):
         """ Update profile for current user """
 
@@ -321,6 +354,27 @@ class Profile(EndpointResource):
 
 
 class ProfileActivate(EndpointResource):
+    depends_on = ["not PROFILE_DISABLED"]
+    baseuri = "/auth"
+    labels = ["base", "profiles"]
+
+    POST = {
+        "/profile/activate": {
+            "summary": "Ask a new activation link",
+            "responses": {
+                "200": {"description": "A new activation link has been sent"}
+            },
+        }
+    }
+    PUT = {
+        "/profile/activate/<token_id>": {
+            "summary": "Activate account by verificate activation token",
+            "responses": {
+                "200": {"description": "Account has been successfully activated"}
+            },
+        }
+    }
+
     @decorate.catch_error()
     def put(self, token_id):
 
@@ -333,20 +387,20 @@ class ProfileActivate(EndpointResource):
             )
 
         # If token is expired
-        except jwt.exceptions.ExpiredSignatureError as e:
+        except jwt.exceptions.ExpiredSignatureError:
             raise RestApiException(
                 'Invalid activation token: this request is expired',
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
         # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError as e:
+        except jwt.exceptions.ImmatureSignatureError:
             raise RestApiException(
                 'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
             )
 
         # if token does not exist (or other generic errors)
-        except Exception as e:
+        except Exception:
             raise RestApiException(
                 'Invalid activation token', status_code=hcodes.HTTP_BAD_REQUEST
             )
@@ -368,9 +422,8 @@ class ProfileActivate(EndpointResource):
             )
 
         # The activation token is valid, do something
-
         self.auth._user.is_active = True
-        self.auth._user.save()
+        self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset activation are valid only once)
         self.auth.invalidate_token(token_id)
@@ -420,6 +473,32 @@ def send_internal_password_reset(uri, title, reset_email):
 
 
 class RecoverPassword(EndpointResource):
+
+    baseuri = "/auth"
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["authentication"]
+
+    POST = {
+        "/reset": {
+            "summary": "Request password reset via email",
+            "description": "Request password reset via email",
+            "responses": {
+                "200": {"description": "Reset email is valid"},
+                "401": {"description": "Invalid reset email"},
+            },
+        }
+    }
+    PUT = {
+        "/reset/<token_id>": {
+            "summary": "Change password as conseguence of a reset request",
+            "description": "Change password as conseguence of a reset request",
+            "responses": {
+                "200": {"description": "Reset token is valid, password changed"},
+                "401": {"description": "Invalid reset token"},
+            },
+        }
+    }
+
     @decorate.catch_error()
     def post(self):
 
@@ -456,12 +535,8 @@ class RecoverPassword(EndpointResource):
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
-        # title = mem.customizer._configurations \
-        #     .get('project', {}) \
-        #     .get('title', "Unkown title")
-
-        title = glom(
-            mem.customizer._configurations, "project.title", default='Unkown title'
+        title = get_project_configuration(
+            "project.title", default='Unkown title'
         )
 
         reset_token, jti = self.auth.create_reset_token(user, self.auth.PWD_RESET)
@@ -492,10 +567,8 @@ class RecoverPassword(EndpointResource):
         # Completing the reset task
         self.auth.save_token(user, reset_token, jti, token_type=self.auth.PWD_RESET)
 
-        msg = (
-            "We are sending an email to your email address where "
-            + "you will find the link to enter a new password"
-        )
+        msg = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
+
         return msg
 
     @decorate.catch_error()
@@ -591,7 +664,7 @@ class RecoverPassword(EndpointResource):
         security.change_password(self.auth._user, None, new_password, password_confirm)
         # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
-        self.auth._user.save()
+        self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset tokens are valid only once)
         self.auth.invalidate_token(token_id)

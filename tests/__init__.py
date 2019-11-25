@@ -12,11 +12,9 @@ from restapi import __package__ as current_package
 from restapi.server import create_app
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
-from utilities import htmlcodes as hcodes
-from utilities.logs import get_logger, set_global_log_level
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import get_logger, set_global_log_level
 from restapi.tests import API_URI, AUTH_URI
-
-__author__ = "Paolo D'Onorio De Meo (m.dantonio@cineca.it)"
 
 # To change UNITTEST debugging level
 TEST_DEBUGGING_LEVEL = logging.DEBUG
@@ -139,7 +137,6 @@ class RestTestsAuthenticatedBase(RestTestsBase):
         self.assertEqual(r.status_code, self._hcodes.HTTP_OK_BASIC)
         content = self.get_content(r)
         self.save_token(content.get('token'))
-        # log.pp(self.__class__)
 
     def tearDown(self):
 

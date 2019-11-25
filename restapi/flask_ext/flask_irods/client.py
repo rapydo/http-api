@@ -4,7 +4,7 @@ import os
 from functools import lru_cache
 from flask import request, stream_with_context, Response
 
-from utilities import htmlcodes as hcodes
+from restapi.utilities.htmlcodes import hcodes
 from irods.access import iRODSAccess
 from irods.rule import Rule
 from irods.ticket import Ticket
@@ -12,7 +12,7 @@ from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
 
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -276,7 +276,7 @@ class IrodsPythonClient:
         if sourcepath == destpath:
             raise IrodsException("Source and destination path are the same")
         try:
-            log.verbose("Copy %s into %s" % (sourcepath, destpath))
+            log.verbose("Copy %s into %s", sourcepath, destpath)
             source = self.prc.data_objects.get(sourcepath)
             self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
@@ -1005,7 +1005,7 @@ class IrodsPythonClient:
 #         com = 'iquest'
 #         args = ["%s" % query]
 #         output = self.basic_icom(com, args)
-#         log.debug("%s query: [%s]\n%s" % (com, query, output))
+#         log.debug("%s query: [%s]\n%s", com, query, output)
 #         if 'CAT_NO_ROWS_FOUND' in output:
 #             return None
 #         return output.split('\n')[0].lstrip("%s = " % key)
@@ -1017,7 +1017,7 @@ class IrodsPythonClient:
 #     def get_base_dir(self):
 #         com = "ipwd"
 #         iout = self.basic_icom(com).strip()
-#         log.very_verbose("Base dir is %s" % iout)
+#         log.verbose("Base dir is %s", iout)
 #         return iout
 
 #     ############################################
@@ -1029,7 +1029,7 @@ class IrodsPythonClient:
 #     def list_resources(self):
 #         com = 'ilsresc'
 #         iout = self.basic_icom(com).strip()
-#         log.debug("Resources %s" % iout)
+#         log.debug("Resources %s", iout)
 #         return iout.split("\n")
 
 #     def get_base_resource(self):
@@ -1047,7 +1047,7 @@ class IrodsPythonClient:
 #                 continue
 #             resources.append(elements[2])
 
-#         log.debug("%s: found resources %s" % (filepath, resources))
+#         log.debug("%s: found resources %s",  filepath, resources)
 #         return resources
 
 #     def admin(self, command, user=None, extra=None):
@@ -1062,7 +1062,7 @@ class IrodsPythonClient:
 #             args.append(user)
 #         if extra is not None:
 #             args.append(extra)
-#         log.debug("iRODS admininistration command '%s'" % command)
+#         log.debug("iRODS admininistration command '%s'", command)
 #         return self.basic_icom(com, args)
 
 #     def admin_list(self):
@@ -1167,7 +1167,7 @@ class IrodsPythonClient:
 #         com = "ilocate"
 #         if like:
 #             path += '%'
-#         log.debug("iRODS search for %s" % path)
+#         log.debug("iRODS search for %s", path)
 #         # Execute
 #         out = self.execute_command(com, path)
 #         content = out.strip().split('\n')

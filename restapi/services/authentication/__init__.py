@@ -12,20 +12,16 @@ import hashlib
 import base64
 import pytz
 
-# import socket
-from glom import glom
-
-from utilities import CUSTOM_PACKAGE
-from utilities.uuid import getUUID
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
-from restapi.confs import PRODUCTION
+from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
 from restapi.attributes import ALL_ROLES, ANY_ROLE
-from utilities.meta import Meta
-from utilities.globals import mem
-from utilities import htmlcodes as hcodes
-from utilities.logs import get_logger
+from restapi.utilities.meta import Meta
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.uuid import getUUID
+
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -70,13 +66,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # TODO: check if still necessary
         """
 
-        credentials = glom(
-            mem.customizer._configurations, "variables.backend.credentials"
+        credentials = get_project_configuration(
+            "variables.backend.credentials"
         )
-        # credentials = mem.customizer._configurations \
-        #     .get('variables', {}) \
-        #     .get('backend', {}) \
-        #     .get('credentials', {})
 
         cls.default_user = credentials.get('username', None)
         cls.default_password = credentials.get('password', None)
@@ -167,13 +159,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return string
 
     @staticmethod
-    def hash_password(password):
+    def hash_password(password, salt="Unknown"):
         """ Original source:
         # https://github.com/mattupstate/flask-security
         #    /blob/develop/flask_security/utils.py#L110
         """
-
-        salt = "Unknown"
 
         h = hmac.new(
             BaseAuthentication.encode_string(salt),
@@ -184,8 +174,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def check_passwords(hashed_password, password):
-        proposed_password = BaseAuthentication.hash_password(password)
-        return hashed_password == proposed_password
+        return hashed_password == BaseAuthentication.hash_password(password)
 
     # ########################
     # # Retrieve information #
@@ -209,6 +198,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         How to retrieve the user from the current service,
         based on the unique username given, or from the content of the token
+        """
+        return
+
+    @abc.abstractmethod
+    def get_users(self, user_id=None):
+        """
+        How to retrieve users list from the current service,
+        Optionally filter by the unique uuid given
         """
         return
 
@@ -364,6 +361,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
+    def save_user(self, user):
+        log.debug("User is not saved in base authentication")
+
+    @abc.abstractmethod
     def invalidate_all_tokens(self, user=None):
         """
             With this method all token emitted for this user must be
@@ -448,6 +449,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(["local_admin"], warnings=False)
 
     @abc.abstractmethod
+    def get_roles(self):
+        """
+        How to retrieve all the roles
+        """
+        return
+
+    @abc.abstractmethod
     def get_roles_from_user(self, userobj=None):
         """
         How to retrieve the role of a user from the current service,
@@ -530,6 +538,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role
         - More to come
+        """
+        return
+
+    @abc.abstractmethod
+    def link_roles(self, user, roles):
+        """
+        A method to assign roles to a user
         """
         return
 

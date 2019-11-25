@@ -4,24 +4,25 @@
 The Main server factory.
 We create all the internal flask components here.
 """
-
+import os
 import warnings
 from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from flask_cors import CORS
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 from restapi import confs as config
+from restapi.confs import ABS_RESTAPI_PATH
 from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
 from restapi.confs import PRODUCTION
 from restapi.confs import SENTRY_URL
-from restapi.protocols.restful import Api, farmer, create_endpoints
+from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
-from utilities.globals import mem
-from utilities.logs import (
+from restapi.utilities.globals import mem
+from restapi.utilities.logs import (
     get_logger,
     handle_log_output,
     MAX_CHAR_LEN,
@@ -52,7 +53,6 @@ class Flask(OriginalFlask):
             out = str(rv)
             if len(out) > response_log_max_len:
                 out = out[:response_log_max_len] + ' ...'
-            # log.very_verbose("Custom response built: %s" % out)
         except BaseException:
             log.debug("Response: [UNREADABLE OBJ]")
         responder = ResponseMaker(rv)
@@ -61,7 +61,6 @@ class Flask(OriginalFlask):
         # or the make_response replica.
         # This happens with Flask exceptions
         if responder.already_converted():
-            log.very_verbose("Response was already converted")
             # # Note: this response could be a class ResponseElements
             # return rv
 
@@ -95,6 +94,47 @@ class Flask(OriginalFlask):
         return response
 
 
+def add(rest_api, resource):
+    """ Adding a single restpoint from a Resource Class """
+
+    from restapi.protocols.bearer import authentication
+
+    # Apply authentication: if required from yaml configuration
+    # Done per each method
+    for method, attributes in resource.custom['methods'].items():
+
+        # If auth has some role, they have been validated
+        # and authentication has been requested
+        # if len(attributes.auth) < 1:
+        #     continue
+        # else:
+        #     roles = attributes.auth
+
+        roles = attributes.auth
+        if roles is None:
+            continue
+
+        log.warning("Deprecated authentication decorator")
+        # Programmatically applying the authentication decorator
+        # Note: there is another similar piece of code in swagger.py
+        original = getattr(resource.cls, method)
+        decorated = authentication.authorization_required(
+            original, roles=roles, required_roles=attributes.required_roles
+        )
+        setattr(resource.cls, method, decorated)
+
+        if len(roles) < 1:
+            roles = "'DEFAULT'"
+        log.verbose("Auth on %s.%s for %s", resource.cls.__name__, method, roles)
+
+    urls = [uri for _, uri in resource.uris.items()]
+
+    # Create the restful resource with it;
+    # this method is from RESTful plugin
+    rest_api.add_resource(resource.cls, *urls)
+    log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
+
+
 ########################
 # Flask App factory    #
 ########################
@@ -105,24 +145,19 @@ def create_app(
     worker_mode=False,
     testing_mode=False,
     skip_endpoint_mapping=False,
-    **kwargs
+    **kwargs,
 ):
     """ Create the server istance for Flask application """
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
 
-    #############################
     # Initialize reading of all files
-    mem.customizer = Customizer(testing_mode, PRODUCTION, init_mode)
+    mem.customizer = Customizer(testing_mode, init_mode)
     # FIXME: try to remove mem. from everywhere...
 
-    #############################
     # Add template dir for output in HTML
-    from utilities import helpers
-
-    tp = helpers.script_abspath(__file__, 'templates')
-    kwargs['template_folder'] = tp
+    kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
 
     #################################################
     # Flask app instance
@@ -130,7 +165,6 @@ def create_app(
 
     microservice = Flask(name, **kwargs)
 
-    ##############################
     # Add commands to 'flask' binary
     if init_mode:
         microservice.config['INIT_MODE'] = init_mode
@@ -141,7 +175,6 @@ def create_app(
     elif testing_mode:
         microservice.config['TESTING'] = testing_mode
         init_mode = True
-        # microservice.config['INIT_MODE'] = init_mode
     elif worker_mode:
         skip_endpoint_mapping = True
 
@@ -153,7 +186,7 @@ def create_app(
     # CORS
     if not PRODUCTION:
         cors = CORS(
-            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'x-upload-content-length', 'x-upload-content-type', 'content-range'],
             supports_credentials=['true'],
             methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         )
@@ -169,21 +202,10 @@ def create_app(
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
-    # log.pp(microservice.__dict__)
 
     ##############################
     if PRODUCTION:
-
         log.info("Production server mode is ON")
-
-        # FIXME: random secrety key in production
-        # # Check and use a random file a secret key.
-        # install_secret_key(microservice)
-
-        # # To enable exceptions printing inside uWSGI
-        # # http://stackoverflow.com/a/17839750/2114395
-        # from werkzeug.debug import DebuggedApplication
-        # app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 
     ##############################
     # Find services and try to connect to the ones available
@@ -201,9 +223,24 @@ def create_app(
     # Restful plugin
     if not skip_endpoint_mapping:
         # Triggering automatic mapping of REST endpoints
-        current_endpoints = create_endpoints(farmer.EndpointsFarmer(Api))
-        # Restful init of the app
-        current_endpoints.rest_api.init_app(microservice)
+        rest_api = Api(catch_all_404s=True)
+
+        # Basic configuration (simple): from example class
+        if len(mem.customizer._endpoints) < 1:
+            log.error("No endpoints found!")
+
+            raise AttributeError("Follow the docs and define your endpoints")
+
+        for resource in mem.customizer._endpoints:
+            add(rest_api, resource)
+
+        # Enable all schema endpoints to be mapped with this extra step
+        if len(mem.customizer._schema_endpoint.uris) > 0:
+            log.debug("Found one or more schema to expose")
+            add(rest_api, mem.customizer._schema_endpoint)
+
+        # HERE all endpoints will be registered by using FlaskRestful
+        rest_api.init_app(microservice)
 
         ##############################
         # Injection!
@@ -216,13 +253,6 @@ def create_app(
         warnings.filterwarnings("ignore")
 
         FlaskInjector(app=microservice, modules=modules)
-
-        # otherwise...
-        # Catch warnings from Flask Injector
-        # try:
-        #     FlaskInjector(app=microservice, modules=modules)
-        # except RuntimeWarning:
-        #     pass
 
     ##############################
     # Clean app routes
@@ -247,14 +277,9 @@ def create_app(
                 # to allow 405 response
                 newmethods.add(verb)
             else:
-                log.verbose("Removed method %s.%s from mapping" % (rulename, verb))
+                log.verbose("Removed method %s.%s from mapping", rulename, verb)
 
         rule.methods = newmethods
-
-        # FIXME: SOLVE CELERY INJECTION
-        # # Set global objects for celery workers
-        # if worker_mode:
-        #     mem.services = internal_services
 
     ##############################
     # Logging responses

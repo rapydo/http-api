@@ -7,11 +7,10 @@
 import abc
 from datetime import datetime, timedelta
 
-# import time
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
-from utilities.meta import Meta
-from utilities.logs import get_logger
+from restapi.utilities.meta import Meta
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
@@ -34,7 +33,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
     def set_name(self):
         """ a different name for each extended object """
         self.name = self.__class__.__name__.lower()
-        log.very_verbose("Opening service instance of %s" % self.name)
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
@@ -49,7 +47,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                     original_model = base_models[key]
                     # Override
                     if issubclass(model, original_model):
-                        log.very_verbose("Overriding model %s" % key)
+                        log.verbose("Overriding model %s", key)
                         cls.models[key] = model
                         continue
 
@@ -126,7 +124,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
         for name, model in self.models.items():
             # Save attribute inside class with the same name
-            log.very_verbose("Injecting model '%s'" % name)
+            log.verbose("Injecting model '%s'", name)
             setattr(obj, name, model)
             obj.models = self.models
 
@@ -153,7 +151,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 obj = self.custom_connection()
             except exceptions as e:
                 log.error("Catched: %s(%s)", e.__class__.__name__, e)
-                # NOTE: if you critical_exit uwsgi will not show this line
+                # NOTE: if you directly exit, uwsgi will not show this line
                 log.critical("Service '%s' not available", self.name)
                 log.exit()
                 # raise e
@@ -185,7 +183,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
         ctx = stack.top
         ref = self
         unique_hash = str(sorted(kwargs.items()))
-        log.very_verbose("instance hash: %s" % unique_hash)
 
         # When not using the context, this is the first connection
         if ctx is None:
@@ -196,10 +193,9 @@ class BaseExtension(metaclass=abc.ABCMeta):
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
-            log.verbose("First connection for %s" % self.name)
+            log.verbose("First connection for %s", self.name)
 
         else:
-            # isauth = 'Authenticator' == self.__class__.__name__
 
             if not isauth:
                 if not global_instance:
@@ -212,9 +208,9 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 exp = timedelta(seconds=cache_expiration)
 
                 if now < obj.connection_time + exp:
-                    log.very_verbose("Cache still fresh for %s" % (self))
+                    log.verbose("Cache is still valid for %s", self)
                 else:
-                    log.warning("Cache expired for %s", (self))
+                    log.warning("Cache expired for %s", self)
                     obj = None
 
             if obj is None:
@@ -314,7 +310,7 @@ def get_debug_instance(MyClass):
 
     #######
     # NOTE: impors are needed here for logging to work correctly
-    from utilities.logs import get_logger
+    from restapi.utilities.logs import get_logger
     from restapi.services.detect import detector
 
     detector  # avoid PEP complaints

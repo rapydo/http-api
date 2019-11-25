@@ -11,14 +11,15 @@ from datetime import datetime
 from injector import inject
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
+from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseElements
 from restapi.swagger import input_validation
-from utilities import htmlcodes as hcodes
-from utilities.globals import mem
-from utilities.time import string_from_timestamp
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.globals import mem
+from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
-from utilities.logs import get_logger, obfuscate_dict
+from restapi.utilities.logs import get_logger, obfuscate_dict
 
 log = get_logger(__name__)
 
@@ -33,6 +34,13 @@ DEFAULT_PERPAGE = 10
 ###################
 # Extending the concept of rest generic resource
 class EndpointResource(Resource):
+
+    baseuri = API_URL
+    labels = []
+    depends_on = []
+    expose_schema = False
+    publish = True
+    labels = ["undefined"]
     """
     Implements a generic Resource for our Restful APIs model
     """
@@ -129,7 +137,7 @@ class EndpointResource(Resource):
                     action=act,
                     location=loc,
                 )
-                log.very_verbose("Accept param '%s' type %s" % (param, mytype))
+                log.verbose("Accept param '%s' type %s", param, mytype)
 
         # TODO: should I check body parameters?
 
@@ -170,7 +178,6 @@ class EndpointResource(Resource):
             try:
                 self._json_args = request.get_json(force=forcing)
             except Exception:  # as e:
-                # log.critical("Cannot get JSON for req: '%s'" % e)
                 pass
 
             # json payload and formData cannot co-exist
@@ -298,8 +305,6 @@ class EndpointResource(Resource):
 
         Build a ResponseElements instance.
         """
-        # log.debug("Force response:\nargs[%s] kwargs[%s]" % (args, kwargs))
-
         # If args has something, it should be one simple element
         # That element is the content and nothing else
         if isinstance(args, tuple) and len(args) > 0:
@@ -596,7 +601,6 @@ class EndpointResource(Resource):
         linked = {}
         for relationship in relationships:
             subrelationship = []
-            # log.debug("Investigate relationship %s" % relationship)
 
             if not hasattr(instance, relationship):
                 continue
@@ -626,10 +630,8 @@ class EndpointResource(Resource):
                 for k in attrs:
                     if k in subnode['attributes']:
                         log.warning(
-                            "Name collision %s" % k
-                            + " on node %s" % subnode
-                            + " from both model %s" % type(node)
-                            + " and property model %s" % type(r)
+                            "Name collision %s on node %s, model %s, property model=%s",
+                            k, subnode, type(node), type(r)
                         )
                     subnode['attributes'][k] = attrs[k]
 
@@ -641,6 +643,76 @@ class EndpointResource(Resource):
 
         if len(linked) > 0:
             data['relationships'] = linked
+
+        return data
+
+    def getJsonResponseFromSql(self, instance):
+
+        resource_type = type(instance).__name__.lower()
+
+        # Get id
+        verify_attribute = hasattr
+        if isinstance(instance, dict):
+            verify_attribute = dict.get
+        if verify_attribute(instance, "uuid"):
+            id = str(instance.uuid)
+        elif verify_attribute(instance, "id"):
+            id = str(instance.id)
+        else:
+            id = "-"
+
+        if id is None:
+            id = "-"
+
+        data = {
+            "id": id,
+            "type": resource_type,
+            "attributes": {}
+            # "links": {"self": request.url + '/' + id},
+        }
+        for c in instance.__table__.columns._data:
+            if c == 'password':
+                continue
+
+            data["attributes"][c] = getattr(instance, c)
+
+        return data
+
+    def getJsonResponseFromMongo(self, instance):
+
+        resource_type = type(instance).__name__.lower()
+
+        # Get id
+        verify_attribute = hasattr
+        if isinstance(instance, dict):
+            verify_attribute = dict.get
+        if verify_attribute(instance, "uuid"):
+            id = str(instance.uuid)
+        elif verify_attribute(instance, "id"):
+            id = str(instance.id)
+        else:
+            id = "-"
+
+        if id is None:
+            id = "-"
+
+        data = {
+            "id": id,
+            "type": resource_type,
+            "attributes": {}
+            # "links": {"self": request.url + '/' + id},
+        }
+        # log.critical(instance._data._members)
+        for c in instance._data._members:
+            if c == 'password':
+                continue
+
+            attribute = getattr(instance, c)
+
+            if isinstance(attribute, list):
+                continue
+
+            data["attributes"][c] = attribute
 
         return data
 
@@ -720,8 +792,34 @@ class EndpointResource(Resource):
                     if field['custom']['islink']:
                         continue
             key = field["name"]
+
             if key in properties:
                 instance.__dict__[key] = properties[key]
+
+    def update_sql_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+            from sqlalchemy.orm.attributes import set_attribute
+            if key in properties:
+                set_attribute(instance, key, properties[key])
+
+    def update_mongo_properties(self, instance, schema, properties):
+
+        for field in schema:
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+            if key in properties:
+                setattr(instance, key, properties[key])
 
     def parseAutocomplete(self, properties, key, id_key='value', split_char=None):
         value = properties.get(key, None)

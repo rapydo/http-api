@@ -13,15 +13,15 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 import pytz
 from datetime import datetime, timedelta
-from utilities.uuid import getUUID
+from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
-from utilities.logs import get_logger
+from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
-    log.critical_exit("No neo4j GraphDB service found for auth")
+    log.exit("No neo4j GraphDB service found for authentication")
 
 
 class Authentication(BaseAuthentication):
@@ -44,6 +44,26 @@ class Authentication(BaseAuthentication):
         except self.db.User.DoesNotExist:
             log.warning("Could not find user for '%s'", username)
         return user
+
+    def get_users(self, user_id=None):
+
+        # Retrieve all
+        if user_id is None:
+            return self.db.User.nodes.all()
+
+        # Retrieve one
+        user = self.db.User.nodes.get_or_none(uuid=user_id)
+        if user is None:
+            return None
+
+        return [user]
+
+    def get_roles(self):
+        roles = []
+        for role in self.db.Role.nodes.all():
+            roles.append(role)
+
+        return roles
 
     def get_roles_from_user(self, userobj=None):
 
@@ -82,7 +102,7 @@ class Authentication(BaseAuthentication):
 
         return user_node
 
-    # Also usre by PUT user
+    # Also used by PUT user
     def link_roles(self, user, roles):
 
         # if self.default_role not in roles:
@@ -112,15 +132,12 @@ class Authentication(BaseAuthentication):
         for role in current_roles_objs:
             current_roles.append(role.name)
 
+        log.info("Current roles: %s", current_roles)
+
         for role in self.default_roles:
             if role not in current_roles:
+                log.info("Creating role: %s", role)
                 self.create_role(role)
-
-        # FIXME: Create some users for testing
-        from flask import current_app
-
-        if current_app.config['TESTING']:
-            pass
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
@@ -132,19 +149,26 @@ class Authentication(BaseAuthentication):
                     # 'authmethod': 'credentials',
                     'name': 'Default',
                     'surname': 'User',
-                    # 'password': self.hash_password(self.default_password)
                     'password': self.default_password,
                 },
                 roles=self.default_roles,
             )
+        else:
+            log.debug("Users already created")
+
+    def save_user(self, user):
+        if user is not None:
+            user.save()
 
     def save_token(self, user, token, jti, token_type=None):
 
-        now = datetime.now(pytz.utc)
-        exp = now + timedelta(seconds=self.shortTTL)
+        ip = self.get_remote_ip()
 
         if token_type is None:
             token_type = self.FULL_TOKEN
+
+        now = datetime.now(pytz.utc)
+        exp = now + timedelta(seconds=self.shortTTL)
 
         token_node = self.db.Token()
         token_node.jti = jti
@@ -153,14 +177,12 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-
-        ip = self.get_remote_ip()
         token_node.IP = ip
 
         token_node.save()
+        # Save user updated in profile endpoint
+        user.save()
         token_node.emitted_for.connect(user)
-
-        log.very_verbose("Token stored in graphDB")
 
     def verify_token_custom(self, jti, user, payload):
         try:
@@ -179,7 +201,7 @@ class Authentication(BaseAuthentication):
 
             if now > token_node.expiration:
                 self.invalidate_token(token=token_node.token)
-                log.critical("This token is not longer valid")
+                log.critical("This token is no longer valid")
                 return False
 
             exp = now + timedelta(seconds=self.shortTTL)
