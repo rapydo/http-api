@@ -72,10 +72,10 @@ class Tokens(EndpointResource):
             if token["id"] == token_id:
                 return token
 
-        errorMessage = """Either this token was not emitted for your account
-                          or it does not exist"""
-
-        return self.send_errors(message=errorMessage, code=hcodes.HTTP_BAD_NOTFOUND)
+        return self.send_errors(
+            message="This token was not emitted for your account or it does not exist",
+            code=hcodes.HTTP_BAD_NOTFOUND
+        )
 
     # token_id = uuid associated to the token you want to select
     @authentication.required()
