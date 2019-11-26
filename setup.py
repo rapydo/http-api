@@ -81,6 +81,7 @@ setup(
         "glom",
         "psutil",
         "plumbum",
+        "better_exceptions"
     ],
     classifiers=[
         'Programming Language :: Python',
