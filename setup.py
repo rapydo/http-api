@@ -35,9 +35,6 @@ setup(
         %s=%s:cli
     ''' % (main_package, app),
     install_requires=[
-        # Rapydo framework
-        "rapydo-utils==%s" % current_version,
-
         # Utilities
         "attrs",
         "pyOpenSSL",
