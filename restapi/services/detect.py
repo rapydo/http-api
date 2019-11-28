@@ -21,7 +21,7 @@ log = get_logger(__name__)
 
 
 class Detector(object):
-    def __init__(self, config_file_name='services'):
+    def __init__(self):
 
         self.authentication_service = None
         self.authentication_name = 'authentication'
@@ -33,7 +33,7 @@ class Detector(object):
         self.extensions_instances = {}
         self.available_services = {}
         self.meta = Meta()
-        self.check_configuration(config_file_name)
+        self.check_configuration()
         self.load_classes()
 
     @staticmethod
@@ -68,13 +68,13 @@ class Detector(object):
     def prefix_name(service):
         return service.get('name'), service.get('prefix').lower() + '_'
 
-    def check_configuration(self, config_file_name):
+    def check_configuration(self):
 
-        self.services_configuration = load_yaml_file(
-            file=config_file_name,
-            path=ABS_RESTAPI_CONFSPATH,
-            logger=True,
-        )
+        try:
+            self.services_configuration = load_yaml_file(
+                file='services.yaml', path=ABS_RESTAPI_CONFSPATH)
+        except AttributeError as e:
+            log.exit(e)
 
         for service in self.services_configuration:
 

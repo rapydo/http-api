@@ -13,10 +13,9 @@ import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
-from restapi.attributes import ExtraAttributes, ALL_ROLES
+from restapi.attributes import ExtraAttributes
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -59,26 +58,21 @@ class BeSwagger(object):
         self._parameter_schemas = {}
         self._used_swagger_tags = {}
 
-    def read_my_swagger(self, method, endpoint, file=None, mapping=None):
-
-        if mapping is None:
-            old_version = True
-            mapping = load_yaml_file(file)
-        else:
-            old_version = False
+    def read_my_swagger(self, method, endpoint, mapping=None):
 
         # content has to be a dictionary
         if not isinstance(mapping, dict):
-            raise TypeError("Wrong method ")
+            raise TypeError("Wrong type: {}".format(type(mapping)))
 
         # read common
         commons = mapping.pop('common', {})
         if commons:
+            # Deprecated since 0.7.0
             log.warning("Commons specs are deprecated")
 
         # Check if there is at least one except for common
         if len(mapping) < 1:
-            raise ValueError("No definition found inside: %s " % file)
+            raise ValueError("No definition found in: {}".format(mapping))
 
         ################################
         # Using 'attrs': a way to save external attributes
@@ -93,19 +87,10 @@ class BeSwagger(object):
 
         for label, specs in mapping.items():
 
-            if old_version:
-                if label not in endpoint.uris:
-                    raise KeyError(
-                        "Invalid label '%s' found.\nAvailable labels: %s"
-                        % (label, list(endpoint.uris.keys()))
-                    )
-                uri = endpoint.uris[label]
-                log.warning("Deprecated mapping-label endpoint definition: %s", uri)
-            else:
-                uri = '/%s%s' % (endpoint.base_uri, label)
-                # This will be used by server.py.add
-                if uri not in endpoint.uris:
-                    endpoint.uris[uri] = uri
+            uri = '/%s%s' % (endpoint.base_uri, label)
+            # This will be used by server.py.add
+            if uri not in endpoint.uris:
+                endpoint.uris[uri] = uri
 
             ################################
             # add common elements to all specs
@@ -123,38 +108,10 @@ class BeSwagger(object):
             # Default is to do it if not otherwise specified
             extra.publish = custom.get('publish', True)
             if not extra.publish:
+                # Deprecated since 0.7.0
                 log.warning("Publish setting is deprecated")
 
-            # Authentication
-            if custom.get('authentication', False):
-
-                # Add Bearer Token security to this method
-                # This was already defined in swagger root
-                specs['security'] = [{"Bearer": []}]
-
-                # Automatically add the response for Unauthorized in not already defined
-                k_int = hcodes.HTTP_BAD_UNAUTHORIZED
-                k_str = str(hcodes.HTTP_BAD_UNAUTHORIZED)
-                if k_int not in specs['responses'] and k_str not in specs['responses']:
-                    specs['responses'][k_str] = {
-                        'description': "Missing or invalid credentials or token"
-                    }
-
-                # Recover required roles
-                roles = custom.get('authorized', [])
-                # roles = custom.get('authorized', ['normal_user'])
-
-                # TODO: create a method inside 'auth' to check roles
-                # for role in roles:
-                #     pass
-
-                # If everything is fine set the roles to be required by Flask
-                extra.auth = roles
-                extra.required_roles = custom.get('required_roles', ALL_ROLES).lower()
-            else:
-                extra.auth = None
-
-            # Other things that could be saved into 'custom' subset?
+            # extra.auth = None
 
             ###########################
             # Strip the uri of the parameter
@@ -366,22 +323,9 @@ class BeSwagger(object):
         models = self.get_models()
         self._fdp = models.pop('FormDataParameters', {})
 
-        key_found = False
         for k in ["definitions", "parameters", "responses"]:
             if k in models:
                 output[k] = models.get(k, {})
-                key_found = True
-
-        #####################################################
-        # I added this for back-compatibility on 21/09/2017.
-        # Please remove me in the future
-        if not key_found:
-            log.warning(
-                "Your swagger model file is obsolete, " + "please add *definitions* key"
-            )
-            log.info("Follow issue #59 for details")
-            output['definitions'] = models
-        #####################################################
 
         output['consumes'] = [JSON_APPLICATION]
         output['produces'] = [JSON_APPLICATION]
@@ -393,18 +337,12 @@ class BeSwagger(object):
             endpoint.custom['methods'] = {}
             endpoint.custom['params'] = {}
 
-            for method, file in endpoint.methods.items():
+            for method, mapping in endpoint.methods.items():
                 # add the custom part to the endpoint
 
-                # In this case we are passing the config dictionary, not the yaml file
-                if isinstance(file, dict):
-                    self._endpoints[key] = self.read_my_swagger(
-                        method, endpoint, mapping=file
-                    )
-                else:
-                    self._endpoints[key] = self.read_my_swagger(
-                        method, endpoint, file=file
-                    )
+                self._endpoints[key] = self.read_my_swagger(
+                    method, endpoint, mapping
+                )
 
         ###################
         # Save query parameters globally
@@ -429,24 +367,28 @@ class BeSwagger(object):
 
         # BASE definitions
         path = os.path.join(ABS_RESTAPI_PATH, MODELS_DIR)
-        data = load_yaml_file('swagger', path=path)
+        try:
+            data = load_yaml_file('swagger.yaml', path=path)
+        except AttributeError as e:
+            log.exit(e)
 
         # EXTENDED definitions, if any
-        if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-            extended_models = {}
-        else:
+        extended_models = None
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
             path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
             # NOTE: with logger=False I skip the warning if this file doesn't exist
-            extended_models = load_yaml_file(
-                'swagger', path=path, skip_error=True, logger=False
-            )
+            try:
+                extended_models = load_yaml_file('swagger.yaml', path=path)
+            except AttributeError as e:
+                log.verbose(e)
 
         # CUSTOM definitions
         path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
-        # NOTE: with logger=False I skip the warning if this file doesn't exist
-        custom_models = load_yaml_file(
-            'swagger', path=path, skip_error=True, logger=False
-        )
+        try:
+            custom_models = load_yaml_file('swagger.yaml', path=path)
+        except AttributeError as e:
+            log.verbose(e)
+            custom_models = {}
 
         if extended_models is None:
             return mix(data, custom_models)

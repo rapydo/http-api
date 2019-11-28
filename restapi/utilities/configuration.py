@@ -8,47 +8,18 @@ from restapi.utilities.logs import get_logger
 log = get_logger(__name__)
 
 
-PROJECTS_DEFAULTS_FILE = 'projects_defaults'
-PROJECT_CONF_FILENAME = 'project_configuration'
+PROJECTS_DEFAULTS_FILE = 'projects_defaults.yaml'
+PROJECT_CONF_FILENAME = 'project_configuration.yaml'
 
 
-def load_project_configuration(path, file=None, do_exit=True):
-
-    if file is None:
-        file = PROJECT_CONF_FILENAME
-
-    args = {
-        'path': path,
-        'skip_error': False,
-        'logger': False,
-        'file': file,
-        'keep_order': True,
-    }
-    try:
-        log.verbose("Found '%s/%s' configuration", path, file)
-        return load_yaml_file(**args)
-    except AttributeError as e:
-        if do_exit:
-            log.exit(e)
-        else:
-            raise AttributeError(e)
-
-
-def read(
-    default_file_path,
-    base_project_path,
-    projects_path,
-    submodules_path,
-    from_container=False,
-    read_extended=True,
-    do_exit=True,
-):
+def read_configuration(
+        default_file_path, base_project_path, projects_path, submodules_path):
     """
     Read default configuration
     """
 
-    custom_configuration = load_project_configuration(
-        base_project_path, file=PROJECT_CONF_FILENAME, do_exit=do_exit
+    custom_configuration = load_yaml_file(
+        PROJECT_CONF_FILENAME, path=base_project_path, keep_order=True
     )
 
     # Verify custom project configuration
@@ -62,7 +33,7 @@ def read(
         if project.get(key) is None:
 
             log.exit(
-                "Project not configured, missing key '%s' in file %s/%s.yaml",
+                "Project not configured, missing key '%s' in file %s/%s",
                 key,
                 base_project_path,
                 PROJECT_CONF_FILENAME,
@@ -71,14 +42,11 @@ def read(
     if default_file_path is None:
         base_configuration = {}
     else:
-        base_configuration = load_project_configuration(
-            default_file_path, file=PROJECTS_DEFAULTS_FILE, do_exit=do_exit
-        )
+        base_configuration = load_yaml_file(
+            file=PROJECTS_DEFAULTS_FILE, path=default_file_path, keep_order=True)
 
-    if read_extended:
-        extended_project = project.get('extends')
-    else:
-        extended_project = None
+    extended_project = project.get('extends')
+
     if extended_project is None:
         # Mix default and custom configuration
         return mix(base_configuration, custom_configuration), None, None
@@ -92,31 +60,17 @@ def read(
         if repository_name == '':
             log.exit('Invalid repository name in extends-from, name is empty')
 
-        if from_container:
-            extend_path = submodules_path
-        else:
-            extend_path = os.path.join(submodules_path, repository_name, projects_path)
+        extend_path = submodules_path
     else:
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
         log.exit("Invalid extends-from parameter: %s.\n%s", extends_from, suggest)
 
-    # in container the file is mounted in the confs folder
-    # otherwise will be in projects/projectname or submodules/projectname
-    if not from_container:
-        extend_path = os.path.join(extend_path, extended_project)
-
     if not os.path.exists(extend_path):
         log.exit("From project not found: %s", extend_path)
 
-    # on backend is mounted with `extended_` prefix
-    if from_container:
-        extend_file = "extended_%s" % (PROJECT_CONF_FILENAME)
-    else:
-        extend_file = PROJECT_CONF_FILENAME
-    extended_configuration = load_project_configuration(
-        extend_path, file=extend_file, do_exit=do_exit
-    )
-
+    extend_file = "extended_%s" % (PROJECT_CONF_FILENAME)
+    extended_configuration = load_yaml_file(
+        file=extend_file, path=extend_path, keep_order=True)
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
@@ -147,30 +101,6 @@ def mix(base, custom):
 
     return base
 
-# ################################
-# ######## FROM myyaml.py ########
-# ################################
-
-
-def get_yaml_path(path, filename, extension):
-    if path is None:
-        filepath = filename
-    else:
-        if extension is not None:
-            filename += '.' + extension
-        filepath = os.path.join(path, filename)
-
-    return filepath
-
-
-def regular_load(stream, loader=yaml.loader.Loader):
-    # LOAD fails if more than one document is there
-    # return yaml.load(fh)
-
-    # LOAD ALL gets more than one document inside the file
-    # gen = yaml.load_all(fh)
-    return yaml.load_all(stream, loader)
-
 
 class OrderedLoader(yaml.SafeLoader):
     """
@@ -191,86 +121,37 @@ def construct_mapping(loader, node):
     return OrderedDict(loader.construct_pairs(node))
 
 
-def ordered_load(stream):
+def load_yaml_file(file, path, keep_order=False):
 
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
-    )
-    # return yaml.load(stream, OrderedLoader)
-    return regular_load(stream, OrderedLoader)
+    filepath = os.path.join(path, file)
 
+    log.verbose("Reading file %s", filepath)
 
-def load_yaml_file(
-    file,
-    path=None,
-    get_all=False,
-    skip_error=False,
-    extension='yaml',
-    return_path=False,
-    logger=True,
-    keep_order=False,
-):
-    """
-    Import any data from a YAML file.
-
-    NOTE: the logger problem
-
-    Since YAML are important files for configuration in our case,
-    we may be in the situation of not having the loggers yet,
-    since the configuration in itself is needed to configure the logger.
-
-    In that case we have logger=False and a silenced read.
-    """
-
-    if logger:
-        from restapi.utilities.logs import get_logger
-
-        log = get_logger(__name__)
-
-    filepath = get_yaml_path(path, file, extension)
-
-    if not return_path and logger:
-        log.verbose("Reading file %s", filepath)
-
-    # load from this file
-    error = None
     if not os.path.exists(filepath):
-        error = 'File does not exist'
-    else:
-        if return_path:
-            return filepath
+        raise AttributeError("YAML file does not exist: {}".format(filepath))
 
-        with open(filepath) as fh:
-            try:
-                if keep_order:
-                    loader = ordered_load(fh)
-                else:
-                    loader = regular_load(fh)
-            except Exception as e:
-                error = e
+    with open(filepath) as fh:
+        try:
+            if keep_order:
+
+                OrderedLoader.add_constructor(
+                    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+                    construct_mapping
+                )
+                loader = yaml.load_all(fh, OrderedLoader)
             else:
-                docs = list(loader)
-                if get_all:
-                    return docs
+                loader = yaml.load_all(fh, yaml.loader.Loader)
 
-                if len(docs) > 0:
-                    return docs[0]
+            docs = list(loader)
 
-                message = "YAML file is empty: %s" % filepath
-                if logger:
-                    log.exit(message)
-                else:
-                    raise AttributeError(message)
+            if len(docs) == 0:
+                raise AttributeError("YAML file is empty: {}".format(filepath))
 
-    # # IF dealing with a strange exception string (escaped)
-    # import codecs
-    # error, _ = codecs.getdecoder("unicode_escape")(str(error))
+            return docs[0]
 
-    message = "Failed to read YAML file [%s]: %s" % (filepath, error)
-    if logger:
-        log.warning(message)
-    elif not skip_error:
-        raise AttributeError(message)
-    # else:
-    #     pass
-    return {}
+        except Exception as e:
+            # # IF dealing with a strange exception string (escaped)
+            # import codecs
+            # error, _ = codecs.getdecoder("unicode_escape")(str(error))
+
+            raise AttributeError("Failed to read file {}: {}".format(filepath, e))

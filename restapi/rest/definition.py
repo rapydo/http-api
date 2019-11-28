@@ -394,52 +394,52 @@ class EndpointResource(Resource):
         # TODO: write it and use it in EUDAT
         return NotImplementedError("To be written")
 
-    @staticmethod
-    def timestamp_from_string(timestamp_string):
+    # @staticmethod
+    # def timestamp_from_string(timestamp_string):
 
-        log.warning("DEPRECATED: use utilities/time.py instead")
+    #     log.warning("DEPRECATED: use utilities/time.py instead")
 
-        """
-        Neomodels complains about UTC, this is to fix it.
-        Taken from http://stackoverflow.com/a/21952077/2114395
-        """
+    #     """
+    #     Neomodels complains about UTC, this is to fix it.
+    #     Taken from http://stackoverflow.com/a/21952077/2114395
+    #     """
 
-        precision = float(timestamp_string)
-        # return datetime.fromtimestamp(precision)
+    #     precision = float(timestamp_string)
+    #     # return datetime.fromtimestamp(precision)
 
-        utc_dt = datetime.utcfromtimestamp(precision)
-        aware_utc_dt = utc_dt.replace(tzinfo=pytz.utc)
+    #     utc_dt = datetime.utcfromtimestamp(precision)
+    #     aware_utc_dt = utc_dt.replace(tzinfo=pytz.utc)
 
-        return aware_utc_dt
+    #     return aware_utc_dt
 
-    @staticmethod
-    def date_from_string(date, fmt="%d/%m/%Y"):
+    # @staticmethod
+    # def date_from_string(date, fmt="%d/%m/%Y"):
 
-        log.warning("DEPRECATED: use utilities/time.py instead")
+    #     log.warning("DEPRECATED: use utilities/time.py instead")
 
-        if date == "":
-            return ""
-        # datetime.now(pytz.utc)
-        try:
-            return_date = datetime.strptime(date, fmt)
-        except BaseException:
-            return_date = dateutil.parser.parse(date)
+    #     if date == "":
+    #         return ""
+    #     # datetime.now(pytz.utc)
+    #     try:
+    #         return_date = datetime.strptime(date, fmt)
+    #     except BaseException:
+    #         return_date = dateutil.parser.parse(date)
 
-        return pytz.utc.localize(return_date)
+    #     return pytz.utc.localize(return_date)
 
-    @staticmethod
-    def string_from_timestamp(timestamp):
+    # @staticmethod
+    # def string_from_timestamp(timestamp):
 
-        log.warning("DEPRECATED: use utilities/time.py instead")
+    #     log.warning("DEPRECATED: use utilities/time.py instead")
 
-        if timestamp == "":
-            return ""
-        try:
-            date = datetime.fromtimestamp(float(timestamp))
-            return date.isoformat()
-        except BaseException:
-            log.warning("Errors parsing %s", timestamp)
-            return ""
+    #     if timestamp == "":
+    #         return ""
+    #     try:
+    #         date = datetime.fromtimestamp(float(timestamp))
+    #         return date.isoformat()
+    #     except BaseException:
+    #         log.warning("Errors parsing %s", timestamp)
+    #         return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
         """

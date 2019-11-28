@@ -94,47 +94,6 @@ class Flask(OriginalFlask):
         return response
 
 
-def add(rest_api, resource):
-    """ Adding a single restpoint from a Resource Class """
-
-    from restapi.protocols.bearer import authentication
-
-    # Apply authentication: if required from yaml configuration
-    # Done per each method
-    for method, attributes in resource.custom['methods'].items():
-
-        # If auth has some role, they have been validated
-        # and authentication has been requested
-        # if len(attributes.auth) < 1:
-        #     continue
-        # else:
-        #     roles = attributes.auth
-
-        roles = attributes.auth
-        if roles is None:
-            continue
-
-        log.warning("Deprecated authentication decorator")
-        # Programmatically applying the authentication decorator
-        # Note: there is another similar piece of code in swagger.py
-        original = getattr(resource.cls, method)
-        decorated = authentication.authorization_required(
-            original, roles=roles, required_roles=attributes.required_roles
-        )
-        setattr(resource.cls, method, decorated)
-
-        if len(roles) < 1:
-            roles = "'DEFAULT'"
-        log.verbose("Auth on %s.%s for %s", resource.cls.__name__, method, roles)
-
-    urls = [uri for _, uri in resource.uris.items()]
-
-    # Create the restful resource with it;
-    # this method is from RESTful plugin
-    rest_api.add_resource(resource.cls, *urls)
-    log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
-
-
 ########################
 # Flask App factory    #
 ########################
@@ -232,12 +191,18 @@ def create_app(
             raise AttributeError("Follow the docs and define your endpoints")
 
         for resource in mem.customizer._endpoints:
-            add(rest_api, resource)
+            urls = [uri for _, uri in resource.uris.items()]
+
+            # Create the restful resource with it;
+            # this method is from RESTful plugin
+            rest_api.add_resource(resource.cls, *urls)
+            log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
 
         # Enable all schema endpoints to be mapped with this extra step
         if len(mem.customizer._schema_endpoint.uris) > 0:
             log.debug("Found one or more schema to expose")
-            add(rest_api, mem.customizer._schema_endpoint)
+            urls = [uri for _, uri in mem.customizer._schema_endpoint.uris.items()]
+            rest_api.add_resource(resource.cls, *urls)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
