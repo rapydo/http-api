@@ -154,9 +154,9 @@ class AdminUsers(EndpointResource):
         html = get_html_template(template, replaces)
 
         body = """
-Username: "%s"
-Password: "%s"
-        """ % (
+Username: "{}"
+Password: "{}"
+        """.format(
             user.email,
             unhashed_password,
         )

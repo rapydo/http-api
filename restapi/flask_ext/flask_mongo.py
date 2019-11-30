@@ -24,7 +24,7 @@ class MongoExt(BaseExtension):
 
         ##################
         # connect for authentication if required
-        uri = "mongodb://%s:%s/%s" % (
+        uri = "mongodb://{}:{}/{}".format(
             variables.get('host'),
             variables.get('port'),
             AUTH_DB,
@@ -33,7 +33,10 @@ class MongoExt(BaseExtension):
 
         ##################
         db = variables.get('database', 'UNKNOWN')
-        uri = "mongodb://%s:%s/%s" % (variables.get('host'), variables.get('port'), db)
+        uri = "mongodb://{}:{}/{}".format(
+            variables.get('host'),
+            variables.get('port'), db
+        )
 
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)

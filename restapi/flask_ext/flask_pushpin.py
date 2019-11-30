@@ -28,7 +28,7 @@ class PushpinExt(BaseExtension):
         host = variables.get('host')
         port = variables.get('port')
 
-        control_uri = 'http://%s:%s' % (host, port)
+        control_uri = 'http://{}:{}'.format(host, port)
         pubctrl = GripPubControl({
             'control_uri': control_uri
         })

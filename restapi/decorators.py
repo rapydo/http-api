@@ -164,7 +164,7 @@ def catch_graph_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = "A %s already exists with %s = %s" % (node, prop, val)
+                error = "A {} already exists with {} = {}".format(node, prop, val)
             else:
                 error = str(e)
 

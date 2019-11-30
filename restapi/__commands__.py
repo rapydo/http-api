@@ -19,7 +19,6 @@ log = get_logger(__name__)
 # @click.option('--debug/--no-debug', default=False)
 # def cli(debug):
 def cli():
-    # click.echo('Debug mode is %s' % ('on' if debug else 'off'))
     click.echo('*** RESTful HTTP API ***')
 
 
@@ -50,7 +49,6 @@ def main(args, another_app=None):
     #     # do not let flask close the application
     #     # so we can do more code after closing
     #     log.error(e)
-    #     log.warning('error type: %s', type(e))
 
 
 def flask_cli(options=None):
@@ -140,26 +138,12 @@ def wait():
 def get_service_address(variables, host_var, port_var, service):
 
     host = variables.get(host_var)
-    # if host is None:
-    #     log.warning("Unable to find HOST variable for %s", service)
-    #     for k in myclass.variables:
-    #         log.critical(myclass.variables)
-    #         if k.endswith("_host"):
-    #             host = myclass.variables.get(k)
-    #             log.info("Using %s as HOST variable for %s", k, service)
     if host is None:
         log.exit("Cannot find any variable matching %s for %s", host_var, service)
 
     port = variables.get(port_var)
-    # if port is None:
-    #     log.warning("Unable to find PORT variable for %s", service)
-    #     for k in myclass.variables:
-    #         if k.endswith("_port"):
-    #             port = myclass.variables.get(k)
-    #             log.info("Using %s as PORT variable for %s", k, service)
-
     if port is None:
-        log.exit("Cannot find any variable matching %s  for %s", port_var, service)
+        log.exit("Cannot find any variable matching %s for %s", port_var, service)
 
     log.debug("Checking address: %s:%s", host, port)
 

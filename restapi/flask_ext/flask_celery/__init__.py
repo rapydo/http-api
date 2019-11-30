@@ -24,7 +24,7 @@ class CeleryExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        worker_mode = self.args.get("worker_mode", False)
+        # worker_mode = self.args.get("worker_mode", False)
 
         broker = self.variables.get("broker")
 
@@ -59,19 +59,19 @@ class CeleryExt(BaseExtension):
             BACKEND_PASSWORD = None
 
         if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKER_CREDENTIALS = "%s:%s@" % (BROKER_USER, BROKER_PASSWORD)
+            BROKER_CREDENTIALS = '{}:{}@'.format(BROKER_USER, BROKER_PASSWORD)
         else:
             BROKER_CREDENTIALS = ""
 
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://%s%s%s' % (
+            BROKER_URL = 'amqp://{}{}{}'.format(
                 BROKER_CREDENTIALS,
                 BROKER_HOST,
                 BROKER_VHOST,
             )
             log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
         elif broker == 'REDIS':
-            BROKER_URL = 'redis://%s%s:%s/0' % (
+            BROKER_URL = 'redis://{}{}:{}/0'.format(
                 BROKER_CREDENTIALS,
                 BROKER_HOST,
                 BROKER_PORT,
@@ -83,26 +83,26 @@ class CeleryExt(BaseExtension):
             return celery_app
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
-            BACKEND_CREDENTIALS = "%s:%s@" % (BACKEND_USER, BACKEND_PASSWORD)
+            BACKEND_CREDENTIALS = '{}:{}@'.format(BACKEND_USER, BACKEND_PASSWORD)
         else:
             BACKEND_CREDENTIALS = ""
 
         if backend == 'RABBIT':
-            BACKEND_URL = 'rpc://%s%s:%s/0' % (
+            BACKEND_URL = 'rpc://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
             log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
         elif backend == 'REDIS':
-            BACKEND_URL = 'redis://%s%s:%s/0' % (
+            BACKEND_URL = 'redis://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
             log.info("Configured Redis as Celery backend %s", BACKEND_URL)
         elif backend == 'MONGODB':
-            BACKEND_URL = 'mongodb://%s%s:%s' % (
+            BACKEND_URL = 'mongodb://{}{}:{}'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
@@ -187,7 +187,7 @@ class CeleryExt(BaseExtension):
                 log.info("Celery-beat connected to MongoDB: %s", m)
             elif backend == 'REDIS':
 
-                BEAT_BACKEND_URL = 'redis://%s%s:%s/1' % (
+                BEAT_BACKEND_URL = 'redis://{}{}:{}/1'.format(
                     BACKEND_CREDENTIALS,
                     BACKEND_HOST,
                     BACKEND_PORT,
@@ -216,7 +216,7 @@ class CeleryExt(BaseExtension):
         elif cls.CELERY_BEAT_SCHEDULER == 'REDIS':
             from redbeat.schedulers import RedBeatSchedulerEntry
             try:
-                task_key = "%s%s" % (cls.REDBEAT_KEY_PREFIX, name)
+                task_key = "{}{}".format(cls.REDBEAT_KEY_PREFIX, name)
                 return RedBeatSchedulerEntry.from_key(
                     task_key, app=CeleryExt.celery_app)
             except KeyError:
@@ -350,13 +350,15 @@ def send_errors_by_email(func):
             if send_mail_is_active():
                 log.info("Sending error report by email", task_id, task_name)
 
-                body = "Celery task %s failed" % task_id
-                body += "\n\n"
-                body += "Name: %s" % task_name
-                body += "\n\n"
-                body += "Arguments: %s" % str(self.request.args)
-                body += "\n\n"
-                body += "Error: %s" % (traceback.format_exc())
+                body = """
+Celery task %s failed
+
+Name: %s
+
+Arguments: %s
+
+Error: %s
+""".format(task_id, task_name, str(self.request.args), traceback.format_exc())
 
                 project = get_project_configuration(
                     "project.title",

@@ -30,7 +30,8 @@ class NeomodelClient:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
         except Exception as e:
-            raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
+            raise Exception(
+                "Failed to execute Cypher Query: {}\n{}".format(query, e))
         return results
 
     @staticmethod
@@ -101,7 +102,7 @@ class NeoModel(BaseExtension):
         else:
             variables = self.variables
 
-        self.uri = "bolt://%s:%s@%s:%s" % (
+        self.uri = "bolt://{}:{}@{}:{}".format(
             # User:Password
             variables.get('user', 'neo4j'),
             variables.get('password'),

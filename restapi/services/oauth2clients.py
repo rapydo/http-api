@@ -182,7 +182,7 @@ def decorate_http_request(remote):
             userpass = b64encode(
                 str.encode("%s:%s" % (client_id, client_secret))
             ).decode("ascii")
-            headers.update({'Authorization': 'Basic %s' % (userpass,)})
+            headers.update({'Authorization': 'Basic {}'.format(userpass,)})
         response = old_http_request(uri, headers=headers, data=data, method=method)
 
         # TODO: check if we may handle failed B2ACCESS response here

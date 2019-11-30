@@ -87,7 +87,7 @@ class BeSwagger(object):
 
         for label, specs in mapping.items():
 
-            uri = '/%s%s' % (endpoint.base_uri, label)
+            uri = '/{}{}'.format(endpoint.base_uri, label)
             # This will be used by server.py.add
             if uri not in endpoint.uris:
                 endpoint.uris[uri] = uri

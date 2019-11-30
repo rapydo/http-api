@@ -16,9 +16,9 @@ from restapi.utilities.logs import get_logger
 
 log = get_logger(__name__)
 
-SERVER_URI = 'http://%s:%s' % (DEFAULT_HOST, DEFAULT_PORT)
-API_URI = '%s%s' % (SERVER_URI, API_URL)
-AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
+SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
+API_URI = '{}{}'.format(SERVER_URI, API_URL)
+AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
 class BaseTests(object):

@@ -98,7 +98,7 @@ class Downloader(object):
             data, hcodes.HTTP_PARTIAL_CONTENT, mimetype=mime, direct_passthrough=True
         )
         rv.headers.add(
-            'Content-Range', 'bytes %d-%d/%d' % (byte1, byte1 + length - 1, size)
+            'Content-Range', 'bytes {}-{}/{}'.format(byte1, byte1 + length - 1, size)
         )
         rv.headers.add('Accept-Ranges', 'bytes')
 

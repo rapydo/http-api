@@ -70,7 +70,7 @@ class Customizer(object):
     def do_schema(self):
         """ Schemas exposing, if requested """
 
-        name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
+        name = '{}.rest.schema'.format(BACKEND_PACKAGE)
         module = Meta.get_module_from_string(
             name, exit_if_not_found=True, exit_on_fail=True
         )
@@ -132,17 +132,17 @@ class Customizer(object):
 
             if iscore:
                 apis_dir = os.path.join(base_dir, 'resources')
-                apiclass_module = '%s.%s' % (base_module, 'resources')
+                apiclass_module = '{}.resources'.format(base_module)
             else:
                 apis_dir = os.path.join(base_dir, 'apis')
-                apiclass_module = '%s.%s' % (base_module, 'apis')
+                apiclass_module = '{}.apis'.format(base_module)
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
 
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
-                module_name = "%s.%s" % (apiclass_module, module_file)
+                module_name = "{}.{}".format(apiclass_module, module_file)
                 # Convert module name into a module
                 try:
                     module = Meta.get_module_from_string(module_name, exit_on_fail=True)
@@ -169,7 +169,7 @@ class Customizer(object):
                     #         already_loaded[class_name],
                     #     )
                     #     continue
-                    # already_loaded[class_name] = "%s.%s" % (apis_dir, module_file)
+                    # already_loaded[class_name] = "{}.{}".format(apis_dir, module_file)
                     log.debug(
                         "Importing %s from %s.%s", class_name, apis_dir, module_file
                     )
@@ -245,13 +245,12 @@ class Customizer(object):
 
                     if endpoint.custom['schema']['expose']:
                         for uri in mapping_lists:
-                            total_uri = '/%s%s' % (endpoint.base_uri, uri)
-                            schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+                            total_uri = '/{}{}'.format(endpoint.base_uri, uri)
+                            schema_uri = '{}/schemas{}'.format(API_URL, uri)
 
                             p = hex(id(endpoint.cls))
                             self._schema_endpoint.uris[uri + p] = schema_uri
 
-                            # endpoint.custom['schema']['publish'][uri] = ep_class.publish
                             self._schemas_map[schema_uri] = total_uri
 
                     self._endpoints.append(endpoint)

@@ -32,8 +32,8 @@ setup(
     },
     entry_points='''
         [console_scripts]
-        %s=%s:cli
-    ''' % (main_package, app),
+        {}={}:cli
+    '''.format(main_package, app),
     install_requires=[
         # Utilities
         "attrs",
