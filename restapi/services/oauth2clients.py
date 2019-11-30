@@ -119,8 +119,8 @@ class ExternalLogins(object):
             return None
 
         base_url = B2ACCESS_URLS.get(selected_b2access)
-        b2access_url = "https://%s:%s" % (base_url, B2ACCESS_MAIN_PORT)
-        b2access_ca = "https://%s:%s" % (base_url, B2ACCESS_CA_PORT)
+        b2access_url = "https://{}:{}".format(base_url, B2ACCESS_MAIN_PORT)
+        b2access_ca = "https://{}:{}".format(base_url, B2ACCESS_CA_PORT)
 
         # SET OTHER URLS
         token_url = b2access_url + '/oauth2/token'
@@ -180,7 +180,7 @@ def decorate_http_request(remote):
             client_id = remote.consumer_key
             client_secret = remote.consumer_secret
             userpass = b64encode(
-                str.encode("%s:%s" % (client_id, client_secret))
+                str.encode("{}:{}".format(client_id, client_secret))
             ).decode("ascii")
             headers.update({'Authorization': 'Basic {}'.format(userpass,)})
         response = old_http_request(uri, headers=headers, data=data, method=method)

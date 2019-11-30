@@ -36,7 +36,7 @@ class Certificates(object):
     def get_dn_from_cert(cls, certdir, certfilename, ext='pem'):
 
         dn = ''
-        cpath = os.path.join(cls._dir, certdir, "%s.%s" % (certfilename, ext))
+        cpath = os.path.join(cls._dir, certdir, "{}.{}".format(certfilename, ext))
         content = open(cpath).read()
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, content)
         sub = cert.get_subject()

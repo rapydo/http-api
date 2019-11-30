@@ -735,7 +735,7 @@ class IrodsPythonClient:
             return False, "User %s does not exist" % username
         if checkGroup is not None:
             if checkGroup not in userdata['groups']:
-                return False, "User %s is not in group %s" % (username, checkGroup)
+                return False, "User {} is not in group {}".format(username, checkGroup)
         return True, "OK"
 
     def query_user_exists(self, user):
@@ -1011,7 +1011,7 @@ class IrodsPythonClient:
 #         return output.split('\n')[0].lstrip("%s = " % key)
 
 #     def query_user(self, select="USER_NAME", where="USER_NAME", field=None):
-#         query = "SELECT %s WHERE %s = '%s'" % (select, where, field)
+#         query = "SELECT {} WHERE {} = '{}'".format(select, where, field)
 #         return self.query_icat(query, select)
 
 #     def get_base_dir(self):
@@ -1083,7 +1083,7 @@ class IrodsPythonClient:
 #         irods://130.186.13.14:1247/cinecaDMPZone/home/pdonorio/replica/test2
 #         """
 #         protocol = 'irods'
-#         URL = "%s://%s:%s%s" % (
+#         URL = "{}://{}:{}{}".format(
 #             protocol,
 #             self._current_environment['IRODS_HOST'],
 #             self._current_environment['IRODS_PORT'],

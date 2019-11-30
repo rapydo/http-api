@@ -55,7 +55,7 @@ def send_activation_link(auth, user):
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: %s", rt)
-    url = "%s://%s/public/register/%s" % (protocol, domain, rt)
+    url = "{}://{}/public/register/{}".format(protocol, domain, rt)
     body = "Follow this link to activate your account: %s" % url
 
     obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
@@ -551,7 +551,7 @@ class RecoverPassword(EndpointResource):
 
         var = "RESET_PASSWORD_URI"
         uri = detector.get_global_var(key=var, default='/public/reset')
-        complete_uri = "%s://%s%s/%s" % (protocol, domain, uri, rt)
+        complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
 
         ##################
         # Send email with internal or external SMTP

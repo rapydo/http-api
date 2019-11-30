@@ -95,7 +95,7 @@ class IrodsPythonExt(BaseExtension):
                 log.debug("Forcing %s authscheme", GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
-            proxy_cert_name = "%s%s" % (
+            proxy_cert_name = "{}{}".format(
                 self.variables.get('certificates_prefix', ""),
                 kwargs.get("proxy_cert_name"),
             )

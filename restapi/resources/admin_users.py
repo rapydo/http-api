@@ -275,7 +275,7 @@ Password: "{}"
                         new_schema[idx]["enum"] = []
 
                         for g in self.graph.Group.nodes.all():
-                            group_name = "%s - %s" % (g.shortname, g.fullname)
+                            group_name = "{} - {}".format(g.shortname, g.fullname)
                             new_schema[idx]["enum"].append({g.uuid: group_name})
                             if new_schema[idx]["default"] is None:
                                 new_schema[idx]["default"] = g.uuid
@@ -342,7 +342,7 @@ Password: "{}"
                         if g == default_group:
                             continue
 
-                        group_name = "%s - %s" % (g.shortname, g.fullname)
+                        group_name = "{} - {}".format(g.shortname, g.fullname)
                         new_schema[idx]["enum"].append({g.uuid: group_name})
                         if defg is None:
                             defg = g.uuid

@@ -331,10 +331,10 @@ class Uploader(object):
 
         domain = detector.get_global_var('DOMAIN')
         if PRODUCTION:
-            host = "https://%s" % domain
+            host = "https://{}".format(domain)
         else:
-            host = "http://%s:8080" % domain
-        url = "%s%s/%s" % (host, request.path, filename)
+            host = "http://{}:8080".format(domain)
+        url = "{}{}/{}".format(host, request.path, filename)
 
         log.info("Upload initialized on url: %s", url)
 
@@ -406,7 +406,8 @@ class Uploader(object):
             except Exception:
                 log.warning("Unknown type for '%s'", file_path)
 
-            return completed, self.force_response({
+            return completed, self.force_response(
+                {
                     'filename': filename,
                     'meta': {'type': ftype, 'charset': fcharset}
                 }, code=200)
@@ -415,7 +416,7 @@ class Uploader(object):
             "partial",
             headers={
                 "Access-Control-Expose-Headers": "Range",
-                "Range": "0-%s" % (stop - 1)
+                "Range": "0-{}".format(stop - 1)
             },
             code=206
         )

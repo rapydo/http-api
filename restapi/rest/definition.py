@@ -609,7 +609,7 @@ class EndpointResource(Resource):
                 if relationship_name == "":
                     rel_name = relationship
                 else:
-                    rel_name = "%s.%s" % (relationship_name, relationship)
+                    rel_name = "{}.{}".format(relationship_name, relationship)
                 subnode = self.getJsonResponse(
                     node,
                     view_public_only=view_public_only,
@@ -756,7 +756,7 @@ class EndpointResource(Resource):
             )
         if method not in mem.customizer._parameter_schemas[url]:
             raise RestApiException(
-                "No parameters schema defined for method %s in %s" % (method, url),
+                "No parameters schema defined for method {} in {}".format(method, url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
             return None

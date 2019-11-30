@@ -23,7 +23,7 @@ class Role(db.Model):
     description = db.Column(db.String(255))
 
     def __str__(self):
-        return "db.%s(%s)" % (self.__class__.__name__, self.name)
+        return "db.{}({})".format(self.__class__.__name__, self.name)
 
     def __repr__(self):
         return self.__str__()
@@ -46,7 +46,7 @@ class User(db.Model):
     )
 
     def __str__(self):
-        return "db.%s(%s, type=%s) {%s}" % (
+        return "db.{}({}, type={}) [{}]".format(
             self.__class__.__name__,
             self.email,
             self.authmethod,
@@ -72,7 +72,7 @@ class Token(db.Model):
     emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
 
     def __str__(self):
-        return "db.%s(%s){%s}" % (self.__class__.__name__, self.token, self.emitted_for)
+        return "db.{}({})[{}]".format(self.__class__.__name__, self.token, self.emitted_for)
 
     def __repr__(self):
         return self.__str__()
@@ -97,7 +97,7 @@ class ExternalAccounts(db.Model):
     )
 
     def __str__(self):
-        return "db.%s(%s, %s){%s}" % (
+        return "db.{}({}, {})[{}]".format(
             self.__class__.__name__,
             self.username,
             self.email,

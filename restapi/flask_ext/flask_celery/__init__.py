@@ -364,7 +364,7 @@ Error: %s
                     "project.title",
                     default='Unkown title',
                 )
-                subject = "%s: task %s failed" % (project, task_name)
+                subject = "{}: task {} failed".format(project, task_name)
                 send_mail(body, subject)
 
     return wrapper
