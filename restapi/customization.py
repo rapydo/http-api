@@ -121,7 +121,7 @@ class Customizer(object):
             {'path': os.path.join(os.curdir, CUSTOM_PACKAGE), 'iscore': False}
         )
 
-        already_loaded = {}
+        # already_loaded = {}
         for folder in endpoints_folders:
 
             base_dir = folder.get('path')
@@ -150,7 +150,8 @@ class Customizer(object):
                     log.exit("Cannot import %s\nError: %s", module_name, e)
 
                 # Extract classes from the module
-                classes = meta.get_classes_from_module(module)
+                # classes = meta.get_classes_from_module(module)
+                classes = meta.get_new_classes_from_module(module)
                 for class_name in classes:
                     ep_class = classes.get(class_name)
                     # Filtering out classes without required data
@@ -159,18 +160,18 @@ class Customizer(object):
                     if ep_class.methods is None:
                         continue
 
-                    if class_name in already_loaded:
-                        log.warning(
-                            "Skipping import of %s from %s.%s, already loded from %s",
-                            class_name,
-                            apis_dir,
-                            module_file,
-                            already_loaded[class_name],
-                        )
-                        continue
-                    already_loaded[class_name] = "%s.%s" % (apis_dir, module_file)
+                    # if class_name in already_loaded:
+                    #     log.warning(
+                    #         "Skipping import of %s from %s.%s, already loded from %s",
+                    #         class_name,
+                    #         apis_dir,
+                    #         module_file,
+                    #         already_loaded[class_name],
+                    #     )
+                    #     continue
+                    # already_loaded[class_name] = "%s.%s" % (apis_dir, module_file)
                     log.debug(
-                        "Importing %s from %s", class_name, already_loaded[class_name]
+                        "Importing %s from %s.%s", class_name, apis_dir, module_file
                     )
                     if not self._testing:
                         skip = False
@@ -197,7 +198,7 @@ class Customizer(object):
 
                         if skip:
                             log.debug(
-                                "Skip '%s %s': unmet %s",
+                                "Skipping '%s %s' due to unmet dependency: %s",
                                 module_name,
                                 class_name,
                                 dependency
