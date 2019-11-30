@@ -19,21 +19,12 @@ log = get_logger(__name__)
 class Meta(object):
     """Utilities with meta in mind"""
 
-    _latest_list = {}
-    _submodules = []
-
-    def get_latest_classes(self):
-        return self._latest_list
-
-    def set_latest_classes(self, classes):
-        self._latest_list = classes
-
     def get_submodules_from_package(self, package):
-        self._submodules = []
+        submodules = []
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
-                self._submodules.append(modname)
-        return self._submodules
+                submodules.append(modname)
+        return submodules
 
     def get_classes_from_module(self, module):
         """
@@ -54,8 +45,7 @@ class Meta(object):
         except AttributeError:
             log.warning("Could not find any class inside your module")
 
-        self.set_latest_classes(classes)
-        return self.get_latest_classes()
+        return classes
 
     def get_new_classes_from_module(self, module):
         """
@@ -68,8 +58,7 @@ class Meta(object):
         for key, value in self.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
                 classes[key] = value
-        self.set_latest_classes(classes)
-        return self.get_latest_classes()
+        return classes
 
     @staticmethod
     def get_module_from_string(
