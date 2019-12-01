@@ -19,7 +19,7 @@ except ImportError:
 
 #######################
 # DEBUG level is 10 (https://docs.python.org/3/howto/logging.html)
-CRITICAL_EXIT = 60
+EXIT = 60
 # PRINT_STACK = 59
 PRINT = 9
 VERBOSE = 5
@@ -66,7 +66,7 @@ def suppress_stdout():
 
 
 #######################
-def critical_exit(self, message=None, *args, **kws):
+def exit(self, message=None, *args, **kws):
 
     error_code = kws.pop('error_code', 1)
     if not isinstance(error_code, int):
@@ -74,36 +74,15 @@ def critical_exit(self, message=None, *args, **kws):
     if error_code < 1:
         raise ValueError("Cannot exit with value below 1")
 
-    if self.isEnabledFor(CRITICAL_EXIT):
+    if self.isEnabledFor(EXIT):
         if message is not None:
             # Yes, logger takes its '*args' as 'args'.
             self._log(  # pylint:disable=protected-access
-                CRITICAL_EXIT, message, args, **kws
+                EXIT, message, args, **kws
             )
 
     # TODO: check if raise is better
     sys.exit(error_code)
-
-
-def fail_exit(self, message, *args, **kws):
-    message = '(FAIL)\t%s' % message
-    return self.error(message, *args, **kws)
-
-
-# def print_stack(self, message, *args, **kws):
-#     if self.isEnabledFor(PRINT_STACK):
-#         print("")
-#         self._log(PRINT_STACK, message, args, **kws)  # pylint:disable=protected-access
-#         traceback.print_stack()
-#         print("\n\n")
-
-
-# def myprint(self, message, *args, **kws):
-#     # if self.isEnabledFor(PRINT):
-#     if self.isEnabledFor(logging.DEBUG):
-#         message = "\033[33;5m%s" % message
-#         print(message, *args, **kws)
-#         print("\033[1;0m", end='')
 
 
 def verbose(self, message, *args, **kws):
@@ -112,86 +91,13 @@ def verbose(self, message, *args, **kws):
         self._log(VERBOSE, message, args, **kws)  # pylint:disable=protected-access
 
 
-def very_verbose(self, message, *args, **kws):
-    if self.isEnabledFor(VERY_VERBOSE):
-        # Yes, logger takes its '*args' as 'args'.
-        self._log(VERY_VERBOSE, message, args, **kws)  # pylint:disable=protected-access
-
-
-# def beeprint_print(self, myobject, prefix_line=None):
-#     """
-#     Make object(s) and structure(s) clearer to debug
-#     """
-
-#     if prefix_line is not None:
-#         print("PRETTY PRINT [%s]" % prefix_line)
-#     from beeprint import pp
-
-#     pp(myobject)
-#     return self
-
-
-# def prettyprinter_print(self, myobject, prefix_line=None):
-#     """
-#     Make object(s) and structure(s) clearer to debug
-#     """
-
-#     if prefix_line is not None:
-#         print("PRETTY PRINT [%s]" % prefix_line)
-#     from prettyprinter import pprint as pp
-
-#     pp(myobject)
-#     return self
-
-
-# def checked(self, message, *args, **kws):
-
-#     level = logging.INFO
-
-#     if self.isEnabledFor(level):
-#         # Yes, logger takes its '*args' as 'args'.
-#         # message = "\u2713 %s" % message
-
-#         if self.disable_unicode:
-#             message = "(CHECKED) %s" % message
-#         elif self.colors_enabled:
-#             message = "\033[0;32m\u2713\033[0m %s" % message
-#         else:
-#             message = "\u2713 %s" % message
-#         self._log(level, message, args, **kws)  # pylint:disable=protected-access
-
-
-# @staticmethod
-# def clear_screen():
-#     sys.stderr.write("\x1b[2J\x1b[H")
-
-
-logging.addLevelName(CRITICAL_EXIT, "EXIT")
-logging.Logger.critical_exit = critical_exit
-logging.Logger.exit = critical_exit
-# logging.Logger.fail = fail_exit
-logging.CRITICAL_EXIT = CRITICAL_EXIT
-
-# logging.addLevelName(PRINT_STACK, "PRINT_STACK")
-# logging.Logger.print_stack = print_stack
-# logging.PRINT_STACK = PRINT_STACK
-
-# logging.addLevelName(PRINT, "PRINT")
-# logging.Logger.print = myprint
-# logging.PRINT = PRINT
+logging.addLevelName(EXIT, "EXIT")
+logging.Logger.exit = exit
+logging.EXIT = EXIT
 
 logging.addLevelName(VERBOSE, "VERBOSE")
 logging.Logger.verbose = verbose
 logging.VERBOSE = VERBOSE
-
-logging.addLevelName(VERY_VERBOSE, "VERY_VERBOSE")
-logging.Logger.very_verbose = very_verbose
-logging.VERY_VERBOSE = VERY_VERBOSE
-
-# logging.Logger.pp = beeprint_print
-# logging.Logger.app = prettyprinter_print
-# logging.Logger.checked = checked
-# logging.Logger.clear_screen = clear_screen
 
 
 class LogMe(object):
@@ -239,47 +145,42 @@ class LogMe(object):
         # modify logging labels colors
         if self.colors_enabled:
             logging.addLevelName(
-                logging.CRITICAL_EXIT,
-                "\033[4;33;41m%s\033[1;0m"
-                % logging.getLevelName(logging.CRITICAL_EXIT),
+                logging.EXIT,
+                "\033[4;33;41m{}\033[1;0m".format(
+                    logging.getLevelName(logging.EXIT)),
             )
-            # logging.addLevelName(
-            #     logging.PRINT_STACK,
-            #     "\033[5;37;41m%s\033[1;0m" % logging.getLevelName(logging.PRINT_STACK),
-            # )
             logging.addLevelName(
                 logging.CRITICAL,
-                "\033[5;37;41m%s\033[1;0m" % logging.getLevelName(logging.CRITICAL),
+                "\033[5;37;41m{}\033[1;0m".format(
+                    logging.getLevelName(logging.CRITICAL)),
             )
             logging.addLevelName(
                 logging.ERROR,
-                "\033[4;37;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR),
+                "\033[4;37;41m{}\033[1;0m".format(
+                    logging.getLevelName(logging.ERROR)),
             )
             logging.addLevelName(
                 logging.WARNING,
-                "\033[1;30;43m%s\033[1;0m" % logging.getLevelName(logging.WARNING),
+                "\033[1;30;43m{}\033[1;0m".format(
+                    logging.getLevelName(logging.WARNING)),
             )
             logging.addLevelName(
                 logging.INFO,
-                "\033[1;32;49m%s\033[1;0m" % logging.getLevelName(logging.INFO),
+                "\033[1;32;49m{}\033[1;0m".format(
+                    logging.getLevelName(logging.INFO)),
             )
             logging.addLevelName(
                 logging.DEBUG,
-                "\033[7;30;46m%s\033[1;0m" % logging.getLevelName(logging.DEBUG),
+                "\033[7;30;46m{}\033[1;0m".format(
+                    logging.getLevelName(logging.DEBUG)),
             )
             logging.addLevelName(
                 logging.VERBOSE,
-                "\033[1;90;49m%s\033[1;0m" % logging.getLevelName(logging.VERBOSE),
-            )
-            logging.addLevelName(
-                logging.VERY_VERBOSE,
-                "\033[7;30;47m%s\033[1;0m" % logging.getLevelName(logging.VERY_VERBOSE),
+                "\033[1;90;49m{}\033[1;0m".format(
+                    logging.getLevelName(logging.VERBOSE)),
             )
 
     def set_debug(self, debug=True, level=None):
-        # print("DEBUG IS", debug)
-        # if debug is None:
-        #     return
 
         self.debug = debug
         if self.debug:
@@ -295,7 +196,7 @@ class LogMe(object):
     def get_new_logger(self, name, verbosity=None):
         """ Recover the right logger + set a proper specific level """
         if self.colors_enabled:
-            name = "\033[1;90m%s\033[1;0m" % name
+            name = "\033[1;90m{}\033[1;0m".format(name)
         logger = logging.getLogger(name)
 
         if verbosity is not None:
