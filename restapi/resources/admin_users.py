@@ -141,12 +141,11 @@ class AdminUsers(EndpointResource):
             "project.title", default='Unkown title'
         )
 
-        subject = "%s: " % title
         if is_update:
-            subject += "password changed"
+            subject = "{}: password changed".format(title)
             template = "update_credentials.html"
         else:
-            subject += "new credentials"
+            subject = "{}: new credentials".format(title)
             template = "new_credentials.html"
 
         replaces = {"username": user.email, "password": unhashed_password}
@@ -175,11 +174,11 @@ Password: "{}"
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
         if not is_admin and not is_local_admin:
-            extra_debug = "is_admin = %s;" % is_admin
-            extra_debug += " is_local_admin = %s;" % is_local_admin
-            extra_debug += " roles = %s;" % self.auth.get_roles_from_user()
+            extra_debug = "is_admin = {};".format(is_admin)
+            extra_debug += " is_local_admin = {};".format(is_local_admin)
+            extra_debug += " roles = {};".format(self.auth.get_roles_from_user())
             raise RestApiException(
-                "You are not authorized: missing privileges. %s" % extra_debug,
+                "You are not authorized: missing privileges. {}".format(extra_debug),
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
@@ -302,9 +301,7 @@ Password: "{}"
 
                             role = {
                                 "type": "checkbox",
-                                # "name": "roles[%s]" % r.name,
-                                "name": "roles_%s" % r.name,
-                                # "name": r.name,
+                                "name": "roles_{}".format(r.name),
                                 "custom": {"label": r.description},
                             }
 
@@ -342,7 +339,7 @@ Password: "{}"
                         if g == default_group:
                             continue
 
-                        group_name = "{} - {}".format(g.shortname, g.fullname)
+                        group_name = "{} - {}".formatF(g.shortname, g.fullname)
                         new_schema[idx]["enum"].append({g.uuid: group_name})
                         if defg is None:
                             defg = g.uuid
@@ -614,11 +611,11 @@ class UserRole(EndpointResource):
                 default=[],
             )
             # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
-            cypher += " WHERE r.name in %s" % allowed_roles
+            cypher += " WHERE r.name in {}".format(allowed_roles)
         # Admin only
         elif query is not None:
             cypher += " WHERE r.description <> 'automatic'"
-            cypher += " AND r.name =~ '(?i).*%s.*'" % query
+            cypher += " AND r.name =~ '(?i).*{}.*'".format(query)
 
         cypher += " RETURN r ORDER BY r.name ASC"
 

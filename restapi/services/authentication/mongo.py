@@ -181,7 +181,7 @@ class Authentication(BaseAuthentication):
 
         except BaseException as e:
             # raise e
-            raise AttributeError("Models for auth are wrong:\n%s" % e)
+            raise AttributeError("Models for auth are wrong:\n{}".format(e))
 
         # if missing_user or missing_role:
         #     for transaction in transactions:

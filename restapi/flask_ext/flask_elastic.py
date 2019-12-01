@@ -102,7 +102,7 @@ def today():
 def log_today(elastic, msg=None):
     if msg is None:
         return False
-    index = 'log-%s' % today()
+    index = 'log-{}'.format(today())
     doc = 'logs'
     elastic.index(index=index, doc_type=doc, body=msg)
     return True
@@ -116,7 +116,7 @@ def generator(data):
 def get_logs(elastic, day=None):
     if day is None:
         day = today()
-    index = 'log-%s' % today()
+    index = 'log-{}'.format(today())
 
     # search all
     out = elastic.search(index=index, size=10000, body={"query": {'match_all': {}}})

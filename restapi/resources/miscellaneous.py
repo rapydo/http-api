@@ -72,13 +72,13 @@ class Verify(EndpointResource):
         log.critical(detector.available_services)
         if not detector.check_availability(service):
             raise RestApiException(
-                "Unknown service: %s" % service,
+                "Unknown service: {}".format(service),
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
         service_instance = self.get_service_instance(service, global_instance=False)
         log.critical(service_instance)
-        return "Service is reachable: %s" % service
+        return "Service is reachable: {}".format(service)
 
 
 class SwaggerSpecifications(EndpointResource):

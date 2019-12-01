@@ -40,7 +40,7 @@ class PushpinExt(BaseExtension):
         if is_active:
             return client
 
-        raise ServiceUnavailable("Pushpin unavailable on %s" % control_uri)
+        raise ServiceUnavailable("Pushpin unavailable on {}".format(control_uri))
 
 
 class PushpinClient:

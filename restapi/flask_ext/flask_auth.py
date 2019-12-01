@@ -255,8 +255,8 @@ class HandleSecurity(object):
             msg = (
                 """
                 Sorry, this account is temporarily blocked due to
-                more than %d failed login attempts. Try again later"""
-                % self.auth.MAX_LOGIN_ATTEMPTS
+                more than {} failed login attempts. Try again later""".format(
+                    self.auth.MAX_LOGIN_ATTEMPTS)
             )
             code = hcodes.HTTP_BAD_UNAUTHORIZED
             raise RestApiException(msg, status_code=code)

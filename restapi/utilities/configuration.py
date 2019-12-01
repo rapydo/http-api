@@ -68,7 +68,7 @@ def read_configuration(
     if not os.path.exists(extend_path):
         log.exit("From project not found: %s", extend_path)
 
-    extend_file = "extended_%s" % (PROJECT_CONF_FILENAME)
+    extend_file = "extended_{}".format(PROJECT_CONF_FILENAME)
     extended_configuration = load_yaml_file(
         file=extend_file, path=extend_path, keep_order=True)
     m1 = mix(base_configuration, extended_configuration)

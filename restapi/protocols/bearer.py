@@ -113,8 +113,9 @@ class HTTPTokenAuth(object):
                 if auth_type is None or auth_type.lower() != self._scheme.lower():
                     # Wrong authentication string
                     msg = (
-                        "Missing credentials in headers, e.g. %s: '%s %s'"
-                        % (HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME, 'TOKEN')
+                        "Missing credentials in headers, e.g. {}: '{} TOKEN'".format(
+                            HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME
+                        )
                     )
                     #
                     return decorated_self.send_errors(
@@ -136,7 +137,7 @@ class HTTPTokenAuth(object):
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         return decorated_self.send_errors(
-                            message="Invalid token received '%s'" % token,
+                            message="Invalid token received '{}'".format(token),
                             headers=headers,
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
                         )

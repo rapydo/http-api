@@ -6,7 +6,7 @@ from restapi import \
     __version__ as current_version
 
 
-app = '%s.__commands__' % main_package
+app = '{}.__commands__'.format(main_package)
 
 setup(
     name='rapydo_http',

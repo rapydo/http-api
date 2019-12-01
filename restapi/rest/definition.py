@@ -79,7 +79,7 @@ class EndpointResource(Resource):
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
         farm = self.services.get(service_name)
         if farm is None:
-            raise AttributeError("Service %s not found" % service_name)
+            raise AttributeError("Service {} not found".format(service_name))
         instance = farm.get_instance(global_instance=global_instance, **kwargs)
         return instance
 
@@ -500,7 +500,7 @@ class EndpointResource(Resource):
 
                     # Based on neomodel choices:
                     # http://neomodel.readthedocs.io/en/latest/properties.html#choices
-                    choice_function = "get_%s_display" % key
+                    choice_function = "get_{}_display".format(key)
                     if hasattr(obj, choice_function):
                         fn = getattr(obj, choice_function)
                         description = fn()
@@ -588,7 +588,7 @@ class EndpointResource(Resource):
                     relationships = getattr(instance, field_name)
         elif relationships_expansion is not None:
             for e in relationships_expansion:
-                if e.startswith("%s." % relationship_name):
+                if e.startswith("{}.".format(relationship_name)):
                     rel_name_len = len(relationship_name) + 1
                     expansion_rel = e[rel_name_len:]
                     log.debug(
@@ -751,7 +751,7 @@ class EndpointResource(Resource):
 
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(
-                "No parameters schema defined for %s" % url,
+                "No parameters schema defined for {}".format(url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
         if method not in mem.customizer._parameter_schemas[url]:
@@ -779,7 +779,7 @@ class EndpointResource(Resource):
             # this field is missing but required!
             elif checkRequired and field["required"]:
                 raise RestApiException(
-                    'Missing field: %s' % k, status_code=hcodes.HTTP_BAD_REQUEST
+                    'Missing field: {}'.format(k), status_code=hcodes.HTTP_BAD_REQUEST
                 )
 
         return properties

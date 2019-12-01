@@ -25,11 +25,11 @@ def cli():
 def main(args, another_app=None):
 
     if another_app is not None:
-        os.environ[APP] = '%s.py' % another_app
+        os.environ[APP] = '{}.py'.format(another_app)
     else:
         current_app = os.environ.get(APP)
         if current_app is None or current_app.strip() == '':
-            os.environ[APP] = '%s.__main__' % current_package
+            os.environ[APP] = '{}.__main__'.format(current_package)
 
     cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}

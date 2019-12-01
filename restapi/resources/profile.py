@@ -56,7 +56,7 @@ def send_activation_link(auth, user):
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: %s", rt)
     url = "{}://{}/public/register/{}".format(protocol, domain, rt)
-    body = "Follow this link to activate your account: %s" % url
+    body = "Follow this link to activate your account: {}".format(url)
 
     obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
 
@@ -71,7 +71,7 @@ def send_activation_link(auth, user):
             body = None
 
         # NOTE: possibility to define a different subject
-        default_subject = "%s account activation" % title
+        default_subject = "{} account activation".format(title)
         subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
         sent = send_mail(html_body, subject, user.email, plain_body=body)
@@ -100,8 +100,8 @@ def notify_registration(user):
         title = get_project_configuration(
             "project.title", default='Unkown title'
         )
-        subject = "%s New credentials requested" % title
-        body = "New credentials request from %s" % user.email
+        subject = "{} New credentials requested".format(title)
+        body = "New credentials request from {}".format(user.email)
 
         send_mail(body, subject)
 
@@ -256,7 +256,7 @@ class Profile(EndpointResource):
         user = self.auth.get_user_object(username=v['email'])
         if user is not None:
             raise RestApiException(
-                "This user already exists: %s" % v['email'],
+                "This user already exists: {}".format(v['email']),
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
@@ -458,13 +458,13 @@ class ProfileActivate(EndpointResource):
 
 def send_internal_password_reset(uri, title, reset_email):
     # Internal templating
-    body = "Follow this link to reset password: %s" % uri
+    body = "Follow this link to reset password: {}".format(uri)
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")
         html_body = body
         body = None
-    subject = "%s Password Reset" % title
+    subject = "{} Password Reset".format(title)
 
     # Internal email sending
     c = send_mail(html_body, subject, reset_email, plain_body=body)
@@ -522,8 +522,7 @@ class RecoverPassword(EndpointResource):
 
         if user is None:
             raise RestApiException(
-                'Sorry, %s ' % reset_email
-                + 'is not recognized as a valid username or email address',
+                'Sorry, {} is not recognized as a valid username'.format(reset_email),
                 status_code=hcodes.HTTP_BAD_FORBIDDEN,
             )
 

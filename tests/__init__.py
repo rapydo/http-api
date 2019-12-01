@@ -105,7 +105,7 @@ class RestTestsBase(unittest.TestCase):
 
 #####################
 class RestTestsAuthenticatedBase(RestTestsBase):
-    def save_token(self, bearer_token, suffix=None):
+    def save_token(self, token, suffix=None):
 
         if suffix is None:
             suffix = ''
@@ -113,15 +113,10 @@ class RestTestsAuthenticatedBase(RestTestsBase):
             suffix = '_' + suffix
 
         key = 'bearer_token' + suffix
-        setattr(self.__class__, key, bearer_token)
+        setattr(self.__class__, key, token)
 
         key = 'auth_header' + suffix
-        setattr(self.__class__, key, {'Authorization': 'Bearer %s' % bearer_token})
-
-        # self.__class__.bearer_token = bearer_token
-        # self.__class__.auth_header = {
-        #     'Authorization': 'Bearer %s' % self.__class__.bearer_token
-        # }
+        setattr(self.__class__, key, {'Authorization': 'Bearer {}'.format(token)})
 
     def setUp(self):
 

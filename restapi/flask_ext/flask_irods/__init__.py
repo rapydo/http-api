@@ -188,7 +188,7 @@ class IrodsPythonExt(BaseExtension):
 
         else:
             raise NotImplementedError(
-                "Invalid iRODS authentication scheme: %s" % self.authscheme
+                "Invalid iRODS authentication scheme: {}".format(self.authscheme)
             )
 
         # # set timeout on existing socket/connection

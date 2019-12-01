@@ -215,13 +215,13 @@ class ResponseMaker(object):
             else:
                 elements['defined_content'] = response
 
-            elements['headers']["_RV"] = "%s" % __version__
+            elements['headers']["_RV"] = str(__version__)
 
             PROJECT_VERSION = get_project_configuration(
                 "project.version", default=None
             )
             if PROJECT_VERSION is not None:
-                elements['headers']["Version"] = "%s" % PROJECT_VERSION
+                elements['headers']["Version"] = str(PROJECT_VERSION)
 
         # POST-CHECK: is it a flask response?
         if self.is_internal_response(elements['defined_content']):
@@ -299,7 +299,7 @@ class ResponseMaker(object):
         if r['extra'] is not None:
             log.warning(
                 "NOT IMPLEMENTED YET: "
-                + "what to do with extra field?\n%s" % r['extra']
+                + "what to do with extra field?\n{}".format(r['extra'])
             )
 
         # 5. Return what is necessary to build a standard flask response
@@ -471,7 +471,7 @@ def get_content_from_response(http_out):
             log.critical("Failed to load response:\n%s", e)
             raise ValueError(
                 "Trying to recover informations"
-                + " from a malformed response:\n%s" % http_out
+                + " from a malformed response:\n{}".format(http_out)
             )
     # Or convert an half-way made response
     elif isinstance(http_out, ResponseElements):
@@ -483,7 +483,7 @@ def get_content_from_response(http_out):
     if not isinstance(response, dict) or len(response) != 2:
         raise ValueError(
             "Trying to recover informations"
-            + " from a malformed response:\n%s" % response
+            + " from a malformed response:\n{}".format(response)
         )
 
     # Split

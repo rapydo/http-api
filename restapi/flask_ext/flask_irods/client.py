@@ -76,11 +76,11 @@ class IrodsPythonClient:
         try:
             return self.prc.data_objects.get(path)
         except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
-            raise IrodsException("%s not found or no permissions" % path)
+            raise IrodsException("{} not found or no permissions".format(path))
 
     def getPath(self, path, prefix=None):
         if prefix is not None and prefix != '':
-            path = path[len(prefix) :]
+            path = path[len(prefix):]
             if path[0] == "/":
                 path = path[1:]
 
@@ -163,7 +163,7 @@ class IrodsPythonClient:
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Not found (or no permission): %s" % path)
+            raise IrodsException("Not found (or no permission): {}".format(path))
 
         # replicas = []
         # for line in lines:
@@ -199,7 +199,7 @@ class IrodsPythonClient:
                 log.debug("Irods collection already exists: %s", path)
 
         except (iexceptions.CAT_NO_ACCESS_PERMISSION, iexceptions.SYS_NO_API_PRIV):
-            raise IrodsException("You have no permissions on path %s" % path)
+            raise IrodsException("You have no permissions on path {}".format(path))
 
         return None
 
@@ -287,11 +287,11 @@ class IrodsPythonClient:
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException(
-                "DataObject not found (or no permission): %s" % sourcepath
+                "DataObject not found (or no permission): {}".format(sourcepath)
             )
         except iexceptions.CollectionDoesNotExist:
             raise IrodsException(
-                "Collection not found (or no permission): %s" % sourcepath
+                "Collection not found (or no permission): {}".format(sourcepath)
             )
 
     def move(self, src_path, dest_path):
@@ -562,7 +562,7 @@ class IrodsPythonClient:
 
         if coll_or_obj is None:
             raise IrodsException(
-                "Cannot get permission: path not found: %s" % coll_or_obj
+                "Cannot get permission: path not found: {}".format(coll_or_obj)
             )
 
         data = {}
@@ -732,7 +732,7 @@ class IrodsPythonClient:
     def check_user_exists(self, username, checkGroup=None):
         userdata = self.get_user_info(username)
         if userdata is None:
-            return False, "User %s does not exist" % username
+            return False, "User {} does not exist".format(username)
         if checkGroup is not None:
             if checkGroup not in userdata['groups']:
                 return False, "User {} is not in group {}".format(username, checkGroup)
@@ -872,6 +872,7 @@ class IrodsPythonClient:
 
         import textwrap
 
+        # A bit completed to use {}.format syntax...
         rule_body = textwrap.dedent(
             '''\
             %s {{
@@ -887,10 +888,9 @@ class IrodsPythonClient:
         try:
             raw_out = myrule.execute()
         except BaseException as e:
-            msg = 'Irule failed: %s' % e.__class__.__name__
+            msg = 'Irule failed: {}'.format(e.__class__.__name__)
             log.error(msg)
             log.warning(e)
-            # raise IrodsException(msg)
             raise e
         else:
             log.debug("Rule %s executed: %s", name, raw_out)
@@ -927,9 +927,9 @@ class IrodsPythonClient:
         # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
         # test_name = 'paolo2'
         # inputs = {  # extra quotes for string literals
-        #     '*object': '"%s"' % object_path,
-        #     '*name': '"%s"' % test_name,
-        #     '*value': '"%s"' % test_name,
+        #     '*object': '"{}"'.format(object_path),
+        #     '*name': '"{}"'.format(test_name),
+        #     '*value': '"{}"'.format(test_name),
         # }
         # body = \"\"\"
         #     # add metadata
@@ -1003,12 +1003,12 @@ class IrodsPythonClient:
 
 #     def query_icat(self, query, key):
 #         com = 'iquest'
-#         args = ["%s" % query]
+#         args = [query]
 #         output = self.basic_icom(com, args)
 #         log.debug("%s query: [%s]\n%s", com, query, output)
 #         if 'CAT_NO_ROWS_FOUND' in output:
 #             return None
-#         return output.split('\n')[0].lstrip("%s = " % key)
+#         return output.split('\n')[0].lstrip("{} = ".format(key))
 
 #     def query_user(self, select="USER_NAME", where="USER_NAME", field=None):
 #         query = "SELECT {} WHERE {} = '{}'".format(select, where, field)
@@ -1217,10 +1217,6 @@ def get_and_verify_irods_session(function, parameters):
         log.warning("Invalid iCAT user: %s", username)
     except iexceptions.CAT_INVALID_AUTHENTICATION:
         log.warning("Invalid password for %s", username)
-    # This problem below should not happen anymore
-    # except iexceptions.MultipleResultsFound:
-    #     raise IrodsException(
-    #         "User %s belonging to multiple iRODS zones" % username)
     except BaseException as e:
         log.warning("Failed with unknown reason:\n[%s] \"%s\"", type(e), e)
         error = 'Failed to verify credentials against B2SAFE. ' + 'Unknown error: '

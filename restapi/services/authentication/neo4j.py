@@ -94,7 +94,7 @@ class Authentication(BaseAuthentication):
         try:
             user_node.save()
         except Exception as e:
-            message = "Can't create user %s:\n%s" % (userdata['email'], e)
+            message = "Can't create user {}:\n{}".format(userdata['email'], e)
             log.error(message)
             raise AttributeError(message)
 
@@ -105,9 +105,6 @@ class Authentication(BaseAuthentication):
     # Also used by PUT user
     def link_roles(self, user, roles):
 
-        # if self.default_role not in roles:
-        #     roles.append(self.default_role)
-
         for p in user.roles.all():
             user.roles.disconnect(p)
 
@@ -116,7 +113,7 @@ class Authentication(BaseAuthentication):
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
             except self.db.Role.DoesNotExist:
-                raise Exception("Graph role %s does not exist" % role)
+                raise Exception("Graph role {} does not exist".format(role))
             user.roles.connect(role_obj)
 
     def create_role(self, role, description="automatic"):

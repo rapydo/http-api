@@ -185,42 +185,42 @@ class RabbitWrapper(object):
                 )
                 if success:
                     log.verbose(
-                        'Succeeded to send message to RabbitMQ in try (%s/%s)'
-                        % ((i + 1), max_publish)
+                        'Succeeded to send message to RabbitMQ (try %s/%s)',
+                        i + 1, max_publish
                     )
                     break
                 else:
-                    log.warn('Log fail without clear reason.')
+                    log.warn('Log fail without clear reason')
 
             except pika.exceptions.ConnectionClosed as e:
                 # TODO: This happens often. Check if heartbeat solves problem.
-                log.info(
-                    'Failed to send log message in try (%s/%s), because connection is dead (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try %s/%s), connection is dead (%s)',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPConnectionError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s) because connection failed (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try %s/%s). connection failed (%s)',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPChannelError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s), because channel is dead (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try %s/%s), channel is dead (%s)',
+                    i + 1, max_publish, e
                 )
                 self.__channel = None
                 continue
 
             except AttributeError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s) (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try %s/%s) (%s)',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue

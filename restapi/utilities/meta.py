@@ -88,7 +88,7 @@ class Meta(object):
             # Meta language for dinamically import
             module = import_module(modulestring)
         except import_exceptions as e:  # pylint:disable=catching-non-exception
-            args = {'msg': "Failed to load module:\n%s" % e, 'exc_info': True}
+            args = {'msg': "Failed to load module:\n{}".format(e), 'exc_info': True}
             if exit_if_not_found:
                 log.exit(**args)
             else:
@@ -178,7 +178,7 @@ class Meta(object):
 
     @staticmethod
     def models_module(name, package):
-        module_name = "%s.%s.%s" % (package, 'models', name)
+        module_name = "{}.models.{}".format(package, name)
         return Meta.get_module_from_string(module_name, exit_on_fail=True)
 
     def obj_from_models(obj_name, module_name, package):
@@ -202,7 +202,7 @@ class Meta(object):
     @staticmethod
     def get_authentication_module(auth_service):
 
-        module_name = "%s.%s.%s" % ('services', 'authentication', auth_service)
+        module_name = "services.authentication.{}".format(auth_service)
         log.verbose("Loading auth extension: %s", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
@@ -240,7 +240,7 @@ class Meta(object):
 
     def get_customizer_class(self, module_relpath, class_name, args=None):
 
-        abspath = "%s.%s" % (CUSTOM_PACKAGE, module_relpath)
+        abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
         MyClass = self.get_class_from_string(
             class_name,
             Meta.get_module_from_string(abspath, debug_on_fail=False),

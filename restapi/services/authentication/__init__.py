@@ -140,7 +140,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.warning("Jwt secret file %s not found, using default", abs_filename)
             log.info(
                 "To create your own secret file:\n"
-                + "head -c 24 /dev/urandom > %s" % abs_filename
+                + "head -c 24 /dev/urandom > {}".format(abs_filename)
             )
 
         return self.JWT_SECRET
@@ -348,10 +348,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not self.refresh_token(payload['jti']):
             return False
 
-        logfunc = log.verbose
-        if current_app.config['TESTING']:
-            logfunc = log.very_verbose
-        logfunc("User authorized")
+        log.verbose("User authorized")
 
         self._token = token
         self._jti = payload['jti']
@@ -497,7 +494,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     def custom_user_properties(self, userdata):
-        module_path = "%s.%s.%s" % (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
         meta = Meta()
@@ -516,7 +513,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        module_path = "%s.%s.%s" % (CUSTOM_PACKAGE, 'initialization', 'initialization')
+        module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path, debug_on_fail=False)
 
         meta = Meta()

@@ -245,8 +245,8 @@ class Detector(object):
                     continue
                 else:
                     log.exit(
-                        "Auth service '%s' seems unreachable"
-                        % self.authentication_service
+                        "Auth service '{}' is unreachable".format(
+                            self.authentication_service)
                     )
 
             args = {}
@@ -289,7 +289,7 @@ class Detector(object):
             if name == self.task_service_name:
                 do_init = True
 
-                task_package = "%s.tasks" % CUSTOM_PACKAGE
+                task_package = "{}.tasks".format(CUSTOM_PACKAGE)
 
                 submodules = self.meta.import_submodules_from_package(
                     task_package, exit_on_fail=True
@@ -325,7 +325,7 @@ class Detector(object):
             # Recover class
             MyClass = self.services_classes.get(name)
             if MyClass is None:
-                raise AttributeError("No class found for %s" % name)
+                raise AttributeError("No class found for {}".format(name))
             MyModule.set_extension_class(MyClass)
             self.modules.append(MyModule)
 

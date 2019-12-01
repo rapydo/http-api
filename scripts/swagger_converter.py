@@ -14,7 +14,7 @@ if len(sys.argv) <= 1:
     log.exit("Usage: %s project_name", sys.argv[0])
 
 PROJECT = sys.argv[1]
-PROJECT_DIR = "projects/%s/backend/swagger" % PROJECT
+PROJECT_DIR = "projects/{}/backend/swagger".format(PROJECT)
 
 if not os.path.exists(PROJECT_DIR):
     log.exit("%s folder does not exist", PROJECT_DIR)
@@ -55,15 +55,15 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                     log.exit("Found unexpected key: %s", j)
 
                 if baseuri is not None:
-                    conf_output += "\nbaseuri = '%s'" % baseuri
+                    conf_output += "\nbaseuri = '{}'".format(baseuri)
 
                 if schema:
                     conf_output += "\n# schema_expose = True"
 
-                conf_output += "\nlabels = %s" % labels
+                conf_output += "\nlabels = {}".format(labels)
 
                 if len(depends_on) > 0:
-                    conf_output += "\ndepends_on = %s" % depends_on
+                    conf_output += "\ndepends_on = {}".format(depends_on)
             else:
                 common = j.pop('common', {})
                 # log.critical(common)
@@ -85,22 +85,23 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                         if auth:
                             decorators_output += "\n@authentication.required("
                             if roles is not None:
-                                decorators_output += "roles=%s" % roles
+                                decorators_output += "roles={}".format(roles)
                             if req_roles is not None:
                                 if roles is not None:
                                     decorators_output += ", "
-                                decorators_output += "required_roles='%s'" % req_roles
+                                decorators_output += "required_roles='{}'".format(
+                                    req_roles)
                             decorators_output += ")"
 
-                            decorators_output += "\ndef %s(self...\n" % y
+                            decorators_output += "\ndef {}(self...\n".format(y)
                     data[u] = conf
 
                 if len(j) > 0:
                     log.exit("Found unexpected key: %s", j)
-                conf_output += "\n%s = %s" % (y.upper(), data)
+                conf_output += "\n{} = {}".format(y.upper(), data)
 
     print("***************************************")
-    print("# Conf in %s.%s (%s)" % (pfile, pclass, swagger_folder))
+    print("# Conf in {}.{} ({})".format(pfile, pclass, swagger_folder))
     print(conf_output)
     if len(decorators_output) > 0:
         print("\nfrom restapi.protocols.bearer import authentication")

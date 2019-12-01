@@ -229,10 +229,7 @@ class TestUtilities(unittest.TestCase):
             Make standard tests on endpoint based on Swagger definition
         """
 
-        uri = "%s/%s/%s" % (SERVER_URI, API_URL, endpoint)
-
-        # log.critical(mapping)
-        # log.critical(endpoint)
+        uri = "{}/{}/{}".format(SERVER_URI, API_URL, endpoint)
 
         # # # TEST GET # # #
         r = self.app.get(uri)
@@ -311,7 +308,7 @@ class TestUtilities(unittest.TestCase):
             is parsed using self.parseResponse method
         """
 
-        uri = "%s/%s/%s" % (SERVER_URI, API_URL, endpoint)
+        uri = "{}/{}/{}".format(SERVER_URI, API_URL, endpoint)
 
         if data is not None:
             data = json.dumps(data)
@@ -343,9 +340,8 @@ class TestUtilities(unittest.TestCase):
             error = self.get_error_message(definition, method, status)
             if error is None:
                 log.critical(
-                    "Unable to find a valid message for "
-                    + "status = %s, method = %s, endpoint = %s"
-                    % (status, method, endpoint)
+                    "No message found for status = %s, method = %s, endpoint = %s",
+                    status, method, endpoint
                 )
 
             # if error is None, it will give errors in the next error assert
@@ -548,12 +544,12 @@ class TestUtilities(unittest.TestCase):
 
             if not t_found:
                 print(
-                    "\t *** SKIPPING TEST %s - type %s not found"
-                    % (trouble_type, t_type)
+                    "\t *** SKIPPING TEST {} - type {} not found"
+                    .format(trouble_type, t_type)
                 )
                 continue
 
-            print("\t *** TESTING %s " % trouble_type)
+            print("\t *** TESTING {}".format(trouble_type))
 
             id = self._test_create(
                 definition, endpoint, headers, post_data, post_status, check_error=False
@@ -566,9 +562,9 @@ class TestUtilities(unittest.TestCase):
                 continue
 
             if second_endpoint is None:
-                tmp_ep = "%s/%s" % (endpoint, id)
+                tmp_ep = "{}/{}".format(endpoint, id)
             else:
-                tmp_ep = "%s/%s" % (second_endpoint, id)
+                tmp_ep = "{}/{}".format(second_endpoint, id)
 
             self._test_update(
                 second_definition,
@@ -651,5 +647,5 @@ class TestUtilities(unittest.TestCase):
         if trouble_type == 'UNEXPECTED_OPTION':
             return self.randomString()
 
-        self.assertFalse("Unexpected trouble: %s" % trouble_type)
+        self.assertFalse("Unexpected trouble: {}".format(trouble_type))
         return data
