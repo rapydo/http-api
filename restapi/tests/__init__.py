@@ -159,7 +159,7 @@ class BaseTests(object):
         if r.status_code == hcodes.HTTP_OK_NORESPONSE:
             log.info("Test TOKEN removed")
         else:
-            log.error("Failed to logout with:\n%s", headers)
+            log.error("Failed to logout with:\n{}", headers)
 
     def delete_tokens(self, client, headers):
         # r = client.delete(AUTH_URI + '/tokens', headers=headers)

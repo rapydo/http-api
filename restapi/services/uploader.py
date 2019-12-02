@@ -101,7 +101,7 @@ class Uploader(object):
         content = request.data
 
         abs_file = self.absolute_upload_file(filename, subfolder)
-        log.info("File request for %s", abs_file)
+        log.info("File request for {}", abs_file)
 
         if os.path.exists(abs_file):
 
@@ -138,7 +138,7 @@ class Uploader(object):
             ftype = tmp[0].strip()
             fcharset = tmp[1].split('=')[1].strip()
         except Exception:
-            log.warning("Unknown type for '%s'", abs_file)
+            log.warning("Unknown type for '{}'", abs_file)
 
         ########################
         # ## Final response
@@ -179,7 +179,7 @@ class Uploader(object):
         # Check file name
         filename = secure_filename(myfile.filename)
         abs_file = self.absolute_upload_file(filename, subfolder)
-        log.info("File request for [%s](%s)", myfile, abs_file)
+        log.info("File request for [{}]({})", myfile, abs_file)
 
         # ## IMPORTANT NOTE TO SELF:
         # If you are going to receive chunks here there could be problems.
@@ -206,7 +206,7 @@ class Uploader(object):
         # Save the file
         try:
             myfile.save(abs_file)
-            log.debug("Absolute file path should be '%s'", abs_file)
+            log.debug("Absolute file path should be '{}'", abs_file)
         except Exception:
             return self.force_response(
                 errors={"Permissions": "Failed to write uploaded file"},
@@ -232,7 +232,7 @@ class Uploader(object):
             ftype = tmp[0].strip()
             fcharset = tmp[1].split('=')[1].strip()
         except Exception:
-            log.warning("Unknown type for '%s'", abs_file)
+            log.warning("Unknown type for '{}'", abs_file)
 
         ########################
         # ## Final response
@@ -259,7 +259,7 @@ class Uploader(object):
                 os.remove(destination)
                 log.debug("Forced removal")
             else:
-                log.error("File '%s' already exists", destination)
+                log.error("File '{}' already exists", destination)
                 return False
 
         with open(destination, "ab") as f:
@@ -271,10 +271,10 @@ class Uploader(object):
 
         # Check exists
         if not os.path.exists(destination):
-            log.error("Unable to recover the uploaded file: %s", destination)
+            log.error("Unable to recover the uploaded file: {}", destination)
             return False
 
-        log.info("File uploaded: %s", destination)
+        log.info("File uploaded: {}", destination)
         return True
 
     def remove(self, filename, subfolder=None, skip_response=False):
@@ -284,7 +284,7 @@ class Uploader(object):
 
         # Check file existence
         if not os.path.exists(abs_file):
-            log.critical("File '%s' not found", abs_file)
+            log.critical("File '{}' not found", abs_file)
             return self.force_response(
                 errors={"File missing": "File requested does not exists"},
                 code=hcodes.HTTP_BAD_NOTFOUND,
@@ -294,12 +294,12 @@ class Uploader(object):
         try:
             os.remove(abs_file)
         except Exception:
-            log.critical("Cannot remove local file %s", abs_file)
+            log.critical("Cannot remove local file {}", abs_file)
             return self.force_response(
                 errors={"Permissions": "Failed to remove file"},
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
-        log.warn("Removed '%s'", abs_file)
+        log.warn("Removed '{}'", abs_file)
 
         if skip_response:
             return
@@ -336,7 +336,7 @@ class Uploader(object):
             host = "http://{}:8080".format(domain)
         url = "{}{}/{}".format(host, request.path, filename)
 
-        log.info("Upload initialized on url: %s", url)
+        log.info("Upload initialized on url: {}", url)
 
         return self.force_response(
             "",
@@ -356,7 +356,7 @@ class Uploader(object):
             content_range = parse_content_range_header(range_header)
 
             if content_range is None:
-                log.error("Unable to parse Content-Range: %s", range_header)
+                log.error("Unable to parse Content-Range: {}", range_header)
                 completed = True
                 start = 0
                 total_length = int(range_header.split("/")[1])
@@ -372,7 +372,7 @@ class Uploader(object):
                 # log.critical(content_range.units)
                 completed = (stop >= total_length)
         except BaseException as e:
-            log.error("Unable to parse Content-Range: %s", range_header)
+            log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
             completed = False
             return completed, self.force_response("Invalid request")
@@ -404,7 +404,7 @@ class Uploader(object):
                 ftype = tmp[0].strip()
                 fcharset = tmp[1].split('=')[1].strip()
             except Exception:
-                log.warning("Unknown type for '%s'", file_path)
+                log.warning("Unknown type for '{}'", file_path)
 
             return completed, self.force_response(
                 {

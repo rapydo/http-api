@@ -40,9 +40,9 @@ class Authentication(BaseAuthentication):
             self.db.refresh_connection()
             raise e
         except DeflateError:
-            log.warning("Invalid username '%s'", username)
+            log.warning("Invalid username '{}'", username)
         except self.db.User.DoesNotExist:
-            log.warning("Could not find user for '%s'", username)
+            log.warning("Could not find user for '{}'", username)
         return user
 
     def get_users(self, user_id=None):
@@ -72,7 +72,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s", e)
+                log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
         for role in userobj.roles.all():
@@ -109,7 +109,7 @@ class Authentication(BaseAuthentication):
             user.roles.disconnect(p)
 
         for role in roles:
-            log.debug("Adding role %s", role)
+            log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
             except self.db.Role.DoesNotExist:
@@ -129,11 +129,11 @@ class Authentication(BaseAuthentication):
         for role in current_roles_objs:
             current_roles.append(role.name)
 
-        log.info("Current roles: %s", current_roles)
+        log.info("Current roles: {}", current_roles)
 
         for role in self.default_roles:
             if role not in current_roles:
-                log.info("Creating role: %s", role)
+                log.info("Creating role: {}", role)
                 self.create_role(role)
 
         # Default user (if no users yet available)
@@ -210,7 +210,7 @@ class Authentication(BaseAuthentication):
 
             return True
         except self.db.Token.DoesNotExist:
-            log.warning("Token %s not found", jti)
+            log.warning("Token {} not found", jti)
             return False
 
     def get_tokens(self, user=None, token_jti=None):
@@ -234,10 +234,10 @@ class Authentication(BaseAuthentication):
                 t["id"] = token.jti
                 t["token"] = token.token
                 t["token_type"] = token.token_type
-                t["emitted"] = token.creation.strftime('%s')
-                t["last_access"] = token.last_access.strftime('%s')
+                t["emitted"] = token.creation.strftime('{}')
+                t["last_access"] = token.last_access.strftime('{}')
                 if token.expiration is not None:
-                    t["expiration"] = token.expiration.strftime('%s')
+                    t["expiration"] = token.expiration.strftime('{}')
                 t["IP"] = token.IP
                 t["hostname"] = token.hostname
                 list.append(t)
@@ -259,7 +259,7 @@ class Authentication(BaseAuthentication):
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()
         except self.db.Token.DoesNotExist:
-            log.warning("Unable to invalidate, token not found: %s", token)
+            log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
 

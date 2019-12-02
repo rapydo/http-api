@@ -62,7 +62,7 @@ class ExternalLogins(object):
             var2 = key.upper() + '_APPKEY'
 
             if var1 not in os.environ or var2 not in os.environ:
-                log.verbose("Skipping Oauth2 service %s", key)
+                log.verbose("Skipping Oauth2 service {}", key)
                 continue
 
             # Call the service and save it
@@ -76,13 +76,13 @@ class ExternalLogins(object):
                 # Cycle all the Oauth2 group services
                 for name, oauth2 in obj.items():
                     if oauth2 is None:
-                        log.debug("Skipping failing credentials: %s", key)
+                        log.debug("Skipping failing credentials: {}", key)
                     else:
                         services[name] = oauth2
-                        log.debug("Created Oauth2 service %s", name)
+                        log.debug("Created Oauth2 service {}", name)
 
             except Exception as e:
-                log.critical("Unable to request oauth2 service %s\n%s", key, e)
+                log.critical("Unable to request oauth2 service {}\n{}", key, e)
 
         return services
 

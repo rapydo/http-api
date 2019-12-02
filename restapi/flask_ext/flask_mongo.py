@@ -40,7 +40,7 @@ class MongoExt(BaseExtension):
 
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)
-        log.verbose("Connected to db %s", db)
+        log.verbose("Connected to db {}", db)
 
         class obj:
             connection = link
@@ -67,7 +67,7 @@ class MongoExt(BaseExtension):
             for db in client.database_names():
                 if db not in system_dbs:
                     client.drop_database(db)
-                    log.critical("Dropped db '%s'", db)
+                    log.critical("Dropped db '{}'", db)
 
         # if pinit:
         #     pass

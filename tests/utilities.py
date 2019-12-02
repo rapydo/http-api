@@ -163,7 +163,7 @@ class TestUtilities(unittest.TestCase):
 
         for data in content['Response']['data']:
             if data["token"] == token:
-                log.info("Destroying token %s", data["id"])
+                log.info("Destroying token {}", data["id"])
                 uri = '{}/tokens/{}'.format(AUTH_URI, data["id"])
                 r = self.app.delete(uri, headers=headers)
                 self.assertEqual(r.status_code, NO_CONTENT)
@@ -340,7 +340,7 @@ class TestUtilities(unittest.TestCase):
             error = self.get_error_message(definition, method, status)
             if error is None:
                 log.critical(
-                    "No message found for status = %s, method = %s, endpoint = %s",
+                    "No message found for status = {}, method = {}, endpoint = {}",
                     status, method, endpoint
                 )
 

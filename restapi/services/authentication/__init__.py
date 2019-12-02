@@ -96,7 +96,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             user = self.get_user_object(username=username)
         except BaseException as e:
-            log.error("Unable to connect to auth backend\n[%s] %s", type(e), e)
+            log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
             # log.critical("Please reinitialize backend tables")
             from restapi.exceptions import RestApiException
 
@@ -137,7 +137,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
         except IOError:
-            log.warning("Jwt secret file %s not found, using default", abs_filename)
+            log.warning("Jwt secret file {} not found, using default", abs_filename)
             log.info(
                 "To create your own secret file:\n"
                 + "head -c 24 /dev/urandom > {}".format(abs_filename)
@@ -258,7 +258,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             tok = t.get("token")
             if self.invalidate_token(tok):
-                log.info("Previous token invalidated: %s", tok)
+                log.info("Previous token invalidated: {}", tok)
 
         # Generate a new reset token
         new_token, jti = self.create_temporary_token(
@@ -294,18 +294,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if raiseErrors:
                 raise (e)
             else:
-                log.warning("Unable to decode JWT token. %s", e)
+                log.warning("Unable to decode JWT token. {}", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
             if raiseErrors:
                 raise (e)
             else:
-                log.warning("Unable to decode JWT token. %s", e)
+                log.warning("Unable to decode JWT token. {}", e)
         except Exception as e:
             if raiseErrors:
                 raise (e)
             else:
-                log.warning("Unable to decode JWT token. %s", e)
+                log.warning("Unable to decode JWT token. {}", e)
 
         return payload
 
@@ -331,7 +331,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             token_type = self.FULL_TOKEN
 
         if token_type != payload_type:
-            log.error("Invalid token type %s, required: %s", payload_type, token_type)
+            log.error("Invalid token type {}, required: {}", payload_type, token_type)
             return False
 
         # Get the user from payload
@@ -425,7 +425,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             for role in roles:
                 if role not in current_roles:
                     if warnings:
-                        log.warning("Auth role '%s' missing for request", role)
+                        log.warning("Auth role '{}' missing for request", role)
                     return False
             return True
 
@@ -435,7 +435,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     return True
             return False
 
-        log.critical("Unknown role authorization requirement: %s", required_roles)
+        log.critical("Unknown role authorization requirement: {}", required_roles)
         return False
 
     def verify_admin(self):
@@ -505,7 +505,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 userdata = Customizer().custom_user_properties(userdata)
             except BaseException as e:
-                log.error("Unable to customize user properties: %s", e)
+                log.error("Unable to customize user properties: {}", e)
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
@@ -524,7 +524,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 Customizer().custom_post_handle_user_input(self, user_node, input_data)
             except BaseException as e:
-                log.error("Unable to customize user properties: %s", e)
+                log.error("Unable to customize user properties: {}", e)
 
     # ################
     # # Create Users #

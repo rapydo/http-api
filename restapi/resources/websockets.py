@@ -51,7 +51,7 @@ class PushpinWebSocket(EndpointResource):
 
         in_events = decode_websocket_events(request.data)
         if in_events is None or len(in_events) <= 0:
-            log.error("Websocket request: %s", request.data)
+            log.error("Websocket request: {}", request.data)
             raise RestApiException("Cannot decode websocket request")
         in_events = in_events[0]
 
@@ -88,7 +88,7 @@ class PushpinWebSocket(EndpointResource):
             )
             return resp
 
-        log.error("Unknkown event type: %s", event_type)
+        log.error("Unknkown event type: {}", event_type)
         raise RestApiException("Cannot understand websocket request")
 
 

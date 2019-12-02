@@ -137,7 +137,7 @@ class EndpointResource(Resource):
                     action=act,
                     location=loc,
                 )
-                log.verbose("Accept param '%s' type %s", param, mytype)
+                log.verbose("Accept param '{}' type {}", param, mytype)
 
         # TODO: should I check body parameters?
 
@@ -200,7 +200,7 @@ class EndpointResource(Resource):
             return self._args.get(single_parameter, default)
 
         if len(self._args) > 0:
-            log.verbose("Parameters %s", obfuscate_dict(self._args))
+            log.verbose("Parameters {}", obfuscate_dict(self._args))
         return self._args
 
     def set_method_id(self, name='myid', idtype='string'):
@@ -223,14 +223,14 @@ class EndpointResource(Resource):
         try:
             limit = int(limit)
         except ValueError:
-            log.warning("%s is expected to be an int, not %s", PERPAGE_KEY, limit)
+            log.warning("{} is expected to be an int, not {}", PERPAGE_KEY, limit)
             limit = DEFAULT_PERPAGE
 
         try:
             current_page = int(current_page)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s", CURRENTPAGE_KEY, current_page
+                "{} is expected to be an int, not {}", CURRENTPAGE_KEY, current_page
             )
             current_page = DEFAULT_CURRENTPAGE
 
@@ -438,7 +438,7 @@ class EndpointResource(Resource):
     #         date = datetime.fromtimestamp(float(timestamp))
     #         return date.isoformat()
     #     except BaseException:
-    #         log.warning("Errors parsing %s", timestamp)
+    #         log.warning("Errors parsing {}", timestamp)
     #         return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
@@ -494,7 +494,7 @@ class EndpointResource(Resource):
                 if attribute is None:
                     attributes[key] = None
                 elif isinstance(attribute, datetime):
-                    dval = string_from_timestamp(attribute.strftime('%s'))
+                    dval = string_from_timestamp(attribute.strftime('{}'))
                     attributes[key] = dval
                 else:
 
@@ -584,7 +584,7 @@ class EndpointResource(Resource):
                     field_name = '_relationships_to_follow'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models", field_name)
+                    log.warning("Obsolete use of {} into models", field_name)
                     relationships = getattr(instance, field_name)
         elif relationships_expansion is not None:
             for e in relationships_expansion:
@@ -592,7 +592,7 @@ class EndpointResource(Resource):
                     rel_name_len = len(relationship_name) + 1
                     expansion_rel = e[rel_name_len:]
                     log.debug(
-                        "Expanding %s relationship with %s",
+                        "Expanding {} relationship with {}",
                         relationship_name,
                         expansion_rel,
                     )
@@ -630,7 +630,7 @@ class EndpointResource(Resource):
                 for k in attrs:
                     if k in subnode['attributes']:
                         log.warning(
-                            "Name collision %s on node %s, model %s, property model=%s",
+                            "Name collision {} on node {}, model {}, property model={}",
                             k, subnode, type(node), type(r)
                         )
                     subnode['attributes'][k] = attrs[k]
@@ -883,7 +883,7 @@ class EndpointResource(Resource):
             if http.authenticate(self.auth.verify_token, token):
                 # we have a valid token in header
                 user = self.get_current_user()
-                log.debug("Logged user: %s", user.email)
+                log.debug("Logged user: {}", user.email)
 
         return user
 

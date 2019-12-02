@@ -54,7 +54,7 @@ def send_activation_link(auth, user):
         protocol = "http"
 
     rt = activation_token.replace(".", "+")
-    log.debug("Activation token: %s", rt)
+    log.debug("Activation token: {}", rt)
     url = "{}://{}/public/register/{}".format(protocol, domain, rt)
     body = "Follow this link to activate your account: {}".format(url)
 
@@ -84,7 +84,7 @@ def send_activation_link(auth, user):
             obj.request_activation(name=user.name, email=user.email, url=url)
         except BaseException as e:
             log.error(
-                "Could not send email with custom service:\n%s: %s",
+                "Could not send email with custom service:\n{}: {}",
                 e.__class__.__name__,
                 e,
             )
@@ -121,7 +121,7 @@ def custom_extra_registration(variables):
             )
         except BaseException as e:
             log.error(
-                "Could not register your custom profile:\n%s: %s",
+                "Could not register your custom profile:\n{}: {}",
                 e.__class__.__name__,
                 e,
             )
@@ -210,7 +210,7 @@ class Profile(EndpointResource):
             try:
                 data = obj.manipulate(ref=self, user=current_user, data=data)
             except BaseException as e:
-                log.error("Could not custom manipulate profile:\n%s", e)
+                log.error("Could not custom manipulate profile:\n{}", e)
 
         return data
 
@@ -273,7 +273,7 @@ class Profile(EndpointResource):
             )
 
         except BaseException as e:
-            log.error("Errors during account registration: %s", str(e))
+            log.error("Errors during account registration: {}", str(e))
             user.delete()
             raise RestApiException(str(e))
         else:
@@ -321,10 +321,10 @@ class Profile(EndpointResource):
             for key, value in data.items():
                 if key.startswith('_') or key in avoid_update:
                     continue
-                log.debug("Profile new value: %s=%s", key, value)
+                log.debug("Profile new value: {}={}", key, value)
                 setattr(user, key, value)
         except BaseException as e:
-            log.error("Failed to update profile:\n%s: %s", e.__class__.__name__, e)
+            log.error("Failed to update profile:\n{}: {}", e.__class__.__name__, e)
         else:
             log.info("Profile updated")
 

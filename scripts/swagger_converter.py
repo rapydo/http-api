@@ -11,16 +11,16 @@ from utilities.logs import get_logger
 log = get_logger(__name__)
 
 if len(sys.argv) <= 1:
-    log.exit("Usage: %s project_name", sys.argv[0])
+    log.exit("Usage: {} project_name", sys.argv[0])
 
 PROJECT = sys.argv[1]
 PROJECT_DIR = "projects/{}/backend/swagger".format(PROJECT)
 
 if not os.path.exists(PROJECT_DIR):
-    log.exit("%s folder does not exist", PROJECT_DIR)
+    log.exit("{} folder does not exist", PROJECT_DIR)
 
 if not os.path.isdir(PROJECT_DIR):
-    log.exit("%s is not a folder", PROJECT_DIR)
+    log.exit("{} is not a folder", PROJECT_DIR)
 
 yamls = ["specs", "get", "post", "put", "patch", "delete", "head"]
 for swagger_folder in os.listdir(PROJECT_DIR):
@@ -52,7 +52,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                 mappings = j.pop("mapping")
 
                 if len(j) > 0:
-                    log.exit("Found unexpected key: %s", j)
+                    log.exit("Found unexpected key: {}", j)
 
                 if baseuri is not None:
                     conf_output += "\nbaseuri = '{}'".format(baseuri)
@@ -71,7 +71,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                 data = {}
                 for m in keys:
                     if m not in mappings:
-                        log.exit("Missing %s label in %s.%s.specs", m, pfile, pclass)
+                        log.exit("Missing {} label in {}.{}.specs", m, pfile, pclass)
 
                     u = mappings.get(m)
 
@@ -97,7 +97,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                     data[u] = conf
 
                 if len(j) > 0:
-                    log.exit("Found unexpected key: %s", j)
+                    log.exit("Found unexpected key: {}", j)
                 conf_output += "\n{} = {}".format(y.upper(), data)
 
     print("***************************************")

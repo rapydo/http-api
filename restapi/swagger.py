@@ -128,7 +128,7 @@ class BeSwagger(object):
 
                     params = self._fdp.get(fdp)
                     if params is None:
-                        log.exit("No custom form data '%s'", fdp)
+                        log.exit("No custom form data '{}'", fdp)
                     else:
                         # Unable to extend with list by using extends() because
                         # it add references to the original object and do not
@@ -250,7 +250,7 @@ class BeSwagger(object):
                 self._paths[newuri] = {}
             self._paths[newuri][method] = specs
 
-            log.verbose("Built definition '%s:%s'", method.upper(), newuri)
+            log.verbose("Built definition '{}:{}'", method.upper(), newuri)
 
         endpoint.custom['methods'][method] = extra
         return endpoint
@@ -355,7 +355,7 @@ class BeSwagger(object):
         tags = []
         for tag, desc in self._customizer._configurations['tags'].items():
             if tag not in self._used_swagger_tags:
-                log.debug("Skipping unsed tag: %s", tag)
+                log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({'name': tag, 'description': desc})
         output['tags'] = tags
@@ -436,7 +436,7 @@ class BeSwagger(object):
         except Exception as e:
             # raise e
             error = str(e).split('\n')[0]
-            log.error("Failed to validate:\n%s\n", error)
+            log.error("Failed to validate:\n{}\n", error)
             return False
         finally:
             os.remove(filepath)

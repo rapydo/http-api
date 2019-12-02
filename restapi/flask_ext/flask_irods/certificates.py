@@ -19,7 +19,7 @@ try:
     from plumbum import local
     import dateutil.parser
 except ImportError as e:
-    log.exit("\nThis module requires an extra package:\n%s", e)
+    log.exit("\nThis module requires an extra package:\n{}", e)
 
 
 class Certificates(object):
@@ -44,7 +44,7 @@ class Certificates(object):
         for tup in sub.get_components():
             dn += '/' + tup[0].decode() + '=' + tup[1].decode()
 
-        log.verbose("Host DN computed is %s", dn)
+        log.verbose("Host DN computed is {}", dn)
         return dn
 
     @staticmethod
@@ -93,7 +93,7 @@ class Certificates(object):
         ################
         # 1. b2access
         if proxy_file is not None:
-            log.debug("Certificate path: %s", proxy_file)
+            log.debug("Certificate path: {}", proxy_file)
             Certificates.set_globus_proxy_cert(key=proxy_file, cert=proxy_file)
 
         ################
@@ -118,7 +118,7 @@ class Certificates(object):
                 )
                 if not valid:
                     log.warning(
-                        "Invalid proxy certificate for %s." + " Validity: %s - %s",
+                        "Invalid proxy certificate for {}." + " Validity: {} - {}",
                         user_proxy,
                         not_before,
                         not_after,
@@ -126,7 +126,7 @@ class Certificates(object):
 
             # Proxy file does not exist or expired
             if not valid:
-                log.warning("Creating a new proxy for %s", user_proxy)
+                log.warning("Creating a new proxy for {}", user_proxy)
                 try:
 
                     irods_env = os.environ
@@ -142,12 +142,12 @@ class Certificates(object):
                     )
 
                     if valid:
-                        log.info("Proxy refreshed for %s", user_proxy)
+                        log.info("Proxy refreshed for {}", user_proxy)
                     else:
-                        log.error("Got invalid proxy: user %s", user_proxy)
+                        log.error("Got invalid proxy: user {}", user_proxy)
 
                 except Exception as e:
-                    log.critical("Cannot refresh proxy: user %s", user_proxy)
+                    log.critical("Cannot refresh proxy: user {}", user_proxy)
                     log.critical(e)
 
             ##################
@@ -188,14 +188,14 @@ class Certificates(object):
                 if not Certificates.path_is_readable(filepath):
                     failed = True
                     log.error(
-                        "%s variable (%s) not readable by %s", key, filepath, os_user
+                        "{} variable ({}) not readable by {}", key, filepath, os_user
                     )
             else:
                 os_owner = pwd.getpwuid(os.stat(filepath).st_uid).pw_name
                 if os_user != os_owner:
                     failed = True
                     log.error(
-                        "%s variable (%s) owned by %s instead of %s",
+                        "{} variable ({}) owned by {} instead of {}",
                         key,
                         filepath,
                         os_owner,
@@ -218,7 +218,7 @@ class Certificates(object):
 
             # Pattern in plumbum library for executing a shell command
             command = local["openssl"]
-            log.verbose("Executing command openssl %s", command, args)
+            log.verbose("Executing command openssl {}", command, args)
             output = command(args)
 
         except ProcessExecutionError as e:

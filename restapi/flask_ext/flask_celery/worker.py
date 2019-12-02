@@ -30,7 +30,7 @@ celery_app.app = app
 def get_service(service, **kwargs):
     ext = celery_app.app.extensions.get(service)
     if ext is None:
-        log.error("%s is not enabled", service)
+        log.error("{} is not enabled", service)
         return None
     return ext.get_instance(**kwargs)
 
@@ -47,4 +47,4 @@ meta = Meta()
 # # Custom tasks
 submodules = meta.import_submodules_from_package("{}.tasks".format(CUSTOM_PACKAGE))
 
-log.debug("Celery worker is ready %s", celery_app)
+log.debug("Celery worker is ready {}", celery_app)

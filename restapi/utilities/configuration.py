@@ -33,7 +33,7 @@ def read_configuration(
         if project.get(key) is None:
 
             log.exit(
-                "Project not configured, missing key '%s' in file %s/%s",
+                "Project not configured, missing key '{}' in file {}/{}",
                 key,
                 base_project_path,
                 PROJECT_CONF_FILENAME,
@@ -63,10 +63,10 @@ def read_configuration(
         extend_path = submodules_path
     else:
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
-        log.exit("Invalid extends-from parameter: %s.\n%s", extends_from, suggest)
+        log.exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
     if not os.path.exists(extend_path):
-        log.exit("From project not found: %s", extend_path)
+        log.exit("From project not found: {}", extend_path)
 
     extend_file = "extended_{}".format(PROJECT_CONF_FILENAME)
     extended_configuration = load_yaml_file(
@@ -87,7 +87,7 @@ def mix(base, custom):
 
         if elements is None:
             if isinstance(base[key], dict):
-                log.warning("Cannot replace %s with empty list", key)
+                log.warning("Cannot replace {} with empty list", key)
                 continue
 
         if isinstance(elements, dict):
@@ -125,7 +125,7 @@ def load_yaml_file(file, path, keep_order=False):
 
     filepath = os.path.join(path, file)
 
-    log.verbose("Reading file %s", filepath)
+    log.verbose("Reading file {}", filepath)
 
     if not os.path.exists(filepath):
         raise AttributeError("YAML file does not exist: {}".format(filepath))

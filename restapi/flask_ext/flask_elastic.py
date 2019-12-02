@@ -52,9 +52,9 @@ class ElasticPythonExt(BaseExtension):
                 check = False
 
         if check:
-            log.debug('Connected to elastic: %s:%s', host, port)
+            log.debug('Connected to elastic: {}:{}', host, port)
         else:
-            msg = 'Failed to connect: %s:%s', host, port
+            msg = 'Failed to connect: {}:{}', host, port
             log.error(msg)
             raise EnvironmentError(msg)
 
@@ -80,7 +80,7 @@ class ElasticPythonExt(BaseExtension):
     #         for db in client.database_names():
     #             if db not in system_dbs:
     #                 client.drop_database(db)
-    #                 log.critical("Dropped db '%s'", db)
+    #                 log.critical("Dropped db '{}'", db)
 
     #     if pinit:
     #         # TODO: discuss!

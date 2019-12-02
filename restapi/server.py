@@ -85,7 +85,7 @@ class Flask(OriginalFlask):
                 content_type = idx
                 continue
             log.warning(
-                "Duplicated Content-Type, removing %s and keeping %s",
+                "Duplicated Content-Type, removing {} and keeping {}",
                 response.headers[content_type][1],
                 val[1],
             )
@@ -196,7 +196,7 @@ def create_app(
             # Create the restful resource with it;
             # this method is from RESTful plugin
             rest_api.add_resource(resource.cls, *urls)
-            log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
+            log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
 
         # Enable all schema endpoints to be mapped with this extra step
         if len(mem.customizer._schema_endpoint.uris) > 0:
@@ -295,7 +295,7 @@ def create_app(
             print(url.query)
 
         url = urllib_parse.urlunparse(url)
-        log.info("%s %s %s %s", request.method, url, data, response)
+        log.info("{} {} {} {}", request.method, url, data, response)
 
         return response
 
@@ -317,7 +317,7 @@ def create_app(
             from sentry_sdk.integrations.flask import FlaskIntegration
 
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
-            log.info("Enabled Sentry %s", SENTRY_URL)
+            log.info("Enabled Sentry {}", SENTRY_URL)
 
     # return our flask app
     return microservice

@@ -99,7 +99,7 @@ class Detector(object):
             # raise AttributeError("no service defined behind authentication")
         else:
             log.info(
-                "Authentication based on '%s' service",
+                "Authentication based on '{}' service",
                 self.authentication_service
             )
 
@@ -154,7 +154,7 @@ class Detector(object):
         if isinstance(host, str):  # and host.count('.') > 2:
             if not host.endswith('dockerized.io'):
                 variables['external'] = True
-                log.verbose("Service %s detected as external: %s", service, host)
+                log.verbose("Service {} detected as external: {}", service, host)
 
         return variables
 
@@ -170,7 +170,7 @@ class Detector(object):
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
-            log.exit("Missing %s for %s", flaskext, service)
+            log.exit("Missing {} for {}", flaskext, service)
 
         return getattr(module, classname)
 
@@ -182,7 +182,7 @@ class Detector(object):
 
             if not self.available_services.get(name):
                 continue
-            log.verbose("Looking for class %s", name)
+            log.verbose("Looking for class {}", name)
 
             variables = service.get('variables')
             ext_name = service.get('class')
@@ -214,11 +214,11 @@ class Detector(object):
 
             except AttributeError as e:
                 log.error(str(e))
-                log.exit('Invalid Extension class: %s', ext_name)
+                log.exit('Invalid Extension class: {}', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
-            log.debug("Got class definition for %s", MyClass)
+            log.debug("Got class definition for {}", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
@@ -258,7 +258,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.exit('Your class %s is not compliant:\n%s', name, e)
+                log.exit('Your class {} is not compliant:\n{}', name, e)
             else:
                 self.extensions_instances[name] = ext_instance
 
@@ -367,7 +367,7 @@ class Detector(object):
                 try:
                     Initializer(instances, app=app)
                 except BaseException as e:
-                    log.error("Errors during custom initialization: %s", e)
+                    log.error("Errors during custom initialization: {}", e)
                 else:
                     log.info("Vanilla project has been initialized")
 

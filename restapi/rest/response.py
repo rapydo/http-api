@@ -282,7 +282,7 @@ class ResponseMaker(object):
         # (strictly to the sole content)
         method = get_response()
         # TODO: check why this is often called twice from flask
-        log.verbose("Response method: %s", method.__name__)
+        log.verbose("Response method: {}", method.__name__)
         r['defined_content'] = method(r['defined_content'])
 
         # 3. Recover correct status and errors
@@ -407,7 +407,7 @@ class ResponseMaker(object):
 
             code = int(code)
         except Exception as e:
-            log.critical("Could not build response!\n%s", e)
+            log.critical("Could not build response!\n{}", e)
             # Revert to defaults
             defined_content = (None,)
             data_type = str(type(defined_content))
@@ -468,7 +468,7 @@ def get_content_from_response(http_out):
         try:
             response = json.loads(http_out.get_data().decode())
         except Exception as e:
-            log.critical("Failed to load response:\n%s", e)
+            log.critical("Failed to load response:\n{}", e)
             raise ValueError(
                 "Trying to recover informations"
                 + " from a malformed response:\n{}".format(http_out)

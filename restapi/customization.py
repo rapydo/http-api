@@ -147,7 +147,7 @@ class Customizer(object):
                 try:
                     module = Meta.get_module_from_string(module_name, exit_on_fail=True)
                 except BaseException as e:
-                    log.exit("Cannot import %s\nError: %s", module_name, e)
+                    log.exit("Cannot import {}\nError: {}", module_name, e)
 
                 # Extract classes from the module
                 # classes = meta.get_classes_from_module(module)
@@ -162,7 +162,7 @@ class Customizer(object):
 
                     # if class_name in already_loaded:
                     #     log.warning(
-                    #         "Skipping import of %s from %s.%s, already loded from %s",
+                    #         "Skipping import of {} from {}.{}, already loded from {}",
                     #         class_name,
                     #         apis_dir,
                     #         module_file,
@@ -171,7 +171,7 @@ class Customizer(object):
                     #     continue
                     # already_loaded[class_name] = "{}.{}".format(apis_dir, module_file)
                     log.debug(
-                        "Importing %s from %s.%s", class_name, apis_dir, module_file
+                        "Importing {} from {}.{}", class_name, apis_dir, module_file
                     )
                     if not self._testing:
                         skip = False
@@ -185,7 +185,7 @@ class Customizer(object):
                                 negate, dependency = pieces
                                 negate = negate.lower() == 'not'
                             else:
-                                log.exit('Wrong parameter: %s', var)
+                                log.exit('Wrong parameter: {}', var)
 
                             check = detector.get_bool_from_os(dependency)
                             if negate:
@@ -198,7 +198,7 @@ class Customizer(object):
 
                         if skip:
                             log.debug(
-                                "Skipping '%s %s' due to unmet dependency: %s",
+                                "Skipping '{} {}' due to unmet dependency: {}",
                                 module_name,
                                 class_name,
                                 dependency
@@ -218,7 +218,7 @@ class Customizer(object):
                     # base URI
                     base = ep_class.baseuri
                     if base not in BASE_URLS:
-                        log.warning("Invalid base %s", base)
+                        log.warning("Invalid base {}", base)
                         base = API_URL
                     base = base.strip('/')
                     endpoint.base_uri = base
@@ -235,7 +235,7 @@ class Customizer(object):
                     for m in ep_class.methods:
                         if not hasattr(ep_class, m):
                             log.warning(
-                                "%s configuration not found in %s", m, class_name
+                                "{} configuration not found in {}", m, class_name
                             )
                             continue
                         conf = getattr(ep_class, m)

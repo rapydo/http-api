@@ -28,7 +28,7 @@ class Downloader(object):
             )
 
         path = self.absolute_upload_file(filename, subfolder=subfolder, onlydir=True)
-        log.info("Provide '%s' from '%s'", filename, path)
+        log.info("Provide '{}' from '{}'", filename, path)
 
         return send_from_directory(path, filename)
 
@@ -44,7 +44,7 @@ class Downloader(object):
             yield data
 
     def send_file_streamed(self, path, mime):
-        log.info("Providing streamed content from %s", path)
+        log.info("Providing streamed content from {}", path)
 
         f = open(path, "rb")
         return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
@@ -82,7 +82,7 @@ class Downloader(object):
             length = MAX_ALLOWED_LENGTH
 
         log.debug(
-            "Providing partial content (bytes %s-%s, len = %s bytes) from %s",
+            "Providing partial content (bytes {}-{}, len = {} bytes) from {}",
             byte1,
             byte2,
             length,

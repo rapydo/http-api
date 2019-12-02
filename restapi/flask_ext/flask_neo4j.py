@@ -174,7 +174,7 @@ def graph_transactions(func):
             try:
                 transaction.rollback()
             except Exception as sub_ex:
-                log.warning("Exception raised during rollback: %s", sub_ex)
+                log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
     return wrapper
@@ -212,7 +212,7 @@ def graph_nestable_transactions(func):
                     log.verbose("Neomodel transaction ROLLBACK")
                     transaction.rollback()
                 except Exception as sub_ex:
-                    log.warning("Exception raised during rollback: %s", sub_ex)
+                    log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
     return wrapper

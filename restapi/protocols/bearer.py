@@ -160,4 +160,4 @@ class HTTPTokenAuth(object):
 
 authentication = HTTPTokenAuth()
 
-log.info("%s authentication class initizialized", authentication.get_scheme())
+log.info("{} authentication class initizialized", authentication.get_scheme())

@@ -48,5 +48,5 @@ def string_from_timestamp(timestamp):
         date = datetime.fromtimestamp(float(timestamp))
         return date.isoformat()
     except BaseException:
-        log.warning("Errors parsing %s", timestamp)
+        log.warning("Errors parsing {}", timestamp)
         return ""

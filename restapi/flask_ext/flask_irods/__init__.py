@@ -65,7 +65,7 @@ class IrodsPythonExt(BaseExtension):
 
             log.verbose(
                 "Check connection parameters:"
-                + "\nexternal[%s], auth[%s], user[%s], admin[%s]",
+                + "\nexternal[{}], auth[{}], user[{}], admin[{}]",
                 external,
                 self.authscheme,
                 user,
@@ -81,7 +81,7 @@ class IrodsPythonExt(BaseExtension):
             raise AttributeError("No user is defined")
         else:
             self.user = user
-            log.debug("Irods user: %s", self.user)
+            log.debug("Irods user: {}", self.user)
 
         ######################
         # Irods/b2safe direct credentials
@@ -92,7 +92,7 @@ class IrodsPythonExt(BaseExtension):
         elif gss:
 
             if self.authscheme != GSI_AUTH_SCHEME:
-                log.debug("Forcing %s authscheme", GSI_AUTH_SCHEME)
+                log.debug("Forcing {} authscheme", GSI_AUTH_SCHEME)
                 self.authscheme = GSI_AUTH_SCHEME
 
             proxy_cert_name = "{}{}".format(
@@ -159,7 +159,7 @@ class IrodsPythonExt(BaseExtension):
                     certdir='host', certfilename='hostcert'
                 )
             else:
-                log.verbose("Existing DN:\n\"%s\"", host_dn)
+                log.verbose("Existing DN:\n\"{}\"", host_dn)
 
             obj = iRODSSession(
                 user=self.user,
@@ -194,10 +194,10 @@ class IrodsPythonExt(BaseExtension):
         # # set timeout on existing socket/connection
         # with obj.pool.get_connection() as conn:
         #     timer = conn.socket.gettimeout()
-        #     log.debug("Current timeout: %s", timer)
+        #     log.debug("Current timeout: {}", timer)
         #     conn.socket.settimeout(10.0)
         #     timer = conn.socket.gettimeout()
-        #     log.debug("New timeout: %s", timer)
+        #     log.debug("New timeout: {}", timer)
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
@@ -235,7 +235,7 @@ class IrodsPythonExt(BaseExtension):
                 else:
                     raise e
 
-            log.verbose("Tested session retrieving '%s'", u.name)
+            log.verbose("Tested session retrieving '{}'", u.name)
 
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
@@ -259,7 +259,7 @@ class IrodsPythonExt(BaseExtension):
         if self.variables.get('external') and self.variables.get(user):
             if not session.query_user_exists(user):
                 log.exit(
-                    "Cannot find '%s' inside "
+                    "Cannot find '{}' inside "
                     + "the currently connected iRODS instance",
                     user,
                 )

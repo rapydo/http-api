@@ -88,7 +88,7 @@ class BeElastic(ServiceObject):
         obj = DocumentClass.get(id=used_id, ignore=404)
         # print("Check", id, check)
         if obj is None:
-            log.debug("Creating a new document '%s'", used_id)
+            log.debug("Creating a new document '{}'", used_id)
 
             # Put the id in place
             args['meta'] = {'id': used_id}
@@ -204,7 +204,7 @@ class BeElastic(ServiceObject):
             )
 
         except Exception as e:
-            log.warning("Suggestion error:\n%s", e)
+            log.warning("Suggestion error:\n{}", e)
             raise e
         # finally:
         #     if suggest is None or 'data' not in suggest:
@@ -249,7 +249,7 @@ class ElasticFarm(ServiceFarm):
         self.get_instance()
 
         self._instance._connection.ping()
-        log.debug("'%s' service seems plugged", name)
+        log.debug("'{}' service seems plugged", name)
 
         # # CHECK 2: test the models
         # from elasticsearch_dsl import DocType, String

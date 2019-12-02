@@ -98,7 +98,7 @@ class Meta(object):
             if exit_on_fail:
                 raise e
             else:
-                log.error("Module %s not found.\nError: %s", modulestring, e)
+                log.error("Module {} not found.\nError: {}", modulestring, e)
 
         return module
 
@@ -111,7 +111,7 @@ class Meta(object):
 
         for module_name in self.get_submodules_from_package(package):
             module_path = package_name + '.' + module_name
-            log.debug("Loading module '%s'", module_path)
+            log.debug("Loading module '{}'", module_path)
 
             submod = Meta.get_module_from_string(
                 module_path,
@@ -203,7 +203,7 @@ class Meta(object):
     def get_authentication_module(auth_service):
 
         module_name = "services.authentication.{}".format(auth_service)
-        log.verbose("Loading auth extension: %s", module_name)
+        log.verbose("Loading auth extension: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )
@@ -252,12 +252,12 @@ class Meta(object):
             args = {}
 
         if MyClass is None:
-            log.verbose("No customizer available for %s", class_name)
+            log.verbose("No customizer available for {}", class_name)
         else:
             try:
                 instance = MyClass(**args)
             except BaseException as e:
-                log.error("Errors during customizer: %s", e)
+                log.error("Errors during customizer: {}", e)
             else:
-                log.debug("Customizer called: %s", class_name)
+                log.debug("Customizer called: {}", class_name)
         return instance

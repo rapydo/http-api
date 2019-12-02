@@ -134,7 +134,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s", e)
+                log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
         for role in userobj.roles:
@@ -222,7 +222,7 @@ class Authentication(BaseAuthentication):
 
             log.verbose("Token stored inside the DB")
         except BaseException as e:
-            log.error("DB error (%s), rolling back", e)
+            log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
     def refresh_token(self, jti):
@@ -245,7 +245,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(token_entry)
             self.db.session.commit()
         except BaseException as e:
-            log.error("DB error (%s), rolling back", e)
+            log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
         return True
@@ -269,10 +269,10 @@ class Authentication(BaseAuthentication):
                 t["id"] = token.jti
                 t["token"] = token.token
                 t["token_type"] = token.token_type
-                t["emitted"] = token.creation.strftime('%s')
-                t["last_access"] = token.last_access.strftime('%s')
+                t["emitted"] = token.creation.strftime('{}')
+                t["last_access"] = token.last_access.strftime('{}')
                 if token.expiration is not None:
-                    t["expiration"] = token.expiration.strftime('%s')
+                    t["expiration"] = token.expiration.strftime('{}')
                 t["IP"] = token.IP
                 t["hostname"] = token.hostname
                 list.append(t)
@@ -289,9 +289,9 @@ class Authentication(BaseAuthentication):
         try:
             self.db.session.add(user)
             self.db.session.commit()
-            log.warning("User uuid changed to: %s", user.uuid)
+            log.warning("User uuid changed to: {}", user.uuid)
         except BaseException as e:
-            log.error("DB error (%s), rolling back", e)
+            log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
         return True
 
@@ -308,7 +308,7 @@ class Authentication(BaseAuthentication):
                 self.db.session.commit()
                 return True
             except BaseException as e:
-                log.error("Could not invalidate token (%s), rolling back", e)
+                log.error("Could not invalidate token ({}), rolling back", e)
                 self.db.session.rollback()
                 return False
 
@@ -371,7 +371,7 @@ class Authentication(BaseAuthentication):
         if len(internal_users) > 0:
 
             internal_user = internal_users.pop()
-            log.debug("Existing internal user: %s", internal_user)
+            log.debug("Existing internal user: {}", internal_user)
             # A user already locally exists with another authmethod. Not good.
             if internal_user.authmethod != account_type:
                 return None, "User already exists, cannot store oauth2 data"
@@ -385,9 +385,9 @@ class Authentication(BaseAuthentication):
             try:
                 internal_user = self.create_user(userdata, [self.default_role])
                 self.db.session.commit()
-                log.info("Created internal user %s", internal_user)
+                log.info("Created internal user {}", internal_user)
             except BaseException as e:
-                log.error("Could not create internal user (%s), rolling back", e)
+                log.error("Could not create internal user ({}), rolling back", e)
                 self.db.session.rollback()
                 return None, "Server error"
 
@@ -401,7 +401,7 @@ class Authentication(BaseAuthentication):
             external_user.main_user = internal_user
             # Note: for pre-production release
             # we allow only one external account per local user
-            log.info("Created external user %s", external_user)
+            log.info("Created external user {}", external_user)
 
         # Update external user data to latest info received
         external_user.email = email
@@ -416,9 +416,9 @@ class Authentication(BaseAuthentication):
         try:
             self.db.session.add(external_user)
             self.db.session.commit()
-            log.debug("Updated external user %s", external_user)
+            log.debug("Updated external user {}", external_user)
         except BaseException as e:
-            log.error("Could not update external user (%s), rolling back", e)
+            log.error("Could not update external user ({}), rolling back", e)
             self.db.session.rollback()
             return None, "Server error"
 
@@ -435,7 +435,7 @@ class Authentication(BaseAuthentication):
             setattr(obj, key, value)
             self.db.session.commit()
         except BaseException as e:
-            log.error("DB error (%s), rolling back", e)
+            log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
         return
 
@@ -450,7 +450,7 @@ class Authentication(BaseAuthentication):
         user = self.get_user_object(username)
 
         if user is not None:
-            log.debug("iRODS user already cached: %s", username)
+            log.debug("iRODS user already cached: {}", username)
             user.session = session
         else:
 
@@ -464,11 +464,11 @@ class Authentication(BaseAuthentication):
             user = self.create_user(userdata, [self.default_role])
             try:
                 self.db.session.commit()
-                log.info('Cached iRODS user: %s', username)
+                log.info('Cached iRODS user: {}', username)
             # except sqlalchemy.exc.IntegrityError:
             except BaseException as e:
                 self.db.session.rollback()
-                log.error("Errors saving iRODS user: %s", username)
+                log.error("Errors saving iRODS user: {}", username)
                 log.error(str(e))
                 log.error(type(e))
 
@@ -488,7 +488,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
         except BaseException as e:
-            log.error("DB error (%s), rolling back", e)
+            log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
         self.save_token(user, token, jti)

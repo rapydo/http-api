@@ -188,7 +188,7 @@ if detector.check_availability('celery'):
 
             for worker in workers:
                 i = celery.control.inspect([worker])
-                log.debug('checked worker: %s', worker)
+                log.debug('checked worker: {}', worker)
                 for key, value in i.active().items():
                     active_tasks[key] = value
                 for key, value in i.revoked().items():

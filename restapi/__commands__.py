@@ -110,8 +110,8 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"%s\" was NOT detected", service)
-        log.info("Verifying service: %s", service)
+            log.exit("Service \"{}\" was NOT detected", service)
+        log.info("Verifying service: {}", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
 
@@ -139,13 +139,13 @@ def get_service_address(variables, host_var, port_var, service):
 
     host = variables.get(host_var)
     if host is None:
-        log.exit("Cannot find any variable matching %s for %s", host_var, service)
+        log.exit("Cannot find any variable matching {} for {}", host_var, service)
 
     port = variables.get(port_var)
     if port is None:
-        log.exit("Cannot find any variable matching %s for %s", port_var, service)
+        log.exit("Cannot find any variable matching {} for {}", port_var, service)
 
-    log.debug("Checking address: %s:%s", host, port)
+    log.debug("Checking address: {}:{}", host, port)
 
     return host, int(port)
 
@@ -212,7 +212,7 @@ def tests(wait, core, file, folder):
             log.debug('Waiting service startup')
             time.sleep(5)
 
-    log.debug("Starting unit tests: %s", be)
+    log.debug("Starting unit tests: {}", be)
 
     # launch unittests and also compute coverage
     log.warning(
@@ -224,13 +224,13 @@ def tests(wait, core, file, folder):
         parameters.append(current_package)
     elif file is not None:
         if not os.path.isfile(os.path.join("tests", file)):
-            log.exit("File not found: %s", file)
+            log.exit("File not found: {}", file)
         else:
             parameters.append("default")
             parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
-            log.exit("Folder not found: %s", folder)
+            log.exit("Folder not found: {}", folder)
         else:
             parameters.append("default")
             parameters.append(folder)
@@ -241,11 +241,11 @@ def tests(wait, core, file, folder):
         # Pattern in plumbum library for executing a shell command
         from plumbum import local
         command = local["pyunittests"]
-        log.verbose("Executing command pyunittests %s", parameters)
+        log.verbose("Executing command pyunittests {}", parameters)
         output = command(parameters)
 
     except Exception as e:
         log.error(str(e))
         raise e
 
-    log.info("Completed:\n%s", output)
+    log.info("Completed:\n{}", output)

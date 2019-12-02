@@ -69,16 +69,16 @@ class CeleryExt(BaseExtension):
                 BROKER_HOST,
                 BROKER_VHOST,
             )
-            log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
+            log.info("Configured RabbitMQ as Celery broker {}", BROKER_URL)
         elif broker == 'REDIS':
             BROKER_URL = 'redis://{}{}:{}/0'.format(
                 BROKER_CREDENTIALS,
                 BROKER_HOST,
                 BROKER_PORT,
             )
-            log.info("Configured Redis as Celery broker %s", BROKER_URL)
+            log.info("Configured Redis as Celery broker {}", BROKER_URL)
         else:
-            log.error("Unable to start Celery unknown broker service: %s", broker)
+            log.error("Unable to start Celery unknown broker service: {}", broker)
             celery_app = None
             return celery_app
 
@@ -93,23 +93,23 @@ class CeleryExt(BaseExtension):
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
+            log.info("Configured RabbitMQ as Celery backend {}", BACKEND_URL)
         elif backend == 'REDIS':
             BACKEND_URL = 'redis://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured Redis as Celery backend %s", BACKEND_URL)
+            log.info("Configured Redis as Celery backend {}", BACKEND_URL)
         elif backend == 'MONGODB':
             BACKEND_URL = 'mongodb://{}{}:{}'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
+            log.info("Configured MongoDB as Celery backend {}", BACKEND_URL)
         else:
-            log.exit("Unable to start Celery unknown backend service: %s", backend)
+            log.exit("Unable to start Celery unknown backend service: {}", backend)
             # celery_app = None
             # return celery_app
 
@@ -184,7 +184,7 @@ class CeleryExt(BaseExtension):
                 import mongoengine
 
                 m = mongoengine.connect(SCHEDULER_DB, host=BACKEND_URL)
-                log.info("Celery-beat connected to MongoDB: %s", m)
+                log.info("Celery-beat connected to MongoDB: {}", m)
             elif backend == 'REDIS':
 
                 BEAT_BACKEND_URL = 'redis://{}{}:{}/1'.format(
@@ -195,7 +195,7 @@ class CeleryExt(BaseExtension):
 
                 celery_app.conf['REDBEAT_REDIS_URL'] = BEAT_BACKEND_URL
                 celery_app.conf['REDBEAT_KEY_PREFIX'] = CeleryExt.REDBEAT_KEY_PREFIX
-                log.info("Celery-beat connected to Redis: %s", BEAT_BACKEND_URL)
+                log.info("Celery-beat connected to Redis: {}", BEAT_BACKEND_URL)
             else:
                 log.warning("Cannot configure mongodb celery beat scheduler")
 
@@ -223,7 +223,7 @@ class CeleryExt(BaseExtension):
                 return None
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
     @classmethod
     def delete_periodic_task(cls, name):
@@ -254,7 +254,7 @@ class CeleryExt(BaseExtension):
             if period != 'seconds':
 
                 # do conversion... run_every should be a datetime.timedelta
-                log.error("Unsupported period %s for redis beat", period)
+                log.error("Unsupported period {} for redis beat", period)
 
             interval = schedule(run_every=every)  # seconds
             entry = RedBeatSchedulerEntry(
@@ -268,7 +268,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
     @classmethod
     def create_crontab_task(
@@ -322,7 +322,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
 
 def send_errors_by_email(func):
@@ -342,22 +342,22 @@ def send_errors_by_email(func):
             task_id = self.request.id
             task_name = self.request.task
 
-            log.error("Celery task %s failed (%s)", task_id, task_name)
+            log.error("Celery task {} failed ({})", task_id, task_name)
             arguments = str(self.request.args)
-            log.error("Failed task arguments: %s", arguments[0:256])
-            log.error("Task error: %s", traceback.format_exc())
+            log.error("Failed task arguments: {}", arguments[0:256])
+            log.error("Task error: {}", traceback.format_exc())
 
             if send_mail_is_active():
                 log.info("Sending error report by email", task_id, task_name)
 
                 body = """
-Celery task %s failed
+Celery task {} failed
 
-Name: %s
+Name: {}
 
-Arguments: %s
+Arguments: {}
 
-Error: %s
+Error: {}
 """.format(task_id, task_name, str(self.request.args), traceback.format_exc())
 
                 project = get_project_configuration(

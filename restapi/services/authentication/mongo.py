@@ -124,7 +124,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s", e)
+                log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
         for role in userobj.roles:
@@ -263,10 +263,10 @@ class Authentication(BaseAuthentication):
             t["id"] = token.jti
             t["token"] = token.token
             t["token_type"] = token.token_type
-            t["emitted"] = token.creation.strftime('%s')
-            t["last_access"] = token.last_access.strftime('%s')
+            t["emitted"] = token.creation.strftime('{}')
+            t["last_access"] = token.last_access.strftime('{}')
             if token.expiration is not None:
-                t["expiration"] = token.expiration.strftime('%s')
+                t["expiration"] = token.expiration.strftime('{}')
             t["IP"] = token.IP
             t["hostname"] = token.hostname
             returning_tokens.append(t)
@@ -281,7 +281,7 @@ class Authentication(BaseAuthentication):
             user = self._user
         user.uuid = getUUID()
         user.save()
-        log.warning("User uuid changed to: %s", user.uuid)
+        log.warning("User uuid changed to: {}", user.uuid)
         return True
 
     def invalidate_token(self, token, user=None):

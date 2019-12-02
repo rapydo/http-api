@@ -52,7 +52,7 @@ class PushpinClient:
         if result:
             log.debug('Message successfully published on pushpin')
         else:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
 
     def publish_on_stream(self, channel, message, sync=False):
         if not sync:
@@ -65,7 +65,7 @@ class PushpinClient:
             log.debug('Message successfully published on pushpin')
             return True
         except BaseException as e:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
             log.error(e)
             return False
 
@@ -80,6 +80,6 @@ class PushpinClient:
             log.debug('Message successfully published on pushpin')
             return True
         except BaseException as e:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
             log.error(e)
             return False

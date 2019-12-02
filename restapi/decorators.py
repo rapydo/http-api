@@ -53,7 +53,7 @@ def set_response(original=False, custom_method=None, first_call=False):
 
         # Debug when response is injected and if custom
         if not first_call:
-            log.debug("Response method set to: %s", custom_method)
+            log.debug("Response method set to: {}", custom_method)
 
 
 def custom_response(func=None, original=False):
@@ -127,7 +127,7 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
 
                 excname = e.__class__.__name__
                 log.warning(
-                    "Catched exception:\n\n[%s] %s\n", excname, e, exc_info=True
+                    "Catched exception:\n\n[{}] {}\n", excname, e, exc_info=True
                 )
                 if catch_generic:
                     if excname in ['AttributeError', 'ValueError', 'KeyError']:
