@@ -11,9 +11,7 @@ import os
 import better_exceptions as be
 from restapi.confs import PRODUCTION
 from restapi.server import create_app
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 # Connection internal to containers, proxy handle all HTTPS calls
 # We may safely disable HTTPS on OAUTHLIB requests

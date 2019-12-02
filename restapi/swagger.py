@@ -19,9 +19,8 @@ from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DIS
 from restapi.utilities.globals import mem
 
 from restapi.utilities.configuration import load_yaml_file, mix
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 JSON_APPLICATION = 'application/json'
 
 

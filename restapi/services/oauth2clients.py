@@ -12,9 +12,8 @@ from restapi.protocols.oauth import oauth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
 
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 meta = Meta()
 
 B2ACCESS_MAIN_PORT = 8443

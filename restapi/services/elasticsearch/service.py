@@ -22,9 +22,7 @@ from elasticsearch_dsl import Index
 from elasticsearch_dsl.connections import connections
 from elasticsearch_dsl.query import MultiMatch
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 HOST = os.environ['EL_NAME'].split('/').pop()
 PORT = os.environ['EL_PORT'].split(':').pop()

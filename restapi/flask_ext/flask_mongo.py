@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import pymodm.connection as mongodb
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 AUTH_DB = 'auth'
 

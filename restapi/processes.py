@@ -2,9 +2,7 @@
 
 import os
 import psutil
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 def find(prefix, suffixes=None, local_bin=False):

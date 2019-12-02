@@ -13,9 +13,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi import decorators as decorate
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class PushpinWebSocket(EndpointResource):

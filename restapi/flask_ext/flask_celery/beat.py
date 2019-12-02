@@ -15,9 +15,7 @@ from flask import Flask
 
 from restapi.services.detect import detector
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 ################################################
 # Reload Flask app code also for the worker

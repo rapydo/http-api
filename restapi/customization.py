@@ -15,9 +15,8 @@ from restapi.swagger import BeSwagger
 from restapi.utilities.meta import Meta
 
 from restapi.utilities.configuration import read_configuration
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 meta = Meta()
 
 CONF_FOLDERS = detector.load_group(label='project_confs')

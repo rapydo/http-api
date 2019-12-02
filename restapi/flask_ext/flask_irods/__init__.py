@@ -8,7 +8,8 @@ iRODS file-system flask connector
 import logging
 
 # from restapi.confs import PRODUCTION
-from restapi.flask_ext import BaseExtension, get_logger
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSession
 
 # from irods.session import iRODSSession
@@ -23,8 +24,6 @@ irodslogger.setLevel(logging.INFO)
 NORMAL_AUTH_SCHEME = 'credentials'
 GSI_AUTH_SCHEME = 'GSI'
 PAM_AUTH_SCHEME = 'PAM'
-
-log = get_logger(__name__)
 
 
 class IrodsPythonExt(BaseExtension):

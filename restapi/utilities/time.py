@@ -4,9 +4,7 @@ import pytz
 from datetime import datetime
 import dateutil.parser
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 def timestamp_from_string(timestamp_string):

@@ -3,9 +3,7 @@
 import os
 import yaml
 from collections import OrderedDict
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 PROJECTS_DEFAULTS_FILE = 'projects_defaults.yaml'

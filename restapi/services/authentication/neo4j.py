@@ -16,9 +16,7 @@ from datetime import datetime, timedelta
 from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 if not detector.check_availability(__name__):
     log.exit("No neo4j GraphDB service found for authentication")

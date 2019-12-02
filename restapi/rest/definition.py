@@ -19,9 +19,7 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger, obfuscate_dict
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
 # Paging costants

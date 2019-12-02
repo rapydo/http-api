@@ -22,18 +22,11 @@ from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import (
-    get_logger,
-    handle_log_output,
-    MAX_CHAR_LEN,
-    # set_global_log_level,
-)
-
+from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
 
 #############################
-# LOGS
-log = get_logger(__name__)
 
+# from restapi.utilities.logs import set_global_log_level,
 # This is the first file to be imported in the project
 # We need to enable many things on a global level for logs
 # set_global_log_level(package=__package__)

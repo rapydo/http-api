@@ -12,9 +12,7 @@ from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 if not detector.check_availability(__name__):
     log.exit("No sqlalchemy service available for authentication")

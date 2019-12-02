@@ -5,10 +5,8 @@ import os
 import yaml
 import json
 
-from utilities.configuration import mix
-from utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.configuration import mix
+from restapi.utilities.logs import log
 
 if len(sys.argv) <= 1:
     log.exit("Usage: {} project_name", sys.argv[0])

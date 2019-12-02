@@ -13,9 +13,8 @@ import sqlalchemy
 from restapi.utilities.meta import Meta
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.flask_ext import BaseExtension
+from restapi.utilities.logs import log
 
 
 class SqlAlchemy(BaseExtension):

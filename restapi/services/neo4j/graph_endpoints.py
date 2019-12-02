@@ -2,9 +2,7 @@
 
 from restapi.rest.definition import EndpointResource
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 log.warning("This class is deprecated, stop using it as endpoint parent")
 

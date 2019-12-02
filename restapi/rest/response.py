@@ -36,9 +36,7 @@ from restapi.attributes import ResponseElements
 from restapi import __version__
 from restapi.confs import get_project_configuration
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 MIMETYPE_JSON = 'application/json'
 MIMETYPE_XML = 'application/xml'

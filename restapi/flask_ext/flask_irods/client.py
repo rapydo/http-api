@@ -12,9 +12,7 @@ from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class IrodsException(RestApiException):

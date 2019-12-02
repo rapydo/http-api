@@ -12,8 +12,7 @@ from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.flask_ext import BaseExtension
 from restapi.confs import get_project_configuration
 
-from restapi.utilities.logs import get_logger
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class CeleryExt(BaseExtension):

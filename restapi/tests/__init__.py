@@ -12,9 +12,7 @@ from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
 API_URI = '{}{}'.format(SERVER_URI, API_URL)

@@ -13,9 +13,7 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.services.mail import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+# from restapi.utilities.logs import log
 
 
 class AdminUsers(EndpointResource):

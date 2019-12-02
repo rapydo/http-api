@@ -4,9 +4,8 @@ from gripcontrol import GripPubControl
 from gripcontrol import WebSocketMessageFormat
 from pubcontrol import Item
 
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 
 class ServiceUnavailable(BaseException):

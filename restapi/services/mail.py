@@ -12,9 +12,7 @@ from email.mime.multipart import MIMEMultipart
 
 from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 # TODO: configure HOST with gmail, search example online
 

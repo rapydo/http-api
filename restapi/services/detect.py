@@ -15,9 +15,7 @@ from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import load_yaml_file
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class Detector(object):

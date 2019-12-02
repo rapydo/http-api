@@ -10,10 +10,8 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.flask_ext.flask_mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-
-log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
     log.exit("No mongodb service available for authentication")
