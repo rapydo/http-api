@@ -16,22 +16,22 @@ log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
 
 
-def change_formatting_syntax(message):
+# def change_formatting_syntax(message):
 
-    # Deprecated since 0.7.1
-    if "%s" in message:
-        log.original_warning(
-            "Deprecated %s in log message ({}), replace it with {}", message, '{}')
-    elif "%d" in message:
-        log.original_warning(
-            "Deprecated %d in log message ({}), replace it with {}", message, '{}')
-    elif "%f" in message:
-        log.original_warning(
-            "Deprecated %f in log message ({}), replace it with {}", message, '{}')
-    elif "%" in message:
-        log.original_warning(
-            "Found a % in log message ({}), please verify if correctly used", message)
-    return message
+#     # Deprecated since 0.7.1
+#     if "%s" in message:
+#         log.original_warning(
+#             "Deprecated %s in log message ({}), replace it with {}", message, '{}')
+#     elif "%d" in message:
+#         log.original_warning(
+#             "Deprecated %d in log message ({}), replace it with {}", message, '{}')
+#     elif "%f" in message:
+#         log.original_warning(
+#             "Deprecated %f in log message ({}), replace it with {}", message, '{}')
+#     elif "%" in message:
+#         log.original_warning(
+#             "Found a % in log message ({}), please verify if correctly used", message)
+#     return message
 
 
 def get_logger(not_used):
@@ -40,13 +40,13 @@ def get_logger(not_used):
     return log
 
 
-def verbose(message="", *args, **kwargs):
-    message = change_formatting_syntax(message)
-    log.log("VERBOSE", message, *args, **kwargs)
+def verbose(*args, **kwargs):
+    # message = change_formatting_syntax(message)
+    log.log("VERBOSE", *args, **kwargs)
 
 
 def exit(message="", *args, **kwargs):
-    args[0] = change_formatting_syntax(args[0])
+    # args[0] = change_formatting_syntax(args[0])
     error_code = kwargs.pop('error_code', 1)
     if not isinstance(error_code, int):
         raise ValueError("Error code must be an integer")
@@ -57,36 +57,36 @@ def exit(message="", *args, **kwargs):
     sys.exit(error_code)
 
 
-log.original_debug = log.debug
-log.original_info = log.info
-log.original_warning = log.warning
-log.original_error = log.error
+# log.original_debug = log.debug
+# log.original_info = log.info
+# log.original_warning = log.warning
+# log.original_error = log.error
 
 
-def tmp_debug(message="", *args, **kwargs):
-    message = change_formatting_syntax(message)
-    log.original_debug(message, *args, **kwargs)
+# def tmp_debug(message="", *args, **kwargs):
+#     message = change_formatting_syntax(message)
+#     log.original_debug(message, *args, **kwargs)
 
 
-def tmp_info(message="", *args, **kwargs):
-    message = change_formatting_syntax(message)
-    log.original_info(message, args, **kwargs)
+# def tmp_info(message="", *args, **kwargs):
+#     message = change_formatting_syntax(message)
+#     log.original_info(message, args, **kwargs)
 
 
-def tmp_warning(message="", *args, **kwargs):
-    message = change_formatting_syntax(message)
-    log.original_warning(message, args, **kwargs)
+# def tmp_warning(message="", *args, **kwargs):
+#     message = change_formatting_syntax(message)
+#     log.original_warning(message, args, **kwargs)
 
 
-def tmp_error(message="", *args, **kwargs):
-    message = change_formatting_syntax(message)
-    log.original_error(message, *args, **kwargs)
+# def tmp_error(message="", *args, **kwargs):
+#     message = change_formatting_syntax(message)
+#     log.original_error(message, *args, **kwargs)
 
 
-log.debug = tmp_debug
-log.info = tmp_info
-log.warning = tmp_warning
-log.error = tmp_error
+# log.debug = tmp_debug
+# log.info = tmp_info
+# log.warning = tmp_warning
+# log.error = tmp_error
 
 log.verbose = verbose
 log.exit = exit
