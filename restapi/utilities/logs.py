@@ -18,14 +18,27 @@ log.level("INFO", color="<green>")
 
 def change_formatting_syntax(message):
 
+    # Deprecated since 0.7.1
     if "%s" in message:
         log.original_warning(
             "Deprecated %s in log message ({}), replace it with {}", message, '{}')
         message = message.replace("%s", "{}")
+    if "%d" in message:
+        log.original_warning(
+            "Deprecated %d in log message ({}), replace it with {}", message, '{}')
+        message = message.replace("%d", "{}")
+    if "%f" in message:
+        log.original_warning(
+            "Deprecated %f in log message ({}), replace it with {}", message, '{}')
+        message = message.replace("%f", "{}")
+    if "%" in message:
+        log.original_warning(
+            "Found a % in log message ({}), please verify if correctly used", message)
     return message
 
 
 def get_logger(not_used):
+    # Deprecated since 0.7.1
     log.warning("Deprecated get_logger, import log instead")
     return log
 
