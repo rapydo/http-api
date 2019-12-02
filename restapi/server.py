@@ -26,7 +26,7 @@ from restapi.utilities.logs import (
     get_logger,
     handle_log_output,
     MAX_CHAR_LEN,
-    set_global_log_level,
+    # set_global_log_level,
 )
 
 
@@ -36,7 +36,7 @@ log = get_logger(__name__)
 
 # This is the first file to be imported in the project
 # We need to enable many things on a global level for logs
-set_global_log_level(package=__package__)
+# set_global_log_level(package=__package__)
 
 
 #############################
@@ -242,7 +242,7 @@ def create_app(
                 # to allow 405 response
                 newmethods.add(verb)
             else:
-                log.verbose("Removed method %s.%s from mapping", rulename, verb)
+                log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
         rule.methods = newmethods
 

@@ -272,7 +272,7 @@ class Detector(object):
                 do_init = False
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s (pinit=%s)", name, do_init)
+            log.debug("Initializing {} (pinit={})", name, do_init)
             service_instance = ext_instance.custom_init(
                 pinit=do_init, pdestroy=project_clean, abackend=auth_backend
             )

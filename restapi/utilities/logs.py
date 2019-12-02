@@ -5,8 +5,89 @@ import re
 import sys
 import json
 import urllib
-import logging
+# import logging
+from loguru import logger as log
 
+LOGS_FOLDER = "/logs"
+LOGS_FILE = os.environ.get("HOSTNAME", "backend")
+LOGS_PATH = os.path.join(LOGS_FOLDER, "{}.log".format(LOGS_FILE))
+
+log.level("VERBOSE", no=1, color="<fg #666>")
+log.level("INFO", color="<green>")
+
+
+def change_formatting_syntax(message):
+
+    if "%s" in message:
+        log.original_warning(
+            "Deprecated %s in log message ({}), replace it with {}", message, '{}')
+        message = message.replace("%s", "{}")
+    return message
+
+
+def get_logger(not_used):
+    log.warning("Deprecated get_logger, import log instead")
+    return log
+
+
+def verbose(message="", *args, **kwargs):
+    message = change_formatting_syntax(message)
+    log.log("VERBOSE", message, *args, **kwargs)
+
+
+def exit(message="", *args, **kwargs):
+    args[0] = change_formatting_syntax(args[0])
+    error_code = kwargs.pop('error_code', 1)
+    if not isinstance(error_code, int):
+        raise ValueError("Error code must be an integer")
+    if error_code < 1:
+        raise ValueError("Cannot exit with value below 1")
+
+    log.critical(message, *args, **kwargs)
+    sys.exit(error_code)
+
+
+log.original_debug = log.debug
+log.original_info = log.info
+log.original_warning = log.warning
+log.original_error = log.error
+
+
+def tmp_debug(message="", *args, **kwargs):
+    message = change_formatting_syntax(message)
+    log.original_debug(message, *args, **kwargs)
+
+
+def tmp_info(message="", *args, **kwargs):
+    message = change_formatting_syntax(message)
+    log.original_info(message, args, **kwargs)
+
+
+def tmp_warning(message="", *args, **kwargs):
+    message = change_formatting_syntax(message)
+    log.original_warning(message, args, **kwargs)
+
+
+def tmp_error(message="", *args, **kwargs):
+    message = change_formatting_syntax(message)
+    log.original_error(message, *args, **kwargs)
+
+
+log.debug = tmp_debug
+log.info = tmp_info
+log.warning = tmp_warning
+log.error = tmp_error
+
+log.verbose = verbose
+log.exit = exit
+
+log.remove()
+if LOGS_PATH is not None:
+    log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
+
+log.add(sys.stderr, colorize=True, format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>")
+
+"""
 # DEBUG level is 10 (https://docs.python.org/3/howto/logging.html)
 EXIT = 60
 VERBOSE = 5
@@ -47,7 +128,7 @@ logging.VERBOSE = VERBOSE
 
 
 class LogMe(object):
-    """ A common logger to be used all around development packages """
+    # A common logger to be used all around development packages
 
     def __init__(self):
 
@@ -149,7 +230,7 @@ class LogMe(object):
         return self.log_level
 
     def get_new_logger(self, name, verbosity=None):
-        """ Recover the right logger + set a proper specific level """
+        # Recover the right logger + set a proper specific level
         if self.colors_enabled:
             name = "\033[1;90m{}\033[1;0m".format(name)
         logger = logging.getLogger(name)
@@ -223,7 +304,7 @@ please_logme = LogMe()
 
 
 def get_logger(name):
-    """ Recover the right logger + set a proper specific level """
+    # Recover the right logger + set a proper specific level
 
     # read from os DEBUG_LEVEL (level of verbosity)
     # configurated on a container level
@@ -232,6 +313,7 @@ def get_logger(name):
 
     return please_logme.get_new_logger(name, verbosity=VERBOSITY_REQUESTED)
 
+"""
 # Logs utilities
 
 

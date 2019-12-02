@@ -7,20 +7,21 @@ THIS STUFF IS BASED ON NOSE2 -> TO BE REMOVED!!!
 
 import unittest
 import json
-import logging
-from restapi import __package__ as current_package
+# import logging
+# from restapi import __package__ as current_package
 from restapi.server import create_app
 from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication as ba
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.logs import get_logger, set_global_log_level
+from restapi.utilities.logs import get_logger
+#  , set_global_log_level
 from restapi.tests import API_URI, AUTH_URI
 
 # To change UNITTEST debugging level
-TEST_DEBUGGING_LEVEL = logging.DEBUG
+# TEST_DEBUGGING_LEVEL = logging.DEBUG
 
 #####################
-set_global_log_level(current_package, TEST_DEBUGGING_LEVEL)
+# set_global_log_level(current_package, TEST_DEBUGGING_LEVEL)
 log = get_logger(__name__)
 
 
