@@ -86,14 +86,15 @@ class LogMe(object):
         def script_abspath(file, *suffixes):
             return os.path.join(os.path.dirname(os.path.realpath(file)), *suffixes)
 
+        from logging.config import fileConfig
         if self.testing_mode:
             LOG_INI_TESTS_FILE = os.path.join(
                 script_abspath(__file__), 'logging_tests.ini')
-            logging.config.fileConfig(LOG_INI_TESTS_FILE)
+            fileConfig(LOG_INI_TESTS_FILE)
         else:
             LOG_INI_FILE = os.path.join(
                 script_abspath(__file__), 'logging.ini')
-            logging.config.fileConfig(LOG_INI_FILE)
+            fileConfig(LOG_INI_FILE)
 
         #####################
         # modify logging labels colors
