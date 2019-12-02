@@ -155,11 +155,7 @@ class LogMe(object):
 
         if verbosity is not None:
             self.set_debug(True, verbosity)
-        #     logger.warning("TRAVIS: %s/%s", verbosity, self.log_level)
-        # else:
-        #     logger.warning("TRAVIS not: %s/%s", verbosity, self.log_level)
 
-        # print("LOGGER LEVEL", self.log_level, logging.INFO)
         logger.setLevel(self.log_level)
         logger.colors_enabled = self.colors_enabled
         logger.disable_unicode = self.disable_unicode
@@ -172,14 +168,6 @@ def set_global_log_level(package=None, app_level=None):
     external_level = logging.ERROR
     if app_level is None:
         app_level = please_logme.log_level
-
-    # List of rapydo packages to include into the current level of debugging
-    internal_packages = [
-        'utilities',
-        # 'develop',
-        'controller',
-        'restapi',
-    ]
 
     # A list of packages that make too much noise inside the logs
     external_packages = [
@@ -209,7 +197,6 @@ def set_global_log_level(package=None, app_level=None):
     for key, value in logging.Logger.manager.loggerDict.items():
 
         if not isinstance(value, logging.Logger):
-            # print("placeholder", key, value)
             continue
 
         key_colors = key.split('0m')
@@ -218,25 +205,20 @@ def set_global_log_level(package=None, app_level=None):
         key_base = key.split('.')[0]
 
         if package is not None and package + '.' in key:
-            # print("current", key, value.level)
             value.setLevel(app_level)
         elif key_base == package_base:
-            # print("current package", key, key_base)
             value.setLevel(app_level)
         elif __package__ + '.' in key or 'flask_ext' in key:
-            # print("common", key)
             value.setLevel(app_level)
-        elif key in internal_packages:
+        elif key == 'restapi':
             value.setLevel(app_level)
         elif key == 'test_logs':
-            # print("internal", key, package)
             value.setLevel(app_level)
         else:
             value.setLevel(external_level)
 
 
 please_logme = LogMe()
-# log = please_logme.get_new_logger(__name__)
 
 
 def get_logger(name):
