@@ -6,66 +6,12 @@ import sys
 import json
 import urllib
 import logging
-# import traceback
-from contextlib import contextmanager
-from logging.config import fileConfig
 
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    # fix for Python 3.4+
-    JSONDecodeError = ValueError
-
-
-#######################
 # DEBUG level is 10 (https://docs.python.org/3/howto/logging.html)
 EXIT = 60
-# PRINT_STACK = 59
-PRINT = 9
 VERBOSE = 5
-VERY_VERBOSE = 1
-DEFAULT_LOGLEVEL_NAME = 'info'
-
-MAX_CHAR_LEN = 200
-OBSCURE_VALUE = '****'
-OBSCURED_FIELDS = [
-    'password',
-    'pwd',
-    'token',
-    'access_token',
-    'file',
-    'filename',
-    'new_password',
-    'password_confirm',
-]
 
 
-def script_abspath(file, *suffixes):
-    return os.path.join(os.path.dirname(os.path.realpath(file)), *suffixes)
-
-
-AVOID_COLORS_ENV_LABEL = "IDONTWANTCOLORS"
-LOG_INI_FILE = os.path.join(script_abspath(__file__), 'logging.ini')
-LOG_INI_TESTS_FILE = os.path.join(script_abspath(__file__), 'logging_tests.ini')
-
-
-#######################
-@contextmanager
-def suppress_stdout():
-    """
-    http://thesmithfam.org/blog/2012/10/25/
-    temporarily-suppress-console-output-in-python/
-    """
-    with open(os.devnull, "w") as devnull:
-        old_stdout = sys.stdout
-        sys.stdout = devnull
-        try:
-            yield
-        finally:
-            sys.stdout = old_stdout
-
-
-#######################
 def exit(self, message=None, *args, **kws):
 
     error_code = kws.pop('error_code', 1)
@@ -113,7 +59,7 @@ class LogMe(object):
         super(LogMe, self).__init__()
 
         #####################
-        if AVOID_COLORS_ENV_LABEL in os.environ:
+        if "IDONTWANTCOLORS" in os.environ:
             self.colors_enabled = False
         testing_key = "TESTING"
         if testing_key in os.environ and os.environ.get(testing_key) == '1':
@@ -135,11 +81,19 @@ class LogMe(object):
         #####################
         # Make sure there is at least one logger
         logging.getLogger(__name__).addHandler(NullHandler())
+
         # Format
+        def script_abspath(file, *suffixes):
+            return os.path.join(os.path.dirname(os.path.realpath(file)), *suffixes)
+
         if self.testing_mode:
-            fileConfig(LOG_INI_TESTS_FILE)
+            LOG_INI_TESTS_FILE = os.path.join(
+                script_abspath(__file__), 'logging_tests.ini')
+            logging.config.fileConfig(LOG_INI_TESTS_FILE)
         else:
-            fileConfig(LOG_INI_FILE)
+            LOG_INI_FILE = os.path.join(
+                script_abspath(__file__), 'logging.ini')
+            logging.config.fileConfig(LOG_INI_FILE)
 
         #####################
         # modify logging labels colors
@@ -290,10 +244,26 @@ def get_logger(name):
 
     # read from os DEBUG_LEVEL (level of verbosity)
     # configurated on a container level
-    USER_DEBUG_LEVEL = os.environ.get('DEBUG_LEVEL', 'VERY_VERBOSE')
+    USER_DEBUG_LEVEL = os.environ.get('DEBUG_LEVEL', 'VERBOSE')
     VERBOSITY_REQUESTED = getattr(logging, USER_DEBUG_LEVEL.upper())
 
     return please_logme.get_new_logger(name, verbosity=VERBOSITY_REQUESTED)
+
+# Logs utilities
+
+
+MAX_CHAR_LEN = 200
+OBSCURE_VALUE = '****'
+OBSCURED_FIELDS = [
+    'password',
+    'pwd',
+    'token',
+    'access_token',
+    'file',
+    'filename',
+    'new_password',
+    'password_confirm',
+]
 
 
 def re_obscure_pattern(string):
@@ -328,8 +298,7 @@ def handle_log_output(original_parameters_string):
     urlencoded = False
     try:
         parameters = json.loads(mystr)
-    except JSONDecodeError:
-
+    except json.decoder.JSONDecodeError:
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True

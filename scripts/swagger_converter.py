@@ -71,7 +71,7 @@ for swagger_folder in os.listdir(PROJECT_DIR):
                 data = {}
                 for m in keys:
                     if m not in mappings:
-                        log.exit("Missing %s label in %f.%p.specs", m, pfile, pclass)
+                        log.exit("Missing %s label in %s.%s.specs", m, pfile, pclass)
 
                     u = mappings.get(m)
 
