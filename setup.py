@@ -62,8 +62,6 @@ setup(
         "injector==0.12",
         "flask_injector==0.10.1",
 
-        # Already installed from utils, forcing here since bravado-core install 5.1,
-        # not compatible with docker-compose 1.24
         "PyYAML==3.13",
 
         # DB drivers
@@ -78,6 +76,7 @@ setup(
         "swagger-spec-validator",
 
         # Utilities
+        "loguru",
         "glom",
         "psutil",
         "plumbum",
