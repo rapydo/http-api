@@ -25,9 +25,7 @@ setup(
         main_package: [
             'confs/services.yaml',
             'models/swagger.yaml',
-            'templates/index.html',
-            'utilities/logging.ini',
-            'utilities/logging_tests.ini'
+            'templates/index.html'
         ],
     },
     entry_points='''
