@@ -89,7 +89,7 @@ def launch():
     ]
 
     if starting_up():
-        log.exit("Please wait few more seconds: resources still starting up")
+        log.exit("Please wait few more seconds: resources are still starting up")
     else:
         main(args)
         log.warning("Server shutdown")
