@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
 import sys
 import json
 import urllib
-from loguru import logger as log
 
+try:
+    from loguru import logger as log
+except ValueError as e:
+    print("Cannot initialize logs: {}".format(e))
+    sys.exit(1)
+
+
+log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
 LOGS_FOLDER = "/logs"
 LOGS_FILE = os.environ.get("HOSTNAME", "backend")
 LOGS_PATH = os.path.join(LOGS_FOLDER, "{}.log".format(LOGS_FILE))
@@ -43,7 +49,12 @@ log.remove()
 if LOGS_PATH is not None:
     log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
 
-log.add(sys.stderr, colorize=True, format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>")
+log.add(
+    sys.stderr,
+    level=log_level,
+    colorize=True,
+    format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>"
+)
 
 # Logs utilities
 
