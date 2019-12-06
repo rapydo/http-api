@@ -354,7 +354,7 @@ class Detector(object):
                 'initialization',
                 'initialization',
             )
-            module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+            module = Meta.get_module_from_string(module_path)
             meta = Meta()
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True

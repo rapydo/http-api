@@ -63,8 +63,7 @@ class Meta(object):
         modulestring,
         prefix_package=False,
         exit_if_not_found=False,
-        exit_on_fail=False,
-        debug_on_fail=True,
+        exit_on_fail=False
     ):
         """
         Getting a module import
@@ -86,12 +85,10 @@ class Meta(object):
             # Meta language for dinamically import
             module = import_module(modulestring)
         except import_exceptions as e:  # pylint:disable=catching-non-exception
-            args = {'msg': "Failed to load module:\n{}".format(e), 'exc_info': True}
             if exit_if_not_found:
-                log.exit(**args)
+                log.exit("Failed to load module:\n{}", e)
             else:
-                if debug_on_fail:
-                    log.warning(**args)
+                log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
             if exit_on_fail:
                 raise e
@@ -241,7 +238,7 @@ class Meta(object):
         abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
         MyClass = self.get_class_from_string(
             class_name,
-            Meta.get_module_from_string(abspath, debug_on_fail=False),
+            Meta.get_module_from_string(abspath),
             skip_error=True,
         )
 
