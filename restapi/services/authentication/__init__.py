@@ -20,6 +20,7 @@ from restapi.attributes import ALL_ROLES, ANY_ROLE
 from restapi.utilities.meta import Meta
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
+from restapi.utilities.globals import mem
 
 from restapi.utilities.logs import log
 
@@ -226,6 +227,38 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         ip = request.remote_addr
         return ip
+
+    @staticmethod
+    def localize_ip(ip):
+
+        try:
+            data = mem.geo_reader.get(ip)
+
+            if data is None:
+                return "Unknown"
+
+            if 'city' in data:
+                try:
+                    return data['city']['names']['en']
+                except BaseException:
+                    log.error("Missing city.names.en in {}", data)
+                    return "Unknown city"
+            if 'country' in data:
+                try:
+                    return data['country']['names']['en']
+                except BaseException:
+                    log.error("Missing country.names.en in {}", data)
+                    return "Unknown country"
+            if 'continent' in data:
+                try:
+                    return data['continent']['names']['en']
+                except BaseException:
+                    log.error("Missing continent.names.en in {}", data)
+                    return "Unknown continent"
+        except BaseException as e:
+            log.error(e)
+
+        return "Unknown"
 
     # ###################
     # # Tokens handling #
@@ -493,7 +526,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def custom_user_properties(self, userdata):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
-        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+        module = Meta.get_module_from_string(module_path)
 
         meta = Meta()
         Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
@@ -512,7 +545,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def custom_post_handle_user_input(self, user_node, input_data):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
-        module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+        module = Meta.get_module_from_string(module_path)
 
         meta = Meta()
         Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)

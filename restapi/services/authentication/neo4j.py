@@ -158,6 +158,7 @@ class Authentication(BaseAuthentication):
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -173,6 +174,7 @@ class Authentication(BaseAuthentication):
         token_node.last_access = now
         token_node.expiration = exp
         token_node.IP = ip
+        token_node.hostname = ip_loc
 
         token_node.save()
         # Save user updated in profile endpoint

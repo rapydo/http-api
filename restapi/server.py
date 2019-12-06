@@ -11,6 +11,7 @@ from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from geolite2 import geolite2
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH
 from restapi.rest.response import InternalResponse
@@ -106,7 +107,9 @@ def create_app(
 
     # Initialize reading of all files
     mem.customizer = Customizer(testing_mode, init_mode)
-    # FIXME: try to remove mem. from everywhere...
+    mem.geo_reader = geolite2.reader()
+    # when to close??
+    # geolite2.close()
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')

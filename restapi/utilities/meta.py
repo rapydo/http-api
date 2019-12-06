@@ -87,8 +87,8 @@ class Meta(object):
         except import_exceptions as e:  # pylint:disable=catching-non-exception
             if exit_if_not_found:
                 log.exit("Failed to load module:\n{}", e)
-            else:
-                log.warning("Failed to load module:\n{}", e)
+            # else:
+            #     log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
             if exit_on_fail:
                 raise e

@@ -78,7 +78,8 @@ setup(
         "glom",
         "psutil",
         "plumbum",
-        "better_exceptions"
+        "better_exceptions",
+        "maxminddb-geolite2"
     ],
     classifiers=[
         'Programming Language :: Python',

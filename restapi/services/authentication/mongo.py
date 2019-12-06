@@ -193,6 +193,7 @@ class Authentication(BaseAuthentication):
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -211,7 +212,7 @@ class Authentication(BaseAuthentication):
                 last_access=now,
                 expiration=exp,
                 IP=ip,
-                hostname="",
+                hostname=ip_loc,
                 user_id=user,
             ).save()
 
