@@ -62,7 +62,7 @@ setup(
         "injector==0.12",
         "flask_injector==0.10.1",
 
-        "PyYAML==3.13",
+        "PyYAML==5.2",
 
         # DB drivers
         # "neomodel==3.3.1",
