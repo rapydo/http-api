@@ -198,7 +198,7 @@ def create_app(
         if len(mem.customizer._schema_endpoint.uris) > 0:
             log.debug("Found one or more schema to expose")
             urls = [uri for _, uri in mem.customizer._schema_endpoint.uris.items()]
-            rest_api.add_resource(resource.cls, *urls)
+            rest_api.add_resource(mem.customizer._schema_endpoint.cls, *urls)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)

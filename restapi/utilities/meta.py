@@ -41,7 +41,7 @@ class Meta(object):
                 ]
             )
         except AttributeError:
-            log.warning("Could not find any class inside your module")
+            log.warning("Could not find any class in module {}", module)
 
         return classes
 

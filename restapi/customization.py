@@ -144,7 +144,11 @@ class Customizer(object):
                 module_name = "{}.{}".format(apiclass_module, module_file)
                 # Convert module name into a module
                 try:
-                    module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+                    module = Meta.get_module_from_string(
+                        module_name,
+                        exit_on_fail=True,
+                        exit_if_not_found=True
+                    )
                 except BaseException as e:
                     log.exit("Cannot import {}\nError: {}", module_name, e)
 
