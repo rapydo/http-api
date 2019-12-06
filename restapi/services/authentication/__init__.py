@@ -34,8 +34,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     """
 
     ##########################
-    # This string will be replaced with a proper secret file
-    JWT_SECRET = 'top secret!'
+    # Secret loaded from secret.key file
+    JWT_SECRET = None
     JWT_ALGO = 'HS256'
     # FIXME: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
     token_type = 'Bearer'
@@ -126,23 +126,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
     def import_secret(self, abs_filename):
         """
-        Configure the JWT_SECRET from a file
-
-        If the file does not exist, print instructions
-        to create it from a shell with a random key
-        and continues with default key
+        Load the JWT_SECRET from a file
         """
 
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
+            return self.JWT_SECRET
         except IOError:
-            log.warning("Jwt secret file {} not found, using default", abs_filename)
-            log.info(
-                "To create your own secret file:\n"
-                + "head -c 24 /dev/urandom > {}".format(abs_filename)
-            )
-
-        return self.JWT_SECRET
+            log.exit("Jwt secret file {} not found", abs_filename)
 
     def set_oauth2_services(self, services):
         self._oauth2 = services
