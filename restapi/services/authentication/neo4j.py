@@ -198,7 +198,10 @@ class Authentication(BaseAuthentication):
 
             if now > token_node.expiration:
                 self.invalidate_token(token=token_node.token)
-                log.critical("This token is no longer valid")
+                log.info(
+                    "This token is no longer valid: expired since {}",
+                    token_node.strftime("%d/%m/%Y")
+                )
                 return False
 
             exp = now + timedelta(seconds=self.shortTTL)

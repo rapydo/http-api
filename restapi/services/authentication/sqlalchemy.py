@@ -232,7 +232,10 @@ class Authentication(BaseAuthentication):
 
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
-            log.critical("This token is no longer valid")
+            log.info(
+                "This token is no longer valid: expired since {}",
+                token_entry.strftime("%d/%m/%Y")
+            )
             return False
 
         exp = now + timedelta(seconds=self.shortTTL)
