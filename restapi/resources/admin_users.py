@@ -10,7 +10,7 @@ from restapi.confs import get_project_configuration
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.services.mail import get_html_template
+from restapi.utilities.templates import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 
 # from restapi.utilities.logs import log

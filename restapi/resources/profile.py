@@ -11,8 +11,8 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
-from restapi.services.mail import get_html_template
 from restapi.flask_ext.flask_auth import HandleSecurity
+from restapi.utilities.templates import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
@@ -449,8 +449,8 @@ class ProfileActivate(EndpointResource):
         if user is not None:
             send_activation_link(self.auth, user)
         msg = (
-            "We are sending an email to your email address where "
-            + "you will find the link to activate your account"
+            "We are sending an email to your email address where " +
+            "you will find the link to activate your account"
         )
         return msg
 

@@ -243,6 +243,11 @@ def get_html_template(template_file, replaces):
     """
     # FIXME: use jinja2 instead :)
     """
+    # Deprecated since 0.7.1
+    log.warning(
+        "Deprecated template, convert it with jinja and import get_html_template " +
+        "from restapi.utilities.templates instead"
+    )
     path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
     template = os.path.join(path, "emails", template_file)
 
