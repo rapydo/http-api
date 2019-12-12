@@ -30,6 +30,12 @@ class IrodsPythonClient:
         self.variables = variables
         self.chunk_size = self.variables.get('chunksize', default_chunk_size)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.prc.cleanup()
+
     def connect(self):
         return self
 
