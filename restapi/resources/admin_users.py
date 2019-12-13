@@ -337,7 +337,7 @@ Password: "{}"
                         if g == default_group:
                             continue
 
-                        group_name = "{} - {}".formatF(g.shortname, g.fullname)
+                        group_name = "{} - {}".format(g.shortname, g.fullname)
                         new_schema[idx]["enum"].append({g.uuid: group_name})
                         if defg is None:
                             defg = g.uuid
