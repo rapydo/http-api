@@ -470,7 +470,7 @@ class IrodsPythonClient:
         # log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
-            log.warn("Already exists")
+            log.warning("Already exists")
             raise IrodsException(
                 "File '"
                 + destination

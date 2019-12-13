@@ -103,7 +103,7 @@ class Uploader(object):
 
         if os.path.exists(abs_file):
 
-            log.warn("File already exists")
+            log.warning("File already exists")
             if force:
                 os.remove(abs_file)
                 log.debug("Forced removal")
@@ -187,7 +187,7 @@ class Uploader(object):
         # But corrupted...
         if os.path.exists(abs_file):
 
-            log.warn("Already exists")
+            log.warning("Already exists")
             if force:
                 os.remove(abs_file)
                 log.debug("Forced removal")
@@ -252,7 +252,7 @@ class Uploader(object):
 
         if os.path.exists(destination):
 
-            log.warn("Already exists")
+            log.warning("Already exists")
             if force:
                 os.remove(destination)
                 log.debug("Forced removal")
@@ -297,7 +297,7 @@ class Uploader(object):
                 errors={"Permissions": "Failed to remove file"},
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
-        log.warn("Removed '{}'", abs_file)
+        log.warning("Removed '{}'", abs_file)
 
         if skip_response:
             return

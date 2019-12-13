@@ -56,7 +56,7 @@ class RabbitWrapper(object):
 
         # Initial connection:
         if self.__dont_connect:
-            log.warn('Will not connect to RabbitMQ (dont_connect = True).')
+            log.warning('Will not connect to RabbitMQ (dont_connect = True).')
             log.debug(
                 'Creating RabbitMQ connection wrapper... done. (without connection).'
             )
@@ -70,7 +70,7 @@ class RabbitWrapper(object):
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn(
+            log.warning(
                 'Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.'
             )
             log.debug(
@@ -107,7 +107,7 @@ class RabbitWrapper(object):
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn('Connecting to the Rabbit... failed ({})', e)
+            log.warning('Connecting to the Rabbit... failed ({})', e)
             self.__connection = None
             self.__couldnt_connect = self.__couldnt_connect + 1
             raise e
@@ -187,7 +187,7 @@ class RabbitWrapper(object):
                     )
                     break
                 else:
-                    log.warn('Log fail without clear reason')
+                    log.warning('Log fail without clear reason')
 
             except pika.exceptions.ConnectionClosed as e:
                 # TODO: This happens often. Check if heartbeat solves problem.
