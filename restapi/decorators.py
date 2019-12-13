@@ -155,6 +155,9 @@ def catch_graph_exceptions(func):
 
         except (UniqueProperty) as e:
 
+            # Duplicated in admin_users
+            # Please not that neomodel changed this error
+            # the correct version is in admin_users
             prefix = "Node [0-9]+ already exists with label"
             m = re.search("{} (.+) and property (.+)".format(prefix), str(e))
 

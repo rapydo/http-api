@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from sqlalchemy.exc import IntegrityError
 
 from restapi import decorators as decorate
@@ -372,7 +373,22 @@ Password: "{}"
         else:
             unhashed_password = None
 
-        user = self.auth.create_user(properties, roles)
+        try:
+            user = self.auth.create_user(properties, roles)
+        except AttributeError as e:
+
+            # Duplicated from decorators
+            prefix = "Can't create user .*:\nNode\([0-9]+\) already exists with label"
+            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(prefix), str(e))
+
+            if m:
+                node = m.group(1)
+                prop = m.group(2)
+                val = m.group(3)
+                error = "A {} already exists with {} = {}".format(node, prop, val)
+                raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
+            else:
+                raise e
 
         if self.sql_enabled:
 
