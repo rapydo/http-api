@@ -134,10 +134,12 @@ class HTTPTokenAuth(object):
                         request.data
                         # Mimic the response from a normal endpoint
                         # To use the same standards
+                        log.info("Invalid token received '{}'", token)
                         return decorated_self.send_errors(
-                            message="Invalid token received '{}'".format(token),
+                            message="Invalid token received",
                             headers=headers,
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                            print_error=False
                         )
 
                 # Check roles

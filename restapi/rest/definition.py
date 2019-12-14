@@ -343,7 +343,8 @@ class EndpointResource(Resource):
         )
 
     def send_errors(
-        self, message=None, errors=None, code=None, headers=None, head_method=False
+        self, message=None, errors=None, code=None, headers=None,
+        head_method=False, print_error=True
     ):
         """ Setup an error message """
 
@@ -360,7 +361,7 @@ class EndpointResource(Resource):
             # default error
             code = hcodes.HTTP_SERVER_ERROR
 
-        if errors is not None and len(errors) > 0:
+        if print_error and errors is not None and len(errors) > 0:
             log.error(errors)
 
         if head_method:
