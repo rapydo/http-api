@@ -63,15 +63,12 @@ def get_response():
 
 
 #####################################################################
-# Error handling with custom methods
-def send_error(self, e, code=None):
+# # Error handling with custom methods
+# def send_error(self, error, code=hcodes.HTTP_BAD_REQUEST):
 
-    if code is None:
-        code = hcodes.HTTP_BAD_REQUEST
-    error = str(e)
-    # It is already print by send_errors, it is a duplicated msg
-    # log.error(error)
-    return self.send_errors(message=error, code=code)
+#     # It is already print by send_errors, it is a duplicated msg
+#     # log.error(error)
+#     return self.send_errors(message=str(error), code=code)
 
 
 def catch_error(exception=None, catch_generic=True, exception_label=None, **kwargs):
@@ -98,20 +95,19 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
             except exception as e:
 
                 message = exception_label + str(e)
-                # Already print by send_error, it is a duplicated message
-                # log.warning(exception_label, exc_info=True)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
-                    return send_error(self, message, error_code)
                 else:
-                    return send_error(self, message)
+                    error_code = hcodes.HTTP_BAD_REQUEST
+                # return send_error(self, message, error_code)
+                return self.send_errors(message=message, code=error_code)
 
             # Catch the basic API exception
             except RestApiException as e:
-                # log.warning(e, exc_info=True)
                 log.warning(e)
                 if catch_generic:
-                    return send_error(self, e, e.status_code)
+                    # return send_error(self, e, e.status_code)
+                    return self.send_errors(message=str(e), code=e.status_code)
                 else:
                     raise e
 
@@ -131,8 +127,9 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                     if excname in ['AttributeError', 'ValueError', 'KeyError']:
                         error = 'Server failure; please contact admin.'
                     else:
-                        error = e
-                    return send_error(self, error)
+                        error = str(e)
+                    # return send_error(self, error, hcodes.HTTP_BAD_REQUEST)
+                    return self.send_errors(message=error, code=hcodes.HTTP_BAD_REQUEST)
                 else:
                     raise e
 
