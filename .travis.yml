@@ -30,9 +30,9 @@ jobs:
     script:
       scripts/test_and_coverage.sh &&
       cd coverage_files &&
-      ls .coverage* &&
+      ls -la .coverage* &&
       coverage combine &&
-      ls .coverage &&
+      ls -la .coverage &&
       coveralls
     env:
     - PROJECT=COVERAGE
