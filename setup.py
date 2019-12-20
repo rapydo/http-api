@@ -58,7 +58,7 @@ setup(
         # annotations to declare dependencies. :/
         # "injector==0.17",
         "injector==0.12",
-        "flask_injector==0.10.1",
+        "flask_injector==0.12.0",
 
         "PyYAML==5.2",
 
