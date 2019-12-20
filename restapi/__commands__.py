@@ -214,7 +214,7 @@ def tests(wait, core, file, folder):
 
     # launch unittests and also compute coverage
     log.warning(
-        "Running all tests and computing coverage.\n" + "This might take some minutes."
+        "Running all tests and computing coverage.\n" + "This may take some minutes."
     )
 
     parameters = []

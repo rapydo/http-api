@@ -87,7 +87,6 @@ else
 	# CURRENT DIR IS $CORE_DIR
 
 	echo "project: ${PROJECT}" > .projectrc
-	echo "development: True" >> .projectrc
 	echo "project_configuration:" >> .projectrc
 	echo "  variables:" >> .projectrc
 	echo "    env:" >> .projectrc
