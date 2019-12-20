@@ -27,8 +27,8 @@ jobs:
     env:
     - PROJECT=pushpin
   - stage: coverage
+    script: scripts/test_and_coverage.sh
     after_success:
-      scripts/test_and_coverage.sh &&
       cd coverage_files &&
       ls .coverage* &&
       coverage combine &&
