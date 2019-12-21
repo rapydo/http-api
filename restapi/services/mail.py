@@ -26,9 +26,9 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
     ###################
     # https://stackabuse.com/how-to-send-emails-with-gmail-using-python/
     if smtp_port == '465':
-        smtp = SMTP_SSL()
+        smtp = SMTP_SSL(smtp_host)
     else:
-        smtp = SMTP()
+        smtp = SMTP(smtp_host)
         # if this is 587 we might need also
         # smtp.starttls()
 
