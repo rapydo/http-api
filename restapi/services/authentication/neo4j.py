@@ -200,7 +200,7 @@ class Authentication(BaseAuthentication):
                 self.invalidate_token(token=token_node.token)
                 log.info(
                     "This token is no longer valid: expired since {}",
-                    token_node.strftime("%d/%m/%Y")
+                    token_node.expiration.strftime("%d/%m/%Y")
                 )
                 return False
 
