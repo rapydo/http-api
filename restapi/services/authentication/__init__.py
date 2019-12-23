@@ -228,12 +228,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if data is None:
                 return "Unknown"
 
-            if 'city' in data:
-                try:
-                    return data['city']['names']['en']
-                except BaseException:
-                    log.error("Missing city.names.en in {}", data)
-                    return "Unknown city"
+            # if 'city' in data:
+            #     try:
+            #         return data['city']['names']['en']
+            #     except BaseException:
+            #         log.error("Missing city.names.en in {}", data)
+            #         return "Unknown city"
             if 'country' in data:
                 try:
                     return data['country']['names']['en']
