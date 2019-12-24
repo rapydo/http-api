@@ -66,9 +66,10 @@ class CeleryExt(BaseExtension):
             BROKER_CREDENTIALS = ""
 
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://{}{}{}'.format(
+            BROKER_URL = 'amqp://{}{}:{}{}'.format(
                 BROKER_CREDENTIALS,
                 BROKER_HOST,
+                BROKER_PORT,
                 BROKER_VHOST,
             )
             log.info("Configured RabbitMQ as Celery broker {}", BROKER_URL)
