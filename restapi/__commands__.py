@@ -152,10 +152,6 @@ def mywait():
     """
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
-
-    NOTE: this could be packaged as a `waiter` cli utility probably
-    p.s. could that be done with rapydo-utils maybe?
-    pp.ss. could rapydo utils be python 2.7+ compliant?
     """
     from restapi.services.detect import detector
 
@@ -165,17 +161,33 @@ def mywait():
             continue
 
         if name == 'celery':
-            host, port = get_service_address(
-                myclass.variables, 'broker_host', 'broker_port', name
-            )
 
-            wait_socket(host, port, "celery_broker")
+            broker = myclass.variables.get('broker')
 
-            host, port = get_service_address(
-                myclass.variables, 'backend_host', 'backend_port', name
-            )
+            if broker == 'RABBIT':
+                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+            elif broker == 'REDIS':
+                service_vars = detector.load_variables({'prefix': 'redis'})
+            else:
+                log.exit("Invalid celery broker: {}", broker)
 
-            wait_socket(host, port, "celery_backend")
+            host, port = get_service_address(service_vars, 'host', 'port', broker)
+
+            wait_socket(host, port, broker)
+
+            backend = myclass.variables.get('backend')
+            if backend == 'RABBIT':
+                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+            elif backend == 'REDIS':
+                service_vars = detector.load_variables({'prefix': 'redis'})
+            elif backend == 'MONGODB':
+                service_vars = detector.load_variables({'prefix': 'mongo'})
+            else:
+                log.exit("Invalid celery backend: {}", backend)
+
+            host, port = get_service_address(service_vars, 'host', 'port', backend)
+
+            wait_socket(host, port, backend)
         else:
             host, port = get_service_address(myclass.variables, 'host', 'port', name)
 

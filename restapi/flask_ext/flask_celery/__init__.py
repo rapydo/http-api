@@ -32,11 +32,25 @@ class CeleryExt(BaseExtension):
             # celery_app = None
             # return celery_app
 
-        BROKER_HOST = self.variables.get("broker_host")
-        BROKER_PORT = int(self.variables.get("broker_port"))
-        BROKER_USER = self.variables.get("broker_user", "")
-        BROKER_PASSWORD = self.variables.get("broker_password", "")
-        BROKER_VHOST = self.variables.get("broker_vhost", "")
+        # Do not import before loading the ext!
+        from restapi.services.detect import Detector
+
+        if broker == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            BROKER_HOST = service_vars.get("host")
+            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_USER = service_vars.get("user", "")
+            BROKER_PASSWORD = service_vars.get("password", "")
+            BROKER_VHOST = service_vars.get("vhost", "")
+        elif broker == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'redis'})
+            BROKER_HOST = service_vars.get("host")
+            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_USER = ""
+            BROKER_PASSWORD = ""
+            BROKER_VHOST = ""
+        else:
+            log.exit("Invalid celery broker: {}", broker)
 
         if BROKER_USER == "":
             BROKER_USER = None
@@ -45,17 +59,6 @@ class CeleryExt(BaseExtension):
 
         if BROKER_VHOST != "":
             BROKER_VHOST = "/{}".format(BROKER_VHOST)
-
-        backend = self.variables.get("backend", broker)
-        BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
-        BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
-        BACKEND_USER = self.variables.get("backend_user", BROKER_USER)
-        BACKEND_PASSWORD = self.variables.get("backend_password", BROKER_PASSWORD)
-
-        if BACKEND_USER == "":
-            BACKEND_USER = None
-        if BACKEND_PASSWORD == "":
-            BACKEND_PASSWORD = None
 
         if BROKER_USER is not None and BROKER_PASSWORD is not None:
             BROKER_CREDENTIALS = '{}:{}@'.format(BROKER_USER, BROKER_PASSWORD)
@@ -80,6 +83,34 @@ class CeleryExt(BaseExtension):
             log.error("Unable to start Celery unknown broker service: {}", broker)
             celery_app = None
             return celery_app
+
+        backend = self.variables.get("backend", broker)
+
+        if backend == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = service_vars.get("user", "")
+            BACKEND_PASSWORD = service_vars.get("password", "")
+        elif backend == 'REDIS':
+            service_vars = Detector.load_variables({'prefix': 'redis'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = ""
+            BACKEND_PASSWORD = ""
+        elif backend == 'MONGODB':
+            service_vars = Detector.load_variables({'prefix': 'mongo'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = service_vars.get("user", "")
+            BACKEND_PASSWORD = service_vars.get("password", "")
+        else:
+            log.exit("Invalid celery backend: {}", backend)
+
+        if BACKEND_USER == "":
+            BACKEND_USER = None
+        if BACKEND_PASSWORD == "":
+            BACKEND_PASSWORD = None
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
             BACKEND_CREDENTIALS = '{}:{}@'.format(BACKEND_USER, BACKEND_PASSWORD)
