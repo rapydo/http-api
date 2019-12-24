@@ -92,6 +92,8 @@ else
 	echo "    env:" >> .projectrc
 	echo "      DEFAULT_DHLEN: 256" >> .projectrc
 	echo "      GRAPHDB_AUTOINDEXING: False" >> .projectrc
+	echo "      RABBITMQ_USER: white" >> .projectrc
+	echo "      RABBITMQ_PASSWORD: rabbit" >> .projectrc
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo init
