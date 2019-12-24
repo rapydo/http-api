@@ -12,7 +12,7 @@ from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.flask_ext import BaseExtension
 from restapi.confs import get_project_configuration
 
-from restapi.utilities.logs import log
+from restapi.utilities.logs import log, obfuscate_url
 
 
 class CeleryExt(BaseExtension):
@@ -72,14 +72,16 @@ class CeleryExt(BaseExtension):
                 BROKER_PORT,
                 BROKER_VHOST,
             )
-            log.info("Configured RabbitMQ as Celery broker {}", BROKER_URL)
+            log.info(
+                "Configured RabbitMQ as Celery broker {}", obfuscate_url(BROKER_URL))
         elif broker == 'REDIS':
             BROKER_URL = 'redis://{}{}:{}/0'.format(
                 BROKER_CREDENTIALS,
                 BROKER_HOST,
                 BROKER_PORT,
             )
-            log.info("Configured Redis as Celery broker {}", BROKER_URL)
+            log.info(
+                "Configured Redis as Celery broker {}", obfuscate_url(BROKER_URL))
         else:
             log.error("Unable to start Celery unknown broker service: {}", broker)
             celery_app = None
@@ -124,21 +126,24 @@ class CeleryExt(BaseExtension):
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured RabbitMQ as Celery backend {}", BACKEND_URL)
+            log.info(
+                "Configured RabbitMQ as Celery backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'REDIS':
             BACKEND_URL = 'redis://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured Redis as Celery backend {}", BACKEND_URL)
+            log.info(
+                "Configured Redis as Celery backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'MONGODB':
             BACKEND_URL = 'mongodb://{}{}:{}'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured MongoDB as Celery backend {}", BACKEND_URL)
+            log.info(
+                "Configured MongoDB as Celery backend {}", obfuscate_url(BACKEND_URL))
         else:
             log.exit("Unable to start Celery unknown backend service: {}", backend)
             # celery_app = None

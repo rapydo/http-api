@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import urllib
+import re
 
 try:
     from loguru import logger as log
@@ -114,6 +115,10 @@ def handle_log_output(original_parameters_string):
             return original_parameters_string
 
     return obfuscate_dict(parameters, urlencoded=urlencoded)
+
+
+def obfuscate_url(url):
+    return re.sub(r'\/\/.*:.*@', '//***:***@', url)
 
 
 def obfuscate_dict(parameters, urlencoded=False):
