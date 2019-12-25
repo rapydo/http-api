@@ -27,8 +27,8 @@ jobs:
     env:
     - PROJECT=centos
   - stage: coverage
-    script:
-      scripts/test_and_coverage.sh &&
+    script: scripts/test_and_coverage.sh
+    after_success:
       cd coverage_files &&
       ls .coverage* &&
       coverage combine &&
