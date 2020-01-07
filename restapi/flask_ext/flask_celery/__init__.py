@@ -42,6 +42,7 @@ class CeleryExt(BaseExtension):
             BROKER_USER = service_vars.get("user", "")
             BROKER_PASSWORD = service_vars.get("password", "")
             BROKER_VHOST = service_vars.get("vhost", "")
+            BROKER_USE_SSL = service_vars.get("ssl_enabled", False)
         elif broker == 'RABBIT':
             service_vars = Detector.load_variables({'prefix': 'redis'})
             BROKER_HOST = service_vars.get("host")
@@ -49,6 +50,7 @@ class CeleryExt(BaseExtension):
             BROKER_USER = ""
             BROKER_PASSWORD = ""
             BROKER_VHOST = ""
+            BROKER_USE_SSL = False
         else:
             log.exit("Invalid celery broker: {}", broker)
 
@@ -150,6 +152,7 @@ class CeleryExt(BaseExtension):
             # return celery_app
 
         celery_app = Celery('RestApiQueue', broker=BROKER_URL, backend=BACKEND_URL)
+        celery_app.conf['broker_use_ssl'] = BROKER_USE_SSL
 
         # if not worker_mode:
 
