@@ -330,9 +330,9 @@ class BeSwagger(object):
         output['consumes'] = [
             JSON_APPLICATION,
             # required for parameters with "in: formData"
-            "application/x-www-form-urlencoded",
+            # "application/x-www-form-urlencoded",
             # required for parameters of "type: file"
-            "multipart/form-data"
+            # "multipart/form-data"
         ]
         output['produces'] = [JSON_APPLICATION]
 
