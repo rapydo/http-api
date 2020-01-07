@@ -42,7 +42,9 @@ class CeleryExt(BaseExtension):
             BROKER_USER = service_vars.get("user", "")
             BROKER_PASSWORD = service_vars.get("password", "")
             BROKER_VHOST = service_vars.get("vhost", "")
-            BROKER_USE_SSL = service_vars.get("ssl_enabled", False)
+            BROKER_USE_SSL = Detector.get_bool_envvar(
+                service_vars.get("ssl_enabled", False)
+            )
         elif broker == 'RABBIT':
             service_vars = Detector.load_variables({'prefix': 'redis'})
             BROKER_HOST = service_vars.get("host")

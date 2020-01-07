@@ -40,9 +40,8 @@ class Detector(object):
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):
+    def get_bool_envvar(bool_var):
 
-        bool_var = os.environ.get(name, False)
         if isinstance(bool_var, bool):
             return bool_var
 
@@ -55,12 +54,22 @@ class Detector(object):
             pass
 
         # STRINGS
-        # any non empty string with a least one char
-        # has to be considered True
-        if isinstance(bool_var, str) and len(bool_var) > 0:
-            return True
+        if isinstance(bool_var, str):
+            # false / False / FALSE
+            if bool_var.lower() == 'false':
+                return False
+            # any non empty string has to be considered True
+            if len(bool_var) > 0:
+                return True
 
         return False
+
+    @staticmethod
+    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
+    def get_bool_from_os(name):
+
+        bool_var = os.environ.get(name, False)
+        return Detector.get_bool_envvar(bool_var)
 
     @staticmethod
     def prefix_name(service):
