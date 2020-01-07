@@ -327,7 +327,13 @@ class BeSwagger(object):
             if k in models:
                 output[k] = models.get(k, {})
 
-        output['consumes'] = [JSON_APPLICATION]
+        output['consumes'] = [
+            JSON_APPLICATION,
+            # required for parameters with "in: formData"
+            "application/x-www-form-urlencoded",
+            # required for parameters of "type: file"
+            "multipart/form-data"
+        ]
         output['produces'] = [JSON_APPLICATION]
 
         ###################
