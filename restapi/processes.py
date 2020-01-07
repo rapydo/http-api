@@ -68,7 +68,7 @@ def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
         else:
 
             counter += 1
-            if counter % 5 == 0:
+            if counter % 6 == 0:
                 # FIXME: also do something here if the service is external?
                 log.warning(
                     "'{}' service ({}:{}) still unavailable after {} seconds",
