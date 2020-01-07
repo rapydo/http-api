@@ -40,7 +40,7 @@ def find(prefix, suffixes=None, local_bin=False):
     return False
 
 
-def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
+def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
 
     import time
     import errno
@@ -75,7 +75,7 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
                     service_name,
                     host,
                     port,
-                    sleep_time * timeout * counter,
+                    (sleep_time + timeout) * counter,
                 )
             else:
                 log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
