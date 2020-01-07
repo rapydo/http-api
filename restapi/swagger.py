@@ -168,8 +168,9 @@ class BeSwagger(object):
                 specs['parameters'].append(path_parameter)
 
                 # replace in a new uri
+                # <param> -> {param}
                 newuri = newuri.replace(
-                    '<{}>'.format(parameter), '{{}}'.format(paramname))
+                    '<{}>'.format(parameter), '{{{}}}'.format(paramname))
 
             # cycle parameters and add them to the endpoint class
             query_params = []
