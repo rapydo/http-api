@@ -126,6 +126,7 @@ else
 
 	rapydo --production pull
 	rapydo --production start
+	rapydo --production ssl-certificate
 
 	echo "Backend server is starting"
 	sleep 30
