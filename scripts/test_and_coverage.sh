@@ -124,18 +124,18 @@ else
 
 	rapydo clean
 
-	rapydo --mode production pull
-	rapydo --mode production start
+	rapydo --production pull
+	rapydo --production start
 
 	echo "Backend server is starting"
 	sleep 30
 	echo "Backend server should be ready now!"
 
-	rapydo --mode production -s backend logs
+	rapydo --production -s backend logs
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-	rapydo --mode production remove
-	rapydo --mode production clean
+	rapydo --production remove
+	rapydo --production clean
 
 fi
