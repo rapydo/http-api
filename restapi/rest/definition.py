@@ -19,9 +19,7 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger, obfuscate_dict
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
 # Paging costants
@@ -79,7 +77,7 @@ class EndpointResource(Resource):
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
         farm = self.services.get(service_name)
         if farm is None:
-            raise AttributeError("Service %s not found" % service_name)
+            raise AttributeError("Service {} not found".format(service_name))
         instance = farm.get_instance(global_instance=global_instance, **kwargs)
         return instance
 
@@ -137,7 +135,7 @@ class EndpointResource(Resource):
                     action=act,
                     location=loc,
                 )
-                log.verbose("Accept param '%s' type %s", param, mytype)
+                log.verbose("Accept param '{}' type {}", param, mytype)
 
         # TODO: should I check body parameters?
 
@@ -200,7 +198,7 @@ class EndpointResource(Resource):
             return self._args.get(single_parameter, default)
 
         if len(self._args) > 0:
-            log.verbose("Parameters %s", obfuscate_dict(self._args))
+            log.verbose("Parameters {}", obfuscate_dict(self._args))
         return self._args
 
     def set_method_id(self, name='myid', idtype='string'):
@@ -223,14 +221,14 @@ class EndpointResource(Resource):
         try:
             limit = int(limit)
         except ValueError:
-            log.warning("%s is expected to be an int, not %s", PERPAGE_KEY, limit)
+            log.warning("{} is expected to be an int, not {}", PERPAGE_KEY, limit)
             limit = DEFAULT_PERPAGE
 
         try:
             current_page = int(current_page)
         except ValueError:
             log.warning(
-                "%s is expected to be an int, not %s", CURRENTPAGE_KEY, current_page
+                "{} is expected to be an int, not {}", CURRENTPAGE_KEY, current_page
             )
             current_page = DEFAULT_CURRENTPAGE
 
@@ -345,7 +343,8 @@ class EndpointResource(Resource):
         )
 
     def send_errors(
-        self, message=None, errors=None, code=None, headers=None, head_method=False
+        self, message=None, errors=None, code=None, headers=None,
+        head_method=False, print_error=True
     ):
         """ Setup an error message """
 
@@ -362,7 +361,7 @@ class EndpointResource(Resource):
             # default error
             code = hcodes.HTTP_SERVER_ERROR
 
-        if errors is not None and len(errors) > 0:
+        if print_error and errors is not None and len(errors) > 0:
             log.error(errors)
 
         if head_method:
@@ -393,53 +392,6 @@ class EndpointResource(Resource):
         """
         # TODO: write it and use it in EUDAT
         return NotImplementedError("To be written")
-
-    @staticmethod
-    def timestamp_from_string(timestamp_string):
-
-        log.warning("DEPRECATED: use utilities/time.py instead")
-
-        """
-        Neomodels complains about UTC, this is to fix it.
-        Taken from http://stackoverflow.com/a/21952077/2114395
-        """
-
-        precision = float(timestamp_string)
-        # return datetime.fromtimestamp(precision)
-
-        utc_dt = datetime.utcfromtimestamp(precision)
-        aware_utc_dt = utc_dt.replace(tzinfo=pytz.utc)
-
-        return aware_utc_dt
-
-    @staticmethod
-    def date_from_string(date, fmt="%d/%m/%Y"):
-
-        log.warning("DEPRECATED: use utilities/time.py instead")
-
-        if date == "":
-            return ""
-        # datetime.now(pytz.utc)
-        try:
-            return_date = datetime.strptime(date, fmt)
-        except BaseException:
-            return_date = dateutil.parser.parse(date)
-
-        return pytz.utc.localize(return_date)
-
-    @staticmethod
-    def string_from_timestamp(timestamp):
-
-        log.warning("DEPRECATED: use utilities/time.py instead")
-
-        if timestamp == "":
-            return ""
-        try:
-            date = datetime.fromtimestamp(float(timestamp))
-            return date.isoformat()
-        except BaseException:
-            log.warning("Errors parsing %s", timestamp)
-            return ""
 
     def formatJsonResponse(self, instances, resource_type=None):
         """
@@ -500,7 +452,7 @@ class EndpointResource(Resource):
 
                     # Based on neomodel choices:
                     # http://neomodel.readthedocs.io/en/latest/properties.html#choices
-                    choice_function = "get_%s_display" % key
+                    choice_function = "get_{}_display".format(key)
                     if hasattr(obj, choice_function):
                         fn = getattr(obj, choice_function)
                         description = fn()
@@ -584,15 +536,15 @@ class EndpointResource(Resource):
                     field_name = '_relationships_to_follow'
 
                 if hasattr(instance, field_name):
-                    log.warning("Obsolete use of %s into models", field_name)
+                    log.warning("Obsolete use of {} into models", field_name)
                     relationships = getattr(instance, field_name)
         elif relationships_expansion is not None:
             for e in relationships_expansion:
-                if e.startswith("%s." % relationship_name):
+                if e.startswith("{}.".format(relationship_name)):
                     rel_name_len = len(relationship_name) + 1
                     expansion_rel = e[rel_name_len:]
                     log.debug(
-                        "Expanding %s relationship with %s",
+                        "Expanding {} relationship with {}",
                         relationship_name,
                         expansion_rel,
                     )
@@ -609,7 +561,7 @@ class EndpointResource(Resource):
                 if relationship_name == "":
                     rel_name = relationship
                 else:
-                    rel_name = "%s.%s" % (relationship_name, relationship)
+                    rel_name = "{}.{}".format(relationship_name, relationship)
                 subnode = self.getJsonResponse(
                     node,
                     view_public_only=view_public_only,
@@ -630,7 +582,7 @@ class EndpointResource(Resource):
                 for k in attrs:
                     if k in subnode['attributes']:
                         log.warning(
-                            "Name collision %s on node %s, model %s, property model=%s",
+                            "Name collision {} on node {}, model {}, property model={}",
                             k, subnode, type(node), type(r)
                         )
                     subnode['attributes'][k] = attrs[k]
@@ -751,12 +703,12 @@ class EndpointResource(Resource):
 
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(
-                "No parameters schema defined for %s" % url,
+                "No parameters schema defined for {}".format(url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
         if method not in mem.customizer._parameter_schemas[url]:
             raise RestApiException(
-                "No parameters schema defined for method %s in %s" % (method, url),
+                "No parameters schema defined for method {} in {}".format(method, url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
             return None
@@ -779,7 +731,7 @@ class EndpointResource(Resource):
             # this field is missing but required!
             elif checkRequired and field["required"]:
                 raise RestApiException(
-                    'Missing field: %s' % k, status_code=hcodes.HTTP_BAD_REQUEST
+                    'Missing field: {}'.format(k), status_code=hcodes.HTTP_BAD_REQUEST
                 )
 
         return properties
@@ -883,7 +835,7 @@ class EndpointResource(Resource):
             if http.authenticate(self.auth.verify_token, token):
                 # we have a valid token in header
                 user = self.get_current_user()
-                log.debug("Logged user: %s", user.email)
+                log.debug("Logged user: {}", user.email)
 
         return user
 

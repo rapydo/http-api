@@ -10,10 +10,8 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.flask_ext.flask_mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-
-log = get_logger(__name__)
 
 if not detector.check_availability(__name__):
     log.exit("No mongodb service available for authentication")
@@ -124,7 +122,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s", e)
+                log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
         for role in userobj.roles:
@@ -181,7 +179,7 @@ class Authentication(BaseAuthentication):
 
         except BaseException as e:
             # raise e
-            raise AttributeError("Models for auth are wrong:\n%s" % e)
+            raise AttributeError("Models for auth are wrong:\n{}".format(e))
 
         # if missing_user or missing_role:
         #     for transaction in transactions:
@@ -195,6 +193,7 @@ class Authentication(BaseAuthentication):
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -213,7 +212,7 @@ class Authentication(BaseAuthentication):
                 last_access=now,
                 expiration=exp,
                 IP=ip,
-                hostname="",
+                hostname=ip_loc,
                 user_id=user,
             ).save()
 
@@ -232,7 +231,10 @@ class Authentication(BaseAuthentication):
         now = datetime.now()
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
-            log.critical("This token is no longer valid")
+            log.info(
+                "This token is no longer valid: expired since {}",
+                token_entry.strftime("%d/%m/%Y")
+            )
             return False
 
         exp = now + timedelta(seconds=self.shortTTL)
@@ -281,7 +283,7 @@ class Authentication(BaseAuthentication):
             user = self._user
         user.uuid = getUUID()
         user.save()
-        log.warning("User uuid changed to: %s", user.uuid)
+        log.warning("User uuid changed to: {}", user.uuid)
         return True
 
     def invalidate_token(self, token, user=None):

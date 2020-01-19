@@ -11,29 +11,18 @@ import pkgutil
 import inspect
 from importlib import import_module
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class Meta(object):
     """Utilities with meta in mind"""
 
-    _latest_list = {}
-    _submodules = []
-
-    def get_latest_classes(self):
-        return self._latest_list
-
-    def set_latest_classes(self, classes):
-        self._latest_list = classes
-
     def get_submodules_from_package(self, package):
-        self._submodules = []
+        submodules = []
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
-                self._submodules.append(modname)
-        return self._submodules
+                submodules.append(modname)
+        return submodules
 
     def get_classes_from_module(self, module):
         """
@@ -52,10 +41,9 @@ class Meta(object):
                 ]
             )
         except AttributeError:
-            log.warning("Could not find any class inside your module")
+            log.warning("Could not find any class in module {}", module)
 
-        self.set_latest_classes(classes)
-        return self.get_latest_classes()
+        return classes
 
     def get_new_classes_from_module(self, module):
         """
@@ -68,16 +56,14 @@ class Meta(object):
         for key, value in self.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
                 classes[key] = value
-        self.set_latest_classes(classes)
-        return self.get_latest_classes()
+        return classes
 
     @staticmethod
     def get_module_from_string(
         modulestring,
         prefix_package=False,
         exit_if_not_found=False,
-        exit_on_fail=False,
-        debug_on_fail=True,
+        exit_on_fail=False
     ):
         """
         Getting a module import
@@ -99,17 +85,15 @@ class Meta(object):
             # Meta language for dinamically import
             module = import_module(modulestring)
         except import_exceptions as e:  # pylint:disable=catching-non-exception
-            args = {'msg': "Failed to load module:\n%s" % e, 'exc_info': True}
             if exit_if_not_found:
-                log.exit(**args)
-            else:
-                if debug_on_fail:
-                    log.warning(**args)
+                log.exit("Failed to load module:\n{}", e)
+            # else:
+            #     log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
             if exit_on_fail:
                 raise e
             else:
-                log.error("Module %s not found.\nError: %s", modulestring, e)
+                log.error("Module {} not found.\nError: {}", modulestring, e)
 
         return module
 
@@ -122,7 +106,7 @@ class Meta(object):
 
         for module_name in self.get_submodules_from_package(package):
             module_path = package_name + '.' + module_name
-            log.debug("Loading module '%s'", module_path)
+            log.debug("Loading module '{}'", module_path)
 
             submod = Meta.get_module_from_string(
                 module_path,
@@ -189,7 +173,7 @@ class Meta(object):
 
     @staticmethod
     def models_module(name, package):
-        module_name = "%s.%s.%s" % (package, 'models', name)
+        module_name = "{}.models.{}".format(package, name)
         return Meta.get_module_from_string(module_name, exit_on_fail=True)
 
     def obj_from_models(obj_name, module_name, package):
@@ -213,8 +197,8 @@ class Meta(object):
     @staticmethod
     def get_authentication_module(auth_service):
 
-        module_name = "%s.%s.%s" % ('services', 'authentication', auth_service)
-        log.verbose("Loading auth extension: %s", module_name)
+        module_name = "services.authentication.{}".format(auth_service)
+        log.verbose("Loading auth extension: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )
@@ -251,10 +235,10 @@ class Meta(object):
 
     def get_customizer_class(self, module_relpath, class_name, args=None):
 
-        abspath = "%s.%s" % (CUSTOM_PACKAGE, module_relpath)
+        abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
         MyClass = self.get_class_from_string(
             class_name,
-            Meta.get_module_from_string(abspath, debug_on_fail=False),
+            Meta.get_module_from_string(abspath),
             skip_error=True,
         )
 
@@ -263,12 +247,12 @@ class Meta(object):
             args = {}
 
         if MyClass is None:
-            log.verbose("No customizer available for %s", class_name)
+            log.verbose("No customizer available for {}", class_name)
         else:
             try:
                 instance = MyClass(**args)
             except BaseException as e:
-                log.error("Errors during customizer: %s", e)
+                log.error("Errors during customizer: {}", e)
             else:
-                log.debug("Customizer called: %s", class_name)
+                log.debug("Customizer called: {}", class_name)
         return instance

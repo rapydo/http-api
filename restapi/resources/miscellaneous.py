@@ -10,9 +10,7 @@ from restapi import decorators as decorate
 
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 """
 class Status
@@ -72,13 +70,13 @@ class Verify(EndpointResource):
         log.critical(detector.available_services)
         if not detector.check_availability(service):
             raise RestApiException(
-                "Unknown service: %s" % service,
+                "Unknown service: {}".format(service),
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
         service_instance = self.get_service_instance(service, global_instance=False)
         log.critical(service_instance)
-        return "Service is reachable: %s" % service
+        return "Service is reachable: {}".format(service)
 
 
 class SwaggerSpecifications(EndpointResource):
@@ -188,7 +186,7 @@ if detector.check_availability('celery'):
 
             for worker in workers:
                 i = celery.control.inspect([worker])
-                log.debug('checked worker: %s', worker)
+                log.debug('checked worker: {}', worker)
                 for key, value in i.active().items():
                     active_tasks[key] = value
                 for key, value in i.revoked().items():

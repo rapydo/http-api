@@ -2,11 +2,8 @@
 
 import pika
 import json
-from restapi.flask_ext import BaseExtension, get_logger
-
-# from restapi.utilities.logs import re_obscure_pattern
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 # TODO To be tested: With working RabbitMQ: Does everything
 #       work as intended?
@@ -49,7 +46,7 @@ class RabbitExt(BaseExtension):
 
 class RabbitWrapper(object):
     def __init__(self, variables, dont_connect=False):
-        log.debug('Creating RabbitMQ connection wrapper with variables %s', variables)
+        log.debug('Creating RabbitMQ connection wrapper with variables {}', variables)
         self.__variables = variables
         self.__connection = None
         self.__channel = None
@@ -59,7 +56,7 @@ class RabbitWrapper(object):
 
         # Initial connection:
         if self.__dont_connect:
-            log.warn('Will not connect to RabbitMQ (dont_connect = True).')
+            log.warning('Will not connect to RabbitMQ (dont_connect = True).')
             log.debug(
                 'Creating RabbitMQ connection wrapper... done. (without connection).'
             )
@@ -73,7 +70,7 @@ class RabbitWrapper(object):
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn(
+            log.warning(
                 'Could not connect to RabbitMQ now. Connection will be attempted a few times when messages are sent.'
             )
             log.debug(
@@ -91,7 +88,7 @@ class RabbitWrapper(object):
             ssl_enabled = False
         else:
             ssl_enabled = ssl_enabled.lower() == 'true' or int(ssl_enabled) == 1
-        log.info('SSL enabled for RabbitMQ? %s', ssl_enabled)
+        log.info('SSL enabled for RabbitMQ? {}', ssl_enabled)
 
         try:
             self.__connection = pika.BlockingConnection(
@@ -110,7 +107,7 @@ class RabbitWrapper(object):
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
-            log.warn('Connecting to the Rabbit... failed (%s)', e)
+            log.warning('Connecting to the Rabbit... failed ({})', e)
             self.__connection = None
             self.__couldnt_connect = self.__couldnt_connect + 1
             raise e
@@ -130,7 +127,7 @@ class RabbitWrapper(object):
 
     def log_json_to_queue(self, dictionary_message, app_name, exchange, queue):
         log.verbose(
-            'Asked to log (%s, %s, %s): %s',
+            'Asked to log ({}, {}, {}): {}',
             exchange,
             queue,
             app_name,
@@ -142,7 +139,7 @@ class RabbitWrapper(object):
         max_reconnect = 3
         if self.__dont_connect or self.__couldnt_connect > max_reconnect:
             log.info(
-                'RABBIT LOG MESSAGE (%s, %s, %s): %s', app_name, exchange, queue, body
+                'RABBIT LOG MESSAGE ({}, {}, {}): {}', app_name, exchange, queue, body
             )
             return
 
@@ -160,7 +157,7 @@ class RabbitWrapper(object):
         e = None
         for i in range(max_publish):
             log.verbose(
-                'Trying to send message to RabbitMQ in try (%s/%s)',
+                'Trying to send message to RabbitMQ in try ({}/{})',
                 (i + 1),
                 max_publish,
             )
@@ -185,42 +182,42 @@ class RabbitWrapper(object):
                 )
                 if success:
                     log.verbose(
-                        'Succeeded to send message to RabbitMQ in try (%s/%s)'
-                        % ((i + 1), max_publish)
+                        'Succeeded to send message to RabbitMQ (try {}/{})',
+                        i + 1, max_publish
                     )
                     break
                 else:
-                    log.warn('Log fail without clear reason.')
+                    log.warning('Log fail without clear reason')
 
             except pika.exceptions.ConnectionClosed as e:
                 # TODO: This happens often. Check if heartbeat solves problem.
-                log.info(
-                    'Failed to send log message in try (%s/%s), because connection is dead (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try {}/{}), connection is dead ({})',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPConnectionError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s) because connection failed (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try {}/{}). connection failed ({})',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue
 
             except pika.exceptions.AMQPChannelError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s), because channel is dead (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try {}/{}), channel is dead ({})',
+                    i + 1, max_publish, e
                 )
                 self.__channel = None
                 continue
 
             except AttributeError as e:
-                log.info(
-                    'Failed to send log message in try (%s/%s) (%s).'
-                    % ((i + 1), max_publish, e)
+                log.error(
+                    'Failed to send log message (try {}/{}) ({})',
+                    i + 1, max_publish, e
                 )
                 self.__connection = None
                 continue
@@ -228,10 +225,10 @@ class RabbitWrapper(object):
             # If failed each time:
             if i + 1 >= max_publish:
                 log.warning(
-                    'Could not log to RabbitMQ (%s), logging here instead...', e
+                    'Could not log to RabbitMQ ({}), logging here instead...', e
                 )
                 log.info(
-                    'RABBIT LOG MESSAGE (%s, %s, %s): %s',
+                    'RABBIT LOG MESSAGE ({}, {}, {}): {}',
                     app_name, exchange, queue, body
                 )
 

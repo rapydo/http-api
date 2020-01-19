@@ -13,10 +13,8 @@ import sqlalchemy
 from restapi.utilities.meta import Meta
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.flask_ext import BaseExtension, get_logger
-from restapi.utilities.logs import re_obscure_pattern
-
-log = get_logger(__name__)
+from restapi.flask_ext import BaseExtension
+from restapi.utilities.logs import log
 
 
 class SqlAlchemy(BaseExtension):
@@ -28,7 +26,7 @@ class SqlAlchemy(BaseExtension):
         if len(kwargs) > 0:
             print("TODO: use args for connection?", kwargs)
 
-        uri = '%s://%s:%s@%s:%s/%s' % (
+        uri = '{}://{}:{}@{}:{}/{}'.format(
             self.variables.get('dbtype', 'postgresql'),
             self.variables.get('user'),
             self.variables.get('password'),
@@ -54,7 +52,7 @@ class SqlAlchemy(BaseExtension):
         #     # defaults: overflow=10, pool_size=5
         #     # self.app.config['SQLALCHEMY_MAX_OVERFLOW'] = 0
         #     self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
-        #     log.debug("Setting SQLALCHEMY_POOL_SIZE = %s", pool_size)
+        #     log.debug("Setting SQLALCHEMY_POOL_SIZE = {}", pool_size)
 
         obj_name = 'db'
         # search the original sqlalchemy object into models
@@ -79,7 +77,7 @@ class SqlAlchemy(BaseExtension):
             log.warning("No sqlalchemy db imported in custom package")
             db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
         if db is None:
-            log.exit("Could not get %s within %s models", obj_name, self.name)
+            log.exit("Could not get {} within {} models", obj_name, self.name)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...

@@ -87,12 +87,13 @@ else
 	# CURRENT DIR IS $CORE_DIR
 
 	echo "project: ${PROJECT}" > .projectrc
-	echo "development: True" >> .projectrc
 	echo "project_configuration:" >> .projectrc
 	echo "  variables:" >> .projectrc
 	echo "    env:" >> .projectrc
 	echo "      DEFAULT_DHLEN: 256" >> .projectrc
 	echo "      GRAPHDB_AUTOINDEXING: False" >> .projectrc
+	echo "      RABBITMQ_USER: white" >> .projectrc
+	echo "      RABBITMQ_PASSWORD: rabbit" >> .projectrc
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo init
@@ -123,18 +124,19 @@ else
 
 	rapydo clean
 
-	rapydo --mode production pull
-	rapydo --mode production start
+	rapydo --production pull
+	rapydo --production start
+	rapydo --production ssl-certificate
 
 	echo "Backend server is starting"
 	sleep 30
 	echo "Backend server should be ready now!"
 
-	rapydo --mode production -s backend logs
+	rapydo --production -s backend logs
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-	rapydo --mode production remove
-	rapydo --mode production clean
+	rapydo --production remove
+	rapydo --production clean
 
 fi

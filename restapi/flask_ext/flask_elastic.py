@@ -2,9 +2,8 @@
 
 import sys
 import contextlib
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 
 ########################
@@ -45,10 +44,6 @@ class ElasticPythonExt(BaseExtension):
         host = variables.get('host')
         port = variables.get('port')
         obj = Elasticsearch([host], port=port)
-        # elhost = "%s:%s" % (variables.get('host'), variables.get('port'))
-        # host = {'host': elhost}
-        # log.verbose("Connecting to elastic: %s", elhost)
-        # obj = Elasticsearch([host])
         with nostderr():
             try:
                 check = obj.ping()
@@ -56,9 +51,9 @@ class ElasticPythonExt(BaseExtension):
                 check = False
 
         if check:
-            log.debug('Connected to elastic: %s:%s', host, port)
+            log.debug('Connected to elastic: {}:{}', host, port)
         else:
-            msg = 'Failed to connect: %s:%s', host, port
+            msg = 'Failed to connect: {}:{}', host, port
             log.error(msg)
             raise EnvironmentError(msg)
 
@@ -84,7 +79,7 @@ class ElasticPythonExt(BaseExtension):
     #         for db in client.database_names():
     #             if db not in system_dbs:
     #                 client.drop_database(db)
-    #                 log.critical("Dropped db '%s'", db)
+    #                 log.critical("Dropped db '{}'", db)
 
     #     if pinit:
     #         # TODO: discuss!
@@ -106,7 +101,7 @@ def today():
 def log_today(elastic, msg=None):
     if msg is None:
         return False
-    index = 'log-%s' % today()
+    index = 'log-{}'.format(today())
     doc = 'logs'
     elastic.index(index=index, doc_type=doc, body=msg)
     return True
@@ -120,7 +115,7 @@ def generator(data):
 def get_logs(elastic, day=None):
     if day is None:
         day = today()
-    index = 'log-%s' % today()
+    index = 'log-{}'.format(today())
 
     # search all
     out = elastic.search(index=index, size=10000, body={"query": {'match_all': {}}})

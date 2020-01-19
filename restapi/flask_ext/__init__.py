@@ -10,9 +10,7 @@ from datetime import datetime, timedelta
 from flask import Flask, _app_ctx_stack as stack
 from injector import Module, singleton, inject  # , provider
 from restapi.utilities.meta import Meta
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class BaseExtension(metaclass=abc.ABCMeta):
@@ -47,7 +45,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
                     original_model = base_models[key]
                     # Override
                     if issubclass(model, original_model):
-                        log.verbose("Overriding model %s", key)
+                        log.verbose("Overriding model {}", key)
                         cls.models[key] = model
                         continue
 
@@ -101,7 +99,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
         ok = self.pre_connection(**kwargs)
 
         if not ok:
-            log.critical("Unable to make preconnection for %s", self.name)
+            log.critical("Unable to make preconnection for {}", self.name)
             return obj
 
         # Try until it's connected
@@ -109,7 +107,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             obj = self.custom_connection(**kwargs)
         else:
             obj = self.retry()
-            log.verbose("Connected! %s", self.name)
+            log.verbose("Connected! {}", self.name)
 
         # AFTER
         self.post_connection(obj, **kwargs)
@@ -124,7 +122,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
         for name, model in self.models.items():
             # Save attribute inside class with the same name
-            log.verbose("Injecting model '%s'", name)
+            log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
             obj.models = self.models
 
@@ -145,16 +143,13 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
             retry_count += 1
             if retry_count > 1:
-                log.verbose("testing again in %s secs", retry_interval)
+                log.verbose("testing again in {} secs", retry_interval)
 
             try:
                 obj = self.custom_connection()
             except exceptions as e:
-                log.error("Catched: %s(%s)", e.__class__.__name__, e)
-                # NOTE: if you directly exit, uwsgi will not show this line
-                log.critical("Service '%s' not available", self.name)
-                log.exit()
-                # raise e
+                log.error("Catched: {}({})", e.__class__.__name__, e)
+                log.exit("Service '{}' not available", self.name)
             else:
                 break
 
@@ -193,7 +188,7 @@ class BaseExtension(metaclass=abc.ABCMeta):
             # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
-            log.verbose("First connection for %s", self.name)
+            log.verbose("First connection for {}", self.name)
 
         else:
 
@@ -208,9 +203,9 @@ class BaseExtension(metaclass=abc.ABCMeta):
                 exp = timedelta(seconds=cache_expiration)
 
                 if now < obj.connection_time + exp:
-                    log.verbose("Cache is still valid for %s", self)
+                    log.verbose("Cache is still valid for {}", self)
                 else:
-                    log.warning("Cache expired for %s", self)
+                    log.warning("Cache expired for {}", self)
                     obj = None
 
             if obj is None:
@@ -310,11 +305,9 @@ def get_debug_instance(MyClass):
 
     #######
     # NOTE: impors are needed here for logging to work correctly
-    from restapi.utilities.logs import get_logger
     from restapi.services.detect import detector
 
     detector  # avoid PEP complaints
-    get_logger
     # FIXME: e.g. importing-programmatically
     # docs.python.org/3/library/importlib.html
 

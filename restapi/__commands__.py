@@ -7,30 +7,27 @@ import better_exceptions as be
 from flask.cli import FlaskGroup
 from restapi.processes import wait_socket
 from restapi import __package__ as current_package
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
-
-log = get_logger(__name__)
 
 
 @click.group()
 # @click.option('--debug/--no-debug', default=False)
 # def cli(debug):
 def cli():
-    # click.echo('Debug mode is %s' % ('on' if debug else 'off'))
     click.echo('*** RESTful HTTP API ***')
 
 
 def main(args, another_app=None):
 
     if another_app is not None:
-        os.environ[APP] = '%s.py' % another_app
+        os.environ[APP] = '{}.py'.format(another_app)
     else:
         current_app = os.environ.get(APP)
         if current_app is None or current_app.strip() == '':
-            os.environ[APP] = '%s.__main__' % current_package
+            os.environ[APP] = '{}.__main__'.format(current_package)
 
     cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}
@@ -50,7 +47,6 @@ def main(args, another_app=None):
     #     # do not let flask close the application
     #     # so we can do more code after closing
     #     log.error(e)
-    #     log.warning('error type: %s', type(e))
 
 
 def flask_cli(options=None):
@@ -93,7 +89,7 @@ def launch():
     ]
 
     if starting_up():
-        log.exit("Please wait few more seconds: resources still starting up")
+        log.exit("Please wait few more seconds: resources are still starting up")
     else:
         main(args)
         log.warning("Server shutdown")
@@ -112,8 +108,8 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"%s\" was NOT detected", service)
-        log.info("Verifying service: %s", service)
+            log.exit("Service \"{}\" was NOT detected", service)
+        log.info("Verifying service: {}", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
 
@@ -140,28 +136,14 @@ def wait():
 def get_service_address(variables, host_var, port_var, service):
 
     host = variables.get(host_var)
-    # if host is None:
-    #     log.warning("Unable to find HOST variable for %s", service)
-    #     for k in myclass.variables:
-    #         log.critical(myclass.variables)
-    #         if k.endswith("_host"):
-    #             host = myclass.variables.get(k)
-    #             log.info("Using %s as HOST variable for %s", k, service)
     if host is None:
-        log.exit("Cannot find any variable matching %s for %s", host_var, service)
+        log.exit("Cannot find any variable matching {} for {}", host_var, service)
 
     port = variables.get(port_var)
-    # if port is None:
-    #     log.warning("Unable to find PORT variable for %s", service)
-    #     for k in myclass.variables:
-    #         if k.endswith("_port"):
-    #             port = myclass.variables.get(k)
-    #             log.info("Using %s as PORT variable for %s", k, service)
-
     if port is None:
-        log.exit("Cannot find any variable matching %s  for %s", port_var, service)
+        log.exit("Cannot find any variable matching {} for {}", port_var, service)
 
-    log.debug("Checking address: %s:%s", host, port)
+    log.debug("Checking address: {}:{}", host, port)
 
     return host, int(port)
 
@@ -170,10 +152,6 @@ def mywait():
     """
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
-
-    NOTE: this could be packaged as a `waiter` cli utility probably
-    p.s. could that be done with rapydo-utils maybe?
-    pp.ss. could rapydo utils be python 2.7+ compliant?
     """
     from restapi.services.detect import detector
 
@@ -183,17 +161,33 @@ def mywait():
             continue
 
         if name == 'celery':
-            host, port = get_service_address(
-                myclass.variables, 'broker_host', 'broker_port', name
-            )
 
-            wait_socket(host, port, "celery_broker")
+            broker = myclass.variables.get('broker')
 
-            host, port = get_service_address(
-                myclass.variables, 'backend_host', 'backend_port', name
-            )
+            if broker == 'RABBIT':
+                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+            elif broker == 'REDIS':
+                service_vars = detector.load_variables({'prefix': 'redis'})
+            else:
+                log.exit("Invalid celery broker: {}", broker)
 
-            wait_socket(host, port, "celery_backend")
+            host, port = get_service_address(service_vars, 'host', 'port', broker)
+
+            wait_socket(host, port, broker)
+
+            backend = myclass.variables.get('backend')
+            if backend == 'RABBIT':
+                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+            elif backend == 'REDIS':
+                service_vars = detector.load_variables({'prefix': 'redis'})
+            elif backend == 'MONGODB':
+                service_vars = detector.load_variables({'prefix': 'mongo'})
+            else:
+                log.exit("Invalid celery backend: {}", backend)
+
+            host, port = get_service_address(service_vars, 'host', 'port', backend)
+
+            wait_socket(host, port, backend)
         else:
             host, port = get_service_address(myclass.variables, 'host', 'port', name)
 
@@ -228,11 +222,11 @@ def tests(wait, core, file, folder):
             log.debug('Waiting service startup')
             time.sleep(5)
 
-    log.debug("Starting unit tests: %s", be)
+    log.debug("Starting unit tests: {}", be)
 
     # launch unittests and also compute coverage
     log.warning(
-        "Running all tests and computing coverage.\n" + "This might take some minutes."
+        "Running all tests and computing coverage.\n" + "This may take some minutes."
     )
 
     parameters = []
@@ -240,13 +234,13 @@ def tests(wait, core, file, folder):
         parameters.append(current_package)
     elif file is not None:
         if not os.path.isfile(os.path.join("tests", file)):
-            log.exit("File not found: %s", file)
+            log.exit("File not found: {}", file)
         else:
             parameters.append("default")
             parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
-            log.exit("Folder not found: %s", folder)
+            log.exit("Folder not found: {}", folder)
         else:
             parameters.append("default")
             parameters.append(folder)
@@ -257,11 +251,11 @@ def tests(wait, core, file, folder):
         # Pattern in plumbum library for executing a shell command
         from plumbum import local
         command = local["pyunittests"]
-        log.verbose("Executing command pyunittests %s", parameters)
+        log.verbose("Executing command pyunittests {}", parameters)
         output = command(parameters)
 
     except Exception as e:
         log.error(str(e))
         raise e
 
-    log.info("Completed:\n%s", output)
+    log.info("Completed:\n{}", output)

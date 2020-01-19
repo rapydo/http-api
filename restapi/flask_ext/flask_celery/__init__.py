@@ -12,8 +12,7 @@ from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.flask_ext import BaseExtension
 from restapi.confs import get_project_configuration
 
-from restapi.utilities.logs import get_logger
-log = get_logger(__name__)
+from restapi.utilities.logs import log, obfuscate_url
 
 
 class CeleryExt(BaseExtension):
@@ -24,7 +23,7 @@ class CeleryExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        worker_mode = self.args.get("worker_mode", False)
+        # worker_mode = self.args.get("worker_mode", False)
 
         broker = self.variables.get("broker")
 
@@ -33,11 +32,29 @@ class CeleryExt(BaseExtension):
             # celery_app = None
             # return celery_app
 
-        BROKER_HOST = self.variables.get("broker_host")
-        BROKER_PORT = int(self.variables.get("broker_port"))
-        BROKER_USER = self.variables.get("broker_user", "")
-        BROKER_PASSWORD = self.variables.get("broker_password", "")
-        BROKER_VHOST = self.variables.get("broker_vhost", "")
+        # Do not import before loading the ext!
+        from restapi.services.detect import Detector
+
+        if broker == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            BROKER_HOST = service_vars.get("host")
+            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_USER = service_vars.get("user", "")
+            BROKER_PASSWORD = service_vars.get("password", "")
+            BROKER_VHOST = service_vars.get("vhost", "")
+            BROKER_USE_SSL = Detector.get_bool_envvar(
+                service_vars.get("ssl_enabled", False)
+            )
+        elif broker == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'redis'})
+            BROKER_HOST = service_vars.get("host")
+            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_USER = ""
+            BROKER_PASSWORD = ""
+            BROKER_VHOST = ""
+            BROKER_USE_SSL = False
+        else:
+            log.exit("Invalid celery broker: {}", broker)
 
         if BROKER_USER == "":
             BROKER_USER = None
@@ -45,75 +62,99 @@ class CeleryExt(BaseExtension):
             BROKER_PASSWORD = None
 
         if BROKER_VHOST != "":
-            BROKER_VHOST = "/%s" % BROKER_VHOST
+            BROKER_VHOST = "/{}".format(BROKER_VHOST)
+
+        if BROKER_USER is not None and BROKER_PASSWORD is not None:
+            BROKER_CREDENTIALS = '{}:{}@'.format(BROKER_USER, BROKER_PASSWORD)
+        else:
+            BROKER_CREDENTIALS = ""
+
+        if broker == 'RABBIT':
+            BROKER_URL = 'amqp://{}{}:{}{}'.format(
+                BROKER_CREDENTIALS,
+                BROKER_HOST,
+                BROKER_PORT,
+                BROKER_VHOST,
+            )
+            log.info(
+                "Configured RabbitMQ as Celery broker {}", obfuscate_url(BROKER_URL))
+        elif broker == 'REDIS':
+            BROKER_URL = 'redis://{}{}:{}/0'.format(
+                BROKER_CREDENTIALS,
+                BROKER_HOST,
+                BROKER_PORT,
+            )
+            log.info(
+                "Configured Redis as Celery broker {}", obfuscate_url(BROKER_URL))
+        else:
+            log.error("Unable to start Celery unknown broker service: {}", broker)
+            celery_app = None
+            return celery_app
 
         backend = self.variables.get("backend", broker)
-        BACKEND_HOST = self.variables.get("backend_host", BROKER_HOST)
-        BACKEND_PORT = int(self.variables.get("backend_port", BROKER_PORT))
-        BACKEND_USER = self.variables.get("backend_user", BROKER_USER)
-        BACKEND_PASSWORD = self.variables.get("backend_password", BROKER_PASSWORD)
+
+        if backend == 'RABBIT':
+            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = service_vars.get("user", "")
+            BACKEND_PASSWORD = service_vars.get("password", "")
+        elif backend == 'REDIS':
+            service_vars = Detector.load_variables({'prefix': 'redis'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = ""
+            BACKEND_PASSWORD = ""
+        elif backend == 'MONGODB':
+            service_vars = Detector.load_variables({'prefix': 'mongo'})
+            BACKEND_HOST = service_vars.get("host")
+            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_USER = service_vars.get("user", "")
+            BACKEND_PASSWORD = service_vars.get("password", "")
+        else:
+            log.exit("Invalid celery backend: {}", backend)
 
         if BACKEND_USER == "":
             BACKEND_USER = None
         if BACKEND_PASSWORD == "":
             BACKEND_PASSWORD = None
 
-        if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKER_CREDENTIALS = "%s:%s@" % (BROKER_USER, BROKER_PASSWORD)
-        else:
-            BROKER_CREDENTIALS = ""
-
-        if broker == 'RABBIT':
-            BROKER_URL = 'amqp://%s%s%s' % (
-                BROKER_CREDENTIALS,
-                BROKER_HOST,
-                BROKER_VHOST,
-            )
-            log.info("Configured RabbitMQ as Celery broker %s", BROKER_URL)
-        elif broker == 'REDIS':
-            BROKER_URL = 'redis://%s%s:%s/0' % (
-                BROKER_CREDENTIALS,
-                BROKER_HOST,
-                BROKER_PORT,
-            )
-            log.info("Configured Redis as Celery broker %s", BROKER_URL)
-        else:
-            log.error("Unable to start Celery unknown broker service: %s", broker)
-            celery_app = None
-            return celery_app
-
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
-            BACKEND_CREDENTIALS = "%s:%s@" % (BACKEND_USER, BACKEND_PASSWORD)
+            BACKEND_CREDENTIALS = '{}:{}@'.format(BACKEND_USER, BACKEND_PASSWORD)
         else:
             BACKEND_CREDENTIALS = ""
 
         if backend == 'RABBIT':
-            BACKEND_URL = 'rpc://%s%s:%s/0' % (
+            BACKEND_URL = 'rpc://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured RabbitMQ as Celery backend %s", BACKEND_URL)
+            log.info(
+                "Configured RabbitMQ as Celery backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'REDIS':
-            BACKEND_URL = 'redis://%s%s:%s/0' % (
+            BACKEND_URL = 'redis://{}{}:{}/0'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured Redis as Celery backend %s", BACKEND_URL)
+            log.info(
+                "Configured Redis as Celery backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'MONGODB':
-            BACKEND_URL = 'mongodb://%s%s:%s' % (
+            BACKEND_URL = 'mongodb://{}{}:{}'.format(
                 BACKEND_CREDENTIALS,
                 BACKEND_HOST,
                 BACKEND_PORT,
             )
-            log.info("Configured MongoDB as Celery backend %s", BACKEND_URL)
+            log.info(
+                "Configured MongoDB as Celery backend {}", obfuscate_url(BACKEND_URL))
         else:
-            log.exit("Unable to start Celery unknown backend service: %s", backend)
+            log.exit("Unable to start Celery unknown backend service: {}", backend)
             # celery_app = None
             # return celery_app
 
         celery_app = Celery('RestApiQueue', broker=BROKER_URL, backend=BACKEND_URL)
+        celery_app.conf['broker_use_ssl'] = BROKER_USE_SSL
 
         # if not worker_mode:
 
@@ -184,10 +225,10 @@ class CeleryExt(BaseExtension):
                 import mongoengine
 
                 m = mongoengine.connect(SCHEDULER_DB, host=BACKEND_URL)
-                log.info("Celery-beat connected to MongoDB: %s", m)
+                log.info("Celery-beat connected to MongoDB: {}", m)
             elif backend == 'REDIS':
 
-                BEAT_BACKEND_URL = 'redis://%s%s:%s/1' % (
+                BEAT_BACKEND_URL = 'redis://{}{}:{}/1'.format(
                     BACKEND_CREDENTIALS,
                     BACKEND_HOST,
                     BACKEND_PORT,
@@ -195,7 +236,7 @@ class CeleryExt(BaseExtension):
 
                 celery_app.conf['REDBEAT_REDIS_URL'] = BEAT_BACKEND_URL
                 celery_app.conf['REDBEAT_KEY_PREFIX'] = CeleryExt.REDBEAT_KEY_PREFIX
-                log.info("Celery-beat connected to Redis: %s", BEAT_BACKEND_URL)
+                log.info("Celery-beat connected to Redis: {}", BEAT_BACKEND_URL)
             else:
                 log.warning("Cannot configure mongodb celery beat scheduler")
 
@@ -216,14 +257,14 @@ class CeleryExt(BaseExtension):
         elif cls.CELERY_BEAT_SCHEDULER == 'REDIS':
             from redbeat.schedulers import RedBeatSchedulerEntry
             try:
-                task_key = "%s%s" % (cls.REDBEAT_KEY_PREFIX, name)
+                task_key = "{}{}".format(cls.REDBEAT_KEY_PREFIX, name)
                 return RedBeatSchedulerEntry.from_key(
                     task_key, app=CeleryExt.celery_app)
             except KeyError:
                 return None
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
     @classmethod
     def delete_periodic_task(cls, name):
@@ -254,7 +295,7 @@ class CeleryExt(BaseExtension):
             if period != 'seconds':
 
                 # do conversion... run_every should be a datetime.timedelta
-                log.error("Unsupported period %s for redis beat", period)
+                log.error("Unsupported period {} for redis beat", period)
 
             interval = schedule(run_every=every)  # seconds
             entry = RedBeatSchedulerEntry(
@@ -268,7 +309,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
     @classmethod
     def create_crontab_task(
@@ -322,7 +363,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: %s", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
 
 
 def send_errors_by_email(func):
@@ -342,27 +383,29 @@ def send_errors_by_email(func):
             task_id = self.request.id
             task_name = self.request.task
 
-            log.error("Celery task %s failed (%s)", task_id, task_name)
+            log.error("Celery task {} failed ({})", task_id, task_name)
             arguments = str(self.request.args)
-            log.error("Failed task arguments: %s", arguments[0:256])
-            log.error("Task error: %s", traceback.format_exc())
+            log.error("Failed task arguments: {}", arguments[0:256])
+            log.error("Task error: {}", traceback.format_exc())
 
             if send_mail_is_active():
                 log.info("Sending error report by email", task_id, task_name)
 
-                body = "Celery task %s failed" % task_id
-                body += "\n\n"
-                body += "Name: %s" % task_name
-                body += "\n\n"
-                body += "Arguments: %s" % str(self.request.args)
-                body += "\n\n"
-                body += "Error: %s" % (traceback.format_exc())
+                body = """
+Celery task {} failed
+
+Name: {}
+
+Arguments: {}
+
+Error: {}
+""".format(task_id, task_name, str(self.request.args), traceback.format_exc())
 
                 project = get_project_configuration(
                     "project.title",
                     default='Unkown title',
                 )
-                subject = "%s: task %s failed" % (project, task_name)
+                subject = "{}: task {} failed".format(project, task_name)
                 send_mail(body, subject)
 
     return wrapper

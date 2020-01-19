@@ -11,6 +11,7 @@ from flask import Flask as OriginalFlask, request
 from flask_injector import FlaskInjector
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from geolite2 import geolite2
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH
 from restapi.rest.response import InternalResponse
@@ -22,21 +23,14 @@ from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import (
-    get_logger,
-    handle_log_output,
-    MAX_CHAR_LEN,
-    set_global_log_level,
-)
-
+from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
 
 #############################
-# LOGS
-log = get_logger(__name__)
 
+# from restapi.utilities.logs import set_global_log_level,
 # This is the first file to be imported in the project
 # We need to enable many things on a global level for logs
-set_global_log_level(package=__package__)
+# set_global_log_level(package=__package__)
 
 
 #############################
@@ -85,54 +79,13 @@ class Flask(OriginalFlask):
                 content_type = idx
                 continue
             log.warning(
-                "Duplicated Content-Type, removing %s and keeping %s",
+                "Duplicated Content-Type, removing {} and keeping {}",
                 response.headers[content_type][1],
                 val[1],
             )
             response.headers.pop(content_type)
             break
         return response
-
-
-def add(rest_api, resource):
-    """ Adding a single restpoint from a Resource Class """
-
-    from restapi.protocols.bearer import authentication
-
-    # Apply authentication: if required from yaml configuration
-    # Done per each method
-    for method, attributes in resource.custom['methods'].items():
-
-        # If auth has some role, they have been validated
-        # and authentication has been requested
-        # if len(attributes.auth) < 1:
-        #     continue
-        # else:
-        #     roles = attributes.auth
-
-        roles = attributes.auth
-        if roles is None:
-            continue
-
-        log.warning("Deprecated authentication decorator")
-        # Programmatically applying the authentication decorator
-        # Note: there is another similar piece of code in swagger.py
-        original = getattr(resource.cls, method)
-        decorated = authentication.authorization_required(
-            original, roles=roles, required_roles=attributes.required_roles
-        )
-        setattr(resource.cls, method, decorated)
-
-        if len(roles) < 1:
-            roles = "'DEFAULT'"
-        log.verbose("Auth on %s.%s for %s", resource.cls.__name__, method, roles)
-
-    urls = [uri for _, uri in resource.uris.items()]
-
-    # Create the restful resource with it;
-    # this method is from RESTful plugin
-    rest_api.add_resource(resource.cls, *urls)
-    log.verbose("Map '%s' to %s", resource.cls.__name__, urls)
 
 
 ########################
@@ -154,7 +107,9 @@ def create_app(
 
     # Initialize reading of all files
     mem.customizer = Customizer(testing_mode, init_mode)
-    # FIXME: try to remove mem. from everywhere...
+    mem.geo_reader = geolite2.reader()
+    # when to close??
+    # geolite2.close()
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
@@ -232,12 +187,18 @@ def create_app(
             raise AttributeError("Follow the docs and define your endpoints")
 
         for resource in mem.customizer._endpoints:
-            add(rest_api, resource)
+            urls = [uri for _, uri in resource.uris.items()]
+
+            # Create the restful resource with it;
+            # this method is from RESTful plugin
+            rest_api.add_resource(resource.cls, *urls)
+            log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
 
         # Enable all schema endpoints to be mapped with this extra step
         if len(mem.customizer._schema_endpoint.uris) > 0:
             log.debug("Found one or more schema to expose")
-            add(rest_api, mem.customizer._schema_endpoint)
+            urls = [uri for _, uri in mem.customizer._schema_endpoint.uris.items()]
+            rest_api.add_resource(mem.customizer._schema_endpoint.cls, *urls)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
@@ -277,7 +238,7 @@ def create_app(
                 # to allow 405 response
                 newmethods.add(verb)
             else:
-                log.verbose("Removed method %s.%s from mapping", rulename, verb)
+                log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
         rule.methods = newmethods
 
@@ -330,7 +291,7 @@ def create_app(
             print(url.query)
 
         url = urllib_parse.urlunparse(url)
-        log.info("%s %s %s %s", request.method, url, data, response)
+        log.info("{} {} {} {}", request.method, url, data, response)
 
         return response
 
@@ -352,7 +313,7 @@ def create_app(
             from sentry_sdk.integrations.flask import FlaskIntegration
 
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
-            log.info("Enabled Sentry %s", SENTRY_URL)
+            log.info("Enabled Sentry {}", SENTRY_URL)
 
     # return our flask app
     return microservice

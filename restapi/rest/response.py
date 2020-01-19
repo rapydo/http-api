@@ -36,9 +36,7 @@ from restapi.attributes import ResponseElements
 from restapi import __version__
 from restapi.confs import get_project_configuration
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 MIMETYPE_JSON = 'application/json'
 MIMETYPE_XML = 'application/xml'
@@ -215,13 +213,13 @@ class ResponseMaker(object):
             else:
                 elements['defined_content'] = response
 
-            elements['headers']["_RV"] = "%s" % __version__
+            elements['headers']["_RV"] = str(__version__)
 
             PROJECT_VERSION = get_project_configuration(
                 "project.version", default=None
             )
             if PROJECT_VERSION is not None:
-                elements['headers']["Version"] = "%s" % PROJECT_VERSION
+                elements['headers']["Version"] = str(PROJECT_VERSION)
 
         # POST-CHECK: is it a flask response?
         if self.is_internal_response(elements['defined_content']):
@@ -282,7 +280,7 @@ class ResponseMaker(object):
         # (strictly to the sole content)
         method = get_response()
         # TODO: check why this is often called twice from flask
-        log.verbose("Response method: %s", method.__name__)
+        log.verbose("Response method: {}", method.__name__)
         r['defined_content'] = method(r['defined_content'])
 
         # 3. Recover correct status and errors
@@ -299,7 +297,7 @@ class ResponseMaker(object):
         if r['extra'] is not None:
             log.warning(
                 "NOT IMPLEMENTED YET: "
-                + "what to do with extra field?\n%s" % r['extra']
+                + "what to do with extra field?\n{}".format(r['extra'])
             )
 
         # 5. Return what is necessary to build a standard flask response
@@ -407,7 +405,7 @@ class ResponseMaker(object):
 
             code = int(code)
         except Exception as e:
-            log.critical("Could not build response!\n%s", e)
+            log.critical("Could not build response!\n{}", e)
             # Revert to defaults
             defined_content = (None,)
             data_type = str(type(defined_content))
@@ -468,10 +466,10 @@ def get_content_from_response(http_out):
         try:
             response = json.loads(http_out.get_data().decode())
         except Exception as e:
-            log.critical("Failed to load response:\n%s", e)
+            log.critical("Failed to load response:\n{}", e)
             raise ValueError(
                 "Trying to recover informations"
-                + " from a malformed response:\n%s" % http_out
+                + " from a malformed response:\n{}".format(http_out)
             )
     # Or convert an half-way made response
     elif isinstance(http_out, ResponseElements):
@@ -483,7 +481,7 @@ def get_content_from_response(http_out):
     if not isinstance(response, dict) or len(response) != 2:
         raise ValueError(
             "Trying to recover informations"
-            + " from a malformed response:\n%s" % response
+            + " from a malformed response:\n{}".format(response)
         )
 
     # Split

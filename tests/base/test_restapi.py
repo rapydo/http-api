@@ -7,10 +7,7 @@ Tests for http api base (mostly authentication)
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.logs import get_logger
-
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
@@ -181,7 +178,7 @@ class TestApp(BaseTests):
             self.save("token_id", c["id"])
 
         # TEST GET SINGLE TOKEN
-        endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
+        endpoint_single = "{}/{}".format(endpoint, self.get("token_id"))
         r = client.get(endpoint_single, headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_OK_BASIC
 
@@ -192,7 +189,7 @@ class TestApp(BaseTests):
     def test_07_DELETE_tokens(self, client):
 
         endpoint = AUTH_URI + '/tokens'
-        endpoint_single = "%s/%s" % (endpoint, self.get("token_id"))
+        endpoint_single = "{}/{}".format(endpoint, self.get("token_id"))
 
         # TEST DELETE OF A SINGLE TOKEN
         r = client.delete(endpoint_single, headers=self.get("tokens_header"))

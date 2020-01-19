@@ -4,9 +4,8 @@ from gripcontrol import GripPubControl
 from gripcontrol import WebSocketMessageFormat
 from pubcontrol import Item
 
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 
 class ServiceUnavailable(BaseException):
@@ -28,7 +27,7 @@ class PushpinExt(BaseExtension):
         host = variables.get('host')
         port = variables.get('port')
 
-        control_uri = 'http://%s:%s' % (host, port)
+        control_uri = 'http://{}:{}'.format(host, port)
         pubctrl = GripPubControl({
             'control_uri': control_uri
         })
@@ -40,7 +39,7 @@ class PushpinExt(BaseExtension):
         if is_active:
             return client
 
-        raise ServiceUnavailable("Pushpin unavailable on %s" % control_uri)
+        raise ServiceUnavailable("Pushpin unavailable on {}".format(control_uri))
 
 
 class PushpinClient:
@@ -52,7 +51,7 @@ class PushpinClient:
         if result:
             log.debug('Message successfully published on pushpin')
         else:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
 
     def publish_on_stream(self, channel, message, sync=False):
         if not sync:
@@ -65,7 +64,7 @@ class PushpinClient:
             log.debug('Message successfully published on pushpin')
             return True
         except BaseException as e:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
             log.error(e)
             return False
 
@@ -80,6 +79,6 @@ class PushpinClient:
             log.debug('Message successfully published on pushpin')
             return True
         except BaseException as e:
-            log.error('Publish failed on pushpin: %s', message)
+            log.error('Publish failed on pushpin: {}', message)
             log.error(e)
             return False

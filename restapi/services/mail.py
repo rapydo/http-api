@@ -12,9 +12,7 @@ from email.mime.multipart import MIMEMultipart
 
 from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 # TODO: configure HOST with gmail, search example online
 
@@ -28,15 +26,15 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
     ###################
     # https://stackabuse.com/how-to-send-emails-with-gmail-using-python/
     if smtp_port == '465':
-        smtp = SMTP_SSL()
+        smtp = SMTP_SSL(smtp_host)
     else:
-        smtp = SMTP()
+        smtp = SMTP(smtp_host)
         # if this is 587 we might need also
         # smtp.starttls()
 
     ###################
     smtp.set_debuglevel(0)
-    log.verbose("Connecting to %s:%s", smtp_host, smtp_port)
+    log.verbose("Connecting to {}:{}", smtp_host, smtp_port)
     try:
         smtp.connect(smtp_host, smtp_port)
         smtp.ehlo()
@@ -137,7 +135,7 @@ def send(
             msg['Cc'] = ",".join(cc)
             dest_addresses.append(cc)
         else:
-            log.warning("Invalid CC value: %s", cc)
+            log.warning("Invalid CC value: {}", cc)
             cc = None
 
         if bcc is None:
@@ -149,7 +147,7 @@ def send(
             msg['Bcc'] = ",".join(bcc)
             dest_addresses.append(bcc)
         else:
-            log.warning("Invalid BCC value: %s", bcc)
+            log.warning("Invalid BCC value: {}", bcc)
             bcc = None
 
         msg['Date'] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
@@ -164,17 +162,17 @@ def send(
             msg.attach(part2)
 
         try:
-            log.verbose("Sending email to %s", to_address)
+            log.verbose("Sending email to {}", to_address)
 
             smtp.sendmail(from_address, dest_addresses, msg.as_string())
 
             log.info(
-                "Successfully sent email to %s [cc=%s], [bcc=%s]", to_address, cc, bcc
+                "Successfully sent email to {} [cc={}], [bcc={}]", to_address, cc, bcc
             )
             smtp.quit()
             return True
         except SMTPException:
-            log.error("Unable to send email to %s", to_address)
+            log.error("Unable to send email to {}", to_address)
             smtp.quit()
             return False
 
@@ -245,6 +243,11 @@ def get_html_template(template_file, replaces):
     """
     # FIXME: use jinja2 instead :)
     """
+    # Deprecated since 0.7.1
+    log.warning(
+        "Deprecated template, convert it with jinja and import get_html_template " +
+        "from restapi.utilities.templates instead"
+    )
     path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
     template = os.path.join(path, "emails", template_file)
 
@@ -253,7 +256,7 @@ def get_html_template(template_file, replaces):
         with open(template, 'r') as f:
             html = f.read()
     else:
-        log.warning("Unable to find email template: %s", template)
+        log.warning("Unable to find email template: {}", template)
 
     if html is None:
         return html

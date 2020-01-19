@@ -16,9 +16,7 @@ from datetime import datetime, timedelta
 from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 if not detector.check_availability(__name__):
     log.exit("No neo4j GraphDB service found for authentication")
@@ -40,9 +38,9 @@ class Authentication(BaseAuthentication):
             self.db.refresh_connection()
             raise e
         except DeflateError:
-            log.warning("Invalid username '%s'", username)
+            log.warning("Invalid username '{}'", username)
         except self.db.User.DoesNotExist:
-            log.warning("Could not find user for '%s'", username)
+            log.warning("Could not find user for '{}'", username)
         return user
 
     def get_users(self, user_id=None):
@@ -72,7 +70,7 @@ class Authentication(BaseAuthentication):
             try:
                 userobj = self.get_user()
             except Exception as e:
-                log.warning("Roles check: invalid current user.\n%s", e)
+                log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
         for role in userobj.roles.all():
@@ -94,7 +92,7 @@ class Authentication(BaseAuthentication):
         try:
             user_node.save()
         except Exception as e:
-            message = "Can't create user %s:\n%s" % (userdata['email'], e)
+            message = "Can't create user {}:\n{}".format(userdata['email'], e)
             log.error(message)
             raise AttributeError(message)
 
@@ -105,18 +103,15 @@ class Authentication(BaseAuthentication):
     # Also used by PUT user
     def link_roles(self, user, roles):
 
-        # if self.default_role not in roles:
-        #     roles.append(self.default_role)
-
         for p in user.roles.all():
             user.roles.disconnect(p)
 
         for role in roles:
-            log.debug("Adding role %s", role)
+            log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
             except self.db.Role.DoesNotExist:
-                raise Exception("Graph role %s does not exist" % role)
+                raise Exception("Graph role {} does not exist".format(role))
             user.roles.connect(role_obj)
 
     def create_role(self, role, description="automatic"):
@@ -132,11 +127,11 @@ class Authentication(BaseAuthentication):
         for role in current_roles_objs:
             current_roles.append(role.name)
 
-        log.info("Current roles: %s", current_roles)
+        log.info("Current roles: {}", current_roles)
 
         for role in self.default_roles:
             if role not in current_roles:
-                log.info("Creating role: %s", role)
+                log.info("Creating role: {}", role)
                 self.create_role(role)
 
         # Default user (if no users yet available)
@@ -163,6 +158,7 @@ class Authentication(BaseAuthentication):
     def save_token(self, user, token, jti, token_type=None):
 
         ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -178,6 +174,7 @@ class Authentication(BaseAuthentication):
         token_node.last_access = now
         token_node.expiration = exp
         token_node.IP = ip
+        token_node.hostname = ip_loc
 
         token_node.save()
         # Save user updated in profile endpoint
@@ -201,7 +198,10 @@ class Authentication(BaseAuthentication):
 
             if now > token_node.expiration:
                 self.invalidate_token(token=token_node.token)
-                log.critical("This token is no longer valid")
+                log.info(
+                    "This token is no longer valid: expired since {}",
+                    token_node.expiration.strftime("%d/%m/%Y")
+                )
                 return False
 
             exp = now + timedelta(seconds=self.shortTTL)
@@ -213,7 +213,7 @@ class Authentication(BaseAuthentication):
 
             return True
         except self.db.Token.DoesNotExist:
-            log.warning("Token %s not found", jti)
+            log.warning("Token {} not found", jti)
             return False
 
     def get_tokens(self, user=None, token_jti=None):
@@ -262,7 +262,7 @@ class Authentication(BaseAuthentication):
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()
         except self.db.Token.DoesNotExist:
-            log.warning("Unable to invalidate, token not found: %s", token)
+            log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
 

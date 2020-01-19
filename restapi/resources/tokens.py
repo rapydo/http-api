@@ -105,7 +105,7 @@ class Tokens(EndpointResource):
                 continue
             if not self.auth.invalidate_token(token=token["token"], user=user):
                 return self.send_errors(
-                    message="Failed token invalidation: '%s'" % token,
+                    message="Failed token invalidation: '{}'".format(token),
                     code=hcodes.HTTP_BAD_REQUEST,
                 )
             return self.empty_response()

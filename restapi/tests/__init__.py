@@ -12,13 +12,11 @@ from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
 
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
-
-SERVER_URI = 'http://%s:%s' % (DEFAULT_HOST, DEFAULT_PORT)
-API_URI = '%s%s' % (SERVER_URI, API_URL)
-AUTH_URI = '%s%s' % (SERVER_URI, AUTH_URL)
+SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
+API_URI = '{}{}'.format(SERVER_URI, API_URL)
+AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
 class BaseTests(object):
@@ -30,7 +28,8 @@ class BaseTests(object):
         if hasattr(self.__class__, variable):
             data = getattr(self.__class__, variable)
             if "read_only" in data and data["read_only"]:
-                pytest.fail("Cannot overwrite a read_only variable [%s]" % variable)
+                pytest.fail(
+                    "Cannot overwrite a read_only variable [{}]".format(variable))
 
         data = {'value': value, 'read_only': read_only}
         setattr(self.__class__, variable, data)
@@ -44,7 +43,7 @@ class BaseTests(object):
             if "value" in data:
                 return data["value"]
 
-        raise AttributeError("Class variable %s not found" % variable)
+        raise AttributeError("Class variable {} not found".format(variable))
         return None
 
     def get_specs(self, client):
@@ -62,7 +61,7 @@ class BaseTests(object):
             for a specific endpoint. The endpoint is expected to have variables
             defined following swagger rules, e.g /path/{variable}
         """
-        mapping = "%s/%s" % (API_URL, endpoint)
+        mapping = "{}/{}".format(API_URL, endpoint)
 
         assert mapping in specs["paths"]
         return specs["paths"][mapping]
@@ -82,7 +81,7 @@ class BaseTests(object):
         """
 
         data = {"get_schema": 1}
-        r = client.post("%s/%s" % (API_URI, endpoint), data=data, headers=headers)
+        r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
@@ -158,7 +157,7 @@ class BaseTests(object):
         if r.status_code == hcodes.HTTP_OK_NORESPONSE:
             log.info("Test TOKEN removed")
         else:
-            log.error("Failed to logout with:\n%s", headers)
+            log.error("Failed to logout with:\n{}", headers)
 
     def delete_tokens(self, client, headers):
         # r = client.delete(AUTH_URI + '/tokens', headers=headers)
@@ -264,11 +263,11 @@ class BaseTests(object):
 
         for f in fields:
             if f not in response[0]["attributes"]:
-                pytest.fail("Missing property: %s" % f)
+                pytest.fail("Missing property: {}".format(f))
 
         for r in relationships:
             if r not in response[0]["relationships"]:
-                pytest.fail("Missing relationship: %s" % r)
+                pytest.fail("Missing relationship: {}".format(r))
 
     def buildData(self, schema):
         """
@@ -360,7 +359,7 @@ class BaseTests(object):
         post_data=None,
     ):
 
-        endpoint = "%s/%s" % (API_URI, endpoint)
+        endpoint = "{}/{}".format(API_URI, endpoint)
 
         if headers is not None:
 

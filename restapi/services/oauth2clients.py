@@ -12,9 +12,8 @@ from restapi.protocols.oauth import oauth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
 
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 meta = Meta()
 
 B2ACCESS_MAIN_PORT = 8443
@@ -62,7 +61,7 @@ class ExternalLogins(object):
             var2 = key.upper() + '_APPKEY'
 
             if var1 not in os.environ or var2 not in os.environ:
-                log.verbose("Skipping Oauth2 service %s", key)
+                log.verbose("Skipping Oauth2 service {}", key)
                 continue
 
             # Call the service and save it
@@ -76,13 +75,13 @@ class ExternalLogins(object):
                 # Cycle all the Oauth2 group services
                 for name, oauth2 in obj.items():
                     if oauth2 is None:
-                        log.debug("Skipping failing credentials: %s", key)
+                        log.debug("Skipping failing credentials: {}", key)
                     else:
                         services[name] = oauth2
-                        log.debug("Created Oauth2 service %s", name)
+                        log.debug("Created Oauth2 service {}", name)
 
             except Exception as e:
-                log.critical("Unable to request oauth2 service %s\n%s", key, e)
+                log.critical("Unable to request oauth2 service {}\n{}", key, e)
 
         return services
 
@@ -119,8 +118,8 @@ class ExternalLogins(object):
             return None
 
         base_url = B2ACCESS_URLS.get(selected_b2access)
-        b2access_url = "https://%s:%s" % (base_url, B2ACCESS_MAIN_PORT)
-        b2access_ca = "https://%s:%s" % (base_url, B2ACCESS_CA_PORT)
+        b2access_url = "https://{}:{}".format(base_url, B2ACCESS_MAIN_PORT)
+        b2access_ca = "https://{}:{}".format(base_url, B2ACCESS_CA_PORT)
 
         # SET OTHER URLS
         token_url = b2access_url + '/oauth2/token'
@@ -180,9 +179,9 @@ def decorate_http_request(remote):
             client_id = remote.consumer_key
             client_secret = remote.consumer_secret
             userpass = b64encode(
-                str.encode("%s:%s" % (client_id, client_secret))
+                str.encode("{}:{}".format(client_id, client_secret))
             ).decode("ascii")
-            headers.update({'Authorization': 'Basic %s' % (userpass,)})
+            headers.update({'Authorization': 'Basic {}'.format(userpass,)})
         response = old_http_request(uri, headers=headers, data=data, method=method)
 
         # TODO: check if we may handle failed B2ACCESS response here

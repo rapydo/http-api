@@ -2,9 +2,7 @@
 
 import os
 import psutil
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 def find(prefix, suffixes=None, local_bin=False):
@@ -42,22 +40,22 @@ def find(prefix, suffixes=None, local_bin=False):
     return False
 
 
-def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
+def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
 
     import time
     import errno
     import socket
 
-    log.verbose("Waiting for %s (%s:%s)", service_name, host, port)
+    log.verbose("Waiting for {} ({}:{})", service_name, host, port)
 
     counter = 0
     while True:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # log.debug("Timeout before: %s", s.gettimeout())
+        # log.debug("Timeout before: {}", s.gettimeout())
         s.settimeout(timeout)
-        # log.debug("Timeout after: %s", s.gettimeout())
+        # log.debug("Timeout after: {}", s.gettimeout())
 
         try:
             result = s.connect_ex((host, port))
@@ -65,21 +63,21 @@ def wait_socket(host, port, service_name, sleep_time=1, timeout=5):
             result = errno.ESRCH
 
         if result == 0:
-            log.info("Service %s is reachable", service_name)
+            log.info("Service {} is reachable", service_name)
             break
         else:
 
             counter += 1
-            if counter % 5 == 0:
+            if counter % 6 == 0:
                 # FIXME: also do something here if the service is external?
                 log.warning(
-                    "'%s' service (%s:%s) still unavailable after %s seconds",
+                    "'{}' service ({}:{}) still unavailable after {} seconds",
                     service_name,
                     host,
                     port,
-                    sleep_time * timeout * counter,
+                    (sleep_time + timeout) * counter,
                 )
             else:
-                log.debug("Not reachable yet: %s (%s:%s)", service_name, host, port)
+                log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
 
             time.sleep(sleep_time)

@@ -12,9 +12,7 @@ from irods.models import User, UserGroup, UserAuth
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class IrodsException(RestApiException):
@@ -29,6 +27,12 @@ class IrodsPythonClient:
         self.prc = prc
         self.variables = variables
         self.chunk_size = self.variables.get('chunksize', default_chunk_size)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        self.prc.cleanup()
 
     def connect(self):
         return self
@@ -60,7 +64,7 @@ class IrodsPythonClient:
         try:
             return self.prc.collections.exists(path)
         except iexceptions.CAT_SQL_ERR as e:
-            log.error("is_collection(%s) raised CAT_SQL_ERR (%s)", path, str(e))
+            log.error("is_collection({}) raised CAT_SQL_ERR ({})", path, str(e))
             return False
 
     def is_dataobject(self, path):
@@ -76,11 +80,11 @@ class IrodsPythonClient:
         try:
             return self.prc.data_objects.get(path)
         except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
-            raise IrodsException("%s not found or no permissions" % path)
+            raise IrodsException("{} not found or no permissions".format(path))
 
     def getPath(self, path, prefix=None):
         if prefix is not None and prefix != '':
-            path = path[len(prefix) :]
+            path = path[len(prefix):]
             if path[0] == "/":
                 path = path[1:]
 
@@ -163,7 +167,7 @@ class IrodsPythonClient:
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Not found (or no permission): %s" % path)
+            raise IrodsException("Not found (or no permission): {}".format(path))
 
         # replicas = []
         # for line in lines:
@@ -183,7 +187,7 @@ class IrodsPythonClient:
         try:
 
             ret = self.prc.collections.create(path, recurse=ignore_existing)
-            log.debug("Created irods collection: %s", path)
+            log.debug("Created irods collection: {}", path)
             return ret
 
         except iexceptions.CAT_UNKNOWN_COLLECTION:
@@ -196,10 +200,10 @@ class IrodsPythonClient:
                     status_code=hcodes.HTTP_BAD_REQUEST,
                 )
             else:
-                log.debug("Irods collection already exists: %s", path)
+                log.debug("Irods collection already exists: {}", path)
 
         except (iexceptions.CAT_NO_ACCESS_PERMISSION, iexceptions.SYS_NO_API_PRIV):
-            raise IrodsException("You have no permissions on path %s" % path)
+            raise IrodsException("You have no permissions on path {}".format(path))
 
         return None
 
@@ -208,7 +212,7 @@ class IrodsPythonClient:
         try:
 
             ret = self.prc.data_objects.create(path)
-            log.debug("Create irods object: %s", path)
+            log.debug("Create irods object: {}", path)
             return ret
 
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
@@ -222,7 +226,7 @@ class IrodsPythonClient:
                 raise IrodsException(
                     "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
                 )
-            log.debug("Irods object already exists: %s", path)
+            log.debug("Irods object already exists: {}", path)
 
         return False
 
@@ -243,9 +247,9 @@ class IrodsPythonClient:
                 raise IrodsException(
                     "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
                 )
-            log.warning("%s: %s", warning, destpath)
+            log.warning("{}: {}", warning, destpath)
         else:
-            log.debug("Copied: %s -> %s", sourcepath, destpath)
+            log.debug("Copied: {} -> {}", sourcepath, destpath)
 
     def put(self, local_path, irods_path):
         # NOTE: this action always overwrite
@@ -276,7 +280,7 @@ class IrodsPythonClient:
         if sourcepath == destpath:
             raise IrodsException("Source and destination path are the same")
         try:
-            log.verbose("Copy %s into %s", sourcepath, destpath)
+            log.verbose("Copy {} into {}", sourcepath, destpath)
             source = self.prc.data_objects.get(sourcepath)
             self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
@@ -287,11 +291,11 @@ class IrodsPythonClient:
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException(
-                "DataObject not found (or no permission): %s" % sourcepath
+                "DataObject not found (or no permission): {}".format(sourcepath)
             )
         except iexceptions.CollectionDoesNotExist:
             raise IrodsException(
-                "Collection not found (or no permission): %s" % sourcepath
+                "Collection not found (or no permission): {}".format(sourcepath)
             )
 
     def move(self, src_path, dest_path):
@@ -299,10 +303,10 @@ class IrodsPythonClient:
         try:
             if self.is_collection(src_path):
                 self.prc.collections.move(src_path, dest_path)
-                log.debug("Renamed collection: %s->%s", src_path, dest_path)
+                log.debug("Renamed collection: {}->{}", src_path, dest_path)
             else:
                 self.prc.data_objects.move(src_path, dest_path)
-                log.debug("Renamed irods object: %s->%s", src_path, dest_path)
+                log.debug("Renamed irods object: {}->{}", src_path, dest_path)
         except iexceptions.CAT_RECURSIVE_MOVE:
             raise IrodsException("Source and destination path are the same")
         except iexceptions.SAME_SRC_DEST_PATHS_ERR:
@@ -313,17 +317,17 @@ class IrodsPythonClient:
             # raised from both collection and data objects?
             raise IrodsException("Destination path already exists")
         except BaseException as e:
-            log.error("%s(%s)", e.__class__.__name__, e)
+            log.error("{}({})", e.__class__.__name__, e)
             raise IrodsException("System error; failed to move.")
 
     def remove(self, path, recursive=False, force=False, resource=None):
         try:
             if self.is_collection(path):
                 self.prc.collections.remove(path, recurse=recursive, force=force)
-                log.debug("Removed irods collection: %s", path)
+                log.debug("Removed irods collection: {}", path)
             else:
                 self.prc.data_objects.unlink(path, force=force)
-                log.debug("Removed irods object: %s", path)
+                log.debug("Removed irods object: {}", path)
         except iexceptions.CAT_COLLECTION_NOT_EMPTY:
 
             if recursive:
@@ -436,7 +440,7 @@ class IrodsPythonClient:
         """
 
         log.info(
-            "Downloading file %s in streaming with chunk size %s",
+            "Downloading file {} in streaming with chunk size {}",
             absolute_path,
             self.chunk_size,
         )
@@ -466,7 +470,7 @@ class IrodsPythonClient:
         # log.warning("Resource not used in saving irods data...")
 
         if not force and self.is_dataobject(destination):
-            log.warn("Already exists")
+            log.warning("Already exists")
             raise IrodsException(
                 "File '"
                 + destination
@@ -475,7 +479,7 @@ class IrodsPythonClient:
             )
 
         log.info(
-            "Uploading file in streaming to %s with chunk size %s",
+            "Uploading file in streaming to {} with chunk size {}",
             destination,
             self.chunk_size,
         )
@@ -488,7 +492,7 @@ class IrodsPythonClient:
                     self.write_in_chunks(target, self.chunk_size)
 
             except BaseException as ex:
-                log.critical("Failed streaming upload: %s", ex)
+                log.critical("Failed streaming upload: {}", ex)
                 # Should I remove file from iRODS if upload failed?
                 log.debug("Removing object from irods")
                 self.remove(destination, force=True)
@@ -502,7 +506,7 @@ class IrodsPythonClient:
         # except iexceptions.DataObjectDoesNotExist:
         #     raise IrodsException("Cannot write to file: not found")
         except BaseException as ex:
-            log.critical("Failed streaming upload: %s", ex)
+            log.critical("Failed streaming upload: {}", ex)
             raise ex
 
         return False
@@ -562,7 +566,7 @@ class IrodsPythonClient:
 
         if coll_or_obj is None:
             raise IrodsException(
-                "Cannot get permission: path not found: %s" % coll_or_obj
+                "Cannot get permission: path not found: {}".format(coll_or_obj)
             )
 
         data = {}
@@ -587,7 +591,7 @@ class IrodsPythonClient:
         ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
         try:
             self.prc.permissions.set(ACL)  # , recursive=False)
-            log.verbose("Enabled %s to %s", key, path)
+            log.verbose("Enabled {} to {}", key, path)
         except iexceptions.CAT_INVALID_ARGUMENT:
             if not self.is_collection(path) and not self.is_dataobject(path):
                 raise IrodsException("Cannot set Inherit: path not found")
@@ -624,7 +628,7 @@ class IrodsPythonClient:
             )
             self.prc.permissions.set(ACL, recursive=recursive)
 
-            log.debug("Grant %s=%s to %s", userOrGroup, permission, path)
+            log.debug("Grant {}={} to {}", userOrGroup, permission, path)
             return True
 
         except iexceptions.CAT_INVALID_USER:
@@ -649,7 +653,7 @@ class IrodsPythonClient:
                 access_name=permission, path=path, user_name='', user_zone=''
             )
             self.prc.permissions.set(ACL, recursive=recursive)
-            log.debug("Set inheritance %r to %s", inheritance, path)
+            log.debug("Set inheritance {} to {}", inheritance, path)
             return True
         except iexceptions.CAT_NO_ACCESS_PERMISSION:
             if self.is_dataobject(path):
@@ -732,10 +736,10 @@ class IrodsPythonClient:
     def check_user_exists(self, username, checkGroup=None):
         userdata = self.get_user_info(username)
         if userdata is None:
-            return False, "User %s does not exist" % username
+            return False, "User {} does not exist".format(username)
         if checkGroup is not None:
             if checkGroup not in userdata['groups']:
-                return False, "User %s is not in group %s" % (username, checkGroup)
+                return False, "User {} is not in group {}".format(username, checkGroup)
         return True, "OK"
 
     def query_user_exists(self, user):
@@ -818,20 +822,20 @@ class IrodsPythonClient:
 
         try:
             user_data = self.prc.users.create(user, user_type)
-            log.info("Created user: %s", user_data)
+            log.info("Created user: {}", user_data)
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
-            log.warning("User %s already exists in iRODS", user)
+            log.warning("User {} already exists in iRODS", user)
             return False
 
         return True
 
     def modify_user_password(self, user, password):
-        log.debug("Changing %s password", user)
+        log.debug("Changing {} password", user)
         return self.prc.users.modify(user, 'password', password)
 
     def remove_user(self, user_name):
         user = self.prc.users.get(user_name)
-        log.warning("Removing user: %s", user_name)
+        log.warning("Removing user: {}", user_name)
         return user.remove()
 
     def list_user_attributes(self, user):
@@ -872,6 +876,7 @@ class IrodsPythonClient:
 
         import textwrap
 
+        # A bit completed to use {}.format syntax...
         rule_body = textwrap.dedent(
             '''\
             %s {{
@@ -887,13 +892,12 @@ class IrodsPythonClient:
         try:
             raw_out = myrule.execute()
         except BaseException as e:
-            msg = 'Irule failed: %s' % e.__class__.__name__
+            msg = 'Irule failed: {}'.format(e.__class__.__name__)
             log.error(msg)
             log.warning(e)
-            # raise IrodsException(msg)
             raise e
         else:
-            log.debug("Rule %s executed: %s", name, raw_out)
+            log.debug("Rule {} executed: {}", name, raw_out)
 
             # retrieve out buffer
             if output and len(raw_out.MsParam_PI) > 0:
@@ -911,13 +915,13 @@ class IrodsPythonClient:
                     buf = re.sub(r'\s+', '', buf)
                     buf = re.sub(r'\\x00', '', buf)
                     buf = buf.rstrip('\x00')
-                    log.debug("Out buff: %s", buf)
+                    log.debug("Out buff: {}", buf)
 
                 err_buf = out_array.stderrBuf.buf
                 if err_buf is not None:
                     err_buf = err_buf.decode(file_coding)
                     err_buf = re.sub(r'\s+', '', err_buf)
-                    log.debug("Err buff: %s", err_buf)
+                    log.debug("Err buff: {}", err_buf)
 
                 return buf
 
@@ -927,9 +931,9 @@ class IrodsPythonClient:
         # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
         # test_name = 'paolo2'
         # inputs = {  # extra quotes for string literals
-        #     '*object': '"%s"' % object_path,
-        #     '*name': '"%s"' % test_name,
-        #     '*value': '"%s"' % test_name,
+        #     '*object': '"{}"'.format(object_path),
+        #     '*name': '"{}"'.format(test_name),
+        #     '*value': '"{}"'.format(test_name),
         # }
         # body = \"\"\"
         #     # add metadata
@@ -1003,21 +1007,21 @@ class IrodsPythonClient:
 
 #     def query_icat(self, query, key):
 #         com = 'iquest'
-#         args = ["%s" % query]
+#         args = [query]
 #         output = self.basic_icom(com, args)
-#         log.debug("%s query: [%s]\n%s", com, query, output)
+#         log.debug("{} query: [{}]\n{}", com, query, output)
 #         if 'CAT_NO_ROWS_FOUND' in output:
 #             return None
-#         return output.split('\n')[0].lstrip("%s = " % key)
+#         return output.split('\n')[0].lstrip("{} = ".format(key))
 
 #     def query_user(self, select="USER_NAME", where="USER_NAME", field=None):
-#         query = "SELECT %s WHERE %s = '%s'" % (select, where, field)
+#         query = "SELECT {} WHERE {} = '{}'".format(select, where, field)
 #         return self.query_icat(query, select)
 
 #     def get_base_dir(self):
 #         com = "ipwd"
 #         iout = self.basic_icom(com).strip()
-#         log.verbose("Base dir is %s", iout)
+#         log.verbose("Base dir is {}", iout)
 #         return iout
 
 #     ############################################
@@ -1029,7 +1033,7 @@ class IrodsPythonClient:
 #     def list_resources(self):
 #         com = 'ilsresc'
 #         iout = self.basic_icom(com).strip()
-#         log.debug("Resources %s", iout)
+#         log.debug("Resources {}", iout)
 #         return iout.split("\n")
 
 #     def get_base_resource(self):
@@ -1047,7 +1051,7 @@ class IrodsPythonClient:
 #                 continue
 #             resources.append(elements[2])
 
-#         log.debug("%s: found resources %s",  filepath, resources)
+#         log.debug("{}: found resources {}",  filepath, resources)
 #         return resources
 
 #     def admin(self, command, user=None, extra=None):
@@ -1062,7 +1066,7 @@ class IrodsPythonClient:
 #             args.append(user)
 #         if extra is not None:
 #             args.append(extra)
-#         log.debug("iRODS admininistration command '%s'", command)
+#         log.debug("iRODS admininistration command '{}'", command)
 #         return self.basic_icom(com, args)
 
 #     def admin_list(self):
@@ -1083,7 +1087,7 @@ class IrodsPythonClient:
 #         irods://130.186.13.14:1247/cinecaDMPZone/home/pdonorio/replica/test2
 #         """
 #         protocol = 'irods'
-#         URL = "%s://%s:%s%s" % (
+#         URL = "{}://{}:{}{}".format(
 #             protocol,
 #             self._current_environment['IRODS_HOST'],
 #             self._current_environment['IRODS_PORT'],
@@ -1167,7 +1171,7 @@ class IrodsPythonClient:
 #         com = "ilocate"
 #         if like:
 #             path += '%'
-#         log.debug("iRODS search for %s", path)
+#         log.debug("iRODS search for {}", path)
 #         # Execute
 #         out = self.execute_command(com, path)
 #         content = out.strip().split('\n')
@@ -1212,17 +1216,13 @@ def get_and_verify_irods_session(function, parameters):
         obj = function(**parameters)
 
     except iexceptions.CAT_INVALID_USER:
-        log.warning("Invalid user: %s", username)
+        log.warning("Invalid user: {}", username)
     except iexceptions.UserDoesNotExist:
-        log.warning("Invalid iCAT user: %s", username)
+        log.warning("Invalid iCAT user: {}", username)
     except iexceptions.CAT_INVALID_AUTHENTICATION:
-        log.warning("Invalid password for %s", username)
-    # This problem below should not happen anymore
-    # except iexceptions.MultipleResultsFound:
-    #     raise IrodsException(
-    #         "User %s belonging to multiple iRODS zones" % username)
+        log.warning("Invalid password for {}", username)
     except BaseException as e:
-        log.warning("Failed with unknown reason:\n[%s] \"%s\"", type(e), e)
+        log.warning("Failed with unknown reason:\n[{}] \"{}\"", type(e), e)
         error = 'Failed to verify credentials against B2SAFE. ' + 'Unknown error: '
         if str(e).strip() == '':
             error += e.__class__.__name__

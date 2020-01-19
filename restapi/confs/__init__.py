@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 from restapi.utilities.globals import mem
 
-AVOID_COLORS_ENV_LABEL = 'TESTING_FLASK'
 STACKTRACE = False
 REMOVE_DATA_AT_INIT_TIME = False
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from sqlalchemy.exc import IntegrityError
 
 from restapi import decorators as decorate
@@ -10,12 +11,10 @@ from restapi.confs import get_project_configuration
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.services.mail import get_html_template
+from restapi.utilities.templates import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+# from restapi.utilities.logs import log
 
 
 class AdminUsers(EndpointResource):
@@ -141,12 +140,11 @@ class AdminUsers(EndpointResource):
             "project.title", default='Unkown title'
         )
 
-        subject = "%s: " % title
         if is_update:
-            subject += "password changed"
+            subject = "{}: password changed".format(title)
             template = "update_credentials.html"
         else:
-            subject += "new credentials"
+            subject = "{}: new credentials".format(title)
             template = "new_credentials.html"
 
         replaces = {"username": user.email, "password": unhashed_password}
@@ -154,9 +152,9 @@ class AdminUsers(EndpointResource):
         html = get_html_template(template, replaces)
 
         body = """
-Username: "%s"
-Password: "%s"
-        """ % (
+Username: "{}"
+Password: "{}"
+        """.format(
             user.email,
             unhashed_password,
         )
@@ -175,11 +173,11 @@ Password: "%s"
         is_admin = self.auth.verify_admin()
         is_local_admin = self.auth.verify_local_admin()
         if not is_admin and not is_local_admin:
-            extra_debug = "is_admin = %s;" % is_admin
-            extra_debug += " is_local_admin = %s;" % is_local_admin
-            extra_debug += " roles = %s;" % self.auth.get_roles_from_user()
+            extra_debug = "is_admin = {};".format(is_admin)
+            extra_debug += " is_local_admin = {};".format(is_local_admin)
+            extra_debug += " roles = {};".format(self.auth.get_roles_from_user())
             raise RestApiException(
-                "You are not authorized: missing privileges. %s" % extra_debug,
+                "You are not authorized: missing privileges. {}".format(extra_debug),
                 status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
             )
 
@@ -275,7 +273,7 @@ Password: "%s"
                         new_schema[idx]["enum"] = []
 
                         for g in self.graph.Group.nodes.all():
-                            group_name = "%s - %s" % (g.shortname, g.fullname)
+                            group_name = "{} - {}".format(g.shortname, g.fullname)
                             new_schema[idx]["enum"].append({g.uuid: group_name})
                             if new_schema[idx]["default"] is None:
                                 new_schema[idx]["default"] = g.uuid
@@ -302,9 +300,7 @@ Password: "%s"
 
                             role = {
                                 "type": "checkbox",
-                                # "name": "roles[%s]" % r.name,
-                                "name": "roles_%s" % r.name,
-                                # "name": r.name,
+                                "name": "roles_{}".format(r.name),
                                 "custom": {"label": r.description},
                             }
 
@@ -342,7 +338,7 @@ Password: "%s"
                         if g == default_group:
                             continue
 
-                        group_name = "%s - %s" % (g.shortname, g.fullname)
+                        group_name = "{} - {}".format(g.shortname, g.fullname)
                         new_schema[idx]["enum"].append({g.uuid: group_name})
                         if defg is None:
                             defg = g.uuid
@@ -377,7 +373,22 @@ Password: "%s"
         else:
             unhashed_password = None
 
-        user = self.auth.create_user(properties, roles)
+        try:
+            user = self.auth.create_user(properties, roles)
+        except AttributeError as e:
+
+            # Duplicated from decorators
+            prefix = "Can't create user .*:\nNode\([0-9]+\) already exists with label"
+            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(prefix), str(e))
+
+            if m:
+                node = m.group(1)
+                prop = m.group(2)
+                val = m.group(3)
+                error = "A {} already exists with {} = {}".format(node, prop, val)
+                raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
+            else:
+                raise e
 
         if self.sql_enabled:
 
@@ -614,11 +625,11 @@ class UserRole(EndpointResource):
                 default=[],
             )
             # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
-            cypher += " WHERE r.name in %s" % allowed_roles
+            cypher += " WHERE r.name in {}".format(allowed_roles)
         # Admin only
         elif query is not None:
             cypher += " WHERE r.description <> 'automatic'"
-            cypher += " AND r.name =~ '(?i).*%s.*'" % query
+            cypher += " AND r.name =~ '(?i).*{}.*'".format(query)
 
         cypher += " RETURN r ORDER BY r.name ASC"
 

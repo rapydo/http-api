@@ -4,9 +4,7 @@ import pytz
 from datetime import datetime
 import dateutil.parser
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 def timestamp_from_string(timestamp_string):
@@ -48,5 +46,5 @@ def string_from_timestamp(timestamp):
         date = datetime.fromtimestamp(float(timestamp))
         return date.isoformat()
     except BaseException:
-        log.warning("Errors parsing %s", timestamp)
+        log.warning("Errors parsing {}", timestamp)
         return ""

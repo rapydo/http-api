@@ -9,9 +9,6 @@ from elasticsearch_dsl import DocType, String, Completion
 # Date, Nested, Boolean, \
 # analyzer, InnerObjectWrapper,
 
-# log = get_logger(__name__)
-# log.info("Things to do")
-
 
 class User(DocType):
     title = String()

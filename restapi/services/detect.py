@@ -15,13 +15,11 @@ from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import load_yaml_file
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 
 class Detector(object):
-    def __init__(self, config_file_name='services'):
+    def __init__(self):
 
         self.authentication_service = None
         self.authentication_name = 'authentication'
@@ -33,7 +31,7 @@ class Detector(object):
         self.extensions_instances = {}
         self.available_services = {}
         self.meta = Meta()
-        self.check_configuration(config_file_name)
+        self.check_configuration()
         self.load_classes()
 
     @staticmethod
@@ -42,9 +40,8 @@ class Detector(object):
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):
+    def get_bool_envvar(bool_var):
 
-        bool_var = os.environ.get(name, False)
         if isinstance(bool_var, bool):
             return bool_var
 
@@ -57,24 +54,34 @@ class Detector(object):
             pass
 
         # STRINGS
-        # any non empty string with a least one char
-        # has to be considered True
-        if isinstance(bool_var, str) and len(bool_var) > 0:
-            return True
+        if isinstance(bool_var, str):
+            # false / False / FALSE
+            if bool_var.lower() == 'false':
+                return False
+            # any non empty string has to be considered True
+            if len(bool_var) > 0:
+                return True
 
         return False
+
+    @staticmethod
+    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
+    def get_bool_from_os(name):
+
+        bool_var = os.environ.get(name, False)
+        return Detector.get_bool_envvar(bool_var)
 
     @staticmethod
     def prefix_name(service):
         return service.get('name'), service.get('prefix').lower() + '_'
 
-    def check_configuration(self, config_file_name):
+    def check_configuration(self):
 
-        self.services_configuration = load_yaml_file(
-            file=config_file_name,
-            path=ABS_RESTAPI_CONFSPATH,
-            logger=True,
-        )
+        try:
+            self.services_configuration = load_yaml_file(
+                file='services.yaml', path=ABS_RESTAPI_CONFSPATH)
+        except AttributeError as e:
+            log.exit(e)
 
         for service in self.services_configuration:
 
@@ -95,11 +102,10 @@ class Detector(object):
                     self.authentication_service = variables.get('service')
 
         if self.authentication_service is None:
-            log.warning("no service defined behind authentication")
-            # raise AttributeError("no service defined behind authentication")
+            log.warning("No service defined behind authentication")
         else:
             log.info(
-                "Authentication based on '%s' service",
+                "Authentication based on '{}' service",
                 self.authentication_service
             )
 
@@ -154,7 +160,7 @@ class Detector(object):
         if isinstance(host, str):  # and host.count('.') > 2:
             if not host.endswith('dockerized.io'):
                 variables['external'] = True
-                log.verbose("Service %s detected as external: %s", service, host)
+                log.verbose("Service {} detected as external: {}", service, host)
 
         return variables
 
@@ -170,7 +176,7 @@ class Detector(object):
             modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
         )
         if module is None:
-            log.exit("Missing %s for %s", flaskext, service)
+            log.exit("Missing {} for {}", flaskext, service)
 
         return getattr(module, classname)
 
@@ -182,7 +188,7 @@ class Detector(object):
 
             if not self.available_services.get(name):
                 continue
-            log.verbose("Looking for class %s", name)
+            log.verbose("Looking for class {}", name)
 
             variables = service.get('variables')
             ext_name = service.get('class')
@@ -214,11 +220,11 @@ class Detector(object):
 
             except AttributeError as e:
                 log.error(str(e))
-                log.exit('Invalid Extension class: %s', ext_name)
+                log.exit('Invalid Extension class: {}', ext_name)
 
             # Save
             self.services_classes[name] = MyClass
-            log.debug("Got class definition for %s", MyClass)
+            log.debug("Got class definition for {}", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
@@ -245,8 +251,8 @@ class Detector(object):
                     continue
                 else:
                     log.exit(
-                        "Auth service '%s' seems unreachable"
-                        % self.authentication_service
+                        "Auth service '{}' is unreachable".format(
+                            self.authentication_service)
                     )
 
             args = {}
@@ -258,7 +264,7 @@ class Detector(object):
             try:
                 ext_instance = ExtClass(app, **args)
             except TypeError as e:
-                log.exit('Your class %s is not compliant:\n%s', name, e)
+                log.exit('Your class {} is not compliant:\n{}', name, e)
             else:
                 self.extensions_instances[name] = ext_instance
 
@@ -272,7 +278,7 @@ class Detector(object):
                 do_init = False
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing %s (pinit=%s)", name, do_init)
+            log.debug("Initializing {} (pinit={})", name, do_init)
             service_instance = ext_instance.custom_init(
                 pinit=do_init, pdestroy=project_clean, abackend=auth_backend
             )
@@ -289,7 +295,7 @@ class Detector(object):
             if name == self.task_service_name:
                 do_init = True
 
-                task_package = "%s.tasks" % CUSTOM_PACKAGE
+                task_package = "{}.tasks".format(CUSTOM_PACKAGE)
 
                 submodules = self.meta.import_submodules_from_package(
                     task_package, exit_on_fail=True
@@ -325,7 +331,7 @@ class Detector(object):
             # Recover class
             MyClass = self.services_classes.get(name)
             if MyClass is None:
-                raise AttributeError("No class found for %s" % name)
+                raise AttributeError("No class found for {}".format(name))
             MyModule.set_extension_class(MyClass)
             self.modules.append(MyModule)
 
@@ -351,12 +357,12 @@ class Detector(object):
         try:
             # NOTE: this might be a pattern
             # see in meta.py:get_customizer_class
-            module_path = "%s.%s.%s" % (
+            module_path = "{}.{}.{}".format(
                 CUSTOM_PACKAGE,
                 'initialization',
                 'initialization',
             )
-            module = Meta.get_module_from_string(module_path, debug_on_fail=False)
+            module = Meta.get_module_from_string(module_path)
             meta = Meta()
             Initializer = meta.get_class_from_string(
                 'Initializer', module, skip_error=True
@@ -367,7 +373,7 @@ class Detector(object):
                 try:
                     Initializer(instances, app=app)
                 except BaseException as e:
-                    log.error("Errors during custom initialization: %s", e)
+                    log.error("Errors during custom initialization: {}", e)
                 else:
                     log.info("Vanilla project has been initialized")
 

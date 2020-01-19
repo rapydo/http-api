@@ -14,9 +14,7 @@ So we made some improvement along the code.
 from restapi.server import create_app
 from restapi.confs import CUSTOM_PACKAGE
 from restapi.utilities.meta import Meta
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 ################################################
 # Reload Flask app code also for the worker
@@ -30,7 +28,7 @@ celery_app.app = app
 def get_service(service, **kwargs):
     ext = celery_app.app.extensions.get(service)
     if ext is None:
-        log.error("%s is not enabled", service)
+        log.error("{} is not enabled", service)
         return None
     return ext.get_instance(**kwargs)
 
@@ -45,6 +43,6 @@ meta = Meta()
 # # Base tasks
 # submodules = meta.import_submodules_from_package(main_package + "base")
 # # Custom tasks
-submodules = meta.import_submodules_from_package("%s.tasks" % CUSTOM_PACKAGE)
+submodules = meta.import_submodules_from_package("{}.tasks".format(CUSTOM_PACKAGE))
 
-log.debug("Celery worker is ready %s", celery_app)
+log.debug("Celery worker is ready {}", celery_app)

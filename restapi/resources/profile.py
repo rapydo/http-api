@@ -11,15 +11,14 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
-from restapi.services.mail import get_html_template
 from restapi.flask_ext.flask_auth import HandleSecurity
+from restapi.utilities.templates import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
 
-from restapi.utilities.logs import get_logger
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 meta = Meta()
 
 """
@@ -54,9 +53,9 @@ def send_activation_link(auth, user):
         protocol = "http"
 
     rt = activation_token.replace(".", "+")
-    log.debug("Activation token: %s", rt)
-    url = "%s://%s/public/register/%s" % (protocol, domain, rt)
-    body = "Follow this link to activate your account: %s" % url
+    log.debug("Activation token: {}", rt)
+    url = "{}://{}/public/register/{}".format(protocol, domain, rt)
+    body = "Follow this link to activate your account: {}".format(url)
 
     obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
 
@@ -71,7 +70,7 @@ def send_activation_link(auth, user):
             body = None
 
         # NOTE: possibility to define a different subject
-        default_subject = "%s account activation" % title
+        default_subject = "{} account activation".format(title)
         subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
         sent = send_mail(html_body, subject, user.email, plain_body=body)
@@ -84,7 +83,7 @@ def send_activation_link(auth, user):
             obj.request_activation(name=user.name, email=user.email, url=url)
         except BaseException as e:
             log.error(
-                "Could not send email with custom service:\n%s: %s",
+                "Could not send email with custom service:\n{}: {}",
                 e.__class__.__name__,
                 e,
             )
@@ -100,8 +99,8 @@ def notify_registration(user):
         title = get_project_configuration(
             "project.title", default='Unkown title'
         )
-        subject = "%s New credentials requested" % title
-        body = "New credentials request from %s" % user.email
+        subject = "{} New credentials requested".format(title)
+        body = "New credentials request from {}".format(user.email)
 
         send_mail(body, subject)
 
@@ -121,7 +120,7 @@ def custom_extra_registration(variables):
             )
         except BaseException as e:
             log.error(
-                "Could not register your custom profile:\n%s: %s",
+                "Could not register your custom profile:\n{}: {}",
                 e.__class__.__name__,
                 e,
             )
@@ -210,7 +209,7 @@ class Profile(EndpointResource):
             try:
                 data = obj.manipulate(ref=self, user=current_user, data=data)
             except BaseException as e:
-                log.error("Could not custom manipulate profile:\n%s", e)
+                log.error("Could not custom manipulate profile:\n{}", e)
 
         return data
 
@@ -256,7 +255,7 @@ class Profile(EndpointResource):
         user = self.auth.get_user_object(username=v['email'])
         if user is not None:
             raise RestApiException(
-                "This user already exists: %s" % v['email'],
+                "This user already exists: {}".format(v['email']),
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
@@ -273,7 +272,7 @@ class Profile(EndpointResource):
             )
 
         except BaseException as e:
-            log.error("Errors during account registration: %s", str(e))
+            log.error("Errors during account registration: {}", str(e))
             user.delete()
             raise RestApiException(str(e))
         else:
@@ -321,10 +320,10 @@ class Profile(EndpointResource):
             for key, value in data.items():
                 if key.startswith('_') or key in avoid_update:
                     continue
-                log.debug("Profile new value: %s=%s", key, value)
+                log.debug("Profile new value: {}={}", key, value)
                 setattr(user, key, value)
         except BaseException as e:
-            log.error("Failed to update profile:\n%s: %s", e.__class__.__name__, e)
+            log.error("Failed to update profile:\n{}: {}", e.__class__.__name__, e)
         else:
             log.info("Profile updated")
 
@@ -450,21 +449,21 @@ class ProfileActivate(EndpointResource):
         if user is not None:
             send_activation_link(self.auth, user)
         msg = (
-            "We are sending an email to your email address where "
-            + "you will find the link to activate your account"
+            "We are sending an email to your email address where " +
+            "you will find the link to activate your account"
         )
         return msg
 
 
 def send_internal_password_reset(uri, title, reset_email):
     # Internal templating
-    body = "Follow this link to reset password: %s" % uri
+    body = "Follow this link to reset password: {}".format(uri)
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")
         html_body = body
         body = None
-    subject = "%s Password Reset" % title
+    subject = "{} Password Reset".format(title)
 
     # Internal email sending
     c = send_mail(html_body, subject, reset_email, plain_body=body)
@@ -522,8 +521,7 @@ class RecoverPassword(EndpointResource):
 
         if user is None:
             raise RestApiException(
-                'Sorry, %s ' % reset_email
-                + 'is not recognized as a valid username or email address',
+                'Sorry, {} is not recognized as a valid username'.format(reset_email),
                 status_code=hcodes.HTTP_BAD_FORBIDDEN,
             )
 
@@ -551,7 +549,7 @@ class RecoverPassword(EndpointResource):
 
         var = "RESET_PASSWORD_URI"
         uri = detector.get_global_var(key=var, default='/public/reset')
-        complete_uri = "%s://%s%s/%s" % (protocol, domain, uri, rt)
+        complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
 
         ##################
         # Send email with internal or external SMTP

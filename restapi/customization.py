@@ -5,8 +5,6 @@ Customization based on configuration 'blueprint' files
 """
 
 import os
-import re
-import glob
 import copy
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
@@ -16,11 +14,9 @@ from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
 from restapi.utilities.meta import Meta
 
-from restapi.utilities import configuration as conf
-from restapi.utilities.configuration import load_yaml_file
-from restapi.utilities.logs import get_logger
+from restapi.utilities.configuration import read_configuration
+from restapi.utilities.logs import log
 
-log = get_logger(__name__)
 meta = Meta()
 
 CONF_FOLDERS = detector.load_group(label='project_confs')
@@ -47,53 +43,33 @@ class Customizer(object):
         self._query_params = {}
         self._schemas_map = {}
 
-        # Do things
-        self.read_configuration()
+        # Reading configuration
+        confs_path = os.path.join(os.curdir, CONF_PATH)
+        defaults_path = CONF_FOLDERS.get('defaults_path', confs_path)
+        base_path = CONF_FOLDERS.get('base_path', confs_path)
+        projects_path = CONF_FOLDERS.get('projects_path', confs_path)
+        submodules_path = CONF_FOLDERS.get('submodules_path', confs_path)
+
+        try:
+            self._configurations, self._extended_project, self._extended_path = \
+                read_configuration(
+                    default_file_path=defaults_path,
+                    base_project_path=base_path,
+                    projects_path=projects_path,
+                    submodules_path=submodules_path
+                )
+        except AttributeError as e:
+            log.exit(e)
 
         if not init:
             self.do_schema()
             self.find_endpoints()
             self.do_swagger()
 
-    def read_configuration(self):
-        ##################
-        # Reading configuration
-
-        confs_path = os.path.join(os.curdir, CONF_PATH)
-
-        if 'defaults_path' in CONF_FOLDERS:
-            defaults_path = CONF_FOLDERS['defaults_path']
-        else:
-            defaults_path = confs_path
-
-        if 'base_path' in CONF_FOLDERS:
-            base_path = CONF_FOLDERS['base_path']
-        else:
-            base_path = confs_path
-
-        if 'projects_path' in CONF_FOLDERS:
-            projects_path = CONF_FOLDERS['projects_path']
-        else:
-            projects_path = confs_path
-
-        if 'submodules_path' in CONF_FOLDERS:
-            submodules_path = CONF_FOLDERS['submodules_path']
-        else:
-            submodules_path = confs_path
-
-        self._configurations, self._extended_project, self._extended_path = conf.read(
-            default_file_path=defaults_path,
-            base_project_path=base_path,
-            projects_path=projects_path,
-            submodules_path=submodules_path,
-            from_container=True,
-            do_exit=True,
-        )
-
     def do_schema(self):
         """ Schemas exposing, if requested """
 
-        name = '%s.%s.%s' % (BACKEND_PACKAGE, 'rest', 'schema')
+        name = '{}.rest.schema'.format(BACKEND_PACKAGE)
         module = Meta.get_module_from_string(
             name, exit_if_not_found=True, exit_on_fail=True
         )
@@ -144,8 +120,7 @@ class Customizer(object):
             {'path': os.path.join(os.curdir, CUSTOM_PACKAGE), 'iscore': False}
         )
 
-        simple_override_check = {}
-        already_loaded = {}
+        # already_loaded = {}
         for folder in endpoints_folders:
 
             base_dir = folder.get('path')
@@ -156,25 +131,30 @@ class Customizer(object):
 
             if iscore:
                 apis_dir = os.path.join(base_dir, 'resources')
-                apiclass_module = '%s.%s' % (base_module, 'resources')
+                apiclass_module = '{}.resources'.format(base_module)
             else:
                 apis_dir = os.path.join(base_dir, 'apis')
-                apiclass_module = '%s.%s' % (base_module, 'apis')
+                apiclass_module = '{}.apis'.format(base_module)
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
 
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
-                module_name = "%s.%s" % (apiclass_module, module_file)
+                module_name = "{}.{}".format(apiclass_module, module_file)
                 # Convert module name into a module
                 try:
-                    module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+                    module = Meta.get_module_from_string(
+                        module_name,
+                        exit_on_fail=True,
+                        exit_if_not_found=True
+                    )
                 except BaseException as e:
-                    log.exit("Cannot import %s\nError: %s", module_name, e)
+                    log.exit("Cannot import {}\nError: {}", module_name, e)
 
                 # Extract classes from the module
-                classes = meta.get_classes_from_module(module)
+                # classes = meta.get_classes_from_module(module)
+                classes = meta.get_new_classes_from_module(module)
                 for class_name in classes:
                     ep_class = classes.get(class_name)
                     # Filtering out classes without required data
@@ -183,18 +163,18 @@ class Customizer(object):
                     if ep_class.methods is None:
                         continue
 
-                    if class_name in already_loaded:
-                        log.warning(
-                            "Skipping import of %s from %s.%s, already loded from %s",
-                            class_name,
-                            apis_dir,
-                            module_file,
-                            already_loaded[class_name],
-                        )
-                        continue
-                    already_loaded[class_name] = "%s.%s" % (apis_dir, module_file)
+                    # if class_name in already_loaded:
+                    #     log.warning(
+                    #         "Skipping import of {} from {}.{}, already loded from {}",
+                    #         class_name,
+                    #         apis_dir,
+                    #         module_file,
+                    #         already_loaded[class_name],
+                    #     )
+                    #     continue
+                    # already_loaded[class_name] = "{}.{}".format(apis_dir, module_file)
                     log.debug(
-                        "Importing %s from %s", class_name, already_loaded[class_name]
+                        "Importing {} from {}.{}", class_name, apis_dir, module_file
                     )
                     if not self._testing:
                         skip = False
@@ -208,7 +188,7 @@ class Customizer(object):
                                 negate, dependency = pieces
                                 negate = negate.lower() == 'not'
                             else:
-                                log.exit('Wrong parameter: %s', var)
+                                log.exit('Wrong parameter: {}', var)
 
                             check = detector.get_bool_from_os(dependency)
                             if negate:
@@ -221,7 +201,7 @@ class Customizer(object):
 
                         if skip:
                             log.debug(
-                                "Skip '%s %s': unmet %s",
+                                "Skipping '{} {}' due to unmet dependency: {}",
                                 module_name,
                                 class_name,
                                 dependency
@@ -241,7 +221,7 @@ class Customizer(object):
                     # base URI
                     base = ep_class.baseuri
                     if base not in BASE_URLS:
-                        log.warning("Invalid base %s", base)
+                        log.warning("Invalid base {}", base)
                         base = API_URL
                     base = base.strip('/')
                     endpoint.base_uri = base
@@ -258,7 +238,7 @@ class Customizer(object):
                     for m in ep_class.methods:
                         if not hasattr(ep_class, m):
                             log.warning(
-                                "%s configuration not found in %s", m, class_name
+                                "{} configuration not found in {}", m, class_name
                             )
                             continue
                         conf = getattr(ep_class, m)
@@ -268,58 +248,15 @@ class Customizer(object):
 
                     if endpoint.custom['schema']['expose']:
                         for uri in mapping_lists:
-                            total_uri = '/%s%s' % (endpoint.base_uri, uri)
-                            schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
+                            total_uri = '/{}{}'.format(endpoint.base_uri, uri)
+                            schema_uri = '{}/schemas{}'.format(API_URL, uri)
 
                             p = hex(id(endpoint.cls))
                             self._schema_endpoint.uris[uri + p] = schema_uri
 
-                            # endpoint.custom['schema']['publish'][uri] = ep_class.publish
                             self._schemas_map[schema_uri] = total_uri
 
                     self._endpoints.append(endpoint)
-
-            swagger_dir = os.path.join(base_dir, 'swagger')
-            if not iscore and os.path.exists(swagger_dir):
-                log.verbose("Swagger dir: %s", swagger_dir)
-
-                for ep in os.listdir(swagger_dir):
-
-                    if ep in simple_override_check:
-                        log.warning(
-                            "%s already loaded from %s",
-                            ep,
-                            simple_override_check.get(ep),
-                        )
-                        continue
-                    simple_override_check[ep] = base_dir
-
-                    swagger_endpoint_dir = os.path.join(swagger_dir, ep)
-
-                    if os.path.isfile(swagger_endpoint_dir):
-                        log.debug(
-                            "Found a file instead of a folder: %s", swagger_endpoint_dir
-                        )
-                        continue
-
-                    # get last item of the path
-                    # normapath is required to strip final / is any
-                    base_module = os.path.basename(os.path.normpath(base_dir))
-
-                    if iscore:
-                        apiclass_module = '%s.%s' % (base_module, 'resources')
-                    else:
-                        apiclass_module = '%s.%s' % (base_module, 'apis')
-
-                    log.warning("Deprecated endpoint configuration from yaml: %s", ep)
-
-                    current = self.lookup(
-                        ep, apiclass_module, swagger_endpoint_dir, iscore
-                    )
-
-                    if current is not None and current.exists:
-                        # Add endpoint to REST mapping
-                        self._endpoints.append(current)
 
     def do_swagger(self):
 
@@ -335,137 +272,3 @@ class Customizer(object):
             log.exit("Current swagger definition is invalid")
 
         self._definitions = swag_dict
-
-    def lookup(self, endpoint, apiclass_module, swagger_endpoint_dir, iscore):
-
-        log.verbose("Found endpoint dir: '%s'", endpoint)
-
-        if os.path.exists(os.path.join(swagger_endpoint_dir, 'SKIP')):
-            log.info("Skipping: %s", endpoint)
-            return None
-
-        # Find yaml files
-        conf = None
-        yaml_files = {}
-        yaml_listing = os.path.join(swagger_endpoint_dir, "*.yaml")
-
-        for file in glob.glob(yaml_listing):
-            if file.endswith('specs.yaml'):
-                # load configuration and find file and class
-                conf = load_yaml_file(file)
-            else:
-                # add file to be loaded from swagger extension
-                p = re.compile(r'\/([^\.\/]+)\.yaml$')
-                match = p.search(file)
-                method = match.groups()[0]
-                yaml_files[method] = file
-
-        if len(yaml_files) < 1:
-            raise Exception("%s: no methods defined in any YAML" % endpoint)
-        if conf is None or 'class' not in conf:
-            raise ValueError("No 'class' defined for '%s'" % endpoint)
-
-        current = self.load_endpoint(apiclass_module, conf, iscore)
-        current.methods = yaml_files
-        return current
-
-    def load_endpoint(self, apiclass_module, conf, iscore):
-
-        endpoint = EndpointElements(custom={})
-
-        # Load the endpoint class defined in the YAML file
-        file_name = conf.pop('file')
-        class_name = conf.pop('class')
-        name = '%s.%s' % (apiclass_module, file_name)
-        module = Meta.get_module_from_string(name, exit_on_fail=False)
-
-        # Error if unable to find the module in python
-        if module is None:
-            log.exit("Could not find module %s (in %s)", name, file_name)
-
-        # Check for dependecies and skip if missing
-        for var in conf.pop('depends_on', []):
-
-            negate = ''
-            pieces = var.strip().split(' ')
-            pieces_num = len(pieces)
-            if pieces_num == 1:
-                dependency = pieces.pop()
-            elif pieces_num == 2:
-                negate, dependency = pieces
-            else:
-                log.exit('Wrong parameter: %s', var)
-
-            check = detector.get_bool_from_os(dependency)
-            # Enable the possibility to depend on not having a variable
-            if negate.lower() == 'not':
-                check = not check
-
-            # Skip if not meeting the requirements of the dependency
-            if not check:
-                if not self._testing:
-                    log.debug("Skip '%s': unmet %s", apiclass_module, dependency)
-                return endpoint
-
-        # Get the class from the module
-        endpoint.cls = meta.get_class_from_string(class_name, module)
-        if endpoint.cls is None:
-            log.critical("Could not extract python class '%s'", class_name)
-            return endpoint
-        else:
-            endpoint.exists = True
-
-        # Is this a base or a custom class?
-        endpoint.iscore = iscore
-
-        # DEPRECATED
-        # endpoint.instance = endpoint.cls()
-
-        # Global tags
-        # to be applied to all methods
-        endpoint.tags = conf.pop('labels', [])
-
-        # base URI
-        base = conf.pop('baseuri', API_URL)
-        if base not in BASE_URLS:
-            log.warning("Invalid base %s", base)
-            base = API_URL
-        base = base.strip('/')
-
-        #####################
-        # MAPPING
-        schema = conf.pop('schema', {})
-        mappings = conf.pop('mapping', [])
-        if len(mappings) < 1:
-            raise KeyError("Missing 'mapping' section")
-
-        endpoint.uris = {}  # attrs python lib bug?
-        endpoint.custom['schema'] = {
-            'expose': schema.get('expose', False),
-            'publish': {},
-        }
-        for label, uri in mappings.items():
-
-            # BUILD URI
-            total_uri = '/%s%s' % (base, uri)
-            endpoint.uris[label] = total_uri
-
-            # If SCHEMA requested create
-            if endpoint.custom['schema']['expose']:
-
-                schema_uri = '%s%s%s' % (API_URL, '/schemas', uri)
-
-                p = hex(id(endpoint.cls))
-                self._schema_endpoint.uris[label + p] = schema_uri
-
-                endpoint.custom['schema']['publish'][label] = schema.get(
-                    'publish', False
-                )
-
-                self._schemas_map[schema_uri] = total_uri
-
-        # Check if something strange is still in configuration
-        if len(conf) > 0:
-            raise KeyError("Unwanted keys: %s" % list(conf.keys()))
-
-        return endpoint

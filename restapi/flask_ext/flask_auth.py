@@ -5,14 +5,14 @@ import pytz
 from datetime import datetime, timedelta
 from restapi.services.detect import Detector
 
-from restapi.flask_ext import BaseExtension, get_logger
+from restapi.flask_ext import BaseExtension
 from restapi.services.authentication import BaseAuthentication
 from restapi.exceptions import RestApiException
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.meta import Meta
+from restapi.utilities.logs import log
 from restapi.confs import get_project_configuration
 
-log = get_logger(__name__)
 
 if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     try:
@@ -255,8 +255,8 @@ class HandleSecurity(object):
             msg = (
                 """
                 Sorry, this account is temporarily blocked due to
-                more than %d failed login attempts. Try again later"""
-                % self.auth.MAX_LOGIN_ATTEMPTS
+                more than {} failed login attempts. Try again later""".format(
+                    self.auth.MAX_LOGIN_ATTEMPTS)
             )
             code = hcodes.HTTP_BAD_UNAUTHORIZED
             raise RestApiException(msg, status_code=code)

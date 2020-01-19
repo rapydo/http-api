@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import pymodm.connection as mongodb
-from restapi.flask_ext import BaseExtension, get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
+from restapi.flask_ext import BaseExtension
 
 AUTH_DB = 'auth'
 
@@ -24,7 +23,7 @@ class MongoExt(BaseExtension):
 
         ##################
         # connect for authentication if required
-        uri = "mongodb://%s:%s/%s" % (
+        uri = "mongodb://{}:{}/{}".format(
             variables.get('host'),
             variables.get('port'),
             AUTH_DB,
@@ -33,11 +32,14 @@ class MongoExt(BaseExtension):
 
         ##################
         db = variables.get('database', 'UNKNOWN')
-        uri = "mongodb://%s:%s/%s" % (variables.get('host'), variables.get('port'), db)
+        uri = "mongodb://{}:{}/{}".format(
+            variables.get('host'),
+            variables.get('port'), db
+        )
 
         mongodb.connect(uri, alias=db)
         link = mongodb._get_connection(alias=db)
-        log.verbose("Connected to db %s", db)
+        log.verbose("Connected to db {}", db)
 
         class obj:
             connection = link
@@ -64,7 +66,7 @@ class MongoExt(BaseExtension):
             for db in client.database_names():
                 if db not in system_dbs:
                     client.drop_database(db)
-                    log.critical("Dropped db '%s'", db)
+                    log.critical("Dropped db '{}'", db)
 
         # if pinit:
         #     pass

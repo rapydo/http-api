@@ -15,9 +15,7 @@ from flask import Flask
 
 from restapi.services.detect import detector
 
-from restapi.utilities.logs import get_logger
-
-log = get_logger(__name__)
+from restapi.utilities.logs import log
 
 ################################################
 # Reload Flask app code also for the worker
@@ -36,11 +34,11 @@ celery_app.app = app
 def get_service(service, **kwargs):
     ext = celery_app.app.extensions.get(service)
     if ext is None:
-        log.error("%s is not enabled", service)
+        log.error("{} is not enabled", service)
         return None
     return ext.get_instance(**kwargs)
 
 
 celery_app.get_service = get_service
 
-log.debug("Celery beat is ready %s", celery_app)
+log.debug("Celery beat is ready {}", celery_app)

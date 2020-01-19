@@ -5,10 +5,8 @@
 import re
 from functools import wraps
 from neomodel import db, config
-from restapi.flask_ext import BaseExtension, get_logger
-from restapi.utilities.logs import re_obscure_pattern
-
-log = get_logger(__name__)
+from restapi.flask_ext import BaseExtension
+from restapi.utilities.logs import log
 
 
 class NeomodelClient:
@@ -30,7 +28,8 @@ class NeomodelClient:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
         except Exception as e:
-            raise Exception("Failed to execute Cypher Query: %s\n%s" % (query, str(e)))
+            raise Exception(
+                "Failed to execute Cypher Query: {}\n{}".format(query, e))
         return results
 
     @staticmethod
@@ -101,7 +100,7 @@ class NeoModel(BaseExtension):
         else:
             variables = self.variables
 
-        self.uri = "bolt://%s:%s@%s:%s" % (
+        self.uri = "bolt://{}:{}@{}:{}".format(
             # User:Password
             variables.get('user', 'neo4j'),
             variables.get('password'),
@@ -173,7 +172,7 @@ def graph_transactions(func):
             try:
                 transaction.rollback()
             except Exception as sub_ex:
-                log.warning("Exception raised during rollback: %s", sub_ex)
+                log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
     return wrapper
@@ -211,7 +210,7 @@ def graph_nestable_transactions(func):
                     log.verbose("Neomodel transaction ROLLBACK")
                     transaction.rollback()
                 except Exception as sub_ex:
-                    log.warning("Exception raised during rollback: %s", sub_ex)
+                    log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
     return wrapper
