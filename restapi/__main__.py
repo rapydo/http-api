@@ -8,7 +8,7 @@ RESTful API Python 3 Flask server
 """
 
 import os
-import better_exceptions as be
+import pretty_errors
 from restapi.confs import PRODUCTION
 from restapi.server import create_app
 from restapi.utilities.logs import log
@@ -24,5 +24,5 @@ if PRODUCTION:
 app = create_app(name='REST_API')
 
 if __name__ == "__main__":
-    log.debug("Server running (w/ {})", be.__name__)
+    log.debug("Server running (w/ {})", pretty_errors.__name__)
     app.run(host='0.0.0.0', threaded=True)

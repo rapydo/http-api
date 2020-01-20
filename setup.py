@@ -77,7 +77,7 @@ setup(
         "glom",
         "psutil",
         "plumbum",
-        "better_exceptions",
+        "pretty_errors",
         "maxminddb-geolite2"
     ],
     classifiers=[

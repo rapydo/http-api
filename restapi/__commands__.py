@@ -3,7 +3,7 @@
 import os
 import time
 import click
-import better_exceptions as be
+import pretty_errors
 from flask.cli import FlaskGroup
 from restapi.processes import wait_socket
 from restapi import __package__ as current_package
@@ -222,7 +222,7 @@ def tests(wait, core, file, folder):
             log.debug('Waiting service startup')
             time.sleep(5)
 
-    log.debug("Starting unit tests: {}", be)
+    log.debug("Starting unit tests: {}", pretty_errors)
 
     # launch unittests and also compute coverage
     log.warning(
