@@ -54,7 +54,7 @@ setup(
         "Flask-RESTful==0.3.7",
         "Flask-SQLAlchemy==2.4.1",
 
-        "PyYAML==5.2",
+        "PyYAML==5.3",
 
         # DB drivers
         "neomodel>=3.2.9, <=3.3.2",
