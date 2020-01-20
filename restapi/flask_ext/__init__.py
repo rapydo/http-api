@@ -2,13 +2,10 @@
 
 """ base in common for our flask internal extensions """
 
-# TODO: we may create a base object for flask extensions like the injector
-
 import abc
 from datetime import datetime, timedelta
 
-from flask import Flask, _app_ctx_stack as stack
-from injector import Module, singleton, inject  # , provider
+from flask import _app_ctx_stack as stack
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
@@ -259,38 +256,6 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
         """
         return self.get_instance()
-
-
-class BaseInjector(Module):
-
-    # def __init__(self, **kwargs):
-    #     self.args = kwargs
-
-    @classmethod
-    def set_extension_class(cls, ExtensionClass):
-        if hasattr(cls, '_extClass'):
-            raise ("Extension class was already set")
-        cls._extClass = ExtensionClass
-
-    @classmethod
-    def get_extension_class(cls):
-        if not hasattr(cls, '_extClass'):
-            raise ("Extension class was not set at 'service detection' time")
-        return cls._extClass
-
-    # @provider
-    # @singleton
-    # def provide_ext(self, app: Flask) -> BaseExtension:
-    @inject
-    def configure(self, binder, app: Flask):
-
-        # TODO: recheck soon on new versions of Flask-Injector...
-
-        # Get the Flask extension and its instance
-        MyClass = self.get_extension_class()
-        # my_instance = MyClass(app, **self.args)
-        return binder.bind(MyClass, to=MyClass(app), scope=singleton)
-        # return my_instance
 
 
 def get_debug_instance(MyClass):

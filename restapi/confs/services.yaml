@@ -11,7 +11,6 @@
   prefix: alchemy
   extension: flask_alchemy
   class: SqlAlchemy
-  injector: SqlInjector
 
   # neo4j graphdb ORM
 - name: neo4j
@@ -19,7 +18,6 @@
   prefix: graphdb
   extension: flask_neo4j
   class: NeoModel
-  injector: NeoInjector
 
   # celery tasks
 - name: celery
@@ -27,7 +25,6 @@
   prefix: celery
   extension: flask_celery
   class: CeleryExt
-  injector: CeleryInjector
 
   # mongo database
 - name: mongo
@@ -35,7 +32,6 @@
   prefix: mongo
   extension: flask_mongo
   class: MongoExt
-  injector: MongoInjector
 
   # rabbitmq message queue
 - name: rabbit
@@ -43,7 +39,6 @@
   prefix: rabbit
   extension: flask_rabbit
   class: RabbitExt
-  injector: RabbitInjector
 
   # irods file system commands
 - name: irods
@@ -51,7 +46,6 @@
   prefix: irods
   extension: flask_irods
   class: IrodsPythonExt
-  injector: RPCInjector
 
   # full text search
 - name: elastic
@@ -59,7 +53,6 @@
   prefix: elastic
   extension: flask_elastic
   class: ElasticPythonExt
-  injector: ElasticInjector
 
   # pushpin websockets and HTTP stream
 - name: pushpin
@@ -67,7 +60,6 @@
   prefix: pushpin
   extension: flask_pushpin
   class: PushpinExt
-  injector: PushpinInjector
 
 ##############################
 # # OTHERS?
@@ -84,4 +76,3 @@
   prefix: auth
   extension: flask_auth
   class: Authenticator
-  injector: AuthInjector

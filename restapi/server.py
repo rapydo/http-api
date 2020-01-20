@@ -5,10 +5,8 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import os
-import warnings
 from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
-from flask_injector import FlaskInjector
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
@@ -203,17 +201,10 @@ def create_app(
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
-        ##############################
-        # Injection!
-        # Enabling "configuration modules" for services to be injected
-        # IMPORTANT: Injector must be initialized AFTER mapping endpoints
-
-        modules = detector.load_injector_modules()
-
-        # AVOID warnings from Flask Injector
-        warnings.filterwarnings("ignore")
-
-        FlaskInjector(app=microservice, modules=modules)
+        microservice.services_instances = {}
+        for m in detector.services_classes:
+            ExtClass = detector.services_classes.get(m)
+            microservice.services_instances[m] = ExtClass(microservice)
 
     ##############################
     # Clean app routes

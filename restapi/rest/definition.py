@@ -5,10 +5,8 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
-import pytz
-import dateutil.parser
 from datetime import datetime
-from injector import inject
+from flask import current_app
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
 from restapi.confs import API_URL
@@ -43,16 +41,15 @@ class EndpointResource(Resource):
     Implements a generic Resource for our Restful APIs model
     """
 
-    @inject(**detector.services_classes)
-    def __init__(self, **services):
+    def __init__(self):
 
-        if len(services) < 1:
+        self.services = current_app.services_instances
+        if len(self.services) < 1:
             raise AttributeError("No services available for requests...")
 
         # Init original class
         super(EndpointResource, self).__init__()
 
-        self.services = services
         self.load_authentication()
         self.init_parameters()
 

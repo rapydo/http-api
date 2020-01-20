@@ -143,19 +143,6 @@ class Meta(object):
         return myclass
 
     @staticmethod
-    def metaclassing(your_class, label=None, attributes=None):
-        """
-        Creating a class using metas.
-        Very usefull for automatic algorithms.
-        """
-
-        methods = dict(your_class.__dict__)
-        if attributes is not None and isinstance(attributes, dict):
-            for key, value in attributes.items():
-                methods.update({key: value})
-        return type(label, (your_class,), methods)
-
-    @staticmethod
     def get_self_reference_from_args(*args):
         """
         Useful in decorators:
