@@ -209,9 +209,6 @@ class CeleryExt(BaseExtension):
         """
         # celery_app.conf.broker_pool_limit = None
 
-        # Do not import before loading the ext!
-        from restapi.services.detect import Detector
-
         if Detector.get_bool_from_os('CELERY_BEAT_ENABLED'):
 
             CeleryExt.CELERY_BEAT_SCHEDULER = backend

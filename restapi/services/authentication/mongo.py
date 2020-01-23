@@ -25,7 +25,6 @@ class Authentication(BaseAuthentication):
 
         # Get the instance for mongodb
         name = __name__.split('.')[::-1][0]  # returns 'mongo'
-        from restapi.services.detect import detector
 
         extension = detector.services_classes.get(name)
         self.db = extension().get_instance(dbname=AUTH_DB)
