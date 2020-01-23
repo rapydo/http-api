@@ -172,8 +172,8 @@ class EndpointResource(Resource):
         if len(self._json_args) < 1 and request.mimetype != 'application/octet-stream':
             try:
                 self._json_args = request.get_json(force=forcing)
-            except Exception:  # as e:
-                pass
+            except Exception as e:
+                log.verbose("Error retrieving input parameters, {}", e)
 
             # json payload and formData cannot co-exist
             if len(self._json_args) < 1:

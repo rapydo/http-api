@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # USER
 export IRODS_USER_NAME=guest

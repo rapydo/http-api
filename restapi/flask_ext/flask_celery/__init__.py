@@ -49,8 +49,8 @@ class CeleryExt(BaseExtension):
             service_vars = Detector.load_variables({'prefix': 'redis'})
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
-            BROKER_USER = ""
-            BROKER_PASSWORD = ""
+            BROKER_USER = None
+            BROKER_PASSWORD = None
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
         else:
