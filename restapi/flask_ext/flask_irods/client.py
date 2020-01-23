@@ -8,7 +8,7 @@ from restapi.utilities.htmlcodes import hcodes
 from irods.access import iRODSAccess
 from irods.rule import Rule
 from irods.ticket import Ticket
-from irods.models import User, UserGroup, UserAuth
+from irods import models
 from irods import exception as iexceptions
 from restapi.exceptions import RestApiException
 
@@ -668,7 +668,7 @@ class IrodsPythonClient:
 
         home = self.variables.get('home', 'home')
         if home.startswith(zone):
-            home = home[len(zone) :]
+            home = home[len(zone):]
         home = home.lstrip('/')
 
         if not append_user:
@@ -710,8 +710,8 @@ class IrodsPythonClient:
             data["account"] = user.manager.sess.pool.account.__dict__
 
             results = (
-                self.prc.query(UserGroup.name)
-                .filter(User.name == user.name)
+                self.prc.query(models.UserGroup.name)
+                .filter(models.User.name == user.name)
                 .get_results()
             )
             groups = []
@@ -743,11 +743,11 @@ class IrodsPythonClient:
         return True, "OK"
 
     def query_user_exists(self, user):
-        results = self.prc.query(User.name).filter(User.name == user).first()
+        results = self.prc.query(models.User.name).filter(models.User.name == user).first()
 
         if results is None:
             return False
-        elif results[User.name] == user:
+        elif results[models.User.name] == user:
             return True
         else:
             raise AttributeError("Failed to query")
@@ -801,12 +801,12 @@ class IrodsPythonClient:
 
     def get_user_from_dn(self, dn):
         results = (
-            self.prc.query(User.name, UserAuth.user_dn)
-            .filter(UserAuth.user_dn == dn)
+            self.prc.query(models.User.name, models.UserAuth.user_dn)
+            .filter(models.UserAuth.user_dn == dn)
             .first()
         )
         if results is not None:
-            return results.get(User.name)
+            return results.get(models.User.name)
         else:
             return None
 
@@ -842,27 +842,30 @@ class IrodsPythonClient:
 
         try:
             data = (
-                self.prc.query(User.id, User.name, User.type, User.zone)
-                .filter(User.name == user)
-                .one()
+                self.prc.query(
+                    models.User.id,
+                    models.User.name,
+                    models.User.type,
+                    models.User.zone
+                ).filter(models.User.name == user).one()
             )
         except iexceptions.NoResultFound:
             return None
 
         try:
             auth_data = (
-                self.prc.query(UserAuth.user_dn)
-                .filter(UserAuth.user_id == data[User.id])
+                self.prc.query(models.UserAuth.user_dn)
+                .filter(models.UserAuth.user_id == data[models.User.id])
                 .one()
             )
-            dn = auth_data.get(UserAuth.user_dn)
+            dn = auth_data.get(models.UserAuth.user_dn)
         except iexceptions.NoResultFound:
             dn = None
 
         return {
-            'name': data[User.name],
-            'type': data[User.type],
-            'zone': data[User.zone],
+            'name': data[models.User.name],
+            'type': data[models.User.type],
+            'zone': data[models.User.zone],
             'dn': dn,
         }
 
@@ -972,18 +975,17 @@ class IrodsPythonClient:
         )
 
     def list_tickets(self, user=None):
-        from irods.models import Ticket, DataObject
 
         try:
             data = self.prc.query(
-                # Ticket.id,
-                Ticket.string,
-                Ticket.type,
-                User.name,
-                DataObject.name,
-                Ticket.uses_limit,
-                Ticket.uses_count,
-                Ticket.expiration,
+                # models.Ticket.id,
+                models.Ticket.string,
+                models.Ticket.type,
+                models.User.name,
+                models.DataObject.name,
+                models.Ticket.uses_limit,
+                models.Ticket.uses_count,
+                models.Ticket.expiration,
             ).all()
             # ).filter(User.name == user).one()
 
