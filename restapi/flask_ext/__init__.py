@@ -243,11 +243,8 @@ class BaseExtension(metaclass=abc.ABCMeta):
 
     ############################
     # Already has default
-    def custom_init(self, **kwargs):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
         """
-        The real signature:
-        def custom_init(self, pinit=False, pdestroy=False, abackend=None):
-
             - A backend is needed for non-standalone services
                 e.g. authentication module
             - Project initialization/removal could be used here

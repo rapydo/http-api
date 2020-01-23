@@ -239,7 +239,7 @@ class IrodsPythonExt(BaseExtension):
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
-    def custom_init(self, pinit=False, **kwargs):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
         # NOTE: we ignore args here
 
         # if pinit and not self.variables.get('external'):
