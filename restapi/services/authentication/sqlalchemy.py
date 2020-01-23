@@ -48,7 +48,7 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def get_user_object(self, username=None, payload=None, retry=0):
+    def get_user_object(self, username=None, payload=None):
         user = None
         try:
             if username is not None:
@@ -82,12 +82,12 @@ class Authentication(BaseAuthentication):
                 # Only a single transaction will fail -> retry the operation is enough
                 # https://docs.sqlalchemy.org/en/13/core/pooling.html#disconnect-handling-optimistic
 
-                if retry <= 0:
-                    log.error(str(e))
-                    log.warning("Errors retrieving user object, retrying...")
-                    return self.get_user_object(
-                        username=username, payload=payload, retry=1
-                    )
+                # if retry <= 0:
+                #     log.error(str(e))
+                #     log.warning("Errors retrieving user object, retrying...")
+                #     return self.get_user_object(
+                #         username=username, payload=payload, retry=1
+                #     )
                 raise e
             else:
                 log.error(str(e))
@@ -96,10 +96,11 @@ class Authentication(BaseAuthentication):
                     status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
                 )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
-            if retry <= 0:
-                log.error(str(e))
-                log.warning("Errors retrieving user object, retrying...")
-                return self.get_user_object(username=username, payload=payload, retry=1)
+            # if retry <= 0:
+            #     log.error(str(e))
+            #     log.warning("Errors retrieving user object, retrying...")
+                # return self.get_user_object(
+                #     username=username, payload=payload, retry=1)
             raise e
 
         return user
