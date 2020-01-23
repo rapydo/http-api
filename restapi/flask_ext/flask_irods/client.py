@@ -555,7 +555,7 @@ class IrodsPythonClient:
 
     def get_permissions(self, coll_or_obj):
 
-        if type(coll_or_obj) is str:
+        if isinstance(coll_or_obj, str):
 
             if self.is_collection(coll_or_obj):
                 coll_or_obj = self.prc.collections.get(coll_or_obj)
@@ -961,7 +961,7 @@ class IrodsPythonClient:
 
         try:
             with self.prc.data_objects.open(path, 'r') as obj:
-                obj.__class__.__name__
+                log.verbose(obj.__class__.__name__)
         except iexceptions.SYS_FILE_DESC_OUT_OF_RANGE:
             return False
         else:

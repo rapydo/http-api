@@ -269,7 +269,7 @@ def get_debug_instance(MyClass):
     # NOTE: impors are needed here for logging to work correctly
     from restapi.services.detect import detector
 
-    detector  # avoid PEP complaints
+    log.verbose("Detector imported: {}", detector)  # avoid PEP complaints
     # FIXME: e.g. importing-programmatically
     # docs.python.org/3/library/importlib.html
 

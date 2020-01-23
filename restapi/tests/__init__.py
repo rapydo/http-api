@@ -44,7 +44,6 @@ class BaseTests(object):
                 return data["value"]
 
         raise AttributeError("Class variable {} not found".format(variable))
-        return None
 
     def get_specs(self, client):
         """

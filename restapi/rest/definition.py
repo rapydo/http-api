@@ -708,7 +708,6 @@ class EndpointResource(Resource):
                 "No parameters schema defined for method {} in {}".format(method, url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
-            return None
         return mem.customizer._parameter_schemas[url][method]
 
     # HANDLE INPUT PARAMETERS
@@ -779,7 +778,7 @@ class EndpointResource(Resource):
             return ids
 
         # Multiple autocomplete
-        if type(value) is list:
+        if isinstance(value, list):
             for v in value:
                 if v is None:
                     return None

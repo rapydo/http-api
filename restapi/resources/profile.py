@@ -581,20 +581,20 @@ class RecoverPassword(EndpointResource):
             )
 
         # If token is expired
-        except jwt.exceptions.ExpiredSignatureError as e:
+        except jwt.exceptions.ExpiredSignatureError:
             raise RestApiException(
                 'Invalid reset token: this request is expired',
                 status_code=hcodes.HTTP_BAD_REQUEST,
             )
 
         # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError as e:
+        except jwt.exceptions.ImmatureSignatureError:
             raise RestApiException(
                 'Invalid reset token', status_code=hcodes.HTTP_BAD_REQUEST
             )
 
         # if token does not exist (or other generic errors)
-        except Exception as e:
+        except Exception:
             raise RestApiException(
                 'Invalid reset token', status_code=hcodes.HTTP_BAD_REQUEST
             )

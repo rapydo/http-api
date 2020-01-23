@@ -131,7 +131,7 @@ class HTTPTokenAuth(object):
                     token_fn = decorated_self.auth.verify_token
                     if not self.authenticate(token_fn, token):
                         # Clear TCP receive buffer of any pending data
-                        request.data
+                        log.verbose(request.data)
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
