@@ -88,7 +88,7 @@ class Authenticator(BaseExtension):
 
         return custom_auth
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
 
         # Get the instance from the parent
         obj = super().custom_init()
