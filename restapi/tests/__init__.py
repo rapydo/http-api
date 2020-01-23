@@ -239,7 +239,7 @@ class BaseTests(object):
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    def randomString(self, len=16, prefix="TEST-"):
+    def randomString(self, length=16, prefix="TEST-"):
         """
             Create a random string to be used to build data for tests
         """

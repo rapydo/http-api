@@ -32,7 +32,7 @@ def verbose(*args, **kwargs):
     log.log("VERBOSE", *args, **kwargs)
 
 
-def exit(message="", *args, **kwargs):
+def critical_exit(message="", *args, **kwargs):
     error_code = kwargs.pop('error_code', 1)
     if not isinstance(error_code, int):
         raise ValueError("Error code must be an integer")
@@ -44,7 +44,7 @@ def exit(message="", *args, **kwargs):
 
 
 log.verbose = verbose
-log.exit = exit
+log.exit = critical_exit
 
 log.remove()
 if LOGS_PATH is not None:

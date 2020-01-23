@@ -268,14 +268,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
         return self.create_token(payload)
 
-    def create_reset_token(self, user, type, duration=86400):
+    def create_reset_token(self, user, token_type, duration=86400):
         # invalidate previous reset tokens
         tokens = self.get_tokens(user=user)
         for t in tokens:
             token_type = t.get("token_type")
             if token_type is None:
                 continue
-            if token_type != type:
+            if token_type != token_type:
                 continue
 
             tok = t.get("token")
@@ -284,7 +284,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # Generate a new reset token
         new_token, jti = self.create_temporary_token(
-            user, duration=duration, token_type=type
+            user, duration=duration, token_type=token_type
         )
 
         return new_token, jti

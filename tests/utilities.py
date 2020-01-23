@@ -547,20 +547,20 @@ class TestUtilities(unittest.TestCase):
 
             print("\t *** TESTING {}".format(trouble_type))
 
-            id = self._test_create(
+            uuid = self._test_create(
                 definition, endpoint, headers, post_data, post_status, check_error=False
             )
 
             if post_status != OK:
                 continue
 
-            if id is None:
+            if uuid is None:
                 continue
 
             if second_endpoint is None:
-                tmp_ep = "{}/{}".format(endpoint, id)
+                tmp_ep = "{}/{}".format(endpoint, uuid)
             else:
-                tmp_ep = "{}/{}".format(second_endpoint, id)
+                tmp_ep = "{}/{}".format(second_endpoint, uuid)
 
             self._test_update(
                 second_definition,
@@ -618,25 +618,25 @@ class TestUtilities(unittest.TestCase):
             if trouble_type == 'LONG_TEXT':
                 return '{}{}{}'.format(
                     prefix,
-                    self.randomString(len=256, prefix=""),
+                    self.randomString(length=256, prefix=""),
                     suffix,
                 )
             if trouble_type == 'VERY_LONG_TEXT':
                 return '{}{}{}'.format(
                     prefix,
-                    self.randomString(len=65536, prefix=""),
+                    self.randomString(length=65536, prefix=""),
                     suffix,
                 )
             if trouble_type == 'EXTREMELY_LONG_TEXT':
                 return '{}{}{}'.format(
                     prefix,
-                    self.randomString(len=16777216, prefix=""),
+                    self.randomString(length=16777216, prefix=""),
                     suffix,
                 )
             if trouble_type == 'TOOOO_LONG_TEXT':
                 return '{}{}{}'.format(
                     prefix,
-                    self.randomString(len=4294967296, prefix=""),
+                    self.randomString(length=4294967296, prefix=""),
                     suffix,
                 )
 

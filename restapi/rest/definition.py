@@ -484,30 +484,30 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
 
-        if skip_missing_ids and id == '-':
+        if skip_missing_ids and res_id == '-':
             del data['id']
 
         # TO FIX: for now is difficult to compute self links for relationships
         if relationship_depth == 0:
             self_uri = request.url
-            if not self_uri.endswith(id):
-                self_uri += '/' + id
+            if not self_uri.endswith(res_id):
+                self_uri += '/' + res_id
             data["links"] = {"self": self_uri}
 
         data["attributes"] = self.get_show_fields(
@@ -604,20 +604,20 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
         for c in instance.__table__.columns._data:
             if c == 'password':
@@ -636,20 +636,20 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
         # log.critical(instance._data._members)
         for c in instance._data._members:

@@ -219,7 +219,7 @@ class Authentication(BaseAuthentication):
     def get_tokens(self, user=None, token_jti=None):
         # FIXME: TTL should be considered?
 
-        list = []
+        tokens_list = []
         tokens = None
 
         if user is not None:
@@ -243,9 +243,9 @@ class Authentication(BaseAuthentication):
                     t["expiration"] = token.expiration.strftime('%s')
                 t["IP"] = token.IP
                 t["hostname"] = token.hostname
-                list.append(t)
+                tokens_list.append(t)
 
-        return list
+        return tokens_list
 
     def invalidate_all_tokens(self, user=None):
         if user is None:

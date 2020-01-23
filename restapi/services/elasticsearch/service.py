@@ -107,23 +107,27 @@ class BeElastic(ServiceObject):
         payload=None,
     ):
 
-        input = [text]
+        input_values = [text]
         text_lower = text.lower()
         if text != text_lower:
-            input.append(text_lower)
+            input_values.append(text_lower)
 
         if output is None:
             output = text
 
-        suggestion = {"input": input, "output": output, "payload": payload}
+        suggestion = {"input": input_values, "output": output, "payload": payload}
 
         if weight > 1:
             suggestion["weight"] = weight
 
         # force the new id with the subnested dictionary
-        id = getUUIDfromString(self.dict2ordered_string(suggestion))
+        uuid = getUUIDfromString(self.dict2ordered_string(suggestion))
 
-        return self.get_or_create(DocumentClass, {attribute: suggestion}, forced_id=id)
+        return self.get_or_create(
+            DocumentClass,
+            {attribute: suggestion},
+            forced_id=uuid
+        )
 
     def clean_all(self):
         log.warning("Removing all data")
@@ -135,7 +139,7 @@ class BeElastic(ServiceObject):
             # self._connection.indices.create(index)
         # self.rebuild_connection()
 
-    def search(self, DocumentClass, parameters=None, filter=False):
+    def search(self, DocumentClass, parameters=None, filtering=False):
         """
         It should be:
             MyESobj.search() \
@@ -146,7 +150,7 @@ class BeElastic(ServiceObject):
         query = DocumentClass.search()
         if parameters is not None:
             if isinstance(parameters, dict) and len(parameters) > 0:
-                if filter:
+                if filtering:
                     query = query.filter('term', **parameters)
                 else:
                     query = query.query('match', **parameters)

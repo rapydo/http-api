@@ -31,7 +31,7 @@ class IrodsPythonClient:
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, tb):
+    def __exit__(self, _type, value, tb):
         self.prc.cleanup()
 
     def connect(self):
