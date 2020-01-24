@@ -54,11 +54,6 @@ class Authenticator(BaseExtension):
             # Install self.app secret for oauth2
             self.app.secret_key = secret + '_app'
 
-            # Enabling also OAUTH library
-            from restapi.protocols.oauth import oauth
-
-            oauth.init_app(self.app)
-
             custom_auth.TOTP = 'TOTP'
 
             custom_auth.REGISTER_FAILED_LOGIN = (
