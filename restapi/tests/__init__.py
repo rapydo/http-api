@@ -242,15 +242,15 @@ class BaseTests(object):
         """
             Create a random string to be used to build data for tests
         """
-        if len > 500000:
+        if length > 500000:
             lis = list(string.ascii_lowercase)
-            return ''.join(random.choice(lis) for _ in range(len))
+            return ''.join(random.choice(lis) for _ in range(length))
 
         rand = random.SystemRandom()
         charset = string.ascii_uppercase + string.digits
 
         random_string = prefix
-        for _ in range(len):
+        for _ in range(length):
             random_string += rand.choice(charset)
 
         return random_string
