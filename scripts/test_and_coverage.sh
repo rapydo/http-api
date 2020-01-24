@@ -94,6 +94,8 @@ else
 	echo "      GRAPHDB_AUTOINDEXING: False" >> .projectrc
 	echo "      RABBITMQ_USER: white" >> .projectrc
 	echo "      RABBITMQ_PASSWORD: rabbit" >> .projectrc
+	echo "      AUTH_DEFAULT_USERNAME: test@nomail.org" >> .projectrc
+	echo "      AUTH_DEFAULT_PASSWORD: testme" >> .projectrc
 
 	# Let's init and start the stack for the configured PROJECT
 	rapydo init
