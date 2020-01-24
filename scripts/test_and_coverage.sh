@@ -10,13 +10,17 @@ if [ -z $PROJECT ]; then
 fi
 
 # install requirements in listed order
-for package in `cat dev-requirements.txt`;
-do
-    echo "adding: $package";
-    pip3 install --upgrade --no-cache-dir $package;
-done
+# for package in `cat dev-requirements.txt`;
+# do
+#     echo "adding: $package";
+#     pip3 install --upgrade --no-cache-dir $package;
+# done
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
+
+pip3 install --upgrade --no-cache-dir coveralls pip awscli==1.15.70 git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+# six==1.11.0
+# git+https://github.com/rapydo/http-api.git@0.7.2
 
 #https://docs.travis-ci.com/user/environment-variables/#Default-Environment-Variables
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
