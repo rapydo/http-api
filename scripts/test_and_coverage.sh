@@ -18,7 +18,7 @@ fi
 
 export CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
 
-pip3 install --upgrade --no-cache-dir coveralls pip awscli==1.15.70 git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+pip3 install --upgrade --no-cache-dir awscli==1.15.70 git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
 # six==1.11.0
 # git+https://github.com/rapydo/http-api.git@0.7.2
 
