@@ -47,7 +47,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     _oauth2 = {}
 
     def __init__(self):
-        # TODO: myinit is a class method for unittest could it be fixed?
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
@@ -60,26 +59,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @classmethod
     def myinit(cls):
-        """
-        Note: converted as a classmethod to use inside unittests
-        # TODO: check if still necessary
-        """
 
-        credentials = get_project_configuration(
-            "variables.backend.credentials"
-        )
+        credentials = get_project_configuration("variables.backend.credentials")
 
-        cls.default_user = credentials.get('username', None)
-        cls.default_password = credentials.get('password', None)
+        if credentials.get('username') is not None:
+            log.exit("Obsolete use of variables.backend.credentials.username")
+
+        if credentials.get('password') is not None:
+            log.exit("Obsolete use of variables.backend.credentials.password")
+
+        # cls.default_user = credentials.get('username', None)
+        # cls.default_password = credentials.get('password', None)
+        cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
+        cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
-            raise AttributeError("Default credentials unavailable!")
+            log.exit("Default credentials are unavailable!")
 
         roles = credentials.get('roles', {})
         cls.default_role = roles.get('default')
         cls.role_admin = roles.get('admin')
         cls.default_roles = [roles.get('user'), roles.get('internal'), cls.role_admin]
         if cls.default_role is None or None in cls.default_roles:
-            raise AttributeError("Default roles are not available!")
+            log.exit("Default roles are not available!")
 
     # @abc.abstractmethod
     # def __init__(self, services=None):
