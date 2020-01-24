@@ -67,6 +67,7 @@ fi
 
 if [[ "$PROJECT" == "COVERAGE" ]]; then
 
+    pip3 install --upgrade --no-cache-dir coveralls git+https://github.com/rapydo/http-api.git@${CURRENT_VERSION}
 	# Sync coverage files from previous stages
 	aws --endpoint-url $S3_HOST s3 sync s3://http-api-${TRAVIS_BUILD_ID} $COV_DIR
 

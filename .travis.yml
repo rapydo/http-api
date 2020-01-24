@@ -29,7 +29,6 @@ jobs:
   - stage: coverage
     script: scripts/test_and_coverage.sh
     after_success:
-      pip3 install --upgrade --no-cache-dir coveralls &&
       cd coverage_files &&
       ls -la .coverage* &&
       coverage combine &&
