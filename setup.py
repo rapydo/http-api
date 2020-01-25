@@ -42,7 +42,7 @@ setup(
         "Flask==1.1.1",
         "Flask-Cors==3.0.8",
 
-        "passlib[bcrypt]==1.7.2"
+        "passlib[bcrypt]==1.7.2",
         "authlib==0.13",
 
         "Flask-RESTful==0.3.7",
