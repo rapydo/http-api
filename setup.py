@@ -80,8 +80,8 @@ setup(
         "redis",
         "elasticsearch",
         "Flask-Migrate",
-        "gripcontrol==3.3.1",
-        "sentry-sdk[flask]==0.7.8"
+        "gripcontrol==4.0.0",
+        "sentry-sdk[flask]==0.14.0"
     ],
     classifiers=[
         'Programming Language :: Python',
