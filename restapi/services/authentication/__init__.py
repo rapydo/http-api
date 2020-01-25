@@ -36,9 +36,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ##########################
     # Secret loaded from secret.key file
     JWT_SECRET = None
-    JWT_ALGO = 'HS256'
-    # FIXME: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
-    token_type = 'Bearer'
+    # JWT_ALGO = 'HS256'
+    # Should be faster on 64bit machines
+    JWT_ALGO = 'HS512'
 
     FULL_TOKEN = "f"
     PWD_RESET = "r"
@@ -127,7 +127,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
     def import_secret(self, abs_filename):
         """
-        Load the JWT_SECRET from a file
+        Load the jwt secret from a file
         """
 
         try:
