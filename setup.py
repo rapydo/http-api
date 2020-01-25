@@ -32,6 +32,9 @@ setup(
         [console_scripts]
         {}={}:cli
     '''.format(main_package, app),
+    dependency_links=[
+        "https://github.com/zmap/celerybeat-mongo.git@master",
+    ],
     install_requires=[
         # Utilities
         "attrs",
@@ -75,7 +78,6 @@ setup(
         "websocket-client",
         "celery",
         "flower==0.9.3",
-        "git+https://github.com/zmap/celerybeat-mongo.git@master",
         "celery-redbeat==0.13.0",
         "redis",
         "elasticsearch",
