@@ -113,7 +113,8 @@ else
 	docker ps -a
 
 	rapydo shell backend --command 'restapi --help'
-	timeout 60s rapydo shell backend --command 'restapi wait'
+	timeout 60s rapydo shell backend --command 'restapi wait' || true
+	rapydo -s backend logs
 	# Cleaning DB before starting the tests
 	rapydo shell backend --command 'restapi forced-clean'
 	rapydo shell backend --command 'restapi init'
