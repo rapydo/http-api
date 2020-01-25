@@ -113,8 +113,8 @@ else
 	docker ps -a
 
 	rapydo shell backend --command 'restapi --help'
-	# Beware!! Cleaning DB before starting the tests
-	rapydo shell backend --command 'restapi wait'
+	timeout 60s rapydo shell backend --command 'restapi wait'
+	# Cleaning DB before starting the tests
 	rapydo shell backend --command 'restapi forced-clean'
 	rapydo shell backend --command 'restapi init'
 
@@ -136,8 +136,7 @@ else
 	rapydo --production ssl-certificate
 
 	echo "Backend server is starting"
-	sleep 30
-	echo "Backend server should be ready now!"
+	timeout 60s rapydo shell backend --command 'restapi wait'
 
 	rapydo --production -s backend logs
 
