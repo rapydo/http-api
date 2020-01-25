@@ -42,7 +42,7 @@ class Authentication(BaseAuthentication):
             userdata["authmethod"] = "credentials"
 
         if "password" in userdata:
-            userdata["password"] = self.hash_password(userdata["password"])
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
         user = self.db.User(**userdata)

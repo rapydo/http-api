@@ -177,7 +177,7 @@ class HandleSecurity(object):
         if old_pwd is not None and pwd == old_pwd:
             return False, "The new password cannot match the previous password"
         if old_hash is not None:
-            new_hash = BaseAuthentication.hash_password(pwd)
+            new_hash = BaseAuthentication.get_password_hash(pwd)
             if old_hash == new_hash:
                 return False, "The new password cannot match the previous password"
 
@@ -221,7 +221,7 @@ class HandleSecurity(object):
 
         if new_password is not None and password_confirm is not None:
             now = datetime.now(pytz.utc)
-            user.password = BaseAuthentication.hash_password(new_password)
+            user.password = BaseAuthentication.get_password_hash(new_password)
             user.last_password_change = now
             self.auth.save_user(user)
 

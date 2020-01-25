@@ -12,6 +12,7 @@ import hashlib
 import base64
 import pytz
 
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
@@ -23,6 +24,8 @@ from restapi.utilities.uuid import getUUID
 from restapi.utilities.globals import mem
 
 from restapi.utilities.logs import log
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class BaseAuthentication(metaclass=abc.ABCMeta):
@@ -117,8 +120,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.critical("Current authentication db models are broken!")
             return None, None
 
-        if self.check_passwords(user.password, password):
+        # New hashing algorithm, based on bcrypt
+        if self.verify_password(password, user.password):
             return self.create_token(self.fill_payload(user))
+
+        # old hashing; since 0.7.2. Removed me in a near future!!
+        if self.check_old_password(user.password, password):
+            log.warning(
+                "Old password encoding for user {}, automatic convertion", user.email)
+
+            now = datetime.now(pytz.utc)
+            user.password = BaseAuthentication.get_password_hash(password)
+            user.last_password_change = now
+            self.save_user(user)
+
+            return self.make_login(username, password)
 
         return None, None
 
@@ -141,7 +157,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     # #####################
     # # Password handling #
-    # #####################
+    ####################
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
     def encode_string(string):
         """ Encodes a string to bytes, if it isn't already. """
@@ -149,6 +166,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             string = string.encode('utf-8')
         return string
 
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
     def hash_password(password, salt="Unknown"):
         """ Original source:
@@ -163,9 +181,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
         return base64.b64encode(h.digest()).decode('ascii')
 
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
-    def check_passwords(hashed_password, password):
+    def check_old_password(hashed_password, password):
         return hashed_password == BaseAuthentication.hash_password(password)
+
+    @staticmethod
+    def verify_password(plain_password, hashed_password):
+        try:
+            return pwd_context.verify(plain_password, hashed_password)
+        except ValueError as e:
+            log.error(e)
+
+            return False
+
+    @staticmethod
+    def get_password_hash(password):
+        return pwd_context.hash(password)
 
     # ########################
     # # Retrieve information #
@@ -487,16 +519,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
     # # Database init #
     # #################
-    def avoid_defaults(self):
-        """
-        Check in production if using the default user...
-        """
-
-        user = self.get_user_object(username=self.default_user)
-        if user is not None and user.email == self.default_user:
-            if user.password == self.hash_password(self.default_password):
-                return True
-        return False
 
     @abc.abstractmethod
     def init_users_and_roles(self):
