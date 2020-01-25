@@ -66,7 +66,22 @@ setup(
         "psutil",
         "plumbum",
         "pretty_errors",
-        "maxminddb-geolite2"
+        "maxminddb-geolite2",
+
+        # From requirements.txt
+        "uWSGI",
+        "pika",
+        "gdapi-python",
+        "websocket-client",
+        "celery",
+        "flower==0.9.3",
+        "git+https://github.com/zmap/celerybeat-mongo.git@master",
+        "celery-redbeat==0.13.0",
+        "redis",
+        "elasticsearch",
+        "Flask-Migrate",
+        "gripcontrol==3.3.1",
+        "sentry-sdk[flask]==0.7.8"
     ],
     classifiers=[
         'Programming Language :: Python',
