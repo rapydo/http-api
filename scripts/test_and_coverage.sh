@@ -116,23 +116,23 @@ else
 	timeout 60s rapydo shell backend --command 'restapi wait' || true
 	rapydo --production -s backend logs
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	# Cleaning DB before starting the tests
 	rapydo shell backend --command 'restapi forced-clean'
 	rapydo shell backend --command 'restapi init'
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	# Test API and calculate coverage
 	rapydo shell backend --command 'restapi tests --core'
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	# Sync the coverage file to S3, to be available for the next stage
 	rapydo dump
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	backend_container=$(docker-compose ps -q backend)
 	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
@@ -140,25 +140,26 @@ else
 	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
 	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	rapydo clean
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	rapydo --production pull
 	rapydo --production start
 	rapydo --production ssl-certificate
 
-	echo "\n\nBackend server is starting\n\n"
+	printf "\n\n\nBackend server is starting\n\n\n"
+
 	timeout 60s rapydo shell backend --command 'restapi wait' || true
 	rapydo --production -s backend logs
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-	echo "\n\n\n"
+	printf "\n\n\n"
 
 	rapydo --production remove
 	rapydo --production clean
