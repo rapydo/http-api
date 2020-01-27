@@ -236,6 +236,16 @@ class Authentication(BaseAuthentication):
             )
             return False
 
+        # Verify IP validity only after grace period is expired
+        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+            ip = self.get_remote_ip()
+            if token_entry.IP != ip:
+                log.error(
+                    "This token is emitted for IP {}, invalid use from {}",
+                    token_entry.IP, ip
+                )
+                return False
+
         exp = now + timedelta(seconds=self.shortTTL)
         token_entry.last_access = now
         token_entry.expiration = exp

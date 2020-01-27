@@ -59,6 +59,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.longTTL = float(Detector.get_global_var('TOKEN_LONG_TTL', 2592000))
         # Default shortTTL = 604800     # 1 week in seconds
         self.shortTTL = float(Detector.get_global_var('TOKEN_SHORT_TTL', 604800))
+        self.grace_period = 7200  # 2 hours in seconds
 
     @classmethod
     def myinit(cls):
@@ -367,18 +368,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force token cleaning
-        payload = {}
         self._user = None
 
         if token is None:
             return False
 
         # Decode the current token
-        tmp_payload = self.unpack_token(token, raiseErrors=raiseErrors)
-        if tmp_payload is None:
+        payload = self.unpack_token(token, raiseErrors=raiseErrors)
+        if payload is None:
             return False
-        else:
-            payload = tmp_payload
 
         payload_type = payload.get("t", self.FULL_TOKEN)
 
