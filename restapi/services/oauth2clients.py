@@ -25,13 +25,42 @@ B2ACCESS_URLS = {
 }
 
 
+def fetch_token(name, request):
+    # if name in OAUTH1_SERVICES:
+    #     model = OAuth1Token
+    # else:
+    #     model = OAuth2Token
+
+    # token = model.find(
+    #     name=name,
+    #     user=request.user
+    # )
+    # return token.to_token()
+
+    log.critical("fetch_token {} {}", name, request)
+    return None
+
+
+def save_request_token(name, request):
+    log.critical("save_request_token {} {}", name, request)
+
+
+def fetch_request_token(name, request):
+    log.critical("fetch_request_token {} {}", name, request)
+
+
 class ExternalLogins(object):
 
     _available_services = {}
 
     def __init__(self, app):
 
-        self.oauth = OAuth(app)
+        self.oauth = OAuth(
+            fetch_token=fetch_token,
+            save_request_token=save_request_token,
+            fetch_request_token=fetch_request_token
+        )
+        self.oauth.init_app(app)
         log.info(self.oauth)
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
@@ -151,12 +180,12 @@ class ExternalLogins(object):
 
         #####################
         # Decorated session save of the token
-        @b2access_oauth.tokengetter
-        @b2accessCA.tokengetter
-        def get_b2access_oauth_token():
-            from flask import session
+        # @b2access_oauth.tokengetter
+        # @b2accessCA.tokengetter
+        # def get_b2access_oauth_token():
+        #     from flask import session
 
-            return session.get('b2access_token')
+        #     return session.get('b2access_token')
 
         return {
             'b2access': b2access_oauth,
