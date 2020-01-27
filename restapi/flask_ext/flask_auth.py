@@ -45,9 +45,9 @@ class Authenticator(BaseExtension):
         if not Detector.get_global_var('AUTH_SKIP_OAUTH', default=False):
 
             # If oauth services are available, set them before every request
-            from restapi.services.oauth2clients import ExternalLogins as oauth2
+            from restapi.services.oauth2clients import ExternalLogins
 
-            ext_auth = oauth2()
+            ext_auth = ExternalLogins(self.app)
             custom_auth.set_oauth2_services(ext_auth._available_services)
             secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 

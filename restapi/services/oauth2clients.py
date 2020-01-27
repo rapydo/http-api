@@ -8,7 +8,6 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 
 import os
 from base64 import b64encode
-from flask import current_app
 from authlib.integrations.flask_client import OAuth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
@@ -30,10 +29,9 @@ class ExternalLogins(object):
 
     _available_services = {}
 
-    def __init__(self):
+    def __init__(self, app):
 
-        self.oauth = OAuth()
-        self.oauth.init_app(current_app)
+        self.oauth = OAuth(app)
         log.info(self.oauth)
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
