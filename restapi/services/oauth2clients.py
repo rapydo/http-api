@@ -56,9 +56,9 @@ class ExternalLogins(object):
     def __init__(self, app):
 
         self.oauth = OAuth(
-            fetch_token=fetch_token,
+            fetch_token=fetch_token
             # save_request_token=save_request_token,
-            fetch_request_token=fetch_request_token
+            # fetch_request_token=fetch_request_token
         )
         self.oauth.init_app(app)
         log.info(self.oauth)
