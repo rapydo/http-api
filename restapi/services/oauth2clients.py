@@ -57,7 +57,7 @@ class ExternalLogins(object):
 
         self.oauth = OAuth(
             fetch_token=fetch_token,
-            save_request_token=save_request_token,
+            # save_request_token=save_request_token,
             fetch_request_token=fetch_request_token
         )
         self.oauth.init_app(app)
