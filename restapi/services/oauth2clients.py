@@ -32,7 +32,9 @@ class ExternalLogins(object):
 
     def __init__(self):
 
-        self.oauth = OAuth(current_app)
+        self.oauth = OAuth()
+        self.oauth.init_app(current_app)
+        log.info(self.oauth)
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
         # in different places of the code
