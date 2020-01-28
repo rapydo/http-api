@@ -119,12 +119,6 @@ else
 
 	printf "\n\n\n"
 
-	# Cleaning DB before starting the tests
-	rapydo shell backend --command 'restapi forced-clean'
-	rapydo shell backend --command 'restapi init'
-
-	printf "\n\n\n"
-
 	# Test API and calculate coverage
 	rapydo shell backend --command 'restapi tests --core'
 
