@@ -88,6 +88,7 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi wait'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi init'
 
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
