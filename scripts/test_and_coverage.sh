@@ -107,6 +107,7 @@ else
 
 	rapydo shell backend --command 'restapi --help'
 	rapydo shell backend --command 'restapi wait'
+	rapydo shell backend --command 'restapi init'
 
 	# Test API and calculate coverage
 	rapydo shell backend --command 'restapi tests --core'
