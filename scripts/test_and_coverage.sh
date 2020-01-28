@@ -113,14 +113,8 @@ else
 	rapydo start
 	docker ps -a
 
-	rapydo shell backend --command 'restapi --help'
-	timeout 60s rapydo shell backend --command 'restapi wait' || true
-	rapydo --production -s backend logs
-
-	printf "\n\n\n"
-
 	# Test API and calculate coverage
-	rapydo shell backend --command 'restapi tests --core'
+	rapydo shell backend --command 'restapi tests --core --wait'
 
 	printf "\n\n\n"
 
@@ -147,7 +141,7 @@ else
 
 	printf "\n\n\nBackend server is starting\n\n\n"
 
-	timeout 60s rapydo shell backend --command 'restapi wait' || true
+	rapydo --production shell backend --command 'restapi wait'
 	rapydo --production -s backend logs
 
 	printf "\n\n\n"

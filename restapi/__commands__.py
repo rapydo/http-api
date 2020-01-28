@@ -221,6 +221,7 @@ def tests(wait, core, file, folder):
         while starting_up():
             log.debug('Waiting service startup')
             time.sleep(5)
+        mywait()
 
     log.debug("Starting unit tests: {}", pretty_errors)
 
