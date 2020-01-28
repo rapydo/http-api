@@ -87,8 +87,9 @@ if [ "$PROJECT" != "COVERAGE" ]; then
 	docker ps -a
 
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi --help'
+	# Beware!! Cleaning DB before starting the tests
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi wait'
-	rapydo --development --project ${PROJECT} shell backend --command 'restapi init'
+	rapydo --development --project ${PROJECT} shell backend --command 'restapi forced-clean'
 
 	# Test API and calculate coverage
 	rapydo --development --project ${PROJECT} shell backend --command 'restapi tests --core'
