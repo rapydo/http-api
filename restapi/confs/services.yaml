@@ -15,7 +15,7 @@
   # neo4j graphdb ORM
 - name: neo4j
   load_models: 1
-  prefix: graphdb
+  prefix: neo4j
   extension: flask_neo4j
   class: NeoModel
 
