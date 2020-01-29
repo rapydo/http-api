@@ -47,6 +47,7 @@ class Authenticator(BaseExtension):
 
         ext_auth = ExternalLogins(self.app)
         custom_auth._oauth2 = ext_auth._available_services
+        custom_auth.set_oauth2_services()
         # #######################################################
 
         secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
