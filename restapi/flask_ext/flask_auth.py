@@ -46,8 +46,10 @@ class Authenticator(BaseExtension):
 
             # If oauth services are available, set them before every request
             from restapi.services.oauth2clients import ExternalLogins
+            from restapi.protocols.oauth import oauth
 
             ext_auth = ExternalLogins(self.app)
+            oauth.init_app(self.app)
             custom_auth.set_oauth2_services(ext_auth._available_services)
             secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 

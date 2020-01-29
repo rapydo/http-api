@@ -8,7 +8,7 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 
 import os
 from base64 import b64encode
-from authlib.integrations.flask_client import OAuth
+from restapi.protocols.oauth import oauth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
 
@@ -25,43 +25,12 @@ B2ACCESS_URLS = {
 }
 
 
-def fetch_token(name, request):
-    # if name in OAUTH1_SERVICES:
-    #     model = OAuth1Token
-    # else:
-    #     model = OAuth2Token
-
-    # token = model.find(
-    #     name=name,
-    #     user=request.user
-    # )
-    # return token.to_token()
-
-    log.critical("fetch_token {} {}", name, request)
-    return None
-
-
-def save_request_token(name, request):
-    log.critical("save_request_token {} {}", name, request)
-
-
-def fetch_request_token(name, request):
-    log.critical("fetch_request_token {} {}", name, request)
-
-
 class ExternalLogins(object):
 
     _available_services = {}
 
-    def __init__(self, app):
+    def __init__(self):
 
-        self.oauth = OAuth(
-            fetch_token=fetch_token
-            # save_request_token=save_request_token,
-            # fetch_request_token=fetch_request_token
-        )
-        self.oauth.init_app(app)
-        log.info(self.oauth)
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
         # in different places of the code
@@ -119,11 +88,11 @@ class ExternalLogins(object):
     def github(self):
         """ This APIs are very useful for testing purpose """
 
-        return self.oauth.register(
+        return oauth.remote_app(
             'github',
-            client_id=os.environ.get('GITHUB_APPNAME', 'yourappusername'),
-            client_secret=os.environ.get('GITHUB_APPKEY', 'yourapppw'),
-            api_base_url='https://github.com/login/oauth',
+            consumer_key=os.environ.get('GITHUB_APPNAME', 'yourappusername'),
+            consumer_secret=os.environ.get('GITHUB_APPKEY', 'yourapppw'),
+            base_url='https://github.com/login/oauth',
             request_token_params={'scope': 'user'},
             request_token_url=None,
             access_token_method='POST',
@@ -148,9 +117,9 @@ class ExternalLogins(object):
             log.warning("B2ACCESS credentials not set")
             return None
 
-        api_base_url = B2ACCESS_URLS.get(selected_b2access)
-        b2access_url = "https://{}:{}".format(api_base_url, B2ACCESS_MAIN_PORT)
-        b2access_ca = "https://{}:{}".format(api_base_url, B2ACCESS_CA_PORT)
+        base_url = B2ACCESS_URLS.get(selected_b2access)
+        b2access_url = "https://{}:{}".format(base_url, B2ACCESS_MAIN_PORT)
+        b2access_ca = "https://{}:{}".format(base_url, B2ACCESS_CA_PORT)
 
         # SET OTHER URLS
         token_url = b2access_url + '/oauth2/token'
@@ -158,8 +127,8 @@ class ExternalLogins(object):
 
         # COMMON ARGUMENTS
         arguments = {
-            'client_id': key,
-            'client_secret': secret,
+            'consumer_key': key,
+            'consumer_secret': secret,
             'access_token_url': token_url,
             'authorize_url': authorize_url,
             'request_token_params': {
@@ -171,21 +140,21 @@ class ExternalLogins(object):
         }
 
         # B2ACCESS main app
-        arguments['api_base_url'] = b2access_url + '/oauth2/'
-        b2access_oauth = self.oauth.register('b2access', **arguments)
+        arguments['base_url'] = b2access_url + '/oauth2/'
+        b2access_oauth = oauth.remote_app('b2access', **arguments)
 
         # B2ACCESS certification authority app
-        arguments['api_base_url'] = b2access_ca
-        b2accessCA = self.oauth.register('b2accessCA', **arguments)
+        arguments['base_url'] = b2access_ca
+        b2accessCA = oauth.remote_app('b2accessCA', **arguments)
 
         #####################
         # Decorated session save of the token
-        # @b2access_oauth.tokengetter
-        # @b2accessCA.tokengetter
-        # def get_b2access_oauth_token():
-        #     from flask import session
+        @b2access_oauth.tokengetter
+        @b2accessCA.tokengetter
+        def get_b2access_oauth_token():
+            from flask import session
 
-        #     return session.get('b2access_token')
+            return session.get('b2access_token')
 
         return {
             'b2access': b2access_oauth,
@@ -207,8 +176,8 @@ def decorate_http_request(remote):
         if not headers:
             headers = {}
         if not headers.get("Authorization"):
-            client_id = remote.client_id
-            client_secret = remote.client_secret
+            client_id = remote.consumer_key
+            client_secret = remote.consumer_secret
             userpass = b64encode(
                 str.encode("{}:{}".format(client_id, client_secret))
             ).decode("ascii")
