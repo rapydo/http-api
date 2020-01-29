@@ -42,46 +42,44 @@ class Authenticator(BaseExtension):
         auth_module = Meta.get_authentication_module(auth_service)
         custom_auth = auth_module.Authentication()
 
-        if not Detector.get_global_var('AUTH_SKIP_OAUTH', default=False):
+        # Oauth services ########################################
+        from restapi.services.oauth2clients import ExternalLogins
 
-            # If oauth services are available, set them before every request
-            from restapi.services.oauth2clients import ExternalLogins
-            from restapi.protocols.oauth import oauth
+        ext_auth = ExternalLogins(self.app)
+        custom_auth._oauth2 = ext_auth._available_services
+        # #######################################################
 
-            ext_auth = ExternalLogins()
-            oauth.init_app(self.app)
-            custom_auth.set_oauth2_services(ext_auth._available_services)
-            secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
+        secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 
-            # Install self.app secret for oauth2
-            self.app.secret_key = secret + '_app'
+        # Install self.app secret for oauth2
+        self.app.secret_key = secret + '_app'
 
-            custom_auth.TOTP = 'TOTP'
+        custom_auth.TOTP = 'TOTP'
 
-            custom_auth.REGISTER_FAILED_LOGIN = (
-                self.variables.get("register_failed_login", False) == 'True'
-            )
-            custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
-                self.variables.get("force_first_password_change", False) == 'True'
-            )
-            custom_auth.VERIFY_PASSWORD_STRENGTH = (
-                self.variables.get("verify_password_strength", False) == 'True'
-            )
-            custom_auth.MAX_PASSWORD_VALIDITY = int(
-                self.variables.get("max_password_validity", 0)
-            )
-            custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
-                self.variables.get("disable_unused_credentials_after", 0)
-            )
-            custom_auth.MAX_LOGIN_ATTEMPTS = int(
-                self.variables.get("max_login_attempts", 0)
-            )
-            custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
-                "second_factor_authentication", None
-            )
+        custom_auth.REGISTER_FAILED_LOGIN = (
+            self.variables.get("register_failed_login", False) == 'True'
+        )
+        custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
+            self.variables.get("force_first_password_change", False) == 'True'
+        )
+        custom_auth.VERIFY_PASSWORD_STRENGTH = (
+            self.variables.get("verify_password_strength", False) == 'True'
+        )
+        custom_auth.MAX_PASSWORD_VALIDITY = int(
+            self.variables.get("max_password_validity", 0)
+        )
+        custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
+            self.variables.get("disable_unused_credentials_after", 0)
+        )
+        custom_auth.MAX_LOGIN_ATTEMPTS = int(
+            self.variables.get("max_login_attempts", 0)
+        )
+        custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
+            "second_factor_authentication", None
+        )
 
-            if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
-                custom_auth.SECOND_FACTOR_AUTHENTICATION = None
+        if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
+            custom_auth.SECOND_FACTOR_AUTHENTICATION = None
 
         return custom_auth
 

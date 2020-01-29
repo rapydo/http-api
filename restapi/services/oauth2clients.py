@@ -7,8 +7,8 @@ Testend against GitHub, then worked off B2ACCESS (EUDAT oauth service)
 """
 
 import os
+from flask_oauthlib.client import OAuth
 from base64 import b64encode
-from restapi.protocols.oauth import oauth
 from restapi.utilities.globals import mem
 from restapi.utilities.meta import Meta
 
@@ -29,8 +29,10 @@ class ExternalLogins(object):
 
     _available_services = {}
 
-    def __init__(self):
+    def __init__(self, app):
 
+        self.oauth = OAuth()
+        self.oauth.init_app(app)
         # Global memory of oauth2 services across the whole server instance:
         # because we may define the external service
         # in different places of the code
@@ -88,7 +90,7 @@ class ExternalLogins(object):
     def github(self):
         """ This APIs are very useful for testing purpose """
 
-        return oauth.remote_app(
+        return self.oauth.remote_app(
             'github',
             consumer_key=os.environ.get('GITHUB_APPNAME', 'yourappusername'),
             consumer_secret=os.environ.get('GITHUB_APPKEY', 'yourapppw'),
@@ -141,11 +143,11 @@ class ExternalLogins(object):
 
         # B2ACCESS main app
         arguments['base_url'] = b2access_url + '/oauth2/'
-        b2access_oauth = oauth.remote_app('b2access', **arguments)
+        b2access_oauth = self.oauth.remote_app('b2access', **arguments)
 
         # B2ACCESS certification authority app
         arguments['base_url'] = b2access_ca
-        b2accessCA = oauth.remote_app('b2accessCA', **arguments)
+        b2accessCA = self.oauth.remote_app('b2accessCA', **arguments)
 
         #####################
         # Decorated session save of the token
