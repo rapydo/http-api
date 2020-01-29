@@ -153,9 +153,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         except IOError:
             log.exit("Jwt secret file {} not found", abs_filename)
 
-    def set_oauth2_services(self, services):
-        self._oauth2 = services
-
     # #####################
     # # Password handling #
     ####################
