@@ -337,120 +337,111 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    # def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-    #     """
-    #     Allow external accounts (oauth2 credentials)
-    #     to be connected to internal local user
-    #     """
+    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
+        """
+        Allow external accounts (oauth2 credentials)
+        to be connected to internal local user
+        """
 
-    #     cn = None
-    #     dn = None
-    #     if isinstance(current_user, str):
-    #         email = current_user
-    #     else:
-    #         try:
-    #             values = current_user.data
-    #         except BaseException:
-    #             return None, "Authorized response is invalid"
+        cn = None
+        dn = None
+        if isinstance(current_user, str):
+            email = current_user
+        else:
+            try:
+                values = current_user.data
+            except BaseException:
+                return None, "Authorized response is invalid"
 
-    #         # print("TEST", values, type(values))
-    #         if not isinstance(values, dict) or len(values) < 1:
-    #             return None, "Authorized response is empty"
+            # print("TEST", values, type(values))
+            if not isinstance(values, dict) or len(values) < 1:
+                return None, "Authorized response is empty"
 
-    #         email = values.get('email')
-    #         cn = values.get('cn')
-    #         ui = values.get('unity:persistent')
+            email = values.get('email')
+            cn = values.get('cn')
+            ui = values.get('unity:persistent')
 
-    #         # distinguishedName is only defined in prod, not in dev and staging
-    #         # dn = values.get('distinguishedName')
-    #         # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
-    #         # is it going to change?
-    #         for key, _ in values.items():
-    #             if 'urn:oid' in key:
-    #                 dn = values.get(key)
-    #         if dn is None:
-    #             return None, "Missing DN from authorized response..."
+            # distinguishedName is only defined in prod, not in dev and staging
+            # dn = values.get('distinguishedName')
+            # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
+            # is it going to change?
+            for key, _ in values.items():
+                if 'urn:oid' in key:
+                    dn = values.get(key)
+            if dn is None:
+                return None, "Missing DN from authorized response..."
 
-    #     # Check if a user already exists with this email
-    #     internal_user = None
-    #     internal_users = self.db.User.query.filter(self.db.User.email == email).all()
+        # Check if a user already exists with this email
+        internal_user = None
+        internal_users = self.db.User.query.filter(self.db.User.email == email).all()
 
-    #     # Should never happen, please
-    #     if len(internal_users) > 1:
-    #         log.critical("Multiple users?")
-    #         return None, "Server misconfiguration"
+        # Should never happen, please
+        if len(internal_users) > 1:
+            log.critical("Multiple users?")
+            return None, "Server misconfiguration"
 
-    #     # If something found
-    #     if len(internal_users) > 0:
+        # If something found
+        if len(internal_users) > 0:
 
-    #         internal_user = internal_users.pop()
-    #         log.debug("Existing internal user: {}", internal_user)
-    #         # A user already locally exists with another authmethod. Not good.
-    #         if internal_user.authmethod != account_type:
-    #             return None, "User already exists, cannot store oauth2 data"
-    #     # If missing, add it locally
-    #     else:
-    #         userdata = {
-    #             # "uuid": getUUID(),
-    #             "email": email,
-    #             "authmethod": account_type
-    #         }
-    #         try:
-    #             internal_user = self.create_user(userdata, [self.default_role])
-    #             self.db.session.commit()
-    #             log.info("Created internal user {}", internal_user)
-    #         except BaseException as e:
-    #             log.error("Could not create internal user ({}), rolling back", e)
-    #             self.db.session.rollback()
-    #             return None, "Server error"
+            internal_user = internal_users.pop()
+            log.debug("Existing internal user: {}", internal_user)
+            # A user already locally exists with another authmethod. Not good.
+            if internal_user.authmethod != account_type:
+                return None, "User already exists, cannot store oauth2 data"
+        # If missing, add it locally
+        else:
+            userdata = {
+                # "uuid": getUUID(),
+                "email": email,
+                "authmethod": account_type
+            }
+            try:
+                internal_user = self.create_user(userdata, [self.default_role])
+                self.db.session.commit()
+                log.info("Created internal user {}", internal_user)
+            except BaseException as e:
+                log.error("Could not create internal user ({}), rolling back", e)
+                self.db.session.rollback()
+                return None, "Server error"
 
-    #     # Get ExternalAccount for the oauth2 data if exists
-    #     external_user = self.db.ExternalAccounts.query.filter_by(username=email).first()
-    #     # or create it otherwise
-    #     if external_user is None:
-    #         external_user = self.db.ExternalAccounts(username=email, unity=ui)
+        # Get ExternalAccount for the oauth2 data if exists
+        external_user = self.db.ExternalAccounts.query.filter_by(username=email).first()
+        # or create it otherwise
+        if external_user is None:
+            external_user = self.db.ExternalAccounts(username=email, unity=ui)
 
-    #         # Connect the external account to the current user
-    #         external_user.main_user = internal_user
-    #         # Note: for pre-production release
-    #         # we allow only one external account per local user
-    #         log.info("Created external user {}", external_user)
+            # Connect the external account to the current user
+            external_user.main_user = internal_user
+            # Note: for pre-production release
+            # we allow only one external account per local user
+            log.info("Created external user {}", external_user)
 
-    #     # Update external user data to latest info received
-    #     external_user.email = email
-    #     external_user.account_type = account_type
-    #     external_user.token = token
-    #     external_user.refresh_token = refresh_token
-    #     if cn is not None:
-    #         external_user.certificate_cn = cn
-    #     if dn is not None:
-    #         external_user.certificate_dn = dn
+        # Update external user data to latest info received
+        external_user.email = email
+        external_user.account_type = account_type
+        external_user.token = token
+        external_user.refresh_token = refresh_token
+        if cn is not None:
+            external_user.certificate_cn = cn
+        if dn is not None:
+            external_user.certificate_dn = dn
 
-    #     try:
-    #         self.db.session.add(external_user)
-    #         self.db.session.commit()
-    #         log.debug("Updated external user {}", external_user)
-    #     except BaseException as e:
-    #         log.error("Could not update external user ({}), rolling back", e)
-    #         self.db.session.rollback()
-    #         return None, "Server error"
-
-    #     return internal_user, external_user
-
-    # def oauth_from_token(self, token):
-    #     extus = self.db.ExternalAccounts.query.filter_by(token=token).first()
-    #     intus = extus.main_user
-    #     # print(token, intus, extus)
-    #     return intus, extus
-
-    def associate_object_to_attr(self, obj, key, value):
         try:
-            setattr(obj, key, value)
+            self.db.session.add(external_user)
             self.db.session.commit()
+            log.debug("Updated external user {}", external_user)
         except BaseException as e:
-            log.error("DB error ({}), rolling back", e)
+            log.error("Could not update external user ({}), rolling back", e)
             self.db.session.rollback()
-        return
+            return None, "Server error"
+
+        return internal_user, external_user
+
+    def oauth_from_token(self, token):
+        extus = self.db.ExternalAccounts.query.filter_by(token=token).first()
+        intus = extus.main_user
+        # print(token, intus, extus)
+        return intus, extus
 
     def oauth_from_local(self, internal_user):
         accounts = self.db.ExternalAccounts

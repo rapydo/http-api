@@ -321,24 +321,3 @@ class Authentication(BaseAuthentication):
             return False
 
         return True
-
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        # FIXME: b2access
-        raise NotImplementedError("to do")
-
-    def oauth_from_token(self, token):
-        raise NotImplementedError("to do")
-
-    def associate_object_to_attr(self, obj, key, value):
-        raise NotImplementedError("to do")
-
-    def oauth_from_local(self, internal_user):
-
-        accounts = self.db.ExternalAccounts
-        try:
-            external_user = accounts.objects.raw(
-                {'user_id': internal_user.email}
-            ).first()
-        except self.db.ExternalAccounts.DoesNotExist:
-            external_user = None
-        return external_user
