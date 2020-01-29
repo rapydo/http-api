@@ -582,15 +582,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    @abc.abstractmethod
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        """
-        Allow external accounts (oauth2 credentials)
-        to be connected to internal local user.
+    # @abc.abstractmethod
+    # def store_oauth2_user(self, account_type, current_user, token, refresh_token):
+    #     """
+    #     Allow external accounts (oauth2 credentials)
+    #     to be connected to internal local user.
 
-        (requires an ExternalAccounts model defined for current service)
-        """
-        return ('internal_user', 'external_user')
+    #     (requires an ExternalAccounts model defined for current service)
+    #     """
+    #     return ('internal_user', 'external_user')
 
     # ###########################
     # # Login attempts handling #
