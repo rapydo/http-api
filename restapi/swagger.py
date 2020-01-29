@@ -297,17 +297,6 @@ class BeSwagger(object):
             "basePath": "/",
             "securityDefinitions": {
                 "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-                # "OauthSecurity": {
-                #     "type": "oauth2",
-                #     "tokenUrl": "https://oauth.simple.api/token",
-                #     "flow": "accessCode",
-                #     "authorizationUrl": "https://blabla/authorization",
-                #     "scopes": {
-                #         "admin": "Admin scope",
-                #         "user": "User scope"
-                #       }
-                # }
-                # TODO: check about scopes (roles?)
             },
             "security": [{"Bearer": []}],
         }

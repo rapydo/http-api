@@ -36,7 +36,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     that aims to store credentials of users and roles.
     """
 
-    ##########################
     # Secret loaded from secret.key file
     JWT_SECRET = None
     # JWT_ALGO = 'HS256'
@@ -46,8 +45,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
-    ##########################
-    _oauth2 = {}
 
     def __init__(self):
         self.myinit()

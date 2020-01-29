@@ -42,16 +42,10 @@ class Authenticator(BaseExtension):
         auth_module = Meta.get_authentication_module(auth_service)
         custom_auth = auth_module.Authentication()
 
-        # Oauth services ########################################
-        # from restapi.services.oauth2clients import ExternalLogins
-
-        # ext_auth = ExternalLogins(self.app)
-        # custom_auth.set_oauth2_services(ext_auth._available_services)
-        # #######################################################
-
         secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 
         # Install self.app secret for oauth2
+        # !?
         self.app.secret_key = secret + '_app'
 
         custom_auth.TOTP = 'TOTP'
