@@ -29,9 +29,6 @@ class User(IdentifiedNode):
     privacy_accepted = BooleanProperty(default=True, show=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
     roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)
-    externals = RelationshipTo(
-        'ExternalAccounts', 'HAS_AUTHORIZATION', cardinality=OneOrMore
-    )
 
 
 class Token(StructuredNode):
@@ -50,15 +47,3 @@ class Role(StructuredNode):
     name = StringProperty(required=True, unique_index=True, show=True)
     description = StringProperty(default='No description', show=True)
     privileged = RelationshipFrom(User, 'HAS_ROLE', cardinality=OneOrMore)
-
-
-class ExternalAccounts(StructuredNode):
-    username = StringProperty(required=True, unique_index=True)
-    account_type = StringProperty(required=True)
-    token = StringProperty(required=True)
-    refresh_token = StringProperty()
-    email = StringProperty()
-    certificate_cn = StringProperty()
-    proxyfile = StringProperty()
-    description = StringProperty(default='No description')
-    main_user = RelationshipFrom(User, 'HAS_AUTHORIZATION', cardinality=OneOrMore)
