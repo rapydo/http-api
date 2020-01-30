@@ -40,11 +40,14 @@ def find(prefix, suffixes=None, local_bin=False):
     return False
 
 
-def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
+def wait_socket(host, port, service_name):
 
     import time
     import errno
     import socket
+
+    sleep_time = 1
+    timeout = 1
 
     log.verbose("Waiting for {} ({}:{})", service_name, host, port)
 
@@ -53,9 +56,7 @@ def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # log.debug("Timeout before: {}", s.gettimeout())
         s.settimeout(timeout)
-        # log.debug("Timeout after: {}", s.gettimeout())
 
         try:
             result = s.connect_ex((host, port))
@@ -65,19 +66,17 @@ def wait_socket(host, port, service_name, sleep_time=5, timeout=5):
         if result == 0:
             log.info("Service {} is reachable", service_name)
             break
+
+        counter += 1
+        if counter % 20 == 0:
+            log.warning(
+                "'{}' service ({}:{}) still unavailable after {} seconds",
+                service_name,
+                host,
+                port,
+                (sleep_time + timeout) * counter,
+            )
         else:
+            log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
 
-            counter += 1
-            if counter % 6 == 0:
-                # FIXME: also do something here if the service is external?
-                log.warning(
-                    "'{}' service ({}:{}) still unavailable after {} seconds",
-                    service_name,
-                    host,
-                    port,
-                    (sleep_time + timeout) * counter,
-                )
-            else:
-                log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
-
-            time.sleep(sleep_time)
+        time.sleep(sleep_time)
