@@ -48,7 +48,7 @@ setup(
         "passlib[bcrypt]==1.7.2",
         "authlib==0.13",
 
-        "Flask-RESTful==0.3.7",
+        "Flask-RESTful==0.3.8",
         "Flask-SQLAlchemy==2.4.1",
 
         "PyYAML==5.3",
