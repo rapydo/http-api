@@ -11,6 +11,7 @@ from restapi.utilities.logs import log
 
 APP = 'FLASK_APP'
 PORT = 'FLASK_PORT'
+BIND_INTERFACE = "0.0.0.0"
 
 
 @click.group()
@@ -57,7 +58,7 @@ def flask_cli(options=None):
     if options is None:
         options = {'name': 'RESTful HTTP API server'}
         app = create_app(**options)
-        app.run(host='0.0.0.0', threaded=True)
+        app.run(host=BIND_INTERFACE, threaded=True)
     else:
         create_app(**options)
         # app.run(debug=False)
@@ -79,7 +80,7 @@ def launch():
     args = [
         'run',
         '--host',
-        '0.0.0.0',
+        BIND_INTERFACE,
         '--port',
         os.environ.get(PORT),
         '--reload',

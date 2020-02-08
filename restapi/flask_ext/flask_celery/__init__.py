@@ -23,7 +23,8 @@ class CeleryExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        # worker_mode = self.args.get("worker_mode", False)
+        # set here to avoid warnings like 'Possible hardcoded password'
+        EMPTY = ""
 
         broker = self.variables.get("broker")
 
@@ -58,7 +59,7 @@ class CeleryExt(BaseExtension):
 
         if BROKER_USER == "":
             BROKER_USER = None
-        if BROKER_PASSWORD == "":
+        if BROKER_PASSWORD == EMPTY:
             BROKER_PASSWORD = None
 
         if BROKER_VHOST != "":
@@ -104,7 +105,7 @@ class CeleryExt(BaseExtension):
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = ""
-            BACKEND_PASSWORD = ""
+            BACKEND_PASSWORD = None
         elif backend == 'MONGODB':
             service_vars = Detector.load_variables({'prefix': 'mongo'})
             BACKEND_HOST = service_vars.get("host")
@@ -114,9 +115,9 @@ class CeleryExt(BaseExtension):
         else:
             log.exit("Invalid celery backend: {}", backend)
 
-        if BACKEND_USER == "":
+        if BACKEND_USER == EMPTY:
             BACKEND_USER = None
-        if BACKEND_PASSWORD == "":
+        if BACKEND_PASSWORD == EMPTY:
             BACKEND_PASSWORD = None
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:

@@ -18,6 +18,7 @@ from restapi.utilities.logs import log
 if PRODUCTION:
     # http://stackoverflow.com/a/27785830/2114395
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+BIND_INTERFACE = "0.0.0.0"
 
 #############################
 # BE FLASK
@@ -25,4 +26,4 @@ app = create_app(name='REST_API')
 
 if __name__ == "__main__":
     log.debug("Server running (w/ {})", pretty_errors.__name__)
-    app.run(host='0.0.0.0', threaded=True)
+    app.run(host=BIND_INTERFACE, threaded=True)
