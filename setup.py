@@ -84,6 +84,7 @@ setup(
         "glom",
         "psutil",
         "plumbum",
+        "Werkzeug==0.16.1"
     ],
     classifiers=[
         'Programming Language :: Python',
