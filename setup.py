@@ -78,7 +78,8 @@ setup(
         "psutil",
         "plumbum",
         "better_exceptions",
-        "maxminddb-geolite2"
+        "maxminddb-geolite2",
+        "Werkzeug==0.16.1"
     ],
     classifiers=[
         'Programming Language :: Python',
