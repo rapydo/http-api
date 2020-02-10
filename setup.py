@@ -57,6 +57,7 @@ setup(
         "neomodel>=3.2.9, <=3.3.2",
         "psycopg2-binary",
         "pymodm",
+        "mongoengine",
         "PyMySQL",
 
         # Swagger
