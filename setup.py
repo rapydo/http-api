@@ -32,9 +32,6 @@ setup(
         [console_scripts]
         {}={}:cli
     '''.format(main_package, app),
-    dependency_links=[
-        "https://github.com/zmap/celerybeat-mongo.git@master",
-    ],
     install_requires=[
         # Utilities
         "attrs",
@@ -57,7 +54,6 @@ setup(
         "neomodel>=3.2.9, <=3.3.2",
         "psycopg2-binary",
         "pymodm",
-        "mongoengine",
         "PyMySQL",
 
         # Swagger
@@ -80,6 +76,7 @@ setup(
         "celery",
         "flower==0.9.3",
         "celery-redbeat==0.13.0",
+        "celerybeat-mongo @ https://github.com/zmap/celerybeat-mongo.git@master",
         "redis",
         "elasticsearch",
         "Flask-Migrate",
