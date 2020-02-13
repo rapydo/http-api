@@ -76,7 +76,7 @@ setup(
         "celery",
         "flower==0.9.3",
         "celery-redbeat==0.13.0",
-        "celerybeat-mongo @ https://github.com/zmap/celerybeat-mongo.git@master",
+        "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
         "redis",
         "elasticsearch",
         "Flask-Migrate",
