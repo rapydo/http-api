@@ -18,6 +18,7 @@ I didn't manage so far to have it working in the way the documentation require.
 """
 
 import re
+import werkzeug.exceptions
 from functools import wraps
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
@@ -110,6 +111,10 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                     return self.send_errors(message=str(e), code=e.status_code)
                 else:
                     raise e
+
+            except werkzeug.exceptions.BadRequest as e:
+                # do not stop werkzeug BadRequest
+                raise e
 
             # Catch any other exception
             except Exception as e:
