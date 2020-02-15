@@ -6,20 +6,7 @@ from irods.pool import Pool
 from irods.session import iRODSSession
 
 """
-Manipulate irods session as a string,
-to be saved inside a database.
-
-===
-
-NOTE: an alternative would have been to use dill instead of pickle,
-# import dill as pickle
-but suddenly it stopped working
-
-sess = iRODSSession(...)
-dill.dumps(sess)
-
-TypeError: Cannot serialize socket object
-(which is located in list(sess.pool.idle)[0].socket )
+Manipulate irods session as a string, to be saved inside a database.
 """
 
 
