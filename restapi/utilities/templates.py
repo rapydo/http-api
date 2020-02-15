@@ -12,7 +12,7 @@ def get_html_template(template_file, replaces):
         template_path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails")
 
         templateLoader = jinja2.FileSystemLoader(searchpath=template_path)
-        templateEnv = jinja2.Environment(loader=templateLoader)
+        templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
         template = templateEnv.get_template(template_file)
 
         return template.render(**replaces)
