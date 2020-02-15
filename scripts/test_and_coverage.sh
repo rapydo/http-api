@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-WORK_DIR=`pwd`
+WORK_DIR=$(pwd)
 
 if [ -z $PROJECT ]; then
     echo "Missing the current testing project."
