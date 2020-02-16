@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-import pytz
 from datetime import datetime, timedelta
-from restapi.services.detect import Detector
 
+import pytz
+
+from restapi.services.detect import Detector
 from restapi.flask_ext import BaseExtension
 from restapi.services.authentication import BaseAuthentication
 from restapi.exceptions import RestApiException

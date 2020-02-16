@@ -11,8 +11,8 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 """
 
-import pytz
 from datetime import datetime, timedelta
+import pytz
 from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector

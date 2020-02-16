@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import pytz
 from datetime import datetime
 import dateutil.parser
+import pytz
 
 from restapi.utilities.logs import log
 

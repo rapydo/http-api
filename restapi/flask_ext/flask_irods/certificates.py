@@ -7,8 +7,9 @@ Using x509 certificates
 import os
 import pwd
 import re
-import pytz
 from datetime import datetime, timedelta
+
+import pytz
 
 from restapi.utilities.logs import log
 

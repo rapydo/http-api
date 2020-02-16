@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import pytz
 from datetime import datetime, timedelta
+import pytz
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
