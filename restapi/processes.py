@@ -54,29 +54,29 @@ def wait_socket(host, port, service_name):
     counter = 0
     while True:
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-        s.settimeout(timeout)
+            s.settimeout(timeout)
 
-        try:
-            result = s.connect_ex((host, port))
-        except socket.gaierror:
-            result = errno.ESRCH
+            try:
+                result = s.connect_ex((host, port))
+            except socket.gaierror:
+                result = errno.ESRCH
 
-        if result == 0:
-            log.info("Service {} is reachable", service_name)
-            break
+            if result == 0:
+                log.info("Service {} is reachable", service_name)
+                break
 
-        counter += 1
-        if counter % 20 == 0:
-            log.warning(
-                "'{}' service ({}:{}) still unavailable after {} seconds",
-                service_name,
-                host,
-                port,
-                (sleep_time + timeout) * counter,
-            )
-        else:
-            log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
+            counter += 1
+            if counter % 20 == 0:
+                log.warning(
+                    "'{}' service ({}:{}) still unavailable after {} seconds",
+                    service_name,
+                    host,
+                    port,
+                    (sleep_time + timeout) * counter,
+                )
+            else:
+                log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
 
-        time.sleep(sleep_time)
+            time.sleep(sleep_time)
