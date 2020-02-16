@@ -7,13 +7,13 @@ iRODS file-system flask connector
 # import os
 import logging
 
+# from irods.session import iRODSSession
+from irods import exception as iexceptions
+
 # from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
 from restapi.flask_ext import BaseExtension
 from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSession
-
-# from irods.session import iRODSSession
-from irods import exception as iexceptions
 from restapi.flask_ext.flask_irods.client import IrodsException, IrodsPythonClient
 from restapi.flask_ext.flask_irods.certificates import Certificates
 
