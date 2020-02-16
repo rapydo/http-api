@@ -7,7 +7,7 @@ from restapi.flask_ext import BaseExtension
 
 
 ########################
-class Devnull(object):
+class Devnull:
     def write(self, _):
         pass
 

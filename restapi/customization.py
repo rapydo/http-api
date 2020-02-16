@@ -25,7 +25,7 @@ CONF_FOLDERS = detector.load_group(label='project_confs')
 ########################
 # Customization on the table
 ########################
-class Customizer(object):
+class Customizer:
     """
     Customize your BACKEND:
     Read all of available configurations and definitions.

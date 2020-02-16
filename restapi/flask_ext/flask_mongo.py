@@ -74,7 +74,7 @@ class MongoExt(BaseExtension):
         return db
 
 
-class Converter(object):
+class Converter:
     def __init__(self, mongo_model):
         self._model = mongo_model
 

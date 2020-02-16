@@ -150,7 +150,7 @@ class InternalResponse(Response):
 ########################
 # Flask response internal builder
 ########################
-class ResponseMaker(object):
+class ResponseMaker:
 
     _content_key = "Response"
     _content_meta = "Meta"

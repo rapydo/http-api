@@ -27,7 +27,7 @@ from restapi.utilities.logs import log
 
 ######################################
 # Save files http://API/upload
-class Uploader(object):
+class Uploader:
 
     allowed_exts = []
     # allowed_exts = ['png', 'jpg', 'jpeg', 'tiff']

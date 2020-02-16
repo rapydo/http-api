@@ -54,7 +54,7 @@ def RelationshipFrom(
     return rel
 
 
-class myAttribProperty(object):
+class myAttribProperty:
     """
     This class is used to save custom flags assigned to a property, to be used
     in the show_fields method of StructuredNode class.

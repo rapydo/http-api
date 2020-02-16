@@ -31,7 +31,7 @@ ALLOW_ACCESS_TOKEN_PARAMETER = (
 )
 
 
-class HTTPTokenAuth(object):
+class HTTPTokenAuth:
     """
     A class to implement a Generic Token (oauth2-like) authentication.
     Started on a draft of the great miguel: http://bit.ly/2nTqQKA

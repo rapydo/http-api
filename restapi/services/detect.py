@@ -18,7 +18,7 @@ from restapi.utilities.configuration import load_yaml_file
 from restapi.utilities.logs import log
 
 
-class Detector(object):
+class Detector:
     def __init__(self):
 
         self.authentication_service = None

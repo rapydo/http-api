@@ -19,7 +19,7 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
-class BaseTests(object):
+class BaseTests:
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests

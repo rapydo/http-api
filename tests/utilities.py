@@ -46,7 +46,7 @@ CONFLICT = hcodes.HTTP_BAD_CONFLICT  # 409
 # }
 
 
-class ParsedResponse(object):
+class ParsedResponse:
     pass
 
 

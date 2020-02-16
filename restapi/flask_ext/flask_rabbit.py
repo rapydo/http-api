@@ -44,7 +44,7 @@ class RabbitExt(BaseExtension):
         return conn_wrapper
 
 
-class RabbitWrapper(object):
+class RabbitWrapper:
     def __init__(self, variables, dont_connect=False):
         log.debug('Creating RabbitMQ connection wrapper with variables {}', variables)
         self.__variables = variables

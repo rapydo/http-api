@@ -14,7 +14,7 @@ from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
 
-class Meta(object):
+class Meta:
     """Utilities with meta in mind"""
 
     def get_submodules_from_package(self, package):

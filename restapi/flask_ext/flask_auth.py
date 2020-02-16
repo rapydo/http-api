@@ -102,7 +102,7 @@ class Authenticator(BaseExtension):
         #         raise ValueError("Production with default admin user")
 
 
-class HandleSecurity(object):
+class HandleSecurity:
     def __init__(self, auth):
         self.auth = auth
 

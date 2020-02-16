@@ -12,7 +12,7 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
 
-class Downloader(object):
+class Downloader:
     def download(self, filename=None, subfolder=None, get=False):
 
         if not get:

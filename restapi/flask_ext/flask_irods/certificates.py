@@ -20,7 +20,7 @@ except ImportError as e:
     log.exit("\nThis module requires an extra package:\n{}", e)
 
 
-class Certificates(object):
+class Certificates:
 
     _dir = os.environ.get('CERTDIR')
     _proxyfile = 'userproxy.crt'
