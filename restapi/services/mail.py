@@ -74,11 +74,11 @@ def test_smtp_client():
     username = os.environ.get("SMTP_USERNAME")
     password = os.environ.get("SMTP_PASSWORD")
 
-    smtp = get_smtp_client(host, port, username, password)
-    if smtp is None:
-        return False
-    smtp.quit()
-    return True
+    with get_smtp_client(host, port, username, password) as smtp:
+        if smtp is None:
+            return False
+        smtp.quit()
+        return True
 
 
 def send(
@@ -108,77 +108,78 @@ def send(
         log.error("Skipping send email: destination address not configured")
         return False
 
-    smtp = get_smtp_client(smtp_host, smtp_port, username, password)
+    with get_smtp_client(smtp_host, smtp_port, username, password) as smtp:
 
-    if smtp is None:
-        log.error("Unable to send email: client initialization failed")
-        return False
-
-    try:
-
-        dest_addresses = [to_address]
-
-        date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
-        if html:
-            msg = MIMEMultipart('alternative')
-        else:
-            msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = from_address
-        msg['To'] = to_address
-        if cc is None:
-            pass
-        elif isinstance(cc, str):
-            msg['Cc'] = cc
-            dest_addresses.append(cc.split(","))
-        elif isinstance(cc, list):
-            msg['Cc'] = ",".join(cc)
-            dest_addresses.append(cc)
-        else:
-            log.warning("Invalid CC value: {}", cc)
-            cc = None
-
-        if bcc is None:
-            pass
-        elif isinstance(bcc, str):
-            msg['Bcc'] = bcc
-            dest_addresses.append(bcc.split(","))
-        elif isinstance(bcc, list):
-            msg['Bcc'] = ",".join(bcc)
-            dest_addresses.append(bcc)
-        else:
-            log.warning("Invalid BCC value: {}", bcc)
-            bcc = None
-
-        msg['Date'] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
-
-        if html:
-            if plain_body is None:
-                log.warning("Plain body is none")
-                plain_body = body
-            part1 = MIMEText(plain_body, 'plain')
-            part2 = MIMEText(body, 'html')
-            msg.attach(part1)
-            msg.attach(part2)
-
-        try:
-            log.verbose("Sending email to {}", to_address)
-
-            smtp.sendmail(from_address, dest_addresses, msg.as_string())
-
-            log.info(
-                "Successfully sent email to {} [cc={}], [bcc={}]", to_address, cc, bcc
-            )
-            smtp.quit()
-            return True
-        except SMTPException:
-            log.error("Unable to send email to {}", to_address)
-            smtp.quit()
+        if smtp is None:
+            log.error("Unable to send email: client initialization failed")
             return False
 
-    except BaseException as e:
-        log.error(str(e))
-        return False
+        try:
+
+            dest_addresses = [to_address]
+
+            date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
+            if html:
+                msg = MIMEMultipart('alternative')
+            else:
+                msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = from_address
+            msg['To'] = to_address
+            if cc is None:
+                pass
+            elif isinstance(cc, str):
+                msg['Cc'] = cc
+                dest_addresses.append(cc.split(","))
+            elif isinstance(cc, list):
+                msg['Cc'] = ",".join(cc)
+                dest_addresses.append(cc)
+            else:
+                log.warning("Invalid CC value: {}", cc)
+                cc = None
+
+            if bcc is None:
+                pass
+            elif isinstance(bcc, str):
+                msg['Bcc'] = bcc
+                dest_addresses.append(bcc.split(","))
+            elif isinstance(bcc, list):
+                msg['Bcc'] = ",".join(bcc)
+                dest_addresses.append(bcc)
+            else:
+                log.warning("Invalid BCC value: {}", bcc)
+                bcc = None
+
+            msg['Date'] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
+
+            if html:
+                if plain_body is None:
+                    log.warning("Plain body is none")
+                    plain_body = body
+                part1 = MIMEText(plain_body, 'plain')
+                part2 = MIMEText(body, 'html')
+                msg.attach(part1)
+                msg.attach(part2)
+
+            try:
+                log.verbose("Sending email to {}", to_address)
+
+                smtp.sendmail(from_address, dest_addresses, msg.as_string())
+
+                log.info(
+                    "Successfully sent email to {} [cc={}], [bcc={}]",
+                    to_address, cc, bcc
+                )
+                smtp.quit()
+                return True
+            except SMTPException:
+                log.error("Unable to send email to {}", to_address)
+                smtp.quit()
+                return False
+
+        except BaseException as e:
+            log.error(str(e))
+            return False
 
     return False
 
