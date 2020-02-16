@@ -30,24 +30,11 @@ def main(args, another_app=None):
         if current_app is None or current_app.strip() == '':
             os.environ[APP] = '{}.__main__'.format(current_package)
 
-    cli = FlaskGroup()
+    fg_cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}
 
     # cannot catch for CTRL+c
-    cli.main(**options)
-
-    # try:
-    #     cli.main(**options)
-    # except SystemExit as e:
-    #     if str(e) == "3":
-    #         print("AH!")
-    #     else:
-    #         # it looks like there is no Keyboard interrupt with flask
-    #         log.warning("Flask received: system exit")
-    # except BaseException as e:
-    #     # do not let flask close the application
-    #     # so we can do more code after closing
-    #     log.error(e)
+    fg_cli.main(**options)
 
 
 def flask_cli(options=None):
