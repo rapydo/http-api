@@ -444,7 +444,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
 
         if token_type is not None:
-            if token_type == self.PWD_RESET or token_type == self.ACTIVATE_ACCOUNT:
+            if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
                 short_jwt = True
                 payload["t"] = token_type
 
