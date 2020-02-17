@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """ Models for graph database """
+import neomodel
 
 from restapi.services.neo4j.models import (
     StructuredNode,
