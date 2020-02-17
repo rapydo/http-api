@@ -36,7 +36,7 @@
   # rabbitmq message queue
 - name: rabbit
   load_models: 0
-  prefix: rabbit
+  prefix: rabbitmq
   extension: flask_rabbit
   class: RabbitExt
 
