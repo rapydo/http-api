@@ -102,7 +102,7 @@ class RabbitWrapper:
     :param queue: RabbitMQ routing key.
     '''
 
-    def write_to_queue(self, jmsg, queue, exchange="", headers={}):
+    def write_to_queue(self, jmsg, queue, exchange="", headers=None):
 
         log.verbose(
             'Asked to log ({}, {}): {}',
@@ -122,6 +122,9 @@ class RabbitWrapper:
 
         # Settings for the message:
         permanent_delivery = 2  # make message persistent
+        if headers is None:
+            headers = {}
+
         props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
 
         # Try sending n times:
@@ -182,12 +185,13 @@ class RabbitWrapper:
                     i, MAX_RETRY, e
                 )
                 self.__connection = None
-        else:
+
             if i > MAX_RETRY:
                 log.warning(
                     'Could not write to RabbitMQ ({}, {}): {}',
                     exchange, queue, body
                 )
+            break
 
         return False
 
