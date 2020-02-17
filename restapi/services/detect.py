@@ -172,7 +172,8 @@ class Detector:
 
         # Try inside our extensions
         module = Meta.get_module_from_string(
-            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
+            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
+            exit_on_fail=True
         )
         if module is None:
             log.exit("Missing {} for {}", flaskext, service)

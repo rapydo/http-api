@@ -85,7 +85,9 @@ class Meta:
             # Meta language for dinamically import
             module = import_module(modulestring)
         except import_exceptions as e:  # pylint:disable=catching-non-exception
-            if exit_if_not_found:
+            if exit_on_fail:
+                raise e
+            elif exit_if_not_found:
                 log.exit("Failed to load module:\n{}", e)
             # else:
             #     log.warning("Failed to load module:\n{}", e)
