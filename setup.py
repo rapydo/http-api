@@ -76,9 +76,6 @@ setup(
         "pretty_errors",
         "maxminddb-geolite2",
 
-        # Rancher
-        "gdapi-python",
-
         # Web sockets
         "websocket-client",
         "gripcontrol==4.0.0",
