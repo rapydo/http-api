@@ -33,34 +33,42 @@ setup(
         {}={}:cli
     '''.format(main_package, app),
     install_requires=[
-        # Utilities
-        "attrs",
-        "pyOpenSSL",
-        "PyJWT",
-
         # Flask and plugins
         "Flask==1.1.1",
+        "Flask-RESTful==0.3.8",
+        "flask-apispec==0.8.5",
         "Flask-Cors==3.0.8",
+        "Flask-SQLAlchemy==2.4.1",
+        "Flask-Migrate",
+        "uWSGI",
 
+        "PyJWT",
+        "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
         "authlib==0.13",
 
-        "Flask-RESTful==0.3.8",
-        "Flask-SQLAlchemy==2.4.1",
-
         "PyYAML==5.3",
 
-        # DB drivers
+        # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
+        "redis",
+        "pika",
+        "celery",
+        "flower==0.9.3",
+        "celery-redbeat==0.13.0",
+        # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
+        "celerybeat-mongo==0.2.0",
+        "elasticsearch",
 
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
 
         # Utilities
+        "attrs",
         "loguru",
         "glom",
         "psutil",
@@ -68,20 +76,14 @@ setup(
         "pretty_errors",
         "maxminddb-geolite2",
 
-        # From requirements.txt
-        "uWSGI",
-        "pika",
+        # Rancher
         "gdapi-python",
+
+        # Web sockets
         "websocket-client",
-        "celery",
-        "flower==0.9.3",
-        "celery-redbeat==0.13.0",
-        # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
-        "celerybeat-mongo==0.2.0",
-        "redis",
-        "elasticsearch",
-        "Flask-Migrate",
         "gripcontrol==4.0.0",
+
+        # Sentry
         "sentry-sdk[flask]==0.14.0"
     ],
     classifiers=[
