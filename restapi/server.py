@@ -9,6 +9,7 @@ from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from glom import glom
 from geolite2 import geolite2
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH
@@ -185,11 +186,13 @@ def create_app(
             raise AttributeError("Follow the docs and define your endpoints")
 
         for resource in mem.customizer._endpoints:
-            urls = [uri for _, uri in resource.uris.items()]
+            # urls = [uri for _, uri in resource.uris.items()]
+            urls = list(resource.uris.values())
 
             # Create the restful resource with it;
             # this method is from RESTful plugin
             rest_api.add_resource(resource.cls, *urls)
+
             log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
 
         # Enable all schema endpoints to be mapped with this extra step
@@ -205,6 +208,51 @@ def create_app(
         for m in detector.services_classes:
             ExtClass = detector.services_classes.get(m)
             microservice.services_instances[m] = ExtClass(microservice)
+
+        # FlaskApiSpec experimentation
+        from apispec import APISpec
+        from flask_apispec import FlaskApiSpec
+        from apispec.ext.marshmallow import MarshmallowPlugin
+        # from apispec_webframeworks.flask import FlaskPlugin
+
+        microservice.config.update({
+            'APISPEC_SPEC': APISpec(
+                title=glom(
+                    mem.customizer._configurations,
+                    'project.title',
+                    default='0.0.1'
+                ),
+                version=glom(
+                    mem.customizer._configurations,
+                    'project.version',
+                    default='Your application name'
+                ),
+                openapi_version="2.0",
+                # OpenApi 3 not working with FlaskApiSpec
+                # -> Duplicate parameter with name body and location body
+                # https://github.com/jmcarp/flask-apispec/issues/170
+                # Find other warning like this by searching:
+                # **FASTAPI**
+                # openapi_version="3.0.2",
+                plugins=[
+                    MarshmallowPlugin()
+                ],
+            ),
+            'APISPEC_SWAGGER_URL': '/api/swagger',
+        })
+        docs = FlaskApiSpec(microservice)
+
+        with microservice.app_context():
+            for resource in mem.customizer._endpoints:
+                urls = list(resource.uris.values())
+                try:
+                    docs.register(resource.cls)
+                except TypeError as e:
+                    # log.warning("{} on {}", type(e), resource.cls)
+                    # Enable this warning to start conversion to FlaskFastApi
+                    # Find other warning like this by searching:
+                    # **FASTAPI**
+                    log.verbose("{} on {}", type(e), resource.cls)
 
     ##############################
     # Clean app routes
