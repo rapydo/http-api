@@ -11,13 +11,14 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from glom import glom
 from geolite2 import geolite2
+from restapi import __version__
 from restapi import confs as config
-from restapi.confs import ABS_RESTAPI_PATH
+from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
+from restapi.confs import get_project_configuration
 from restapi.rest.response import InternalResponse
 from restapi.rest.response import ResponseMaker
 from restapi.customization import Customizer
-from restapi.confs import PRODUCTION
-from restapi.confs import SENTRY_URL
+
 from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
@@ -286,6 +287,13 @@ def create_app(
     @microservice.after_request
     def log_response(response):
 
+        response.headers["_RV"] = str(__version__)
+
+        PROJECT_VERSION = get_project_configuration(
+            "project.version", default=None
+        )
+        if PROJECT_VERSION is not None:
+            response.headers["Version"] = str(PROJECT_VERSION)
         ###############################
         # NOTE: if it is an upload,
         # I must NOT consume request.data or request.json,

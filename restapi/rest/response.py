@@ -33,8 +33,6 @@ from werkzeug import exceptions as wsgi_exceptions
 from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.decorators import get_response, set_response
 from restapi.attributes import ResponseElements
-from restapi import __version__
-from restapi.confs import get_project_configuration
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
@@ -77,8 +75,6 @@ def add_to_dict(mydict, content, key='content'):
         content = {key: content}
     mydict.update(content)
     return mydict
-
-
 
 
 def respond_to_browser(r):
@@ -212,14 +208,6 @@ class ResponseMaker:
             # Anything that remains is just a content
             else:
                 elements['defined_content'] = response
-
-            elements['headers']["_RV"] = str(__version__)
-
-            PROJECT_VERSION = get_project_configuration(
-                "project.version", default=None
-            )
-            if PROJECT_VERSION is not None:
-                elements['headers']["Version"] = str(PROJECT_VERSION)
 
         # POST-CHECK: is it a flask response?
         if self.is_internal_response(elements['defined_content']):
