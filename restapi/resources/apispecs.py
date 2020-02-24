@@ -16,8 +16,7 @@ class UserSchema(Schema):
     created_at = fields.DateTime(required=True)
 
 
-class ApiSpecsStatus(MethodResource, EndpointResource):
-    """ API online client testing """
+class ApiSpecsPOC(MethodResource, EndpointResource):
 
     labels = ['helpers']
 
@@ -31,14 +30,14 @@ class ApiSpecsStatus(MethodResource, EndpointResource):
 
     # Example1
     # @use_kwargs({'species': fields.Int(required=True)})
-    # def get(self, service=None, **kwargs):
+    # def get(self, **kwargs):
     # Example2
     # @use_kwargs({'species': fields.Int(required=True)})
-    # def get(self, species, service=None):
+    # def get(self, species):
     # Example3
     @use_kwargs(UserSchema)
     @decorate.catch_error()
-    def get(self, service=None, **kwargs):
+    def get(self, **kwargs):
 
         log.critical(kwargs)
 
