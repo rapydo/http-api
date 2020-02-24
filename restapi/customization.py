@@ -236,12 +236,24 @@ class Customizer:
 
                     mapping_lists = []
                     for m in ep_class.methods:
-                        if not hasattr(ep_class, m):
-                            log.warning(
-                                "{} configuration not found in {}", m, class_name
-                            )
-                            continue
-                        conf = getattr(ep_class, m)
+                        method_name = "_{}".format(m)
+                        if not hasattr(ep_class, method_name):
+
+                            method_name = m
+                            if not hasattr(ep_class, method_name):
+                                log.warning(
+                                    "{} configuration not found in {}", m, class_name
+                                )
+                                continue
+                            # Enable this warning to start conversions GET -> _GET
+                            # Find other warning like this by searching:
+                            # **FASTAPI**
+                            # else:
+                            #     log.warning(
+                            #         "Obsolete dict {} in {}", m, class_name
+                            #     )
+
+                        conf = getattr(ep_class, method_name)
                         kk = conf.keys()
                         mapping_lists.extend(kk)
                         endpoint.methods[m.lower()] = copy.deepcopy(conf)
