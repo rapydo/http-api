@@ -2,7 +2,7 @@
 from restapi.rest.definition import EndpointResource
 from restapi import decorators as decorate
 
-from flask_apispec import use_kwargs  # , marshal_with
+from flask_apispec import use_kwargs, marshal_with
 from flask_apispec import MethodResource
 from webargs import fields
 from marshmallow import Schema
@@ -16,7 +16,11 @@ class UserSchema(Schema):
     created_at = fields.DateTime(required=True)
 
 
-class ApiSpecsPOC(MethodResource, EndpointResource):
+class OutSchema(Schema):
+    value = fields.Int()
+
+
+class ApiSpecsPoC(MethodResource, EndpointResource):
 
     labels = ['helpers']
 
@@ -36,9 +40,10 @@ class ApiSpecsPOC(MethodResource, EndpointResource):
     # def get(self, species):
     # Example3
     @use_kwargs(UserSchema)
+    @marshal_with(OutSchema)
     @decorate.catch_error()
     def get(self, **kwargs):
 
         log.critical(kwargs)
 
-        return 'Server is alive!'
+        return {"value": '10'}
