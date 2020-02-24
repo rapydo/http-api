@@ -32,7 +32,7 @@ DEFAULT_PERPAGE = 10
 class EndpointResource(Resource):
 
     baseuri = API_URL
-    labels = []
+    # labels = []
     depends_on = []
     expose_schema = False
     publish = True
@@ -51,7 +51,14 @@ class EndpointResource(Resource):
         super(EndpointResource, self).__init__()
 
         self.load_authentication()
-        self.init_parameters()
+        try:
+            self.init_parameters()
+        except RuntimeError:
+            # Once converted everything to FastApi remove this init_parameters
+            # Find other warning like this by searching:
+            # **FASTAPI**
+            # log.warning("self.init_parameters should be reoved since handle by webargs")
+            pass
 
         # Custom init
         custom_method = getattr(self, 'custom_init', None)
