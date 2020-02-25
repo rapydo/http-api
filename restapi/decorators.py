@@ -78,10 +78,6 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
     and catch a specific error.
     """
 
-    if exception_label is None:
-        exception_label = ''
-    if len(exception_label) > 0:
-        exception_label += ': '
     if exception is None:
         exception = RestApiException
 
@@ -95,7 +91,9 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
             # Catch the exception requested by the user
             except exception as e:
 
-                message = exception_label + str(e)
+                # only used by B2STAGE
+                if exception_label:
+                    message = "{}: {}".format(exception_label, str(e))
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
