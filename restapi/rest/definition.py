@@ -375,20 +375,6 @@ class EndpointResource(Resource):
             errors=errors, code=code, headers=headers, head_method=head_method
         )
 
-    def report_generic_error(self, message=None, current_response_available=True):
-
-        if message is None:
-            message = "Something BAD happened somewhere..."
-        log.critical(message)
-
-        user_message = "Server unable to respond."
-        code = hcodes.HTTP_SERVER_ERROR
-        if current_response_available:
-            return self.force_response(errors=user_message, code=code)
-        else:
-            # flask-like
-            return (user_message, code)
-
     def formatJsonResponse(self, instances, resource_type=None):
         """
         Format specifications can be found here:
