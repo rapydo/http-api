@@ -240,6 +240,9 @@ def create_app(
                 ],
             ),
             'APISPEC_SWAGGER_URL': '/api/swagger',
+            # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
+            # Disable Swagger-UI
+            'APISPEC_SWAGGER_UI_URL': None,
         })
         docs = FlaskApiSpec(microservice)
 
