@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from flask import current_app
+from restapi import decorators as decorate
 from restapi.rest.definition import EndpointResource
+from restapi.exceptions import RestApiException
 from restapi.protocols.bearer import authentication
 
 from restapi.utilities.htmlcodes import hcodes
@@ -55,13 +57,14 @@ class Tokens(EndpointResource):
         return self.get_current_user()
 
     # token_id = uuid associated to the token you want to select
+    @decorate.catch_error()
     @authentication.required()
     def get(self, token_id=None):
 
         user = self.get_user()
         if user is None:
-            return self.send_errors(
-                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST
+            raise RestApiException(
+                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
             )
 
         tokens = self.auth.get_tokens(user=user)
@@ -72,12 +75,13 @@ class Tokens(EndpointResource):
             if token["id"] == token_id:
                 return token
 
-        return self.send_errors(
-            message="This token was not emitted for your account or it does not exist",
-            code=hcodes.HTTP_BAD_NOTFOUND
+        raise RestApiException(
+            'This token was not emitted for your account or it does not exist',
+            status_code=hcodes.HTTP_BAD_NOTFOUND
         )
 
     # token_id = uuid associated to the token you want to select
+    @decorate.catch_error()
     @authentication.required()
     def delete(self, token_id=None):
         """
@@ -87,8 +91,8 @@ class Tokens(EndpointResource):
 
         user = self.get_user()
         if user is None:
-            return self.send_errors(
-                message="Invalid: bad username", code=hcodes.HTTP_BAD_REQUEST
+            raise RestApiException(
+                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
             )
 
         if token_id is None:
@@ -104,11 +108,13 @@ class Tokens(EndpointResource):
             if token["id"] != token_id:
                 continue
             if not self.auth.invalidate_token(token=token["token"], user=user):
-                return self.send_errors(
-                    message="Failed token invalidation: '{}'".format(token),
-                    code=hcodes.HTTP_BAD_REQUEST,
+                raise RestApiException(
+                    "Failed token invalidation: '{}'".format(token),
+                    status_code=hcodes.HTTP_BAD_REQUEST
                 )
             return self.empty_response()
 
-        message = "Token not emitted for your account or does not exist"
-        return self.send_errors(message=message, code=hcodes.HTTP_BAD_UNAUTHORIZED)
+        raise RestApiException(
+            "Token not emitted for your account or does not exist",
+            status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+        )
