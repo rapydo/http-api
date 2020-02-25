@@ -365,7 +365,7 @@ class EndpointResource(Resource):
             # default error
             code = hcodes.HTTP_SERVER_ERROR
 
-        if print_error and errors is not None and len(errors) > 0:
+        if print_error and errors:
             log.error(errors)
 
         if head_method:
@@ -388,14 +388,6 @@ class EndpointResource(Resource):
         else:
             # flask-like
             return (user_message, code)
-
-    def send_credentials(self, token, extra=None, meta=None):
-        """
-        Define a standard response to give a Bearer token back.
-        Also considering headers.
-        """
-        # TODO: write it and use it in EUDAT
-        return NotImplementedError("To be written")
 
     def formatJsonResponse(self, instances, resource_type=None):
         """
