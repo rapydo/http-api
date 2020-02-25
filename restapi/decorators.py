@@ -94,6 +94,8 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                 # only used by B2STAGE
                 if exception_label:
                     message = "{}: {}".format(exception_label, str(e))
+                else:
+                    message = str(e)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
