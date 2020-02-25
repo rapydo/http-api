@@ -5,20 +5,17 @@ from restapi import decorators as decorate
 
 from flask_apispec import use_kwargs, marshal_with
 from flask_apispec import MethodResource
-from webargs import fields
-from marshmallow import Schema
+# from flask_apispec import Ref
+from marshmallow import Schema, fields, validate
 
 from restapi.utilities.logs import log
 
 
 class UserSchema(Schema):
-    name = fields.Str(required=True)
+    name = fields.Str(required=True, validate=validate.Length(min=4))
     email = fields.Email(required=True)
+    age = fields.Int(required=True, validate=validate.Range(min=18, max=40))
     created_at = fields.DateTime(required=True)
-
-
-class Wrapper(Schema):
-    data: dict()
 
 
 class Error(Schema):
@@ -26,8 +23,14 @@ class Error(Schema):
 
 
 class old_responses(Schema):
-    defined_content = fields.Str()
-    errors = fields.Str()
+    # Field that applies no formatting.
+    data = fields.Raw(attribute="defined_content")
+    errors = fields.List(fields.Str())
+    # "Raw",
+    # "Nested",
+    # "Mapping",
+    # "Dict",
+    # "List",
 
 
 class OutSchema(Schema):
@@ -41,6 +44,8 @@ class OutSchema1(Schema):
 class ApiSpecsPoC(MethodResource, EndpointResource):
 
     labels = ['helpers']
+
+    # schema = OutSchema
 
     _GET = {
         "/apispec": {
@@ -67,13 +72,13 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
     @decorate.catch_error()
     def get(self, **kwargs):
 
-        log.critical(kwargs)
+        log.info(kwargs)
 
         # return self.force_response("blabla")
-        data = {"mydata": "123", "xyz": "abc"}
+        data = {"value": "123", "xyz": "abc"}
         errors = ["x", "y"]
         return self.force_response(data, errors=errors)
-        raise RestApiException("Just an error")
+        # raise RestApiException("Just an error")
 
-        return {"value": '10'}, 200
+        # return {"value": '10'}, 200
         # return {"value": '10'}, 201
