@@ -344,13 +344,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if raiseErrors:
                 raise e
             else:
-                log.warning("Unable to decode JWT token. {}", e)
+                log.info("Unable to decode JWT token. {}", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
             if raiseErrors:
                 raise e
             else:
-                log.warning("Unable to decode JWT token. {}", e)
+                log.info("Unable to decode JWT token. {}", e)
         except Exception as e:
             if raiseErrors:
                 raise e

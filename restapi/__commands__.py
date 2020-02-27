@@ -9,8 +9,6 @@ from restapi.processes import wait_socket
 from restapi import __package__ as current_package
 from restapi.utilities.logs import log
 
-APP = 'FLASK_APP'
-PORT = 'FLASK_PORT'
 BIND_INTERFACE = "0.0.0.0"
 
 
@@ -21,14 +19,11 @@ def cli():
     click.echo('*** RESTful HTTP API ***')
 
 
-def main(args, another_app=None):
+def main(args):
 
-    if another_app is not None:
-        os.environ[APP] = '{}.py'.format(another_app)
-    else:
-        current_app = os.environ.get(APP)
-        if current_app is None or current_app.strip() == '':
-            os.environ[APP] = '{}.__main__'.format(current_package)
+    current_app = os.environ.get('FLASK_APP')
+    if current_app is None or current_app.strip() == '':
+        os.environ['FLASK_APP'] = '{}.__main__'.format(current_package)
 
     fg_cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}
@@ -41,14 +36,12 @@ def flask_cli(options=None):
     log.info("Launching the app")
     from restapi.server import create_app
 
-    # log.warning("TEST")
     if options is None:
         options = {'name': 'RESTful HTTP API server'}
         app = create_app(**options)
         app.run(host=BIND_INTERFACE, threaded=True)
     else:
         create_app(**options)
-        # app.run(debug=False)
     log.debug("cli execution completed")
 
 
@@ -69,7 +62,7 @@ def launch():
         '--host',
         BIND_INTERFACE,
         '--port',
-        os.environ.get(PORT),
+        os.environ.get('FLASK_PORT'),
         '--reload',
         '--no-debugger',
         '--eager-loading',

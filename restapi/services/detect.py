@@ -101,7 +101,7 @@ class Detector:
                     self.authentication_service = variables.get('service')
 
         if self.authentication_service is None:
-            log.warning("No service defined behind authentication")
+            log.info("No service defined for authentication")
         else:
             log.info(
                 "Authentication based on '{}' service",
