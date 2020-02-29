@@ -301,7 +301,7 @@ class EndpointResource(Resource):
     #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
     def force_response(self, content=None, errors=None,
-                       code=None, headers={}, head_method=False,
+                       code=None, headers=None, head_method=False,
                        elements=None, meta=None, extra=None):
         """
         Helper function to let the developer define
@@ -319,6 +319,9 @@ class EndpointResource(Resource):
 
         if content and errors:
             log.warning("Deprecated use of warning messages in force_response")
+
+        if headers is None:
+            headers = {}
 
         try:
             return ResponseElements(
