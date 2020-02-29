@@ -300,8 +300,8 @@ class EndpointResource(Resource):
     #         errors='The method is not allowed for the requested URL.',
     #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
-    def force_response(self, defined_content,
-                       code=None, errors=None, headers={}, head_method=False,
+    def force_response(self, content=None, errors=None,
+                       code=None, headers={}, head_method=False,
                        elements=None, meta=None, extra=None):
         """
         Helper function to let the developer define
@@ -319,7 +319,7 @@ class EndpointResource(Resource):
 
         try:
             return ResponseElements(
-                defined_content=defined_content,
+                defined_content=content,
                 code=code,
                 errors=errors,
                 headers=headers,
