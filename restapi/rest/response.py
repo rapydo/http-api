@@ -373,7 +373,44 @@ class ResponseMaker:
             "Meta": metas,
         }
 
-    @staticmethod
-    def flask_response(data, status=hcodes.HTTP_OK_BASIC, headers=None):
 
-        raise DeprecationWarning("Useless mimic of Flask response")
+########################
+# FIXME: Explode the normal response content?
+def get_content_from_response(http_out):
+
+    response = None
+
+    # Read a real flask response
+    if isinstance(http_out, WerkzeugResponse):
+        try:
+            response = json.loads(http_out.get_data().decode())
+        except Exception as e:
+            log.error("Failed to load response:\n{}", e)
+            raise ValueError(
+                "Malformed response: {}".format(http_out)
+            )
+    # Or convert an half-way made response
+    elif isinstance(http_out, ResponseElements):
+        tmp = ResponseMaker(http_out).generate_response()
+        response = tmp[0]
+
+    # Check what we have so far
+    # Should be {Response: DATA, Meta: RESPONSE_METADATA}
+    if not isinstance(response, dict) or len(response) != 2:
+        raise ValueError(
+            "Malformed response: {}".format(response)
+        )
+
+    Response = response.get("Response")
+    Meta = response.get("Meta")
+
+    if Response is None or Meta is None:
+        raise ValueError(
+            "Malformed response: {}".format(response)
+        )
+
+    content = Response.get('data')
+    err = Response.get('errors')
+    code = Meta.get('status')
+
+    return content, err, Meta, code
