@@ -300,27 +300,36 @@ class EndpointResource(Resource):
     #         errors='The method is not allowed for the requested URL.',
     #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
 
-    def force_response(self, *args, **kwargs):
+    def force_response(self, defined_content,
+                       code=None, errors=None, headers={}, head_method=False,
+                       elements=None, meta=None, extra=None):
         """
         Helper function to let the developer define
         how to respond with the REST and HTTP protocol
 
         Build a ResponseElements instance.
         """
-        # If args has something, it should be one simple element
-        # That element is the content and nothing else
-        if isinstance(args, tuple) and len(args) > 0:
-            kwargs['defined_content'] = args[0]
-        elif 'defined_content' not in kwargs:
-            kwargs['defined_content'] = None
 
-        # try to push keywords arguments directly to the attrs class
-        response = None
+        if elements is not None:
+            log.warning("Deprecated use of elements in force_response")
+        if meta is not None:
+            log.warning("Deprecated use of meta in force_response")
+        if extra is not None:
+            log.warning("Deprecated use of extra in force_response")
+
         try:
-            response = ResponseElements(**kwargs)
+            return ResponseElements(
+                defined_content=defined_content,
+                code=code,
+                errors=errors,
+                headers=headers,
+                head_method=head_method,
+                elements=elements,
+                meta=meta,
+                extra=extra,
+            )
         except Exception as e:
-            response = ResponseElements(errors=str(e))
-        return response
+            return ResponseElements(errors=str(e))
 
     def empty_response(self):
         """ Empty response as defined by the protocol """
