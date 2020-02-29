@@ -114,10 +114,7 @@ def create_app(
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
 
-    #################################################
     # Flask app instance
-    #################################################
-
     microservice = Flask(name, **kwargs)
 
     # Add commands to 'flask' binary
@@ -133,11 +130,9 @@ def create_app(
     elif worker_mode:
         skip_endpoint_mapping = True
 
-    ##############################
     # Fix proxy wsgi for production calls
     microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
-    ##############################
     # CORS
     if not PRODUCTION:
         cors = CORS(
@@ -149,20 +144,16 @@ def create_app(
         cors.init_app(microservice)
         log.verbose("FLASKING! Injected CORS")
 
-    ##############################
     # Enabling our internal Flask customized response
     microservice.response_class = InternalResponse
 
-    ##############################
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
 
-    ##############################
     if PRODUCTION:
         log.info("Production server mode is ON")
 
-    ##############################
     # Find services and try to connect to the ones available
     extensions = detector.init_services(
         app=microservice,
@@ -174,7 +165,6 @@ def create_app(
     if worker_mode:
         microservice.extensions = extensions
 
-    ##############################
     # Restful plugin
     if not skip_endpoint_mapping:
         # Triggering automatic mapping of REST endpoints
@@ -258,7 +248,6 @@ def create_app(
                     # **FASTAPI**
                     log.verbose("{} on {}", type(e), resource.cls)
 
-    ##############################
     # Clean app routes
     ignore_verbs = {"HEAD", "OPTIONS"}
 
@@ -285,7 +274,6 @@ def create_app(
 
         rule.methods = newmethods
 
-    ##############################
     # Logging responses
     @microservice.after_request
     def log_response(response):
@@ -297,7 +285,6 @@ def create_app(
         )
         if PROJECT_VERSION is not None:
             response.headers["Version"] = str(PROJECT_VERSION)
-        ###############################
         # NOTE: if it is an upload,
         # I must NOT consume request.data or request.json,
         # otherwise the content gets lost
@@ -350,7 +337,6 @@ def create_app(
             log.critical("Bad SMTP configuration, unable to create a client")
         else:
             log.info("SMTP configuration verified")
-    ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
 
