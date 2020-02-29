@@ -23,44 +23,8 @@ import werkzeug.exceptions
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.globals import mem
 
 from restapi.utilities.logs import log
-
-
-#################################
-# Identity is usefull to some (very) extreme decorators cases
-def identity(*args, **kwargs):
-    """ Expecting no keywords arguments """
-    kwargs['content'] = args
-    return kwargs
-
-
-#################################
-# Decide what is the response method for every endpoint
-
-
-def set_response(original=False, custom_method=None, first_call=False):
-
-    # Use identity if requested
-    if original:
-        mem.current_response = identity
-
-    # Custom method is another option
-    elif custom_method is not None:
-        mem.current_response = custom_method
-
-        # Debug when response is injected and if custom
-        if not first_call:
-            log.debug("Response method set to: {}", custom_method)
-
-
-def custom_response(func=None, original=False):
-    set_response(original=original, custom_method=func)
-
-
-def get_response():
-    return mem.current_response
 
 
 def catch_error(exception=None, catch_generic=True, exception_label=None, **kwargs):

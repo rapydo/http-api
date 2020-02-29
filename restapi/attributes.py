@@ -22,7 +22,6 @@ class ResponseElements:
     errors = attribute(default=None)
     headers = attribute(default={})
     meta = attribute(default=None)
-    extra = attribute(default=None)
     head_method = attribute(default=False)
 
 

@@ -4,7 +4,6 @@
 If you need things globally, come here and take.
 
 Used to save:
-- current_response
 - customizer
 """
 

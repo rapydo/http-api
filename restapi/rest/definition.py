@@ -252,30 +252,6 @@ class EndpointResource(Resource):
         definitions = mem.customizer._definitions.get('definitions')
         return definitions.get(refname).get('properties')
 
-    def explode_response(
-        self,
-        api_output,
-        get_all=False,
-        get_error=False,
-        get_status=False,
-        get_meta=False,
-    ):
-
-        from restapi.rest.response import get_content_from_response
-
-        content, err, meta, code = get_content_from_response(api_output)
-
-        if get_error:
-            return err
-        elif get_meta:
-            return meta
-        elif get_status:
-            return code
-        elif get_all:
-            return content, err, code
-
-        return content
-
     def get_current_user(self):
         """
         Return the associated User OBJECT if:
@@ -302,7 +278,7 @@ class EndpointResource(Resource):
 
     def force_response(self, content=None, errors=None,
                        code=None, headers=None, head_method=False,
-                       elements=None, meta=None, extra=None):
+                       elements=None, meta=None):
         """
         Helper function to let the developer define
         how to respond with the REST and HTTP protocol
@@ -314,8 +290,6 @@ class EndpointResource(Resource):
             log.warning("Deprecated use of elements in force_response")
         if meta is not None:
             log.warning("Deprecated use of meta in force_response")
-        if extra is not None:
-            log.warning("Deprecated use of extra in force_response")
 
         if content and errors:
             log.warning("Deprecated use of warning messages in force_response")
@@ -331,8 +305,7 @@ class EndpointResource(Resource):
                 headers=headers,
                 head_method=head_method,
                 elements=elements,
-                meta=meta,
-                extra=extra,
+                meta=meta
             )
         except Exception as e:
             return ResponseElements(errors=str(e))

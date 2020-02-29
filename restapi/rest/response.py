@@ -14,7 +14,6 @@ force_response (base.py)    or              simple return
              |- x = ResponseMaker(rv) instance __init__
              |- x.generate_response()
                     |
-                get_custom_or_default_response_method
                 get_errors
                 set_standard to output ({Response: OUT, Meta: ...})
                 return tuple (data, status, headers)
@@ -148,9 +147,6 @@ class InternalResponse(Response):
 ########################
 class ResponseMaker:
 
-    _content_key = "Response"
-    _content_meta = "Meta"
-
     def __init__(self, response):
         """
         Executed before building the final response.
@@ -241,13 +237,6 @@ class ResponseMaker:
 
         return False
 
-    @staticmethod
-    def default_response(content):
-        """
-        Our default for response content
-        """
-        return content  # Could we follow jsonapi.org?
-
     def already_converted(self):
         return self.is_internal_response(self._response)
 
@@ -262,33 +251,43 @@ class ResponseMaker:
         r = self._response
 
         if self.already_converted():
+            log.warning("Response already converted")
             return r
 
-        # 2. Apply DEFAULT or CUSTOM manipulation
-        # (strictly to the sole content)
-        method = get_response()
-        # TODO: check why this is often called twice from flask
-        log.verbose("Response method: {}", method.__name__)
-        r['defined_content'] = method(r['defined_content'])
+        # 2. Fix code range
 
-        # 3. Recover correct status and errors
-        r['code'], r['errors'] = self.get_errors_and_status(
-            r['defined_content'], r['code'], r['errors'], r['head_method']
-        )
+        if r['code'] is None:
+            # flask exception?
+            if self.is_internal_exception(r['defined_content']):
+                exception = r['defined_content']
+                r['code'] = exception.code
+                r['errors'] = {exception.name: exception.description}
+            else:
+                r['code'] = hcodes.HTTP_OK_BASIC
 
-        # 4. Encapsulate response and other things in a standard json obj:
+        if r['errors'] and not isinstance(r['errors'], list):
+            r['errors'] = [r['errors']]
+
+        if r['errors'] is None and r['defined_content'] is None:
+            if not r['head_method'] or r['code'] is None:
+                log.warning("RESPONSE: Warning, no data and no errors")
+                r['code'] = hcodes.HTTP_OK_NORESPONSE
+        elif r['errors'] is None:
+            if r['code'] not in range(0, hcodes.HTTP_MULTIPLE_CHOICES):
+                log.warning("Forcing 200 OK since no errors are raised")
+                r['code'] = hcodes.HTTP_OK_BASIC
+        elif r['defined_content'] is None:
+            log.warning("Forcing 500 SERVER ERROR since only errors are returned")
+            if r['code'] < hcodes.HTTP_BAD_REQUEST:
+                r['code'] = hcodes.HTTP_SERVER_ERROR
+
+        # 3. Encapsulate response and other things in a standard json obj:
         # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
         final_content = self.standard_response_content(
             r['defined_content'], r['elements'], r['code'], r['errors'], r['meta']
         )
 
-        if r['extra'] is not None:
-            log.warning(
-                "NOT IMPLEMENTED YET: "
-                + "what to do with extra field?\n{}".format(r['extra'])
-            )
-
-        # 5. Return what is necessary to build a standard flask response
+        # 4. Return what is necessary to build a standard flask response
         # from all that was gathered so far
         response = (final_content, r['code'], r['headers'])
 
@@ -296,7 +295,7 @@ class ResponseMaker:
 
         if MIMETYPE_HTML in accepted_formats:
             # skip in case of errors, for now
-            if r.get('errors') is None:
+            if r['errors'] is None:
                 return respond_to_browser(r)
 
         if MIMETYPE_JSON in accepted_formats:
@@ -312,52 +311,6 @@ class ResponseMaker:
 
         # The client does not support any particular format, use the default
         return response
-
-    def get_errors_and_status(
-        self, defined_content=None, code=None, errors=None, head_method=False
-    ):
-        """
-        Handle OUR standard response following criteria described in
-        https://github.com/EUDAT-B2STAGE/http-api-base/issues/7
-        """
-
-        if code is None:
-            # flask exception?
-            if self.is_internal_exception(defined_content):
-                exception = defined_content
-                code = exception.code
-                errors = {exception.name: exception.description}
-            else:
-                code = hcodes.HTTP_OK_BASIC
-
-        #########################
-        # errors and conseguent status code range
-
-        # Convert errors in a list, always
-        if errors is not None:
-            if not isinstance(errors, list):
-                # if not isinstance(errors, dict):
-                # errors = {'Generic error': errors}
-                errors = [errors]
-
-        # Decide code range
-        if errors is None and defined_content is None:
-            if not head_method or code is None:
-                log.warning("RESPONSE: Warning, no data and no errors")
-                code = hcodes.HTTP_OK_NORESPONSE
-        elif errors is None:
-            if code not in range(0, hcodes.HTTP_MULTIPLE_CHOICES):
-                code = hcodes.HTTP_OK_BASIC
-        elif defined_content is None:
-            if code < hcodes.HTTP_BAD_REQUEST:
-                # code = hcodes.HTTP_BAD_REQUEST
-                code = hcodes.HTTP_SERVER_ERROR
-        else:
-            # warnings:
-            # range 300 < 400
-            pass
-
-        return code, errors
 
     @staticmethod
     def standard_response_content(
@@ -417,68 +370,11 @@ class ResponseMaker:
             metas = {**metas, **custom_metas}
 
         return {
-            ResponseMaker._content_key: contents,
-            ResponseMaker._content_meta: metas,
+            "Response": contents,
+            "Meta": metas,
         }
 
     @staticmethod
     def flask_response(data, status=hcodes.HTTP_OK_BASIC, headers=None):
 
         raise DeprecationWarning("Useless mimic of Flask response")
-
-
-#         Was inspired by
-#         http://blog.miguelgrinberg.com/
-#             post/customizing-the-flask-response-class
-
-
-########################
-# Set default response
-# as the user may support its own response
-set_response(
-    # Note: original here means the Flask simple response
-    original=False,
-    first_call=True,
-    custom_method=ResponseMaker.default_response,
-)
-
-
-########################
-# FIXME: Explode the normal response content?
-def get_content_from_response(http_out):
-
-    response = None
-
-    # Read a real flask response
-    if isinstance(http_out, WerkzeugResponse):
-        try:
-            response = json.loads(http_out.get_data().decode())
-        except Exception as e:
-            log.critical("Failed to load response:\n{}", e)
-            raise ValueError(
-                "Trying to recover informations"
-                + " from a malformed response:\n{}".format(http_out)
-            )
-    # Or convert an half-way made response
-    elif isinstance(http_out, ResponseElements):
-        tmp = ResponseMaker(http_out).generate_response()
-        response = tmp[0]
-
-    # Check what we have so far
-    # Should be {Response: DATA, Meta: RESPONSE_METADATA}
-    if not isinstance(response, dict) or len(response) != 2:
-        raise ValueError(
-            "Trying to recover informations"
-            + " from a malformed response:\n{}".format(response)
-        )
-
-    # Split
-    content = response.get(ResponseMaker._content_key, {}).get('data')
-    err = response.get(ResponseMaker._content_key, {}).get('errors')
-    meta = response.get(ResponseMaker._content_meta, {})
-    code = meta.get('status')
-
-    # if code is None:
-    #     log.warning("Wrong content?")
-
-    return content, err, meta, code
