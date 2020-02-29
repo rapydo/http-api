@@ -345,33 +345,32 @@ class ResponseMaker:
 
             code = int(code)
         except Exception as e:
-            log.critical("Could not build response!\n{}", e)
+            log.critical("Could not build response! {}", e)
             # Revert to defaults
-            defined_content = (None,)
+            defined_content = None
+            errors = ['Failed to build response {}'.format(e)]
             data_type = str(type(defined_content))
             elements = 0
-            # Also set the error
+            total_errors = 1
             code = hcodes.HTTP_SERVICE_UNAVAILABLE
-            errors = [{'Failed to build response': str(e)}]
-            total_errors = len(errors)
 
-        contents = {'data': defined_content, 'errors': errors}
-
-        metas = {
-            'data_type': data_type,
-            'elements': elements,
-            'errors': total_errors,
-            'status': code,
+        Response = {
+            "Response": {
+                'data': defined_content,
+                'errors': errors
+            },
+            "Meta": {
+                'data_type': data_type,
+                'elements': elements,
+                'errors': total_errors,
+                'status': code,
+            },
         }
 
         if custom_metas is not None:
-            # sugar syntax for merging dictionaries
-            metas = {**metas, **custom_metas}
+            Response['meta'].update(custom_metas)
 
-        return {
-            "Response": contents,
-            "Meta": metas,
-        }
+        return Response
 
 
 ########################
