@@ -30,7 +30,6 @@ import json
 from flask import Response, jsonify, render_template
 from werkzeug import exceptions as wsgi_exceptions
 from werkzeug.wrappers import Response as WerkzeugResponse
-from restapi.decorators import get_response, set_response
 from restapi.attributes import ResponseElements
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
