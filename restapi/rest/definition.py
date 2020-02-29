@@ -317,6 +317,9 @@ class EndpointResource(Resource):
         if extra is not None:
             log.warning("Deprecated use of extra in force_response")
 
+        if content and errors:
+            log.warning("Deprecated use of warning messages in force_response")
+
         try:
             return ResponseElements(
                 defined_content=content,
