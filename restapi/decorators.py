@@ -1,22 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-
-Decorating my REST API resources.
-
-Decorate is a cool but sometimes dangerous place in Python, I guess.
-Here we test different kind of decorations for different problems.
-
-Restful resources are Flask Views classes.
-Official docs talks about their decoration:
-http://flask-restful.readthedocs.org/en/latest/extending.html#resource-method-decorators
-So... you should also read better this section of Flask itself:
-http://flask.pocoo.org/docs/0.10/views/#decorating-views
-
-I didn't manage so far to have it working in the way the documentation require.
-
-"""
-
 import re
 from functools import wraps
 import werkzeug.exceptions

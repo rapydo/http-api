@@ -16,7 +16,7 @@ from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
 from restapi.rest.response import InternalResponse
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import ResponseElements, ResponseMaker
 from restapi.customization import Customizer
 
 from restapi.protocols.restful import Api
@@ -25,41 +25,27 @@ from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
 
-#############################
 
-# from restapi.utilities.logs import set_global_log_level,
-# This is the first file to be imported in the project
-# We need to enable many things on a global level for logs
-# set_global_log_level(package=__package__)
-
-
-#############################
 class Flask(OriginalFlask):
-    def make_response(self, rv, response_log_max_len=MAX_CHAR_LEN):
+    def make_response(self, rv):
         """
         Hack original flask response generator to read our internal response
         and build what is needed:
         the tuple (data, status, headers) to be eaten by make_response()
         """
 
-        try:
-            # Limit the output, sometimes it's too big
-            out = str(rv)
-            if len(out) > response_log_max_len:
-                out = out[:response_log_max_len] + ' ...'
-        except BaseException:
-            log.debug("Response: [UNREADABLE OBJ]")
         responder = ResponseMaker(rv)
 
         # Avoid duplicating the response generation
         # or the make_response replica.
         # This happens with Flask exceptions
         if responder.already_converted():
-            # # Note: this response could be a class ResponseElements
-            # return rv
-
-            # The responder instead would have already found the right element
             return responder.get_original_response()
+
+        if not isinstance(rv, ResponseElements):
+            log.warning(
+                "Deprecated endpoint output, please use self.force_respose() wrapper"
+            )
 
         # Note: jsonify gets done when calling the make_response,
         # so make sure that the data is written in the right format!

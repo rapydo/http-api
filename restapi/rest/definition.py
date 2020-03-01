@@ -7,10 +7,12 @@ we could provide back then
 
 from datetime import datetime
 from flask import current_app
+# from flask import make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
 from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
+# from restapi.rest.response import ResponseMaker
 from restapi.rest.response import ResponseElements
 from restapi.swagger import input_validation
 from restapi.utilities.htmlcodes import hcodes
@@ -57,7 +59,8 @@ class EndpointResource(Resource):
             # Once converted everything to FastApi remove this init_parameters
             # Find other warning like this by searching:
             # **FASTAPI**
-            # log.warning("self.init_parameters should be reoved since handle by webargs")
+            # log.warning(
+            #     "self.init_parameters should be removed since handle by webargs")
             pass
 
         # Custom init
@@ -265,17 +268,6 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
-    # def method_not_allowed(self, methods=['GET']):
-    #     methods.append('HEAD')
-    #     methods.append('OPTIONS')
-    #     methods_string = ""
-    #     for method in methods:
-    #         methods_string += method + ', '
-    #     return self.force_response(
-    #         headers={'ALLOW': methods_string.strip(', ')},
-    #         errors='The method is not allowed for the requested URL.',
-    #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
-
     def force_response(self, content=None, errors=None,
                        code=None, headers=None, head_method=False,
                        elements=None, meta=None):
@@ -297,18 +289,67 @@ class EndpointResource(Resource):
         if headers is None:
             headers = {}
 
-        try:
-            return ResponseElements(
-                defined_content=content,
-                code=code,
-                errors=errors,
-                headers=headers,
-                head_method=head_method,
-                elements=elements,
-                meta=meta
+        rv = ResponseElements(
+            defined_content=content,
+            code=code,
+            errors=errors,
+            headers=headers,
+            head_method=head_method,
+            elements=elements,
+            meta=meta
+        )
+
+        return rv
+
+        """
+        responder = ResponseMaker(rv)
+
+        # Avoid duplicating the response generation
+        # or the make_response replica.
+        # This happens with Flask exceptions
+        if responder.already_converted():
+            # # Note: this response could be a class ResponseElements
+            # return rv
+
+            log.warning("already_converted !?")
+            # The responder instead would have already found the right element
+            return responder.get_original_response()
+
+        r = responder.generate_response()
+
+        # !!! IMPORTANT, TO BE VERIFIED
+        # Is the following issue still happening??
+
+        # TOFIX: avoid duplicated Content-type
+        # the jsonify in respose.py#force_type force the content-type
+        # to be application/json. If content-type is already specified in headers
+        # the header will have a duplicated Content-type. We should fix by avoding
+        # jsonfy for more specific mimetypes
+        # For now I will simply remove the duplicates
+
+        # !!! IMPORTANT, PLEASE NOT THAT THE FOLLOWING BLOCK WAS APPLIED TO:
+        # response = super().make_response(r)
+        response = make_response(r)
+        # HOW WE HAVE a tuple (content, code, headers)
+
+        content_type = None
+        for idx, val in enumerate(response.headers):
+            if val[0] != 'Content-Type':
+                continue
+            if content_type is None:
+                content_type = idx
+                continue
+            log.warning(
+                "Duplicated Content-Type, removing {} and keeping {}",
+                response.headers[content_type][1],
+                val[1],
             )
-        except Exception as e:
-            return ResponseElements(errors=str(e))
+            response.headers.pop(content_type)
+            break
+
+        log.critical(response)
+        return response
+        """
 
     def empty_response(self):
         """ Empty response as defined by the protocol """

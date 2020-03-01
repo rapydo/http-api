@@ -273,10 +273,10 @@ class ResponseMaker:
                 r['code'] = hcodes.HTTP_OK_NORESPONSE
         elif r['errors'] is None:
             if r['code'] not in range(0, hcodes.HTTP_MULTIPLE_CHOICES):
-                log.warning("Forcing 200 OK since no errors are raised")
+                log.warning("Forcing 200 OK because no errors are raised")
                 r['code'] = hcodes.HTTP_OK_BASIC
         elif r['defined_content'] is None:
-            log.warning("Forcing 500 SERVER ERROR since only errors are returned")
+            log.warning("Forcing 500 SERVER ERROR because only errors are returned")
             if r['code'] < hcodes.HTTP_BAD_REQUEST:
                 r['code'] = hcodes.HTTP_SERVER_ERROR
 
