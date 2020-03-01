@@ -46,7 +46,7 @@ class Status(EndpointResource):
     @decorate.catch_error()
     def get(self, service=None):
 
-        return 'Server is alive!'
+        return self.force_response('Server is alive!')
 
 
 class Verify(EndpointResource):
@@ -76,7 +76,7 @@ class Verify(EndpointResource):
 
         service_instance = self.get_service_instance(service, global_instance=False)
         log.critical(service_instance)
-        return "Service is reachable: {}".format(service)
+        return self.force_response("Service is reachable: {}".format(service))
 
 
 class SwaggerSpecifications(EndpointResource):
@@ -168,11 +168,11 @@ if detector.check_availability('celery'):
                 res = task_result.result
                 if not isinstance(res, dict):
                     res = str(res)
-                return {
+                return self.force_response({
                     'status': task_result.status,
                     # 'info': task_result.info,
                     'output': res,
-                }
+                })
 
             #############################
             # FAST WAY
