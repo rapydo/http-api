@@ -264,6 +264,7 @@ class ResponseMaker:
             else:
                 r['code'] = hcodes.HTTP_OK_BASIC
 
+        # Is that really needed?
         if r['errors'] and not isinstance(r['errors'], list):
             r['errors'] = [r['errors']]
 
@@ -272,12 +273,12 @@ class ResponseMaker:
                 log.warning("RESPONSE: Warning, no data and no errors")
                 r['code'] = hcodes.HTTP_OK_NORESPONSE
         elif r['errors'] is None:
-            if r['code'] not in range(0, hcodes.HTTP_MULTIPLE_CHOICES):
+            if r['code'] >= 300:
                 log.warning("Forcing 200 OK because no errors are raised")
                 r['code'] = hcodes.HTTP_OK_BASIC
         elif r['defined_content'] is None:
-            log.warning("Forcing 500 SERVER ERROR because only errors are returned")
-            if r['code'] < hcodes.HTTP_BAD_REQUEST:
+            if r['code'] < 400:
+                log.warning("Forcing 500 SERVER ERROR because only errors are returned")
                 r['code'] = hcodes.HTTP_SERVER_ERROR
 
         # 3. Encapsulate response and other things in a standard json obj:

@@ -143,6 +143,7 @@ class Customizer:
                 module_file = os.path.splitext(epfiles)[0]
                 module_name = "{}.{}".format(apiclass_module, module_file)
                 # Convert module name into a module
+                log.debug("Importing {}", module_name)
                 try:
                     module = Meta.get_module_from_string(
                         module_name,
