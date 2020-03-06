@@ -175,11 +175,8 @@ class Authentication(BaseAuthentication):
                 self.db.session.commit()
         except sqlalchemy.exc.OperationalError:
             self.db.session.rollback()
-            raise AttributeError(
-                "Existing SQL tables are not consistent "
-                + "to existing models. Please consider "
-                + "rebuilding your DB."
-            )
+            # A migration / rebuild is required?
+            raise AttributeError("Inconsistences between DB schema and data models")
 
     def save_user(self, user):
         if user is not None:

@@ -369,7 +369,7 @@ class ResponseMaker:
         }
 
         if custom_metas is not None:
-            Response['meta'].update(custom_metas)
+            Response['Meta'].update(custom_metas)
 
         return Response
 
