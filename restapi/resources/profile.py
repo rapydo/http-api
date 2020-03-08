@@ -211,7 +211,7 @@ class Profile(EndpointResource):
             except BaseException as e:
                 log.error("Could not custom manipulate profile:\n{}", e)
 
-        return data
+        return self.force_response(data)
 
     @decorate.catch_error()
     def post(self):
@@ -277,7 +277,7 @@ class Profile(EndpointResource):
             raise RestApiException(str(e))
         else:
             custom_extra_registration(v)
-            return msg
+            return self.force_response(msg)
 
     def update_password(self, user, data):
 
@@ -427,7 +427,7 @@ class ProfileActivate(EndpointResource):
         # Bye bye token (reset activation are valid only once)
         self.auth.invalidate_token(token_id)
 
-        return "Account activated"
+        return self.force_response("Account activated")
 
     @decorate.catch_error()
     def post(self):
@@ -452,7 +452,7 @@ class ProfileActivate(EndpointResource):
             "We are sending an email to your email address where " +
             "you will find the link to activate your account"
         )
-        return msg
+        return self.force_response(msg)
 
 
 def send_internal_password_reset(uri, title, reset_email):
@@ -567,7 +567,7 @@ class RecoverPassword(EndpointResource):
 
         msg = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
 
-        return msg
+        return self.force_response(msg)
 
     @decorate.catch_error()
     def put(self, token_id):
@@ -667,4 +667,4 @@ class RecoverPassword(EndpointResource):
         # Bye bye token (reset tokens are valid only once)
         self.auth.invalidate_token(token_id)
 
-        return "Password changed"
+        return self.force_response("Password changed")
