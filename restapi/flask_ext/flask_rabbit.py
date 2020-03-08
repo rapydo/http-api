@@ -66,7 +66,21 @@ class RabbitWrapper:
         try:
             ssl_options = None
             if ssl_enabled:
+                import ssl
                 log.warning("SSL not implemented for Rabbit")
+                # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
+                context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                # context.verify_mode = ssl.CERT_REQUIRED
+                context.verify_mode = ssl.CERT_NONE
+                context.load_default_certs()
+                # Enable client certification verification
+                # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
+                # context.load_verify_locations(cafile=client_certs)
+                ssl_options = pika.SSLOptions(
+                    context=context
+                )
+
+                ssl_options = None
 
             self.__connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
