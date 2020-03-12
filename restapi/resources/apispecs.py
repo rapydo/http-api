@@ -77,7 +77,9 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
         # return self.force_response("blabla")
         data = {"value": "123", "xyz": "abc"}
         errors = ["x", "y"]
-        return self.force_response(data, errors=errors)
+
+        # return (errors, 400)
+        return self.force_response(data, errors=errors, code=400)
         # raise RestApiException("Just an error")
 
         # return {"value": '10'}, 200
