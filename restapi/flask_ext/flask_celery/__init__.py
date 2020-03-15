@@ -46,7 +46,7 @@ class CeleryExt(BaseExtension):
             BROKER_USE_SSL = Detector.get_bool_envvar(
                 service_vars.get("ssl_enabled", False)
             )
-        elif broker == 'RABBIT':
+        elif broker == 'REDIS':
             service_vars = Detector.load_variables({'prefix': 'redis'})
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
