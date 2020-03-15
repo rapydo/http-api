@@ -124,10 +124,13 @@ else
 	printf "\n\n\n"
 
 	backend_container=$(docker-compose ps -q backend)
-	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
+	# docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
+	docker cp ${backend_container}:/code/coverage.xml coverage.xml
 
-	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
-	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
+	bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+
+	# aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
+	# aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
 	printf "\n\n\n"
 
