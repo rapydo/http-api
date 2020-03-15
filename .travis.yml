@@ -26,6 +26,9 @@ jobs:
   - script: scripts/test_and_coverage.sh
     env:
     - PROJECT=pushpin
+  - script: scripts/test_and_coverage.sh
+    env:
+    - PROJECT=celerybeat
 
   - stage: deploy
     script: skip
