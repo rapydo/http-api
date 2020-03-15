@@ -47,13 +47,6 @@
   extension: flask_irods
   class: IrodsPythonExt
 
-  # full text search
-- name: elastic
-  load_models: 0
-  prefix: elastic
-  extension: flask_elastic
-  class: ElasticPythonExt
-
   # pushpin websockets and HTTP stream
 - name: pushpin
   load_models: 0

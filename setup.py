@@ -61,7 +61,6 @@ setup(
         "celery-redbeat==0.13.0",
         # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
         "celerybeat-mongo==0.2.0",
-        "elasticsearch",
 
         # Swagger
         "bravado-core",

@@ -22,12 +22,6 @@ class Role(db.Model):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-    def __str__(self):
-        return "db.{}({})".format(self.__class__.__name__, self.name)
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,17 +39,6 @@ class User(db.Model):
         'Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic')
     )
 
-    def __str__(self):
-        return "db.{}({}, type={}) [{}]".format(
-            self.__class__.__name__,
-            self.email,
-            self.authmethod,
-            self.roles,
-        )
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,9 +53,3 @@ class Token(db.Model):
     hostname = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
-
-    def __str__(self):
-        return "db.{}({})[{}]".format(self.__class__.__name__, self.token, self.emitted_for)
-
-    def __repr__(self):
-        return self.__str__()
