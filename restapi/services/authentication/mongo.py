@@ -25,7 +25,6 @@ class Authentication(BaseAuthentication):
 
         # Get the instance for mongodb
         name = __name__.split('.')[::-1][0]  # returns 'mongo'
-        from restapi.services.detect import detector
 
         extension = detector.services_classes.get(name)
         self.db = extension().get_instance(dbname=AUTH_DB)
@@ -43,7 +42,7 @@ class Authentication(BaseAuthentication):
             userdata["authmethod"] = "credentials"
 
         if "password" in userdata:
-            userdata["password"] = self.hash_password(userdata["password"])
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
         user = self.db.User(**userdata)
@@ -237,6 +236,16 @@ class Authentication(BaseAuthentication):
             )
             return False
 
+        # Verify IP validity only after grace period is expired
+        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+            ip = self.get_remote_ip()
+            if token_entry.IP != ip:
+                log.error(
+                    "This token is emitted for IP {}, invalid use from {}",
+                    token_entry.IP, ip
+                )
+                return False
+
         exp = now + timedelta(seconds=self.shortTTL)
         token_entry.last_access = now
         token_entry.expiration = exp
@@ -312,24 +321,3 @@ class Authentication(BaseAuthentication):
             return False
 
         return True
-
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        # FIXME: b2access
-        raise NotImplementedError("to do")
-
-    def oauth_from_token(self, token):
-        raise NotImplementedError("to do")
-
-    def associate_object_to_attr(self, obj, key, value):
-        raise NotImplementedError("to do")
-
-    def oauth_from_local(self, internal_user):
-
-        accounts = self.db.ExternalAccounts
-        try:
-            external_user = accounts.objects.raw(
-                {'user_id': internal_user.email}
-            ).first()
-        except self.db.ExternalAccounts.DoesNotExist:
-            external_user = None
-        return external_user

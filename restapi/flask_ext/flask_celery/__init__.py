@@ -23,7 +23,8 @@ class CeleryExt(BaseExtension):
 
     def custom_connection(self, **kwargs):
 
-        # worker_mode = self.args.get("worker_mode", False)
+        # set here to avoid warnings like 'Possible hardcoded password'
+        EMPTY = ""
 
         broker = self.variables.get("broker")
 
@@ -45,12 +46,12 @@ class CeleryExt(BaseExtension):
             BROKER_USE_SSL = Detector.get_bool_envvar(
                 service_vars.get("ssl_enabled", False)
             )
-        elif broker == 'RABBIT':
+        elif broker == 'REDIS':
             service_vars = Detector.load_variables({'prefix': 'redis'})
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
-            BROKER_USER = ""
-            BROKER_PASSWORD = ""
+            BROKER_USER = None
+            BROKER_PASSWORD = None
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
         else:
@@ -58,7 +59,7 @@ class CeleryExt(BaseExtension):
 
         if BROKER_USER == "":
             BROKER_USER = None
-        if BROKER_PASSWORD == "":
+        if BROKER_PASSWORD == EMPTY:
             BROKER_PASSWORD = None
 
         if BROKER_VHOST != "":
@@ -104,7 +105,7 @@ class CeleryExt(BaseExtension):
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = ""
-            BACKEND_PASSWORD = ""
+            BACKEND_PASSWORD = None
         elif backend == 'MONGODB':
             service_vars = Detector.load_variables({'prefix': 'mongo'})
             BACKEND_HOST = service_vars.get("host")
@@ -114,9 +115,9 @@ class CeleryExt(BaseExtension):
         else:
             log.exit("Invalid celery backend: {}", backend)
 
-        if BACKEND_USER == "":
+        if BACKEND_USER == EMPTY:
             BACKEND_USER = None
-        if BACKEND_PASSWORD == "":
+        if BACKEND_PASSWORD == EMPTY:
             BACKEND_PASSWORD = None
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
@@ -190,27 +191,7 @@ class CeleryExt(BaseExtension):
         # CELERY_ACKS_LATE = True
         # CELERYD_PREFETCH_MULTIPLIER = 1
 
-        """
-        This is a workaround, please fix me!
-
-        This workaround is required to avoid the work be freeze when is
-        the connection to rabbit is temporary lost.
-        Behavious without the option:
-        connection lost
-        => trying to connect - repeat until the connection is back
-        => once the connection is back Celery raise an exception and stops:
-        ConnectionResetError: [Errno 104] Connection reset by peer
-
-        broker_pool_limit = None means that the connection pool is disabled
-        and connections will be established and closed for every use
-        I found this workaround here:
-
-        https://github.com/celery/celery/issues/4226
-        """
         # celery_app.conf.broker_pool_limit = None
-
-        # Do not import before loading the ext!
-        from restapi.services.detect import Detector
 
         if Detector.get_bool_from_os('CELERY_BEAT_ENABLED'):
 
@@ -238,7 +219,7 @@ class CeleryExt(BaseExtension):
                 celery_app.conf['REDBEAT_KEY_PREFIX'] = CeleryExt.REDBEAT_KEY_PREFIX
                 log.info("Celery-beat connected to Redis: {}", BEAT_BACKEND_URL)
             else:
-                log.warning("Cannot configure mongodb celery beat scheduler")
+                log.warning("Cannot configure celery beat scheduler")
 
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app

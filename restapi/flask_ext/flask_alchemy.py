@@ -90,7 +90,7 @@ class SqlAlchemy(BaseExtension):
 
         return db
 
-    def custom_init(self, pinit=False, pdestroy=False, **kwargs):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
         """ Note: we ignore args here """
 
         # recover instance with the parent method

@@ -11,8 +11,8 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 """
 
-import pytz
 from datetime import datetime, timedelta
+import pytz
 from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
@@ -84,7 +84,7 @@ class Authentication(BaseAuthentication):
             userdata["authmethod"] = "credentials"
 
         if "password" in userdata:
-            userdata["password"] = self.hash_password(userdata["password"])
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
 
@@ -204,6 +204,16 @@ class Authentication(BaseAuthentication):
                 )
                 return False
 
+            # Verify IP validity only after grace period is expired
+            if token_node.last_access + timedelta(seconds=self.grace_period) < now:
+                ip = self.get_remote_ip()
+                if token_node.IP != ip:
+                    log.error(
+                        "This token is emitted for IP {}, invalid use from {}",
+                        token_node.IP, ip
+                    )
+                    return False
+
             exp = now + timedelta(seconds=self.shortTTL)
 
             token_node.last_access = now
@@ -219,7 +229,7 @@ class Authentication(BaseAuthentication):
     def get_tokens(self, user=None, token_jti=None):
         # FIXME: TTL should be considered?
 
-        list = []
+        tokens_list = []
         tokens = None
 
         if user is not None:
@@ -243,9 +253,9 @@ class Authentication(BaseAuthentication):
                     t["expiration"] = token.expiration.strftime('%s')
                 t["IP"] = token.IP
                 t["hostname"] = token.hostname
-                list.append(t)
+                tokens_list.append(t)
 
-        return list
+        return tokens_list
 
     def invalidate_all_tokens(self, user=None):
         if user is None:
@@ -269,65 +279,3 @@ class Authentication(BaseAuthentication):
     # def clean_pending_tokens(self):
     #     log.debug("Removing all pending tokens")
     #     return self.cypher("MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a")
-
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        """
-        Allow external accounts (oauth2 credentials)
-        to be connected to internal local user
-        """
-
-        email = current_user.data.get('email')
-        cn = current_user.data.get('cn')
-
-        # A graph node for internal accounts associated to oauth2
-        try:
-            user_node = self.db.User.nodes.get(email=email)
-            if user_node.authmethod != account_type:
-                # The user already exist with another type of authentication
-                return None
-        # TO BE VERIFIED
-        except self.db.User.DoesNotExist:
-            user_node = self.create_user(
-                userdata={
-                    # 'uuid': getUUID(),
-                    'email': email,
-                    'authmethod': account_type,
-                }
-            )
-        # NOTE: missing roles for this user?
-
-        # A self.db node for external oauth2 account
-        try:
-            oauth2_external = self.db.ExternalAccounts.nodes.get(username=email)
-        except self.db.ExternalAccounts.DoesNotExist:
-            oauth2_external = self.db.ExternalAccounts(username=email)
-        # update main info for this user
-        oauth2_external.email = email
-        oauth2_external.account_type = account_type
-        oauth2_external.token = token
-        oauth2_external.refresh_token = refresh_token
-        oauth2_external.certificate_cn = cn
-        oauth2_external.save()
-
-        user_node.externals.connect(oauth2_external)
-
-        return user_node, oauth2_external
-
-    # def associate_object_to_attribute(self, obj, key, value):
-
-    #     # ##################################
-    #     # # Create irods user inside the database
-
-    #     # graph_irods_user = None
-    #     # graph = self.neo
-    #     # try:
-    #     #     graph_irods_user = .IrodsUser.nodes.get(username=irods_user)
-    #     # except graph.IrodsUser.DoesNotExist:
-    #     #     # Save into the graph
-    #     #     graph_irods_user = graph.IrodsUser(username=irods_user)
-    #     #     graph_irods_user.save()
-
-    #     # # Connect the user to graph If not already
-    #     # user_node.associated.connect(graph_irods_user)
-
-    #     pass

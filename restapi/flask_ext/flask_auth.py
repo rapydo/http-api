@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-import pytz
 from datetime import datetime, timedelta
-from restapi.services.detect import Detector
 
+import pytz
+
+from restapi.services.detect import Detector
 from restapi.flask_ext import BaseExtension
 from restapi.services.authentication import BaseAuthentication
 from restapi.exceptions import RestApiException
@@ -42,53 +43,42 @@ class Authenticator(BaseExtension):
         auth_module = Meta.get_authentication_module(auth_service)
         custom_auth = auth_module.Authentication()
 
-        if not Detector.get_global_var('AUTH_SKIP_OAUTH', default=False):
+        secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 
-            # If oauth services are available, set them before every request
-            from restapi.services.oauth2clients import ExternalLogins as oauth2
+        # Install self.app secret for oauth2
+        # !?
+        self.app.secret_key = secret + '_app'
 
-            ext_auth = oauth2()
-            custom_auth.set_oauth2_services(ext_auth._available_services)
-            secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
+        custom_auth.TOTP = 'TOTP'
 
-            # Install self.app secret for oauth2
-            self.app.secret_key = secret + '_app'
+        custom_auth.REGISTER_FAILED_LOGIN = (
+            self.variables.get("register_failed_login", False) == 'True'
+        )
+        custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
+            self.variables.get("force_first_password_change", False) == 'True'
+        )
+        custom_auth.VERIFY_PASSWORD_STRENGTH = (
+            self.variables.get("verify_password_strength", False) == 'True'
+        )
+        custom_auth.MAX_PASSWORD_VALIDITY = int(
+            self.variables.get("max_password_validity", 0)
+        )
+        custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
+            self.variables.get("disable_unused_credentials_after", 0)
+        )
+        custom_auth.MAX_LOGIN_ATTEMPTS = int(
+            self.variables.get("max_login_attempts", 0)
+        )
+        custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
+            "second_factor_authentication", None
+        )
 
-            # Enabling also OAUTH library
-            from restapi.protocols.oauth import oauth
-
-            oauth.init_app(self.app)
-
-            custom_auth.TOTP = 'TOTP'
-
-            custom_auth.REGISTER_FAILED_LOGIN = (
-                self.variables.get("register_failed_login", False) == 'True'
-            )
-            custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
-                self.variables.get("force_first_password_change", False) == 'True'
-            )
-            custom_auth.VERIFY_PASSWORD_STRENGTH = (
-                self.variables.get("verify_password_strength", False) == 'True'
-            )
-            custom_auth.MAX_PASSWORD_VALIDITY = int(
-                self.variables.get("max_password_validity", 0)
-            )
-            custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
-                self.variables.get("disable_unused_credentials_after", 0)
-            )
-            custom_auth.MAX_LOGIN_ATTEMPTS = int(
-                self.variables.get("max_login_attempts", 0)
-            )
-            custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
-                "second_factor_authentication", None
-            )
-
-            if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
-                custom_auth.SECOND_FACTOR_AUTHENTICATION = None
+        if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
+            custom_auth.SECOND_FACTOR_AUTHENTICATION = None
 
         return custom_auth
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
 
         # Get the instance from the parent
         obj = super().custom_init()
@@ -113,7 +103,7 @@ class Authenticator(BaseExtension):
         #         raise ValueError("Production with default admin user")
 
 
-class HandleSecurity(object):
+class HandleSecurity:
     def __init__(self, auth):
         self.auth = auth
 
@@ -182,7 +172,7 @@ class HandleSecurity(object):
         if old_pwd is not None and pwd == old_pwd:
             return False, "The new password cannot match the previous password"
         if old_hash is not None:
-            new_hash = BaseAuthentication.hash_password(pwd)
+            new_hash = BaseAuthentication.get_password_hash(pwd)
             if old_hash == new_hash:
                 return False, "The new password cannot match the previous password"
 
@@ -226,7 +216,7 @@ class HandleSecurity(object):
 
         if new_password is not None and password_confirm is not None:
             now = datetime.now(pytz.utc)
-            user.password = BaseAuthentication.hash_password(new_password)
+            user.password = BaseAuthentication.get_password_hash(new_password)
             user.last_password_change = now
             self.auth.save_user(user)
 

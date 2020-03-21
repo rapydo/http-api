@@ -60,24 +60,3 @@ class Token(MongoModel):
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
-
-
-class ExternalAccounts(MongoModel):
-    username = fields.CharField(primary_key=True)
-    account_type = fields.CharField()
-    token = fields.CharField()
-    refresh_token = fields.CharField()
-    token_expiration = fields.DateTimeField()
-    email = fields.EmailField()
-    certificate_cn = fields.CharField()
-    certificate_dn = fields.CharField()
-    proxyfile = fields.CharField()
-    description = fields.CharField(blank=True)
-    user_id = fields.ReferenceField(User)
-    # NOTE: in the pre-production release we allow only 1 ext_account per user
-    # FIXME: probably using user_id instead of main_user
-    main_user = fields.EmbeddedDocumentField(User)
-
-    class Meta:
-        # write_concern = WriteConcern(j=True)
-        connection_alias = AUTH_DB

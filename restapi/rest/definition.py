@@ -5,14 +5,14 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
-import pytz
-import dateutil.parser
 from datetime import datetime
-from injector import inject
+from flask import current_app
+# from flask import make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
 from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
+# from restapi.rest.response import ResponseMaker
 from restapi.rest.response import ResponseElements
 from restapi.swagger import input_validation
 from restapi.utilities.htmlcodes import hcodes
@@ -34,7 +34,7 @@ DEFAULT_PERPAGE = 10
 class EndpointResource(Resource):
 
     baseuri = API_URL
-    labels = []
+    # labels = []
     depends_on = []
     expose_schema = False
     publish = True
@@ -43,18 +43,25 @@ class EndpointResource(Resource):
     Implements a generic Resource for our Restful APIs model
     """
 
-    @inject(**detector.services_classes)
-    def __init__(self, **services):
+    def __init__(self):
 
-        if len(services) < 1:
+        self.services = current_app.services_instances
+        if len(self.services) < 1:
             raise AttributeError("No services available for requests...")
 
         # Init original class
         super(EndpointResource, self).__init__()
 
-        self.services = services
         self.load_authentication()
-        self.init_parameters()
+        try:
+            self.init_parameters()
+        except RuntimeError:
+            # Once converted everything to FastApi remove this init_parameters
+            # Find other warning like this by searching:
+            # **FASTAPI**
+            # log.warning(
+            #     "self.init_parameters should be removed since handle by webargs")
+            pass
 
         # Custom init
         custom_method = getattr(self, 'custom_init', None)
@@ -175,8 +182,8 @@ class EndpointResource(Resource):
         if len(self._json_args) < 1 and request.mimetype != 'application/octet-stream':
             try:
                 self._json_args = request.get_json(force=forcing)
-            except Exception:  # as e:
-                pass
+            except Exception as e:
+                log.verbose("Error retrieving input parameters, {}", e)
 
             # json payload and formData cannot co-exist
             if len(self._json_args) < 1:
@@ -248,30 +255,6 @@ class EndpointResource(Resource):
         definitions = mem.customizer._definitions.get('definitions')
         return definitions.get(refname).get('properties')
 
-    def explode_response(
-        self,
-        api_output,
-        get_all=False,
-        get_error=False,
-        get_status=False,
-        get_meta=False,
-    ):
-
-        from restapi.rest.response import get_content_from_response
-
-        content, err, meta, code = get_content_from_response(api_output)
-
-        if get_error:
-            return err
-        elif get_meta:
-            return meta
-        elif get_status:
-            return code
-        elif get_all:
-            return content, err, code
-
-        return content
-
     def get_current_user(self):
         """
         Return the associated User OBJECT if:
@@ -285,113 +268,92 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
-    # def method_not_allowed(self, methods=['GET']):
-    #     methods.append('HEAD')
-    #     methods.append('OPTIONS')
-    #     methods_string = ""
-    #     for method in methods:
-    #         methods_string += method + ', '
-    #     return self.force_response(
-    #         headers={'ALLOW': methods_string.strip(', ')},
-    #         errors='The method is not allowed for the requested URL.',
-    #         code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED)
-
-    def force_response(self, *args, **kwargs):
+    def force_response(self, content=None, errors=None,
+                       code=None, headers=None, head_method=False,
+                       elements=None, meta=None):
         """
         Helper function to let the developer define
         how to respond with the REST and HTTP protocol
 
         Build a ResponseElements instance.
         """
-        # If args has something, it should be one simple element
-        # That element is the content and nothing else
-        if isinstance(args, tuple) and len(args) > 0:
-            kwargs['defined_content'] = args[0]
-        elif 'defined_content' not in kwargs:
-            kwargs['defined_content'] = None
 
-        # try to push keywords arguments directly to the attrs class
-        response = None
-        try:
-            response = ResponseElements(**kwargs)
-        except Exception as e:
-            response = ResponseElements(errors=str(e))
+        if elements is not None:
+            log.warning("Deprecated use of elements in force_response")
+        if meta is not None:
+            log.warning("Deprecated use of meta in force_response")
+
+        if content and errors:
+            log.warning("Deprecated use of warning messages in force_response")
+
+        if headers is None:
+            headers = {}
+
+        rv = ResponseElements(
+            defined_content=content,
+            code=code,
+            errors=errors,
+            headers=headers,
+            head_method=head_method,
+            elements=elements,
+            meta=meta
+        )
+
+        return rv
+
+        """
+        responder = ResponseMaker(rv)
+
+        # Avoid duplicating the response generation
+        # or the make_response replica.
+        # This happens with Flask exceptions
+        if responder.already_converted():
+            # # Note: this response could be a class ResponseElements
+            # return rv
+
+            log.warning("already_converted !?")
+            # The responder instead would have already found the right element
+            return responder.get_original_response()
+
+        r = responder.generate_response()
+
+        # !!! IMPORTANT, TO BE VERIFIED
+        # Is the following issue still happening??
+
+        # TOFIX: avoid duplicated Content-type
+        # the jsonify in respose.py#force_type force the content-type
+        # to be application/json. If content-type is already specified in headers
+        # the header will have a duplicated Content-type. We should fix by avoding
+        # jsonfy for more specific mimetypes
+        # For now I will simply remove the duplicates
+
+        # !!! IMPORTANT, PLEASE NOT THAT THE FOLLOWING BLOCK WAS APPLIED TO:
+        # response = super().make_response(r)
+        response = make_response(r)
+        # HOW WE HAVE a tuple (content, code, headers)
+
+        content_type = None
+        for idx, val in enumerate(response.headers):
+            if val[0] != 'Content-Type':
+                continue
+            if content_type is None:
+                content_type = idx
+                continue
+            log.warning(
+                "Duplicated Content-Type, removing {} and keeping {}",
+                response.headers[content_type][1],
+                val[1],
+            )
+            response.headers.pop(content_type)
+            break
+
+        log.critical(response)
         return response
+        """
 
     def empty_response(self):
         """ Empty response as defined by the protocol """
         return self.force_response("", code=hcodes.HTTP_OK_NORESPONSE)
-
-    def send_warnings(self, defined_content, errors, code=None, head_method=False):
-        """
-        Warnings when there is both data and errors in response.
-        So 'defined_content' and 'errors' are required,
-        while the code has to be between below 400
-        """
-        if code is None or code >= hcodes.HTTP_BAD_REQUEST:
-            code = hcodes.HTTP_MULTIPLE_CHOICES
-
-        if head_method:
-            defined_content = None
-            errors = None
-
-        return self.force_response(
-            defined_content=defined_content,
-            errors=errors,
-            code=code,
-            head_method=head_method,
-        )
-
-    def send_errors(
-        self, message=None, errors=None, code=None, headers=None,
-        head_method=False, print_error=True
-    ):
-        """ Setup an error message """
-
-        if errors is None:
-            errors = []
-        if isinstance(errors, str):
-            errors = [errors]
-
-        # See if we have the main message
-        if message is not None:
-            errors.append(message)
-
-        if code is None or code < hcodes.HTTP_BAD_REQUEST:
-            # default error
-            code = hcodes.HTTP_SERVER_ERROR
-
-        if print_error and errors is not None and len(errors) > 0:
-            log.error(errors)
-
-        if head_method:
-            errors = None
-
-        return self.force_response(
-            errors=errors, code=code, headers=headers, head_method=head_method
-        )
-
-    def report_generic_error(self, message=None, current_response_available=True):
-
-        if message is None:
-            message = "Something BAD happened somewhere..."
-        log.critical(message)
-
-        user_message = "Server unable to respond."
-        code = hcodes.HTTP_SERVER_ERROR
-        if current_response_available:
-            return self.force_response(errors=user_message, code=code)
-        else:
-            # flask-like
-            return (user_message, code)
-
-    def send_credentials(self, token, extra=None, meta=None):
-        """
-        Define a standard response to give a Bearer token back.
-        Also considering headers.
-        """
-        # TODO: write it and use it in EUDAT
-        return NotImplementedError("To be written")
 
     def formatJsonResponse(self, instances, resource_type=None):
         """
@@ -487,30 +449,30 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
 
-        if skip_missing_ids and id == '-':
+        if skip_missing_ids and res_id == '-':
             del data['id']
 
         # TO FIX: for now is difficult to compute self links for relationships
         if relationship_depth == 0:
             self_uri = request.url
-            if not self_uri.endswith(id):
-                self_uri += '/' + id
+            if not self_uri.endswith(res_id):
+                self_uri += '/' + res_id
             data["links"] = {"self": self_uri}
 
         data["attributes"] = self.get_show_fields(
@@ -607,20 +569,20 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
         for c in instance.__table__.columns._data:
             if c == 'password':
@@ -639,20 +601,20 @@ class EndpointResource(Resource):
         if isinstance(instance, dict):
             verify_attribute = dict.get
         if verify_attribute(instance, "uuid"):
-            id = str(instance.uuid)
+            res_id = str(instance.uuid)
         elif verify_attribute(instance, "id"):
-            id = str(instance.id)
+            res_id = str(instance.id)
         else:
-            id = "-"
+            res_id = "-"
 
-        if id is None:
-            id = "-"
+        if res_id is None:
+            res_id = "-"
 
         data = {
-            "id": id,
+            "id": res_id,
             "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + id},
+            # "links": {"self": request.url + '/' + res_id},
         }
         # log.critical(instance._data._members)
         for c in instance._data._members:
@@ -711,7 +673,6 @@ class EndpointResource(Resource):
                 "No parameters schema defined for method {} in {}".format(method, url),
                 status_code=hcodes.HTTP_BAD_NOTFOUND,
             )
-            return None
         return mem.customizer._parameter_schemas[url][method]
 
     # HANDLE INPUT PARAMETERS
@@ -782,7 +743,7 @@ class EndpointResource(Resource):
             return ids
 
         # Multiple autocomplete
-        if type(value) is list:
+        if isinstance(value, list):
             for v in value:
                 if v is None:
                     return None

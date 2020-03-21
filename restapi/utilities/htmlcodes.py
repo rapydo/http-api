@@ -11,7 +11,7 @@ http://racksburg.com/choosing-an-http-status-code/
 """
 
 
-class hcodes(object):
+class hcodes:
     # RESPONSE TO BE VERIFIED
     HTTP_CONTINUE = 100
     HTTP_SWITCHING_PROTOCOLS = 101

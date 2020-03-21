@@ -27,7 +27,7 @@ from restapi.utilities.logs import log
 
 ######################################
 # Save files http://API/upload
-class Uploader(object):
+class Uploader:
 
     allowed_exts = []
     # allowed_exts = ['png', 'jpg', 'jpeg', 'tiff']
@@ -49,7 +49,7 @@ class Uploader(object):
             filename = os.path.join(subfolder, filename)
             subdir = os.path.join(UPLOAD_FOLDER, subfolder)
             if not os.path.exists(subdir):
-                os.mkdir(subdir)
+                os.makedirs(subdir)
         abs_file = os.path.join(UPLOAD_FOLDER, filename)  # filename.lower())
         if onlydir:
             return os.path.dirname(abs_file)
@@ -310,7 +310,7 @@ class Uploader(object):
     def init_chunk_upload(self, upload_dir, filename, force=True):
 
         if not os.path.exists(upload_dir):
-            os.mkdir(upload_dir)
+            os.makedirs(upload_dir)
 
         filename = secure_filename(filename)
 

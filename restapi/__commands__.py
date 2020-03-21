@@ -3,14 +3,13 @@
 import os
 import time
 import click
-import better_exceptions as be
+import pretty_errors
 from flask.cli import FlaskGroup
 from restapi.processes import wait_socket
 from restapi import __package__ as current_package
 from restapi.utilities.logs import log
 
-APP = 'FLASK_APP'
-PORT = 'FLASK_PORT'
+BIND_INTERFACE = "0.0.0.0"
 
 
 @click.group()
@@ -20,47 +19,29 @@ def cli():
     click.echo('*** RESTful HTTP API ***')
 
 
-def main(args, another_app=None):
+def main(args):
 
-    if another_app is not None:
-        os.environ[APP] = '{}.py'.format(another_app)
-    else:
-        current_app = os.environ.get(APP)
-        if current_app is None or current_app.strip() == '':
-            os.environ[APP] = '{}.__main__'.format(current_package)
+    current_app = os.environ.get('FLASK_APP')
+    if current_app is None or current_app.strip() == '':
+        os.environ['FLASK_APP'] = '{}.__main__'.format(current_package)
 
-    cli = FlaskGroup()
+    fg_cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}
 
     # cannot catch for CTRL+c
-    cli.main(**options)
-
-    # try:
-    #     cli.main(**options)
-    # except SystemExit as e:
-    #     if str(e) == "3":
-    #         print("AH!")
-    #     else:
-    #         # it looks like there is no Keyboard interrupt with flask
-    #         log.warning("Flask received: system exit")
-    # except BaseException as e:
-    #     # do not let flask close the application
-    #     # so we can do more code after closing
-    #     log.error(e)
+    fg_cli.main(**options)
 
 
 def flask_cli(options=None):
     log.info("Launching the app")
     from restapi.server import create_app
 
-    # log.warning("TEST")
     if options is None:
         options = {'name': 'RESTful HTTP API server'}
         app = create_app(**options)
-        app.run(host='0.0.0.0', threaded=True)
+        app.run(host=BIND_INTERFACE, threaded=True)
     else:
         create_app(**options)
-        # app.run(debug=False)
     log.debug("cli execution completed")
 
 
@@ -79,9 +60,9 @@ def launch():
     args = [
         'run',
         '--host',
-        '0.0.0.0',
+        BIND_INTERFACE,
         '--port',
-        os.environ.get(PORT),
+        os.environ.get('FLASK_PORT'),
         '--reload',
         '--no-debugger',
         '--eager-loading',
@@ -221,8 +202,9 @@ def tests(wait, core, file, folder):
         while starting_up():
             log.debug('Waiting service startup')
             time.sleep(5)
+        mywait()
 
-    log.debug("Starting unit tests: {}", be)
+    log.debug("Starting unit tests: {}", pretty_errors)
 
     # launch unittests and also compute coverage
     log.warning(

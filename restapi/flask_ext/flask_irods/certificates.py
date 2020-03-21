@@ -7,8 +7,9 @@ Using x509 certificates
 import os
 import pwd
 import re
-import pytz
 from datetime import datetime, timedelta
+
+import pytz
 
 from restapi.utilities.logs import log
 
@@ -20,7 +21,7 @@ except ImportError as e:
     log.exit("\nThis module requires an extra package:\n{}", e)
 
 
-class Certificates(object):
+class Certificates:
 
     _dir = os.environ.get('CERTDIR')
     _proxyfile = 'userproxy.crt'
@@ -35,15 +36,16 @@ class Certificates(object):
 
         dn = ''
         cpath = os.path.join(cls._dir, certdir, "{}.{}".format(certfilename, ext))
-        content = open(cpath).read()
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, content)
-        sub = cert.get_subject()
+        with open(cpath) as fh:
+            content = fh.read()
+            cert = crypto.load_certificate(crypto.FILETYPE_PEM, content)
+            sub = cert.get_subject()
 
-        for tup in sub.get_components():
-            dn += '/' + tup[0].decode() + '=' + tup[1].decode()
+            for tup in sub.get_components():
+                dn += '/' + tup[0].decode() + '=' + tup[1].decode()
 
-        log.verbose("Host DN computed is {}", dn)
-        return dn
+            log.verbose("Host DN computed is {}", dn)
+            return dn
 
     @staticmethod
     def generate_csr_and_key(user='TestUser'):

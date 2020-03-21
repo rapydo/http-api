@@ -5,61 +5,47 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import os
-import warnings
 from urllib import parse as urllib_parse
 from flask import Flask as OriginalFlask, request
-from flask_injector import FlaskInjector
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from glom import glom
 from geolite2 import geolite2
+from restapi import __version__
 from restapi import confs as config
-from restapi.confs import ABS_RESTAPI_PATH
+from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
+from restapi.confs import get_project_configuration
 from restapi.rest.response import InternalResponse
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import ResponseElements, ResponseMaker
 from restapi.customization import Customizer
-from restapi.confs import PRODUCTION
-from restapi.confs import SENTRY_URL
+
 from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
 
-#############################
 
-# from restapi.utilities.logs import set_global_log_level,
-# This is the first file to be imported in the project
-# We need to enable many things on a global level for logs
-# set_global_log_level(package=__package__)
-
-
-#############################
 class Flask(OriginalFlask):
-    def make_response(self, rv, response_log_max_len=MAX_CHAR_LEN):
+    def make_response(self, rv):
         """
         Hack original flask response generator to read our internal response
         and build what is needed:
         the tuple (data, status, headers) to be eaten by make_response()
         """
 
-        try:
-            # Limit the output, sometimes it's too big
-            out = str(rv)
-            if len(out) > response_log_max_len:
-                out = out[:response_log_max_len] + ' ...'
-        except BaseException:
-            log.debug("Response: [UNREADABLE OBJ]")
         responder = ResponseMaker(rv)
 
         # Avoid duplicating the response generation
         # or the make_response replica.
         # This happens with Flask exceptions
         if responder.already_converted():
-            # # Note: this response could be a class ResponseElements
-            # return rv
-
-            # The responder instead would have already found the right element
             return responder.get_original_response()
+
+        if not isinstance(rv, ResponseElements):
+            log.warning(
+                "Deprecated endpoint output, please use self.force_respose() wrapper"
+            )
 
         # Note: jsonify gets done when calling the make_response,
         # so make sure that the data is written in the right format!
@@ -114,10 +100,7 @@ def create_app(
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
 
-    #################################################
     # Flask app instance
-    #################################################
-
     microservice = Flask(name, **kwargs)
 
     # Add commands to 'flask' binary
@@ -133,11 +116,9 @@ def create_app(
     elif worker_mode:
         skip_endpoint_mapping = True
 
-    ##############################
     # Fix proxy wsgi for production calls
     microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
-    ##############################
     # CORS
     if not PRODUCTION:
         cors = CORS(
@@ -149,20 +130,16 @@ def create_app(
         cors.init_app(microservice)
         log.verbose("FLASKING! Injected CORS")
 
-    ##############################
     # Enabling our internal Flask customized response
     microservice.response_class = InternalResponse
 
-    ##############################
     # Flask configuration from config file
     microservice.config.from_object(config)
     log.debug("Flask app configured")
 
-    ##############################
     if PRODUCTION:
         log.info("Production server mode is ON")
 
-    ##############################
     # Find services and try to connect to the ones available
     extensions = detector.init_services(
         app=microservice,
@@ -174,7 +151,6 @@ def create_app(
     if worker_mode:
         microservice.extensions = extensions
 
-    ##############################
     # Restful plugin
     if not skip_endpoint_mapping:
         # Triggering automatic mapping of REST endpoints
@@ -187,11 +163,13 @@ def create_app(
             raise AttributeError("Follow the docs and define your endpoints")
 
         for resource in mem.customizer._endpoints:
-            urls = [uri for _, uri in resource.uris.items()]
+            # urls = [uri for _, uri in resource.uris.items()]
+            urls = list(resource.uris.values())
 
             # Create the restful resource with it;
             # this method is from RESTful plugin
             rest_api.add_resource(resource.cls, *urls)
+
             log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
 
         # Enable all schema endpoints to be mapped with this extra step
@@ -203,19 +181,59 @@ def create_app(
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
-        ##############################
-        # Injection!
-        # Enabling "configuration modules" for services to be injected
-        # IMPORTANT: Injector must be initialized AFTER mapping endpoints
+        microservice.services_instances = {}
+        for m in detector.services_classes:
+            ExtClass = detector.services_classes.get(m)
+            microservice.services_instances[m] = ExtClass(microservice)
 
-        modules = detector.load_injector_modules()
+        # FlaskApiSpec experimentation
+        from apispec import APISpec
+        from flask_apispec import FlaskApiSpec
+        from apispec.ext.marshmallow import MarshmallowPlugin
+        # from apispec_webframeworks.flask import FlaskPlugin
 
-        # AVOID warnings from Flask Injector
-        warnings.filterwarnings("ignore")
+        microservice.config.update({
+            'APISPEC_SPEC': APISpec(
+                title=glom(
+                    mem.customizer._configurations,
+                    'project.title',
+                    default='0.0.1'
+                ),
+                version=glom(
+                    mem.customizer._configurations,
+                    'project.version',
+                    default='Your application name'
+                ),
+                openapi_version="2.0",
+                # OpenApi 3 not working with FlaskApiSpec
+                # -> Duplicate parameter with name body and location body
+                # https://github.com/jmcarp/flask-apispec/issues/170
+                # Find other warning like this by searching:
+                # **FASTAPI**
+                # openapi_version="3.0.2",
+                plugins=[
+                    MarshmallowPlugin()
+                ],
+            ),
+            'APISPEC_SWAGGER_URL': '/api/swagger',
+            # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
+            # Disable Swagger-UI
+            'APISPEC_SWAGGER_UI_URL': None,
+        })
+        docs = FlaskApiSpec(microservice)
 
-        FlaskInjector(app=microservice, modules=modules)
+        with microservice.app_context():
+            for resource in mem.customizer._endpoints:
+                urls = list(resource.uris.values())
+                try:
+                    docs.register(resource.cls)
+                except TypeError as e:
+                    # log.warning("{} on {}", type(e), resource.cls)
+                    # Enable this warning to start conversion to FlaskFastApi
+                    # Find other warning like this by searching:
+                    # **FASTAPI**
+                    log.verbose("{} on {}", type(e), resource.cls)
 
-    ##############################
     # Clean app routes
     ignore_verbs = {"HEAD", "OPTIONS"}
 
@@ -242,12 +260,17 @@ def create_app(
 
         rule.methods = newmethods
 
-    ##############################
     # Logging responses
     @microservice.after_request
     def log_response(response):
 
-        ###############################
+        response.headers["_RV"] = str(__version__)
+
+        PROJECT_VERSION = get_project_configuration(
+            "project.version", default=None
+        )
+        if PROJECT_VERSION is not None:
+            response.headers["Version"] = str(PROJECT_VERSION)
         # NOTE: if it is an upload,
         # I must NOT consume request.data or request.json,
         # otherwise the content gets lost
@@ -300,7 +323,6 @@ def create_app(
             log.critical("Bad SMTP configuration, unable to create a client")
         else:
             log.info("SMTP configuration verified")
-    ##############################
     # and the flask App is ready now:
     log.info("Boot completed")
 

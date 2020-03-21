@@ -12,6 +12,7 @@ import hashlib
 import base64
 import pytz
 
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from flask import current_app, request
 from restapi.services.detect import Detector
@@ -24,6 +25,8 @@ from restapi.utilities.globals import mem
 
 from restapi.utilities.logs import log
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class BaseAuthentication(metaclass=abc.ABCMeta):
 
@@ -33,21 +36,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     that aims to store credentials of users and roles.
     """
 
-    ##########################
     # Secret loaded from secret.key file
     JWT_SECRET = None
-    JWT_ALGO = 'HS256'
-    # FIXME: already defined in auth.py HTTPAUTH_DEFAULT_SCHEME
-    token_type = 'Bearer'
+    # JWT_ALGO = 'HS256'
+    # Should be faster on 64bit machines
+    JWT_ALGO = 'HS512'
 
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
-    ##########################
-    _oauth2 = {}
 
     def __init__(self):
-        # TODO: myinit is a class method for unittest could it be fixed?
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
@@ -57,29 +56,32 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.longTTL = float(Detector.get_global_var('TOKEN_LONG_TTL', 2592000))
         # Default shortTTL = 604800     # 1 week in seconds
         self.shortTTL = float(Detector.get_global_var('TOKEN_SHORT_TTL', 604800))
+        self.grace_period = 7200  # 2 hours in seconds
 
     @classmethod
     def myinit(cls):
-        """
-        Note: converted as a classmethod to use inside unittests
-        # TODO: check if still necessary
-        """
 
-        credentials = get_project_configuration(
-            "variables.backend.credentials"
-        )
+        credentials = get_project_configuration("variables.backend.credentials")
 
-        cls.default_user = credentials.get('username', None)
-        cls.default_password = credentials.get('password', None)
+        if credentials.get('username') is not None:
+            log.exit("Obsolete use of variables.backend.credentials.username")
+
+        if credentials.get('password') is not None:
+            log.exit("Obsolete use of variables.backend.credentials.password")
+
+        # cls.default_user = credentials.get('username', None)
+        # cls.default_password = credentials.get('password', None)
+        cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
+        cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
-            raise AttributeError("Default credentials unavailable!")
+            log.exit("Default credentials are unavailable!")
 
         roles = credentials.get('roles', {})
         cls.default_role = roles.get('default')
         cls.role_admin = roles.get('admin')
         cls.default_roles = [roles.get('user'), roles.get('internal'), cls.role_admin]
         if cls.default_role is None or None in cls.default_roles:
-            raise AttributeError("Default roles are not available!")
+            log.exit("Default roles are not available!")
 
     # @abc.abstractmethod
     # def __init__(self, services=None):
@@ -116,8 +118,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.critical("Current authentication db models are broken!")
             return None, None
 
-        if self.check_passwords(user.password, password):
+        # New hashing algorithm, based on bcrypt
+        if self.verify_password(password, user.password):
             return self.create_token(self.fill_payload(user))
+
+        # old hashing; since 0.7.2. Removed me in a near future!!
+        if self.check_old_password(user.password, password):
+            log.warning(
+                "Old password encoding for user {}, automatic convertion", user.email)
+
+            now = datetime.now(pytz.utc)
+            user.password = BaseAuthentication.get_password_hash(password)
+            user.last_password_change = now
+            self.save_user(user)
+
+            return self.make_login(username, password)
 
         return None, None
 
@@ -126,7 +141,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
     def import_secret(self, abs_filename):
         """
-        Load the JWT_SECRET from a file
+        Load the jwt secret from a file
         """
 
         try:
@@ -135,12 +150,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         except IOError:
             log.exit("Jwt secret file {} not found", abs_filename)
 
-    def set_oauth2_services(self, services):
-        self._oauth2 = services
-
     # #####################
     # # Password handling #
-    # #####################
+    ####################
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
     def encode_string(string):
         """ Encodes a string to bytes, if it isn't already. """
@@ -148,6 +161,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             string = string.encode('utf-8')
         return string
 
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
     def hash_password(password, salt="Unknown"):
         """ Original source:
@@ -162,9 +176,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
         return base64.b64encode(h.digest()).decode('ascii')
 
+    # Old hashing, deprecated since 0.7.2
     @staticmethod
-    def check_passwords(hashed_password, password):
+    def check_old_password(hashed_password, password):
         return hashed_password == BaseAuthentication.hash_password(password)
+
+    @staticmethod
+    def verify_password(plain_password, hashed_password):
+        try:
+            return pwd_context.verify(plain_password, hashed_password)
+        except ValueError as e:
+            log.error(e)
+
+            return False
+
+    @staticmethod
+    def get_password_hash(password):
+        return pwd_context.hash(password)
 
     # ########################
     # # Retrieve information #
@@ -268,14 +296,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
         return self.create_token(payload)
 
-    def create_reset_token(self, user, type, duration=86400):
-        # invalidate previous reset tokens
+    def create_reset_token(self, user, token_type, duration=86400):
+        # invalidate previous tokens with same token_type
         tokens = self.get_tokens(user=user)
         for t in tokens:
-            token_type = t.get("token_type")
-            if token_type is None:
+            ttype = t.get("token_type")
+            if ttype is None:
                 continue
-            if token_type != type:
+            if ttype != token_type:
                 continue
 
             tok = t.get("token")
@@ -284,7 +312,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # Generate a new reset token
         new_token, jti = self.create_temporary_token(
-            user, duration=duration, token_type=type
+            user, duration=duration, token_type=token_type
         )
 
         return new_token, jti
@@ -314,18 +342,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
             if raiseErrors:
-                raise (e)
+                raise e
             else:
-                log.warning("Unable to decode JWT token. {}", e)
+                log.info("Unable to decode JWT token. {}", e)
         # now < nbf
         except jwt.exceptions.ImmatureSignatureError as e:
             if raiseErrors:
-                raise (e)
+                raise e
             else:
-                log.warning("Unable to decode JWT token. {}", e)
+                log.info("Unable to decode JWT token. {}", e)
         except Exception as e:
             if raiseErrors:
-                raise (e)
+                raise e
             else:
                 log.warning("Unable to decode JWT token. {}", e)
 
@@ -334,18 +362,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force token cleaning
-        payload = {}
         self._user = None
 
         if token is None:
             return False
 
         # Decode the current token
-        tmp_payload = self.unpack_token(token, raiseErrors=raiseErrors)
-        if tmp_payload is None:
+        payload = self.unpack_token(token, raiseErrors=raiseErrors)
+        if payload is None:
             return False
-        else:
-            payload = tmp_payload
 
         payload_type = payload.get("t", self.FULL_TOKEN)
 
@@ -419,7 +444,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
 
         if token_type is not None:
-            if token_type == self.PWD_RESET or token_type == self.ACTIVATE_ACCOUNT:
+            if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
                 short_jwt = True
                 payload["t"] = token_type
 
@@ -486,16 +511,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
     # # Database init #
     # #################
-    def avoid_defaults(self):
-        """
-        Check in production if using the default user...
-        """
-
-        user = self.get_user_object(username=self.default_user)
-        if user is not None and user.email == self.default_user:
-            if user.password == self.hash_password(self.default_password):
-                return True
-        return False
 
     @abc.abstractmethod
     def init_users_and_roles(self):
@@ -566,16 +581,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         A method to assign roles to a user
         """
         return
-
-    @abc.abstractmethod
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        """
-        Allow external accounts (oauth2 credentials)
-        to be connected to internal local user.
-
-        (requires an ExternalAccounts model defined for current service)
-        """
-        return ('internal_user', 'external_user')
 
     # ###########################
     # # Login attempts handling #

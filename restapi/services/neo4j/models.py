@@ -1,7 +1,8 @@
 # NEOMODEL BASE CLASSES EXTENSION #
 import inspect
-import pytz
 from datetime import datetime
+
+import pytz
 from neomodel import StringProperty as originalStringProperty
 from neomodel import IntegerProperty as originalIntegerProperty
 from neomodel import FloatProperty as originalFloatProperty
@@ -12,13 +13,11 @@ from neomodel import JSONProperty as originalJSONProperty
 from neomodel import ArrayProperty as originalArrayProperty
 from neomodel import EmailProperty as originalEmailProperty
 from neomodel import AliasProperty as originalAliasProperty
-
 # from neomodel import UniqueIdProperty as originalUniqueIdProperty
 from neomodel import StructuredNode as originalStructuredNode
 from neomodel import StructuredRel as originalStructuredRel
 from neomodel import RelationshipTo as originalRelationshipTo
 from neomodel import RelationshipFrom as originalRelationshipFrom
-
 from neomodel.relationship_manager import RelationshipDefinition
 
 from restapi.utilities.uuid import getUUID
@@ -54,7 +53,7 @@ def RelationshipFrom(
     return rel
 
 
-class myAttribProperty(object):
+class myAttribProperty:
     """
     This class is used to save custom flags assigned to a property, to be used
     in the show_fields method of StructuredNode class.

@@ -33,52 +33,54 @@ setup(
         {}={}:cli
     '''.format(main_package, app),
     install_requires=[
-        # Utilities
-        "attrs",
-        "pyOpenSSL",
-        "PyJWT",
-
         # Flask and plugins
         "Flask==1.1.1",
+        "Flask-RESTful==0.3.8",
+        "flask-apispec==0.8.5",
         "Flask-Cors==3.0.8",
-
-        # Latest requests-oauthlib [1.2.0] (required by Flask-OAuthlib)
-        # requires oauthlib<3.0.0,>=2.1.0
-        "oauthlib==2.1.0",
-        # Version 1.2.0 depends on OAuthlib 3.0.0 and above
-        # It does not support versions of OAuthlib before 3.0.0
-        # But Flask-OAuthlib depends from OAuthlib < 3.0.0
-        "requests-oauthlib==1.1.0",
-        "Flask-OAuthlib==0.9.5",
-
-        "Flask-RESTful==0.3.7",
         "Flask-SQLAlchemy==2.4.1",
-        # AssertionError: Passing keyword arguments to inject is no
-        # longer supported. Use inject in combination with parameter
-        # annotations to declare dependencies. :/
-        # "injector==0.17",
-        "injector==0.12",
-        "flask_injector==0.11.0",
+        "Flask-Migrate",
+        "uWSGI",
 
-        "PyYAML==5.2",
+        "PyJWT",
+        "pyOpenSSL",
+        "passlib[bcrypt]==1.7.2",
+        "authlib==0.13",
 
-        # DB drivers
+        "PyYAML==5.3",
+
+        # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
+        "redis",
+        "pika",
+        "celery",
+        "flower==0.9.3",
+        "celery-redbeat==0.13.0",
+        # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
+        "celerybeat-mongo==0.2.0",
 
         # Swagger
         "bravado-core",
         "swagger-spec-validator",
 
         # Utilities
+        "attrs",
         "loguru",
         "glom",
         "psutil",
         "plumbum",
-        "better_exceptions",
-        "maxminddb-geolite2"
+        "pretty_errors",
+        "maxminddb-geolite2",
+
+        # Web sockets
+        "websocket-client",
+        "gripcontrol==4.0.0",
+
+        # Sentry
+        "sentry-sdk[flask]==0.14.0"
     ],
     classifiers=[
         'Programming Language :: Python',

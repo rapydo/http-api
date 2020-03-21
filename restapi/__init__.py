@@ -2,10 +2,7 @@
 
 import sys
 
-__version__ = '0.7.1'
-
-# FRAMEWORK_NAME = 'RAPyDo'
-# FRAMEWORK_PREFIX = FRAMEWORK_NAME.lower() + '-'
+__version__ = '0.7.2'
 
 # detect if the developer is asking for help/usage on the cli command
 # 1. if using the help option

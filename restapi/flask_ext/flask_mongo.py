@@ -46,7 +46,7 @@ class MongoExt(BaseExtension):
 
         return obj
 
-    def custom_init(self, pinit=False, pdestroy=False, **kwargs):
+    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
         """ Note: we ignore args here """
 
         # recover instance with the parent method
@@ -74,7 +74,7 @@ class MongoExt(BaseExtension):
         return db
 
 
-class Converter(object):
+class Converter:
     def __init__(self, mongo_model):
         self._model = mongo_model
 

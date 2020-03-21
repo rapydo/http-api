@@ -474,7 +474,7 @@ Password: "{}"
 
         if "password" in v:
             unhashed_password = v["password"]
-            v["password"] = BaseAuthentication.hash_password(v["password"])
+            v["password"] = BaseAuthentication.get_password_hash(v["password"])
         else:
             unhashed_password = None
 

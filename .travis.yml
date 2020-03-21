@@ -1,8 +1,8 @@
 language: python
 sudo: required
-dist: xenial
+dist: bionic
 python:
-- 3.7.1
+- 3.8
 services:
 - docker
 jobs:
@@ -26,16 +26,10 @@ jobs:
   - script: scripts/test_and_coverage.sh
     env:
     - PROJECT=pushpin
-  - stage: coverage
-    script: scripts/test_and_coverage.sh
-    after_success:
-      cd coverage_files &&
-      ls -la .coverage* &&
-      coverage combine &&
-      ls -la .coverage &&
-      coveralls
+  - script: scripts/test_and_coverage.sh
     env:
-    - PROJECT=COVERAGE
+    - PROJECT=celerybeat
+
   - stage: deploy
     script: skip
     deploy:

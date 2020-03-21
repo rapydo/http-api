@@ -25,7 +25,7 @@ CONF_FOLDERS = detector.load_group(label='project_confs')
 ########################
 # Customization on the table
 ########################
-class Customizer(object):
+class Customizer:
     """
     Customize your BACKEND:
     Read all of available configurations and definitions.
@@ -143,6 +143,7 @@ class Customizer(object):
                 module_file = os.path.splitext(epfiles)[0]
                 module_name = "{}.{}".format(apiclass_module, module_file)
                 # Convert module name into a module
+                log.debug("Importing {}", module_name)
                 try:
                     module = Meta.get_module_from_string(
                         module_name,
@@ -236,12 +237,24 @@ class Customizer(object):
 
                     mapping_lists = []
                     for m in ep_class.methods:
-                        if not hasattr(ep_class, m):
-                            log.warning(
-                                "{} configuration not found in {}", m, class_name
-                            )
-                            continue
-                        conf = getattr(ep_class, m)
+                        method_name = "_{}".format(m)
+                        if not hasattr(ep_class, method_name):
+
+                            method_name = m
+                            if not hasattr(ep_class, method_name):
+                                log.warning(
+                                    "{} configuration not found in {}", m, class_name
+                                )
+                                continue
+                            # Enable this warning to start conversions GET -> _GET
+                            # Find other warning like this by searching:
+                            # **FASTAPI**
+                            # else:
+                            #     log.warning(
+                            #         "Obsolete dict {} in {}", m, class_name
+                            #     )
+
+                        conf = getattr(ep_class, method_name)
                         kk = conf.keys()
                         mapping_lists.extend(kk)
                         endpoint.methods[m.lower()] = copy.deepcopy(conf)

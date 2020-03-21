@@ -15,7 +15,20 @@ except ValueError as e:
 
 log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
 LOGS_FOLDER = "/logs"
-LOGS_FILE = os.environ.get("HOSTNAME", "backend")
+HOSTNAME = os.environ.get("HOSTNAME", "backend")
+CONTAINER_ID = os.environ.get("CONTAINER_ID", "")
+CELERY_HOST = os.environ.get("CELERY_HOST", "0")
+
+# BACKEND-SERVER
+if CELERY_HOST == '0':
+    LOGS_FILE = HOSTNAME
+# Flower or Celery-Beat
+elif HOSTNAME != CONTAINER_ID:
+    LOGS_FILE = HOSTNAME
+# Celery (variables name due to scaling)
+else:
+    LOGS_FILE = "celery_{}".format(HOSTNAME)
+
 LOGS_PATH = os.path.join(LOGS_FOLDER, "{}.log".format(LOGS_FILE))
 
 log.level("VERBOSE", no=1, color="<fg #666>")
@@ -32,7 +45,7 @@ def verbose(*args, **kwargs):
     log.log("VERBOSE", *args, **kwargs)
 
 
-def exit(message="", *args, **kwargs):
+def critical_exit(message="", *args, **kwargs):
     error_code = kwargs.pop('error_code', 1)
     if not isinstance(error_code, int):
         raise ValueError("Error code must be an integer")
@@ -44,7 +57,7 @@ def exit(message="", *args, **kwargs):
 
 
 log.verbose = verbose
-log.exit = exit
+log.exit = critical_exit
 
 log.remove()
 if LOGS_PATH is not None:

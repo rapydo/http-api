@@ -22,12 +22,6 @@ class Role(db.Model):
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
-    def __str__(self):
-        return "db.{}({})".format(self.__class__.__name__, self.name)
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,17 +39,6 @@ class User(db.Model):
         'Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic')
     )
 
-    def __str__(self):
-        return "db.{}({}, type={}) [{}]".format(
-            self.__class__.__name__,
-            self.email,
-            self.authmethod,
-            self.roles,
-        )
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,39 +53,3 @@ class Token(db.Model):
     hostname = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
-
-    def __str__(self):
-        return "db.{}({})[{}]".format(self.__class__.__name__, self.token, self.emitted_for)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class ExternalAccounts(db.Model):
-    username = db.Column(db.String(60), primary_key=True)
-    account_type = db.Column(db.String(16))
-    token = db.Column(db.Text())
-    refresh_token = db.Column(db.Text())
-    token_expiration = db.Column(db.DateTime)
-    email = db.Column(db.String(255))
-    certificate_cn = db.Column(db.String(255))
-    certificate_dn = db.Column(db.Text())
-    proxyfile = db.Column(db.Text())
-    description = db.Column(db.String(255))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    # Note: for pre-production release
-    # we allow only one external account per local user
-    main_user = db.relationship(
-        'User', backref=db.backref('authorization', lazy='dynamic')
-    )
-
-    def __str__(self):
-        return "db.{}({}, {})[{}]".format(
-            self.__class__.__name__,
-            self.username,
-            self.email,
-            self.main_user,
-        )
-
-    def __repr__(self):
-        return self.__str__()

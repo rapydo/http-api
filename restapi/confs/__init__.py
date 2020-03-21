@@ -2,8 +2,9 @@
 
 import os
 import re
-from glom import glom
 from urllib.parse import urlparse
+
+from glom import glom
 
 from restapi.utilities.globals import mem
 

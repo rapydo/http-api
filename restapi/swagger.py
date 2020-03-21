@@ -33,7 +33,7 @@ def input_validation(json_parameters, definitionName):
     validate_object(spec, definition, json_parameters)
 
 
-class BeSwagger(object):
+class BeSwagger:
     """Swagger class in our own way:
 
     Fewer methods than the original swagger reading,
@@ -297,17 +297,6 @@ class BeSwagger(object):
             "basePath": "/",
             "securityDefinitions": {
                 "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-                # "OauthSecurity": {
-                #     "type": "oauth2",
-                #     "tokenUrl": "https://oauth.simple.api/token",
-                #     "flow": "accessCode",
-                #     "authorizationUrl": "https://blabla/authorization",
-                #     "scopes": {
-                #         "admin": "Admin scope",
-                #         "user": "User scope"
-                #       }
-                # }
-                # TODO: check about scopes (roles?)
             },
             "security": [{"Bearer": []}],
         }

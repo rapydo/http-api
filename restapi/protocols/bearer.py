@@ -31,7 +31,7 @@ ALLOW_ACCESS_TOKEN_PARAMETER = (
 )
 
 
-class HTTPTokenAuth(object):
+class HTTPTokenAuth:
     """
     A class to implement a Generic Token (oauth2-like) authentication.
     Started on a draft of the great miguel: http://bit.ly/2nTqQKA
@@ -115,12 +115,11 @@ class HTTPTokenAuth(object):
                             HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME
                         )
                     )
-                    #
-                    return decorated_self.send_errors(
-                        # label="No authentication schema",
-                        message=msg,
-                        headers=headers,
+                    log.info("Unauthorized request: missing credentials")
+                    return decorated_self.force_response(
+                        errors=msg,
                         code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                        headers=headers,
                     )
 
                 # Handling OPTIONS forwarded to our application:
@@ -131,23 +130,23 @@ class HTTPTokenAuth(object):
                     token_fn = decorated_self.auth.verify_token
                     if not self.authenticate(token_fn, token):
                         # Clear TCP receive buffer of any pending data
-                        request.data
+                        log.verbose(request.data)
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
-                        return decorated_self.send_errors(
-                            message="Invalid token received",
-                            headers=headers,
+                        return decorated_self.force_response(
+                            errors="Invalid token received",
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
-                            print_error=False
+                            headers=headers
                         )
 
                 # Check roles
                 if len(roles) > 0:
                     roles_fn = decorated_self.auth.verify_roles
                     if not self.authenticate_roles(roles_fn, roles, required_roles):
-                        return decorated_self.send_errors(
-                            message="You are not authorized: missing privileges",
+                        log.info("Unauthorized request: missing privileges")
+                        return decorated_self.force_response(
+                            errors="You are not authorized: missing privileges",
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
                         )
 

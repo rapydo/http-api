@@ -15,14 +15,13 @@ ANY_ROLE = 'any'
 # All attributes we use for a Flask Response
 ########################
 @ClassOfAttributes
-class ResponseElements(object):
+class ResponseElements:
     defined_content = attribute()
     elements = attribute(default=None)
     code = attribute(default=None)
     errors = attribute(default=None)
     headers = attribute(default={})
     meta = attribute(default=None)
-    extra = attribute(default=None)
     head_method = attribute(default=False)
 
 
@@ -30,7 +29,7 @@ class ResponseElements(object):
 # Definition for extra custom attributes to EndpointElements
 ########################
 @ClassOfAttributes
-class ExtraAttributes(object):
+class ExtraAttributes:
     auth = attribute(default=[])
     publish = attribute(default=True)
     schema = attribute(default={})
@@ -42,7 +41,7 @@ class ExtraAttributes(object):
 # Elements for endpoint configuration
 ########################
 @ClassOfAttributes
-class EndpointElements(object):
+class EndpointElements:
     exists = attribute(default=False)
     isbase = attribute(default=False)
     cls = attribute(default=None)

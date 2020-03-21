@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import pytz
 from datetime import datetime, timedelta
+import pytz
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
@@ -158,24 +158,11 @@ class Login(EndpointResource):
         if ret is not None:
             return ret
 
-        # ##################################################
         # Everything is ok, let's save authentication information
 
         if user.first_login is None:
             user.first_login = now
         user.last_login = now
-        # User should be saved inside save_token...
         self.auth.save_token(user, token, jti)
-
-        # FIXME: split response as above in access_token and token_type?
-        # # The right response should be the following
-        # {
-        #   "scope": "https://b2stage-test.cineca.it/api/.*",
-        #   "access_token": "EEwJ6tF9x5WCIZDYzyZGaz6Khbw7raYRIBV_WxVvgmsG",
-        #   "token_type": "Bearer",
-        #   "user": "pippo",
-        #   "expires_in": 28800
-        # }
-        # FIXME: also set headers in a standard way if it exists
 
         return {'token': token}

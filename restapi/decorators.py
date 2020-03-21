@@ -1,74 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""
-
-Decorating my REST API resources.
-
-Decorate is a cool but sometimes dangerous place in Python, I guess.
-Here we test different kind of decorations for different problems.
-
-Restful resources are Flask Views classes.
-Official docs talks about their decoration:
-http://flask-restful.readthedocs.org/en/latest/extending.html#resource-method-decorators
-So... you should also read better this section of Flask itself:
-http://flask.pocoo.org/docs/0.10/views/#decorating-views
-
-I didn't manage so far to have it working in the way the documentation require.
-
-"""
-
 import re
 from functools import wraps
+import werkzeug.exceptions
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
 from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.globals import mem
 
 from restapi.utilities.logs import log
-
-
-#################################
-# Identity is usefull to some (very) extreme decorators cases
-def identity(*args, **kwargs):
-    """ Expecting no keywords arguments """
-    kwargs['content'] = args
-    return kwargs
-
-
-#################################
-# Decide what is the response method for every endpoint
-
-
-def set_response(original=False, custom_method=None, first_call=False):
-
-    # Use identity if requested
-    if original:
-        mem.current_response = identity
-
-    # Custom method is another option
-    elif custom_method is not None:
-        mem.current_response = custom_method
-
-        # Debug when response is injected and if custom
-        if not first_call:
-            log.debug("Response method set to: {}", custom_method)
-
-
-def custom_response(func=None, original=False):
-    set_response(original=original, custom_method=func)
-
-
-def get_response():
-    return mem.current_response
-
-
-#####################################################################
-# # Error handling with custom methods
-# def send_error(self, error, code=hcodes.HTTP_BAD_REQUEST):
-
-#     # It is already print by send_errors, it is a duplicated msg
-#     # log.error(error)
-#     return self.send_errors(message=str(error), code=code)
 
 
 def catch_error(exception=None, catch_generic=True, exception_label=None, **kwargs):
@@ -77,10 +16,6 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
     and catch a specific error.
     """
 
-    if exception_label is None:
-        exception_label = ''
-    if len(exception_label) > 0:
-        exception_label += ': '
     if exception is None:
         exception = RestApiException
 
@@ -94,22 +29,28 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
             # Catch the exception requested by the user
             except exception as e:
 
-                message = exception_label + str(e)
+                # only used by B2STAGE
+                if exception_label:
+                    message = "{}: {}".format(exception_label, str(e))
+                else:
+                    message = str(e)
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
                     error_code = hcodes.HTTP_BAD_REQUEST
-                # return send_error(self, message, error_code)
-                return self.send_errors(message=message, code=error_code)
+                log.error(message)
+                return self.force_response(errors=message, code=error_code)
 
             # Catch the basic API exception
             except RestApiException as e:
-                log.warning(e)
+                log.error(e)
                 if catch_generic:
-                    # return send_error(self, e, e.status_code)
-                    return self.send_errors(message=str(e), code=e.status_code)
-                else:
-                    raise e
+                    return self.force_response(errors=str(e), code=e.status_code)
+                raise e
+
+            except werkzeug.exceptions.BadRequest as e:
+                # do not stop werkzeug BadRequest
+                raise e
 
             # Catch any other exception
             except Exception as e:
@@ -120,7 +61,7 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                     capture_exception(e)
 
                 excname = e.__class__.__name__
-                log.warning(
+                log.error(
                     "Catched exception:\n\n[{}] {}\n", excname, e, exc_info=True
                 )
                 if catch_generic:
@@ -128,8 +69,7 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                         error = 'Server failure; please contact admin.'
                     else:
                         error = str(e)
-                    # return send_error(self, error, hcodes.HTTP_BAD_REQUEST)
-                    return self.send_errors(message=error, code=hcodes.HTTP_BAD_REQUEST)
+                    return self.force_response(errors=error, code=hcodes.HTTP_BAD_REQUEST)
                 else:
                     raise e
 

@@ -27,7 +27,7 @@ class Authentication(BaseAuthentication):
             userdata["authmethod"] = "credentials"
 
         if "password" in userdata:
-            userdata["password"] = self.hash_password(userdata["password"])
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
         if "uuid" not in userdata:
             userdata["uuid"] = getUUID()
@@ -48,7 +48,7 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def get_user_object(self, username=None, payload=None, retry=0):
+    def get_user_object(self, username=None, payload=None):
         user = None
         try:
             if username is not None:
@@ -82,12 +82,12 @@ class Authentication(BaseAuthentication):
                 # Only a single transaction will fail -> retry the operation is enough
                 # https://docs.sqlalchemy.org/en/13/core/pooling.html#disconnect-handling-optimistic
 
-                if retry <= 0:
-                    log.error(str(e))
-                    log.warning("Errors retrieving user object, retrying...")
-                    return self.get_user_object(
-                        username=username, payload=payload, retry=1
-                    )
+                # if retry <= 0:
+                #     log.error(str(e))
+                #     log.warning("Errors retrieving user object, retrying...")
+                #     return self.get_user_object(
+                #         username=username, payload=payload, retry=1
+                #     )
                 raise e
             else:
                 log.error(str(e))
@@ -96,10 +96,11 @@ class Authentication(BaseAuthentication):
                     status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
                 )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
-            if retry <= 0:
-                log.error(str(e))
-                log.warning("Errors retrieving user object, retrying...")
-                return self.get_user_object(username=username, payload=payload, retry=1)
+            # if retry <= 0:
+            #     log.error(str(e))
+            #     log.warning("Errors retrieving user object, retrying...")
+                # return self.get_user_object(
+                #     username=username, payload=payload, retry=1)
             raise e
 
         return user
@@ -174,11 +175,8 @@ class Authentication(BaseAuthentication):
                 self.db.session.commit()
         except sqlalchemy.exc.OperationalError:
             self.db.session.rollback()
-            raise AttributeError(
-                "Existing SQL tables are not consistent "
-                + "to existing models. Please consider "
-                + "rebuilding your DB."
-            )
+            # A migration / rebuild is required?
+            raise AttributeError("Inconsistences between DB schema and data models")
 
     def save_user(self, user):
         if user is not None:
@@ -238,6 +236,16 @@ class Authentication(BaseAuthentication):
             )
             return False
 
+        # Verify IP validity only after grace period is expired
+        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+            ip = self.get_remote_ip()
+            if token_entry.IP != ip:
+                log.error(
+                    "This token is emitted for IP {}, invalid use from {}",
+                    token_entry.IP, ip
+                )
+                return False
+
         exp = now + timedelta(seconds=self.shortTTL)
 
         token_entry.last_access = now
@@ -255,7 +263,7 @@ class Authentication(BaseAuthentication):
     def get_tokens(self, user=None, token_jti=None):
         # FIXME: TTL should be considered?
 
-        list = []
+        tokens_list = []
         tokens = None
 
         if user is not None:
@@ -277,9 +285,9 @@ class Authentication(BaseAuthentication):
                     t["expiration"] = token.expiration.strftime('%s')
                 t["IP"] = token.IP
                 t["hostname"] = token.hostname
-                list.append(t)
+                tokens_list.append(t)
 
-        return list
+        return tokens_list
 
     def invalidate_all_tokens(self, user=None):
         """
@@ -325,127 +333,6 @@ class Authentication(BaseAuthentication):
             return False
 
         return True
-
-    def store_oauth2_user(self, account_type, current_user, token, refresh_token):
-        """
-        Allow external accounts (oauth2 credentials)
-        to be connected to internal local user
-        """
-
-        cn = None
-        dn = None
-        if isinstance(current_user, str):
-            email = current_user
-        else:
-            try:
-                values = current_user.data
-            except BaseException:
-                return None, "Authorized response is invalid"
-
-            # print("TEST", values, type(values))
-            if not isinstance(values, dict) or len(values) < 1:
-                return None, "Authorized response is empty"
-
-            email = values.get('email')
-            cn = values.get('cn')
-            ui = values.get('unity:persistent')
-
-            # distinguishedName is only defined in prod, not in dev and staging
-            # dn = values.get('distinguishedName')
-            # DN very strange: the current key is something like 'urn:oid:2.5.4.49'
-            # is it going to change?
-            for key, _ in values.items():
-                if 'urn:oid' in key:
-                    dn = values.get(key)
-            if dn is None:
-                return None, "Missing DN from authorized response..."
-
-        # Check if a user already exists with this email
-        internal_user = None
-        internal_users = self.db.User.query.filter(self.db.User.email == email).all()
-
-        # Should never happen, please
-        if len(internal_users) > 1:
-            log.critical("Multiple users?")
-            return None, "Server misconfiguration"
-
-        # If something found
-        if len(internal_users) > 0:
-
-            internal_user = internal_users.pop()
-            log.debug("Existing internal user: {}", internal_user)
-            # A user already locally exists with another authmethod. Not good.
-            if internal_user.authmethod != account_type:
-                return None, "User already exists, cannot store oauth2 data"
-        # If missing, add it locally
-        else:
-            userdata = {
-                # "uuid": getUUID(),
-                "email": email,
-                "authmethod": account_type
-            }
-            try:
-                internal_user = self.create_user(userdata, [self.default_role])
-                self.db.session.commit()
-                log.info("Created internal user {}", internal_user)
-            except BaseException as e:
-                log.error("Could not create internal user ({}), rolling back", e)
-                self.db.session.rollback()
-                return None, "Server error"
-
-        # Get ExternalAccount for the oauth2 data if exists
-        external_user = self.db.ExternalAccounts.query.filter_by(username=email).first()
-        # or create it otherwise
-        if external_user is None:
-            external_user = self.db.ExternalAccounts(username=email, unity=ui)
-
-            # Connect the external account to the current user
-            external_user.main_user = internal_user
-            # Note: for pre-production release
-            # we allow only one external account per local user
-            log.info("Created external user {}", external_user)
-
-        # Update external user data to latest info received
-        external_user.email = email
-        external_user.account_type = account_type
-        external_user.token = token
-        external_user.refresh_token = refresh_token
-        if cn is not None:
-            external_user.certificate_cn = cn
-        if dn is not None:
-            external_user.certificate_dn = dn
-
-        try:
-            self.db.session.add(external_user)
-            self.db.session.commit()
-            log.debug("Updated external user {}", external_user)
-        except BaseException as e:
-            log.error("Could not update external user ({}), rolling back", e)
-            self.db.session.rollback()
-            return None, "Server error"
-
-        return internal_user, external_user
-
-    def oauth_from_token(self, token):
-        extus = self.db.ExternalAccounts.query.filter_by(token=token).first()
-        intus = extus.main_user
-        # print(token, intus, extus)
-        return intus, extus
-
-    def associate_object_to_attr(self, obj, key, value):
-        try:
-            setattr(obj, key, value)
-            self.db.session.commit()
-        except BaseException as e:
-            log.error("DB error ({}), rolling back", e)
-            self.db.session.rollback()
-        return
-
-    def oauth_from_local(self, internal_user):
-        accounts = self.db.ExternalAccounts
-        return accounts.query.filter(
-            accounts.main_user.has(id=internal_user.id)
-        ).first()
 
     def irods_user(self, username, session):
 

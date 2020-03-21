@@ -19,7 +19,7 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
-class BaseTests(object):
+class BaseTests:
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests
@@ -44,7 +44,6 @@ class BaseTests(object):
                 return data["value"]
 
         raise AttributeError("Class variable {} not found".format(variable))
-        return None
 
     def get_specs(self, client):
         """
@@ -239,19 +238,19 @@ class BaseTests(object):
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    def randomString(self, len=16, prefix="TEST-"):
+    def randomString(self, length=16, prefix="TEST-"):
         """
             Create a random string to be used to build data for tests
         """
-        if len > 500000:
+        if length > 500000:
             lis = list(string.ascii_lowercase)
-            return ''.join(random.choice(lis) for _ in range(len))
+            return ''.join(random.choice(lis) for _ in range(length))
 
         rand = random.SystemRandom()
         charset = string.ascii_uppercase + string.digits
 
         random_string = prefix
-        for _ in range(len):
+        for _ in range(length):
             random_string += rand.choice(charset)
 
         return random_string

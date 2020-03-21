@@ -18,13 +18,12 @@ from restapi.utilities.configuration import load_yaml_file
 from restapi.utilities.logs import log
 
 
-class Detector(object):
+class Detector:
     def __init__(self):
 
         self.authentication_service = None
         self.authentication_name = 'authentication'
         self.task_service_name = 'celery'
-        self.modules = []
         self.services_configuration = []
         self.services = {}
         self.services_classes = {}
@@ -102,7 +101,7 @@ class Detector(object):
                     self.authentication_service = variables.get('service')
 
         if self.authentication_service is None:
-            log.warning("No service defined behind authentication")
+            log.info("No service defined for authentication")
         else:
             log.info(
                 "Authentication based on '{}' service",
@@ -164,7 +163,7 @@ class Detector(object):
 
         return variables
 
-    def load_class_from_module(self, classname='BaseInjector', service=None):
+    def load_class_from_module(self, classname, service=None):
 
         if service is None:
             flaskext = ''
@@ -173,7 +172,8 @@ class Detector(object):
 
         # Try inside our extensions
         module = Meta.get_module_from_string(
-            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext, exit_on_fail=True
+            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
+            exit_on_fail=True
         )
         if module is None:
             log.exit("Missing {} for {}", flaskext, service)
@@ -314,28 +314,6 @@ class Detector(object):
             self.project_initialization(instances, app=app)
 
         return self.extensions_instances
-
-    def load_injector_modules(self):
-
-        for service in self.services_configuration:
-
-            name, _ = self.prefix_name(service)
-            if not self.available_services.get(name):
-                continue
-
-            # Module for injection
-            ModuleBaseClass = self.load_class_from_module()
-            # Create modules programmatically 8)
-            MyModule = self.meta.metaclassing(ModuleBaseClass, service.get('injector'))
-
-            # Recover class
-            MyClass = self.services_classes.get(name)
-            if MyClass is None:
-                raise AttributeError("No class found for {}".format(name))
-            MyModule.set_extension_class(MyClass)
-            self.modules.append(MyModule)
-
-        return self.modules
 
     def check_availability(self, name):
 

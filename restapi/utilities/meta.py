@@ -14,7 +14,7 @@ from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
 
-class Meta(object):
+class Meta:
     """Utilities with meta in mind"""
 
     def get_submodules_from_package(self, package):
@@ -85,7 +85,9 @@ class Meta(object):
             # Meta language for dinamically import
             module = import_module(modulestring)
         except import_exceptions as e:  # pylint:disable=catching-non-exception
-            if exit_if_not_found:
+            if exit_on_fail:
+                raise e
+            elif exit_if_not_found:
                 log.exit("Failed to load module:\n{}", e)
             # else:
             #     log.warning("Failed to load module:\n{}", e)
@@ -141,19 +143,6 @@ class Meta(object):
                 pass
 
         return myclass
-
-    @staticmethod
-    def metaclassing(your_class, label=None, attributes=None):
-        """
-        Creating a class using metas.
-        Very usefull for automatic algorithms.
-        """
-
-        methods = dict(your_class.__dict__)
-        if attributes is not None and isinstance(attributes, dict):
-            for key, value in attributes.items():
-                methods.update({key: value})
-        return type(label, (your_class,), methods)
 
     @staticmethod
     def get_self_reference_from_args(*args):
