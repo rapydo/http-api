@@ -116,8 +116,8 @@ else
 	backend_container=$(docker-compose ps -q backend)
 	docker cp ${backend_container}:$COVERAGE_FILE $COV_DIR/.coverage.${PROJECT}
 
-	aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
-	aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
+	# aws --endpoint-url $S3_HOST s3api create-bucket --bucket http-api-${TRAVIS_BUILD_ID}
+	# aws --endpoint-url $S3_HOST s3 sync $COV_DIR s3://http-api-${TRAVIS_BUILD_ID}
 
 	rapydo clean
 
