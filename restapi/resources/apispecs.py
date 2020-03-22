@@ -79,7 +79,7 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
         errors = ["x", "y"]
 
         # return (errors, 400)
-        return self.response(data, errors=errors, code=400)
+        return self.response(errors=errors, code=400)
         # raise RestApiException("Just an error")
 
         # return {"value": '10'}, 200

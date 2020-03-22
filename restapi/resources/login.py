@@ -39,13 +39,14 @@ class Login(EndpointResource):
 
     def verify_information(self, user, security, totp_auth, totp_code, now=None):
 
-        message_body = {}
-        message_body['actions'] = []
-        error_message = None
+        message = {
+            'actions': [],
+            'errors': []
+        }
 
         if totp_auth and totp_code is None:
-            message_body['actions'].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
-            error_message = "You do not provided a valid second factor"
+            message['actions'].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
+            message['errors'].append("You do not provided a valid second factor")
 
         epoch = datetime.fromtimestamp(0, pytz.utc)
         last_pwd_change = user.last_password_change
@@ -54,14 +55,14 @@ class Login(EndpointResource):
 
         if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
 
-            message_body['actions'].append('FIRST LOGIN')
-            error_message = "Please change your temporary password"
+            message['actions'].append('FIRST LOGIN')
+            message['errors'].append("Please change your temporary password")
 
             if totp_auth:
 
                 qr_code = security.get_qrcode(user)
 
-                message_body["qr_code"] = qr_code
+                message["qr_code"] = qr_code
 
         elif self.auth.MAX_PASSWORD_VALIDITY > 0:
 
@@ -78,14 +79,14 @@ class Login(EndpointResource):
 
             if expired:
 
-                message_body['actions'].append('PASSWORD EXPIRED')
-                error_message = "Your password is expired, please change it"
+                message['actions'].append('PASSWORD EXPIRED')
+                message['errors'].append("Your password is expired, please change it")
 
-        if error_message is None:
+        if not message['errors']:
             return None
 
         return self.response(
-            message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN
+            errors=message, code=hcodes.HTTP_BAD_FORBIDDEN
         )
 
     @decorate.catch_error()
