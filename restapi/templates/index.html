@@ -10,10 +10,12 @@
     <meta name="author" content="">
 </head>
 <body>
-{% if array %}
-    <pre>
-    {{ body_content }}
-    </pre>
+{% if is_error %}
+    {% for err in body_content %}
+    <main style='color:red;'>
+    {{ err }}<br/>
+    </main>
+    {% endfor %}
 {% else %}
     <main>
     {{ body_content }}

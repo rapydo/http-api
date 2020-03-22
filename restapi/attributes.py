@@ -12,20 +12,6 @@ ANY_ROLE = 'any'
 
 
 ########################
-# All attributes we use for a Flask Response
-########################
-@ClassOfAttributes
-class ResponseElements:
-    defined_content = attribute()
-    elements = attribute(default=None)
-    code = attribute(default=None)
-    errors = attribute(default=None)
-    headers = attribute(default={})
-    meta = attribute(default=None)
-    head_method = attribute(default=False)
-
-
-########################
 # Definition for extra custom attributes to EndpointElements
 ########################
 @ClassOfAttributes

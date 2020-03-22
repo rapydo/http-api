@@ -24,7 +24,7 @@ class Error(Schema):
 
 class old_responses(Schema):
     # Field that applies no formatting.
-    data = fields.Raw(attribute="defined_content")
+    data = fields.Raw(attribute="content")
     errors = fields.List(fields.Str())
     # "Raw",
     # "Nested",

@@ -5,10 +5,7 @@ import json
 import string
 import random
 
-# import os
-
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
-from restapi.rest.response import get_content_from_response
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.htmlcodes import hcodes
 
@@ -17,6 +14,42 @@ from restapi.utilities.logs import log
 SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
 API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
+
+
+########################
+# FIXME: Explode the normal response content?
+def get_content_from_response(http_out):
+
+    response = None
+
+    try:
+        response = json.loads(http_out.get_data().decode())
+    except Exception as e:
+        log.error("Failed to load response:\n{}", e)
+        raise ValueError(
+            "Malformed response: {}".format(http_out)
+        )
+
+    # Check what we have so far
+    # Should be {Response: DATA, Meta: RESPONSE_METADATA}
+    if not isinstance(response, dict) or len(response) != 2:
+        raise ValueError(
+            "Malformed response: {}".format(response)
+        )
+
+    Response = response.get("Response")
+    Meta = response.get("Meta")
+
+    if Response is None or Meta is None:
+        raise ValueError(
+            "Malformed response: {}".format(response)
+        )
+
+    content = Response.get('data')
+    err = Response.get('errors')
+    code = Meta.get('status')
+
+    return content, err, Meta, code
 
 
 class BaseTests:

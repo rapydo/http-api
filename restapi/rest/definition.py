@@ -6,14 +6,12 @@ we could provide back then
 """
 
 from datetime import datetime
-from flask import current_app
-# from flask import make_response
+from flask import current_app, make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
 from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
-# from restapi.rest.response import ResponseMaker
-from restapi.rest.response import ResponseElements
+from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
@@ -287,12 +285,6 @@ class EndpointResource(Resource):
     def response(self, content=None, errors=None,
                  code=None, headers=None, head_method=False,
                  elements=None, meta=None):
-        """
-        Helper function to let the developer define
-        how to respond with the REST and HTTP protocol
-
-        Build a ResponseElements instance.
-        """
 
         # Deprecated since 0.7.2
         if elements is not None:
@@ -309,8 +301,8 @@ class EndpointResource(Resource):
         if headers is None:
             headers = {}
 
-        rv = ResponseElements(
-            defined_content=content,
+        r = ResponseMaker.generate_response(
+            content=content,
             code=code,
             errors=errors,
             headers=headers,
@@ -318,27 +310,7 @@ class EndpointResource(Resource):
             elements=elements,
             meta=meta
         )
-
-        return rv
-
-        """
-        responder = ResponseMaker(rv)
-
-        # Avoid duplicating the response generation
-        # or the make_response replica.
-        # This happens with Flask exceptions
-        if responder.already_converted():
-            # # Note: this response could be a class ResponseElements
-            # return rv
-
-            log.warning("already_converted !?")
-            # The responder instead would have already found the right element
-            return responder.get_original_response()
-
-        r = responder.generate_response()
-
-        # !!! IMPORTANT, TO BE VERIFIED
-        # Is the following issue still happening??
+        response = make_response(r)
 
         # TOFIX: avoid duplicated Content-type
         # the jsonify in respose.py#force_type force the content-type
@@ -346,11 +318,6 @@ class EndpointResource(Resource):
         # the header will have a duplicated Content-type. We should fix by avoding
         # jsonfy for more specific mimetypes
         # For now I will simply remove the duplicates
-
-        # !!! IMPORTANT, PLEASE NOT THAT THE FOLLOWING BLOCK WAS APPLIED TO:
-        # response = super().make_response(r)
-        response = make_response(r)
-        # HOW WE HAVE a tuple (content, code, headers)
 
         content_type = None
         for idx, val in enumerate(response.headers):
@@ -367,9 +334,7 @@ class EndpointResource(Resource):
             response.headers.pop(content_type)
             break
 
-        log.critical(response)
         return response
-        """
 
     def empty_response(self):
         """ Empty response as defined by the protocol """

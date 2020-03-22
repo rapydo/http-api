@@ -6,7 +6,7 @@ We create all the internal flask components here.
 """
 import os
 from urllib import parse as urllib_parse
-from flask import Flask as OriginalFlask, request
+from flask import Flask, request
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from glom import glom
@@ -16,7 +16,6 @@ from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
 from restapi.rest.response import InternalResponse
-from restapi.rest.response import ResponseElements, ResponseMaker
 from restapi.customization import Customizer
 
 from restapi.protocols.restful import Api
@@ -24,54 +23,6 @@ from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
-
-
-class Flask(OriginalFlask):
-    def make_response(self, rv):
-        """
-        Hack original flask response generator to read our internal response
-        and build what is needed:
-        the tuple (data, status, headers) to be eaten by make_response()
-        """
-
-        responder = ResponseMaker(rv)
-
-        # Avoid duplicating the response generation
-        # or the make_response replica.
-        # This happens with Flask exceptions
-        if responder.already_converted():
-            return responder.get_original_response()
-
-        if not isinstance(rv, ResponseElements):
-            log.warning(
-                "Deprecated endpoint output, please use self.force_respose() wrapper"
-            )
-
-        # Note: jsonify gets done when calling the make_response,
-        # so make sure that the data is written in the right format!
-        r = responder.generate_response()
-        response = super().make_response(r)
-        # TOFIX: avoid duplicated Content-type
-        # the jsonify in respose.py#force_type force the content-type
-        # to be application/json. If content-type is already specified in headers
-        # the header will have a duplicated Content-type. We should fix by avoding
-        # jsonfy for more specific mimetypes
-        # For now I will simply remove the duplicates
-        content_type = None
-        for idx, val in enumerate(response.headers):
-            if val[0] != 'Content-Type':
-                continue
-            if content_type is None:
-                content_type = idx
-                continue
-            log.warning(
-                "Duplicated Content-Type, removing {} and keeping {}",
-                response.headers[content_type][1],
-                val[1],
-            )
-            response.headers.pop(content_type)
-            break
-        return response
 
 
 ########################
@@ -122,7 +73,14 @@ def create_app(
     # CORS
     if not PRODUCTION:
         cors = CORS(
-            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'x-upload-content-length', 'x-upload-content-type', 'content-range'],
+            allow_headers=[
+                'Content-Type',
+                'Authorization',
+                'X-Requested-With',
+                'x-upload-content-length',
+                'x-upload-content-type',
+                'content-range'
+            ],
             supports_credentials=['true'],
             methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         )
