@@ -172,15 +172,18 @@ class BaseTests:
 
         content = json.loads(r.data.decode('utf-8'))
         if error is not None:
-            errors = content['Response']['errors']
-            if errors is not None:
-                assert errors[0] == error
+            if 'Response' in content:
+                errors = content['Response']['errors']
+                if errors is not None:
+                    assert errors[0] == error
+            else:
+                assert content == error
 
         token = ''
         if content is not None:
-            data = content.get('Response', {}).get('data', {})
-            if data is not None:
-                token = data.get('token', '')
+            token = glom(content, "Response.data.token", default=None)
+            if token is None:
+                token = content
         return {'Authorization': 'Bearer ' + token}, token
 
     def do_logout(self, client, headers):
