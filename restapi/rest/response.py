@@ -89,17 +89,20 @@ class ResponseMaker:
         else:
             final_content = errors
 
-        if MIMETYPE_XML in accepted_formats:
-            # TODO: we should convert final_content in XML
-            pass
-
-        if MIMETYPE_CSV in accepted_formats:
-            # TODO: we should convert final_content in CSV
-            pass
-
         if MIMETYPE_JSON in accepted_formats:
             # final_content is already JSON based
             pass
+
+        elif MIMETYPE_XML in accepted_formats:
+            # TODO: we should convert final_content in XML
+            pass
+
+        elif MIMETYPE_CSV in accepted_formats:
+            # TODO: we should convert final_content in CSV
+            pass
+
+        else:
+            log.warning("Unknown accepted format: {}", accepted_formats)
 
         # return a standard flask response tuple(content, code, headers)
         return (final_content, code, headers)
