@@ -8,6 +8,7 @@ import os
 from urllib import parse as urllib_parse
 from flask import Flask, request
 from flask_cors import CORS
+from flask_restful import Api
 from werkzeug.middleware.proxy_fix import ProxyFix
 from glom import glom
 from geolite2 import geolite2
@@ -18,7 +19,6 @@ from restapi.confs import get_project_configuration
 from restapi.rest.response import InternalResponse
 from restapi.customization import Customizer
 
-from restapi.protocols.restful import Api
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
