@@ -28,7 +28,7 @@ class TestApp(BaseTests):
 
         # Check success
         endpoint = API_URI + '/status'
-        alive_message = "Server is alive!"
+        alive_message = "Server is alive"
 
         log.info("*** VERIFY if API is online")
         r = client.get(endpoint)

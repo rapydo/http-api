@@ -39,14 +39,14 @@ class Status(EndpointResource):
         "/status": {
             "summary": "Check if the API server is currently reachable",
             "description": "You may use this URI to monitor network or server problems.",
-            "responses": {"200": {"description": "Server is alive!"}},
+            "responses": {"200": {"description": "Server is alive"}},
         }
     }
 
     @decorate.catch_error()
     def get(self, service=None):
 
-        return self.response('Server is alive!')
+        return self.response('Server is alive')
 
 
 class Verify(EndpointResource):

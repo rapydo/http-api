@@ -109,7 +109,7 @@ rapydo --production -s backend logs
 
 printf "\n\n\n"
 
-curl -k -X GET https://localhost/api/status | grep "Server is alive!"
+curl -k -X GET https://localhost/api/status | grep "Server is alive"
 
 printf "\n\n\n"
 
