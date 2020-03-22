@@ -4,6 +4,7 @@ import pytest
 import json
 import string
 import random
+from glom import glom
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.services.authentication import BaseAuthentication
@@ -33,17 +34,13 @@ def get_content_from_response(http_out):
     # Check what we have so far
     # Should be {Response: DATA, Meta: RESPONSE_METADATA}
     if not isinstance(response, dict) or len(response) != 2:
-        raise ValueError(
-            "Malformed response: {}".format(response)
-        )
+        return response
 
     Response = response.get("Response")
     Meta = response.get("Meta")
 
     if Response is None or Meta is None:
-        raise ValueError(
-            "Malformed response: {}".format(response)
-        )
+        return response
 
     content = Response.get('data')
     err = Response.get('errors')
@@ -118,23 +115,25 @@ class BaseTests:
         content = json.loads(r.data.decode('utf-8'))
         return content['Response']['data']
 
-    def get_content(self, response, return_errors=False):
-        content, err, meta, code = get_content_from_response(response)
+    def get_content(self, http_out):
 
-        # Since unittests use class object and not instances
-        # This is the only workaround to set a persistent variable:
-        # abuse of the __class__ property
+        try:
+            response = json.loads(http_out.get_data().decode())
+        except Exception as e:
+            log.error("Failed to load response:\n{}", e)
+            raise ValueError(
+                "Malformed response: {}".format(http_out)
+            )
 
-        self.__class__.latest_response = {
-            "metadata": meta,
-            "content": content,
-            "errors": err,
-            "status": code,
-        }
-        if return_errors:
-            return err
-        else:
-            return content
+        # Should be {Response: DATA, Meta: RESPONSE_METADATA}
+        # To be removed when WRAP_RESPONSE will be removed
+        if isinstance(response, dict) and len(response) != 2:
+            content = glom(response, "Response.data", default=None)
+
+            if content is not None:
+                return content
+
+        return response
 
     def do_login(
         self, client, USER, PWD, status_code=hcodes.HTTP_OK_BASIC, error=None, **kwargs
