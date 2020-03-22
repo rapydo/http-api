@@ -16,7 +16,6 @@ from restapi import __version__
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
-from restapi.rest.response import InternalResponse
 from restapi.customization import Customizer
 
 from restapi.services.detect import detector
@@ -87,9 +86,6 @@ def create_app(
 
         cors.init_app(microservice)
         log.verbose("FLASKING! Injected CORS")
-
-    # Enabling our internal Flask customized response
-    microservice.response_class = InternalResponse
 
     # Flask configuration from config file
     microservice.config.from_object(config)

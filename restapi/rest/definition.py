@@ -312,13 +312,7 @@ class EndpointResource(Resource):
         )
         response = make_response(r)
 
-        # TOFIX: avoid duplicated Content-type
-        # the jsonify in respose.py#force_type force the content-type
-        # to be application/json. If content-type is already specified in headers
-        # the header will have a duplicated Content-type. We should fix by avoding
-        # jsonfy for more specific mimetypes
-        # For now I will simply remove the duplicates
-
+        # Avoid duplicated Content-type
         content_type = None
         for idx, val in enumerate(response.headers):
             if val[0] != 'Content-Type':

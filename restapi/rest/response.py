@@ -11,43 +11,6 @@ MIMETYPE_HTML = 'text/html'
 MIMETYPE_CSV = 'text/csv'
 
 
-########################
-# Flask custom response
-########################
-class InternalResponse(Response):
-    """
-    adding a few extra checks on the original flask response
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        If the application is not responding JSON (e.g. HTML),
-        This call is not executed
-        """
-
-        if 'mimetype' not in kwargs and 'contenttype' not in kwargs:
-            kwargs['mimetype'] = MIMETYPE_JSON  # our default
-
-        self._latest_response = super().__init__(*args, **kwargs)
-
-    @classmethod
-    def force_type(cls, rv, environ=None):
-        """ Copy/paste from Miguel's tutorial """
-
-        if isinstance(rv, dict):
-            try:
-                rv = jsonify(rv)
-            except BaseException:
-                log.error("Cannot jsonify rv:")
-                from prettyprinter import pprint
-                pprint(rv)
-
-        return super(InternalResponse, cls).force_type(rv, environ)
-
-
-###################################
-# Flask response internal builder #
-###################################
 class ResponseMaker:
 
     @staticmethod
