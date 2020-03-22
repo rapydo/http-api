@@ -56,8 +56,6 @@ class ResponseMaker:
         a tuple (content, status, headers)
         """
 
-        # 1. Fix code range
-
         if code is None:
             code = hcodes.HTTP_OK_BASIC
 
@@ -78,40 +76,33 @@ class ResponseMaker:
                 log.warning("Forcing 500 SERVER ERROR because only errors are returned")
                 code = hcodes.HTTP_SERVER_ERROR
 
-        # 2. Encapsulate response and other things in a standard json obj:
-        # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
-        if response_wrapper is None:
-            if content is not None:
-                final_content = content
-            else:
-                final_content = errors
-        else:
-            final_content = response_wrapper(
-                content, elements, code, errors, meta
-            )
-
-        # 3. Return what is necessary to build a standard flask response
-        # from all that was gathered so far
-        response = (final_content, code, headers)
-
         accepted_formats = ResponseMaker.get_accepted_formats()
 
         if MIMETYPE_HTML in accepted_formats:
             return ResponseMaker.respond_to_browser(content, errors, code, headers)
 
-        if MIMETYPE_JSON in accepted_formats:
-            return response
+        if response_wrapper is not None:
+            # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
+            final_content = response_wrapper(content, elements, code, errors, meta)
+        elif content is not None:
+            final_content = content
+        else:
+            final_content = errors
 
         if MIMETYPE_XML in accepted_formats:
-            # TODO: we should convert in XML
+            # TODO: we should convert final_content in XML
             pass
 
         if MIMETYPE_CSV in accepted_formats:
-            # TODO: we should convert in CSV
+            # TODO: we should convert final_content in CSV
             pass
 
-        # The client does not support any particular format, use the default
-        return response
+        if MIMETYPE_JSON in accepted_formats:
+            # final_content is already JSON based
+            pass
+
+        # return a standard flask response tuple(content, code, headers)
+        return (final_content, code, headers)
 
     @staticmethod
     def wrapped_response(
