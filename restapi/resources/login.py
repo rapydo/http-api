@@ -165,4 +165,4 @@ class Login(EndpointResource):
         user.last_login = now
         self.auth.save_token(user, token, jti)
 
-        return {'token': token}
+        return self.response({'token': token})
