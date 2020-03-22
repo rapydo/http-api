@@ -31,7 +31,7 @@ jobs:
     - PROJECT=celerybeat
   - script: scripts/test_and_coverage.sh
     env:
-    - PROJECT=wrapped_response
+    - PROJECT=wrappedresponse
 
   - stage: deploy
     script: skip
