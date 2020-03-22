@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Response, render_template
+from flask import Response, render_template, jsonify
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
@@ -83,13 +83,8 @@ class ResponseMaker:
         else:
             final_content = errors
 
-        if '*/*' in accepted_formats:
-            # everything is accepted, standard response format will be returned
-            pass
-
-        elif 'application/json' in accepted_formats:
-            # final_content is already JSON based
-            pass
+        if '*/*' in accepted_formats or 'application/json' in accepted_formats:
+            final_content = jsonify(final_content)
 
         elif 'application/xml' in accepted_formats:
             # TODO: we should convert final_content in XML
