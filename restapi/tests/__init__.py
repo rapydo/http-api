@@ -187,7 +187,7 @@ class BaseTests:
             token = glom(content, "Response.data.token", default=None)
             if token is None:
                 token = content
-        return {'Authorization': 'Bearer ' + token}, token
+        return {'Authorization': 'Bearer {}'.format(token)}, token
 
     def do_logout(self, client, headers):
         r = client.get(AUTH_URI + '/logout', headers=headers)
