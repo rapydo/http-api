@@ -42,9 +42,7 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
         # Check HTML response to status if agent/request is text/html
-        from restapi.rest.response import MIMETYPE_HTML
-
-        headers = {"Accept": MIMETYPE_HTML}
+        headers = {"Accept": 'text/html'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         output = r.data.decode('utf-8')
