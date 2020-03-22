@@ -89,7 +89,11 @@ class ResponseMaker:
         else:
             final_content = errors
 
-        if MIMETYPE_JSON in accepted_formats:
+        if '*/*' in accepted_formats:
+            # everything is accepted, standard response format will be returned
+            pass
+
+        elif MIMETYPE_JSON in accepted_formats:
             # final_content is already JSON based
             pass
 
