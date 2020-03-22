@@ -396,7 +396,8 @@ Password: "{}"
                 self.auth.db.session.commit()
             except IntegrityError:
                 self.auth.db.session.rollback()
-                raise RestApiException("This user already exists")
+                raise RestApiException(
+                    "This user already exists", status_code=hcodes.HTTP_BAD_CONFLICT)
 
         # If created by admins, credentials
         # must accept privacy at the login

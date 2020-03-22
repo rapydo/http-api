@@ -166,7 +166,10 @@ class BaseTests:
         if r.status_code != hcodes.HTTP_OK_BASIC:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
             c = json.loads(r.data.decode('utf-8'))
-            log.error(c['Response']['errors'])
+            if 'Response' in c:
+                log.error(c['Response']['errors'])
+            else:
+                log.error(c)
 
         assert r.status_code == status_code
 
