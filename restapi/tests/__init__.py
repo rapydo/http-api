@@ -127,7 +127,7 @@ class BaseTests:
 
         # Should be {Response: DATA, Meta: RESPONSE_METADATA}
         # To be removed when WRAP_RESPONSE will be removed
-        if isinstance(response, dict) and len(response) != 2:
+        if isinstance(response, dict) and len(response) == 2:
             content = glom(response, "Response.data", default=None)
 
             if content is not None:

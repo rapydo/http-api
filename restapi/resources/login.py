@@ -7,6 +7,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.flask_ext.flask_auth import HandleSecurity
 from restapi import decorators as decorate
+from restapi.confs import WRAP_RESPONSE
 
 from restapi.utilities.htmlcodes import hcodes
 
@@ -165,4 +166,6 @@ class Login(EndpointResource):
         user.last_login = now
         self.auth.save_token(user, token, jti)
 
-        return self.response({'token': token})
+        if WRAP_RESPONSE:
+            return self.response({'token': token})
+        return self.response(token)
