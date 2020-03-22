@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import current_app, make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
-from restapi.confs import API_URL
+from restapi.confs import API_URL, WRAP_RESPONSE
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
@@ -284,7 +284,7 @@ class EndpointResource(Resource):
 
     def response(self, content=None, errors=None,
                  code=None, headers=None, head_method=False,
-                 elements=None, meta=None):
+                 elements=None, meta=None, wrap_response=False):
 
         # Deprecated since 0.7.2
         if elements is not None:
@@ -301,6 +301,11 @@ class EndpointResource(Resource):
         if headers is None:
             headers = {}
 
+        if wrap_response or WRAP_RESPONSE:
+            response_wrapper = ResponseMaker.wrapped_response
+        else:
+            response_wrapper = None
+
         r = ResponseMaker.generate_response(
             content=content,
             code=code,
@@ -308,7 +313,8 @@ class EndpointResource(Resource):
             headers=headers,
             head_method=head_method,
             elements=elements,
-            meta=meta
+            meta=meta,
+            response_wrapper=response_wrapper
         )
         response = make_response(r)
 

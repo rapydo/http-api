@@ -49,7 +49,7 @@ class ResponseMaker:
 
     @staticmethod
     def generate_response(content, code, errors, headers,
-                          head_method, elements, meta):
+                          head_method, elements, meta, response_wrapper=None):
         """
         Generating from our user/custom/internal response
         the data necessary for a Flask response (make_response() method):
@@ -61,9 +61,9 @@ class ResponseMaker:
         if code is None:
             code = hcodes.HTTP_OK_BASIC
 
-        # Is that really needed?
-        if errors and not isinstance(errors, list):
-            errors = [errors]
+        # # Is that really needed?
+        # if errors and not isinstance(errors, list):
+        #     errors = [errors]
 
         if errors is None and content is None:
             if not head_method or code is None:
@@ -80,9 +80,15 @@ class ResponseMaker:
 
         # 2. Encapsulate response and other things in a standard json obj:
         # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
-        final_content = ResponseMaker.standard_response_content(
-            content, elements, code, errors, meta
-        )
+        if response_wrapper is None:
+            if content is not None:
+                final_content = content
+            else:
+                final_content = errors
+        else:
+            final_content = response_wrapper(
+                content, elements, code, errors, meta
+            )
 
         # 3. Return what is necessary to build a standard flask response
         # from all that was gathered so far
@@ -108,7 +114,7 @@ class ResponseMaker:
         return response
 
     @staticmethod
-    def standard_response_content(
+    def wrapped_response(
         content=None, elements=None, code=None, errors=None, custom_metas=None
     ):
 
