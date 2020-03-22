@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from flask import Response, jsonify, render_template
-# from werkzeug import exceptions as wsgi_exceptions
+from flask import Response, render_template
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
-
-MIMETYPE_JSON = 'application/json'
-MIMETYPE_XML = 'application/xml'
-MIMETYPE_HTML = 'text/html'
-MIMETYPE_CSV = 'text/csv'
 
 
 class ResponseMaker:
@@ -42,7 +36,7 @@ class ResponseMaker:
         html_page = render_template('index.html', **html_data)
         return Response(
             html_page,
-            mimetype=MIMETYPE_HTML,
+            mimetype='text/html',
             status=code,
             headers=headers
         )
@@ -78,7 +72,7 @@ class ResponseMaker:
 
         accepted_formats = ResponseMaker.get_accepted_formats()
 
-        if MIMETYPE_HTML in accepted_formats:
+        if 'text/html' in accepted_formats:
             return ResponseMaker.respond_to_browser(content, errors, code, headers)
 
         if response_wrapper is not None:
@@ -93,15 +87,15 @@ class ResponseMaker:
             # everything is accepted, standard response format will be returned
             pass
 
-        elif MIMETYPE_JSON in accepted_formats:
+        elif 'application/json' in accepted_formats:
             # final_content is already JSON based
             pass
 
-        elif MIMETYPE_XML in accepted_formats:
+        elif 'application/xml' in accepted_formats:
             # TODO: we should convert final_content in XML
             pass
 
-        elif MIMETYPE_CSV in accepted_formats:
+        elif 'text/csv' in accepted_formats:
             # TODO: we should convert final_content in CSV
             pass
 
