@@ -74,12 +74,12 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
 
         log.info(kwargs)
 
-        # return self.force_response("blabla")
+        # return self.response("blabla")
         data = {"value": "123", "xyz": "abc"}
         errors = ["x", "y"]
 
         # return (errors, 400)
-        return self.force_response(data, errors=errors, code=400)
+        return self.response(data, errors=errors, code=400)
         # raise RestApiException("Just an error")
 
         # return {"value": '10'}, 200

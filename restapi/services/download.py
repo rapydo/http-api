@@ -16,14 +16,10 @@ class Downloader:
     def download(self, filename=None, subfolder=None, get=False):
 
         if not get:
-            return self.force_response(
-                "No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED
-            )
+            return self.response("No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED)
 
         if filename is None:
-            return self.force_response(
-                errors={"Missing file": "No filename specified to download"}
-            )
+            return self.response(errors="No filename specified to download")
 
         path = self.absolute_upload_file(filename, subfolder=subfolder, onlydir=True)
         log.info("Provide '{}' from '{}'", filename, path)

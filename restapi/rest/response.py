@@ -1,30 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-
-Handle the response 'algorithm'
-(also see EUDAT-B2STAGE/http-api-base#7)
-
-force_response (base.py)    or              simple return
-[ResponseElements()]        [obj / (content,status) / (content,status,headers)]
-        |                                           |
-        ---------------------------------------------
-                            |
-            Overriden Flask.make_response (server.py) - called internally
-             |- x = ResponseMaker(rv) instance __init__
-             |- x.generate_response()
-                    |
-                get_errors
-                set_standard to output ({Response: OUT, Meta: ...})
-                return tuple (data, status, headers)
-                                        |
-            Flask handle over to overridden Werkzeug Response
-             |- force_type: jsonify
-                    |
-                   THE END
-
-"""
-
 import attr
 import json
 from flask import Response, jsonify, render_template

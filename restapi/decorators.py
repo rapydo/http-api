@@ -39,13 +39,13 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                 else:
                     error_code = hcodes.HTTP_BAD_REQUEST
                 log.error(message)
-                return self.force_response(errors=message, code=error_code)
+                return self.response(errors=message, code=error_code)
 
             # Catch the basic API exception
             except RestApiException as e:
                 log.error(e)
                 if catch_generic:
-                    return self.force_response(errors=str(e), code=e.status_code)
+                    return self.response(errors=str(e), code=e.status_code)
                 raise e
 
             except werkzeug.exceptions.BadRequest as e:
@@ -69,7 +69,7 @@ def catch_error(exception=None, catch_generic=True, exception_label=None, **kwar
                         error = 'Server failure; please contact admin.'
                     else:
                         error = str(e)
-                    return self.force_response(errors=error, code=hcodes.HTTP_BAD_REQUEST)
+                    return self.response(errors=error, code=hcodes.HTTP_BAD_REQUEST)
                 else:
                     raise e
 

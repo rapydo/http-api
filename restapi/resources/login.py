@@ -83,7 +83,7 @@ class Login(EndpointResource):
         if error_message is None:
             return None
 
-        return self.force_response(
+        return self.response(
             message_body, errors=error_message, code=hcodes.HTTP_BAD_FORBIDDEN
         )
 

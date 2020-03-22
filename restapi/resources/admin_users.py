@@ -218,7 +218,7 @@ Password: "{}"
 
             data.append(user)
 
-        return self.force_response(data)
+        return self.response(data)
 
     @decorate.catch_error()
     @authentication.required()
@@ -307,7 +307,7 @@ Password: "{}"
                             new_schema.insert(idx, role)
 
             if is_admin:
-                return self.force_response(new_schema)
+                return self.response(new_schema)
 
             current_user = self.get_current_user()
             for idx, val in enumerate(new_schema):
@@ -347,7 +347,7 @@ Password: "{}"
                     if (len(new_schema[idx]["enum"])) == 1:
                         new_schema[idx]["default"] = defg
 
-            return self.force_response(new_schema)
+            return self.response(new_schema)
 
         # INIT #
         properties = self.read_properties(schema, v)
@@ -425,7 +425,7 @@ Password: "{}"
         if email_notification and unhashed_password is not None:
             self.send_notification(user, unhashed_password, is_update=False)
 
-        return self.force_response(user.uuid)
+        return self.response(user.uuid)
 
     @decorate.catch_error()
     @authentication.required()
@@ -641,4 +641,4 @@ class UserRole(EndpointResource):
             r = self.graph.Role.inflate(row[0])
             data.append({"name": r.name, "description": r.description})
 
-        return self.force_response(data)
+        return self.response(data)

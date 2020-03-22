@@ -285,8 +285,8 @@ class EndpointResource(Resource):
         )
 
     def response(self, content=None, errors=None,
-                       code=None, headers=None, head_method=False,
-                       elements=None, meta=None):
+                 code=None, headers=None, head_method=False,
+                 elements=None, meta=None):
         """
         Helper function to let the developer define
         how to respond with the REST and HTTP protocol
@@ -294,13 +294,17 @@ class EndpointResource(Resource):
         Build a ResponseElements instance.
         """
 
+        # Deprecated since 0.7.2
         if elements is not None:
-            log.warning("Deprecated use of elements in force_response")
-        if meta is not None:
-            log.warning("Deprecated use of meta in force_response")
+            log.warning("Deprecated use of elements in response")
 
+        # Deprecated since 0.7.2
+        if meta is not None:
+            log.warning("Deprecated use of meta in response")
+
+        # Deprecated since 0.7.2
         if content and errors:
-            log.warning("Deprecated use of warning messages in force_response")
+            log.warning("Deprecated use of warning messages in response")
 
         if headers is None:
             headers = {}
@@ -369,7 +373,7 @@ class EndpointResource(Resource):
 
     def empty_response(self):
         """ Empty response as defined by the protocol """
-        return self.force_response("", code=hcodes.HTTP_OK_NORESPONSE)
+        return self.response("", code=hcodes.HTTP_OK_NORESPONSE)
 
     def formatJsonResponse(self, instances, resource_type=None):
         """

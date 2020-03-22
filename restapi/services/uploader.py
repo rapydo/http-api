@@ -92,9 +92,7 @@ class Uploader:
 
         # Check file extension?
         if not self.allowed_file(filename):
-            return self.force_response(
-                errors=["Wrong extension, file extension not allowed"]
-            )
+            return self.response(errors="Wrong extension, file extension not allowed")
 
         content = request.data
 
@@ -108,8 +106,8 @@ class Uploader:
                 os.remove(abs_file)
                 log.debug("Forced removal")
             else:
-                return self.force_response(
-                    errors=["File '" + filename + "' already exists"],
+                return self.response(
+                    errors="File '{}' already exists".format(filename),
                     code=hcodes.HTTP_BAD_REQUEST,
                 )
 
@@ -119,8 +117,8 @@ class Uploader:
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.force_response(
-                errors=["Server error: unable to recover the uploaded file"],
+            return self.response(
+                errors="Server error: unable to recover the uploaded file",
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
 
@@ -145,7 +143,7 @@ class Uploader:
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
-        return self.force_response(
+        return self.response(
             {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
             code=hcodes.HTTP_OK_BASIC,
         )
@@ -161,8 +159,8 @@ class Uploader:
             #     f.write(request.stream.read())
             # # print("TEST", request.data)
 
-            return self.force_response(
-                errors={"Missing file": "No files specified"},
+            return self.response(
+                errors="No files specified",
                 code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
             )
 
@@ -170,9 +168,7 @@ class Uploader:
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
-            return self.force_response(
-                errors={"Wrong extension": "File extension not allowed"}
-            )
+            return self.response(errors="File extension not allowed")
 
         # Check file name
         filename = secure_filename(myfile.filename)
@@ -192,29 +188,25 @@ class Uploader:
                 os.remove(abs_file)
                 log.debug("Forced removal")
             else:
-                return self.force_response(
-                    errors={
-                        "File '"
-                        + filename
-                        + "' already exists.": "Change file name or use the force parameter"
-                    },
-                    code=hcodes.HTTP_BAD_REQUEST,
+                e = "File '{}' already exists, use force parameter to overwrite".format(
+                    filename
                 )
+                return self.response(errors=e, code=hcodes.HTTP_BAD_REQUEST)
 
         # Save the file
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception:
-            return self.force_response(
-                errors={"Permissions": "Failed to write uploaded file"},
+            return self.response(
+                errors="Permission denied: failed to write the file",
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.force_response(
-                errors={"Server file system": "Unable to recover the uploaded file"},
+            return self.response(
+                errors="Unable to retrieve the uploaded file",
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
 
@@ -239,7 +231,7 @@ class Uploader:
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
-        return self.force_response(
+        return self.response(
             {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
             code=hcodes.HTTP_OK_BASIC,
         )
@@ -283,8 +275,8 @@ class Uploader:
         # Check file existence
         if not os.path.exists(abs_file):
             log.critical("File '{}' not found", abs_file)
-            return self.force_response(
-                errors={"File missing": "File requested does not exists"},
+            return self.response(
+                errors="Requested file does not exists",
                 code=hcodes.HTTP_BAD_NOTFOUND,
             )
 
@@ -293,8 +285,8 @@ class Uploader:
             os.remove(abs_file)
         except Exception:
             log.critical("Cannot remove local file {}", abs_file)
-            return self.force_response(
-                errors={"Permissions": "Failed to remove file"},
+            return self.response(
+                errors="Permission denied: failed to remove the file",
                 code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
             )
         log.warning("Removed '{}'", abs_file)
@@ -302,7 +294,7 @@ class Uploader:
         if skip_response:
             return
 
-        return self.force_response("Deleted", code=hcodes.HTTP_OK_BASIC)
+        return self.response("Deleted", code=hcodes.HTTP_OK_BASIC)
 
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
@@ -322,8 +314,8 @@ class Uploader:
                 os.remove(file_path)
                 log.debug("Forced removal")
             else:
-                return self.force_response(
-                    errors=["File '" + filename + "' already exists"],
+                return self.response(
+                    errors="File '{}' already exists".format(filename),
                     code=hcodes.HTTP_BAD_REQUEST,
                 )
 
@@ -336,7 +328,7 @@ class Uploader:
 
         log.info("Upload initialized on url: {}", url)
 
-        return self.force_response(
+        return self.response(
             "",
             headers={
                 "Access-Control-Expose-Headers": "Location",
@@ -373,7 +365,7 @@ class Uploader:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
             completed = False
-            return completed, self.force_response("Invalid request")
+            return completed, self.response("Invalid request")
 
         # Default chunk size, put this somewhere
         if chunk_size is None:
@@ -404,13 +396,13 @@ class Uploader:
             except Exception:
                 log.warning("Unknown type for '{}'", file_path)
 
-            return completed, self.force_response(
+            return completed, self.response(
                 {
                     'filename': filename,
                     'meta': {'type': ftype, 'charset': fcharset}
                 }, code=200)
 
-        return completed, self.force_response(
+        return completed, self.response(
             "partial",
             headers={
                 "Access-Control-Expose-Headers": "Range",

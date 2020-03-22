@@ -46,7 +46,7 @@ class Status(EndpointResource):
     @decorate.catch_error()
     def get(self, service=None):
 
-        return self.force_response('Server is alive!')
+        return self.response('Server is alive!')
 
 
 class Verify(EndpointResource):
@@ -76,7 +76,7 @@ class Verify(EndpointResource):
 
         service_instance = self.get_service_instance(service, global_instance=False)
         log.critical(service_instance)
-        return self.force_response("Service is reachable: {}".format(service))
+        return self.response("Service is reachable: {}".format(service))
 
 
 class SwaggerSpecifications(EndpointResource):
@@ -168,7 +168,7 @@ if detector.check_availability('celery'):
                 res = task_result.result
                 if not isinstance(res, dict):
                     res = str(res)
-                return self.force_response({
+                return self.response({
                     'status': task_result.status,
                     # 'info': task_result.info,
                     'output': res,
@@ -278,7 +278,7 @@ if detector.check_availability('celery'):
             # tasks = inspect()
             log.verbose('listing completed')
 
-            return self.force_response(data)
+            return self.response(data)
 
         # task_id = uuid referring to the task you are selecting
         @authentication.required(roles=['admin_root'])

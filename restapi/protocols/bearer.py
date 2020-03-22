@@ -116,7 +116,7 @@ class HTTPTokenAuth:
                         )
                     )
                     log.info("Unauthorized request: missing credentials")
-                    return decorated_self.force_response(
+                    return decorated_self.response(
                         errors=msg,
                         code=hcodes.HTTP_BAD_UNAUTHORIZED,
                         headers=headers,
@@ -134,7 +134,7 @@ class HTTPTokenAuth:
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
-                        return decorated_self.force_response(
+                        return decorated_self.response(
                             errors="Invalid token received",
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
                             headers=headers
@@ -145,7 +145,7 @@ class HTTPTokenAuth:
                     roles_fn = decorated_self.auth.verify_roles
                     if not self.authenticate_roles(roles_fn, roles, required_roles):
                         log.info("Unauthorized request: missing privileges")
-                        return decorated_self.force_response(
+                        return decorated_self.response(
                             errors="You are not authorized: missing privileges",
                             code=hcodes.HTTP_BAD_UNAUTHORIZED,
                         )

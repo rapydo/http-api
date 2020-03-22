@@ -24,4 +24,4 @@ class RecoverSchema(EndpointResource):
             method=method, is_schema_url=True
         )
 
-        return self.force_response(custom_definition)
+        return self.response(custom_definition)
