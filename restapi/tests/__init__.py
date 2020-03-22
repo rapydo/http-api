@@ -102,7 +102,9 @@ class BaseTests:
         r = client.get(API_URI + '/schemas/' + endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
-        return content['Response']['data']
+        if 'Response' in content:
+            return content['Response']['data']
+        return content
 
     def getDynamicInputSchema(self, client, endpoint, headers):
         """
@@ -113,7 +115,9 @@ class BaseTests:
         r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
-        return content['Response']['data']
+        if 'Response' in content:
+            return content['Response']['data']
+        return content
 
     def get_content(self, http_out):
 
@@ -264,7 +268,9 @@ class BaseTests:
     def get_profile(self, headers, client):
         r = client.get(AUTH_URI + '/profile', headers=headers)
         content = json.loads(r.data.decode('utf-8'))
-        return content['Response']['data']
+        if 'Response' in content:
+            return content['Response']['data']
+        return content
 
     def get_celery(self, app):
 
