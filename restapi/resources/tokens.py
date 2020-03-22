@@ -69,11 +69,11 @@ class Tokens(EndpointResource):
 
         tokens = self.auth.get_tokens(user=user)
         if token_id is None:
-            return tokens
+            return self.response(tokens)
 
         for token in tokens:
             if token["id"] == token_id:
-                return token
+                return self.response(token)
 
         raise RestApiException(
             'This token was not emitted for your account or it does not exist',
