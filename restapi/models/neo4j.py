@@ -2,7 +2,7 @@
 
 """ Models for graph database """
 
-from restapi.services.neo4j.models import (
+from restapi.services.neo4j import (
     StructuredNode,
     IdentifiedNode,
     StringProperty,
