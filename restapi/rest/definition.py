@@ -271,6 +271,22 @@ class EndpointResource(Resource):
     def force_response(self, content=None, errors=None,
                        code=None, headers=None, head_method=False,
                        elements=None, meta=None):
+
+        # Deprecated since 0.7.3
+        log.warning("Deprecated use of self.forse_respose, replace with self.response")
+        return self.response(
+            content=content,
+            errors=errors,
+            code=code,
+            headers=code,
+            head_method=head_method,
+            elements=elements,
+            meta=meta
+        )
+
+    def response(self, content=None, errors=None,
+                       code=None, headers=None, head_method=False,
+                       elements=None, meta=None):
         """
         Helper function to let the developer define
         how to respond with the REST and HTTP protocol
