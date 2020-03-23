@@ -195,7 +195,7 @@ class Authentication(BaseAuthentication):
         if token_type is None:
             token_type = self.FULL_TOKEN
 
-        now = datetime.now()
+        now = datetime.now(pytz.utc)
         exp = now + timedelta(seconds=self.shortTTL)
 
         token_entry = self.db.Token(
@@ -223,7 +223,7 @@ class Authentication(BaseAuthentication):
             self.db.session.rollback()
 
     def refresh_token(self, jti):
-        now = datetime.now()
+        now = datetime.now(pytz.utc)
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
         if token_entry is None:
             return False

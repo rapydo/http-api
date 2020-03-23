@@ -92,10 +92,7 @@ class Login(EndpointResource):
     @decorate.catch_error()
     def post(self):
 
-        # ########## INIT ##########
         jargs = self.get_input()
-
-        # self.validate_input(jargs, 'Credentials')
 
         username = jargs.get('username')
         if username is None:
@@ -105,7 +102,6 @@ class Login(EndpointResource):
         if password is None:
             password = jargs.get('pwd')
 
-        # ##################################################
         # Now credentials are checked at every request
         if username is None or password is None:
             msg = "Missing username or password"
