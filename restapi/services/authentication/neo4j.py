@@ -136,7 +136,6 @@ class Authentication(BaseAuthentication):
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
-            log.warning("No users inside graphdb. Injecting default.")
             self.create_user(
                 {
                     # 'uuid': getUUID(),
@@ -148,6 +147,7 @@ class Authentication(BaseAuthentication):
                 },
                 roles=self.default_roles,
             )
+            log.warning("Injected default user")
         else:
             log.debug("Users already created")
 

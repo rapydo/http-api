@@ -143,7 +143,6 @@ class Authentication(BaseAuthentication):
             missing_role = len(fetch_roles) < 1
 
             if missing_role:
-                log.warning("No roles inside mongo. Injected defaults.")
                 for role in self.default_roles:
                     roles.append(
                         self.db.Role(name=role, description="automatic").save().name
@@ -151,6 +150,7 @@ class Authentication(BaseAuthentication):
                     # if missing_role:
                     #     transactions.append(role)
                     # roles.append(role)
+                log.warning("Injected default roles")
             else:
                 # roles = fetch_roles
                 for role_obj in fetch_roles:
@@ -174,7 +174,7 @@ class Authentication(BaseAuthentication):
                     roles=roles,
                 )
 
-                log.warning("No users inside mongo. Injected default one.")
+                log.warning("Injected default user")
 
         except BaseException as e:
             # raise e

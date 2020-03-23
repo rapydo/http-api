@@ -150,15 +150,14 @@ class Authentication(BaseAuthentication):
             # if no roles
             missing_role = not self.db.Role.query.first()
             if missing_role:
-                log.warning("No roles inside db. Injected defaults.")
                 for role in self.default_roles:
                     sqlrole = self.db.Role(name=role, description="automatic")
                     self.db.session.add(sqlrole)
+                log.warning("Injected default roles")
 
             # if no users
             missing_user = not self.db.User.query.first()
             if missing_user:
-                log.warning("No users inside db. Injected default.")
                 self.create_user(
                     {
                         # 'uuid': getUUID(),
@@ -170,6 +169,7 @@ class Authentication(BaseAuthentication):
                     },
                     roles=self.default_roles,
                 )
+                log.warning("Injected default user")
 
             if missing_user or missing_role:
                 self.db.session.commit()
