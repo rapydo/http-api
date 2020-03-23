@@ -201,15 +201,11 @@ class HandleSecurity:
             raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
 
         if self.auth.VERIFY_PASSWORD_STRENGTH:
-            check = True
-            if password is not None:
-                check, msg = self.verify_password_strength(
-                    new_password, old_pwd=password
-                )
-            else:
-                check, msg = self.verify_password_strength(
-                    new_password, old_hash=user.password
-                )
+
+            check, msg = self.verify_password_strength(
+                new_password,
+                old_pwd=password if password else user.password
+            )
 
             if not check:
                 raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
