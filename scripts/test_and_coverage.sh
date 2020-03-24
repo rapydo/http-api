@@ -94,7 +94,7 @@ bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
 printf "\n\n\n"
 
-rapydo remove --all
+rapydo remove
 
 printf "\n\n\n"
 
