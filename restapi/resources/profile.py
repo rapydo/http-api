@@ -131,7 +131,7 @@ class Profile(EndpointResource):
 
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]
-    labels = ["profiles"]
+    labels = ["profile"]
 
     GET = {
         "/profile": {
@@ -367,9 +367,9 @@ class ProfileActivate(EndpointResource):
     }
     PUT = {
         "/profile/activate/<token_id>": {
-            "summary": "Activate account by verificate activation token",
+            "summary": "Activate your account by providing the activation token",
             "responses": {
-                "200": {"description": "Account has been successfully activated"}
+                "200": {"description": "Account successfully activated"}
             },
         }
     }
