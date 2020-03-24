@@ -72,7 +72,7 @@ setup(
         "glom",
         "psutil",
         "plumbum",
-        "pretty_errors",
+        "stackprinter",
         "maxminddb-geolite2",
 
         # Web sockets

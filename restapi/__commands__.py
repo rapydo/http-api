@@ -3,13 +3,15 @@
 import os
 import time
 import click
-import pretty_errors
+import stackprinter
 from flask.cli import FlaskGroup
 from restapi.processes import wait_socket
 from restapi import __package__ as current_package
 from restapi.utilities.logs import log
 
 BIND_INTERFACE = "0.0.0.0"
+
+stackprinter.set_excepthook(style='darkbg2')
 
 
 @click.group()
@@ -203,8 +205,6 @@ def tests(wait, core, file, folder):
             log.debug('Waiting service startup')
             time.sleep(5)
         mywait()
-
-    log.debug("Starting unit tests: {}", pretty_errors)
 
     # launch unittests and also compute coverage
     log.warning(
