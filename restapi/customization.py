@@ -139,6 +139,9 @@ class Customizer:
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
 
+                if not epfiles.endswith(".py"):
+                    continue
+
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
                 module_name = "{}.{}".format(apiclass_module, module_file)
