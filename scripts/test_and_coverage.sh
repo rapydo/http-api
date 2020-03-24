@@ -94,7 +94,7 @@ bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
 printf "\n\n\n"
 
-rapydo clean
+rapydo remove --all
 
 printf "\n\n\n"
 
@@ -113,5 +113,4 @@ curl -k -X GET https://localhost/api/status | grep "Server is alive"
 
 printf "\n\n\n"
 
-rapydo --production remove
-rapydo --production clean
+rapydo --production remove --all
