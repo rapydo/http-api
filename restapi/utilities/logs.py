@@ -60,8 +60,6 @@ log.verbose = verbose
 log.exit = critical_exit
 
 log.remove()
-if LOGS_PATH is not None:
-    log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
 
 log.add(
     sys.stderr,
@@ -69,6 +67,13 @@ log.add(
     colorize=True,
     format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>"
 )
+
+if LOGS_PATH is not None:
+    try:
+        log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
+    except PermissionError as p:
+        log.error(p)
+        LOGS_PATH = None
 
 # Logs utilities
 
