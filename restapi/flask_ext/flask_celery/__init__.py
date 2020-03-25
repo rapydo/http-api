@@ -169,27 +169,31 @@ class CeleryExt(BaseExtension):
         celery_app.conf.accept_content = ['json']
         celery_app.conf.task_serializer = 'json'
         celery_app.conf.result_serializer = 'json'
+
         # Max priority default value for all queues
         # Required to be able to set priority parameter on apply_async calls
-        # celery_app.conf.task_queue_max_priority = 10
+        celery_app.conf.task_queue_max_priority = 10
 
-        # default_exchange = Exchange('default', type='direct')
-        # priority_exchange = Exchange('priority', type='direct')
-        # celery_app.conf.task_queues = [
-        #     Queue(
-        #         'priority',
-        #         priority_exchange,
-        #         routing_key='priority',
-        #         queue_arguments={
-        #             'x-max-priority': 10
-        #         }
-        #     )
-        # ]
+        # Default priority for taks (if not specified)
+        celery_app.conf.task_default_priority = 5
+
         # If you want to apply a more strict priority to items
         # probably prefetching should also be disabled:
 
-        # CELERY_ACKS_LATE = True
-        # CELERYD_PREFETCH_MULTIPLIER = 1
+        # Late ack means the task messages will be acknowledged after the task
+        # has been executed, not just before (the default behavior).
+        # celery_app.conf.task_acks_late = True
+
+        # How many messages to prefetch at a time multiplied by the number
+        # of concurrent processes. The default is 4 (four messages for each process).
+        # The default setting is usually a good choice, however – if you have very
+        # long running tasks waiting in the queue and you have to start the workers,
+        # note that the first worker to start will receive four times the number
+        # of messages initially. Thus the tasks may not be fairly distributed to
+        # the workers. To disable prefetching, set worker_prefetch_multiplier to 1.
+        # Changing that setting to 0 will allow the worker to keep consuming as many
+        # messages as it wants.
+        celery_app.conf.worker_prefetch_multiplier = 1
 
         # celery_app.conf.broker_pool_limit = None
 
