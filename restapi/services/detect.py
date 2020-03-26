@@ -72,7 +72,7 @@ class Detector:
 
     @staticmethod
     def prefix_name(service):
-        return service.get('name'), service.get('prefix').lower() + '_'
+        return service.get('prefix').lower() + '_'
 
     def check_configuration(self):
 
@@ -84,7 +84,8 @@ class Detector:
 
         for service in self.services_configuration:
 
-            name, prefix = self.prefix_name(service)
+            name = service.get('name')
+            prefix = self.prefix_name(service)
 
             # Was this service enabled from the developer?
             enable_var = str(prefix + 'enable').upper()
@@ -134,7 +135,7 @@ class Detector:
         host = None
 
         if prefix is None:
-            _, prefix = Detector.prefix_name(service)
+            prefix = Detector.prefix_name(service)
 
         for var, value in os.environ.items():
             if enable_var is not None and var == enable_var:
@@ -145,7 +146,7 @@ class Detector:
             if var.startswith(prefix):
 
                 # Fix key and value before saving
-                key = var[len(prefix) :]
+                key = var[len(prefix):]
                 # One thing that we must avoid is any quote around our value
                 value = value.strip('"').strip("'")
                 # save
@@ -184,7 +185,7 @@ class Detector:
 
         for service in self.services_configuration:
 
-            name, _ = self.prefix_name(service)
+            name = service.get('name')
 
             if not self.available_services.get(name):
                 continue
@@ -240,7 +241,7 @@ class Detector:
 
         for service in self.services_configuration:
 
-            name, _ = self.prefix_name(service)
+            name = service.get('name')
 
             if not self.available_services.get(name):
                 continue
