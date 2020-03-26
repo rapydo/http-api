@@ -47,7 +47,7 @@ setup(
         "passlib[bcrypt]==1.7.2",
         "authlib==0.14.1",
 
-        "PyYAML==5.3",
+        "PyYAML==5.3.1",
 
         # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
