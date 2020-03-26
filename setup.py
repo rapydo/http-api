@@ -36,7 +36,7 @@ setup(
         # Flask and plugins
         "Flask==1.1.1",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.8.5",
+        "flask-apispec==0.8.7",
         "Flask-Cors==3.0.8",
         "Flask-SQLAlchemy==2.4.1",
         "Flask-Migrate",
