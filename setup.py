@@ -45,7 +45,7 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
-        "authlib==0.13",
+        "authlib==0.14.1",
 
         "PyYAML==5.3",
 
