@@ -79,8 +79,7 @@ setup(
         "websocket-client",
         "gripcontrol==4.0.0",
 
-        # Sentry
-        "sentry-sdk[flask]==0.14.0"
+        "sentry-sdk[flask]==0.14.3"
     ],
     classifiers=[
         'Programming Language :: Python',
