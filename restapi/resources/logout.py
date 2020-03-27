@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from restapi.rest.definition import EndpointResource
-from restapi.protocols.bearer import authentication
+from restapi import decorators
 
 
 class Logout(EndpointResource):
@@ -18,7 +18,7 @@ class Logout(EndpointResource):
         }
     }
 
-    @authentication.required()
+    @decorators.auth.required()
     def get(self):
         self.auth.invalidate_token(token=self.auth.get_token())
         return self.empty_response()

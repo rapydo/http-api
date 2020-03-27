@@ -3,8 +3,7 @@
 import re
 from sqlalchemy.exc import IntegrityError
 
-from restapi import decorators as decorate
-from restapi.protocols.bearer import authentication
+from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.confs import get_project_configuration
@@ -164,8 +163,8 @@ Password: "{}"
         else:
             send_mail(html, subject, user.email, plain_body=body)
 
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def get(self, user_id=None):
 
         data = []
@@ -220,8 +219,8 @@ Password: "{}"
 
         return self.response(data)
 
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def post(self):
 
         v = self.get_input()
@@ -428,8 +427,8 @@ Password: "{}"
 
         return self.response(user.uuid)
 
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def put(self, user_id=None):
 
         if user_id is None:
@@ -537,8 +536,8 @@ Password: "{}"
 
         return self.empty_response()
 
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def delete(self, user_id=None):
 
         if user_id is None:
@@ -610,8 +609,8 @@ class UserRole(EndpointResource):
         },
     }
 
-    @decorate.catch_error(exception=Exception, catch_generic=True)
-    @authentication.required()
+    @decorators.catch_errors(exception=Exception, catch_generic=True)
+    @decorators.auth.required()
     def get(self, query=None):
 
         if self.neo4j_enabled:

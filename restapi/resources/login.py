@@ -6,7 +6,7 @@ import pytz
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.flask_ext.flask_auth import HandleSecurity
-from restapi import decorators as decorate
+from restapi import decorators
 from restapi.confs import WRAP_RESPONSE
 
 from restapi.utilities.htmlcodes import hcodes
@@ -89,7 +89,7 @@ class Login(EndpointResource):
             errors=message, code=hcodes.HTTP_BAD_FORBIDDEN
         )
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def post(self):
 
         jargs = self.get_input()

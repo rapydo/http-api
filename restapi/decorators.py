@@ -5,12 +5,17 @@ from functools import wraps
 import werkzeug.exceptions
 from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
+# imported here as utility for endpoints
+from restapi.services.authentication.bearer import authentication as auth
+
 from restapi.utilities.htmlcodes import hcodes
 
 from restapi.utilities.logs import log
 
+log.verbose("Auth loaded {}", auth)
 
-def catch_error(exception=None, catch_generic=True, exception_label=None, **kwargs):
+
+def catch_errors(exception=None, catch_generic=True, exception_label=None, **kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.

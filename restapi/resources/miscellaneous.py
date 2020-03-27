@@ -2,11 +2,10 @@
 
 from flask import jsonify
 
-from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from restapi import decorators as decorate
+from restapi import decorators
 
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
@@ -43,7 +42,7 @@ class Status(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def get(self, service=None):
 
         return self.response('Server is alive')
@@ -63,8 +62,8 @@ class Verify(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
-    @authentication.required(roles=['admin_root'])
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
     def get(self, service):
 
         log.critical(detector.available_services)
@@ -154,7 +153,7 @@ if detector.check_availability('celery'):
         }
 
         # task_id = uuid referring to the task you are selecting
-        @authentication.required(
+        @decorators.auth.required(
             roles=['admin_root', 'staff_user'], required_roles='any'
         )
         def get(self, task_id=None):
@@ -281,14 +280,14 @@ if detector.check_availability('celery'):
             return self.response(data)
 
         # task_id = uuid referring to the task you are selecting
-        @authentication.required(roles=['admin_root'])
+        @decorators.auth.required(roles=['admin_root'])
         def put(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id)
             return self.empty_response()
 
         # task_id = uuid referring to the task you are selecting
-        @authentication.required(roles=['admin_root'])
+        @decorators.auth.required(roles=['admin_root'])
         def delete(self, task_id):
             celery = self.get_service_instance('celery')
             celery.control.revoke(task_id, terminate=True)

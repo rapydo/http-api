@@ -5,12 +5,12 @@ Add schema endpoint if you have models to expose
 """
 
 from restapi.rest.definition import EndpointResource
-from restapi.decorators import catch_error
+from restapi import decorators
 # from restapi.utilities.logs import log
 
 
 class RecoverSchema(EndpointResource):
-    @catch_error()
+    @decorators.catch_errors()
     def get(self, **kwargs):
         """ Expose schemas for UIs automatic form building """
 

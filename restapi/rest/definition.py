@@ -13,6 +13,7 @@ from restapi.confs import API_URL, WRAP_RESPONSE
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
+from restapi.services.authentication.bearer import HTTPTokenAuth
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
@@ -771,8 +772,6 @@ class EndpointResource(Resource):
 
         if request.method == 'OPTIONS':
             return user
-
-        from restapi.protocols.bearer import HTTPTokenAuth
 
         http = HTTPTokenAuth()
         auth_type, token = http.get_authorization_token()

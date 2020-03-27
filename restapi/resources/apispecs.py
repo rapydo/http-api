@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi import decorators as decorate
+from restapi import decorators
 
 from flask_apispec import use_kwargs, marshal_with
 from flask_apispec import MethodResource
@@ -69,7 +69,7 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
     # @marshal_with(OutSchema, code=200)
     @marshal_with(OutSchema1, code=201)
     @marshal_with(None, code=204)
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def get(self, **kwargs):
 
         log.info(kwargs)

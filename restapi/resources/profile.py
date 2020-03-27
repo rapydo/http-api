@@ -5,8 +5,7 @@ import jwt
 import pytz
 
 from restapi.rest.definition import EndpointResource
-from restapi.protocols.bearer import authentication
-from restapi import decorators as decorate
+from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
@@ -162,7 +161,7 @@ class Profile(EndpointResource):
         }
     }
 
-    @authentication.required()
+    @decorators.auth.required()
     def get(self):
 
         current_user = self.get_current_user()
@@ -213,7 +212,7 @@ class Profile(EndpointResource):
 
         return self.response(data)
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def post(self):
         """ Register new user """
 
@@ -329,8 +328,8 @@ class Profile(EndpointResource):
 
         self.auth.save_user(user)
 
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def put(self):
         """ Update profile for current user """
 
@@ -374,7 +373,7 @@ class ProfileActivate(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, token_id):
 
         token_id = token_id.replace("+", ".")
@@ -429,7 +428,7 @@ class ProfileActivate(EndpointResource):
 
         return self.response("Account activated")
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def post(self):
 
         v = self.get_input()
@@ -498,7 +497,7 @@ class RecoverPassword(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def post(self):
 
         if not send_mail_is_active():
@@ -569,7 +568,7 @@ class RecoverPassword(EndpointResource):
 
         return self.response(msg)
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, token_id):
 
         token_id = token_id.replace("+", ".")

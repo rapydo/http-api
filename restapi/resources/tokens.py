@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from flask import current_app
-from restapi import decorators as decorate
+from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi.protocols.bearer import authentication
 
 from restapi.utilities.htmlcodes import hcodes
 
@@ -57,8 +56,8 @@ class Tokens(EndpointResource):
         return self.get_current_user()
 
     # token_id = uuid associated to the token you want to select
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def get(self, token_id=None):
 
         user = self.get_user()
@@ -81,8 +80,8 @@ class Tokens(EndpointResource):
         )
 
     # token_id = uuid associated to the token you want to select
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required()
     def delete(self, token_id=None):
         """
             For additional security, tokens are invalidated both

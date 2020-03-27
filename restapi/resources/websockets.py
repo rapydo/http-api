@@ -8,10 +8,9 @@ try:
 except ImportError as e:
     print(str(e))
 
-from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi import decorators as decorate
+from restapi import decorators
 
 from restapi.utilities.logs import log
 
@@ -33,7 +32,7 @@ class PushpinWebSocket(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, channel):
 
         pushpin = self.get_service_instance('pushpin')
@@ -43,8 +42,8 @@ class PushpinWebSocket(EndpointResource):
 
         return "Message received: {}".format(published)
 
-    @decorate.catch_error()
-    @authentication.required(allow_access_token_parameter=True)
+    @decorators.catch_errors()
+    @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 
         in_events = decode_websocket_events(request.data)
@@ -107,7 +106,7 @@ class PushpinHTTPStream(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, channel):
 
         pushpin = self.get_service_instance('pushpin')
@@ -117,8 +116,8 @@ class PushpinHTTPStream(EndpointResource):
 
         return "Message received: {}".format(published)
 
-    @decorate.catch_error()
-    @authentication.required(allow_access_token_parameter=True)
+    @decorators.catch_errors()
+    @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 
         headers = {}
