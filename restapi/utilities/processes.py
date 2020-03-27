@@ -5,7 +5,7 @@ import psutil
 from restapi.utilities.logs import log
 
 
-def find(prefix, suffixes=None, local_bin=False):
+def find_process(prefix, suffixes=None, local_bin=False):
 
     current_pid = os.getpid()
 

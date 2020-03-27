@@ -5,8 +5,8 @@ import time
 import click
 import stackprinter
 from flask.cli import FlaskGroup
-from restapi.processes import wait_socket
 from restapi import __package__ as current_package
+from restapi.utilities.processes import wait_socket, find_process
 from restapi.utilities.logs import log
 
 BIND_INTERFACE = "0.0.0.0"
@@ -48,7 +48,6 @@ def flask_cli(options=None):
 
 
 def starting_up():
-    from restapi.processes import find as find_process
 
     return find_process(current_package, suffixes=['wait', 'init'], local_bin=True)
 
