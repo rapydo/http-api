@@ -34,7 +34,7 @@ def input_validation(json_parameters, definitionName):
     validate_object(spec, definition, json_parameters)
 
 
-class BeSwagger:
+class Swagger:
     """Swagger class in our own way:
 
     Fewer methods than the original swagger reading,

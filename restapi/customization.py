@@ -11,7 +11,7 @@ from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.confs.attributes import EndpointElements, ExtraAttributes
 from restapi.services.detect import detector
-from restapi.swagger import BeSwagger
+from restapi.swagger import Swagger
 
 from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import read_configuration
@@ -277,7 +277,7 @@ class Customizer:
     def do_swagger(self):
 
         # SWAGGER read endpoints definition
-        swag = BeSwagger(self._endpoints, self)
+        swag = Swagger(self._endpoints, self)
         swag_dict = swag.swaggerish()
 
         # TODO: update internal endpoints from swagger
