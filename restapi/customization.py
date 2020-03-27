@@ -9,11 +9,11 @@ import copy
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.confs.attributes import EndpointElements, ExtraAttributes
 from restapi.services.detect import detector
-from restapi.attributes import EndpointElements, ExtraAttributes
 from restapi.swagger import BeSwagger
-from restapi.utilities.meta import Meta
 
+from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
 

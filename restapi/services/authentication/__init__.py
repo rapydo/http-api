@@ -15,14 +15,15 @@ import pytz
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from flask import current_app, request
+
 from restapi.services.detect import Detector
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
-from restapi.attributes import ALL_ROLES, ANY_ROLE
+from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
+
 from restapi.utilities.meta import Meta
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.globals import mem
-
 from restapi.utilities.logs import log
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

@@ -13,11 +13,12 @@ import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
-from restapi.attributes import ExtraAttributes
+
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
-from restapi.utilities.globals import mem
+from restapi.confs.attributes import ExtraAttributes
 
+from restapi.utilities.globals import mem
 from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.logs import log
 
