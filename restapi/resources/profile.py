@@ -161,6 +161,7 @@ class Profile(EndpointResource):
         }
     }
 
+    @decorators.catch_errors()
     @decorators.auth.required()
     def get(self):
 
