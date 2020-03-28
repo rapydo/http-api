@@ -613,9 +613,6 @@ class EndpointResource(Resource):
             if isinstance(attribute, list):
                 continue
 
-            if isinstance(attribute, UUID):
-                attribute = str(attribute)
-
             data["attributes"][c] = attribute
 
         return data

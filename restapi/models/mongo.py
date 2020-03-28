@@ -28,7 +28,10 @@ class Role(MongoModel):
 
 class User(MongoModel):
     email = fields.EmailField(primary_key=True)
-    uuid = fields.UUIDField()
+    # To be enabled after completed the output serialization,
+    # otherwise will raise this error: Object of type UUID is not JSON serializable
+    # uuid = fields.UUIDField()
+    uuid = fields.CharField()
     name = fields.CharField()
     surname = fields.CharField()
     authmethod = fields.CharField()
