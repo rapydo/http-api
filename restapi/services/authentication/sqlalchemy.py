@@ -160,7 +160,6 @@ class Authentication(BaseAuthentication):
             if missing_user:
                 self.create_user(
                     {
-                        # 'uuid': getUUID(),
                         'email': self.default_user,
                         # 'authmethod': 'credentials',
                         'name': 'Default',

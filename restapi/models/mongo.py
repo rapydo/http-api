@@ -28,8 +28,7 @@ class Role(MongoModel):
 
 class User(MongoModel):
     email = fields.EmailField(primary_key=True)
-    uuid = fields.CharField()
-    # uuid = fields.UUIDField(default=getUUID())
+    uuid = fields.UUIDField()
     name = fields.CharField()
     surname = fields.CharField()
     authmethod = fields.CharField()

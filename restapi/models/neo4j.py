@@ -16,12 +16,11 @@ from neomodel import OneOrMore, ZeroOrMore, ZeroOrOne
 
 
 class User(IdentifiedNode):
-    # uuid = StringProperty(required=True, unique_index=True)
     email = EmailProperty(required=True, unique_index=True, show=True)
     name = StringProperty(required=True, show=True)
     surname = StringProperty(required=True, show=True)
     authmethod = StringProperty(required=True)
-    password = StringProperty()  # Hashed from a custom function
+    password = StringProperty()  # Hashed by a custom function
     first_login = DateTimeProperty(show=True)
     last_login = DateTimeProperty(show=True)
     last_password_change = DateTimeProperty(show=True)

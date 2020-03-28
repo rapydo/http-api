@@ -138,7 +138,6 @@ class Authentication(BaseAuthentication):
         if not len(self.db.User.nodes) > 0:
             self.create_user(
                 {
-                    # 'uuid': getUUID(),
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default',

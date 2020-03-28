@@ -13,14 +13,12 @@ from neomodel import JSONProperty as originalJSONProperty
 from neomodel import ArrayProperty as originalArrayProperty
 from neomodel import EmailProperty as originalEmailProperty
 from neomodel import AliasProperty as originalAliasProperty
-# from neomodel import UniqueIdProperty as originalUniqueIdProperty
+from neomodel import UniqueIdProperty as originalUniqueIdProperty
 from neomodel import StructuredNode as originalStructuredNode
 from neomodel import StructuredRel as originalStructuredRel
 from neomodel import RelationshipTo as originalRelationshipTo
 from neomodel import RelationshipFrom as originalRelationshipFrom
 from neomodel.relationship_manager import RelationshipDefinition
-
-from restapi.utilities.uuid import getUUID
 
 
 def RelationshipTo(cls_name, rel_type, show=None, is_restricted=False, *args, **kwargs):
@@ -179,13 +177,14 @@ class AliasProperty(originalAliasProperty, myAttribProperty):
         super(AliasProperty, self).__init__(*args, **kwargs)
 
 
-# class UniqueIdProperty(originalDateTimeProperty, myAttribProperty):
-#     """
-#     Customized version of UniqueIdProperty implemented in neomodel
-#     """
-#     def __init__(self, show=None, is_restricted=False, *args, **kwargs):
-#         self.save_extra_info(show, is_restricted)
-#         super(UniqueIdProperty, self).__init__(*args, **kwargs)
+class UniqueIdProperty(originalUniqueIdProperty, myAttribProperty):
+    """
+    Customized version of UniqueIdProperty implemented in neomodel
+    """
+
+    def __init__(self, show=None, is_restricted=False, *args, **kwargs):
+        self.save_extra_info(show, is_restricted)
+        super(UniqueIdProperty, self).__init__(*args, **kwargs)
 
 
 class StructuredRel(originalStructuredRel):
@@ -296,9 +295,7 @@ class IdentifiedNode(StructuredNode):
 
     __abstract_node__ = True
 
-    # TO FIX: now we should use:
-    # uuid = UniqueIdProperty
-    uuid = StringProperty(default=getUUID, unique_index=True)
+    uuid = UniqueIdProperty()
 
 
 class TimestampedNode(IdentifiedNode):
