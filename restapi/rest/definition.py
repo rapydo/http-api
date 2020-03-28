@@ -6,6 +6,7 @@ we could provide back then
 """
 
 from datetime import datetime
+from uuid import UUID
 from flask import current_app, make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
@@ -611,6 +612,9 @@ class EndpointResource(Resource):
 
             if isinstance(attribute, list):
                 continue
+
+            if isinstance(attribute, UUID):
+                attribute = str(attribute)
 
             data["attributes"][c] = attribute
 
