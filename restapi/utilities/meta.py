@@ -74,17 +74,10 @@ class Meta:
         if prefix_package:
             modulestring = BACKEND_PACKAGE + '.' + modulestring.lstrip('.')
 
-        # which version of python is this?
-        # Retrocompatibility for Python < 3.6
-        try:
-            import_exceptions = (ModuleNotFoundError, ImportError)
-        except NameError:
-            import_exceptions = ImportError
-
         try:
             # Meta language for dinamically import
             module = import_module(modulestring)
-        except import_exceptions as e:  # pylint:disable=catching-non-exception
+        except ModuleNotFoundError as e:  # pylint:disable=catching-non-exception
             if exit_on_fail:
                 raise e
             elif exit_if_not_found:
@@ -171,13 +164,15 @@ class Meta:
 
         models = {}
         module_name = "{}.models.{}".format(package, name)
-        module = Meta.get_module_from_string(module_name, exit_on_fail=exit_on_fail)
+        try:
+            module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+        except BaseException as e:
+            if exit_on_fail:
+                log.error("Missing module associated to requested models")
+                log.exit(e)
+            log.warning(e)
 
-        if module is not None:
-            models = self.get_new_classes_from_module(module)
-        elif exit_on_fail:
-            log.error("Missing module associated to requested models")
-            exit(1)
+        models = self.get_new_classes_from_module(module)
 
         return models
 
