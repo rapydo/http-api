@@ -18,10 +18,10 @@ log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
 LOGS_FOLDER = "/logs"
 HOSTNAME = os.environ.get("HOSTNAME", "backend")
 CONTAINER_ID = os.environ.get("CONTAINER_ID", "")
-CELERY_HOST = os.environ.get("CELERY_HOST", "0")
+IS_CELERY_CONTAINER = os.environ.get("IS_CELERY_CONTAINER", "0")
 
 # BACKEND-SERVER
-if CELERY_HOST == '0':
+if IS_CELERY_CONTAINER == '0':
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:
