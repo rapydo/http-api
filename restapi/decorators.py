@@ -15,7 +15,7 @@ from restapi.utilities.logs import log
 log.verbose("Auth loaded {}", auth)
 
 
-def catch_errors(exception=None, catch_generic=True, exception_label=None, **kwargs):
+def catch_errors(exception=None, catch_generic=True, **kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
@@ -34,16 +34,14 @@ def catch_errors(exception=None, catch_generic=True, exception_label=None, **kwa
             # Catch the exception requested by the user
             except exception as e:
 
-                # only used by B2STAGE
-                if exception_label:
-                    message = "{}: {}".format(exception_label, str(e))
-                else:
-                    message = str(e)
+                message = str(e)
+                log.error(message)
+
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
                     error_code = hcodes.HTTP_BAD_REQUEST
-                log.error(message)
+
                 return self.response(errors=message, code=error_code)
 
             # Catch the basic API exception
