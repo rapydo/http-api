@@ -93,6 +93,7 @@ class Detector:
             # Was this service enabled from the developer?
             enabled = Detector.get_bool_envvar(variables.get("enable", False))
             external = variables.get("external", False)
+
             self.available_services[name] = enabled or external
 
             if self.available_services[name]:
@@ -133,34 +134,27 @@ class Detector:
     @staticmethod
     def load_variables(prefix):
 
-        variables = {}
-        host = None
+        variables = {
+            'external': False
+        }
 
         for var, value in os.environ.items():
 
             var = var.lower()
 
-            # This is the case when a variable belongs to a service 'prefix'
-            if var.startswith(prefix):
+            if not var.startswith(prefix):
+                continue
 
-                # Fix key and value before saving
-                key = var[len(prefix):]
-                # One thing that we must avoid is any quote around our value
-                value = value.strip('"').strip("'")
-                # save
-                variables[key] = value
+            # Fix key and value before saving
+            key = var[len(prefix):]
+            # One thing that we must avoid is any quote around our value
+            value = value.strip('"').strip("'")
+            # save
+            variables[key] = value
 
-                if key == 'host':
-                    host = value
-
-        # Verify if service is EXTERNAL
-        variables['external'] = False
-        if isinstance(host, str):  # and host.count('.') > 2:
-            if not host.endswith('.dockerized.io'):
+            if key == 'host' and not value.endswith('.dockerized.io'):
                 variables['external'] = True
-                log.verbose(
-                    "Service in group {} detected as external: {}", prefix, host
-                )
+                log.verbose("Service {} detected as external: {}", prefix, value)
 
         return variables
 
