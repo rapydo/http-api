@@ -167,8 +167,8 @@ class Meta:
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
+            log.error("Cannot load {} models")
             if exit_on_fail:
-                log.error("Missing module associated to requested models")
                 log.exit(e)
 
             log.warning(e)
