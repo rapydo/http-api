@@ -147,9 +147,9 @@ def mywait():
             broker = myclass.variables.get('broker')
 
             if broker == 'RABBIT':
-                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+                service_vars = detector.load_variables(prefix='rabbitmq_')
             elif broker == 'REDIS':
-                service_vars = detector.load_variables({'prefix': 'redis'})
+                service_vars = detector.load_variables(prefix='redis_')
             else:
                 log.exit("Invalid celery broker: {}", broker)
 
@@ -159,11 +159,11 @@ def mywait():
 
             backend = myclass.variables.get('backend')
             if backend == 'RABBIT':
-                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+                service_vars = detector.load_variables(prefix='rabbitmq_')
             elif backend == 'REDIS':
-                service_vars = detector.load_variables({'prefix': 'redis'})
+                service_vars = detector.load_variables(prefix='redis_')
             elif backend == 'MONGODB':
-                service_vars = detector.load_variables({'prefix': 'mongo'})
+                service_vars = detector.load_variables(prefix='mongo_')
             else:
                 log.exit("Invalid celery backend: {}", backend)
 

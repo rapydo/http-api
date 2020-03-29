@@ -37,7 +37,7 @@ class CeleryExt(BaseExtension):
         from restapi.services.detect import Detector
 
         if broker == 'RABBIT':
-            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            service_vars = Detector.load_variables(prefix='rabbitmq_')
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
             BROKER_USER = service_vars.get("user", "")
@@ -47,7 +47,7 @@ class CeleryExt(BaseExtension):
                 service_vars.get("ssl_enabled", False)
             )
         elif broker == 'REDIS':
-            service_vars = Detector.load_variables({'prefix': 'redis'})
+            service_vars = Detector.load_variables(prefix='redis_')
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
             BROKER_USER = None
@@ -95,19 +95,19 @@ class CeleryExt(BaseExtension):
         backend = self.variables.get("backend", broker)
 
         if backend == 'RABBIT':
-            service_vars = Detector.load_variables({'prefix': 'rabbitmq'})
+            service_vars = Detector.load_variables(prefix='rabbitmq_')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
         elif backend == 'REDIS':
-            service_vars = Detector.load_variables({'prefix': 'redis'})
+            service_vars = Detector.load_variables(prefix='redis_')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = ""
             BACKEND_PASSWORD = None
         elif backend == 'MONGODB':
-            service_vars = Detector.load_variables({'prefix': 'mongo'})
+            service_vars = Detector.load_variables(prefix='mongo_')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")

@@ -70,10 +70,6 @@ class Detector:
         bool_var = os.environ.get(name, False)
         return Detector.get_bool_envvar(bool_var)
 
-    @staticmethod
-    def prefix_name(service):
-        return service.get('prefix').lower() + '_'
-
     def check_configuration(self):
 
         try:
@@ -85,16 +81,22 @@ class Detector:
         for service in self.services_configuration:
 
             name = service.get('name')
-            prefix = self.prefix_name(service)
+            prefix = "{}_".format(service.get('prefix'))
+
+            variables = Detector.load_variables(prefix=prefix)
+
+            connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
+            if not connect:
+                log.info("{} connector is disabled", name)
+                continue
 
             # Was this service enabled from the developer?
-            enable_var = str(prefix + 'enable').upper()
-            self.available_services[name] = self.get_bool_from_os(enable_var)
+            enabled = Detector.get_bool_envvar(variables.get("enable", False))
+            external = variables.get("external", False)
+            self.available_services[name] = enabled or external
 
             if self.available_services[name]:
 
-                # read variables
-                variables = self.load_variables(service, enable_var, prefix)
                 service['variables'] = variables
 
                 # set auth service
@@ -105,7 +107,7 @@ class Detector:
             log.info("No service defined for authentication")
         else:
             log.info(
-                "Authentication based on '{}' service",
+                "Authentication is based on '{}' service",
                 self.authentication_service
             )
 
@@ -129,17 +131,13 @@ class Detector:
             return {}
 
     @staticmethod
-    def load_variables(service, enable_var=None, prefix=None):
+    def load_variables(prefix):
 
         variables = {}
         host = None
 
-        if prefix is None:
-            prefix = Detector.prefix_name(service)
-
         for var, value in os.environ.items():
-            if enable_var is not None and var == enable_var:
-                continue
+
             var = var.lower()
 
             # This is the case when a variable belongs to a service 'prefix'
@@ -158,9 +156,11 @@ class Detector:
         # Verify if service is EXTERNAL
         variables['external'] = False
         if isinstance(host, str):  # and host.count('.') > 2:
-            if not host.endswith('dockerized.io'):
+            if not host.endswith('.dockerized.io'):
                 variables['external'] = True
-                log.verbose("Service {} detected as external: {}", service, host)
+                log.verbose(
+                    "Service in group {} detected as external: {}", prefix, host
+                )
 
         return variables
 
