@@ -74,7 +74,7 @@ class Detector:
 
         try:
             self.services_configuration = load_yaml_file(
-                file='services.yaml', path=ABS_RESTAPI_CONFSPATH)
+                file='connectors.yaml', path=ABS_RESTAPI_CONFSPATH)
         except AttributeError as e:
             log.exit(e)
 

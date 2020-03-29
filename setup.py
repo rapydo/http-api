@@ -23,7 +23,7 @@ setup(
     ),
     package_data={
         main_package: [
-            'confs/services.yaml',
+            'confs/connectors.yaml',
             'models/swagger.yaml',
             'templates/index.html'
         ],
