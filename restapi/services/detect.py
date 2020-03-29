@@ -202,7 +202,6 @@ class Detector:
                         extended_models = self.meta.import_models(
                             name, EXTENDED_PACKAGE, exit_on_fail=False
                         )
-
                     custom_models = self.meta.import_models(
                         name, CUSTOM_PACKAGE, exit_on_fail=False
                     )

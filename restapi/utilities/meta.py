@@ -160,20 +160,18 @@ class Meta:
                 return args[0]
         return None
 
-    @staticmethod
-    def models_module(name, package):
-        module_name = "{}.models.{}".format(package, name)
-        return Meta.get_module_from_string(module_name, exit_on_fail=True)
-
     def obj_from_models(obj_name, module_name, package):
-        module = Meta.models_module(module_name, package)
+        module_name = "{}.models.{}".format(package, module_name)
+        module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+
         obj = getattr(module, obj_name, None)
         return obj
 
     def import_models(self, name, package, exit_on_fail=True):
 
         models = {}
-        module = Meta.models_module(name, package)
+        module_name = "{}.models.{}".format(package, name)
+        module = Meta.get_module_from_string(module_name, exit_on_fail=exit_on_fail)
 
         if module is not None:
             models = self.get_new_classes_from_module(module)
