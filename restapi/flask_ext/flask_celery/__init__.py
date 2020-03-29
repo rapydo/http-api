@@ -17,7 +17,7 @@ from restapi.utilities.logs import log, obfuscate_url
 
 class CeleryExt(BaseExtension):
 
-    CELERY_BEAT_SCHEDULER = None
+    CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"
     celery_app = None
 
@@ -197,9 +197,9 @@ class CeleryExt(BaseExtension):
 
         # celery_app.conf.broker_pool_limit = None
 
-        if Detector.get_bool_from_os('CELERY_BEAT_ENABLED'):
+        if Detector.get_bool_from_os('CELERYBEAT_ENABLED'):
 
-            CeleryExt.CELERY_BEAT_SCHEDULER = backend
+            CeleryExt.CELERYBEAT_SCHEDULER = backend
 
             if backend == 'MONGODB':
                 SCHEDULER_DB = 'celery'
@@ -233,13 +233,13 @@ class CeleryExt(BaseExtension):
     @classmethod
     def get_periodic_task(cls, name):
 
-        if cls.CELERY_BEAT_SCHEDULER == 'MONGODB':
+        if cls.CELERYBEAT_SCHEDULER == 'MONGODB':
             from celerybeatmongo.models import PeriodicTask, DoesNotExist
             try:
                 return PeriodicTask.objects.get(name=name)
             except DoesNotExist:
                 return None
-        elif cls.CELERY_BEAT_SCHEDULER == 'REDIS':
+        elif cls.CELERYBEAT_SCHEDULER == 'REDIS':
             from redbeat.schedulers import RedBeatSchedulerEntry
             try:
                 task_key = "{}{}".format(cls.REDBEAT_KEY_PREFIX, name)
@@ -249,7 +249,7 @@ class CeleryExt(BaseExtension):
                 return None
         else:
             log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
 
     @classmethod
     def delete_periodic_task(cls, name):
@@ -264,7 +264,7 @@ class CeleryExt(BaseExtension):
     def create_periodic_task(cls, name, task, every,
                              period='seconds', args=[], kwargs={}):
 
-        if cls.CELERY_BEAT_SCHEDULER == 'MONGODB':
+        if cls.CELERYBEAT_SCHEDULER == 'MONGODB':
             from celerybeatmongo.models import PeriodicTask
             PeriodicTask(
                 name=name,
@@ -274,7 +274,7 @@ class CeleryExt(BaseExtension):
                 kwargs=kwargs,
                 interval=PeriodicTask.Interval(every=every, period=period),
             ).save()
-        elif cls.CELERY_BEAT_SCHEDULER == 'REDIS':
+        elif cls.CELERYBEAT_SCHEDULER == 'REDIS':
             from celery.schedules import schedule
             from redbeat.schedulers import RedBeatSchedulerEntry
             if period != 'seconds':
@@ -294,7 +294,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
 
     @classmethod
     def create_crontab_task(
@@ -310,7 +310,7 @@ class CeleryExt(BaseExtension):
         kwargs={},
     ):
 
-        if cls.CELERY_BEAT_SCHEDULER == 'MONGODB':
+        if cls.CELERYBEAT_SCHEDULER == 'MONGODB':
             from celerybeatmongo.models import PeriodicTask
             PeriodicTask(
                 name=name,
@@ -326,7 +326,7 @@ class CeleryExt(BaseExtension):
                     month_of_year=month_of_year,
                 ),
             ).save()
-        elif cls.CELERY_BEAT_SCHEDULER == 'REDIS':
+        elif cls.CELERYBEAT_SCHEDULER == 'REDIS':
             from celery.schedules import crontab
             from redbeat.schedulers import RedBeatSchedulerEntry
             interval = crontab(
@@ -348,7 +348,7 @@ class CeleryExt(BaseExtension):
 
         else:
             log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERY_BEAT_SCHEDULER)
+                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
 
 
 def send_errors_by_email(func):
