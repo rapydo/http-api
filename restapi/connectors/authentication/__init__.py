@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from restapi.services.detect import Detector
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 from restapi.services.authentication import BaseAuthentication
 from restapi.exceptions import RestApiException
 from restapi.utilities.htmlcodes import hcodes
@@ -31,10 +31,7 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
         )
 
 
-class Authenticator(BaseExtension):
-    """
-    The generic authentication Flask extension
-    """
+class Authenticator(Connector):
 
     def custom_connection(self, **kwargs):
 

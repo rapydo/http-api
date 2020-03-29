@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Alchemy extension wrapper
-for the existing Flask-SQLalchemy
+""" Wrapper for the existing Flask-SQLalchemy
 
 NOTE: Flask Sqlalchemy needs to have models defined on existing instance;
 for this reason we create the sql instance where models are defined.
@@ -13,11 +12,11 @@ import sqlalchemy
 from restapi.utilities.meta import Meta
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 from restapi.utilities.logs import log
 
 
-class SqlAlchemy(BaseExtension):
+class SqlAlchemy(Connector):
     def set_connection_exception(self):
         return (sqlalchemy.exc.OperationalError,)
 
@@ -96,7 +95,7 @@ class SqlAlchemy(BaseExtension):
         # recover instance with the parent method
         db = super().custom_init()
 
-        # do init_app on the original flask sqlalchemy extension
+        # do init_app of Flask-SQLAlchemy
         db.init_app(self.app)
 
         # careful on what you do with app context on sqlalchemy

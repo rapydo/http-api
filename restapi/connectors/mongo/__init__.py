@@ -2,12 +2,12 @@
 
 import pymodm.connection as mongodb
 from restapi.utilities.logs import log
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 
 AUTH_DB = 'auth'
 
 
-class MongoExt(BaseExtension):
+class MongoExt(Connector):
 
     # _defaultdb = 'test'
     # _authdb = 'auth'

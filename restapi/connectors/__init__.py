@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-""" base in common for our flask internal extensions """
-
 import abc
 from datetime import datetime, timedelta
 
@@ -10,7 +8,7 @@ from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 
-class BaseExtension(metaclass=abc.ABCMeta):
+class Connector(metaclass=abc.ABCMeta):
 
     models = {}  # I get models on a cls level, instead of instances
     meta = Meta()
@@ -260,8 +258,8 @@ def get_debug_instance(MyClass):
     Obtain a debug instance from any flask ext we have in the app
 
     e.g.
-    from restapi.flask_ext import get_debug_instance
-    from restapi.flask_ext.flask_celery import CeleryExt
+    from restapi.connectors import get_debug_instance
+    from restapi.connectors.celery import CeleryExt
     obj = get_debug_instance(CeleryExt)
     """
 

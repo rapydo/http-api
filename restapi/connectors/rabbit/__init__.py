@@ -3,7 +3,7 @@
 import pika
 import json
 from restapi.utilities.logs import log
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 
 # TODO To be tested: Reconnection mechanism (e.g. wrong password),
 #      does it try to reconnect several times, then give up?
@@ -11,7 +11,7 @@ from restapi.flask_ext import BaseExtension
 # TODO To be added: Close connection - sigint, sigkill
 
 
-class RabbitExt(BaseExtension):
+class RabbitExt(Connector):
     '''
     This class provides a (wrapper for a) RabbitMQ connection
     in order to write log messages into a queue.

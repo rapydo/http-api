@@ -95,7 +95,7 @@ def create_app(
         log.info("Production server mode is ON")
 
     # Find services and try to connect to the ones available
-    extensions = detector.init_services(
+    connectors = detector.init_services(
         app=microservice,
         worker_mode=worker_mode,
         project_init=init_mode,
@@ -103,7 +103,7 @@ def create_app(
     )
 
     if worker_mode:
-        microservice.extensions = extensions
+        microservice.connectors = connectors
 
     # Restful plugin
     if not skip_endpoint_mapping:

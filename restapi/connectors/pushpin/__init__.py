@@ -5,14 +5,14 @@ from gripcontrol import WebSocketMessageFormat
 from pubcontrol import Item
 
 from restapi.utilities.logs import log
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 
 
 class ServiceUnavailable(BaseException):
     pass
 
 
-class PushpinExt(BaseExtension):
+class PushpinExt(Connector):
 
     def set_connection_exception(self):
         return ServiceUnavailable

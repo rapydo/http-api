@@ -12,10 +12,10 @@ from irods import exception as iexceptions
 
 # from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
-from restapi.flask_ext import BaseExtension
-from restapi.flask_ext.flask_irods.session import iRODSPickleSession as iRODSSession
-from restapi.flask_ext.flask_irods.client import IrodsException, IrodsPythonClient
-from restapi.flask_ext.flask_irods.certificates import Certificates
+from restapi.connectors import Connector
+from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
+from restapi.connectors.irods.client import IrodsException, IrodsPythonClient
+from restapi.connectors.irods.certificates import Certificates
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -26,7 +26,7 @@ GSI_AUTH_SCHEME = 'GSI'
 PAM_AUTH_SCHEME = 'PAM'
 
 
-class IrodsPythonExt(BaseExtension):
+class IrodsPythonExt(Connector):
     def pre_connection(self, **kwargs):
 
         session = kwargs.get('user_session')

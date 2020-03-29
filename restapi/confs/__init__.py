@@ -42,8 +42,7 @@ EXTENDED_PACKAGE = os.environ.get('EXTENDED_PACKAGE', None)
 #################
 # SQLALCHEMY
 BASE_DB_DIR = '/dbs'
-SQLLITE_EXTENSION = 'db'
-SQLLITE_DBFILE = 'backend' + '.' + SQLLITE_EXTENSION
+SQLLITE_DBFILE = 'backend.db'
 dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + dbfile
 

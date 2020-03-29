@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""
-Celery extension wrapper
-
-"""
 from celery import Celery
 from functools import wraps
 import traceback
 
 from restapi.services.mail import send_mail_is_active, send_mail
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 from restapi.confs import get_project_configuration
 
 from restapi.utilities.logs import log, obfuscate_url
 
 
-class CeleryExt(BaseExtension):
+class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"

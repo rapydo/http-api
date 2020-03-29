@@ -7,7 +7,7 @@ Mongodb based implementation
 from pytz import utc
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
-from restapi.flask_ext.flask_mongo import AUTH_DB
+from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -26,8 +26,8 @@ class Authentication(BaseAuthentication):
         # Get the instance for mongodb
         name = __name__.split('.')[::-1][0]  # returns 'mongo'
 
-        extension = detector.services_classes.get(name)
-        self.db = extension().get_instance(dbname=AUTH_DB)
+        Connector = detector.services_classes.get(name)
+        self.db = Connector().get_instance(dbname=AUTH_DB)
 
     def custom_user_properties(self, userdata):
         new_userdata = super(Authentication, self).custom_user_properties(userdata)

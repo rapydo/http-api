@@ -5,7 +5,7 @@
 import re
 from functools import wraps
 from neomodel import db, config
-from restapi.flask_ext import BaseExtension
+from restapi.connectors import Connector
 from restapi.utilities.logs import log
 
 
@@ -73,7 +73,7 @@ class NeomodelClient:
         return ' '.join(tokens)
 
 
-class NeoModel(BaseExtension):
+class NeoModel(Connector):
     def set_connection_exception(self):
 
         try:

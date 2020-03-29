@@ -21,12 +21,12 @@ from restapi.utilities.logs import log
 # This is necessary to have the app context available
 app = create_app(worker_mode=True)
 
-celery_app = app.extensions.get('celery').celery_app
+celery_app = app.connectors.get('celery').celery_app
 celery_app.app = app
 
 
 def get_service(service, **kwargs):
-    ext = celery_app.app.extensions.get(service)
+    ext = celery_app.app.connectors.get(service)
     if ext is None:
         log.error("{} is not enabled", service)
         return None

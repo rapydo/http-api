@@ -27,7 +27,7 @@ class Detector:
         self.services_configuration = []
         self.services = {}
         self.services_classes = {}
-        self.extensions_instances = {}
+        self.connectors_instances = {}
         self.available_services = {}
         self.meta = Meta()
         self.check_configuration()
@@ -158,20 +158,15 @@ class Detector:
 
         return variables
 
-    def load_class_from_module(self, classname, service=None):
+    def load_connector(self, connector, classname):
 
-        if service is None:
-            flaskext = ''
-        else:
-            flaskext = '.' + service.get('extension')
-
-        # Try inside our extensions
+        module_name = "{}.connectors.{}".format(BACKEND_PACKAGE, connector)
         module = Meta.get_module_from_string(
-            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
+            modulestring=module_name,
             exit_on_fail=True
         )
         if module is None:
-            log.exit("Missing {} for {}", flaskext, service)
+            log.exit("Failed to load {}", module_name)
 
         return getattr(module, classname)
 
@@ -186,11 +181,12 @@ class Detector:
             log.verbose("Looking for class {}", name)
 
             variables = service.get('variables')
-            ext_name = service.get('class')
+            class_name = service.get('class')
+            connector_name = service.get('name')
 
             # Get the existing class
             try:
-                MyClass = self.load_class_from_module(ext_name, service=service)
+                MyClass = self.load_connector(connector_name, class_name)
 
                 # Passing variables
                 MyClass.set_variables(variables)
@@ -215,7 +211,7 @@ class Detector:
 
             except AttributeError as e:
                 log.error(str(e))
-                log.exit('Invalid Extension class: {}', ext_name)
+                log.exit('Invalid connector class: {}', class_name)
 
             # Save
             self.services_classes[name] = MyClass
@@ -254,14 +250,14 @@ class Detector:
             if name == self.task_service_name:
                 args['worker_mode'] = worker_mode
 
-            # Get extension class and build the extension object
-            ExtClass = self.services_classes.get(name)
+            # Get connectors class and build the connector object
+            Connector = self.services_classes.get(name)
             try:
-                ext_instance = ExtClass(app, **args)
+                instance = Connector(app, **args)
             except TypeError as e:
                 log.exit('Your class {} is not compliant:\n{}', name, e)
             else:
-                self.extensions_instances[name] = ext_instance
+                self.connectors_instances[name] = instance
 
             if not project_init:
                 do_init = False
@@ -274,7 +270,7 @@ class Detector:
 
             # Initialize the real service getting the first service object
             log.debug("Initializing {} (pinit={})", name, do_init)
-            service_instance = ext_instance.custom_init(
+            service_instance = instance.custom_init(
                 pinit=do_init, pdestroy=project_clean, abackend=auth_backend
             )
             instances[name] = service_instance
@@ -282,11 +278,7 @@ class Detector:
             if name == self.authentication_service:
                 auth_backend = service_instance
 
-            # NOTE: commented, looks like a duplicate from try/expect above
-            # self.extensions_instances[name] = ext_instance
-
-            # Injecting into the Celery Extension Class
-            # all celery tasks found in *vanilla_package/tasks*
+            # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
             if name == self.task_service_name:
                 do_init = True
 
@@ -299,16 +291,16 @@ class Detector:
                     tasks = Meta.get_celery_tasks_from_module(submodule)
 
                     for func_name, funct in tasks.items():
-                        setattr(ExtClass, func_name, funct)
+                        setattr(Connector, func_name, funct)
 
-        if len(self.extensions_instances) < 1:
+        if len(self.connectors_instances) < 1:
             raise KeyError("No instances available for modules")
 
         # Only once in a lifetime
         if project_init:
             self.project_initialization(instances, app=app)
 
-        return self.extensions_instances
+        return self.connectors_instances
 
     def check_availability(self, name):
 

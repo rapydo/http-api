@@ -5,7 +5,7 @@ import pytz
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi.flask_ext.flask_auth import HandleSecurity
+from restapi.connectors.authentication import HandleSecurity
 from restapi import decorators
 from restapi.confs import WRAP_RESPONSE
 
