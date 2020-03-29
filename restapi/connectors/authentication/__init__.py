@@ -22,10 +22,7 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
 
         # import base64
         from io import BytesIO
-    # FIXME: cannot use the proper exception (available in python 3.6+)
-    # because we are stuck on python 3.5 con IMC
-    # except ModuleNotFoundError:
-    except BaseException:
+    except ModuleNotFoundError:
         log.exit(
             "Missing libraries for TOTP 2FA authentication"
         )
