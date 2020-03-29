@@ -170,7 +170,9 @@ class Meta:
             if exit_on_fail:
                 log.error("Missing module associated to requested models")
                 log.exit(e)
+
             log.warning(e)
+            return {}
 
         models = self.get_new_classes_from_module(module)
 
