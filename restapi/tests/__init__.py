@@ -19,7 +19,7 @@ AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 ########################
 # FIXME: Explode the normal response content?
-def get_content_from_response(http_out):
+def get_content_from_response(http_out, return_errors=False):
 
     response = None
 
@@ -34,18 +34,16 @@ def get_content_from_response(http_out):
     # Check what we have so far
     # Should be {Response: DATA, Meta: RESPONSE_METADATA}
     if not isinstance(response, dict) or len(response) != 2:
-        return response, None
+        return response
 
     Response = response.get("Response")
-    Meta = response.get("Meta")
 
-    if Response is None or Meta is None:
-        return response, None
+    if Response is None:
+        return response
 
-    content = Response.get('data')
-    err = Response.get('errors')
-
-    return content, err
+    if return_errors:
+        return Response.get('errors')
+    return Response.get('data')
 
 
 class BaseTests:
