@@ -18,10 +18,10 @@ import os
 from flask import request  # , send_from_directory
 from werkzeug import secure_filename
 from werkzeug.http import parse_content_range_header
-from restapi.utilities.htmlcodes import hcodes
 from restapi.confs import UPLOAD_FOLDER, PRODUCTION
 from restapi.services.detect import detector
-
+from restapi.exceptions import RestApiException
+from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
 
@@ -92,7 +92,7 @@ class Uploader:
 
         # Check file extension?
         if not self.allowed_file(filename):
-            return self.response(errors="Wrong extension, file extension not allowed")
+            raise RestApiException("Wrong extension, file extension not allowed")
 
         content = request.data
 
@@ -106,9 +106,9 @@ class Uploader:
                 os.remove(abs_file)
                 log.debug("Forced removal")
             else:
-                return self.response(
-                    errors="File '{}' already exists".format(filename),
-                    code=hcodes.HTTP_BAD_REQUEST,
+                raise RestApiException(
+                    "File '{}' already exists".format(filename),
+                    status_code=hcodes.HTTP_BAD_REQUEST,
                 )
 
         with open(abs_file, "ab") as f:
@@ -117,9 +117,9 @@ class Uploader:
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.response(
-                errors="Server error: unable to recover the uploaded file",
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            raise RestApiException(
+                "Server error: unable to recover the uploaded file",
+                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
             )
 
         # Extra info
@@ -148,27 +148,21 @@ class Uploader:
             code=hcodes.HTTP_OK_BASIC,
         )
 
+    # this method is used by b2stage and mistral. Others are using upload_data
     def upload(self, subfolder=None, force=False):
 
         if 'file' not in request.files:
 
-            # # the PUT problem for uploading?
-            # tmp = request.stream.read()
-            # print("TEST", len(tmp))
-            # with open('uploaded_image.jpg', 'w') as f:
-            #     f.write(request.stream.read())
-            # # print("TEST", request.data)
-
-            return self.response(
-                errors="No files specified",
-                code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+            raise RestApiException(
+                "No files specified",
+                status_code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
             )
 
         myfile = request.files['file']
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
-            return self.response(errors="File extension not allowed")
+            raise RestApiException("File extension not allowed")
 
         # Check file name
         filename = secure_filename(myfile.filename)
@@ -191,23 +185,23 @@ class Uploader:
                 e = "File '{}' already exists, use force parameter to overwrite".format(
                     filename
                 )
-                return self.response(errors=e, code=hcodes.HTTP_BAD_REQUEST)
+                raise RestApiException(e, status_code=hcodes.HTTP_BAD_REQUEST)
 
         # Save the file
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception:
-            return self.response(
-                errors="Permission denied: failed to write the file",
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            raise RestApiException(
+                "Permission denied: failed to write the file",
+                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
             )
 
         # Check exists
         if not os.path.exists(abs_file):
-            return self.response(
-                errors="Unable to retrieve the uploaded file",
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+            raise RestApiException(
+                "Unable to retrieve the uploaded file",
+                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
             )
 
         # Extra info
@@ -287,7 +281,7 @@ class Uploader:
             log.critical("Cannot remove local file {}", abs_file)
             return self.response(
                 errors="Permission denied: failed to remove the file",
-                code=hcodes.HTTP_DEFAULT_SERVICE_FAIL,
+                code=hcodes.HTTP_SERVICE_UNAVAILABLE,
             )
         log.warning("Removed '{}'", abs_file)
 
