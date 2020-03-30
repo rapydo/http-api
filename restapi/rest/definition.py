@@ -269,8 +269,7 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     def force_response(self, content=None, errors=None,
-                       code=None, headers=None, head_method=False,
-                       elements=None, meta=None):
+                       code=None, headers=None, head_method=False, meta=None):
 
         # Deprecated since 0.7.3
         log.warning("Deprecated use of self.forse_respose, replace with self.response")
@@ -280,7 +279,6 @@ class EndpointResource(Resource):
             code=code,
             headers=code,
             head_method=head_method,
-            elements=elements,
             meta=meta
         )
 
@@ -306,7 +304,6 @@ class EndpointResource(Resource):
             errors=errors,
             headers=headers,
             head_method=head_method,
-            elements=elements,
             meta=meta,
             response_wrapper=response_wrapper
         )

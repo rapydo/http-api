@@ -43,7 +43,7 @@ class ResponseMaker:
 
     @staticmethod
     def generate_response(content, code, errors, headers,
-                          head_method, elements, meta, response_wrapper=None):
+                          head_method, meta, response_wrapper=None):
         """
         Generating from our user/custom/internal response
         the data necessary for a Flask response (make_response() method):
@@ -77,7 +77,7 @@ class ResponseMaker:
 
         if response_wrapper is not None:
             # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
-            final_content = response_wrapper(content, elements, code, errors, meta)
+            final_content = response_wrapper(content, code, errors, meta)
         elif content is not None:
             final_content = content
         else:
@@ -102,19 +102,19 @@ class ResponseMaker:
 
     @staticmethod
     def wrapped_response(
-        content=None, elements=None, code=None, errors=None, custom_metas=None
+        content=None, code=None, errors=None, custom_metas=None
     ):
 
         # Our normal content
         try:
             data_type = str(type(content))
-            if elements is None:
-                if content is None:
-                    elements = 0
-                elif isinstance(content, str):
-                    elements = 1
-                else:
-                    elements = len(content)
+
+            if content is None:
+                elements = 0
+            elif isinstance(content, str):
+                elements = 1
+            else:
+                elements = len(content)
 
             if errors is None:
                 total_errors = 0
