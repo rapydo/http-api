@@ -286,11 +286,7 @@ class EndpointResource(Resource):
 
     def response(self, content=None, errors=None,
                  code=None, headers=None, head_method=False,
-                 elements=None, meta=None, wrap_response=False):
-
-        # Deprecated since 0.7.2
-        if elements is not None:
-            log.warning("Deprecated use of elements in response")
+                 meta=None, wrap_response=False):
 
         # Deprecated since 0.7.2
         if meta is not None:
