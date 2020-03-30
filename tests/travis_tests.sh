@@ -100,7 +100,7 @@ printf "\n\n\n"
 
 rapydo --production pull
 rapydo --production start
-rapydo --production ssl-certificate
+rapydo --production ssl
 
 printf "\n\n\nBackend server is starting\n\n\n"
 
@@ -109,7 +109,7 @@ rapydo --production -s backend logs
 
 printf "\n\n\n"
 
-curl -k -X GET https://localhost/api/status | grep "Server is alive"
+curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
 
 printf "\n\n\n"
 
