@@ -7,6 +7,7 @@ from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
 # imported here as utility for endpoints
 from restapi.services.authentication.bearer import authentication as auth
+from restapi.connectors.irods.client import IrodsException
 
 from restapi.utilities.htmlcodes import hcodes
 
@@ -34,7 +35,10 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             # Catch the exception requested by the user
             except exception as e:
 
-                message = str(e)
+                if isinstance(e, IrodsException):
+                    message = "B2SAFE: {}".format(e)
+                else:
+                    message = str(e)
                 log.error(message)
 
                 if hasattr(e, "status_code"):
