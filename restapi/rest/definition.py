@@ -296,10 +296,6 @@ class EndpointResource(Resource):
         if meta is not None:
             log.warning("Deprecated use of meta in response")
 
-        # Deprecated since 0.7.2
-        if content and errors:
-            log.warning("Deprecated use of warning messages in response")
-
         if headers is None:
             headers = {}
 
