@@ -3,7 +3,7 @@
 import os
 import time
 import click
-import stackprinter
+# import stackprinter
 from flask.cli import FlaskGroup
 from restapi import __package__ as current_package
 from restapi.utilities.processes import wait_socket, find_process
@@ -11,7 +11,7 @@ from restapi.utilities.logs import log
 
 BIND_INTERFACE = "0.0.0.0"
 
-stackprinter.set_excepthook(style='darkbg2')
+# stackprinter.set_excepthook(style='darkbg2')
 
 
 @click.group()
