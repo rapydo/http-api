@@ -34,19 +34,18 @@ def get_content_from_response(http_out):
     # Check what we have so far
     # Should be {Response: DATA, Meta: RESPONSE_METADATA}
     if not isinstance(response, dict) or len(response) != 2:
-        return response
+        return response, None
 
     Response = response.get("Response")
     Meta = response.get("Meta")
 
     if Response is None or Meta is None:
-        return response
+        return response, None
 
     content = Response.get('data')
     err = Response.get('errors')
-    code = Meta.get('status')
 
-    return content, err, Meta, code
+    return content, err
 
 
 class BaseTests:
