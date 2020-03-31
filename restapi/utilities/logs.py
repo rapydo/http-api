@@ -57,9 +57,11 @@ def critical_exit(message="", *args, **kwargs):
     sys.exit(error_code)
 
 
+# param added to avoid errors like: log.stack(myexpt)
 def stack(param=None):
-    log.warning("log.stack does not require any parameters")
     stackprinter.show()
+    if param:
+        log.warning("log.stack does not require any parameters")
 
 
 log.verbose = verbose
