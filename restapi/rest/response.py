@@ -111,12 +111,16 @@ class ResponseMaker:
         try:
             data_type = str(type(content))
 
-            if content is None:
-                elements = 0
-            elif isinstance(content, str):
+            try:
+                if content is None:
+                    elements = 0
+                elif isinstance(content, str):
+                    elements = 1
+                else:
+                    elements = len(content)
+            except BaseException as e:
+                log.debug(e)
                 elements = 1
-            else:
-                elements = len(content)
 
             if errors is None:
                 total_errors = 0
