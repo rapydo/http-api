@@ -107,20 +107,18 @@ class ResponseMaker:
         content=None, code=None, errors=None, custom_metas=None
     ):
 
+        if isinstance(content, Response):
+            return content
         # Our normal content
         try:
             data_type = str(type(content))
 
-            try:
-                if content is None:
-                    elements = 0
-                elif isinstance(content, str):
-                    elements = 1
-                else:
-                    elements = len(content)
-            except BaseException as e:
-                log.debug(e)
+            if content is None:
+                elements = 0
+            elif isinstance(content, str):
                 elements = 1
+            else:
+                elements = len(content)
 
             if errors is None:
                 total_errors = 0
@@ -138,7 +136,7 @@ class ResponseMaker:
             total_errors = 1
             code = hcodes.HTTP_SERVICE_UNAVAILABLE
 
-        Response = {
+        resp = {
             "Response": {
                 'data': content,
                 'errors': errors
@@ -152,6 +150,6 @@ class ResponseMaker:
         }
 
         if custom_metas is not None:
-            Response['Meta'].update(custom_metas)
+            resp['Meta'].update(custom_metas)
 
-        return Response
+        return resp
