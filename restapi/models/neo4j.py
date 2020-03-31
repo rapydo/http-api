@@ -38,7 +38,9 @@ class Token(StructuredNode):
     expiration = DateTimeProperty()
     last_access = DateTimeProperty()
     IP = StringProperty()
+    # no longer used
     hostname = StringProperty()
+    location = StringProperty()
     emitted_for = RelationshipFrom('User', 'HAS_TOKEN', cardinality=ZeroOrOne)
 
 

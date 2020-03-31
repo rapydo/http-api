@@ -24,6 +24,8 @@ class Role(db.Model):
 
 
 class User(db.Model):
+    __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True)
     name = db.Column(db.String(255))
@@ -41,6 +43,8 @@ class User(db.Model):
 
 
 class Token(db.Model):
+    __tablename__ = 'tokens'
+
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(36), unique=True)
     # token = db.Column(db.String(360), unique=True)
@@ -50,6 +54,8 @@ class Token(db.Model):
     expiration = db.Column(db.DateTime(timezone=True))
     last_access = db.Column(db.DateTime(timezone=True))
     IP = db.Column(db.String(46))
+    # no longer used
     hostname = db.Column(db.String(256))
+    location = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))

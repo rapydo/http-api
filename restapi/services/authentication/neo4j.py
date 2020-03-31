@@ -173,7 +173,7 @@ class Authentication(BaseAuthentication):
         token_node.last_access = now
         token_node.expiration = exp
         token_node.IP = ip
-        token_node.hostname = ip_loc
+        token_node.location = ip_loc
 
         token_node.save()
         # Save user updated in profile endpoint
@@ -251,7 +251,7 @@ class Authentication(BaseAuthentication):
                 if token.expiration is not None:
                     t["expiration"] = token.expiration.strftime('%s')
                 t["IP"] = token.IP
-                t["hostname"] = token.hostname
+                t["location"] = token.location
                 tokens_list.append(t)
 
         return tokens_list

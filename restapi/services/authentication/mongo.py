@@ -211,7 +211,7 @@ class Authentication(BaseAuthentication):
                 last_access=now,
                 expiration=exp,
                 IP=ip,
-                hostname=ip_loc,
+                location=ip_loc,
                 user_id=user,
             ).save()
 
@@ -279,7 +279,7 @@ class Authentication(BaseAuthentication):
             if token.expiration is not None:
                 t["expiration"] = token.expiration.strftime('%s')
             t["IP"] = token.IP
-            t["hostname"] = token.hostname
+            t["location"] = token.location
             returning_tokens.append(t)
 
         return returning_tokens
