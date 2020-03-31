@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Response, render_template, jsonify
+from werkzeug.wrappers import Response as WerkzeugResponse
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
@@ -107,8 +108,9 @@ class ResponseMaker:
         content=None, code=None, errors=None, custom_metas=None
     ):
 
-        if isinstance(content, Response):
+        if isinstance(content, WerkzeugResponse):
             return content
+
         # Our normal content
         try:
             data_type = str(type(content))
