@@ -219,7 +219,8 @@ class IrodsPythonClient:
             raise IrodsException("CAT_NO_ACCESS_PERMISSION")
 
         except iexceptions.SYS_INTERNAL_NULL_INPUT_ERR:
-            raise IrodsException("Unable to create object, invalid path")
+            raise IrodsException(
+                "Unable to create object, invalid path: {}".format(path))
 
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
