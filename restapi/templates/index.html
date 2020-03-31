@@ -11,11 +11,9 @@
 </head>
 <body>
 {% if is_error %}
-    {% for err in body_content %}
     <main style='color:red;'>
-    {{ err }}<br/>
+    {{ body_content }}<br/>
     </main>
-    {% endfor %}
 {% else %}
     <main>
     {{ body_content }}

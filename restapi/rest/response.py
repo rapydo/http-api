@@ -29,7 +29,9 @@ class ResponseMaker:
     def respond_to_browser(content, errors, code, headers):
         log.debug("Request from a browser: reply with HTML.")
 
-        if errors is not None:
+        if errors:
+            if isinstance(content, list):
+                errors = errors.pop()
             html_data = {'body_content': errors, 'is_error': True}
         else:
             html_data = {'body_content': content, 'is_error': False}
