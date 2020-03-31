@@ -57,5 +57,5 @@ class Token(db.Model):
     # no longer used
     hostname = db.Column(db.String(256))
     location = db.Column(db.String(256))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
