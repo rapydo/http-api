@@ -217,10 +217,11 @@ class Meta:
             tasks[func[0]] = func[1]
         return tasks
 
-    def get_customizer_class(self, module_relpath, class_name, args=None):
+    @staticmethod
+    def get_customizer_class(module_relpath, class_name, args=None):
 
         abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
-        MyClass = self.get_class_from_string(
+        MyClass = Meta.get_class_from_string(
             class_name,
             Meta.get_module_from_string(abspath),
             skip_error=True,

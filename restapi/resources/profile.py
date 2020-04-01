@@ -18,8 +18,6 @@ from restapi.utilities.meta import Meta
 
 from restapi.utilities.logs import log
 
-meta = Meta()
-
 """
 class Profile
     GET: Current user informations
@@ -56,7 +54,7 @@ def send_activation_link(auth, user):
     url = "{}://{}/public/register/{}".format(protocol, domain, rt)
     body = "Follow this link to activate your account: {}".format(url)
 
-    obj = meta.get_customizer_class('apis.profile', 'CustomActivation')
+    obj = Meta.get_customizer_class('apis.profile', 'CustomActivation')
 
     # NORMAL ACTIVATION
     if obj is None:
@@ -107,7 +105,7 @@ def notify_registration(user):
 def custom_extra_registration(variables):
     # Add the possibility to user a custom registration extra service
     oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
-    obj = meta.get_customizer_class(
+    obj = Meta.get_customizer_class(
         'apis.profile', 'CustomRegister', {'client_name': oscr}
     )
     if obj is not None:
@@ -204,7 +202,7 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION is not None:
             data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        obj = meta.get_customizer_class('apis.profile', 'CustomProfile')
+        obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
         if obj is not None:
             try:
                 data = obj.manipulate(ref=self, user=current_user, data=data)
@@ -553,7 +551,7 @@ class RecoverPassword(EndpointResource):
 
         ##################
         # Send email with internal or external SMTP
-        obj = meta.get_customizer_class('apis.profile', 'CustomReset')
+        obj = Meta.get_customizer_class('apis.profile', 'CustomReset')
         if obj is None:
             # normal activation + internal smtp
             send_internal_password_reset(complete_uri, title, reset_email)

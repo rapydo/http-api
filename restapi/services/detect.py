@@ -319,8 +319,6 @@ class Detector:
         """
 
         try:
-            # NOTE: this might be a pattern
-            # see in meta.py:get_customizer_class
             module_path = "{}.{}.{}".format(
                 CUSTOM_PACKAGE,
                 'initialization',
