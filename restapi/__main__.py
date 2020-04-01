@@ -8,7 +8,6 @@ RESTful API Python 3 Flask server
 """
 
 import os
-import stackprinter
 from restapi.confs import PRODUCTION
 from restapi.server import create_app
 
@@ -24,5 +23,4 @@ BIND_INTERFACE = "0.0.0.0"
 app = create_app(name='REST_API')
 
 if __name__ == "__main__":
-    stackprinter.set_excepthook(style='darkbg2')
     app.run(host=BIND_INTERFACE, threaded=True)

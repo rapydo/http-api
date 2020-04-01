@@ -5,7 +5,6 @@ import sys
 import json
 import urllib
 import re
-import stackprinter
 
 try:
     from loguru import logger as log
@@ -57,16 +56,8 @@ def critical_exit(message="", *args, **kwargs):
     sys.exit(error_code)
 
 
-# param added to avoid errors like: log.stack(myexpt)
-def stack(param=None):
-    stackprinter.show()
-    if param:
-        log.warning("log.stack does not require any parameters")
-
-
 log.verbose = verbose
 log.exit = critical_exit
-log.stack = stack
 
 log.remove()
 
