@@ -30,7 +30,6 @@ SECRET_KEY_FILE = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
 #################
 PRODUCTION = os.environ.get('APP_MODE', '') == 'production'
 
-SWAGGER_DIR = 'swagger'
 MODELS_DIR = 'models'
 CONF_PATH = 'confs'
 # Also configured in controller
