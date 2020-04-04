@@ -34,7 +34,7 @@ setup(
     '''.format(main_package, app),
     install_requires=[
         # Flask and plugins
-        "Flask==1.1.1",
+        "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.8.7",
         "Flask-Cors==3.0.8",
