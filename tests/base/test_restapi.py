@@ -277,13 +277,13 @@ class TestApp(BaseTests):
         )
 
         # normal users cannot access to this endpoint
-        r = client.get(url, headers=headers)
+        r = client.get(url, headers=headers2)
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        r = client.get(url + "/" + uuid, headers=headers)
+        r = client.get(url + "/" + uuid, headers=headers2)
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        r = client.post(url, data=data, headers=headers)
+        r = client.post(url, data=data, headers=headers2)
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers2)
