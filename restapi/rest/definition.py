@@ -417,6 +417,8 @@ class EndpointResource(Resource):
         Very important: this method only works with customized neo4j models
         """
 
+        # to be deprecated
+        # log.warning("Deprecated use of getJsonResponse")
         if resource_type is None:
             resource_type = type(instance).__name__.lower()
 
@@ -538,6 +540,8 @@ class EndpointResource(Resource):
 
     def getJsonResponseFromSql(self, instance):
 
+        # Deprecated since 0.7.3
+        log.warning("Deprecated use of getJsonResponseFromSql")
         resource_type = type(instance).__name__.lower()
 
         # Get id
@@ -570,6 +574,8 @@ class EndpointResource(Resource):
 
     def getJsonResponseFromMongo(self, instance):
 
+        # Deprecated since 0.7.3
+        log.warning("Deprecated use of getJsonResponseFromMongo")
         resource_type = type(instance).__name__.lower()
 
         # Get id
