@@ -391,6 +391,7 @@ class EndpointResource(Resource):
 
         # to be deprecated
         # log.warning("Deprecated use of getJsonResponse")
+        log.info("Use of getJsonResponse is discouraged and it will be deprecated soon")
 
         # Get id
         verify_attribute = hasattr
