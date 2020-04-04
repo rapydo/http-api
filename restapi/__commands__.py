@@ -55,6 +55,9 @@ def starting_up():
 # def launch(wait):
 def launch():
     """Launch the RAPyDo-based HTTP API server"""
+
+    mywait()
+
     args = [
         'run',
         '--host',
