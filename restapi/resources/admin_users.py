@@ -212,7 +212,7 @@ Password: "{}"
             for role in user.roles:
                 user_data["_roles"].append(
                     {
-                        "id": role.id,
+                        # "id": role.id,
                         "name": role.name,
                         "description": role.description,
                     }
