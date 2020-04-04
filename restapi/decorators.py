@@ -99,7 +99,7 @@ def catch_graph_exceptions(func):
             # Please not that neomodel changed this error
             # the correct version is in admin_users
             prefix = "Node [0-9]+ already exists with label"
-            m = re.search("{} (.+) and property (.+)".format(prefix), str(e))
+            m = re.search(r"{} (.+) and property (.+)".format(prefix), str(e))
 
             if m:
                 node = m.group(1)
