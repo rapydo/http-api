@@ -254,7 +254,7 @@ class TestApp(BaseTests):
         # email cannot be modiied
         new_data = {'email': data.get('email')}
         r = client.put(url + "/" + uuid2, data=new_data, headers=headers)
-        assert r.status_code == hcodes.HTTP_BAD_CONFLICT
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
         r = client.get(url + "/" + uuid2, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
