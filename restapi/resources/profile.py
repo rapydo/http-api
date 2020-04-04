@@ -189,9 +189,7 @@ class Profile(EndpointResource):
 
         data["isAdmin"] = self.auth.verify_admin()
         data["isLocalAdmin"] = self.auth.verify_local_admin()
-
-        if hasattr(current_user, 'privacy_accepted'):
-            data["privacy_accepted"] = current_user.privacy_accepted
+        data["privacy_accepted"] = current_user.privacy_accepted
 
         if hasattr(current_user, 'name'):
             data["name"] = current_user.name

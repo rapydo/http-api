@@ -401,13 +401,10 @@ Password: "{}"
                 raise RestApiException(
                     "This user already exists", status_code=hcodes.HTTP_BAD_CONFLICT)
 
-        # If created by admins, credentials
-        # must accept privacy at the login
-        if "privacy_accepted" in v:
-            if not v["privacy_accepted"]:
-                if hasattr(user, 'privacy_accepted'):
-                    user.privacy_accepted = False
-                    self.auth.save_user(user)
+        # If created by admins users must accept privacy at first login
+        if not v.get("privacy_accepted", True):
+            user.privacy_accepted = False
+            self.auth.save_user(user)
 
         # FIXME: groups management is only implemented for neo4j
         group = None
