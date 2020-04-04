@@ -401,22 +401,13 @@ class EndpointResource(Resource):
         elif verify_attribute(instance, "id"):
             res_id = str(instance.id)
         else:
-            res_id = "-"
+            res_id = None
 
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "attributes": {}
-        }
-
-        if skip_missing_ids and res_id == '-':
-            del data['id']
-
-        data["attributes"] = self.get_show_fields(
+        data = self.get_show_fields(
             instance, 'show_fields', view_public_only, fields
         )
+        if not skip_missing_ids or res_id is not None:
+            data['id'] = res_id
 
         # Relationships
         max_depth_reached = relationship_depth >= max_relationship_depth
@@ -424,21 +415,11 @@ class EndpointResource(Resource):
         relationships = []
         if not max_depth_reached:
 
-            function_name = 'follow_relationships'
-            if hasattr(instance, function_name):
-                fn = getattr(instance, function_name)
-                relationships = fn(view_public_only=view_public_only)
+            relationships = instance.follow_relationships(
+                view_public_only=view_public_only
+            )
 
-            else:
-
-                if view_public_only:
-                    field_name = '_public_relationships_to_follow'
-                else:
-                    field_name = '_relationships_to_follow'
-
-                if hasattr(instance, field_name):
-                    log.warning("Obsolete use of {} into models", field_name)
-                    relationships = getattr(instance, field_name)
+        # Used by IMC
         elif relationships_expansion is not None:
             for e in relationships_expansion:
                 if e.startswith("{}.".format(relationship_name)):
@@ -451,7 +432,6 @@ class EndpointResource(Resource):
                     )
                     relationships.append(expansion_rel)
 
-        linked = {}
         for relationship in relationships:
             subrelationship = []
 
@@ -481,20 +461,17 @@ class EndpointResource(Resource):
                 attrs = self.get_show_fields(r, 'show_fields', view_public_only)
 
                 for k in attrs:
-                    if k in subnode['attributes']:
+                    if k in subnode:
                         log.warning(
                             "Name collision {} on node {}, model {}, property model={}",
                             k, subnode, type(node), type(r)
                         )
-                    subnode['attributes'][k] = attrs[k]
+                    subnode[k] = attrs[k]
 
                 subrelationship.append(subnode)
 
             if len(subrelationship) > 0:
-                linked[relationship] = subrelationship
-
-        if len(linked) > 0:
-            data['relationships'] = linked
+                data["_{}".format(relationship)] = subrelationship
 
         return data
 

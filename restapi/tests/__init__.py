@@ -302,11 +302,11 @@ class BaseTests:
         """
 
         for f in fields:
-            if f not in response[0]["attributes"]:
+            if f not in response[0]:
                 pytest.fail("Missing property: {}".format(f))
 
         for r in relationships:
-            if r not in response[0]["relationships"]:
+            if "_{}".format(r) not in response[0]:
                 pytest.fail("Missing relationship: {}".format(r))
 
     def buildData(self, schema):
