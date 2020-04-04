@@ -380,8 +380,10 @@ Password: "{}"
         except AttributeError as e:
 
             # Duplicated from decorators
-            prefix = "Can't create user .*:\nNode\([0-9]+\) already exists with label"
-            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(prefix), str(e))
+            prefix = r"Can't create user .*:\nNode\([0-9]+\) already exists with label"
+            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(
+                prefix), str(e)
+            )
 
             if m:
                 node = m.group(1)
@@ -471,9 +473,6 @@ Password: "{}"
             v["password"] = BaseAuthentication.get_password_hash(v["password"])
         else:
             unhashed_password = None
-
-        if "email" in v:
-            v["email"] = v["email"].lower()
 
         roles = self.parse_roles(v)
         if not is_admin:

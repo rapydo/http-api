@@ -235,26 +235,33 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_OK_BASIC
         uuid = self.get_content(r)
 
+        r = client.get(url + "/" + uuid, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+
         # Check duplicates
         r = client.post(url, data=data, headers=headers)
         assert r.status_code == hcodes.HTTP_BAD_CONFLICT
 
-        # Create another user to test duplicates on put
+        # Create another user to test duplicates
         data2 = self.buildData(schema)
         r = client.post(url, data=data2, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         uuid2 = self.get_content(r)
 
-        r = client.get(url + "/" + uuid, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
-
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
-        # update user2 with email of user1
+        # email cannot be modiied
         new_data = {'email': data.get('email')}
         r = client.put(url + "/" + uuid2, data=new_data, headers=headers)
         assert r.status_code == hcodes.HTTP_BAD_CONFLICT
+
+        r = client.get(url + "/" + uuid2, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        u = self.get_content(r)
+        # email is still equal to data2, not data1
+        assert u.get("email") == data.get('email')
+        assert u.get("email") == data2.get('email')
 
         r = client.delete(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
