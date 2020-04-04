@@ -235,11 +235,26 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_OK_BASIC
         uuid = self.get_content(r)
 
+        # Check duplicates
+        r = client.post(url, data=data, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_CONFLICT
+
+        # Create another user to test duplicates on put
+        data2 = self.buildData(schema)
+        r = client.post(url, data=data2, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+        uuid2 = self.get_content(r)
+
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
 
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+
+        # update user2 with email of user1
+        new_data = {'email': data.get('email')}
+        r = client.put(url + "/" + uuid2, data=new_data, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_CONFLICT
 
         r = client.delete(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
@@ -247,7 +262,37 @@ class TestApp(BaseTests):
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
+        # login with a newly created user
+        headers2, _ = self.do_login(
+            client,
+            data2.get("username"),
+            data2.get("password")
+        )
+
+        # normal users cannot access to this endpoint
+        r = client.get(url, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        r = client.get(url + "/" + uuid, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        r = client.post(url, data=data, headers=headers)
+        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers2)
+        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        r = client.delete(url + "/" + uuid, headers=headers2)
+        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+
+        # let's delete the second user
+        r = client.delete(url + "/" + uuid2, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+
         endpoint = AUTH_URI + '/logout'
 
         r = client.get(endpoint, headers=headers)
+        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+
+        r = client.get(endpoint, headers=headers2)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
