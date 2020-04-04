@@ -331,33 +331,6 @@ class EndpointResource(Resource):
         """ Empty response as defined by the protocol """
         return self.response("", code=hcodes.HTTP_OK_NORESPONSE)
 
-    def formatJsonResponse(self, instances, resource_type=None):
-        """
-        Format specifications can be found here:
-        http://jsonapi.org
-        """
-
-        json_data = {}
-        endpoint = request.url
-        json_data["links"] = {"self": endpoint, "next": None, "last": None}
-
-        json_data["content"] = []
-        if not isinstance(instances, list):
-            raise AttributeError("Expecting a list of objects to format")
-        if len(instances) < 1:
-            return json_data
-
-        for instance in instances:
-            json_data["content"].append(self.getJsonResponse(instance))
-
-        # FIXME: get pages FROM SELF ARGS?
-        # json_data["links"]["next"] = \
-        #     endpoint + '?currentpage=2&perpage=1',
-        # json_data["links"]["last"] = \
-        #     endpoint + '?currentpage=' + str(len(instances)) + '&perpage=1',
-
-        return json_data
-
     def get_show_fields(self, obj, function_name, view_public_only, fields=None):
         if fields is None:
             fields = []
@@ -404,7 +377,6 @@ class EndpointResource(Resource):
         self,
         instance,
         fields=None,
-        resource_type=None,
         skip_missing_ids=False,
         view_public_only=False,
         relationship_depth=0,
@@ -419,8 +391,6 @@ class EndpointResource(Resource):
 
         # to be deprecated
         # log.warning("Deprecated use of getJsonResponse")
-        if resource_type is None:
-            resource_type = type(instance).__name__.lower()
 
         # Get id
         verify_attribute = hasattr
@@ -438,20 +408,11 @@ class EndpointResource(Resource):
 
         data = {
             "id": res_id,
-            "type": resource_type,
             "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
         }
 
         if skip_missing_ids and res_id == '-':
             del data['id']
-
-        # TO FIX: for now is difficult to compute self links for relationships
-        if relationship_depth == 0:
-            self_uri = request.url
-            if not self_uri.endswith(res_id):
-                self_uri += '/' + res_id
-            data["links"] = {"self": self_uri}
 
         data["attributes"] = self.get_show_fields(
             instance, 'show_fields', view_public_only, fields
@@ -527,7 +488,6 @@ class EndpointResource(Resource):
                         )
                     subnode['attributes'][k] = attrs[k]
 
-                # subnode['attributes']['pippo'] = 'boh'
                 subrelationship.append(subnode)
 
             if len(subrelationship) > 0:
@@ -535,80 +495,6 @@ class EndpointResource(Resource):
 
         if len(linked) > 0:
             data['relationships'] = linked
-
-        return data
-
-    def getJsonResponseFromSql(self, instance):
-
-        # Deprecated since 0.7.3
-        log.warning("Deprecated use of getJsonResponseFromSql")
-        resource_type = type(instance).__name__.lower()
-
-        # Get id
-        verify_attribute = hasattr
-        if isinstance(instance, dict):
-            verify_attribute = dict.get
-        if verify_attribute(instance, "uuid"):
-            res_id = str(instance.uuid)
-        elif verify_attribute(instance, "id"):
-            res_id = str(instance.id)
-        else:
-            res_id = "-"
-
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "type": resource_type,
-            "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
-        }
-        for c in instance.__table__.columns._data:
-            if c == 'password':
-                continue
-
-            data["attributes"][c] = getattr(instance, c)
-
-        return data
-
-    def getJsonResponseFromMongo(self, instance):
-
-        # Deprecated since 0.7.3
-        log.warning("Deprecated use of getJsonResponseFromMongo")
-        resource_type = type(instance).__name__.lower()
-
-        # Get id
-        verify_attribute = hasattr
-        if isinstance(instance, dict):
-            verify_attribute = dict.get
-        if verify_attribute(instance, "uuid"):
-            res_id = str(instance.uuid)
-        elif verify_attribute(instance, "id"):
-            res_id = str(instance.id)
-        else:
-            res_id = "-"
-
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "type": resource_type,
-            "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
-        }
-        # log.critical(instance._data._members)
-        for c in instance._data._members:
-            if c == 'password':
-                continue
-
-            attribute = getattr(instance, c)
-
-            if isinstance(attribute, list):
-                continue
-
-            data["attributes"][c] = attribute
 
         return data
 

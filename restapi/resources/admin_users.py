@@ -189,33 +189,36 @@ Password: "{}"
             self.graph = self.get_service_instance('neo4j')
 
         current_user = self.get_current_user()
-        for u in users:
+        for user in users:
 
             is_authorized = self.check_permissions(
-                current_user, u, is_admin, is_local_admin
+                current_user, user, is_admin, is_local_admin
             )
             if not is_authorized:
                 continue
 
-            if self.neo4j_enabled:
-                user = self.getJsonResponse(u, max_relationship_depth=1)
-            elif self.sql_enabled:
-                user = self.getJsonResponseFromSql(u)
-                user['relationships'] = {}
-                user['relationships']['roles'] = []
-                for role in u.roles:
-                    r = self.getJsonResponseFromSql(role)
-                    user['relationships']['roles'].append(r)
-            elif self.mongo_enabled:
-                user = self.getJsonResponseFromMongo(u)
-                user['relationships'] = {}
-                user['relationships']['roles'] = self.auth.get_roles_from_user(u)
-            else:
-                raise RestApiException(
-                    "Invalid auth backend, all known db are disabled"
+            user_data = {
+                "id": user.uuid,
+                "email": user.email,
+                "name": user.name,
+                "surname": user.surname,
+                "first_login": user.first_login,
+                "last_login": user.last_login,
+                "last_password_change": user.last_password_change,
+                "is_active": user.is_active,
+                "privacy_accepted": user.privacy_accepted,
+                "_roles": []
+            }
+            for role in user.roles:
+                user_data["_roles"].append(
+                    {
+                        "id": role.id,
+                        "name": role.name,
+                        "description": role.description,
+                    }
                 )
 
-            data.append(user)
+            data.append(user_data)
 
         return self.response(data)
 
