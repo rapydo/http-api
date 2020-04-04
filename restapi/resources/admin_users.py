@@ -429,13 +429,7 @@ Password: "{}"
 
     @decorators.catch_errors()
     @decorators.auth.required()
-    def put(self, user_id=None):
-
-        if user_id is None:
-
-            raise RestApiException(
-                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
-            )
+    def put(self, user_id):
 
         schema = self.get_endpoint_custom_definition()
         if self.neo4j_enabled:
@@ -538,13 +532,7 @@ Password: "{}"
 
     @decorators.catch_errors()
     @decorators.auth.required()
-    def delete(self, user_id=None):
-
-        if user_id is None:
-
-            raise RestApiException(
-                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
-            )
+    def delete(self, user_id):
 
         if self.neo4j_enabled:
             self.graph = self.get_service_instance('neo4j')
