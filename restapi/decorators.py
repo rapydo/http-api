@@ -67,14 +67,14 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 excname = e.__class__.__name__
                 message = str(e)
                 if not message:
-                    message = "*No message*"
+                    message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)
                 if catch_generic:
                     if excname in ['AttributeError', 'ValueError', 'KeyError']:
                         error = 'Server failure; please contact admin.'
                     else:
-                        error = str(e)
+                        error = {excname: message}
                     return self.response(errors=error, code=hcodes.HTTP_BAD_REQUEST)
                 else:
                     raise e
