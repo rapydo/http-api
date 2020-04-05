@@ -238,7 +238,7 @@ class TestApp(BaseTests):
         # test schema from endpoint...
         r = client.post(
             url,
-            data={'get_schema': True, 'autocomplete': False},
+            data={'get_schema': 1, 'autocomplete': 0},
             headers=headers
         )
         assert r.status_code == hcodes.HTTP_OK_BASIC
