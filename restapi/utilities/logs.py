@@ -5,6 +5,7 @@ import sys
 import json
 import urllib
 import re
+from restapi.confs import PRODUCTION
 
 try:
     from loguru import logger as log
@@ -61,16 +62,57 @@ log.exit = critical_exit
 
 log.remove()
 
+
+# Prevent exceptions on standard sink
+def print_message_on_stderr(record):
+    return record.get("exception") is None
+
+
+fmt = ""
+fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
+fmt += "[<level>{level}</level> "
+fmt += "<fg #666>{name}:{line}</fg #666>] "
+fmt += "<fg #FFF>{message}</fg #FFF>"
+
 log.add(
     sys.stderr,
     level=log_level,
     colorize=True,
-    format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>"
+    format=fmt,
+    # If True the exception trace is extended upward, beyond the catching point
+    # to show the full stacktrace which generated the error.
+    backtrace=False,
+    # Display variables values in exception trace to eases the debugging.
+    # Disabled in production to avoid leaking sensitive data.
+    # Note: enabled in development mode on the File Logger
+    diagnose=False,
+    filter=print_message_on_stderr
 )
 
 if LOGS_PATH is not None:
     try:
-        log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
+        log.add(
+            LOGS_PATH,
+            level="WARNING",
+            rotation="1 week",
+            retention="4 weeks",
+            # If True the exception trace is extended upward, beyond the catching point
+            # to show the full stacktrace which generated the error.
+            backtrace=False,
+            # Display variables values in exception trace to eases the debugging.
+            # Disabled in production to avoid leaking sensitive data.
+            diagnose=not PRODUCTION,
+            # Messages pass through a multiprocess-safe queue before reaching the sink
+            # This is useful while logging to a file through multiple processes.
+            # This also has the advantage of making logging calls non-blocking.
+            # Unfortunately it fails to serialize some exceptions with pickle
+            enqueue=False,
+            # Errors occurring while sink handles logs messages are automatically caught
+            # an exception message is displayed on sys.stderr but the exception
+            # is not propagated to the caller, preventing your app to crash.
+            # This is the case when picle fails to serialize before sending to the queue
+            catch=True,
+        )
     except PermissionError as p:
         log.error(p)
         LOGS_PATH = None

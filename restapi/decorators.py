@@ -34,18 +34,19 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             # Catch the exception requested by the user
             except exception as e:
 
-                message = str(e)
-                log.error(message)
+                log.exception(e)
+                log.error(e)
 
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
                     error_code = hcodes.HTTP_BAD_REQUEST
 
-                return self.response(errors=message, code=error_code)
+                return self.response(errors=str(e), code=error_code)
 
             # Catch the basic API exception
             except RestApiException as e:
+                log.exception(e)
                 log.error(e)
                 if catch_generic:
                     return self.response(errors=str(e), code=e.status_code)
@@ -64,9 +65,11 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                     capture_exception(e)
 
                 excname = e.__class__.__name__
-                log.error(
-                    "Catched exception:\n\n[{}] {}\n", excname, e, exc_info=True
-                )
+                message = str(e)
+                if not message:
+                    message = "*No message*"
+                log.exception(message)
+                log.error("Catched {} exception: {}", excname, message)
                 if catch_generic:
                     if excname in ['AttributeError', 'ValueError', 'KeyError']:
                         error = 'Server failure; please contact admin.'
