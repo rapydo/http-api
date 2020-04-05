@@ -45,7 +45,7 @@ class User(MongoModel):
     last_password_change = fields.DateTimeField()
     is_active = fields.BooleanField(default=True)
     privacy_accepted = fields.BooleanField(default=True)
-    roles = fields.EmbeddedDocumentListField(Role)
+    roles = fields.EmbeddedDocumentListField(Role, blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)

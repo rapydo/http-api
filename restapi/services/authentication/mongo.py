@@ -62,9 +62,6 @@ class Authentication(BaseAuthentication):
 
     def link_roles(self, user, roles):
 
-        if roles is None or len(roles) == 0:
-            roles = self.default_roles
-
         roles_obj = []
         for role_name in roles:
             role_obj = self.db.Role.objects.get({'name': role_name})
@@ -211,8 +208,6 @@ class Authentication(BaseAuthentication):
 
             # Save user updated in profile endpoint
             user.save()
-
-            log.debug("Token stored inside mongo")
 
     def refresh_token(self, jti):
 

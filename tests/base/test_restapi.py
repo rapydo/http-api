@@ -235,12 +235,9 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_OK_BASIC
         uuid = self.get_content(r)
 
-        # test schema from endpoint...
         data = {'get_schema': True, 'autocomplete': False}
         r = client.post(url, data=data, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
-        schema2 = self.get_content(r)
-        assert len(schema2) > len(schema)
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
