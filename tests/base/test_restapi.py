@@ -305,6 +305,3 @@ class TestApp(BaseTests):
 
         r = client.get(endpoint, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
-
-        r = client.get(endpoint, headers=headers2)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
