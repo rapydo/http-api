@@ -16,8 +16,8 @@ from bravado_core.validate import validate_object
 
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.confs import get_project_configuration
 from restapi.confs.attributes import ExtraAttributes
-
 from restapi.utilities.globals import mem
 from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.logs import log
@@ -302,13 +302,13 @@ class Swagger:
             "security": [{"Bearer": []}],
         }
 
-        ###################
-        # Set existing values
-        proj = self._customizer._configurations['project']
-        if 'version' in proj:
-            output['info']['version'] = proj['version']
-        if 'title' in proj:
-            output['info']['title'] = proj['title']
+        version = get_project_configuration('project.version')
+        title = get_project_configuration('project.title')
+
+        if version is not None:
+            output['info']['version'] = version
+        if title is not None:
+            output['info']['title'] = title
 
         ###################
         models = self.get_models()

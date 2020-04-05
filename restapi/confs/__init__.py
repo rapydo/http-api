@@ -53,9 +53,7 @@ ABS_RESTAPI_CONFSPATH = os.path.dirname(os.path.realpath(__file__))
 ABS_RESTAPI_PATH = os.path.dirname(ABS_RESTAPI_CONFSPATH)
 
 
-def get_project_configuration(key=None, default=None):
-    if key is None:
-        return mem.customizer._configurations
+def get_project_configuration(key, default=None):
     return glom(mem.customizer._configurations, key, default=default)
 
 

@@ -10,7 +10,6 @@ from flask import Flask, request
 from flask_cors import CORS
 from flask_restful import Api
 from werkzeug.middleware.proxy_fix import ProxyFix
-from glom import glom
 from geolite2 import geolite2
 from restapi import __version__
 from restapi import confs as config
@@ -148,15 +147,11 @@ def create_app(
 
         microservice.config.update({
             'APISPEC_SPEC': APISpec(
-                title=glom(
-                    mem.customizer._configurations,
-                    'project.title',
-                    default='0.0.1'
+                title=get_project_configuration(
+                    'project.title', default='Your application name'
                 ),
-                version=glom(
-                    mem.customizer._configurations,
-                    'project.version',
-                    default='Your application name'
+                version=get_project_configuration(
+                    'project.version', default='0.0.1'
                 ),
                 openapi_version="2.0",
                 # OpenApi 3 not working with FlaskApiSpec
