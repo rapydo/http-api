@@ -38,7 +38,7 @@ if [ ! -d $CORE_DIR ]; then
     git clone https://github.com/rapydo/tests.git $CORE_DIR
 fi
 cd $CORE_DIR
-mkdir -p data
+# mkdir -p data
 
 # Pull requests
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then

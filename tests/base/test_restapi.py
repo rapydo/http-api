@@ -237,6 +237,10 @@ class TestApp(BaseTests):
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
+        users_list = self.get_content(r)
+        assert len(users_list) > 0
+        # email is saved lowercase
+        assert users_list[0].get("email") == data.get('email').lower()
 
         # Check duplicates
         r = client.post(url, data=data, headers=headers)
@@ -261,8 +265,8 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
-        assert users_list[0].get("email") == data.get('email')
-        assert users_list[0].get("email") == data2.get('email')
+        assert users_list[0].get("email") != data.get('email').lower()
+        assert users_list[0].get("email") == data2.get('email').lower()
 
         r = client.delete(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
