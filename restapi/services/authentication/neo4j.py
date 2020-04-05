@@ -92,7 +92,7 @@ class Authentication(BaseAuthentication):
         try:
             user_node.save()
         except Exception as e:
-            message = "Can't create user {}:\n{}".format(userdata['email'], e)
+            message = "Can't create user {}\n{}".format(userdata['email'], e)
             log.error(message)
             raise AttributeError(message)
 

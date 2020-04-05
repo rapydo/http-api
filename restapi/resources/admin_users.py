@@ -13,7 +13,7 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.templates import get_html_template
 from restapi.utilities.htmlcodes import hcodes
 
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 
 class AdminUsers(EndpointResource):
@@ -379,17 +379,31 @@ Password: "{}"
             user = self.auth.create_user(properties, roles)
         except AttributeError as e:
 
-            # Duplicated from decorators
-            prefix = r"Can't create user .*:\nNode\([0-9]+\) already exists with label"
-            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(
-                prefix), str(e)
+            # Message is produced by authentication/neo4j.py and authentication/mongo.py
+            message = str(e).split('\n')
+            if not re.search(r"Can't create user .*", message[0]):
+                log.error("Unrecognized error message: {}", e)
+                raise e
+
+            # ~ duplicated int decorators
+
+            # Neo4j
+            m = re.search(
+                r"Node\([0-9]+\) already exists with label `(.+)` and property `(.+)` = '(.+)'",
+                message[1]
             )
 
+            # Mongodb
+            if not m:
+                m = re.search(
+                    r".+ duplicate key error collection: auth\.(.+) index: .+ dup key: { (.+): \"(.+)\" }",
+                    message[1]
+                )
             if m:
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = "A {} already exists with {} = {}".format(node, prop, val)
+                error = "A {} already exists with {}: {}".format(node, prop, val)
                 raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
             else:
                 raise e

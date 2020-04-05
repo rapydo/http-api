@@ -6,6 +6,7 @@ Mongodb based implementation
 
 from pytz import utc
 from datetime import datetime, timedelta
+from pymongo.errors import DuplicateKeyError
 from restapi.services.authentication import BaseAuthentication
 from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
@@ -38,19 +39,24 @@ class Authentication(BaseAuthentication):
     # Also used by POST user
     def create_user(self, userdata, roles):
 
-        if "authmethod" not in userdata:
-            userdata["authmethod"] = "credentials"
+        try:
+            if "authmethod" not in userdata:
+                userdata["authmethod"] = "credentials"
 
-        if "password" in userdata:
-            userdata["password"] = self.get_password_hash(userdata["password"])
+            if "password" in userdata:
+                userdata["password"] = self.get_password_hash(userdata["password"])
 
-        userdata = self.custom_user_properties(userdata)
-        user = self.db.User(**userdata)
+            userdata = self.custom_user_properties(userdata)
+            user = self.db.User(**userdata)
 
-        self.link_roles(user, roles)
+            self.link_roles(user, roles)
 
-        user.save()
-        return user
+            user.save()
+            return user
+        except DuplicateKeyError as e:
+            message = "Can't create user {}\n{}".format(userdata['email'], e)
+            log.error(message)
+            raise AttributeError(message)
 
     def link_roles(self, user, roles):
 
@@ -59,7 +65,7 @@ class Authentication(BaseAuthentication):
 
         roles_obj = []
         for role_name in roles:
-            role_obj = self.db.Role.objects.get({'_id': role_name})
+            role_obj = self.db.Role.objects.get({'name': role_name})
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
@@ -70,7 +76,7 @@ class Authentication(BaseAuthentication):
         if username is not None:
             # NOTE: email is the key, so to query use _id
             try:
-                user = self.db.User.objects.raw({'_id': username}).first()
+                user = self.db.User.objects.raw({'email': username}).first()
             except self.db.User.DoesNotExist:
                 # don't do things, user will remain 'None'
                 pass
@@ -110,7 +116,7 @@ class Authentication(BaseAuthentication):
         roles = []
         for role_name in self.default_roles:
             try:
-                role = self.db.Role.objects.get({'_id': role_name})
+                role = self.db.Role.objects.get({'name': role_name})
                 roles.append(role)
             except self.db.Role.DoesNotExist:
                 log.warning("Role not found: {}", role_name)
@@ -138,7 +144,7 @@ class Authentication(BaseAuthentication):
 
         for role_name in self.default_roles:
             try:
-                role = self.db.Role.objects.get({'_id': role_name})
+                role = self.db.Role.objects.get({'name': role_name})
                 roles.append(role.name)
                 log.info("Role already exists: {}", role.name)
             except self.db.Role.DoesNotExist:

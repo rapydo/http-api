@@ -10,6 +10,7 @@ https://docs.mongodb.com/manual/applications/data-models-relationships
 
 from pymodm import fields
 from pymodm import MongoModel
+from pymongo.operations import IndexModel
 from restapi.connectors.mongo import AUTH_DB
 
 # from pymongo.write_concern import WriteConcern
@@ -18,12 +19,14 @@ from restapi.connectors.mongo import AUTH_DB
 ####################
 # Base Models
 class Role(MongoModel):
-    name = fields.CharField(primary_key=True)
+    name = fields.CharField()
     description = fields.CharField()
 
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
+
+        indexes = [IndexModel('name', unique=True)]
 
 
 class User(MongoModel):
@@ -31,7 +34,7 @@ class User(MongoModel):
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     # uuid = fields.UUIDField()
     uuid = fields.CharField()
-    email = fields.EmailField(primary_key=True)
+    email = fields.EmailField()
     name = fields.CharField()
     surname = fields.CharField()
     authmethod = fields.CharField()
@@ -46,6 +49,8 @@ class User(MongoModel):
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
+
+        indexes = [IndexModel('email', unique=True)]
 
 
 class Token(MongoModel):
@@ -65,3 +70,5 @@ class Token(MongoModel):
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
+
+        indexes = [IndexModel('token', unique=True)]
