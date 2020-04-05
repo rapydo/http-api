@@ -34,6 +34,8 @@ class Authentication(BaseAuthentication):
         new_userdata = super(Authentication, self).custom_user_properties(userdata)
         if not new_userdata.get('uuid'):
             new_userdata['uuid'] = getUUID()
+        if not new_userdata.get('id'):
+            new_userdata['id'] = new_userdata['uuid']
         return new_userdata
 
     # Also used by POST user
@@ -252,7 +254,7 @@ class Authentication(BaseAuthentication):
 
         if user is not None:
             try:
-                tokens = self.db.Token.objects.raw({'user_id': user.email}).all()
+                tokens = self.db.Token.objects.raw({'user_id': user.id}).all()
             except self.db.Token.DoesNotExist:
                 pass
         elif token_jti is not None:

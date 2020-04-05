@@ -33,6 +33,7 @@ class User(MongoModel):
     # To be enabled after completed the output serialization,
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     # uuid = fields.UUIDField()
+    id = fields.CharField(primary_key=True)
     uuid = fields.CharField()
     email = fields.EmailField()
     name = fields.CharField()
@@ -50,7 +51,10 @@ class User(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [IndexModel('email', unique=True)]
+        indexes = [
+            IndexModel('uuid', unique=True),
+            IndexModel('email', unique=True)
+        ]
 
 
 class Token(MongoModel):
@@ -65,7 +69,6 @@ class Token(MongoModel):
     hostname = fields.CharField(blank=True)
     location = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User, blank=True)
-    # emitted_for = fields.EmbeddedDocumentField(User, blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
