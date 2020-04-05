@@ -258,10 +258,11 @@ class TestApp(BaseTests):
 
         r = client.get(url + "/" + uuid2, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_BASIC
-        u = self.get_content(r)
-        # email is still equal to data2, not data1
-        assert u.get("email") == data.get('email')
-        assert u.get("email") == data2.get('email')
+        users_list = self.get_content(r)
+        assert len(users_list) > 0
+        # email is not modified -> still equal to data2, not data1
+        assert users_list[0].get("email") == data.get('email')
+        assert users_list[0].get("email") == data2.get('email')
 
         r = client.delete(url + "/" + uuid, headers=headers)
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
