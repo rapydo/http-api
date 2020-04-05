@@ -31,12 +31,9 @@ class Customizer:
     Read all of available configurations and definitions.
     """
 
-    def __init__(self, testing=False, init=False):
+    def __init__(self, testing=False):
 
-        # Input
         self._testing = testing
-
-        # Some initialization
         self._endpoints = []
         self._definitions = {}
         self._configurations = {}
@@ -61,10 +58,11 @@ class Customizer:
         except AttributeError as e:
             log.exit(e)
 
-        if not init:
-            self.do_schema()
-            self.find_endpoints()
-            self.do_swagger()
+    def load_swagger(self):
+
+        self.do_schema()
+        self.find_endpoints()
+        self.do_swagger()
 
     def do_schema(self):
         """ Schemas exposing, if requested """
@@ -161,22 +159,12 @@ class Customizer:
                 classes = meta.get_new_classes_from_module(module)
                 for class_name in classes:
                     ep_class = classes.get(class_name)
-                    # Filtering out classes without required data
+                    # Filtering out classes without expected data
                     if not hasattr(ep_class, "methods"):
                         continue
                     if ep_class.methods is None:
                         continue
 
-                    # if class_name in already_loaded:
-                    #     log.warning(
-                    #         "Skipping import of {} from {}.{}, already loded from {}",
-                    #         class_name,
-                    #         apis_dir,
-                    #         module_file,
-                    #         already_loaded[class_name],
-                    #     )
-                    #     continue
-                    # already_loaded[class_name] = "{}.{}".format(apis_dir, module_file)
                     log.debug(
                         "Importing {} from {}.{}", class_name, apis_dir, module_file
                     )

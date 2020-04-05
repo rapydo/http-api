@@ -536,12 +536,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         module = Meta.get_module_from_string(module_path)
 
         meta = Meta()
-        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
-        if Customizer is None:
+        CustomizerClass = meta.get_class_from_string(
+            'Customizer',
+            module,
+            skip_error=True
+        )
+        if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
             try:
-                userdata = Customizer().custom_user_properties(userdata)
+                userdata = CustomizerClass().custom_user_properties(userdata)
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 
@@ -555,12 +559,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         module = Meta.get_module_from_string(module_path)
 
         meta = Meta()
-        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
-        if Customizer is None:
+        CustomizerClass = meta.get_class_from_string(
+            'Customizer',
+            module,
+            skip_error=True
+        )
+        if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
             try:
-                Customizer().custom_post_handle_user_input(self, user_node, input_data)
+                CustomizerClass().custom_post_handle_user_input(
+                    self,
+                    user_node,
+                    input_data
+                )
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 

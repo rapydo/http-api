@@ -41,10 +41,12 @@ def create_app(
         log.exit("Unable to execute tests in production")
 
     # Initialize reading of all files
-    mem.customizer = Customizer(testing_mode, init_mode)
     mem.geo_reader = geolite2.reader()
     # when to close??
     # geolite2.close()
+    mem.customizer = Customizer(testing_mode)
+    if not init_mode:
+        mem.customizer.load_swagger()
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
