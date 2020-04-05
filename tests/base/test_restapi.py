@@ -277,7 +277,7 @@ class TestApp(BaseTests):
         # login with a newly created user
         headers2, _ = self.do_login(
             client,
-            data2.get("username"),
+            data2.get("email"),
             data2.get("password")
         )
 
