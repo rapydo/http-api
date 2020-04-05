@@ -109,8 +109,11 @@ class Authentication(BaseAuthentication):
     def get_roles(self):
         roles = []
         for role_name in self.default_roles:
-            role = self.db.Role.objects.get({'name': role_name})
-            roles.append(role)
+            try:
+                role = self.db.Role.objects.get({'_id': role_name})
+                roles.append(role)
+            except self.db.Role.DoesNotExist:
+                log.warning("Role not found: {}", role_name)
 
         return roles
 
@@ -131,41 +134,30 @@ class Authentication(BaseAuthentication):
 
     def init_users_and_roles(self):
 
-        missing_role = missing_user = False
         roles = []
-        # transactions = []
+
+        for role_name in self.default_roles:
+            try:
+                role = self.db.Role.objects.get({'_id': role_name})
+                roles.append(role.name)
+                log.info("Role already exists: {}", role.name)
+            except self.db.Role.DoesNotExist:
+                role = self.db.Role(name=role_name, description="automatic")
+                role.save()
+                roles.append(role.name)
+                log.warning("Injected default role: {}", role.name)
 
         try:
 
-            # if no roles
-            cursor = self.db.Role.objects.all()
-            fetch_roles = list(cursor)
-            missing_role = len(fetch_roles) < 1
-
-            if missing_role:
-                for role in self.default_roles:
-                    roles.append(
-                        self.db.Role(name=role, description="automatic").save().name
-                    )
-                    # if missing_role:
-                    #     transactions.append(role)
-                    # roles.append(role)
-                log.warning("Injected default roles")
-            else:
-                # roles = fetch_roles
-                for role_obj in fetch_roles:
-                    roles.append(role_obj.name)
-
             # if no users
             cursor = self.db.User.objects.all()
-            missing_user = len(list(cursor)) < 1
-
-            if missing_user:
+            if len(list(cursor)) > 0:
+                log.info("No user injected")
+            else:
 
                 self.create_user(
                     {
                         'email': self.default_user,
-                        # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
                         'password': self.default_password,
@@ -177,13 +169,7 @@ class Authentication(BaseAuthentication):
                 log.warning("Injected default user")
 
         except BaseException as e:
-            # raise e
             raise AttributeError("Models for auth are wrong:\n{}".format(e))
-
-        # if missing_user or missing_role:
-        #     for transaction in transactions:
-        #         transaction.save()
-        #     log.info("Saved init transactions")
 
     def save_user(self, user):
         if user is not None:
