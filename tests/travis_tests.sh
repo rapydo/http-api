@@ -61,7 +61,7 @@ echo "project_configuration:" >> .projectrc
 echo "  variables:" >> .projectrc
 echo "    env:" >> .projectrc
 echo "      DEFAULT_DHLEN: 256" >> .projectrc
-echo "      NEO4J_AUTOINDEXING: False" >> .projectrc
+# echo "      NEO4J_AUTOINDEXING: False" >> .projectrc
 echo "      NEO4J_PASSWORD: AutoT3sts" >> .projectrc
 echo "      RABBITMQ_USER: white" >> .projectrc
 echo "      RABBITMQ_PASSWORD: rabbit" >> .projectrc
