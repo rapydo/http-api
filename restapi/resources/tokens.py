@@ -128,15 +128,26 @@ class AdminTokens(EndpointResource):
 
         users = {}
         tokens = self.auth.get_tokens(get_all=True)
-        for idx, token in enumerate(tokens):
-            user_id = token.pop('user_id')
+        for idx, _ in enumerate(tokens):
+            user_id = tokens[idx].pop('user_id')
+            # Mongo directly provides the user
+            if not isinstance(user_id, str):
+                tokens[idx]['user_email'] = user_id.email
+                tokens[idx]['user_name'] = user_id.name
+                tokens[idx]['user_surname'] = user_id.surname
+
+                continue
+
+            # SQLAlchemy and neo4j provide the user_id
             if user_id not in users:
                 u = self.auth.get_users(user_id=user_id).pop()
+
                 users[user_id] = {
                     "user_email": u.email,
                     "user_name": u.name,
                     "user_surname": u.surname,
                 }
+
             tokens[idx]['user_email'] = users[user_id].get("user_email")
             tokens[idx]['user_name'] = users[user_id].get("user_name")
             tokens[idx]['user_surname'] = users[user_id].get("user_surname")
