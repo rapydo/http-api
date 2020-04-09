@@ -6,6 +6,8 @@ from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 
 from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import log
+
 
 """
 class Tokens
@@ -149,12 +151,15 @@ class AdminTokens(EndpointResource):
             For additional security, tokens are invalidated both
             by changing the user UUID and by removing single tokens
         """
-
-        tokens = self.auth.get_tokens(token_jti=token_id)
+        try:
+            tokens = self.auth.get_tokens(token_jti=token_id)
+        except BaseException as e:
+            log.error(e)
+            tokens = None
 
         if not tokens:
             raise RestApiException(
-                'This token ooes not exist',
+                'This token does not exist',
                 status_code=hcodes.HTTP_BAD_NOTFOUND
             )
         token = tokens[0]
