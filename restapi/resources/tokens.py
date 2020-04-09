@@ -130,6 +130,9 @@ class AdminTokens(EndpointResource):
         tokens = self.auth.get_tokens(get_all=True)
         for idx, _ in enumerate(tokens):
             user_id = tokens[idx].pop('user_id')
+            if user_id is None:
+                log.warning("No user associated to token {}", tokens[idx])
+                continue
             # Mongo directly provides the user
             if not isinstance(user_id, str):
                 tokens[idx]['user_email'] = user_id.email
