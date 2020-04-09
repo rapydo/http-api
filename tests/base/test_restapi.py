@@ -185,13 +185,13 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
         # TEST GET ALL TOKENS (expected at least num_tokens)
-        r = client.get(API_URI + "admin/tokens", headers=self.get("tokens_header"))
+        r = client.get(API_URI + "/admin/tokens", headers=self.get("tokens_header"))
         content = self.get_content(r)
         assert r.status_code == hcodes.HTTP_OK_BASIC
         assert len(content) >= num_tokens
 
-        # DELETE INVALID TOKEN 
-        r = client.get(API_URI + "admin/tokens/xyz", headers=self.get("tokens_header"))
+        # DELETE INVALID TOKEN
+        r = client.get(API_URI + "/admin/tokens/xyz", headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
     def test_07_DELETE_tokens(self, client):
@@ -316,10 +316,9 @@ class TestApp(BaseTests):
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
         # Users are not authorized to /admin/tokens
-        r = client.get(API_URI + "admin/tokens", headers=headers2)
+        r = client.get(API_URI + "/admin/tokens", headers=headers2)
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
-        # Users are not authorized to /admin/tokens
-        r = client.delete(API_URI + "admin/tokens/xyz", headers=headers2)
+        r = client.delete(API_URI + "/admin/tokens/xyz", headers=headers2)
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
         # let's delete the second user
