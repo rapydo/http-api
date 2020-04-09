@@ -96,22 +96,24 @@ printf "\n\n\n"
 
 rapydo clean
 
-printf "\n\n\n"
+if [ "$PROJECT" != "mongo" ]; then
+    printf "\n\n\n"
 
-rapydo --production pull
-rapydo --production start
-rapydo --production ssl-certificate
+    rapydo --production pull
+    rapydo --production start
+    rapydo --production ssl-certificate
 
-printf "\n\n\nBackend server is starting\n\n\n"
+    printf "\n\n\nBackend server is starting\n\n\n"
 
-rapydo --production shell backend --command 'restapi wait'
-rapydo --production -s backend logs
+    rapydo --production shell backend --command 'restapi wait'
+    rapydo --production -s backend logs
 
-printf "\n\n\n"
+    printf "\n\n\n"
 
-curl -k -X GET https://localhost/api/status | grep "Server is alive!"
+    curl -k -X GET https://localhost/api/status | grep "Server is alive!"
 
-printf "\n\n\n"
+    printf "\n\n\n"
 
-rapydo --production remove
-rapydo --production clean
+    rapydo --production remove
+    rapydo --production clean
+fi
