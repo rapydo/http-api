@@ -269,7 +269,7 @@ class Authentication(BaseAuthentication):
         tokens = None
 
         if get_all:
-            tokens = [self.db.Token.query.all()]
+            tokens = self.db.Token.query.all()
         elif user is not None:
             tokens = user.tokens.all()
         elif token_jti is not None:
@@ -292,7 +292,7 @@ class Authentication(BaseAuthentication):
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user_id'] = token.user_id
+                t['user_id'] = token.emitted_for.uuid
             tokens_list.append(t)
 
         return tokens_list

@@ -118,6 +118,19 @@ class AdminTokens(EndpointResource):
     @decorators.auth.required(roles=['admin_root'])
     def get(self):
 
+        users = {}
         tokens = self.auth.get_tokens(get_all=True)
+        for idx, token in enumerate(tokens):
+            user_id = token.pop('user_id')
+            if user_id not in users:
+                u = self.auth.get_users(user_id=user_id).pop()
+                users[user_id] = {
+                    "user_email": u.email,
+                    "user_name": u.name,
+                    "user_surname": u.surname,
+                }
+            tokens[idx]['user_email'] = users[user_id].get("user_email")
+            tokens[idx]['user_name'] = users[user_id].get("user_name")
+            tokens[idx]['user_surname'] = users[user_id].get("user_surname")
 
         return self.response(tokens)
