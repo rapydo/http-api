@@ -295,10 +295,7 @@ class Authentication(BaseAuthentication):
         log.warning("User uuid changed to: {}", user.uuid)
         return True
 
-    def invalidate_token(self, token, user=None):
-        if user is None:
-            user = self.get_user()
-
+    def invalidate_token(self, token):
         try:
             token_entry = self.db.Token.objects.raw({'token': token}).first()
             # NOTE: Other auth db (sqlalchemy, neo4j) delete the token instead

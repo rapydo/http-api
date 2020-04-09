@@ -418,7 +418,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def invalidate_token(self, token, user=None):
+    def invalidate_token(self, token):
         """
             With this method the specified token must be invalidated
             as expected after a user logout

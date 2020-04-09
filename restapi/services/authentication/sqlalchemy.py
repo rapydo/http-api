@@ -313,9 +313,7 @@ class Authentication(BaseAuthentication):
             self.db.session.rollback()
         return True
 
-    def invalidate_token(self, token, user=None):
-        # if user is None:
-        #     user = self.get_user()
+    def invalidate_token(self, token):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry is not None:

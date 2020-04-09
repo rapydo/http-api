@@ -89,7 +89,7 @@ class Tokens(EndpointResource):
         for token in tokens:
             if token["id"] != token_id:
                 continue
-            if not self.auth.invalidate_token(token=token["token"], user=user):
+            if not self.auth.invalidate_token(token=token["token"]):
                 raise RestApiException(
                     "Failed token invalidation: '{}'".format(token),
                     status_code=hcodes.HTTP_BAD_REQUEST
@@ -113,6 +113,12 @@ class AdminTokens(EndpointResource):
             "responses": {"200": {"description": "List of tokens"}},
         },
     }
+    DELETE = {
+        "/admin/tokens/<token_id>": {
+            "summary": "Remove specified token and make it invalid from now on",
+            "responses": {"200": {"description": "Token has been invalidated"}},
+        },
+    }
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
@@ -134,3 +140,28 @@ class AdminTokens(EndpointResource):
             tokens[idx]['user_surname'] = users[user_id].get("user_surname")
 
         return self.response(tokens)
+
+    # token_id = uuid associated to the token you want to select
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    def delete(self, token_id):
+        """
+            For additional security, tokens are invalidated both
+            by changing the user UUID and by removing single tokens
+        """
+
+        tokens = self.auth.get_tokens(token_jti=token_id)
+
+        if not tokens:
+            raise RestApiException(
+                'This token ooes not exist',
+                status_code=hcodes.HTTP_BAD_NOTFOUND
+            )
+        token = tokens[0]
+
+        if not self.auth.invalidate_token(token=token["token"]):
+            raise RestApiException(
+                "Failed token invalidation: '{}'".format(token),
+                status_code=hcodes.HTTP_BAD_REQUEST
+            )
+        return self.empty_response()
