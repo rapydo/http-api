@@ -229,9 +229,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None):
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
         """
-            Return the list of all active tokens
+            Return the list of tokens
         """
         return
 

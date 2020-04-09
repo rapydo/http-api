@@ -9,8 +9,11 @@ from restapi.utilities.htmlcodes import hcodes
 
 """
 class Tokens
-    GET: get list of tokens for the current link
+    GET: get list of tokens for the current user
     DELETE: invalidate a token
+
+class AdminTokens
+    GET: get tokens for all users (admin only)
 
 """
 
@@ -23,11 +26,11 @@ class Tokens(EndpointResource):
 
     GET = {
         "/tokens": {
-            "summary": "Show all tokens emitted for logged user",
+            "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
         },
         "/tokens/<token_id>": {
-            "summary": "Show specified token if available for logged user",
+            "summary": "Retrieve specified token if available for logged user",
             "responses": {"200": {"description": "Details on the specified token"}},
         },
     }
@@ -97,3 +100,24 @@ class Tokens(EndpointResource):
             "Token not emitted for your account or does not exist",
             status_code=hcodes.HTTP_BAD_UNAUTHORIZED
         )
+
+
+class AdminTokens(EndpointResource):
+    """ List all tokens for all users """
+
+    labels = ["authentication"]
+
+    GET = {
+        "/admin/tokens": {
+            "summary": "Retrieve all tokens emitted for logged user",
+            "responses": {"200": {"description": "List of tokens"}},
+        },
+    }
+
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    def get(self):
+
+        tokens = self.auth.get_tokens(get_all=True)
+
+        return self.response(tokens)

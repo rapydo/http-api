@@ -246,12 +246,14 @@ class Authentication(BaseAuthentication):
         token_entry.save()
         return True
 
-    def get_tokens(self, user=None, token_jti=None):
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
 
-        returning_tokens = []
+        tokens_list = []
         tokens = []
 
-        if user is not None:
+        if get_all:
+            tokens = self.db.Token.objects.all()
+        elif user is not None:
             try:
                 tokens = self.db.Token.objects.raw({'user_id': user.id}).all()
             except self.db.Token.DoesNotExist:
@@ -261,6 +263,9 @@ class Authentication(BaseAuthentication):
                 tokens.append(self.db.Token.objects.raw({'jti': token_jti}).first())
             except self.db.Token.DoesNotExist:
                 pass
+
+        if tokens is None:
+            return tokens_list
 
         for token in tokens:
             t = {}
@@ -273,9 +278,11 @@ class Authentication(BaseAuthentication):
                 t["expiration"] = token.expiration.strftime('%s')
             t["IP"] = token.IP
             t["location"] = token.location
-            returning_tokens.append(t)
+            if get_all:
+                t['user_id'] = token.user_id
+            tokens_list.append(t)
 
-        return returning_tokens
+        return tokens_list
 
     def invalidate_all_tokens(self, user=None):
         """

@@ -263,32 +263,37 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def get_tokens(self, user=None, token_jti=None):
-        # FIXME: TTL should be considered?
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
 
         tokens_list = []
         tokens = None
 
-        if user is not None:
+        if get_all:
+            tokens = [self.db.Token.query.all()]
+        elif user is not None:
             tokens = user.tokens.all()
         elif token_jti is not None:
             tokens = [self.db.Token.query.filter_by(jti=token_jti).first()]
 
-        if tokens is not None:
-            for token in tokens:
+        if tokens is None:
+            return tokens_list
 
-                t = {}
+        for token in tokens:
 
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation.strftime('%s')
-                t["last_access"] = token.last_access.strftime('%s')
-                if token.expiration is not None:
-                    t["expiration"] = token.expiration.strftime('%s')
-                t["IP"] = token.IP
-                t["location"] = token.location
-                tokens_list.append(t)
+            t = {}
+
+            t["id"] = token.jti
+            t["token"] = token.token
+            t["token_type"] = token.token_type
+            t["emitted"] = token.creation.strftime('%s')
+            t["last_access"] = token.last_access.strftime('%s')
+            if token.expiration is not None:
+                t["expiration"] = token.expiration.strftime('%s')
+            t["IP"] = token.IP
+            t["location"] = token.location
+            if get_all:
+                t['user_id'] = token.user_id
+            tokens_list.append(t)
 
         return tokens_list
 
