@@ -43,28 +43,12 @@ class Tokens(EndpointResource):
         },
     }
 
-    def get_user(self):
-
-        iamadmin = self.auth.verify_admin()
-
-        if iamadmin:
-            username = self.get_input(single_parameter='username')
-            if username is not None:
-                username = username.lower()
-                return self.auth.get_user_object(username=username)
-
-        return self.get_current_user()
-
     # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
     @decorators.auth.required()
     def get(self, token_id=None):
 
-        user = self.get_user()
-        if user is None:
-            raise RestApiException(
-                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
-            )
+        user = self.get_current_user()
 
         tokens = self.auth.get_tokens(user=user)
         if token_id is None:
@@ -85,14 +69,10 @@ class Tokens(EndpointResource):
     def delete(self, token_id=None):
         """
             For additional security, tokens are invalidated both
-            by chanding the user UUID and by removing single tokens
+            by changing the user UUID and by removing single tokens
         """
 
-        user = self.get_user()
-        if user is None:
-            raise RestApiException(
-                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
-            )
+        user = self.get_current_user()
 
         if token_id is None:
             # NOTE: this is allowed only in removing tokens in unittests
