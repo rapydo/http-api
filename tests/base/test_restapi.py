@@ -191,7 +191,10 @@ class TestApp(BaseTests):
         assert len(content) >= num_tokens
 
         # DELETE INVALID TOKEN
-        r = client.get(API_URI + "/admin/tokens/xyz", headers=self.get("tokens_header"))
+        r = client.delete(
+            API_URI + "/admin/tokens/xyz",
+            headers=self.get("tokens_header")
+        )
         assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
 
     def test_07_DELETE_tokens(self, client):
