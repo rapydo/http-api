@@ -136,6 +136,9 @@ class Authentication(BaseAuthentication):
                 log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
+        if userobj is None:
+            return roles
+
         for role in userobj.roles:
             roles.append(role.name)
         return roles
