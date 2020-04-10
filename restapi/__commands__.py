@@ -210,7 +210,7 @@ def tests(wait, core, file, folder):
         "Running all tests and computing coverage.\n" + "This may take some minutes."
     )
 
-    parameters = []
+    parameters = ["tests/tests.sh"]
     if core:
         parameters.append(current_package)
     elif file is not None:
@@ -228,11 +228,9 @@ def tests(wait, core, file, folder):
 
     try:
 
-        # TODO: convert the `pyunittests` script from the docker image into python
-        # Pattern in plumbum library for executing a shell command
         from plumbum import local
-        command = local["pyunittests"]
-        log.verbose("Executing command pyunittests {}", parameters)
+        command = local["bash"]
+        log.verbose("Executing tests {}", parameters)
         output = command(parameters)
 
     except Exception as e:
