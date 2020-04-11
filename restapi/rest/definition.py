@@ -268,6 +268,31 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
+    @staticmethod
+    def serialize(obj, key):
+
+        attribute = getattr(obj, key)
+        if attribute is None:
+            return None
+
+        # Datetimes
+        if isinstance(attribute, datetime):
+            return string_from_timestamp(attribute.strftime('%s'))
+
+        # Based on neomodel choices:
+        # http://neomodel.readthedocs.io/en/latest/properties.html#choices
+        choice_function = "get_{}_display".format(key)
+
+        # Normal attribute
+        if not hasattr(obj, choice_function):
+            return attribute
+
+        # Choice attribute
+        fn = getattr(obj, choice_function)
+        description = fn()
+
+        return {"key": attribute, "description": description}
+
     def force_response(self, content=None, errors=None,
                        code=None, headers=None, head_method=False, meta=None):
 
