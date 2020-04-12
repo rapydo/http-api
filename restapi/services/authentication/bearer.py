@@ -95,7 +95,7 @@ class HTTPTokenAuth:
         return auth_type, token
 
     def required(
-            self, roles=[], required_roles=None, allow_access_token_parameter=False):
+            self, roles=None, required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
         def decorator(func):
             @wraps(func)
@@ -141,7 +141,7 @@ class HTTPTokenAuth:
                         )
 
                 # Check roles
-                if len(roles) > 0:
+                if roles:
                     roles_fn = decorated_self.auth.verify_roles
                     if not self.authenticate_roles(roles_fn, roles, required_roles):
                         log.info("Unauthorized request: missing privileges")

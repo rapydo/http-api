@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
+# from restapi.exceptions import RestApiException
 from restapi import decorators
 
 from flask_apispec import use_kwargs, marshal_with
@@ -75,7 +75,7 @@ class ApiSpecsPoC(MethodResource, EndpointResource):
         log.info(kwargs)
 
         # return self.response("blabla")
-        data = {"value": "123", "xyz": "abc"}
+        # data = {"value": "123", "xyz": "abc"}
         errors = ["x", "y"]
 
         # return (errors, 400)

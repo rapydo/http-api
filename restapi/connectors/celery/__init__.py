@@ -258,7 +258,11 @@ class CeleryExt(Connector):
     # period = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
     @classmethod
     def create_periodic_task(cls, name, task, every,
-                             period='seconds', args=[], kwargs={}):
+                             period='seconds', args=None, kwargs=None):
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
 
         if cls.CELERYBEAT_SCHEDULER == 'MONGODB':
             from celerybeatmongo.models import PeriodicTask
@@ -302,9 +306,14 @@ class CeleryExt(Connector):
         day_of_week="*",
         day_of_month="*",
         month_of_year="*",
-        args=[],
-        kwargs={},
+        args=None,
+        kwargs=None,
     ):
+
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
 
         if cls.CELERYBEAT_SCHEDULER == 'MONGODB':
             from celerybeatmongo.models import PeriodicTask

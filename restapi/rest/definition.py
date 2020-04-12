@@ -66,9 +66,8 @@ class EndpointResource(Resource):
             pass
 
         # Custom init
-        custom_method = getattr(self, 'custom_init', None)
-        if custom_method is not None:
-            custom_method()
+        if hasattr(self, 'custom_init'):
+            self.custom_init()
 
     def myname(self):
         return self.__class__.__name__
