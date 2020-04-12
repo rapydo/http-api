@@ -6,10 +6,12 @@ we could provide back then
 """
 
 from datetime import datetime
-from uuid import UUID
 from flask import current_app, make_response
 from flask_restful import request, Resource, reqparse
 from jsonschema.exceptions import ValidationError
+from typing import List, Dict
+from neomodel import StructuredNode
+
 from restapi.confs import API_URL, WRAP_RESPONSE
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
@@ -269,7 +271,15 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     @staticmethod
-    def serialize(obj, key):
+    def obj_serialize(obj: StructuredNode, keys: List[str]) -> Dict[str, str]:
+        attributes: Dict[str, str] = {}
+        for k in keys:
+            attributes[k] = EndpointResource.serialize(obj, k)
+
+        return attributes
+
+    @staticmethod
+    def serialize(obj: StructuredNode, key: str) -> str:
 
         attribute = getattr(obj, key)
         if attribute is None:
