@@ -111,15 +111,15 @@ class Meta:
             submodules.append(submod)
         return submodules
 
-    @staticmethod
-    def get_methods_inside_instance(instance, private_methods=False):
-        methods = {}
-        all_methods = inspect.getmembers(instance, predicate=inspect.ismethod)
-        for name, method in all_methods:
-            if not private_methods and name[0] == '_':
-                continue
-            methods[name] = method
-        return methods
+    # @staticmethod
+    # def get_methods_inside_instance(instance, private_methods=False):
+    #     methods = {}
+    #     all_methods = inspect.getmembers(instance, predicate=inspect.ismethod)
+    #     for name, method in all_methods:
+    #         if not private_methods and name[0] == '_':
+    #             continue
+    #         methods[name] = method
+    #     return methods
 
     @staticmethod
     def get_class_from_string(classname, module, skip_error=False):
