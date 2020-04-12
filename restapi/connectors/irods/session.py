@@ -5,12 +5,12 @@ import pickle
 from irods.pool import Pool
 from irods.session import iRODSSession
 
-"""
-Manipulate irods session as a string, to be saved inside a database.
-"""
-
 
 class iRODSPickleSession(iRODSSession):
+    """
+        Manipulate irods session as a string, to be saved inside a database.
+    """
+
     def __getstate__(self):
         attrs = {}
         for attr in self.__dict__:

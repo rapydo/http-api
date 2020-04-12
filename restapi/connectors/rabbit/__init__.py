@@ -229,10 +229,6 @@ class RabbitWrapper:
 
         return self.__channel
 
-    '''
-    Cleanly close the connection.
-    '''
-
     def close_connection(self):
         # TODO: This must be called!
         if self.__connection.is_closed or self.__connection.is_closing:

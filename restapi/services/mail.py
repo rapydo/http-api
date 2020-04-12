@@ -15,11 +15,7 @@ from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
 # TODO: configure HOST with gmail, search example online
-
-"""
-Sending e-mails in python, more info:
-https://pymotw.com/3/smtplib/
-"""
+# Sending e-mails in python, more info: https://pymotw.com/3/smtplib
 
 
 def get_smtp_client(smtp_host, smtp_port, username=None, password=None):

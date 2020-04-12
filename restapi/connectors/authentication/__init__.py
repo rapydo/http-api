@@ -101,7 +101,8 @@ class HandleSecurity:
     def __init__(self, auth):
         self.auth = auth
 
-    def get_secret(self, user):
+    @staticmethod
+    def get_secret(user):
 
         return 'base32secret3232'
         # FIXME: use a real secret
@@ -134,7 +135,7 @@ class HandleSecurity:
         if totp_code is None:
             valid = False
         else:
-            secret = self.get_secret(user)
+            secret = HandleSecurity.get_secret(user)
             totp = pyotp.TOTP(secret)
             if not totp.verify(totp_code):
                 if self.auth.REGISTER_FAILED_LOGIN:
@@ -150,7 +151,7 @@ class HandleSecurity:
 
     def get_qrcode(self, user):
 
-        secret = self.get_secret(user)
+        secret = HandleSecurity.get_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration('project.title', "No project name")
