@@ -154,23 +154,22 @@ class NeoModel(Connector):
 def graph_transactions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        from neomodel import db as transaction
 
         try:
 
-            transaction.begin()
+            db.begin()
             log.verbose("Neomodel transaction BEGIN")
 
             out = func(self, *args, **kwargs)
 
-            transaction.commit()
+            db.commit()
             log.verbose("Neomodel transaction COMMIT")
 
             return out
         except Exception as e:
             log.verbose("Neomodel transaction ROLLBACK")
             try:
-                transaction.rollback()
+                db.rollback()
             except Exception as sub_ex:
                 log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
