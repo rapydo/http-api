@@ -31,6 +31,9 @@ jobs:
     - PROJECT=celerybeat
   - script: tests/travis_tests.sh
     env:
+    - PROJECT=apispecs
+  - script: tests/travis_tests.sh
+    env:
     - PROJECT=wrappedresponse
 
   - stage: deploy
