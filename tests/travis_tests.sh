@@ -70,6 +70,7 @@ cp .projectrc prod_projectrc
 echo "      NEO4J_PASSWORD: AutoT3sts" >> prod_projectrc
 echo "      ALCHEMY_USER: sqluser" >> prod_projectrc
 echo "      ALCHEMY_PASSWORD: D3vMode!" >> prod_projectrc
+echo "      IRODS_USER: irods" >> prod_projectrc
 echo "      IRODS_PASSWORD: D3vMode!" >> prod_projectrc
 echo "      RABBITMQ_USER: white" >> prod_projectrc
 echo "      RABBITMQ_PASSWORD: rabbit" >> prod_projectrc
@@ -101,7 +102,7 @@ bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
 printf "\n\n\n"
 
-rapydo remove
+rapydo remove --all
 
 printf "\n\n\n"
 
