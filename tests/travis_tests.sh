@@ -114,7 +114,7 @@ rapydo --production ssl
 
 printf "\n\n\nBackend server is starting\n\n\n"
 
-rapydo --production shell backend --command 'restapi wait'
+sleep 20
 rapydo --production -s backend logs
 
 printf "\n\n\n"
