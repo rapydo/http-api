@@ -15,6 +15,12 @@ from restapi.utilities.logs import log
 log.verbose("Auth loaded {}", auth)
 
 
+def from_restapi_exception(self, e):
+    log.exception(e)
+    log.error(e)
+    return self.response(errors=e.args[0], code=e.status_code)
+
+
 def catch_errors(exception=None, catch_generic=True, **kwargs):
     """
     A decorator to preprocess an API class method,
@@ -34,6 +40,9 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             # Catch the exception requested by the user
             except exception as e:
 
+                if isinstance(e, RestApiException):
+                    return from_restapi_exception(self, e)
+
                 log.exception(e)
                 log.error(e)
 
@@ -46,11 +55,8 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
 
             # Catch the basic API exception
             except RestApiException as e:
-                log.exception(e)
-                log.error(e)
-                if catch_generic:
-                    return self.response(errors=str(e), code=e.status_code)
-                raise e
+
+                return from_restapi_exception(self, e)
 
             except werkzeug.exceptions.BadRequest as e:
                 # do not stop werkzeug BadRequest

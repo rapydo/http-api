@@ -351,6 +351,8 @@ class EndpointResource(Resource):
 
         # Request from a ApiSpec endpoint, skipping all flask-related following steps
         if isinstance(self, MethodResource):
+            if content is None:
+                content = errors
             return (content, code, headers)
 
         # Convert the response in a Flask response, i.e. make_response(tuple)
