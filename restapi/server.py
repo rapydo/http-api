@@ -211,6 +211,11 @@ def create_app(
 
         rule.methods = newmethods
 
+    # marshmallow errors handler
+    @microservice.errorhandler(422)
+    def handle_marshmallow_errors(error):
+        return (error.data.get("messages"), 400, {})
+
     # Logging responses
     @microservice.after_request
     def log_response(response):
