@@ -53,26 +53,6 @@ class ResponseMaker:
         a tuple (content, status, headers)
         """
 
-        if code is None:
-            code = hcodes.HTTP_OK_BASIC
-
-        # # Is that really needed?
-        # if errors and not isinstance(errors, list):
-        #     errors = [errors]
-
-        if errors is None and content is None:
-            if not head_method or code is None:
-                log.warning("RESPONSE: Warning, no data and no errors")
-                code = hcodes.HTTP_OK_NORESPONSE
-        elif errors is None:
-            if code >= 300:
-                log.warning("Forcing 200 OK because no errors are raised")
-                code = hcodes.HTTP_OK_BASIC
-        elif content is None:
-            if code < 400:
-                log.warning("Forcing 500 SERVER ERROR because only errors are returned")
-                code = hcodes.HTTP_SERVER_ERROR
-
         accepted_formats = ResponseMaker.get_accepted_formats()
 
         if 'text/html' in accepted_formats:

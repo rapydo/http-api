@@ -8,6 +8,7 @@ we could provide back then
 from datetime import datetime
 from flask import current_app, make_response
 from flask_restful import request, Resource, reqparse
+from flask_apispec import MethodResource
 from jsonschema.exceptions import ValidationError
 from typing import List, Dict
 from neomodel import StructuredNode
@@ -332,6 +333,27 @@ class EndpointResource(Resource):
         else:
             response_wrapper = None
 
+        if code is None:
+            code = hcodes.HTTP_OK_BASIC
+
+        if errors is None and content is None:
+            if not head_method or code is None:
+                log.warning("RESPONSE: Warning, no data and no errors")
+                code = hcodes.HTTP_OK_NORESPONSE
+        elif errors is None:
+            if code >= 300:
+                log.warning("Forcing 200 OK because no errors are raised")
+                code = hcodes.HTTP_OK_BASIC
+        elif content is None:
+            if code < 400:
+                log.warning("Forcing 500 SERVER ERROR because only errors are returned")
+                code = hcodes.HTTP_SERVER_ERROR
+
+        # Request from a ApiSpec endpoint, skipping all flask-related following steps
+        if isinstance(self, MethodResource):
+            return (content, code, headers)
+
+        # Convert the response in a Flask response, i.e. make_response(tuple)
         r = ResponseMaker.generate_response(
             content=content,
             code=code,
@@ -341,6 +363,7 @@ class EndpointResource(Resource):
             meta=meta,
             response_wrapper=response_wrapper
         )
+
         response = make_response(r)
 
         # Avoid duplicated Content-type
