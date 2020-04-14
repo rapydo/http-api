@@ -173,18 +173,6 @@ def create_app(
         })
         docs = FlaskApiSpec(microservice)
 
-        with microservice.app_context():
-            for resource in mem.customizer._endpoints:
-                urls = list(resource.uris.values())
-                try:
-                    docs.register(resource.cls)
-                except TypeError as e:
-                    # log.warning("{} on {}", type(e), resource.cls)
-                    # Enable this warning to start conversion to FlaskFastApi
-                    # Find other warning like this by searching:
-                    # **FASTAPI**
-                    log.verbose("{} on {}", type(e), resource.cls)
-
     # Clean app routes
     ignore_verbs = {"HEAD", "OPTIONS"}
 
@@ -210,6 +198,21 @@ def create_app(
                 log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
         rule.methods = newmethods
+
+    # Register swagger. Note: after method mapping cleaning
+    if not skip_endpoint_mapping:
+
+        with microservice.app_context():
+            for resource in mem.customizer._endpoints:
+                urls = list(resource.uris.values())
+                try:
+                    docs.register(resource.cls)
+                except TypeError as e:
+                    # log.warning("{} on {}", type(e), resource.cls)
+                    # Enable this warning to start conversion to FlaskFastApi
+                    # Find other warning like this by searching:
+                    # **FASTAPI**
+                    log.verbose("{} on {}", type(e), resource.cls)
 
     # marshmallow errors handler
     @microservice.errorhandler(422)
