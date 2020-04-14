@@ -62,11 +62,18 @@ echo "  variables:" >> .projectrc
 echo "    env:" >> .projectrc
 echo "      DEFAULT_DHLEN: 256" >> .projectrc
 # echo "      NEO4J_AUTOINDEXING: False" >> .projectrc
-echo "      NEO4J_PASSWORD: AutoT3sts" >> .projectrc
-echo "      RABBITMQ_USER: white" >> .projectrc
-echo "      RABBITMQ_PASSWORD: rabbit" >> .projectrc
 echo "      AUTH_DEFAULT_USERNAME: test@nomail.org" >> .projectrc
 echo "      AUTH_DEFAULT_PASSWORD: testme" >> .projectrc
+
+cp .projectrc prod_projectrc
+
+echo "      NEO4J_PASSWORD: AutoT3sts" >> prod_projectrc
+echo "      ALCHEMY_USER: sqluser" >> prod_projectrc
+echo "      ALCHEMY_PASSWORD: D3vMode!" >> prod_projectrc
+echo "      IRODS_PASSWORD: D3vMode!" >> prod_projectrc
+echo "      RABBITMQ_USER: white" >> prod_projectrc
+echo "      RABBITMQ_PASSWORD: rabbit" >> prod_projectrc
+
 
 # Let's init and start the stack for the configured PROJECT
 rapydo init
@@ -97,6 +104,8 @@ printf "\n\n\n"
 rapydo remove
 
 printf "\n\n\n"
+
+mv prod_projectrc .projectrc
 
 rapydo --production pull
 rapydo --production start
