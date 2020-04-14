@@ -9,6 +9,10 @@ from urllib import parse as urllib_parse
 from flask import Flask, request
 from flask_cors import CORS
 from flask_restful import Api
+from apispec import APISpec
+from flask_apispec import FlaskApiSpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+# from apispec_webframeworks.flask import FlaskPlugin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
 from restapi import __version__
@@ -141,12 +145,6 @@ def create_app(
             ExtClass = detector.services_classes.get(m)
             microservice.services_instances[m] = ExtClass(microservice)
 
-        # FlaskApiSpec experimentation
-        from apispec import APISpec
-        from flask_apispec import FlaskApiSpec
-        from apispec.ext.marshmallow import MarshmallowPlugin
-        # from apispec_webframeworks.flask import FlaskPlugin
-
         microservice.config.update({
             'APISPEC_SPEC': APISpec(
                 title=get_project_configuration(
@@ -163,6 +161,7 @@ def create_app(
                 # **FASTAPI**
                 # openapi_version="3.0.2",
                 plugins=[
+                    # FlaskPlugin(),
                     MarshmallowPlugin()
                 ],
             ),
