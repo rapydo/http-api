@@ -25,7 +25,6 @@ class AdminUsers(EndpointResource):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
-    # expose_schema = True
 
     GET = {
         "/admin/users": {
