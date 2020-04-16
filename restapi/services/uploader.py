@@ -18,7 +18,7 @@ import os
 from flask import request  # , send_from_directory
 from werkzeug import secure_filename
 from werkzeug.http import parse_content_range_header
-from restapi.confs import UPLOAD_FOLDER, PRODUCTION
+from restapi.confs import UPLOAD_PATH, PRODUCTION
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.htmlcodes import hcodes
@@ -47,10 +47,10 @@ class Uploader:
     def absolute_upload_file(filename, subfolder=None, onlydir=False):
         if subfolder is not None:
             filename = os.path.join(subfolder, filename)
-            subdir = os.path.join(UPLOAD_FOLDER, subfolder)
+            subdir = os.path.join(UPLOAD_PATH, subfolder)
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
-        abs_file = os.path.join(UPLOAD_FOLDER, filename)  # filename.lower())
+        abs_file = os.path.join(UPLOAD_PATH, filename)  # filename.lower())
         if onlydir:
             return os.path.dirname(abs_file)
         return abs_file

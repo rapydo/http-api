@@ -24,7 +24,7 @@ BASE_URLS = [API_URL, AUTH_URL]
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = '8080'
 USER_HOME = os.environ['HOME']
-UPLOAD_FOLDER = os.environ.get('UPLOAD_PATH', '/uploads')
+UPLOAD_PATH = os.environ.get('UPLOAD_PATH')
 SECRET_KEY_FILE = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
 
 #################
