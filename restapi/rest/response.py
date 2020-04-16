@@ -2,6 +2,8 @@
 
 from flask import Response, render_template, jsonify
 from werkzeug.wrappers import Response as WerkzeugResponse
+from marshmallow import fields
+
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
@@ -135,3 +137,97 @@ class ResponseMaker:
             resp['Meta'].update(custom_metas)
 
         return resp
+
+    @staticmethod
+    def respond_with_schema(schema):
+
+        fields = []
+        for field, field_def in schema._declared_fields.items():
+
+            f = {}
+
+            if field_def.data_key is None:
+                key = field
+            else:
+                key = field_def.data_key
+
+            f["key"] = key
+
+            if key == key.lower():
+                f["label"] = key.title()
+            else:
+                f["label"] = key
+
+            f["description"] = f["label"]
+            f["required"] = "true" if field_def.required else "false"
+            f["type"] = ResponseMaker.get_schema_type(field_def)
+            fields.append(f)
+
+        return ResponseMaker.generate_response(
+            content=fields,
+            code=hcodes.HTTP_OK_BASIC,
+            errors=None,
+            headers={},
+            head_method=False,
+            meta=None
+        )
+
+    @staticmethod
+    def get_schema_type(schema_type):
+        # types from https://github.com/danohu/py2ng
+        # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
+        if isinstance(schema_type, fields.Bool):
+            return 'boolean'
+        if isinstance(schema_type, fields.Boolean):
+            return 'boolean'
+        # if isinstance(schema_type, fields.Constant):
+        #     return 'any'
+        if isinstance(schema_type, fields.Date):
+            return 'date'
+        if isinstance(schema_type, fields.DateTime):
+            return 'date'
+        if isinstance(schema_type, fields.Decimal):
+            return 'number'
+        # if isinstance(schema_type, fields.Dict):
+        #     return 'object'
+        if isinstance(schema_type, fields.Email):
+            return 'email'
+        # if isinstance(schema_type, fields.Field):
+        #     return 'any'
+        if isinstance(schema_type, fields.Float):
+            return 'number'
+        # if isinstance(schema_type, fields.Function):
+        #     return 'any'
+        if isinstance(schema_type, fields.Int):
+            return 'int'
+        if isinstance(schema_type, fields.Integer):
+            return 'int'
+        # if isinstance(schema_type, fields.List):
+        #     # should be enum?
+        #     return 'any[]'
+        # if isinstance(schema_type, fields.Mapping):
+        #     return 'any'
+        # if isinstance(schema_type, fields.Method):
+        #     return 'any'
+        # if isinstance(schema_type, fields.Nested):
+        #     return 'any'
+        if isinstance(schema_type, fields.Number):
+            return 'number'
+        # if isinstance(schema_type, fields.Raw):
+        #     return 'any'
+        if isinstance(schema_type, fields.Str):
+            return 'string'
+        if isinstance(schema_type, fields.String):
+            return 'string'
+        # if isinstance(schema_type, fields.TimeDelta):
+        #     return 'any'
+        if isinstance(schema_type, fields.URL):
+            return 'string'
+        if isinstance(schema_type, fields.Url):
+            return 'string'
+        if isinstance(schema_type, fields.UUID):
+            return 'string'
+
+        log.error("Unknown schema type: {}", type(schema_type))
+
+        return "string"

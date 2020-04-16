@@ -7,6 +7,7 @@ We create all the internal flask components here.
 import os
 from urllib import parse as urllib_parse
 from flask import Flask, request
+from flask import jsonify
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
@@ -20,6 +21,7 @@ from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
 from restapi.customization import Customizer
+from restapi.rest.response import ResponseMaker
 
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
@@ -216,6 +218,15 @@ def create_app(
     # marshmallow errors handler
     @microservice.errorhandler(422)
     def handle_marshmallow_errors(error):
+
+        try:
+            if request.get_json().get("get_schema", False):
+                return ResponseMaker.respond_with_schema(
+                    error.data.get('schema')
+                )
+        except BaseException as e:
+            log.error(e)
+
         return (error.data.get("messages"), 400, {})
 
     # Logging responses
