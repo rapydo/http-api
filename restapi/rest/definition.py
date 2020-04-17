@@ -533,6 +533,9 @@ class EndpointResource(Resource):
             if len(subrelationship) > 0:
                 data["_{}".format(relationship)] = subrelationship
 
+        if 'type' not in data:
+            data['type'] = type(instance).__name__.lower()
+
         return data
 
     def get_endpoint_definition(self, key=None, is_schema_url=False, method=None):
