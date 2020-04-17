@@ -260,8 +260,11 @@ class Authentication(BaseAuthentication):
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user_id'] = self.db.getSingleLinkedNode(
-                    token.emitted_for).uuid
+                u = self.db.getSingleLinkedNode(token.emitted_for)
+                if u is None:
+                    t['user_id'] = None
+                else:
+                    t['user_id'] = u.uuid
             tokens_list.append(t)
 
         return tokens_list
