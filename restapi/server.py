@@ -96,15 +96,12 @@ def create_app(
     mem.configuration = mem.customizer.load_configuration()
 
     # Find services and try to connect to the ones available
-    connectors = detector.init_services(
+    detector.init_services(
         app=microservice,
         worker_mode=worker_mode,
         project_init=init_mode,
         project_clean=destroy_mode,
     )
-
-    if worker_mode:
-        microservice.connectors = connectors
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()

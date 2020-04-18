@@ -303,8 +303,6 @@ class Detector:
         if project_init:
             self.project_initialization(instances, app=app)
 
-        return self.connectors_instances
-
     def check_availability(self, name):
 
         if '.' in name:

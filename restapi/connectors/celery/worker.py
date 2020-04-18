@@ -12,8 +12,9 @@ So we made some improvement along the code.
 """
 
 from restapi.server import create_app
-from restapi.confs import CUSTOM_PACKAGE
-from restapi.utilities.meta import Meta
+# from restapi.confs import CUSTOM_PACKAGE
+from restapi.services.detect import detector
+# from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 ################################################
@@ -21,16 +22,12 @@ from restapi.utilities.logs import log
 # This is necessary to have the app context available
 app = create_app(worker_mode=True)
 
-celery_app = app.connectors.get('celery').celery_app
+celery_app = detector.connectors_instances.get('celery').celery_app
 celery_app.app = app
 
 
 def get_service(service, **kwargs):
-    ext = celery_app.app.connectors.get(service)
-    if ext is None:
-        log.error("{} is not enabled", service)
-        return None
-    return ext.get_instance(**kwargs)
+    return detector.get_service_instance(service, **kwargs)
 
 
 celery_app.get_service = get_service
