@@ -38,6 +38,7 @@ class Customizer:
         self._query_params = {}
         self._schemas_map = {}
 
+    def load_configuration(self):
         # Reading configuration
         confs_path = os.path.join(os.curdir, CONF_PATH)
         defaults_path = CONF_FOLDERS.get('defaults_path', confs_path)
@@ -46,7 +47,7 @@ class Customizer:
         submodules_path = CONF_FOLDERS.get('submodules_path', confs_path)
 
         try:
-            self._configurations, self._extended_project, self._extended_path = \
+            self._configurations, self._extended_project, _ = \
                 read_configuration(
                     default_file_path=defaults_path,
                     base_project_path=base_path,
@@ -55,6 +56,8 @@ class Customizer:
                 )
         except AttributeError as e:
             log.exit(e)
+
+        return self._configurations
 
     def load_swagger(self):
 

@@ -54,7 +54,7 @@ ABS_RESTAPI_PATH = os.path.dirname(ABS_RESTAPI_CONFSPATH)
 
 
 def get_project_configuration(key, default=None):
-    return glom(mem.customizer._configurations, key, default=default)
+    return glom(mem.configuration, key, default=default)
 
 
 def get_api_url(request_object, production=False):

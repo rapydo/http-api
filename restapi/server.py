@@ -7,7 +7,6 @@ We create all the internal flask components here.
 import os
 from urllib import parse as urllib_parse
 from flask import Flask, request
-from flask import jsonify
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
@@ -45,14 +44,6 @@ def create_app(
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
-
-    # Initialize reading of all files
-    mem.geo_reader = geolite2.reader()
-    # when to close??
-    # geolite2.close()
-    mem.customizer = Customizer(testing_mode)
-    if not init_mode:
-        mem.customizer.load_swagger()
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
@@ -101,6 +92,9 @@ def create_app(
     if PRODUCTION:
         log.info("Production server mode is ON")
 
+    mem.customizer = Customizer(testing_mode)
+    mem.configuration = mem.customizer.load_configuration()
+
     # Find services and try to connect to the ones available
     connectors = detector.init_services(
         app=microservice,
@@ -111,6 +105,14 @@ def create_app(
 
     if worker_mode:
         microservice.connectors = connectors
+
+    # Initialize reading of all files
+    mem.geo_reader = geolite2.reader()
+    # when to close??
+    # geolite2.close()
+
+    if not init_mode:
+        mem.customizer.load_swagger()
 
     # Restful plugin
     if not skip_endpoint_mapping:

@@ -64,9 +64,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         credentials = get_project_configuration("variables.backend.credentials")
 
+        # Deprecated since 0.7.0
         if credentials.get('username') is not None:
             log.exit("Obsolete use of variables.backend.credentials.username")
 
+        # Deprecated since 0.7.0
         if credentials.get('password') is not None:
             log.exit("Obsolete use of variables.backend.credentials.password")
 
