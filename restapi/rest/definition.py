@@ -47,12 +47,6 @@ class EndpointResource(Resource):
     """
 
     def __init__(self):
-
-        self.services = current_app.services_instances
-        if len(self.services) < 1:
-            raise AttributeError("No services available for requests...")
-
-        # Init original class
         super(EndpointResource, self).__init__()
 
         self.load_authentication()
@@ -84,7 +78,7 @@ class EndpointResource(Resource):
         # Set parameters to be used
 
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
-        farm = self.services.get(service_name)
+        farm = detector.connectors_instances.get(service_name)
         if farm is None:
             raise AttributeError("Service {} not found".format(service_name))
         instance = farm.get_instance(global_instance=global_instance, **kwargs)

@@ -142,11 +142,6 @@ def create_app(
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
-        microservice.services_instances = {}
-        for m in detector.services_classes:
-            ExtClass = detector.services_classes.get(m)
-            microservice.services_instances[m] = ExtClass(microservice)
-
         microservice.config.update({
             'APISPEC_SPEC': APISpec(
                 title=get_project_configuration(
