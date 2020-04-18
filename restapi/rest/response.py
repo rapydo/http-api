@@ -2,7 +2,7 @@
 
 from flask import Response, render_template, jsonify
 from werkzeug.wrappers import Response as WerkzeugResponse
-from marshmallow import fields
+from marshmallow import fields, validate
 
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
@@ -160,7 +160,27 @@ class ResponseMaker:
 
             f["description"] = f["label"]
             f["required"] = "true" if field_def.required else "false"
+
             f["type"] = ResponseMaker.get_schema_type(field_def)
+
+            if field_def.validate is not None:
+                if isinstance(field_def.validate, validate.Length):
+                    log.critical(field_def.validate)
+                elif isinstance(field_def.validate, validate.Range):
+                    log.critical(field_def.validate)
+                elif isinstance(field_def.validate, validate.OneOf):
+                    choices = field_def.validate.choices
+                    labels = field_def.validate.labels
+                    if len(labels) != len(choices):
+                        labels = choices
+                    f["enum"] = dict(zip(choices, labels))
+                else:
+                    log.warning(
+                        "Unsupported validation schema: {}.{}",
+                        type(field_def.validate).__module__,
+                        type(field_def.validate).__name__
+                    )
+
             fields.append(f)
 
         return ResponseMaker.generate_response(
@@ -203,7 +223,6 @@ class ResponseMaker:
         if isinstance(schema_type, fields.Integer):
             return 'int'
         # if isinstance(schema_type, fields.List):
-        #     # should be enum?
         #     return 'any[]'
         # if isinstance(schema_type, fields.Mapping):
         #     return 'any'
