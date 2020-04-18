@@ -1,11 +1,90 @@
 # -*- coding: utf-8 -*-
 
-from flask import Response, render_template, jsonify
+from flask import Response, request, render_template, jsonify
 from werkzeug.wrappers import Response as WerkzeugResponse
 from marshmallow import fields, validate
+from urllib import parse as urllib_parse
 
+from restapi import __version__ as version
+from restapi.confs import get_project_configuration
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
+from restapi.utilities.logs import handle_log_output, MAX_CHAR_LEN
+
+
+def handle_marshmallow_errors(error):
+
+    try:
+        if request.get_json().get("get_schema", False):
+            return ResponseMaker.respond_with_schema(
+                error.data.get('schema')
+            )
+    except BaseException as e:
+        log.error(e)
+
+    return (error.data.get("messages"), 400, {})
+
+
+def log_response(response):
+
+    response.headers["_RV"] = str(version)
+
+    PROJECT_VERSION = get_project_configuration(
+        "project.version", default=None
+    )
+    if PROJECT_VERSION is not None:
+        response.headers["Version"] = str(PROJECT_VERSION)
+    # NOTE: if it is an upload,
+    # I must NOT consume request.data or request.json,
+    # otherwise the content gets lost
+    do_not_log_types = ['application/octet-stream', 'multipart/form-data']
+
+    if request.mimetype in do_not_log_types:
+        data = 'STREAM_UPLOAD'
+    else:
+        try:
+            data = handle_log_output(request.data)
+            # Limit the parameters string size, sometimes it's too big
+            for k in data:
+                try:
+                    if isinstance(data[k], dict):
+                        for kk in data[k]:
+                            v = str(data[k][kk])
+                            if len(v) > MAX_CHAR_LEN:
+                                v = v[:MAX_CHAR_LEN] + "..."
+                            data[k][kk] = v
+                        continue
+
+                    if not isinstance(data[k], str):
+                        data[k] = str(data[k])
+
+                    if len(data[k]) > MAX_CHAR_LEN:
+                        data[k] = data[k][:MAX_CHAR_LEN] + "..."
+                except IndexError:
+                    pass
+        except Exception:
+            data = 'OTHER_UPLOAD'
+
+    # Obfuscating query parameters
+    url = urllib_parse.urlparse(request.url)
+    try:
+        params = urllib_parse.unquote(
+            urllib_parse.urlencode(handle_log_output(url.query))
+        )
+        url = url._replace(query=params)
+        # remove http(s)://
+        url = url._replace(scheme='')
+        # remove hostname:port
+        url = url._replace(netloc='')
+    except TypeError:
+        log.error("Unable to url encode the following parameters:")
+        print(url.query)
+
+    url = urllib_parse.urlunparse(url)
+    resp = str(response).replace("<Response ", "").replace(">", "")
+    log.info("{} {} {} - {}", request.method, url, data, resp)
+
+    return response
 
 
 class ResponseMaker:

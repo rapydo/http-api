@@ -5,8 +5,8 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import os
-from urllib import parse as urllib_parse
-from flask import Flask, request
+import logging
+from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
@@ -15,22 +15,18 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 # from apispec_webframeworks.flask import FlaskPlugin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
-from restapi import __version__
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
 from restapi.customization import Customizer
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import handle_marshmallow_errors, log_response
 
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
+from restapi.utilities.logs import log
 
 
-########################
-# Flask App factory    #
-########################
 def create_app(
     name=__name__,
     init_mode=False,
@@ -108,11 +104,10 @@ def create_app(
     # when to close??
     # geolite2.close()
 
-    if not init_mode:
-        mem.customizer.load_swagger()
-
     # Restful plugin
     if not skip_endpoint_mapping:
+
+        mem.customizer.load_swagger()
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 
@@ -168,35 +163,33 @@ def create_app(
         })
         docs = FlaskApiSpec(microservice)
 
-    # Clean app routes
-    ignore_verbs = {"HEAD", "OPTIONS"}
+        # Clean app routes
+        ignore_verbs = {"HEAD", "OPTIONS"}
 
-    for rule in microservice.url_map.iter_rules():
+        for rule in microservice.url_map.iter_rules():
 
-        rulename = str(rule)
-        # Skip rules that are only exposing schemas
-        if '/schemas/' in rulename:
-            continue
+            rulename = str(rule)
+            # Skip rules that are only exposing schemas
+            if '/schemas/' in rulename:
+                continue
 
-        endpoint = microservice.view_functions[rule.endpoint]
-        if not hasattr(endpoint, 'view_class'):
-            continue
-        newmethods = ignore_verbs.copy()
+            endpoint = microservice.view_functions[rule.endpoint]
+            if not hasattr(endpoint, 'view_class'):
+                continue
+            newmethods = ignore_verbs.copy()
 
-        for verb in rule.methods - ignore_verbs:
-            method = verb.lower()
-            if method in mem.customizer._original_paths[rulename]:
-                # remove from flask mapping
-                # to allow 405 response
-                newmethods.add(verb)
-            else:
-                log.verbose("Removed method {}.{} from mapping", rulename, verb)
+            for verb in rule.methods - ignore_verbs:
+                method = verb.lower()
+                if method in mem.customizer._original_paths[rulename]:
+                    # remove from flask mapping
+                    # to allow 405 response
+                    newmethods.add(verb)
+                else:
+                    log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
-        rule.methods = newmethods
+            rule.methods = newmethods
 
-    # Register swagger. Note: after method mapping cleaning
-    if not skip_endpoint_mapping:
-
+        # Register swagger. Note: after method mapping cleaning
         with microservice.app_context():
             for resource in mem.customizer._endpoints:
                 urls = list(resource.uris.values())
@@ -210,84 +203,18 @@ def create_app(
                     log.verbose("{} on {}", type(e), resource.cls)
 
     # marshmallow errors handler
-    @microservice.errorhandler(422)
-    def handle_marshmallow_errors(error):
+    microservice.register_error_handler(422, handle_marshmallow_errors)
 
-        try:
-            if request.get_json().get("get_schema", False):
-                return ResponseMaker.respond_with_schema(
-                    error.data.get('schema')
-                )
-        except BaseException as e:
-            log.error(e)
-
-        return (error.data.get("messages"), 400, {})
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
     # Logging responses
-    @microservice.after_request
-    def log_response(response):
-
-        response.headers["_RV"] = str(__version__)
-
-        PROJECT_VERSION = get_project_configuration(
-            "project.version", default=None
-        )
-        if PROJECT_VERSION is not None:
-            response.headers["Version"] = str(PROJECT_VERSION)
-        # NOTE: if it is an upload,
-        # I must NOT consume request.data or request.json,
-        # otherwise the content gets lost
-        do_not_log_types = ['application/octet-stream', 'multipart/form-data']
-
-        if request.mimetype in do_not_log_types:
-            data = 'STREAM_UPLOAD'
-        else:
-            try:
-                data = handle_log_output(request.data)
-                # Limit the parameters string size, sometimes it's too big
-                for k in data:
-                    try:
-                        if isinstance(data[k], dict):
-                            for kk in data[k]:
-                                v = str(data[k][kk])
-                                if len(v) > MAX_CHAR_LEN:
-                                    v = v[:MAX_CHAR_LEN] + "..."
-                                data[k][kk] = v
-                            continue
-
-                        if not isinstance(data[k], str):
-                            data[k] = str(data[k])
-
-                        if len(data[k]) > MAX_CHAR_LEN:
-                            data[k] = data[k][:MAX_CHAR_LEN] + "..."
-                    except IndexError:
-                        pass
-            except Exception:
-                data = 'OTHER_UPLOAD'
-
-        # Obfuscating query parameters
-        url = urllib_parse.urlparse(request.url)
-        try:
-            params = urllib_parse.unquote(
-                urllib_parse.urlencode(handle_log_output(url.query))
-            )
-            url = url._replace(query=params)
-        except TypeError:
-            log.error("Unable to url encode the following parameters:")
-            print(url.query)
-
-        url = urllib_parse.urlunparse(url)
-        log.info("{} {} {} {}", request.method, url, data, response)
-
-        return response
+    microservice.after_request(log_response)
 
     if send_mail_is_active():
         if not test_smtp_client():
             log.critical("Bad SMTP configuration, unable to create a client")
         else:
             log.info("SMTP configuration verified")
-    # and the flask App is ready now:
-    log.info("Boot completed")
 
     if SENTRY_URL is not None:
 
@@ -299,6 +226,9 @@ def create_app(
 
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
             log.info("Enabled Sentry {}", SENTRY_URL)
+
+    # and the flask App is ready now:
+    log.info("Boot completed")
 
     # return our flask app
     return microservice

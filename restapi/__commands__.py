@@ -36,8 +36,7 @@ def flask_cli(options=None):
     from restapi.server import create_app
 
     if options is None:
-        options = {'name': 'RESTful HTTP API server'}
-        app = create_app(**options)
+        app = create_app(name='RESTful HTTP API server')
         app.run(host=BIND_INTERFACE, threaded=True)
     else:
         create_app(**options)

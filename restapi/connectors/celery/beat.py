@@ -17,10 +17,6 @@ from restapi.services.detect import detector
 
 from restapi.utilities.logs import log
 
-################################################
-# Reload Flask app code also for the worker
-# This is necessary to have the app context available
-# app = create_app(worker_mode=True)
 app = Flask("beat")
 
 detector.init_services(
