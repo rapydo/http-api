@@ -23,13 +23,10 @@ class Detector:
 
         self.authentication_service = None
         self.authentication_name = 'authentication'
-        self.task_service_name = 'celery'
         self.services_configuration = []
-        self.services = {}
         self.services_classes = {}
         self.connectors_instances = {}
         self.available_services = {}
-        self.meta = Meta()
         self.check_configuration()
         self.load_classes()
 
@@ -193,16 +190,16 @@ class Detector:
 
                 if service.get('load_models'):
 
-                    base_models = self.meta.import_models(
+                    base_models = Meta.import_models(
                         name, BACKEND_PACKAGE, exit_on_fail=True
                     )
                     if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
                         extended_models = {}
                     else:
-                        extended_models = self.meta.import_models(
+                        extended_models = Meta.import_models(
                             name, EXTENDED_PACKAGE, exit_on_fail=False
                         )
-                    custom_models = self.meta.import_models(
+                    custom_models = Meta.import_models(
                         name, CUSTOM_PACKAGE, exit_on_fail=False
                     )
 
@@ -246,7 +243,7 @@ class Detector:
                     )
 
             args = {}
-            if name == self.task_service_name:
+            if name == 'celery':
                 args['worker_mode'] = worker_mode
 
             # Get connectors class and build the connector object
@@ -278,12 +275,12 @@ class Detector:
                 auth_backend = service_instance
 
             # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
-            if name == self.task_service_name:
+            if name == 'celery':
                 do_init = True
 
                 task_package = "{}.tasks".format(CUSTOM_PACKAGE)
 
-                submodules = self.meta.import_submodules_from_package(
+                submodules = Meta.import_submodules_from_package(
                     task_package, exit_on_fail=True
                 )
                 for submodule in submodules:
@@ -325,8 +322,7 @@ class Detector:
                 'initialization',
             )
             module = Meta.get_module_from_string(module_path)
-            meta = Meta()
-            Initializer = meta.get_class_from_string(
+            Initializer = Meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
             if Initializer is None:

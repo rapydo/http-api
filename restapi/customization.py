@@ -17,8 +17,6 @@ from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
 
-meta = Meta()
-
 CONF_FOLDERS = detector.load_group(label='project_confs')
 
 
@@ -155,8 +153,7 @@ class Customizer:
                     log.exit("Cannot import {}\nError: {}", module_name, e)
 
                 # Extract classes from the module
-                # classes = meta.get_classes_from_module(module)
-                classes = meta.get_new_classes_from_module(module)
+                classes = Meta.get_new_classes_from_module(module)
                 for class_name in classes:
                     ep_class = classes.get(class_name)
                     # Filtering out classes without expected data

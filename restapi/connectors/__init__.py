@@ -4,14 +4,12 @@ import abc
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
-from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 
 class Connector(metaclass=abc.ABCMeta):
 
     models = {}  # I get models on a cls level, instead of instances
-    meta = Meta()
 
     def __init__(self, app=None, **kwargs):
 

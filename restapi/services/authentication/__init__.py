@@ -123,7 +123,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.verify_password(password, user.password):
             return self.create_token(self.fill_payload(user))
 
-        # old hashing; since 0.7.2. Removed me in a near future!!
+        # old hashing; deprecated since 0.7.2. Removed me in a near future!!
+        # Probably when ALL users will be converted... uhm... never?? :-D
         if self.check_old_password(user.password, password):
             log.warning(
                 "Old password encoding for user {}, automatic convertion", user.email)
@@ -535,8 +536,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path)
 
-        meta = Meta()
-        CustomizerClass = meta.get_class_from_string(
+        CustomizerClass = Meta.get_class_from_string(
             'Customizer',
             module,
             skip_error=True
@@ -558,8 +558,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path)
 
-        meta = Meta()
-        CustomizerClass = meta.get_class_from_string(
+        CustomizerClass = Meta.get_class_from_string(
             'Customizer',
             module,
             skip_error=True

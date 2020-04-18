@@ -17,18 +17,22 @@ from restapi.utilities.logs import log
 class Meta:
     """Utilities with meta in mind"""
 
-    def get_submodules_from_package(self, package):
+    def __init__(self):
+        # Deprecated since 0.7.3
+        log.warning("Deprecated initialization of Meta package")
+
+    @staticmethod
+    def get_submodules_from_package(package):
         submodules = []
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
                 submodules.append(modname)
         return submodules
 
-    def get_classes_from_module(self, module):
+    @staticmethod
+    def get_classes_from_module(module):
         """
         Find classes inside a python module file.
-
-        Note: this method returns a dict.
         """
 
         classes = {}
@@ -45,15 +49,14 @@ class Meta:
 
         return classes
 
-    def get_new_classes_from_module(self, module):
+    @staticmethod
+    def get_new_classes_from_module(module):
         """
         Skip classes not originated inside the module.
-
-        Note: this method returns a list.
         """
 
         classes = {}
-        for key, value in self.get_classes_from_module(module).items():
+        for key, value in Meta.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
                 classes[key] = value
         return classes
@@ -92,14 +95,15 @@ class Meta:
 
         return module
 
+    @staticmethod
     def import_submodules_from_package(
-        self, package_name, exit_if_not_found=False, exit_on_fail=False
+        package_name, exit_if_not_found=False, exit_on_fail=False
     ):
 
         submodules = []
         package = Meta.get_module_from_string(package_name)
 
-        for module_name in self.get_submodules_from_package(package):
+        for module_name in Meta.get_submodules_from_package(package):
             module_path = package_name + '.' + module_name
             log.debug("Loading module '{}'", module_path)
 
@@ -143,6 +147,7 @@ class Meta:
                 return args[0]
         return None
 
+    @staticmethod
     def obj_from_models(obj_name, module_name, package):
         module_name = "{}.models.{}".format(package, module_name)
         module = Meta.get_module_from_string(module_name, exit_on_fail=True)
@@ -150,7 +155,8 @@ class Meta:
         obj = getattr(module, obj_name, None)
         return obj
 
-    def import_models(self, name, package, exit_on_fail=True):
+    @staticmethod
+    def import_models(name, package, exit_on_fail=True):
 
         models = {}
         module_name = "{}.models.{}".format(package, name)
@@ -164,7 +170,7 @@ class Meta:
             log.warning(e)
             return {}
 
-        models = self.get_new_classes_from_module(module)
+        models = Meta.get_new_classes_from_module(module)
 
         return models
 
