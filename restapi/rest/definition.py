@@ -78,11 +78,11 @@ class EndpointResource(Resource):
         # Set parameters to be used
 
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
-        farm = detector.connectors_instances.get(service_name)
-        if farm is None:
-            raise AttributeError("Service {} not found".format(service_name))
-        instance = farm.get_instance(global_instance=global_instance, **kwargs)
-        return instance
+        return detector.get_service_instance(
+            service_name,
+            global_instance=global_instance,
+            **kwargs
+        )
 
     def init_parameters(self):
         # Make sure you can parse arguments at every call

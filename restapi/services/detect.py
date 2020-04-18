@@ -67,6 +67,13 @@ class Detector:
         bool_var = os.environ.get(name, False)
         return Detector.get_bool_envvar(bool_var)
 
+    def get_service_instance(self, service_name, global_instance=True, **kwargs):
+        farm = self.connectors_instances.get(service_name)
+        if farm is None:
+            raise AttributeError("Service {} not found".format(service_name))
+        instance = farm.get_instance(global_instance=global_instance, **kwargs)
+        return instance
+
     def check_configuration(self):
 
         try:
