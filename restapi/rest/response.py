@@ -142,55 +142,86 @@ class ResponseMaker:
     def respond_with_schema(schema):
 
         fields = []
-        for field, field_def in schema._declared_fields.items():
+        try:
+            for field, field_def in schema._declared_fields.items():
 
-            f = {}
+                f = {}
 
-            if field_def.data_key is None:
-                key = field
-            else:
-                key = field_def.data_key
-
-            f["key"] = key
-
-            if key == key.lower():
-                f["label"] = key.title()
-            else:
-                f["label"] = key
-
-            f["description"] = f["label"]
-            f["required"] = "true" if field_def.required else "false"
-
-            f["type"] = ResponseMaker.get_schema_type(field_def)
-
-            if field_def.validate is not None:
-                if isinstance(field_def.validate, validate.Length):
-                    log.critical(field_def.validate)
-                elif isinstance(field_def.validate, validate.Range):
-                    log.critical(field_def.validate)
-                elif isinstance(field_def.validate, validate.OneOf):
-                    choices = field_def.validate.choices
-                    labels = field_def.validate.labels
-                    if len(labels) != len(choices):
-                        labels = choices
-                    f["enum"] = dict(zip(choices, labels))
+                if field_def.data_key is None:
+                    key = field
                 else:
-                    log.warning(
-                        "Unsupported validation schema: {}.{}",
-                        type(field_def.validate).__module__,
-                        type(field_def.validate).__name__
-                    )
+                    key = field_def.data_key
 
-            fields.append(f)
+                f["key"] = key
 
-        return ResponseMaker.generate_response(
-            content=fields,
-            code=hcodes.HTTP_OK_BASIC,
-            errors=None,
-            headers={},
-            head_method=False,
-            meta=None
-        )
+                if key == key.lower():
+                    f["label"] = key.title()
+                else:
+                    f["label"] = key
+
+                f["description"] = f["label"]
+                f["required"] = "true" if field_def.required else "false"
+
+                f["type"] = ResponseMaker.get_schema_type(field_def)
+
+                if field_def.validate is not None:
+                    if isinstance(field_def.validate, validate.Length):
+
+                        if field_def.validate.min is not None:
+                            f["min"] = field_def.validate.min
+                        if field_def.validate.max is not None:
+                            f["max"] = field_def.validate.max
+                        if field_def.validate.equal is not None:
+                            f["min"] = field_def.validate.equal
+                            f["max"] = field_def.validate.equal
+
+                    elif isinstance(field_def.validate, validate.Range):
+
+                        if field_def.validate.min is not None:
+                            f["min"] = field_def.validate.min
+                            if not field_def.validate.min_inclusive:
+                                f["min"] += 1
+
+                        if field_def.validate.max is not None:
+                            f["max"] = field_def.validate.max
+                            if not field_def.validate.max_inclusive:
+                                f["max"] += 1
+
+                    elif isinstance(field_def.validate, validate.OneOf):
+
+                        choices = field_def.validate.choices
+                        labels = field_def.validate.labels
+                        if len(labels) != len(choices):
+                            labels = choices
+                        f["enum"] = dict(zip(choices, labels))
+
+                    else:
+
+                        log.warning(
+                            "Unsupported validation schema: {}.{}",
+                            type(field_def.validate).__module__,
+                            type(field_def.validate).__name__
+                        )
+
+                fields.append(f)
+            return ResponseMaker.generate_response(
+                content=fields,
+                errors=None,
+                code=hcodes.HTTP_OK_BASIC,
+                headers={},
+                head_method=False,
+                meta=None
+            )
+        except BaseException as e:
+            log.error(e)
+            return ResponseMaker.generate_response(
+                content=None,
+                errors={"Server internal error": "Failed to retrieve input schema"},
+                code=hcodes.HTTP_SERVER_ERROR,
+                headers={},
+                head_method=False,
+                meta=None
+            )
 
     @staticmethod
     def get_schema_type(schema_type):
