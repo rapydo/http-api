@@ -144,7 +144,7 @@ class Profile(EndpointResource):
             "custom_parameters": ["User"],
             "responses": {
                 "200": {"description": "ID of new user"},
-                "409": {"description": "This user already exists"},
+                # "409": {"description": "This user already exists"},
             },
         }
     }
