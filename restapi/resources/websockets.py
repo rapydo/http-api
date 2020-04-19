@@ -96,6 +96,7 @@ class PushpinHTTPStream(EndpointResource):
     POST = {
         "/stream/<channel>": {
             "description": "Open a HTTP Stream for Long polling",
+            "produces": ['text/plain'],
             "responses": {"200": {"description": "HTTP Stream connection accepted"}},
         }
     }
