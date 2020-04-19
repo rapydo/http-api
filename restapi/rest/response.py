@@ -15,7 +15,8 @@ from restapi.utilities.logs import handle_log_output, MAX_CHAR_LEN
 def handle_marshmallow_errors(error):
 
     try:
-        if request.get_json().get("get_schema", False):
+        req_json = request.get_json()
+        if req_json and req_json.get("get_schema", False):
             return ResponseMaker.respond_with_schema(
                 error.data.get('schema')
             )
