@@ -40,11 +40,11 @@ class Tokens(EndpointResource):
         "/tokens": {
             "summary": "Remove all tokens emitted for a user",
             "description": "Note: only allowed for testing",
-            "responses": {"200": {"description": "All tokens have been invalidated"}},
+            "responses": {"204": {"description": "All tokens have been invalidated"}},
         },
         "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
-            "responses": {"200": {"description": "Token has been invalidated"}},
+            "responses": {"204": {"description": "Token has been invalidated"}},
         },
     }
 
