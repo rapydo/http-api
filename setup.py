@@ -49,6 +49,11 @@ setup(
 
         "PyYAML==5.3.1",
 
+        "Werkzeug==0.16.1",
+        "pytest-flask==1.0.0",
+        "pytest-cov==2.8.1",
+        "schemathesis==1.2.0",
+
         # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
         "psycopg2-binary",
