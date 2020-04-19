@@ -159,6 +159,7 @@ class TestApp(BaseTests):
             header, token = self.do_login(client, None, None)
             if i == 0:
                 self.save("tokens_header", header, read_only=True)
+                self.save("first_token", token, read_only=True)
                 first_token = token
 
         endpoint = AUTH_URI + '/tokens'
@@ -201,6 +202,7 @@ class TestApp(BaseTests):
 
         endpoint = AUTH_URI + '/tokens'
         endpoint_single = "{}/{}".format(endpoint, self.get("token_id"))
+        endpoint_first_token = "{}/{}".format(endpoint, self.get("first_token"))
 
         # TEST DELETE OF A SINGLE TOKEN
         r = client.delete(endpoint_single, headers=self.get("tokens_header"))
@@ -214,8 +216,12 @@ class TestApp(BaseTests):
         r = client.delete(endpoint + "/0", headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
 
-        # TEST DELETE OF ALL TOKENS
-        r = client.delete(endpoint, headers=self.get("tokens_header"))
+        # TEST TOKEN IS STILL VALID
+        r = client.get(endpoint, headers=self.get("tokens_header"))
+        assert r.status_code == hcodes.HTTP_OK_BASIC
+
+        # INVALIDATE THE TOKEN IN USE
+        r = client.delete(endpoint_first_token, headers=self.get("tokens_header"))
         assert r.status_code == hcodes.HTTP_OK_NORESPONSE
 
         # TEST TOKEN IS NOW INVALID

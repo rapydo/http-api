@@ -37,11 +37,6 @@ class Tokens(EndpointResource):
         },
     }
     DELETE = {
-        "/tokens": {
-            "summary": "Remove all tokens emitted for a user",
-            "description": "Note: only allowed for testing",
-            "responses": {"204": {"description": "All tokens have been invalidated"}},
-        },
         "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
             "responses": {"204": {"description": "Token has been invalidated"}},
@@ -71,21 +66,13 @@ class Tokens(EndpointResource):
     # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
     @decorators.auth.required()
-    def delete(self, token_id=None):
+    def delete(self, token_id):
         """
             For additional security, tokens are invalidated both
             by changing the user UUID and by removing single tokens
         """
 
         user = self.get_current_user()
-
-        if token_id is None:
-            # NOTE: this is allowed only in removing tokens in unittests
-            if not current_app.config['TESTING']:
-                raise KeyError("TESTING IS FALSE! Specify a valid token")
-            self.auth.invalidate_all_tokens(user=user)
-            return self.empty_response()
-
         tokens = self.auth.get_tokens(user=user)
 
         for token in tokens:
