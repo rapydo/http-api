@@ -45,7 +45,8 @@ class AdminUsers(EndpointResource):
             "summary": "Create a new user",
             "custom_parameters": ["AdminUsers"],
             "responses": {
-                "200": {"description": "The uuid of the new user is returned"}
+                "200": {"description": "The uuid of the new user is returned"},
+                "409": {"description": "This user already exists"},
             },
         }
     }
