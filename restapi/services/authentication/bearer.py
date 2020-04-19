@@ -98,6 +98,10 @@ class HTTPTokenAuth:
             self, roles=None, required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
         def decorator(func):
+            # it is used in Customization to verify if an endpoint is requiring
+            # authentication and inject 401 errors if missing in explicint conf
+            func.__dict__['auth.required'] = True
+
             @wraps(func)
             def wrapper(*args, **kwargs):
                 # Recover the auth object
@@ -115,7 +119,7 @@ class HTTPTokenAuth:
                             HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME
                         )
                     )
-                    log.info("Unauthorized request: missing credentials")
+                    log.debug("Unauthorized request: missing credentials")
                     return decorated_self.response(
                         errors=msg,
                         code=hcodes.HTTP_BAD_UNAUTHORIZED,

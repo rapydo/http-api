@@ -101,7 +101,10 @@ class Customizer:
         endpoints_folders = []
         # base swagger dir (rapydo/http-ap)
         endpoints_folders.append(
-            {'path': ABS_RESTAPI_PATH, 'iscore': True}
+            {
+                'path': ABS_RESTAPI_PATH,
+                'iscore': True
+            }
         )
 
         # swagger dir from extended project, if any
@@ -116,24 +119,26 @@ class Customizer:
 
         # custom swagger dir
         endpoints_folders.append(
-            {'path': os.path.join(os.curdir, CUSTOM_PACKAGE), 'iscore': False}
+            {
+                'path': os.path.join(os.curdir, CUSTOM_PACKAGE),
+                'iscore': False
+            }
         )
 
-        # already_loaded = {}
+        ERROR_401 = 'Missing or invalid credentials or token'
+
         for folder in endpoints_folders:
 
             base_dir = folder.get('path')
-            iscore = folder.get('iscore')
             # get last item of the path
             # normapath is required to strip final / is any
             base_module = os.path.basename(os.path.normpath(base_dir))
 
-            if iscore:
-                apis_dir = os.path.join(base_dir, 'resources')
-                apiclass_module = '{}.resources'.format(base_module)
-            else:
-                apis_dir = os.path.join(base_dir, 'apis')
-                apiclass_module = '{}.apis'.format(base_module)
+            iscore = folder.get('iscore')
+            resources_dir = 'resources' if iscore else 'apis'
+
+            apis_dir = os.path.join(base_dir, resources_dir)
+            apiclass_module = '{}.{}'.format(base_module, resources_dir)
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
@@ -245,10 +250,31 @@ class Customizer:
                             #         "Obsolete dict {} in {}", m, class_name
                             #     )
 
+                        # get, post, put, patch, delete
+                        method_fn = m.lower()
+
+                        # conf from GET, POST, ... dictionaries
                         conf = getattr(ep_class, method_name)
+
+                        # endpoint uris /api/bar, /api/food
                         kk = conf.keys()
+
+                        # get, post, put, patch, delete functions
+                        fn = getattr(ep_class, method_fn)
+
+                        # auth.required injected by the required decorator in bearer.py
+                        auth_required = fn.__dict__.get('auth.required', False)
+                        if auth_required:
+                            for u, c in conf.items():
+                                if 'responses' not in c:
+                                    conf[u]['responses'] = {}
+                                if '401' not in conf[u]['responses']:
+                                    conf[u]['responses']['401'] = {
+                                        'description': ERROR_401
+                                    }
+
                         mapping_lists.extend(kk)
-                        endpoint.methods[m.lower()] = copy.deepcopy(conf)
+                        endpoint.methods[method_fn] = copy.deepcopy(conf)
 
                     if endpoint.custom['schema']['expose']:
                         for uri in mapping_lists:
