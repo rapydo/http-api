@@ -56,7 +56,7 @@ for url in ['/api/swagger', '/api/specs']:
     )
     def test_no_server_errors_with_auth(case):
 
-        if case.path == '/api/logout':
+        if case.path == '/auth/logout':
             log.warning("Skipping logout")
             return True
 
@@ -69,7 +69,7 @@ for url in ['/api/swagger', '/api/specs']:
         # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
         case.validate_response(response)
 
-    @schema.parametrize(endpoint="/api/logout")
+    @schema.parametrize(endpoint="/auth/logout")
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow]
