@@ -6,6 +6,9 @@ Customization based on configuration 'blueprint' files
 
 import os
 import copy
+from flask.views import MethodViewType
+from flask_apispec.views import MethodResourceMeta
+from flask_apispec.utils import Annotation
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
@@ -288,6 +291,54 @@ class Customizer:
                                     conf[u]['responses']['404'] = ERROR_404_AUTH
                                 else:
                                     conf[u]['responses']['404'] = ERROR_404
+
+                        # inject _METHOD dictionaries into __apispec__ attribute
+                        # __apispec__ is normally populated by using @docs decorator
+                        if isinstance(ep_class, MethodResourceMeta):
+
+                            # retrieve attributes already set with @docs decorator
+                            fn.__apispec__ = fn.__dict__.get('__apispec__', {})
+                            docs = {}
+                            for doc in fn.__apispec__['docs']:
+                                docs.update(doc.options[0])
+
+                            missing = {}
+                            if 'summary' not in docs:
+                                summary = conf[u].get('summary')
+                                if summary is not None:
+                                    missing['summary'] = summary
+                            if 'description' not in docs:
+                                description = conf[u].get('description')
+                                if description is not None:
+                                    missing['description'] = description
+
+                            if 'responses' not in docs:
+                                responses = conf[u].get('responses')
+                                if responses is not None:
+                                    missing['responses'] = responses
+
+                            if 'responses' in docs:
+                                responses = conf[u].get('responses')
+                                if responses is not None:
+                                    for code, resp in responses.items():
+                                        if code not in docs['responses']:
+                                            if 'responses' not in missing:
+                                                missing['responses'] = {}
+                                            missing['responses'][code] = resp
+
+                            # mimic the behaviour of @docs decorator
+                            # https://github.com/jmcarp/flask-apispec/...
+                            #                         .../flask_apispec/annotations.py
+                            annotation = Annotation(
+                                options=[missing],
+                                # Inherit Swagger documentation from parent classes
+                                # None is the default value
+                                inherit=None
+                            )
+                            fn.__apispec__['docs'].insert(0, annotation)
+
+                        elif not isinstance(ep_class, MethodViewType):
+                            log.warning("Unknown class type: {}", type(ep_class))
 
                         mapping_lists.extend(kk)
                         endpoint.methods[method_fn] = copy.deepcopy(conf)
