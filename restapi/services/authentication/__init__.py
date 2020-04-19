@@ -279,7 +279,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     log.error("Missing continent.names.en in {}", data)
                     return "Unknown continent"
         except BaseException as e:
-            log.error(e)
+            log.error("{}. Input was {}", e, ip)
+
 
         return "Unknown"
 

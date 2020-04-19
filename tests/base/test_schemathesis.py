@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 # import requests
 import schemathesis
-from hypothesis import settings
+from hypothesis import settings, HealthCheck
 import werkzeug
 import json
 from glom import glom
 
 from restapi.server import create_app
 from restapi.services.authentication import BaseAuthentication
-
-app = create_app(testing_mode=True)
-schema = schemathesis.from_wsgi("/api/specs", app)
+from restapi.utilities.logs import log
 
 
 def get_auth_token():
@@ -28,29 +26,41 @@ def get_auth_token():
     return {'Authorization': 'Bearer {}'.format(token)}
 
 
+app = create_app(testing_mode=True)
 auth_header = get_auth_token()
 
 
-@schema.parametrize()
-@settings(deadline=None)
-def test_no_server_errors_no_auth(case):
+for url in ['/api/swagger', '/api/specs']:
+    log.info("Retreving schema from {}", url)
+    schema = schemathesis.from_wsgi(url, app)
 
-    response = case.call_wsgi()
+    log.info("Starting tests...")
 
-    # validation cheks are defined here:
-    # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-    case.validate_response(response)
+    @schema.parametrize()
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_no_server_errors_no_auth(case):
 
+        response = case.call_wsgi()
 
-@schema.parametrize()
-@settings(deadline=None)
-def test_no_server_errors_with_auth(case):
+        # validation cheks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
 
-    if case.headers is None:
-        case.headers = auth_header
+    @schema.parametrize()
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_no_server_errors_with_auth(case):
 
-    response = case.call_wsgi()
+        if case.headers is None:
+            case.headers = auth_header
 
-    # validation cheks are defined here:
-    # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-    case.validate_response(response)
+        response = case.call_wsgi()
+
+        # validation cheks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
