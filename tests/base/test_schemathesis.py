@@ -58,7 +58,7 @@ for url in ['/api/swagger', '/api/specs']:
 
         if case.path == '/auth/logout':
             log.warning("Skipping logout")
-            return True
+            return None
 
         if case.headers is None:
             case.headers = auth_header
