@@ -125,7 +125,18 @@ class Customizer:
             }
         )
 
-        ERROR_401 = 'Missing or invalid credentials or token'
+        ERROR_401 = {
+            'description': 'Missing or invalid credentials or token'
+        }
+        ERROR_400 = {
+            'description': 'The request cannot be satisfied due to malformed syntax'
+        }
+        ERROR_404 = {
+            'description': 'The requested resource cannot be found'
+        }
+        ERROR_404_AUTH = {
+            'description': 'The resource cannot be found or you are not authorized'
+        }
 
         for folder in endpoints_folders:
 
@@ -264,14 +275,19 @@ class Customizer:
 
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get('auth.required', False)
-                        if auth_required:
-                            for u, c in conf.items():
-                                if 'responses' not in c:
-                                    conf[u]['responses'] = {}
-                                if '401' not in conf[u]['responses']:
-                                    conf[u]['responses']['401'] = {
-                                        'description': ERROR_401
-                                    }
+                        for u, c in conf.items():
+                            if 'responses' not in c:
+                                conf[u]['responses'] = {}
+
+                            if auth_required and '401' not in conf[u]['responses']:
+                                conf[u]['responses']['401'] = ERROR_401
+                            if '400' not in conf[u]['responses']:
+                                conf[u]['responses']['400'] = ERROR_400
+                            if '404' not in conf[u]['responses']:
+                                if auth_required:
+                                    conf[u]['responses']['404'] = ERROR_404_AUTH
+                                else:
+                                    conf[u]['responses']['404'] = ERROR_404
 
                         mapping_lists.extend(kk)
                         endpoint.methods[method_fn] = copy.deepcopy(conf)
