@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from flask import current_app, request
 
 from restapi.services.detect import Detector
+from restapi.exceptions import RestApiException
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
 from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
 
@@ -99,10 +100,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         try:
             user = self.get_user_object(username=username)
+        except ValueError as e:
+            # SqlAlchemy can raise the following error:
+            # A string literal cannot contain NUL (0x00) characters.
+            log.error(e)
+            raise RestApiException(
+                "Invalid input received",
+                status_code=hcodes.HTTP_BAD_REQUEST,
+            )
         except BaseException as e:
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
             # log.critical("Please reinitialize backend tables")
-            from restapi.exceptions import RestApiException
 
             raise RestApiException(
                 "Unable to connect to auth backend",
