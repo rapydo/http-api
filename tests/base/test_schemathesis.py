@@ -45,7 +45,7 @@ for url in ['/api/swagger', '/api/specs']:
 
         response = case.call_wsgi()
 
-        # validation cheks are defined here:
+        # validation checks are defined here:
         # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
         case.validate_response(response)
 
@@ -56,11 +56,31 @@ for url in ['/api/swagger', '/api/specs']:
     )
     def test_no_server_errors_with_auth(case):
 
+        if case.path == '/api/logout':
+            log.warning("Skipping logout")
+            return True
+
         if case.headers is None:
             case.headers = auth_header
 
         response = case.call_wsgi()
 
-        # validation cheks are defined here:
+        # validation checks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
+
+    @schema.parametrize(endpoint="/api/logout")
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_logout(case):
+
+        if case.headers is None:
+            case.headers = auth_header
+
+        response = case.call_wsgi()
+
+        # validation checks are defined here:
         # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
         case.validate_response(response)
