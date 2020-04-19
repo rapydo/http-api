@@ -14,7 +14,7 @@ class Logout(EndpointResource):
         "/logout": {
             "summary": "Logout from current credentials",
             "description": "Invalidate current registered token",
-            "responses": {"200": {"description": "Token correctly removed"}},
+            "responses": {"204": {"description": "Token correctly removed"}},
         }
     }
 
