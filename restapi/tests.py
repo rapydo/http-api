@@ -17,35 +17,6 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
-########################
-# FIXME: Explode the normal response content?
-def get_content_from_response(http_out, return_errors=False):
-
-    response = None
-
-    try:
-        response = json.loads(http_out.get_data().decode())
-    except Exception as e:
-        log.error("Failed to load response:\n{}", e)
-        raise ValueError(
-            "Malformed response: {}".format(http_out)
-        )
-
-    # Check what we have so far
-    # Should be {Response: DATA, Meta: RESPONSE_METADATA}
-    if not isinstance(response, dict) or len(response) != 2:
-        return response
-
-    Response = response.get("Response")
-
-    if Response is None:
-        return response
-
-    if return_errors:
-        return Response.get('errors')
-    return Response.get('data')
-
-
 class BaseTests:
     def save(self, variable, value, read_only=False):
         """
@@ -80,17 +51,6 @@ class BaseTests:
         assert r.status_code == hcodes.HTTP_OK_BASIC
         content = json.loads(r.data.decode('utf-8'))
         return content
-
-    def get_definition(self, specs, endpoint):
-        """
-            Given a swagger specs this method extracts a swagger definition
-            for a specific endpoint. The endpoint is expected to have variables
-            defined following swagger rules, e.g /path/{variable}
-        """
-        mapping = "{}/{}".format(API_URL, endpoint)
-
-        assert mapping in specs["paths"]
-        return specs["paths"][mapping]
 
     def getInputSchema(self, client, endpoint, headers):
         """
@@ -190,17 +150,7 @@ class BaseTests:
                 token = content
         return {'Authorization': 'Bearer {}'.format(token)}, token
 
-    def do_logout(self, client, headers):
-        r = client.get(AUTH_URI + '/logout', headers=headers)
-        if r.status_code == hcodes.HTTP_OK_NORESPONSE:
-            log.info("Test TOKEN removed")
-        else:
-            log.error("Failed to logout with:\n{}", headers)
-
-    def delete_tokens(self, client, headers):
-        # r = client.delete(AUTH_URI + '/tokens', headers=headers)
-        pass
-
+    # Only used by nig
     # def create_user(self, username, **kwargs):
 
     #     users_def = self.get("def.users")
@@ -262,12 +212,13 @@ class BaseTests:
 
     #     return user, password
 
-    def get_profile(self, headers, client):
-        r = client.get(AUTH_URI + '/profile', headers=headers)
-        content = json.loads(r.data.decode('utf-8'))
-        if 'Response' in content:
-            return content['Response']['data']
-        return content
+    # only used by nig
+    # def get_profile(self, headers, client):
+    #     r = client.get(AUTH_URI + '/profile', headers=headers)
+    #     content = json.loads(r.data.decode('utf-8'))
+    #     if 'Response' in content:
+    #         return content['Response']['data']
+    #     return content
 
     def get_celery(self, app):
 
@@ -283,10 +234,6 @@ class BaseTests:
         """
             Create a random string to be used to build data for tests
         """
-        if length > 500000:
-            lis = list(string.ascii_lowercase)
-            return ''.join(random.choice(lis) for _ in range(length))
-
         rand = random.SystemRandom()
         charset = string.ascii_uppercase + string.digits
 
@@ -358,23 +305,24 @@ class BaseTests:
 
         return data
 
-    def getPartialData(self, schema, data):
-        """
-            Following directives contained in the schema and
-            taking as input a pre-built data dictionary, this method
-            remove one of the required fields from data
-        """
-        partialData = data.copy()
-        for d in schema:
-            if not d['required']:
-                continue
+    # only used by nig
+    # def getPartialData(self, schema, data):
+    #     """
+    #         Following directives contained in the schema and
+    #         taking as input a pre-built data dictionary, this method
+    #         remove one of the required fields from data
+    #     """
+    #     partialData = data.copy()
+    #     for d in schema:
+    #         if not d['required']:
+    #             continue
 
-            # key = d["key"]
-            key = d["name"]
+    #         # key = d["key"]
+    #         key = d["name"]
 
-            del partialData[key]
-            return partialData
-        return None
+    #         del partialData[key]
+    #         return partialData
+    #     return None
 
     @staticmethod
     def method_exists(status):
