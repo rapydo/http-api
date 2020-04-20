@@ -14,10 +14,6 @@ from restapi.utilities.logs import log
 
 RUN_SCHEMATHESIS = os.environ.get("RUN_SCHEMATHESIS", "1") == "1"
 
-if not RUN_SCHEMATHESIS:
-    log.warning("Skipping schemathesis")
-    return
-
 
 def get_auth_token():
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
@@ -34,61 +30,64 @@ def get_auth_token():
     return {'Authorization': 'Bearer {}'.format(token)}
 
 
-app = create_app(testing_mode=True)
-auth_header = get_auth_token()
+if not RUN_SCHEMATHESIS:
+    log.warning("Skipping schemathesis")
+else:
 
+    app = create_app(testing_mode=True)
+    auth_header = get_auth_token()
 
-for url in ['/api/swagger', '/api/specs']:
-    log.info("Retreving schema from {}", url)
-    schema = schemathesis.from_wsgi(url, app)
+    for url in ['/api/swagger', '/api/specs']:
+        log.info("Retreving schema from {}", url)
+        schema = schemathesis.from_wsgi(url, app)
 
-    log.info("Starting tests...")
+        log.info("Starting tests...")
 
-    @schema.parametrize()
-    @settings(
-        deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
-    )
-    def test_no_server_errors_no_auth(case):
+        @schema.parametrize()
+        @settings(
+            deadline=None,
+            suppress_health_check=[HealthCheck.too_slow]
+        )
+        def test_no_server_errors_no_auth(case):
 
-        response = case.call_wsgi()
+            response = case.call_wsgi()
 
-        # validation checks are defined here:
-        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-        case.validate_response(response)
+            # validation checks are defined here:
+            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+            case.validate_response(response)
 
-    @schema.parametrize()
-    @settings(
-        deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
-    )
-    def test_no_server_errors_with_auth(case):
+        @schema.parametrize()
+        @settings(
+            deadline=None,
+            suppress_health_check=[HealthCheck.too_slow]
+        )
+        def test_no_server_errors_with_auth(case):
 
-        if case.path == '/auth/logout':
-            log.warning("Skipping logout")
-            return None
+            if case.path == '/auth/logout':
+                log.warning("Skipping logout")
+                return None
 
-        if case.headers is None:
-            case.headers = auth_header
+            if case.headers is None:
+                case.headers = auth_header
 
-        response = case.call_wsgi()
+            response = case.call_wsgi()
 
-        # validation checks are defined here:
-        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-        case.validate_response(response)
+            # validation checks are defined here:
+            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+            case.validate_response(response)
 
-    @schema.parametrize(endpoint="/auth/logout")
-    @settings(
-        deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
-    )
-    def test_logout(case):
+        @schema.parametrize(endpoint="/auth/logout")
+        @settings(
+            deadline=None,
+            suppress_health_check=[HealthCheck.too_slow]
+        )
+        def test_logout(case):
 
-        if case.headers is None:
-            case.headers = auth_header
+            if case.headers is None:
+                case.headers = auth_header
 
-        response = case.call_wsgi()
+            response = case.call_wsgi()
 
-        # validation checks are defined here:
-        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-        case.validate_response(response)
+            # validation checks are defined here:
+            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+            case.validate_response(response)
