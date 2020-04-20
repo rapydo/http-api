@@ -55,18 +55,8 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
 def send_mail_is_active():
     host = os.environ.get("SMTP_HOST")
-    port = os.environ.get("SMTP_PORT")
 
-    if host is None or port is None:
-        return False
-
-    if host.strip() == '':
-        return False
-
-    if port.strip() == '':
-        return False
-
-    return True
+    return host and host.strip()
 
 
 def test_smtp_client():
