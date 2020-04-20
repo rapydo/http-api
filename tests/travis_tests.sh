@@ -85,6 +85,8 @@ fi
 
 rapydo start
 
+sleep 2
+
 rapydo -s backend logs
 
 # Test API and calculate coverage
