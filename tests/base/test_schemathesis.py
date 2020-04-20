@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # import requests
+import os
 import schemathesis
 from hypothesis import settings, HealthCheck
 import werkzeug
@@ -9,6 +10,13 @@ from glom import glom
 from restapi.server import create_app
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
+
+
+RUN_SCHEMATHESIS = os.environ.get("RUN_SCHEMATHESIS", "1") == "1"
+
+if not RUN_SCHEMATHESIS:
+    log.warning("Skipping schemathesis")
+    return
 
 
 def get_auth_token():
