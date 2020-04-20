@@ -204,7 +204,7 @@ def tests(wait, core, file, folder):
 
     if wait:
         while initializing():
-            log.debug('Waiting service initialization')
+            log.debug('Waiting services initialization')
             time.sleep(5)
         mywait()
 

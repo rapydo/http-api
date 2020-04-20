@@ -2,6 +2,7 @@
 
 import os
 import psutil
+from datetime import datetime
 from restapi.utilities.logs import log
 
 
@@ -29,7 +30,11 @@ def find_process(process_name, keywords=None, prefix=None):
             continue
 
         cmdline = ' '.join(cmd)
-        log.warning('Process {} is running with PID {}', cmdline, pid)
+        d = datetime.fromtimestamp(process.create_time()).strftime("%Y-%m-%d %H:%M:%S")
+        log.warning(
+            'Process is running\nPID: {}\nCreated: {}\nCmd: {}',
+            pid, d, cmdline
+        )
         return True
 
     return False

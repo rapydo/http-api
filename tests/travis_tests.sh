@@ -84,7 +84,8 @@ if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; 
 fi
 
 rapydo start
-docker ps -a
+
+rapydo -s backend logs
 
 # Test API and calculate coverage
 rapydo shell backend --command 'restapi tests --core --wait'
