@@ -43,7 +43,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
             log.error(str(e))
             return None
 
-    if username is not None and password is not None:
+    if username and password:
         log.verbose("Authenticating SMTP")
         try:
             smtp.login(username, password)
@@ -87,15 +87,15 @@ def send(
     plain_body=None,
 ):
 
-    if smtp_host is None:
+    if not smtp_host:
         log.error("Skipping send email: smtp host not configured")
         return False
 
-    if from_address is None:
+    if not from_address:
         log.error("Skipping send email: from address not configured")
         return False
 
-    if to_address is None:
+    if not to_address:
         log.error("Skipping send email: destination address not configured")
         return False
 
@@ -191,12 +191,12 @@ def send_mail(
         username = os.environ.get("SMTP_USERNAME")
         password = os.environ.get("SMTP_PASSWORD")
 
-        if from_address is None:
+        if not from_address:
             from_address = os.environ.get("SMTP_NOREPLY")
-        if from_address is None:
+        if not from_address:
             from_address = os.environ.get("SMTP_ADMIN")
 
-        if to_address is None:
+        if not to_address:
             to_address = os.environ.get("SMTP_ADMIN")
 
         if plain_body is None:
