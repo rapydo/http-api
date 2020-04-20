@@ -43,9 +43,13 @@ def flask_cli(options=None):
     log.debug("cli execution completed")
 
 
-def starting_up():
+def initializing():
 
-    return find_process(current_package, suffixes=['wait', 'init'], local_bin=True)
+    return find_process(
+        current_package,
+        keywords=['init'],
+        prefix='/usr/local/bin/'
+    )
 
 
 @cli.command()
@@ -69,8 +73,8 @@ def launch():
         '--with-threads',
     ]
 
-    if starting_up():
-        log.exit("Please wait few more seconds: resources are still starting up")
+    if initializing():
+        log.exit("Please wait few more seconds: initialization is still in progress")
     else:
         main(args)
         log.warning("Server shutdown")
@@ -199,8 +203,8 @@ def tests(wait, core, file, folder):
     """Compute tests and coverage"""
 
     if wait:
-        while starting_up():
-            log.debug('Waiting service startup')
+        while initializing():
+            log.debug('Waiting service initialization')
             time.sleep(5)
         mywait()
 

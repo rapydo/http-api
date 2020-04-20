@@ -5,7 +5,13 @@ import psutil
 from restapi.utilities.logs import log
 
 
-def find_process(prefix, suffixes=None, local_bin=False):
+def find_process(process_name, keywords=None, prefix=None):
+
+    if keywords is None:
+        keywords = []
+
+    if prefix:
+        keywords.append("{}{}".format(prefix, process_name))
 
     current_pid = os.getpid()
 
@@ -15,27 +21,16 @@ def find_process(prefix, suffixes=None, local_bin=False):
             continue
         process = psutil.Process(pid)
 
-        if process.name() == prefix:
-            cmd = process.cmdline()
+        if process.name() != process_name:
+            continue
+        cmd = process.cmdline()
 
-            if local_bin:
-                check = False
-                for word in cmd:
-                    if '/usr/local/bin' in word:
-                        check = True
-                if not check:
-                    continue
+        if not all(elem in cmd for elem in keywords):
+            continue
 
-            if suffixes is not None:
-                check = False
-                for word in cmd:
-                    if word in suffixes:
-                        check = True
-                if not check:
-                    continue
-
-            log.warning('Already existing')
-            return True
+        cmdline = ' '.join(cmd)
+        log.warning('Process {} is running with PID {}', cmdline, pid)
+        return True
 
     return False
 
