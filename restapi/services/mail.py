@@ -21,7 +21,7 @@ from restapi.utilities.logs import log
 def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
     ###################
     # https://stackabuse.com/how-to-send-emails-with-gmail-using-python/
-    if smtp_port is None:
+    if not smtp_port:
         smtp = SMTP(smtp_host)
     elif smtp_port == '465':
         smtp = SMTP_SSL(smtp_host)
@@ -32,7 +32,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
     ###################
     smtp.set_debuglevel(0)
-    if smtp_port is None:
+    if not smtp_port:
         log.verbose("Connecting to {}", smtp_host)
     else:
         log.verbose("Connecting to {}:{}", smtp_host, smtp_port)
