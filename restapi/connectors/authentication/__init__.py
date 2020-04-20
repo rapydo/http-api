@@ -213,9 +213,11 @@ class HandleSecurity:
 
             tokens = self.auth.get_tokens(user=user)
             for token in tokens:
-                self.auth.invalidate_token(token=token["token"])
-            # changes the user uuid invalidating all tokens
-            self.auth.invalidate_all_tokens()
+                try:
+                    self.auth.invalidate_token(token=token["token"])
+                except BaseException as e:
+                    log.error(e)
+                    log.critical("Failed to invalidate token {}")
 
         return True
 

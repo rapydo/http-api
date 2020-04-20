@@ -297,22 +297,6 @@ class Authentication(BaseAuthentication):
 
         return tokens_list
 
-    def invalidate_all_tokens(self, user=None):
-        """
-            To invalidate all tokens the user uuid is changed
-        """
-        if user is None:
-            user = self._user
-        user.uuid = getUUID()
-        try:
-            self.db.session.add(user)
-            self.db.session.commit()
-            log.warning("User uuid changed to: {}", user.uuid)
-        except BaseException as e:
-            log.error("DB error ({}), rolling back", e)
-            self.db.session.rollback()
-        return True
-
     def invalidate_token(self, token):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()

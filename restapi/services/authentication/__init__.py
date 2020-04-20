@@ -422,14 +422,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
-    def invalidate_all_tokens(self, user=None):
-        """
-            With this method all token emitted for this user must be
-            invalidated (no longer valid starting from now)
-        """
-        return
-
-    @abc.abstractmethod
     def invalidate_token(self, token):
         """
             With this method the specified token must be invalidated

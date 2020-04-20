@@ -13,7 +13,6 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 from datetime import datetime, timedelta
 import pytz
-from restapi.utilities.uuid import getUUID
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -273,14 +272,6 @@ class Authentication(BaseAuthentication):
             tokens_list.append(t)
 
         return tokens_list
-
-    def invalidate_all_tokens(self, user=None):
-        if user is None:
-            user = self.get_user()
-
-        user.uuid = getUUID()
-        user.save()
-        return True
 
     def invalidate_token(self, token):
         try:

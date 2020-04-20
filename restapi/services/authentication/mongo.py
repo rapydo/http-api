@@ -284,17 +284,6 @@ class Authentication(BaseAuthentication):
 
         return tokens_list
 
-    def invalidate_all_tokens(self, user=None):
-        """
-            To invalidate all tokens the user uuid is changed
-        """
-        if user is None:
-            user = self._user
-        user.uuid = getUUID()
-        user.save()
-        log.warning("User uuid changed to: {}", user.uuid)
-        return True
-
     def invalidate_token(self, token):
         try:
             token_entry = self.db.Token.objects.raw({'token': token}).first()
