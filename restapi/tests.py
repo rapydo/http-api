@@ -288,7 +288,7 @@ class BaseTests:
                 else:
                     value = "NOT_FOUND"
             elif field_type == "number" or field_type == "int":
-                value = random.randrange(0, 1000, 1)
+                value = random.SystemRandom().randrange(0, 1000, 1)
             elif field_format == "date":
                 value = "1969-07-20"  # 20:17:40 UTC
             elif field_format == "email":
