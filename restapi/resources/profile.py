@@ -144,6 +144,7 @@ class Profile(EndpointResource):
             "responses": {
                 "200": {"description": "ID of new user"},
                 "409": {"description": "This user already exists"},
+                "503": {"description": "Server misconfiguration, password cannot be reset"},
             },
         }
     }
@@ -219,7 +220,7 @@ class Profile(EndpointResource):
             log.error("Send mail is not active")
             raise RestApiException(
                 {'Server misconfiguration': 'Password cannot be reset'},
-                status_code=500,
+                status_code=503,
             )
 
         v = self.get_input()
@@ -492,6 +493,7 @@ class RecoverPassword(EndpointResource):
             "responses": {
                 "200": {"description": "Reset token is valid, password changed"},
                 "401": {"description": "Invalid reset token"},
+                "503": {"description": "Server misconfiguration, password cannot be reset"},
             },
         }
     }
@@ -503,7 +505,7 @@ class RecoverPassword(EndpointResource):
             log.error("Send mail is not active")
             raise RestApiException(
                 {'Server misconfiguration': 'Password cannot be reset'},
-                status_code=500,
+                status_code=503,
             )
 
         reset_email = self.get_input(single_parameter='reset_email')
