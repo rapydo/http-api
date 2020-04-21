@@ -257,18 +257,18 @@ class Authentication(BaseAuthentication):
             t["id"] = token.jti
             t["token"] = token.token
             t["token_type"] = token.token_type
-            t["emitted"] = token.creation.strftime('%s')
-            t["last_access"] = token.last_access.strftime('%s')
-            if token.expiration is not None:
-                t["expiration"] = token.expiration.strftime('%s')
+            # t["emitted"] = token.creation.strftime('%s')
+            # t["last_access"] = token.last_access.strftime('%s')
+            # if token.expiration is not None:
+            #     t["expiration"] = token.expiration.strftime('%s')
+            t["emitted"] = token.creation
+            t["last_access"] = token.last_access
+            t["expiration"] = token.expiration
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                u = self.db.getSingleLinkedNode(token.emitted_for)
-                if u is None:
-                    t['user_id'] = None
-                else:
-                    t['user_id'] = u.uuid
+                t['user'] = self.db.getSingleLinkedNode(token.emitted_for)
+
             tokens_list.append(t)
 
         return tokens_list

@@ -284,14 +284,17 @@ class Authentication(BaseAuthentication):
             t["id"] = token.jti
             t["token"] = token.token
             t["token_type"] = token.token_type
-            t["emitted"] = token.creation.strftime('%s')
-            t["last_access"] = token.last_access.strftime('%s')
-            if token.expiration is not None:
-                t["expiration"] = token.expiration.strftime('%s')
+            # t["emitted"] = token.creation.strftime('%s')
+            # t["last_access"] = token.last_access.strftime('%s')
+            # if token.expiration is not None:
+            #     t["expiration"] = token.expiration.strftime('%s')
+            t["emitted"] = token.creation
+            t["last_access"] = token.last_access
+            t["expiration"] = token.expiration
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user_id'] = token.emitted_for.uuid
+                t['user'] = token.emitted_for
             tokens_list.append(t)
 
         return tokens_list

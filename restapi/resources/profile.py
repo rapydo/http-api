@@ -12,7 +12,7 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.connectors.authentication import HandleSecurity
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.time import timestamp_from_string
+# from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
 
 from restapi.utilities.logs import log
@@ -607,7 +607,8 @@ class RecoverPassword(EndpointResource):
             )
 
         token = token.pop(0)
-        emitted = timestamp_from_string(token["emitted"])
+        # emitted = timestamp_from_string(token["emitted"])
+        emitted = token["emitted"]
 
         last_change = None
         # If user logged in after the token emission invalidate the token

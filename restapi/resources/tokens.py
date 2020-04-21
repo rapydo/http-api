@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from flask_apispec import MethodResource
+from flask_apispec import marshal_with
+from marshmallow import fields
+from restapi.models import Schema
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
@@ -28,11 +32,7 @@ class Tokens(EndpointResource):
         "/tokens": {
             "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
-        },
-        "/tokens/<token_id>": {
-            "summary": "Retrieve specified token if available for logged user",
-            "responses": {"200": {"description": "Details on the specified token"}},
-        },
+        }
     }
     DELETE = {
         "/tokens/<token_id>": {
@@ -44,31 +44,23 @@ class Tokens(EndpointResource):
     # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
     @decorators.auth.required()
-    def get(self, token_id=None):
+    def get(self):
 
         user = self.get_current_user()
 
         tokens = self.auth.get_tokens(user=user)
-        if token_id is None:
-            return self.response(tokens)
 
         for token in tokens:
-            if token["id"] == token_id:
-                return self.response(token)
+            token['emitted'] = token['emitted'].strftime('%s')
+            token['last_access'] = token['last_access'].strftime('%s')
+            token['expiration'] = token['expiration'].strftime('%s')
 
-        raise RestApiException(
-            'This token was not emitted for your account or it does not exist',
-            status_code=404
-        )
+        return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
     @decorators.auth.required()
     def delete(self, token_id):
-        """
-            For additional security, tokens are invalidated both
-            by changing the user UUID and by removing single tokens
-        """
 
         user = self.get_current_user()
         tokens = self.auth.get_tokens(user=user)
@@ -89,56 +81,48 @@ class Tokens(EndpointResource):
         )
 
 
-class AdminTokens(EndpointResource):
+class User(Schema):
+    email = fields.Email()
+    name = fields.Str()
+    surname = fields.Str()
+
+
+class TokenAdminSchema(Schema):
+    id = fields.Str()
+    IP = fields.Str()
+    location = fields.Str()
+    token = fields.Str()
+    emitted = fields.DateTime()
+    expiration = fields.DateTime()
+    last_access = fields.DateTime()
+    # token_type = fields.Str()
+    user = fields.Nested(User)
+
+
+class AdminTokens(MethodResource, EndpointResource):
     """ List all tokens for all users """
 
     labels = ["authentication"]
 
-    GET = {
+    _GET = {
         "/admin/tokens": {
             "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
         },
     }
-    DELETE = {
+    _DELETE = {
         "/admin/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
             "responses": {"200": {"description": "Token has been invalidated"}},
         },
     }
 
+    @marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
     def get(self):
 
-        users = {}
         tokens = self.auth.get_tokens(get_all=True)
-        for idx, _ in enumerate(tokens):
-            user_id = tokens[idx].pop('user_id')
-            if user_id is None:
-                log.warning("No user associated to token {}", tokens[idx])
-                continue
-            # Mongo directly provides the user
-            if not isinstance(user_id, str):
-                tokens[idx]['user_email'] = user_id.email
-                tokens[idx]['user_name'] = user_id.name
-                tokens[idx]['user_surname'] = user_id.surname
-
-                continue
-
-            # SQLAlchemy and neo4j provide the user_id
-            if user_id not in users:
-                u = self.auth.get_users(user_id=user_id).pop()
-
-                users[user_id] = {
-                    "user_email": u.email,
-                    "user_name": u.name,
-                    "user_surname": u.surname,
-                }
-
-            tokens[idx]['user_email'] = users[user_id].get("user_email")
-            tokens[idx]['user_name'] = users[user_id].get("user_name")
-            tokens[idx]['user_surname'] = users[user_id].get("user_surname")
 
         return self.response(tokens)
 
@@ -146,10 +130,7 @@ class AdminTokens(EndpointResource):
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
     def delete(self, token_id):
-        """
-            For additional security, tokens are invalidated both
-            by changing the user UUID and by removing single tokens
-        """
+
         try:
             tokens = self.auth.get_tokens(token_jti=token_id)
         except BaseException as e:
