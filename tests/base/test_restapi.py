@@ -174,14 +174,10 @@ class TestApp(BaseTests):
                 continue
             self.save("token_id", c["id"])
 
-        # TEST GET SINGLE TOKEN
+        # SINGLE TOKEN IS NOT ALLOWED
         endpoint_single = "{}/{}".format(endpoint, self.get("token_id"))
         r = client.get(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == 200
-
-        # TEST GET INVALID SINGLE TOKEN
-        r = client.get(endpoint + "/0", headers=self.get("tokens_header"))
-        assert r.status_code == 404
+        assert r.status_code == 405
 
         # TEST GET ALL TOKENS (expected at least num_tokens)
         r = client.get(API_URI + "/admin/tokens", headers=self.get("tokens_header"))
