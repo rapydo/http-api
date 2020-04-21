@@ -22,26 +22,47 @@ class AdminTokens
 """
 
 
-class Tokens(EndpointResource):
+class TokenSchema(Schema):
+    id = fields.Str()
+    IP = fields.Str()
+    location = fields.Str()
+    token = fields.Str()
+    emitted = fields.DateTime()
+    expiration = fields.DateTime()
+    last_access = fields.DateTime()
+
+
+class User(Schema):
+    email = fields.Email()
+    name = fields.Str()
+    surname = fields.Str()
+
+
+class TokenAdminSchema(TokenSchema):
+    # token_type = fields.Str()
+    user = fields.Nested(User)
+
+
+class Tokens(MethodResource, EndpointResource):
     """ List all active tokens for a user """
 
     baseuri = "/auth"
     labels = ["authentication"]
 
-    GET = {
+    _GET = {
         "/tokens": {
             "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
         }
     }
-    DELETE = {
+    _DELETE = {
         "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
             "responses": {"204": {"description": "Token has been invalidated"}},
         },
     }
 
-    # token_id = uuid associated to the token you want to select
+    @marshal_with(TokenSchema(many=True), code=200)
     @decorators.catch_errors()
     @decorators.auth.required()
     def get(self):
@@ -49,11 +70,6 @@ class Tokens(EndpointResource):
         user = self.get_current_user()
 
         tokens = self.auth.get_tokens(user=user)
-
-        for token in tokens:
-            token['emitted'] = token['emitted'].strftime('%s')
-            token['last_access'] = token['last_access'].strftime('%s')
-            token['expiration'] = token['expiration'].strftime('%s')
 
         return self.response(tokens)
 
@@ -79,24 +95,6 @@ class Tokens(EndpointResource):
             "Token not emitted for your account or does not exist",
             status_code=401
         )
-
-
-class User(Schema):
-    email = fields.Email()
-    name = fields.Str()
-    surname = fields.Str()
-
-
-class TokenAdminSchema(Schema):
-    id = fields.Str()
-    IP = fields.Str()
-    location = fields.Str()
-    token = fields.Str()
-    emitted = fields.DateTime()
-    expiration = fields.DateTime()
-    last_access = fields.DateTime()
-    # token_type = fields.Str()
-    user = fields.Nested(User)
 
 
 class AdminTokens(MethodResource, EndpointResource):
@@ -126,7 +124,6 @@ class AdminTokens(MethodResource, EndpointResource):
 
         return self.response(tokens)
 
-    # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
     def delete(self, token_id):

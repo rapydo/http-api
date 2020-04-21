@@ -91,7 +91,6 @@ class ResponseMaker:
 
     @staticmethod
     def get_accepted_formats():
-        from flask import request
 
         for val in request.headers:
             if val[0] == "Accept":
