@@ -15,7 +15,6 @@ there is no client id nor is client authentication required.
 from functools import wraps
 from flask import request
 from restapi.services.detect import Detector
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
@@ -122,7 +121,7 @@ class HTTPTokenAuth:
                     log.debug("Unauthorized request: missing credentials")
                     return decorated_self.response(
                         errors=msg,
-                        code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                        code=401,
                         headers=headers,
                     )
 
@@ -140,7 +139,7 @@ class HTTPTokenAuth:
                         log.info("Invalid token received '{}'", token)
                         return decorated_self.response(
                             errors="Invalid token received",
-                            code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                            code=401,
                             headers=headers
                         )
 
@@ -151,7 +150,7 @@ class HTTPTokenAuth:
                         log.info("Unauthorized request: missing privileges")
                         return decorated_self.response(
                             errors="You are not authorized: missing privileges",
-                            code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                            code=401,
                         )
 
                 return func(*args, **kwargs)

@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.logs import log
 
@@ -93,7 +92,7 @@ class Authentication(BaseAuthentication):
                 log.error(str(e))
                 raise RestApiException(
                     "Backend database is unavailable",
-                    status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                    status_code=503,
                 )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             # if retry <= 0:

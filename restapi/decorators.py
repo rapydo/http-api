@@ -7,9 +7,6 @@ from restapi.exceptions import RestApiException
 from restapi.confs import SENTRY_URL
 # imported here as utility for endpoints
 from restapi.services.authentication.bearer import authentication as auth
-
-from restapi.utilities.htmlcodes import hcodes
-
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
@@ -49,7 +46,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 if hasattr(e, "status_code"):
                     error_code = getattr(e, "status_code")
                 else:
-                    error_code = hcodes.HTTP_BAD_REQUEST
+                    error_code = 400
 
                 return self.response(errors=str(e), code=error_code)
 
@@ -81,7 +78,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                         error = 'Server failure; please contact admin.'
                     else:
                         error = {excname: message}
-                    return self.response(errors=error, code=hcodes.HTTP_BAD_REQUEST)
+                    return self.response(errors=error, code=400)
                 else:
                     raise e
 
@@ -118,7 +115,7 @@ def catch_graph_exceptions(func):
             else:
                 error = str(e)
 
-            raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
+            raise RestApiException(error, status_code=409)
         except (RequiredProperty) as e:
             raise RestApiException(str(e))
 

@@ -7,7 +7,6 @@ Download data from APIs.
 import os
 import re
 from flask import request, send_from_directory, stream_with_context, Response
-from restapi.utilities.htmlcodes import hcodes
 
 from restapi.utilities.logs import log
 
@@ -16,7 +15,7 @@ class Downloader:
     def download(self, filename=None, subfolder=None, get=False):
 
         if not get:
-            return self.response("No flow chunks for now", code=hcodes.HTTP_OK_ACCEPTED)
+            return self.response("No flow chunks for now", code=202)
 
         if filename is None:
             return self.response(errors="No filename specified to download")
@@ -89,7 +88,7 @@ class Downloader:
             data = f.read(length)
 
         rv = Response(
-            data, hcodes.HTTP_PARTIAL_CONTENT, mimetype=mime, direct_passthrough=True
+            data, 206, mimetype=mime, direct_passthrough=True
         )
         rv.headers.add(
             'Content-Range', 'bytes {}-{}/{}'.format(byte1, byte1 + length - 1, size)

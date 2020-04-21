@@ -9,8 +9,6 @@ from restapi.connectors.authentication import HandleSecurity
 from restapi import decorators
 from restapi.confs import WRAP_RESPONSE
 
-from restapi.utilities.htmlcodes import hcodes
-
 
 class Login(EndpointResource):
     """ Let a user login by using the configured method """
@@ -86,7 +84,7 @@ class Login(EndpointResource):
             return None
 
         return self.response(
-            errors=message, code=hcodes.HTTP_BAD_FORBIDDEN
+            errors=message, code=403
         )
 
     @decorators.catch_errors()
@@ -105,7 +103,7 @@ class Login(EndpointResource):
         # Now credentials are checked at every request
         if username is None or password is None:
             msg = "Missing username or password"
-            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_UNAUTHORIZED)
+            raise RestApiException(msg, status_code=401)
 
         username = username.lower()
         now = datetime.now(pytz.utc)

@@ -4,7 +4,6 @@ import os
 from functools import lru_cache
 from flask import request, stream_with_context, Response
 
-from restapi.utilities.htmlcodes import hcodes
 from irods.access import iRODSAccess
 from irods.rule import Rule
 from irods.ticket import Ticket
@@ -197,7 +196,7 @@ class IrodsPythonClient:
             if not ignore_existing:
                 raise IrodsException(
                     "Irods collection already exists",
-                    status_code=hcodes.HTTP_BAD_REQUEST,
+                    status_code=400,
                 )
             else:
                 log.debug("Irods collection already exists: {}", path)
@@ -225,7 +224,7 @@ class IrodsPythonClient:
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
+                    "Irods object already exists", status_code=400
                 )
             log.debug("Irods object already exists: {}", path)
 
@@ -246,7 +245,7 @@ class IrodsPythonClient:
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods object already exists", status_code=hcodes.HTTP_BAD_REQUEST
+                    "Irods object already exists", status_code=400
                 )
             log.warning("{}: {}", warning, destpath)
         else:

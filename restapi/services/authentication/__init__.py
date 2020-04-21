@@ -22,7 +22,6 @@ from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
 from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
 
 from restapi.utilities.meta import Meta
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -106,7 +105,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.error(e)
             raise RestApiException(
                 "Invalid input received",
-                status_code=hcodes.HTTP_BAD_REQUEST,
+                status_code=400,
             )
         except BaseException as e:
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
@@ -114,7 +113,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             raise RestApiException(
                 "Unable to connect to auth backend",
-                status_code=hcodes.HTTP_SERVER_ERROR,
+                status_code=500,
             )
 
         if user is None:

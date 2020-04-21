@@ -6,7 +6,6 @@ Tests for http api base (mostly authentication)
 
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
 
@@ -32,19 +31,19 @@ class TestApp(BaseTests):
 
         log.info("*** VERIFY if API is online")
         r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         output = self.get_content(r)
         assert output == alive_message
 
         # Check failure
         log.info("*** VERIFY if invalid endpoint gives Not Found")
         r = client.get(API_URI)
-        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+        assert r.status_code == 404
 
         # Check HTML response to status if agent/request is text/html
         headers = {"Accept": 'text/html'}
         r = client.get(endpoint, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         output = r.data.decode('utf-8')
         assert output != alive_message
         assert alive_message in output
@@ -89,7 +88,7 @@ class TestApp(BaseTests):
 
         # Off course PWD cannot be upper :D
         self.do_login(
-            client, USER, PWD.upper(), status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            client, USER, PWD.upper(), status_code=401
         )
 
         log.info("*** VERIFY valid credentials")
@@ -103,7 +102,7 @@ class TestApp(BaseTests):
             client,
             'ABC-Random-User-XYZ',
             'ABC-Random-Pass-XYZ',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            status_code=401,
         )
 
         # this check verifies a BUG with neo4j causing crash of auth module
@@ -114,7 +113,7 @@ class TestApp(BaseTests):
             client,
             'notanemail',
             '[A-Za-z0-9]+',
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+            status_code=401,
         )
 
     def test_04_GET_profile(self, client):
@@ -125,12 +124,12 @@ class TestApp(BaseTests):
         # Check success
         log.info("*** VERIFY valid token")
         r = client.get(endpoint, headers=self.get("auth_header"))
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
 
         # Check failure
         log.info("*** VERIFY invalid token")
         r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
     def test_05_GET_logout(self, client):
         """ Check that you can logout with a valid token """
@@ -140,12 +139,12 @@ class TestApp(BaseTests):
         # Check success
         log.info("*** VERIFY valid token")
         r = client.get(endpoint, headers=self.get("auth_header"))
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         # Check failure
         log.info("*** VERIFY invalid token")
         r = client.get(endpoint)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
     def test_06_GET_tokens(self, client):
 
@@ -166,7 +165,7 @@ class TestApp(BaseTests):
         # TEST GET ALL TOKENS (expected at least num_tokens)
         r = client.get(endpoint, headers=self.get("tokens_header"))
         content = self.get_content(r)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         assert len(content) >= num_tokens
 
         # save a token to be used for further tests
@@ -178,16 +177,16 @@ class TestApp(BaseTests):
         # TEST GET SINGLE TOKEN
         endpoint_single = "{}/{}".format(endpoint, self.get("token_id"))
         r = client.get(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
 
         # TEST GET INVALID SINGLE TOKEN
         r = client.get(endpoint + "/0", headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+        assert r.status_code == 404
 
         # TEST GET ALL TOKENS (expected at least num_tokens)
         r = client.get(API_URI + "/admin/tokens", headers=self.get("tokens_header"))
         content = self.get_content(r)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         assert len(content) >= num_tokens
 
         # DELETE INVALID TOKEN
@@ -195,7 +194,7 @@ class TestApp(BaseTests):
             API_URI + "/admin/tokens/xyz",
             headers=self.get("tokens_header")
         )
-        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+        assert r.status_code == 404
 
     def test_07_DELETE_tokens(self, client):
 
@@ -204,19 +203,19 @@ class TestApp(BaseTests):
 
         # TEST DELETE OF A SINGLE TOKEN
         r = client.delete(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         # TEST AN ALREADY DELETED TOKEN
         r = client.delete(endpoint_single, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         # TEST INVALID DELETE OF A SINGLE TOKEN
         r = client.delete(endpoint + "/0", headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         # TEST TOKEN IS STILL VALID
         r = client.get(endpoint, headers=self.get("tokens_header"))
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
 
     def test_08_admin_users(self, client):
 
@@ -227,21 +226,21 @@ class TestApp(BaseTests):
             client,
             endpoint,
             headers,
-            hcodes.HTTP_OK_BASIC,
-            hcodes.HTTP_BAD_REQUEST,
-            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
-            hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+            200,
+            400,
+            405,
+            405,
         )
 
         self.checkResponse(get_r, [], [])
 
         r = client.get(url, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
 
         schema = self.getDynamicInputSchema(client, endpoint, headers)
         data = self.buildData(schema)
         r = client.post(url, data=data, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         uuid = self.get_content(r)
 
         # test schema from endpoint...
@@ -250,10 +249,10 @@ class TestApp(BaseTests):
             data={'get_schema': 1, 'autocomplete': 0},
             headers=headers
         )
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
 
         r = client.get(url + "/" + uuid, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is saved lowercase
@@ -261,24 +260,24 @@ class TestApp(BaseTests):
 
         # Check duplicates
         r = client.post(url, data=data, headers=headers)
-        assert r.status_code == hcodes.HTTP_BAD_CONFLICT
+        assert r.status_code == 409
 
         # Create another user to test duplicates
         data2 = self.buildData(schema)
         r = client.post(url, data=data2, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         uuid2 = self.get_content(r)
 
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         # email cannot be modiied
         new_data = {'email': data.get('email')}
         r = client.put(url + "/" + uuid2, data=new_data, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         r = client.get(url + "/" + uuid2, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
@@ -286,10 +285,10 @@ class TestApp(BaseTests):
         assert users_list[0].get("email") == data2.get('email').lower()
 
         r = client.delete(url + "/" + uuid, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         r = client.get(url + "/" + uuid, headers=headers)
-        assert r.status_code == hcodes.HTTP_BAD_NOTFOUND
+        assert r.status_code == 404
 
         # login with a newly created user
         headers2, _ = self.do_login(
@@ -300,31 +299,31 @@ class TestApp(BaseTests):
 
         # normal users cannot access to this endpoint
         r = client.get(url, headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         r = client.get(url + "/" + uuid, headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         r = client.post(url, data=data, headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         r = client.delete(url + "/" + uuid, headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         # Users are not authorized to /admin/tokens
         r = client.get(API_URI + "/admin/tokens", headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
         r = client.delete(API_URI + "/admin/tokens/xyz", headers=headers2)
-        assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+        assert r.status_code == 401
 
         # let's delete the second user
         r = client.delete(url + "/" + uuid2, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204
 
         endpoint = AUTH_URI + '/logout'
 
         r = client.get(endpoint, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_NORESPONSE
+        assert r.status_code == 204

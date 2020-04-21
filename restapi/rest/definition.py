@@ -6,7 +6,7 @@ we could provide back then
 """
 
 from datetime import datetime
-from flask import current_app, make_response
+from flask import make_response
 from flask_restful import request, Resource, reqparse
 from flask_apispec import MethodResource
 from jsonschema.exceptions import ValidationError
@@ -18,7 +18,6 @@ from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
 from restapi.services.authentication.bearer import HTTPTokenAuth
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
@@ -328,20 +327,20 @@ class EndpointResource(Resource):
             response_wrapper = None
 
         if code is None:
-            code = hcodes.HTTP_OK_BASIC
+            code = 200
 
         if errors is None and content is None:
             if not head_method or code is None:
                 log.warning("RESPONSE: Warning, no data and no errors")
-                code = hcodes.HTTP_OK_NORESPONSE
+                code = 204
         elif errors is None:
             if code >= 300:
                 log.warning("Forcing 200 OK because no errors are raised")
-                code = hcodes.HTTP_OK_BASIC
+                code = 200
         elif content is None:
             if code < 400:
                 log.warning("Forcing 500 SERVER ERROR because only errors are returned")
-                code = hcodes.HTTP_SERVER_ERROR
+                code = 500
 
         # Request from a ApiSpec endpoint, skipping all flask-related following steps
         if isinstance(self, MethodResource):
@@ -382,7 +381,7 @@ class EndpointResource(Resource):
 
     def empty_response(self):
         """ Empty response as defined by the protocol """
-        return self.response("", code=hcodes.HTTP_OK_NORESPONSE)
+        return self.response("", code=204)
 
     def get_show_fields(self, obj, function_name, view_public_only, fields=None):
         if fields is None:
@@ -568,12 +567,12 @@ class EndpointResource(Resource):
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(
                 "No parameters schema defined for {}".format(url),
-                status_code=hcodes.HTTP_BAD_NOTFOUND,
+                status_code=404,
             )
         if method not in mem.customizer._parameter_schemas[url]:
             raise RestApiException(
                 "No parameters schema defined for method {} in {}".format(method, url),
-                status_code=hcodes.HTTP_BAD_NOTFOUND,
+                status_code=404,
             )
         return mem.customizer._parameter_schemas[url][method]
 
@@ -594,7 +593,7 @@ class EndpointResource(Resource):
             # this field is missing but required!
             elif checkRequired and field["required"]:
                 raise RestApiException(
-                    'Missing field: {}'.format(k), status_code=hcodes.HTTP_BAD_REQUEST
+                    'Missing field: {}'.format(k), status_code=400
                 )
 
         return properties
@@ -706,4 +705,4 @@ class EndpointResource(Resource):
         try:
             return input_validation(json_parameters, definitionName)
         except ValidationError as e:
-            raise RestApiException(e.message, status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException(e.message, status_code=400)

@@ -9,7 +9,6 @@ from restapi.services.detect import Detector
 from restapi.connectors import Connector
 from restapi.services.authentication import BaseAuthentication
 from restapi.exceptions import RestApiException
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 from restapi.confs import get_project_configuration
@@ -125,7 +124,7 @@ class HandleSecurity:
             if self.auth.REGISTER_FAILED_LOGIN:
                 self.auth.register_failed_login(username)
             msg = 'Invalid username or password'
-            code = hcodes.HTTP_BAD_UNAUTHORIZED
+            code = 401
             raise RestApiException(msg, status_code=code)
 
     def verify_totp(self, user, totp_code):
@@ -144,7 +143,7 @@ class HandleSecurity:
 
         if not valid:
             msg = 'Invalid verification code'
-            code = hcodes.HTTP_BAD_UNAUTHORIZED
+            code = 401
             raise RestApiException(msg, status_code=code)
 
         return True
@@ -193,7 +192,7 @@ class HandleSecurity:
 
         if new_password != password_confirm:
             msg = "Your password doesn't match the confirmation"
-            raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
+            raise RestApiException(msg, status_code=409)
 
         if self.auth.VERIFY_PASSWORD_STRENGTH:
 
@@ -203,7 +202,7 @@ class HandleSecurity:
             )
 
             if not check:
-                raise RestApiException(msg, status_code=hcodes.HTTP_BAD_CONFLICT)
+                raise RestApiException(msg, status_code=409)
 
         if new_password is not None and password_confirm is not None:
             now = datetime.now(pytz.utc)
@@ -241,7 +240,7 @@ class HandleSecurity:
                 more than {} failed login attempts. Try again later""".format(
                     self.auth.MAX_LOGIN_ATTEMPTS)
             )
-            code = hcodes.HTTP_BAD_UNAUTHORIZED
+            code = 401
             raise RestApiException(msg, status_code=code)
 
     def verify_blocked_user(self, user):
@@ -249,7 +248,7 @@ class HandleSecurity:
         if self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER > 0:
             last_login = user.last_login
             now = datetime.now(pytz.utc)
-            code = hcodes.HTTP_BAD_UNAUTHORIZED
+            code = 401
             if last_login is not None:
 
                 inactivity = timedelta(days=self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER)
@@ -268,5 +267,5 @@ class HandleSecurity:
             # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )

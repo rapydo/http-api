@@ -7,7 +7,6 @@ from urllib import parse as urllib_parse
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 from restapi.utilities.logs import handle_log_output, MAX_CHAR_LEN
 
@@ -198,7 +197,7 @@ class ResponseMaker:
             data_type = str(type(content))
             elements = 0
             total_errors = 1
-            code = hcodes.HTTP_SERVICE_UNAVAILABLE
+            code = 503
 
         resp = {
             "Response": {
@@ -287,7 +286,7 @@ class ResponseMaker:
             return ResponseMaker.generate_response(
                 content=fields,
                 errors=None,
-                code=hcodes.HTTP_OK_BASIC,
+                code=200,
                 headers={},
                 head_method=False,
                 meta=None
@@ -297,7 +296,7 @@ class ResponseMaker:
             return ResponseMaker.generate_response(
                 content=None,
                 errors={"Server internal error": "Failed to retrieve input schema"},
-                code=hcodes.HTTP_SERVER_ERROR,
+                code=500,
                 headers={},
                 head_method=False,
                 meta=None

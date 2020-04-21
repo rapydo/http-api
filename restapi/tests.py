@@ -8,7 +8,6 @@ from glom import glom
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.services.authentication import BaseAuthentication
-from restapi.utilities.htmlcodes import hcodes
 
 from restapi.utilities.logs import log
 
@@ -48,7 +47,7 @@ class BaseTests:
             Retrieve Swagger definition by calling API/specs endpoint
         """
         r = client.get(API_URI + '/specs')
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
         return content
 
@@ -57,7 +56,7 @@ class BaseTests:
             Retrieve a swagger-like data schema associated with a endpoint
         """
         r = client.get(API_URI + '/schemas/' + endpoint, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
         if 'Response' in content:
             return content['Response']['data']
@@ -70,7 +69,7 @@ class BaseTests:
 
         data = {"get_schema": 1}
         r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
-        assert r.status_code == hcodes.HTTP_OK_BASIC
+        assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
         if 'Response' in content:
             return content['Response']['data']
@@ -97,7 +96,7 @@ class BaseTests:
         return response
 
     def do_login(
-        self, client, USER, PWD, status_code=hcodes.HTTP_OK_BASIC, error=None, **kwargs
+        self, client, USER, PWD, status_code=200, error=None, **kwargs
     ):
         """
             Make login and return both token and authorization header
@@ -124,7 +123,7 @@ class BaseTests:
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
 
-        if r.status_code != hcodes.HTTP_OK_BASIC:
+        if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
             c = json.loads(r.data.decode('utf-8'))
             if 'Response' in c:
@@ -169,7 +168,7 @@ class BaseTests:
 
     #     if user is not None:
     #         self._test_delete(user_def, 'admin/users/' + user,
-    #                           admin_headers, hcodes.HTTP_OK_NORESPONSE)
+    #                           admin_headers, 204)
 
     #     data = {}
     #     data['email'] = username
@@ -188,7 +187,7 @@ class BaseTests:
     #     #     data['irods_cert'] = irods_cert
 
     #     user = self._test_create(
-    #         users_def, endpoint, admin_headers, data, hcodes.HTTP_OK_BASIC)
+    #         users_def, endpoint, admin_headers, data, 200)
 
     #     env = os.environ
     #     CHANGE_FIRST_PASSWORD = env.get("AUTH_FORCE_FIRST_PASSWORD_CHANGE")
@@ -196,7 +195,7 @@ class BaseTests:
     #     if CHANGE_FIRST_PASSWORD:
     #         error = "Please change your temporary password"
     #         self.do_login(username, password,
-    #                       status_code=hcodes.HTTP_BAD_FORBIDDEN, error=error)
+    #                       status_code=403, error=error)
 
     #         new_password = self.randomString(prefix="Aa1+")
     #         data = {
@@ -205,7 +204,7 @@ class BaseTests:
     #         }
 
     #         self.do_login(
-    #             username, password, status_code=hcodes.HTTP_OK_BASIC, **data)
+    #             username, password, status_code=200, **data)
     #         # password change also changes the uuid
     #         user = self.get_user_uuid(username)
     #         password = new_password
@@ -328,9 +327,9 @@ class BaseTests:
     def method_exists(status):
         if status is None:
             return False
-        if status == hcodes.HTTP_BAD_NOTFOUND:
+        if status == 404:
             return False
-        if status == hcodes.HTTP_BAD_METHOD_NOT_ALLOWED:
+        if status == 405:
             return False
 
         return True
@@ -353,19 +352,19 @@ class BaseTests:
 
             if self.method_exists(get_status):
                 r = client.get(endpoint)
-                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+                assert r.status_code == 401
 
             if self.method_exists(post_status):
                 r = client.post(endpoint, data=post_data)
-                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+                assert r.status_code == 401
 
             if self.method_exists(put_status):
                 r = client.put(endpoint)
-                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+                assert r.status_code == 401
 
             if self.method_exists(del_status):
                 r = client.delete(endpoint)
-                assert r.status_code == hcodes.HTTP_BAD_UNAUTHORIZED
+                assert r.status_code == 401
 
         get_r = post_r = put_r = delete_r = None
 

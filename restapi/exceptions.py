@@ -7,13 +7,16 @@ to handle services known errors
 
 """
 
-from restapi.utilities.htmlcodes import hcodes
-
 
 class RestApiException(Exception):
-    def __init__(self, exception, status_code=None):
+    # code is now an alias for status_code
+    def __init__(self, exception, status_code=None, code=None):
 
         if status_code is None:
-            status_code = hcodes.HTTP_BAD_NOTFOUND
+            status_code = code
+
+        if status_code is None:
+            status_code = 404
+
         super(RestApiException, self).__init__(exception)
         self.status_code = status_code

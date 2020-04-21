@@ -11,7 +11,6 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.htmlcodes import hcodes
 
 from restapi.utilities.logs import log
 
@@ -83,7 +82,7 @@ class AdminUsers(EndpointResource):
 
         if groups is None:
             raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
+                'Group not found', status_code=400
             )
 
         group_id = groups.pop()
@@ -91,7 +90,7 @@ class AdminUsers(EndpointResource):
 
         if group is None:
             raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
+                'Group not found', status_code=400
             )
 
         return group
@@ -177,7 +176,7 @@ Password: "{}"
             extra_debug += " roles = {};".format(self.auth.get_roles_from_user())
             raise RestApiException(
                 "You are not authorized: missing privileges. {}".format(extra_debug),
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )
 
         users = self.auth.get_users(user_id)
@@ -228,7 +227,7 @@ Password: "{}"
 
         v = self.get_input()
         if len(v) == 0:
-            raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException('Empty input', status_code=400)
 
         if self.neo4j_enabled:
             self.graph = self.get_service_instance('neo4j')
@@ -238,7 +237,7 @@ Password: "{}"
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )
 
         schema = self.get_endpoint_custom_definition()
@@ -404,7 +403,7 @@ Password: "{}"
                 prop = m.group(2)
                 val = m.group(3)
                 error = "A {} already exists with {}: {}".format(node, prop, val)
-                raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
+                raise RestApiException(error, status_code=409)
             else:
                 raise e
 
@@ -415,7 +414,7 @@ Password: "{}"
             except IntegrityError:
                 self.auth.db.session.rollback()
                 raise RestApiException(
-                    "This user already exists", status_code=hcodes.HTTP_BAD_CONFLICT)
+                    "This user already exists", status_code=409)
 
         # If created by admins users must accept privacy at first login
         if not v.get("privacy_accepted", True):
@@ -456,7 +455,7 @@ Password: "{}"
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )
 
         v = self.get_input()
@@ -555,7 +554,7 @@ Password: "{}"
         if not is_admin and not is_local_admin:
             raise RestApiException(
                 "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )
 
         user = self.auth.get_users(user_id)

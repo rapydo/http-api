@@ -21,7 +21,6 @@ from werkzeug.http import parse_content_range_header
 from restapi.confs import UPLOAD_PATH, PRODUCTION
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
 
@@ -108,7 +107,7 @@ class Uploader:
             else:
                 raise RestApiException(
                     "File '{}' already exists".format(filename),
-                    status_code=hcodes.HTTP_BAD_REQUEST,
+                    status_code=400,
                 )
 
         with open(abs_file, "ab") as f:
@@ -119,7 +118,7 @@ class Uploader:
         if not os.path.exists(abs_file):
             raise RestApiException(
                 "Server error: unable to recover the uploaded file",
-                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                status_code=503,
             )
 
         # Extra info
@@ -145,7 +144,7 @@ class Uploader:
 
         return self.response(
             {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
-            code=hcodes.HTTP_OK_BASIC,
+            code=200,
         )
 
     # this method is used by b2stage and mistral. Others are using upload_data
@@ -155,7 +154,7 @@ class Uploader:
 
             raise RestApiException(
                 "No files specified",
-                status_code=hcodes.HTTP_BAD_METHOD_NOT_ALLOWED,
+                status_code=405,
             )
 
         myfile = request.files['file']
@@ -185,7 +184,7 @@ class Uploader:
                 e = "File '{}' already exists, use force parameter to overwrite".format(
                     filename
                 )
-                raise RestApiException(e, status_code=hcodes.HTTP_BAD_REQUEST)
+                raise RestApiException(e, status_code=400)
 
         # Save the file
         try:
@@ -194,14 +193,14 @@ class Uploader:
         except Exception:
             raise RestApiException(
                 "Permission denied: failed to write the file",
-                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                status_code=503,
             )
 
         # Check exists
         if not os.path.exists(abs_file):
             raise RestApiException(
                 "Unable to retrieve the uploaded file",
-                status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                status_code=503,
             )
 
         # Extra info
@@ -227,7 +226,7 @@ class Uploader:
 
         return self.response(
             {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
-            code=hcodes.HTTP_OK_BASIC,
+            code=200,
         )
 
     def upload_chunked(self, destination, force=False, chunk_size=None):
@@ -271,7 +270,7 @@ class Uploader:
             log.critical("File '{}' not found", abs_file)
             return self.response(
                 errors="Requested file does not exists",
-                code=hcodes.HTTP_BAD_NOTFOUND,
+                code=404,
             )
 
         # Remove the real file
@@ -281,14 +280,14 @@ class Uploader:
             log.critical("Cannot remove local file {}", abs_file)
             return self.response(
                 errors="Permission denied: failed to remove the file",
-                code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                code=503,
             )
         log.warning("Removed '{}'", abs_file)
 
         if skip_response:
             return
 
-        return self.response("Deleted", code=hcodes.HTTP_OK_BASIC)
+        return self.response("Deleted", code=200)
 
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
@@ -310,7 +309,7 @@ class Uploader:
             else:
                 return self.response(
                     errors="File '{}' already exists".format(filename),
-                    code=hcodes.HTTP_BAD_REQUEST,
+                    code=400,
                 )
 
         domain = detector.get_global_var('DOMAIN')

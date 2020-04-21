@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import log
 
 
@@ -60,7 +58,7 @@ class Tokens(EndpointResource):
 
         raise RestApiException(
             'This token was not emitted for your account or it does not exist',
-            status_code=hcodes.HTTP_BAD_NOTFOUND
+            status_code=404
         )
 
     # token_id = uuid associated to the token you want to select
@@ -81,13 +79,13 @@ class Tokens(EndpointResource):
             if not self.auth.invalidate_token(token=token["token"]):
                 raise RestApiException(
                     "Failed token invalidation: '{}'".format(token),
-                    status_code=hcodes.HTTP_BAD_REQUEST
+                    status_code=400
                 )
             return self.empty_response()
 
         raise RestApiException(
             "Token not emitted for your account or does not exist",
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            status_code=401
         )
 
 
@@ -161,13 +159,13 @@ class AdminTokens(EndpointResource):
         if not tokens:
             raise RestApiException(
                 'This token does not exist',
-                status_code=hcodes.HTTP_BAD_NOTFOUND
+                status_code=404
             )
         token = tokens[0]
 
         if not self.auth.invalidate_token(token=token["token"]):
             raise RestApiException(
                 "Failed token invalidation: '{}'".format(token),
-                status_code=hcodes.HTTP_BAD_REQUEST
+                status_code=400
             )
         return self.empty_response()

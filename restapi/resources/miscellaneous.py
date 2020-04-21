@@ -7,7 +7,6 @@ from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi import decorators
 
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -70,7 +69,7 @@ class Verify(EndpointResource):
         if not detector.check_availability(service):
             raise RestApiException(
                 "Unknown service: {}".format(service),
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
+                status_code=401,
             )
 
         service_instance = self.get_service_instance(service, global_instance=False)
