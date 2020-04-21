@@ -219,17 +219,13 @@ class Profile(EndpointResource):
         if not send_mail_is_active():
             log.error("Send mail is not active")
             raise RestApiException(
-                {'Server misconfiguration': 'Password cannot be reset'},
+                {'Server misconfiguration': 'Registration is not allowed'},
                 status_code=503,
             )
 
         v = self.get_input()
         if len(v) == 0:
             raise RestApiException('Empty input', status_code=400)
-
-        # INIT #
-        # schema = self.get_endpoint_custom_definition()
-        # properties = self.read_properties(schema, v)
 
         if 'password' not in v:
             raise RestApiException(
