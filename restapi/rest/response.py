@@ -232,12 +232,17 @@ class ResponseMaker:
 
                 f["key"] = key
 
-                if key == key.lower():
+                if "label" in field_def.metadata:
+                    f["label"] = field_def.metadata["label"]
+                elif key == key.lower():
                     f["label"] = key.title()
                 else:
                     f["label"] = key
 
-                f["description"] = f["label"]
+                if "description" in field_def.metadata:
+                    f["description"] = field_def.metadata["description"]
+                else:
+                    f["description"] = f["label"]
                 f["required"] = "true" if field_def.required else "false"
 
                 f["type"] = ResponseMaker.get_schema_type(field_def)
