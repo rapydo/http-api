@@ -239,14 +239,6 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid = self.get_content(r)
 
-        # test schema from endpoint...
-        r = client.post(
-            url,
-            data={'get_schema': 1, 'autocomplete': 0},
-            headers=headers
-        )
-        assert r.status_code == 200
-
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
