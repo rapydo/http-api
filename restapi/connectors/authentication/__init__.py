@@ -44,8 +44,8 @@ class Authenticator(Connector):
 
         custom_auth.TOTP = 'TOTP'
 
-        custom_auth.REGISTER_FAILED_LOGIN = (
-            self.variables.get("register_failed_login", False) == 'True'
+        custom_auth.MIN_PASSWORD_LENGTH = int(
+            self.variables.get("min_password_length", 8)
         )
         custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
             self.variables.get("force_first_password_change", False) == 'True'
@@ -58,6 +58,9 @@ class Authenticator(Connector):
         )
         custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
             self.variables.get("disable_unused_credentials_after", 0)
+        )
+        custom_auth.REGISTER_FAILED_LOGIN = (
+            self.variables.get("register_failed_login", False) == 'True'
         )
         custom_auth.MAX_LOGIN_ATTEMPTS = int(
             self.variables.get("max_login_attempts", 0)
@@ -170,8 +173,7 @@ class HandleSecurity:
             if old_hash == new_hash:
                 return False, "The new password cannot match the previous password"
 
-        # FIXME: min length should configurable?
-        if len(pwd) < 8:
+        if len(pwd) < self.auth.MIN_PASSWORD_LENGTH:
             return False, "Password is too short, use at least 8 characters"
 
         if not re.search("[a-z]", pwd):
