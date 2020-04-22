@@ -307,60 +307,63 @@ class ResponseMaker:
             )
 
     @staticmethod
-    def get_schema_type(schema_type):
+    def get_schema_type(schema):
+
+        if schema.metadata.get("password", False):
+            return "password"
         # types from https://github.com/danohu/py2ng
         # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
-        if isinstance(schema_type, fields.Bool):
+        if isinstance(schema, fields.Bool):
             return 'boolean'
-        if isinstance(schema_type, fields.Boolean):
+        if isinstance(schema, fields.Boolean):
             return 'boolean'
-        # if isinstance(schema_type, fields.Constant):
+        # if isinstance(schema, fields.Constant):
         #     return 'any'
-        if isinstance(schema_type, fields.Date):
+        if isinstance(schema, fields.Date):
             return 'date'
-        if isinstance(schema_type, fields.DateTime):
+        if isinstance(schema, fields.DateTime):
             return 'date'
-        if isinstance(schema_type, fields.Decimal):
+        if isinstance(schema, fields.Decimal):
             return 'number'
-        # if isinstance(schema_type, fields.Dict):
+        # if isinstance(schema, fields.Dict):
         #     return 'object'
-        if isinstance(schema_type, fields.Email):
+        if isinstance(schema, fields.Email):
             return 'email'
-        # if isinstance(schema_type, fields.Field):
+        # if isinstance(schema, fields.Field):
         #     return 'any'
-        if isinstance(schema_type, fields.Float):
+        if isinstance(schema, fields.Float):
             return 'number'
-        # if isinstance(schema_type, fields.Function):
+        # if isinstance(schema, fields.Function):
         #     return 'any'
-        if isinstance(schema_type, fields.Int):
+        if isinstance(schema, fields.Int):
             return 'int'
-        if isinstance(schema_type, fields.Integer):
+        if isinstance(schema, fields.Integer):
             return 'int'
-        # if isinstance(schema_type, fields.List):
+        # if isinstance(schema, fields.List):
         #     return 'any[]'
-        # if isinstance(schema_type, fields.Mapping):
+        # if isinstance(schema, fields.Mapping):
         #     return 'any'
-        # if isinstance(schema_type, fields.Method):
+        # if isinstance(schema, fields.Method):
         #     return 'any'
-        # if isinstance(schema_type, fields.Nested):
+        # if isinstance(schema, fields.Nested):
         #     return 'any'
-        if isinstance(schema_type, fields.Number):
+        if isinstance(schema, fields.Number):
             return 'number'
-        # if isinstance(schema_type, fields.Raw):
+        # if isinstance(schema, fields.Raw):
         #     return 'any'
-        if isinstance(schema_type, fields.Str):
+        if isinstance(schema, fields.Str):
             return 'string'
-        if isinstance(schema_type, fields.String):
+        if isinstance(schema, fields.String):
             return 'string'
-        # if isinstance(schema_type, fields.TimeDelta):
+        # if isinstance(schema, fields.TimeDelta):
         #     return 'any'
-        if isinstance(schema_type, fields.URL):
+        if isinstance(schema, fields.URL):
             return 'string'
-        if isinstance(schema_type, fields.Url):
+        if isinstance(schema, fields.Url):
             return 'string'
-        if isinstance(schema_type, fields.UUID):
+        if isinstance(schema, fields.UUID):
             return 'string'
 
-        log.error("Unknown schema type: {}", type(schema_type))
+        log.error("Unknown schema type: {}", type(schema))
 
         return "string"
