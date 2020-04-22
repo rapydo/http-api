@@ -48,9 +48,10 @@ def log_response(response):
         elif request.form:
             data = obfuscate_dict(request.form)
         else:
-            data = '?'
+            data = ''
 
-        data = " {}".format(data)
+        if data:
+            data = " {}".format(data)
     except Exception as e:
         log.debug(e)
         data = ''
