@@ -8,7 +8,7 @@ from urllib import parse as urllib_parse
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
-from restapi.utilities.logs import handle_log_output, obfuscate_dict, MAX_CHAR_LEN
+from restapi.utilities.logs import handle_log_output, obfuscate_dict
 
 
 def handle_marshmallow_errors(error):
