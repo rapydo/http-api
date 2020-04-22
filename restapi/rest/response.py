@@ -14,13 +14,15 @@ from restapi.utilities.logs import handle_log_output, MAX_CHAR_LEN
 def handle_marshmallow_errors(error):
 
     try:
-        req_json = request.get_json()
-        if req_json:
-            get_schema = req_json.get("get_schema", False)
-            if get_schema or get_schema == 1 or get_schema == "1":
-                return ResponseMaker.respond_with_schema(
-                    error.data.get('schema')
-                )
+
+        params = request.get_json() or request.form or {}
+
+        get_schema = params.get("get_schema", False)
+        if get_schema or str(get_schema) == "1":
+
+            return ResponseMaker.respond_with_schema(
+                error.data.get('schema')
+            )
     except BaseException as e:
         log.error(e)
 
@@ -43,7 +45,7 @@ def log_response(response):
 
     if request.mimetype in do_not_log_types:
         data = 'STREAM_UPLOAD'
-    else:
+    elif request.data:
         try:
             data = handle_log_output(request.data)
             # Limit the parameters string size, sometimes it's too big
@@ -62,10 +64,13 @@ def log_response(response):
 
                     if len(data[k]) > MAX_CHAR_LEN:
                         data[k] = data[k][:MAX_CHAR_LEN] + "..."
+                    data = " {}".format(data)
                 except IndexError:
                     pass
         except Exception:
-            data = 'OTHER_UPLOAD'
+            data = ''
+    else:
+        data = ''
 
     # Obfuscating query parameters
     url = urllib_parse.urlparse(request.url)
@@ -84,7 +89,7 @@ def log_response(response):
 
     url = urllib_parse.urlunparse(url)
     resp = str(response).replace("<Response ", "").replace(">", "")
-    log.info("{} {} {} - {}", request.method, url, data, resp)
+    log.info("{} {}{} -> {}", request.method, url, data, resp)
 
     return response
 
