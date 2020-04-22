@@ -263,8 +263,10 @@ class BaseTests:
         data = {}
         for d in schema:
 
-            key = d["name"]
-            field_type = d["type"]
+            key = d.get("name")
+            if key is None:
+                key = d.get("key")
+            field_type = d.get("type")
             field_format = d.get("format", "")
             default = d.get("default", None)
             custom = d.get("custom", {})
