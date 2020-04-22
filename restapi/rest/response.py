@@ -8,7 +8,7 @@ from urllib import parse as urllib_parse
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
-from restapi.utilities.logs import handle_log_output, MAX_CHAR_LEN
+from restapi.utilities.logs import handle_log_output, obfuscate_dict, MAX_CHAR_LEN
 
 
 def handle_marshmallow_errors(error):
@@ -38,38 +38,21 @@ def log_response(response):
     )
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
-    # NOTE: if it is an upload,
-    # I must NOT consume request.data or request.json,
+    # If it is an upload, DO NOT consume request.data or request.json,
     # otherwise the content gets lost
-    do_not_log_types = ['application/octet-stream', 'multipart/form-data']
-
-    if request.mimetype in do_not_log_types:
-        data = 'STREAM_UPLOAD'
-    elif request.data:
-        try:
+    try:
+        if request.mimetype in ['application/octet-stream', 'multipart/form-data']:
+            data = 'STREAM_UPLOAD'
+        elif request.data:
             data = handle_log_output(request.data)
-            # Limit the parameters string size, sometimes it's too big
-            for k in data:
-                try:
-                    if isinstance(data[k], dict):
-                        for kk in data[k]:
-                            v = str(data[k][kk])
-                            if len(v) > MAX_CHAR_LEN:
-                                v = v[:MAX_CHAR_LEN] + "..."
-                            data[k][kk] = v
-                        continue
+        elif request.form:
+            data = obfuscate_dict(request.form)
+        else:
+            data = '?'
 
-                    if not isinstance(data[k], str):
-                        data[k] = str(data[k])
-
-                    if len(data[k]) > MAX_CHAR_LEN:
-                        data[k] = data[k][:MAX_CHAR_LEN] + "..."
-                    data = " {}".format(data)
-                except IndexError:
-                    pass
-        except Exception:
-            data = ''
-    else:
+        data = " {}".format(data)
+    except Exception as e:
+        log.debug(e)
         data = ''
 
     # Obfuscating query parameters
