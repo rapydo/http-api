@@ -48,7 +48,7 @@ class EndpointResource(Resource):
     def __init__(self):
         super(EndpointResource, self).__init__()
 
-        self.load_authentication()
+        self.auth = self.load_authentication()
         try:
             self.init_parameters()
         except RuntimeError:
@@ -66,15 +66,15 @@ class EndpointResource(Resource):
     def myname(self):
         return self.__class__.__name__
 
-    def load_authentication(self):
+    @staticmethod
+    def load_authentication():
         # Authentication instance is always needed at each request
-        self.auth = self.get_service_instance(
+        auth = detector.get_service_instance(
             detector.authentication_name, authenticator=True
         )
-        auth_backend = self.get_service_instance(detector.authentication_service)
-        self.auth.db = auth_backend
+        auth.db = detector.get_service_instance(detector.authentication_service)
 
-        # Set parameters to be used
+        return auth
 
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
         return detector.get_service_instance(
