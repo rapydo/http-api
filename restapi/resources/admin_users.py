@@ -132,8 +132,11 @@ def get_groups():
 
     if auth_service == 'neo4j':
 
-        groups = {}
         neo4j = detector.get_service_instance('neo4j')
+        if not hasattr(neo4j, "Group"):
+            return None
+
+        groups = {}
         for g in neo4j.Group.nodes.all():
             group_name = "{} - {}".format(g.shortname, g.fullname)
             groups[g.uuid] = group_name
