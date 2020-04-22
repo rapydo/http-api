@@ -292,7 +292,7 @@ class BaseTests:
                 value = random.SystemRandom().randrange(0, 1000, 1)
             elif field_format == "date":
                 value = "1969-07-20"  # 20:17:40 UTC
-            elif field_format == "email":
+            elif field_type == "email" or field_format == "email":
                 value = self.randomString()
                 value += "@nomail.com"
             elif field_type == "multi_section":
