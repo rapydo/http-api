@@ -59,6 +59,11 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 # do not stop werkzeug BadRequest
                 raise e
 
+            except werkzeug.exceptions.UnprocessableEntity as e:
+                # do not stop werkzeug UnprocessableEntity, it will be
+                # catched by handle_marshmallow_errors
+                raise e
+
             # Catch any other exception
             except Exception as e:
 
