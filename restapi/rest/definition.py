@@ -601,78 +601,48 @@ class EndpointResource(Resource):
     def update_properties(self, instance, schema, properties):
 
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
             if key in properties:
                 instance.__dict__[key] = properties[key]
 
     def update_sql_properties(self, instance, schema, properties):
 
+        from sqlalchemy.orm.attributes import set_attribute
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
-            from sqlalchemy.orm.attributes import set_attribute
             if key in properties:
                 set_attribute(instance, key, properties[key])
 
     def update_mongo_properties(self, instance, schema, properties):
 
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
             if key in properties:
                 setattr(instance, key, properties[key])
-
-    def parseAutocomplete(self, properties, key, id_key='value', split_char=None):
-        value = properties.get(key, None)
-
-        ids = []
-
-        if value is None:
-            return ids
-
-        # Multiple autocomplete
-        if isinstance(value, list):
-            for v in value:
-                if v is None:
-                    return None
-                if id_key in v:
-                    ids.append(v[id_key])
-                else:
-                    ids.append(v)
-            return ids
-
-        # Single autocomplete
-        if id_key in value:
-            return [value[id_key]]
-
-        # Command line input
-        if split_char is None:
-            return [value]
-
-        return value.split(split_char)
-
-    def get_roles(self, properties):
-
-        roles = []
-        ids = self.parseAutocomplete(properties, 'roles', id_key='name', split_char=',')
-
-        if ids is None:
-            return roles
-
-        return ids
 
     def get_user_if_logged(self):
         """
