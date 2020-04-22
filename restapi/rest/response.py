@@ -15,10 +15,12 @@ def handle_marshmallow_errors(error):
 
     try:
         req_json = request.get_json()
-        if req_json and req_json.get("get_schema", False):
-            return ResponseMaker.respond_with_schema(
-                error.data.get('schema')
-            )
+        if req_json:
+            get_schema = req_json.get("get_schema", False)
+            if get_schema or get_schema == 1 or get_schema == "1":
+                return ResponseMaker.respond_with_schema(
+                    error.data.get('schema')
+                )
     except BaseException as e:
         log.error(e)
 
