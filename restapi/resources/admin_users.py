@@ -264,7 +264,6 @@ class AdminUsers(MethodResource, EndpointResource):
     _POST = {
         "/admin/users": {
             "summary": "Create a new user",
-            "custom_parameters": ["AdminUsers"],
             "responses": {
                 "200": {"description": "The uuid of the new user is returned"},
                 "409": {"description": "This user already exists"},
@@ -274,7 +273,6 @@ class AdminUsers(MethodResource, EndpointResource):
     _PUT = {
         "/admin/users/<user_id>": {
             "summary": "Modify a user",
-            "custom_parameters": ["AdminUsers"],
             "responses": {"200": {"description": "User successfully modified"}},
         }
     }

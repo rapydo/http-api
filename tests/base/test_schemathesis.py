@@ -37,67 +37,69 @@ else:
     app = create_app(testing_mode=True)
     auth_header = get_auth_token()
 
-    for url in ['/api/swagger', '/api/specs']:
-        log.info("Retreving schema from {}", url)
-        schema = schemathesis.from_wsgi(url, app)
+    schema = schemathesis.from_wsgi('/api/swagger', app)
 
-        log.info("Starting tests...")
+    log.info("Starting tests...")
 
-        @schema.parametrize()
-        @settings(
-            deadline=None,
-            suppress_health_check=[HealthCheck.too_slow]
-        )
-        def test_no_server_errors_no_auth(case):
+    @schema.parametrize()
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_no_server_errors_no_auth(case):
 
-            response = case.call_wsgi()
+        response = case.call_wsgi()
 
-            # I want to allow 503 errors, raised in case of mail sending not enabled
-            # Let's convert to 404 errors
-            if response.status_code == 503:
-                response.status_code = 404
+        # I want to allow 503 errors, raised in case of mail sending not enabled
+        # Let's convert to 404 errors
+        if response.status_code == 503:
+            response.status_code = 404
 
-            # validation checks are defined here:
-            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-            case.validate_response(response)
+        # validation checks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
 
-        @schema.parametrize()
-        @settings(
-            deadline=None,
-            suppress_health_check=[HealthCheck.too_slow]
-        )
-        def test_no_server_errors_with_auth(case):
+    @schema.parametrize()
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_no_server_errors_with_admin_auth(case):
 
-            if case.path == '/auth/logout':
-                log.warning("Skipping logout")
-                return None
+        if case.path == '/auth/logout':
+            log.warning("Skipping logout")
+            return None
 
-            if case.headers is None:
-                case.headers = auth_header
+        if case.headers is None:
+            case.headers = auth_header
 
-            response = case.call_wsgi()
+        response = case.call_wsgi()
 
-            # I want to allow 503 errors, raised in case of mail sending not enabled
-            # Let's convert to 404 errors
-            if response.status_code == 503:
-                response.status_code = 404
+        # I want to allow 503 errors, raised in case of mail sending not enabled
+        # Let's convert to 404 errors
+        if response.status_code == 503:
+            response.status_code = 404
 
-            # validation checks are defined here:
-            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-            case.validate_response(response)
+        # validation checks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
 
-        @schema.parametrize(endpoint="/auth/logout")
-        @settings(
-            deadline=None,
-            suppress_health_check=[HealthCheck.too_slow]
-        )
-        def test_logout(case):
+    # FIXME: TO BE IMPLEMENTED
+    # def test_no_server_errors_with_user_auth(case):
+    #     pass
 
-            if case.headers is None:
-                case.headers = auth_header
+    @schema.parametrize(endpoint="/auth/logout")
+    @settings(
+        deadline=None,
+        suppress_health_check=[HealthCheck.too_slow]
+    )
+    def test_logout(case):
 
-            response = case.call_wsgi()
+        if case.headers is None:
+            case.headers = auth_header
 
-            # validation checks are defined here:
-            # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
-            case.validate_response(response)
+        response = case.call_wsgi()
+
+        # validation checks are defined here:
+        # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
+        case.validate_response(response)
