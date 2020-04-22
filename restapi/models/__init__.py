@@ -8,3 +8,7 @@ class Schema(MarshmallowSchema):
         if strip_required:
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
+
+    # instruct marshmallow to serialize data to a collections.OrderedDict
+    class Meta:
+        ordered = True
