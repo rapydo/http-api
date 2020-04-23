@@ -288,10 +288,8 @@
 #             raise RestApiException(str(e), status_code=409)
 
 #         # FIXME: groups management is only implemented for neo4j
-#         if 'group' in kwargs:
-
-#             if self.neo4j_enabled:
-#                 self.graph = self.get_service_instance('neo4j')
+#         if 'group' in kwargs and self.neo4j_enabled:
+#             self.graph = self.get_service_instance('neo4j')
 #             group = parse_group(kwargs, self.graph)
 
 #             if group is not None:
@@ -374,7 +372,7 @@
 #         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
-#         if 'group' in kwargs:
+#         if 'group' in kwargs and self.neo4j_enabled:
 
 #             group = parse_group(kwargs, self.Graph)
 
