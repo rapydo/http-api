@@ -34,44 +34,20 @@ CORE_DIR="${WORK_DIR}/rapydo_tests"
 echo "WORK_DIR = ${WORK_DIR}"
 echo "CORE_DIR = ${CORE_DIR}"
 
-if [ ! -d $CORE_DIR ]; then
-    git clone https://github.com/rapydo/tests.git $CORE_DIR
-fi
+BRANCH=`[  -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH"`
+
+git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git $CORE_DIR
+
 cd $CORE_DIR
-# mkdir -p data
 
 # Pull requests
 if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    echo "checkout $TRAVIS_PULL_REQUEST_BRANCH"
-    git checkout $TRAVIS_PULL_REQUEST_BRANCH
 
     echo "pulling $TRAVIS_BRANCH"
     git pull origin $TRAVIS_BRANCH
-# Normal commits
-else
-
-    echo "checkout $TRAVIS_BRANCH"
-    git checkout $TRAVIS_BRANCH
 fi
 
 # CURRENT DIR IS $CORE_DIR
-
-echo "project: ${PROJECT}" > .prod_projectrc
-echo "project_configuration:" >> .prod_projectrc
-echo "  variables:" >> .prod_projectrc
-echo "    env:" >> .prod_projectrc
-echo "      DEFAULT_DHLEN: 256" >> .prod_projectrc
-# echo "      NEO4J_AUTOINDEXING: False" >> .prod_projectrc
-echo "      AUTH_DEFAULT_USERNAME: test@nomail.org" >> .prod_projectrc
-echo "      AUTH_DEFAULT_PASSWORD: testme" >> .prod_projectrc
-echo "      NEO4J_PASSWORD: AutoT3sts" >> prod_projectrc
-echo "      ALCHEMY_USER: sqluser" >> prod_projectrc
-echo "      ALCHEMY_PASSWORD: D3vMode!" >> prod_projectrc
-echo "      IRODS_USER: irods" >> prod_projectrc
-echo "      IRODS_PASSWORD: D3vMode!" >> prod_projectrc
-echo "      RABBITMQ_USER: white" >> prod_projectrc
-echo "      RABBITMQ_PASSWORD: rabbit" >> prod_projectrc
-
 
 # Let's init and start the stack for the configured PROJECT
 rapydo --project ${PROJECT} init
@@ -106,16 +82,16 @@ rapydo remove --all
 
 printf "\n\n\n"
 
-mv prod_projectrc .projectrc
+rapydo --production --project ${PROJECT} init --force
 
-rapydo --production pull
-rapydo --production start
-rapydo --production ssl
+rapydo pull
+rapydo start
+rapydo ssl
 
 printf "\n\n\nBackend server is starting\n\n\n"
 
 sleep 30
-rapydo --production -s backend logs
+rapydo -s backend logs
 
 printf "\n\n\n"
 
@@ -123,4 +99,4 @@ curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive
 
 printf "\n\n\n"
 
-rapydo --production remove --all
+rapydo remove --all
