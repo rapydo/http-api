@@ -8,8 +8,10 @@ for this reason we create the sql instance where models are defined.
 For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 """
 
-import sqlalchemy
 import re
+# import sqlalchemy
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.exc import IntegrityError, OperationalError
 from functools import wraps
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
@@ -25,8 +27,10 @@ def catch_duplicates(func):
 
         try:
             return func(*args, **kwargs)
-
-        except sqlalchemy.exc.IntegrityError as e:
+        except DatabaseDuplicatedEntry as e:
+            # already catched and parser, raise up
+            raise(e)
+        except IntegrityError as e:
 
             message = str(e).split('\n')
             if not re.search(r".*duplicate key value violates unique constraint .*",
@@ -57,7 +61,7 @@ def catch_duplicates(func):
 
 class SqlAlchemy(Connector):
     def set_connection_exception(self):
-        return (sqlalchemy.exc.OperationalError,)
+        return (OperationalError,)
 
     def custom_connection(self, **kwargs):
 
@@ -127,6 +131,8 @@ class SqlAlchemy(Connector):
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_duplicates(db.session.commit)
         db.session.flush = catch_duplicates(db.session.flush)
+
+        Connection.execute = catch_duplicates(Connection.execute)
 
         return db
 
