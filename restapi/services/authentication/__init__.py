@@ -261,6 +261,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def localize_ip(ip):
 
+        if ip is None:
+            return "Unknown"
+
         try:
             data = mem.geo_reader.get(ip)
 
