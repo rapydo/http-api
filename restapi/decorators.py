@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re
 from functools import wraps
 import werkzeug.exceptions
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 from restapi.confs import SENTRY_URL
 # imported here as utility for endpoints
 from restapi.services.authentication.bearer import authentication as auth
@@ -99,33 +98,16 @@ def catch_graph_exceptions(func):
     def wrapper(self, *args, **kwargs):
 
         from neomodel.exceptions import RequiredProperty
-        from neomodel.exceptions import UniqueProperty
 
         try:
             return func(self, *args, **kwargs)
 
-        except (UniqueProperty) as e:
+        except DatabaseDuplicatedEntry as e:
 
-            # Duplicated in admin_users
-            # Please not that neomodel changed this error
-            # the correct version is in admin_users
-            prefix = "Node [0-9]+ already exists with label"
-            m = re.search(r"{} (.+) and property (.+)".format(prefix), str(e))
+            raise RestApiException(str(e), status_code=409)
 
-            if m:
-                node = m.group(1)
-                prop = m.group(2)
-                val = m.group(3)
-                error = "A {} already exists with {} = {}".format(node, prop, val)
-            else:
-                error = str(e)
+        except RequiredProperty as e:
 
-            raise RestApiException(error, status_code=409)
-        except (RequiredProperty) as e:
-            raise RestApiException(str(e))
-
-        # FIXME: to be specified with new neomodel exceptions
-        # except ConstraintViolation as e:
-        # except UniqueProperty as e:
+            raise RestApiException(str(e), status_code=400)
 
     return wrapper

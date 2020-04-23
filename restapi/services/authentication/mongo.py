@@ -6,7 +6,6 @@ Mongodb based implementation
 
 from pytz import utc
 from datetime import datetime, timedelta
-from pymongo.errors import DuplicateKeyError
 from restapi.services.authentication import BaseAuthentication
 from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
@@ -41,24 +40,18 @@ class Authentication(BaseAuthentication):
     # Also used by POST user
     def create_user(self, userdata, roles):
 
-        try:
-            if "authmethod" not in userdata:
-                userdata["authmethod"] = "credentials"
+        if "authmethod" not in userdata:
+            userdata["authmethod"] = "credentials"
 
-            if "password" in userdata:
-                userdata["password"] = self.get_password_hash(userdata["password"])
+        if "password" in userdata:
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
-            userdata = self.custom_user_properties(userdata)
-            user = self.db.User(**userdata)
+        userdata = self.custom_user_properties(userdata)
+        user = self.db.User(**userdata)
 
-            self.link_roles(user, roles)
+        self.link_roles(user, roles)
 
-            user.save()
-            return user
-        except DuplicateKeyError as e:
-            message = "Can't create user {}\n{}".format(userdata['email'], e)
-            log.error(message)
-            raise AttributeError(message)
+        user.save()
 
     def link_roles(self, user, roles):
 

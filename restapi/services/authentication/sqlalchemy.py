@@ -183,11 +183,7 @@ class Authentication(BaseAuthentication):
     def save_user(self, user):
         if user is not None:
             self.db.session.add(user)
-            # try:
             self.db.session.commit()
-            # except IntegrityError:
-            #     self.auth.db.session.rollback()
-            #     raise RestApiException("This user already exists")
 
     def save_token(self, user, token, jti, token_type=None):
 
@@ -346,7 +342,6 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.commit()
                 log.info('Cached iRODS user: {}', username)
-            # except sqlalchemy.exc.IntegrityError:
             except BaseException as e:
                 self.db.session.rollback()
                 log.error("Errors saving iRODS user: {}", username)

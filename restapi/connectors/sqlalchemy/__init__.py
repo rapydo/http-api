@@ -9,11 +9,50 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 """
 
 import sqlalchemy
+import re
+from functools import wraps
+from restapi.connectors import Connector
+from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.meta import Meta
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.connectors import Connector
 from restapi.utilities.logs import log
+
+
+def catch_duplicates(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        try:
+            return func(*args, **kwargs)
+
+        except sqlalchemy.exc.IntegrityError as e:
+
+            message = str(e).split('\n')
+            if not re.search(r".*duplicate key value violates unique constraint .*",
+                             message[0]):
+                log.error("Unrecognized error message: {}", e)
+                raise DatabaseDuplicatedEntry("Duplicated entry")
+
+            m = re.search(
+                r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.",
+                message[1]
+            )
+
+            if m:
+                prop = m.group(1)
+                val = m.group(2)
+                error = "{} already exists with value: {}".format(prop.title(), val)
+                raise DatabaseDuplicatedEntry(error)
+
+            log.error("Unrecognized error message: {}", e)
+            raise DatabaseDuplicatedEntry("Duplicated entry")
+
+        except BaseException as e:
+            log.critical("Raised unknown exception: {}", type(e))
+            raise e
+
+    return wrapper
 
 
 class SqlAlchemy(Connector):
@@ -86,6 +125,7 @@ class SqlAlchemy(Connector):
 
         db.engine_bis = create_engine(uri)
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
+        db.session.commit = catch_duplicates(db.session.commit)
 
         return db
 

@@ -97,12 +97,7 @@ class Authentication(BaseAuthentication):
         userdata = self.custom_user_properties(userdata)
 
         user_node = self.db.User(**userdata)
-        try:
-            user_node.save()
-        except Exception as e:
-            message = "Can't create user {}\n{}".format(userdata['email'], e)
-            log.error(message)
-            raise AttributeError(message)
+        user_node.save()
 
         self.link_roles(user_node, roles)
 

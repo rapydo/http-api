@@ -5,13 +5,51 @@
 import re
 from functools import wraps
 from neomodel import db, config
+from neomodel import StructuredNode
+from neomodel.exceptions import UniqueProperty
 from restapi.connectors import Connector
+from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
+
+
+def catch_duplicates(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        try:
+            return func(*args, **kwargs)
+        except DatabaseDuplicatedEntry as e:
+            # already catched and parser, raise up
+            raise(e)
+        except UniqueProperty as e:
+
+            t = "already exists with label"
+            m = re.search(
+                r"Node\([0-9]+\) {} `(.+)` and property `(.+)` = '(.+)'".format(t),
+                str(e)
+            )
+
+            if m:
+                node = m.group(1)
+                prop = m.group(2)
+                val = m.group(3)
+                error = "A {} already exists with {} = {}".format(node, prop, val)
+                raise DatabaseDuplicatedEntry(error)
+
+            log.error("Unrecognized error message: {}", e)
+            raise DatabaseDuplicatedEntry("Duplicated entry")
+
+        except Exception as e:
+            log.critical("Raised unknown exception: {}", type(e))
+            raise e
+
+    return wrapper
 
 
 class NeomodelClient:
     def __init__(self, db):
         self.db = db
+        StructuredNode.save = catch_duplicates(StructuredNode.save)
 
     def refresh_connection(self):
         if self.db.url is None:
@@ -22,11 +60,14 @@ class NeomodelClient:
         self.db.set_connection(self.db.url)
         return True
 
+    @catch_duplicates
     def cypher(self, query):
         """ Execute normal neo4j queries """
         try:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
+        except DatabaseDuplicatedEntry as e:
+            raise(e)
         except Exception as e:
             raise Exception(
                 "Failed to execute Cypher Query: {}\n{}".format(query, e))

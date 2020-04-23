@@ -20,3 +20,7 @@ class RestApiException(Exception):
 
         super(RestApiException, self).__init__(exception)
         self.status_code = status_code
+
+
+class DatabaseDuplicatedEntry(Exception):
+    pass

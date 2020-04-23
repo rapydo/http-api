@@ -2,9 +2,7 @@
 
 # TO BE ENABLED WHEN REQUIRED
 
-# import re
 # from collections import OrderedDict
-# from sqlalchemy.exc import IntegrityError
 # from flask_apispec import MethodResource
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
@@ -13,7 +11,7 @@
 
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
-# from restapi.exceptions import RestApiException
+# from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 # from restapi.confs import get_project_configuration
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
@@ -282,45 +280,12 @@
 
 #         try:
 #             user = self.auth.create_user(kwargs, roles)
-#         except AttributeError as e:
-
-#             # Message is produced by authentication/neo4j.py and authentication/mongo.py
-#             message = str(e).split('\n')
-#             if not re.search(r"Can't create user .*", message[0]):
-#                 log.error("Unrecognized error message: {}", e)
-#                 raise e
-
-#             # ~ duplicated int decorators
-
-#             # Neo4j
-#             m = re.search(
-#                 r"Node\([0-9]+\) already exists with label `(.+)` and property `(.+)` = '(.+)'",
-#                 message[1]
-#             )
-
-#             # Mongodb
-#             if not m:
-#                 m = re.search(
-#                     r".+ duplicate key error collection: auth\.(.+) index: .+ dup key: { (.+): \"(.+)\" }",
-#                     message[1]
-#                 )
-#             if m:
-#                 node = m.group(1)
-#                 prop = m.group(2)
-#                 val = m.group(3)
-#                 error = "A {} already exists with {}: {}".format(node, prop, val)
-#                 raise RestApiException(error, status_code=409)
-#             else:
-#                 raise e
-
-#         if self.sql_enabled:
-
-#             try:
+#             if self.sql_enabled:
 #                 self.auth.db.session.commit()
-#             except IntegrityError:
+#         except DatabaseDuplicatedEntry as e:
+#             if self.sql_enabled:
 #                 self.auth.db.session.rollback()
-#                 raise RestApiException(
-#                     "This user already exists", status_code=409)
+#             raise RestApiException(str(e), status_code=409)
 
 #         # FIXME: groups management is only implemented for neo4j
 #         if 'group' in kwargs:

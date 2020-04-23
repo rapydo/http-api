@@ -1,10 +1,49 @@
 # -*- coding: utf-8 -*-
 
+import re
 import pymodm.connection as mongodb
-from restapi.utilities.logs import log
+from pymodm.base.models import TopLevelMongoModel
+from functools import wraps
+from pymongo.errors import DuplicateKeyError
 from restapi.connectors import Connector
+from restapi.exceptions import DatabaseDuplicatedEntry
+from restapi.utilities.logs import log
 
 AUTH_DB = 'auth'
+
+
+def catch_duplicates(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        try:
+            return func(*args, **kwargs)
+
+        except DatabaseDuplicatedEntry as e:
+            # already catched and parser, raise up
+            raise(e)
+
+        except DuplicateKeyError as e:
+
+            regexp = r".+ duplicate key error collection: auth\."
+            regexp += r"(.+) index: .+ dup key: { (.+): \"(.+)\" }"
+            m = re.search(regexp, str(e))
+            if m:
+                node = m.group(1)
+                prop = m.group(2)
+                val = m.group(3)
+                error = "A {} already exists with {}: {}".format(node, prop, val)
+
+                raise DatabaseDuplicatedEntry(error)
+
+            log.error("Unrecognized error message: {}", e)
+            raise DatabaseDuplicatedEntry("Duplicated entry")
+
+        except BaseException as e:
+            log.critical("Raised unknown exception: {}", type(e))
+            raise e
+
+    return wrapper
 
 
 class MongoExt(Connector):
@@ -44,6 +83,7 @@ class MongoExt(Connector):
         class obj:
             connection = link
 
+        TopLevelMongoModel.save = catch_duplicates(TopLevelMongoModel.save)
         return obj
 
     def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
