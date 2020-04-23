@@ -275,6 +275,9 @@ class Authentication(BaseAuthentication):
 
         for token in tokens:
 
+            if token is None:
+                continue
+
             t = {}
 
             t["id"] = token.jti
