@@ -12,7 +12,7 @@ from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
 
 
-def catch_duplicates(func):
+def catch_db_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
 
@@ -49,7 +49,7 @@ def catch_duplicates(func):
 class NeomodelClient:
     def __init__(self, db):
         self.db = db
-        StructuredNode.save = catch_duplicates(StructuredNode.save)
+        StructuredNode.save = catch_db_exceptions(StructuredNode.save)
 
     def refresh_connection(self):
         if self.db.url is None:
@@ -60,7 +60,7 @@ class NeomodelClient:
         self.db.set_connection(self.db.url)
         return True
 
-    @catch_duplicates
+    @catch_db_exceptions
     def cypher(self, query):
         """ Execute normal neo4j queries """
         try:

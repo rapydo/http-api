@@ -21,7 +21,7 @@ from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.utilities.logs import log
 
 
-def catch_duplicates(func):
+def catch_db_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
 
@@ -129,10 +129,10 @@ class SqlAlchemy(Connector):
 
         db.engine_bis = create_engine(uri)
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_duplicates(db.session.commit)
-        db.session.flush = catch_duplicates(db.session.flush)
+        db.session.commit = catch_db_exceptions(db.session.commit)
+        db.session.flush = catch_db_exceptions(db.session.flush)
 
-        Connection.execute = catch_duplicates(Connection.execute)
+        Connection.execute = catch_db_exceptions(Connection.execute)
 
         return db
 
