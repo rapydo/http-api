@@ -181,7 +181,7 @@ def get_output_schema():
     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
-            custom_fields = obj.get_custom_fields()
+            custom_fields = obj.get_custom_fields(False)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
@@ -214,7 +214,7 @@ def get_input_schema(set_required=True, exclude_email=False):
     groups = get_groups()
     if groups:
         attributes["group"] = fields.Str(
-            required=True,
+            required=set_required,
             validate=validate.OneOf(
                 choices=groups.keys(),
                 labels=groups.values()
@@ -224,7 +224,7 @@ def get_input_schema(set_required=True, exclude_email=False):
     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
-            custom_fields = obj.get_custom_fields()
+            custom_fields = obj.get_custom_fields(set_required)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
