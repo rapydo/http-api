@@ -4,7 +4,7 @@ import re
 import pymodm.connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from functools import wraps
-from pymongo.errors import DuplicateKeyError, ValidationError
+from pymongo.errors import DuplicateKeyError
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
@@ -39,9 +39,9 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)
             raise DatabaseDuplicatedEntry("Duplicated entry")
 
-        except ValidationError as e:
-            # not handled
-            raise e
+        # except ValidationError as e:
+        #     # not handled
+        #     raise e
         except BaseException as e:
             log.critical("Raised unknown exception: {}", type(e))
             raise e
