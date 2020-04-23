@@ -128,7 +128,7 @@ class HandleSecurity:
                 self.auth.register_failed_login(username)
             msg = 'Invalid username or password'
             code = 401
-            raise RestApiException(msg, status_code=code)
+            raise RestApiException(msg, status_code=code, is_warning=True)
 
     def verify_totp(self, user, totp_code):
 

@@ -12,8 +12,11 @@ log.verbose("Auth loaded {}", auth)
 
 
 def from_restapi_exception(self, e):
-    log.exception(e)
-    log.error(e)
+    if e.is_warning:
+        log.warning(e)
+    else:
+        log.exception(e)
+        log.error(e)
     return self.response(errors=e.args[0], code=e.status_code)
 
 

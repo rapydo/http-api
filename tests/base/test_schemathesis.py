@@ -46,7 +46,7 @@ else:
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow]
     )
-    def test_no_server_errors_no_auth(case):
+    def test_no_auth(case):
 
         response = case.call_wsgi()
 
@@ -64,7 +64,7 @@ else:
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow]
     )
-    def test_no_server_errors_with_admin_auth(case):
+    def test_with_admin_auth(case):
 
         if case.path == '/auth/logout':
             log.warning("Skipping logout")
@@ -85,7 +85,7 @@ else:
         case.validate_response(response)
 
     # FIXME: TO BE IMPLEMENTED
-    # def test_no_server_errors_with_user_auth(case):
+    # def test_with_user_auth(case):
     #     pass
 
     @schema.parametrize(endpoint="/auth/logout")
