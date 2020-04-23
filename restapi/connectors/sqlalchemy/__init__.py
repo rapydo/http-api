@@ -126,6 +126,7 @@ class SqlAlchemy(Connector):
         db.engine_bis = create_engine(uri)
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_duplicates(db.session.commit)
+        db.session.flush = catch_duplicates(db.session.flush)
 
         return db
 
