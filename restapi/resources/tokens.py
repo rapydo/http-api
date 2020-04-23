@@ -69,18 +69,9 @@ class Tokens(MethodResource, EndpointResource):
 
         user = self.get_current_user()
 
-        response = []
         tokens = self.auth.get_tokens(user=user)
-        for t in tokens:
-            if t['user'] is None:
-                log.error(
-                    "Found a token without any user assigned: {}",
-                    t['id']
-                )
-                continue
-            response.append(t)
 
-        return self.response(response)
+        return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
     @decorators.catch_errors()
@@ -131,7 +122,17 @@ class AdminTokens(MethodResource, EndpointResource):
 
         tokens = self.auth.get_tokens(get_all=True)
 
-        return self.response(tokens)
+        response = []
+        for t in tokens:
+            if t.get('user') is None:
+                log.error(
+                    "Found a token without any user assigned: {}",
+                    t['id']
+                )
+                continue
+            response.append(t)
+
+        return self.response(response)
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
