@@ -191,9 +191,11 @@ def get_output_schema():
     return schema(many=True)
 
 
-def get_input_schema(set_required=True, exclude_email=False):
+def get_input_schema(strip_required=False, exclude_email=False):
 
     auth = EndpointResource.load_authentication()
+
+    set_required = not strip_required
 
     attributes = OrderedDict()
     if not exclude_email:
@@ -224,7 +226,7 @@ def get_input_schema(set_required=True, exclude_email=False):
     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
-            custom_fields = obj.get_custom_fields(set_required)
+            custom_fields = obj.get_custom_fields(strip_required)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
@@ -336,7 +338,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
-    @use_kwargs(get_input_schema(set_required=False, exclude_email=True))
+    @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
     def put(self, user_id, **kwargs):
 
         # log.critical(kwargs)

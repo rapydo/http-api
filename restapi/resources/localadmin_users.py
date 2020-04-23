@@ -100,8 +100,9 @@
 #     log.error("Unknown auth service: {}", auth_service)
 
 
-# def get_input_schema(set_required=True, exclude_email=False):
+# def get_input_schema(strip_required=false, exclude_email=False):
 
+#     set_required = not strip_required
 #     auth = EndpointResource.load_authentication()
 
 #     attributes = OrderedDict()
@@ -133,7 +134,7 @@
 #     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
 #     if obj is not None and hasattr(obj, "get_custom_fields"):
 #         try:
-#             custom_fields = obj.get_custom_fields(set_required)
+#             custom_fields = obj.get_custom_fields(strip_required)
 #             if custom_fields:
 #                 attributes.update(custom_fields)
 #         except BaseException as e:
@@ -310,7 +311,7 @@
 
 #     @decorators.catch_errors()
 #     @decorators.auth.required(roles=['local_admin'])
-#     @use_kwargs(get_input_schema(set_required=False, exclude_email=True))
+#     @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     def put(self, user_id, **kwargs):
 
 #         user = self.auth.get_users(user_id)
