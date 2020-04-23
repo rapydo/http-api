@@ -34,7 +34,7 @@ CORE_DIR="${WORK_DIR}/rapydo_tests"
 echo "WORK_DIR = ${WORK_DIR}"
 echo "CORE_DIR = ${CORE_DIR}"
 
-BRANCH=`[  -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH"`
+BRANCH=$([  -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH")
 
 git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git $CORE_DIR
 
