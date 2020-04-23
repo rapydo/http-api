@@ -56,17 +56,14 @@ fi
 
 # CURRENT DIR IS $CORE_DIR
 
-echo "project: ${PROJECT}" > .projectrc
-echo "project_configuration:" >> .projectrc
-echo "  variables:" >> .projectrc
-echo "    env:" >> .projectrc
-echo "      DEFAULT_DHLEN: 256" >> .projectrc
-# echo "      NEO4J_AUTOINDEXING: False" >> .projectrc
-echo "      AUTH_DEFAULT_USERNAME: test@nomail.org" >> .projectrc
-echo "      AUTH_DEFAULT_PASSWORD: testme" >> .projectrc
-
-cp .projectrc prod_projectrc
-
+echo "project: ${PROJECT}" > .prod_projectrc
+echo "project_configuration:" >> .prod_projectrc
+echo "  variables:" >> .prod_projectrc
+echo "    env:" >> .prod_projectrc
+echo "      DEFAULT_DHLEN: 256" >> .prod_projectrc
+# echo "      NEO4J_AUTOINDEXING: False" >> .prod_projectrc
+echo "      AUTH_DEFAULT_USERNAME: test@nomail.org" >> .prod_projectrc
+echo "      AUTH_DEFAULT_PASSWORD: testme" >> .prod_projectrc
 echo "      NEO4J_PASSWORD: AutoT3sts" >> prod_projectrc
 echo "      ALCHEMY_USER: sqluser" >> prod_projectrc
 echo "      ALCHEMY_PASSWORD: D3vMode!" >> prod_projectrc
@@ -77,7 +74,7 @@ echo "      RABBITMQ_PASSWORD: rabbit" >> prod_projectrc
 
 
 # Let's init and start the stack for the configured PROJECT
-rapydo init
+rapydo --project ${PROJECT} init
 
 if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then
 	rapydo pull
