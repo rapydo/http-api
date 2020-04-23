@@ -175,8 +175,8 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-        token_node.IP = ip
-        token_node.location = ip_loc
+        token_node.IP = ip or ""
+        token_node.location = ip_loc or "Unknown"
 
         token_node.save()
         # Save user updated in profile endpoint

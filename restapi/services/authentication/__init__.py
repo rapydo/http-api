@@ -261,40 +261,35 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def localize_ip(ip):
 
-        UNKNOWN = "Unknown"
         if ip is None:
-            return UNKNOWN
+            return None
 
         try:
             data = mem.geo_reader.get(ip)
 
             if data is None:
-                return UNKNOWN
+                return None
 
             if 'country' in data:
                 try:
                     c = data['country']['names']['en']
-                    if c is None:
-                        return UNKNOWN
                     return c
                 except BaseException:
                     log.error("Missing country.names.en in {}", data)
-                    return "Unknown country"
+                    return None
             if 'continent' in data:
                 try:
                     c = data['continent']['names']['en']
-                    if c is None:
-                        return UNKNOWN
                     return c
 
                 except BaseException:
                     log.error("Missing continent.names.en in {}", data)
-                    return "Unknown continent"
-            return UNKNOWN
+                    return None
+            return None
         except BaseException as e:
             log.error("{}. Input was {}", e, ip)
 
-        return UNKNOWN
+        return None
 
     # ###################
     # # Tokens handling #

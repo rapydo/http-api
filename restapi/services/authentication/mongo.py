@@ -198,8 +198,8 @@ class Authentication(BaseAuthentication):
                 creation=now,
                 last_access=now,
                 expiration=exp,
-                IP=ip,
-                location=ip_loc,
+                IP=ip or "",
+                location=ip_loc or "Unknown",
                 user_id=user,
             ).save()
 
