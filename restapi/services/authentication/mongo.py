@@ -53,6 +53,8 @@ class Authentication(BaseAuthentication):
 
         user.save()
 
+        return user
+
     def link_roles(self, user, roles):
 
         roles_obj = []
