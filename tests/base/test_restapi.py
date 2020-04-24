@@ -50,6 +50,13 @@ class TestApp(BaseTests):
         assert "<html" in output
         assert "<body>" in output
 
+        # Check /auth/status with no token or invalid token
+        r = client.get(AUTH_URI + '/status')
+        assert r.status_code == 401
+
+        r = client.get(AUTH_URI + '/status', headers={'Authorization': 'Bearer ABC'})
+        assert r.status_code == 401
+
     def test_02_GET_specifications(self, client):
         """ Test that the flask server expose swagger specs """
 
@@ -94,6 +101,11 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid credentials")
         headers, _ = self.do_login(client, None, None)
         self.save("auth_header", headers)
+
+        # Verify credentials
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == 'true'
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
