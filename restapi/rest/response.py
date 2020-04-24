@@ -98,6 +98,19 @@ class ResponseMaker:
         return mydict
 
     @staticmethod
+    def get_html(content, code, headers):
+
+        if isinstance(content, list):
+            content = content.pop()
+
+        headers['Content-Type'] = "text/html; charset=UTF-8"
+
+        html_data = {'body_content': content, 'is_error': code >= 300}
+        html_page = render_template('index.html', **html_data)
+
+        return html_page, headers
+
+    @staticmethod
     def respond_to_browser(content, errors, code, headers):
         log.debug("Request from a browser: reply with HTML.")
 

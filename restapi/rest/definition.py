@@ -6,7 +6,7 @@ we could provide back then
 """
 
 from datetime import datetime
-from flask import make_response
+from flask import Response, make_response
 from flask_restful import request, Resource, reqparse
 from flask_apispec import MethodResource
 from jsonschema.exceptions import ValidationError
@@ -346,6 +346,28 @@ class EndpointResource(Resource):
         if isinstance(self, MethodResource):
             if content is None:
                 content = errors
+
+            # Do not bypass FlaskApiSpec response management otherwise marshalling
+            # will be not applied. Consider the following scenario:
+            # @marshal(OnlyOneFieldSchema)
+            # def get():
+            #    return self.response(all_information)
+            # If you bypass the marshalling you will expose the all_information by
+            # retrieving it from a browser (or by forcing the Accept header)
+            # i.e. html responses will only work on non-MethodResource endpoints
+            # If you accept the risk or you do not use marshalling add to endpoint class
+            # ALLOW_HTML_RESPONSE = True
+            if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
+                accepted_formats = ResponseMaker.get_accepted_formats()
+                if 'text/html' in accepted_formats:
+                    content, headers = ResponseMaker.get_html(content, code, headers)
+                    return Response(
+                        content,
+                        mimetype='text/html',
+                        status=code,
+                        headers=headers
+                    )
+
             return (content, code, headers)
 
         # Convert the response in a Flask response, i.e. make_response(tuple)

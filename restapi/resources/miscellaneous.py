@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import jsonify
-
+from flask_apispec import MethodResource
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
@@ -28,15 +28,16 @@ class Queue
 """
 
 
-class Status(EndpointResource):
-    """ API online client testing """
+class Status(MethodResource, EndpointResource):
+    """ Check if APIs are online """
 
+    ALLOW_HTML_RESPONSE = True
     labels = ['helpers']
 
-    GET = {
+    _GET = {
         "/status": {
             "summary": "Check if the API server is currently reachable",
-            "description": "You may use this URI to monitor network or server problems.",
+            "description": "You may use this URI to monitor network or server problems",
             "responses": {"200": {"description": "Server is alive"}},
         }
     }
