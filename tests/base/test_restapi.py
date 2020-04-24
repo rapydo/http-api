@@ -105,7 +105,8 @@ class TestApp(BaseTests):
         # Verify credentials
         r = client.get(AUTH_URI + '/status', headers=headers)
         assert r.status_code == 200
-        assert self.get_content(r) == 'true'
+        c = self.get_content(r)
+        assert isinstance(c, bool) and c
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
