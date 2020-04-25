@@ -5,36 +5,19 @@ python:
 - 3.8
 services:
 - docker
-jobs:
-  include:
-  - stage: backend-test
-    script: tests/travis_tests.sh
-    env:
-    - PROJECT=irodstest
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=celerytest
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=neo
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=sql
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=mongo
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=pushpin
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=celerybeat
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=apispecs
-  - script: tests/travis_tests.sh
-    env:
-    - PROJECT=wrappedresponse
+env:
+- PROJECT=irodstest
+- PROJECT=celerytest
+- PROJECT=neo
+- PROJECT=sql
+- PROJECT=mongo
+- PROJECT=pushpin
+- PROJECT=celerybeat
+- PROJECT=apispecs
+- PROJECT=wrappedresponse
+
+script:
+  - tests/travis_tests.sh
 
   # - stage: deploy
   #   script: skip
