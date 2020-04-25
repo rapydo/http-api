@@ -17,7 +17,38 @@ env:
 - PROJECT=wrappedresponse
 
 script:
-  - tests/travis_tests.sh
+  - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
+  - BRANCH=$([ -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH")
+  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+  - git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git rapydo_tests
+  - cd rapydo_tests
+  - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then git pull origin $TRAVIS_BRANCH; fi
+  - rapydo --project ${PROJECT} init
+  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  - rapydo start
+  - sleep 2
+  - rapydo -s backend logs
+  - rapydo shell backend --command 'restapi tests --core --wait'
+  - printf "\n\n\n"
+  - rapydo dump
+  - printf "\n\n\n"
+  - backend_container=$(docker-compose ps -q backend)
+  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
+  - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+  - printf "\n\n\n"
+  - rapydo remove --all
+  - printf "\n\n\n"
+  - rapydo --production --project ${PROJECT} init --force
+  - rapydo pull
+  - rapydo start
+  - rapydo ssl
+  - printf "\n\n\nBackend server is starting\n\n\n"
+  - sleep 30
+  - rapydo -s backend logs
+  - printf "\n\n\n"
+  - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  - printf "\n\n\n"
+  - rapydo remove --all
 
   # - stage: deploy
   #   script: skip
