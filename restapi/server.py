@@ -15,6 +15,8 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 # from apispec_webframeworks.flask import FlaskPlugin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
@@ -221,8 +223,6 @@ def create_app(
         if not PRODUCTION:
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
         else:
-            import sentry_sdk
-            from sentry_sdk.integrations.flask import FlaskIntegration
 
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
             log.info("Enabled Sentry {}", SENTRY_URL)

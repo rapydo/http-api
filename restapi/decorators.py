@@ -2,8 +2,9 @@
 
 from functools import wraps
 import werkzeug.exceptions
-from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
+from sentry_sdk import capture_exception
 from restapi.confs import SENTRY_URL
+from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 # imported here as utility for endpoints
 from restapi.services.authentication.bearer import authentication as auth
 from restapi.utilities.logs import log
@@ -70,8 +71,6 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             except Exception as e:
 
                 if SENTRY_URL is not None:
-                    from sentry_sdk import capture_exception
-
                     capture_exception(e)
 
                 excname = e.__class__.__name__

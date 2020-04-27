@@ -28,7 +28,7 @@ script:
   - rapydo start
   - sleep 2
   - rapydo -s backend logs
-  - rapydo shell backend --command 'restapi tests --core --wait'
+  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
   - printf "\n\n\n"
   - rapydo dump
   - printf "\n\n\n"
