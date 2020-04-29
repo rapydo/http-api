@@ -355,6 +355,72 @@ class Customizer:
 
                     self._endpoints.append(endpoint)
 
+        # Verify for mapping duplication or shadowing
+        # Example of shadowing:
+        # /xyz/<variable>
+        # /xyz/abc
+        # The second endpoint is shadowed by the first one
+        mappings = {}
+        classes = {}
+        # duplicates are found while filling the dictionaries
+        for endpoint in self._endpoints:
+            for method, uris in endpoint.methods.items():
+                if method not in mappings:
+                    mappings[method] = set()
+                if method not in classes:
+                    classes[method] = {}
+
+                for uri in uris.keys():
+                    uri = "/{}{}".format(endpoint.base_uri, uri)
+                    if uri in mappings[method]:
+                        log.warning(
+                            "Endpoint redefinition: {} {} used from both {} and {}",
+                            method.upper(),
+                            uri,
+                            endpoint.cls.__name__,
+                            classes[method][uri].__name__
+                        )
+                    else:
+                        mappings[method].add(uri)
+                        classes[method][uri] = endpoint.cls
+        for method, uris in mappings.items():
+            for idx1, u1 in enumerate(uris):
+                for idx2, u2 in enumerate(uris):
+                    # Just skip checks of an element with it-self (same index)
+                    # or elements already verified (idx2 < idx1)
+                    if idx2 <= idx1:
+                        continue
+
+                    # split url tokens and remove the first (always empty) token
+                    u1_tokens = u1.split("/")[1:]
+                    u2_tokens = u2.split("/")[1:]
+                    # If number of tokens differens, there cannot be any collision
+                    if len(u1_tokens) != len(u2_tokens):
+                        continue
+                    # verify is base uri is the same or not
+                    if u1_tokens[0] != u2_tokens[0]:
+                        continue
+                    # strip off base uri
+                    u1_tokens = u1_tokens[1:]
+                    u2_tokens = u2_tokens[1:]
+
+                    is_safe = False
+                    for index, t1 in enumerate(u1_tokens):
+                        t2 = u2_tokens[index]
+                        fixed_token1 = not t1.startswith("<")
+                        fixed_token2 = not t2.startswith("<")
+                        # the safe if tokens are different and not variable
+                        if t1 != t2 and fixed_token1 and fixed_token2:
+                            is_safe = True
+                            break
+                    if not is_safe:
+                        log.warning(
+                            "Endpoint shadowing detected: {}({m} {}) and {}({m} {})",
+                            classes[method][u1].__name__, u1,
+                            classes[method][u2].__name__, u2,
+                            m=method.upper(),
+                        )
+
     def do_swagger(self):
 
         # SWAGGER read endpoints definition
