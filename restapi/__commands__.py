@@ -93,7 +93,7 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"{}\" was NOT detected", service)
+            log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
