@@ -11,8 +11,7 @@ def test_irods():
         log.warning("Skipping irods test: service not avaiable")
         return False
 
-    irods_ext = detector.connectors_instances.get('irods')
-    irods = irods_ext.get_instance()
+    irods = detector.connectors_instances.get('irods').get_instance()
 
     # TESTING HOME
     home = irods.get_user_home()
