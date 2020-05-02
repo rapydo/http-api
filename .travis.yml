@@ -22,11 +22,11 @@ script:
 
   - mkdir $PROJECT
   - cd $PROJECT
-  - rapydo create test${PROJECT} --auth $PROJECT --frontend no
+  - rapydo create test${PROJECT} --auth postgres --frontend no --services $PROJECT
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
-    - rapydo start
+  - rapydo start
   - sleep 2
   - rapydo -s backend logs
   - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
