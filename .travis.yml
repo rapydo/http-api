@@ -13,7 +13,7 @@ env:
 - PROJECT=mongo
 - PROJECT=pushpin
 - PROJECT=celerybeat
-- PROJECT=apispecs
+# - PROJECT=apispecs
 - PROJECT=wrappedresponse
 
 script:
