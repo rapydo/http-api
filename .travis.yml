@@ -22,7 +22,7 @@ script:
 
   - mkdir $PROJECT
   - cd $PROJECT
-  - rapydo create --auth $PROJECT --frontend no
+  - rapydo create test${PROJECT} --auth $PROJECT --frontend no
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
