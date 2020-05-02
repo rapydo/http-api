@@ -19,6 +19,22 @@ env:
 script:
   - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+
+  - mkdir $PROJECT
+  - cd $PROJECT
+  - rapydo create --auth $PROJECT --frontend no
+  - git init
+  - git remote add origin https://your_remote_git/your_project.git
+  - rapydo init
+    - rapydo start
+  - sleep 2
+  - rapydo -s backend logs
+  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  # Temporary, before standard tests
+  - rapydo remove --all
+  - cd ..
+
+  # template based tests (old style)
   - BRANCH=$([ -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH")
   - git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git rapydo_tests
   - cd rapydo_tests
@@ -29,6 +45,8 @@ script:
   - sleep 2
   - rapydo -s backend logs
   - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+
+  # Continue with tests: coverage & production
   - printf "\n\n\n"
   - rapydo dump
   - printf "\n\n\n"
