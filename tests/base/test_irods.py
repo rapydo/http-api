@@ -5,7 +5,7 @@ from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
-def test_irods(self):
+def test_irods():
 
     if not detector.check_availability('irods'):
         log.warning("Skipping irods test: service not avaiable")
