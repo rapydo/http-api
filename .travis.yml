@@ -20,7 +20,8 @@ env:
 - TEMPLATE=celery-redis-redis
 - TEMPLATE=celery-redis-mongo
 - TEMPLATE=irods
-- TEMPLATE=extra
+- TEMPLATE=extraservices
+- TEMPLATE=extended
 # to be deprecated
 - TEMPLATE=wrapped
 
@@ -64,8 +65,12 @@ script:
       rapydo create prj --services irods --auth ${RANDOM_AUTH} --frontend no;
 
 
-    elif [[ "$TEMPLATE" == "extra" ]]; then
+    elif [[ "$TEMPLATE" == "extraservices" ]]; then
       rapydo create prj --services ftp,pushpin --auth ${RANDOM_AUTH} --frontend no;
+
+    elif [[ "$TEMPLATE" == "extended" ]]; then
+      rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no;
 
 
 
@@ -81,7 +86,7 @@ script:
 
   - git init
   - git remote add origin https://your_remote_git/your_project.git
-  - rapydo init
+  - rapydo -p prj init
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
   - rapydo start
   - sleep 2
