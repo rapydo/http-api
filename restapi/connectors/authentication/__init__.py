@@ -160,8 +160,10 @@ class HandleSecurity:
 
         if old_pwd is not None and pwd == old_pwd:
             return False, "The new password cannot match the previous password"
+        log.warning(old_hash)
         if old_hash is not None:
             new_hash = BaseAuthentication.get_password_hash(pwd)
+            log.warning(new_hash)
             if old_hash == new_hash:
                 return False, "The new password cannot match the previous password"
 
