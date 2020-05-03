@@ -241,8 +241,6 @@ class TestApp(BaseTests):
             405,
         )
 
-        self.checkResponse(get_r, [], [])
-
         r = client.get(url, headers=headers)
         assert r.status_code == 200
 

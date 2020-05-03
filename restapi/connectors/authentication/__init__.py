@@ -89,14 +89,6 @@ class Authenticator(Connector):
 
         if pdestroy:
             log.error("Destroy not implemented for authentication service")
-        # elif PRODUCTION:
-        #     """
-        #     # TODO: check if this piece of code works
-        #     and
-        #     # FIXME: what if launched in production for the first time?
-        #     """
-        #     if obj.check_if_user_defaults():
-        #         raise ValueError("Production with default admin user")
 
 
 class HandleSecurity:

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-import os
+from restapi.connectors.authentication import HandleSecurity
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -12,5 +11,6 @@ def test_authentication():
         return False
 
     auth = detector.connectors_instances.get('authentication').get_instance()
+    security = HandleSecurity(auth)
 
     return True

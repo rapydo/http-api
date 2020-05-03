@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -12,5 +11,6 @@ def test_rabbit():
         return False
 
     rabbit = detector.connectors_instances.get('rabbit').get_instance()
+    assert rabbit.write_to_queue("test", "celery")
 
     return True

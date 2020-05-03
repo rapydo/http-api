@@ -95,9 +95,7 @@ class BaseTests:
 
         return response
 
-    def do_login(
-        self, client, USER, PWD, status_code=200, error=None, **kwargs
-    ):
+    def do_login(self, client, USER, PWD, status_code=200, error=None):
         """
             Make login and return both token and authorization header
         """
@@ -118,8 +116,6 @@ class BaseTests:
         # AUTH_MAX_PASSWORD_VALIDITY=0
 
         data = {'username': USER, 'password': PWD}
-        for v in kwargs:
-            data[v] = kwargs[v]
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
 
