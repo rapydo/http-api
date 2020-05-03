@@ -2,8 +2,10 @@
 import os
 import random
 import string
+import pytest
 from restapi.connectors.authentication import HandleSecurity
 from restapi.services.detect import detector
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
@@ -104,3 +106,44 @@ def test_authentication():
     ret_val, ret_text = security.verify_password_strength(pwd)
     assert ret_val
     assert ret_text is None
+
+    # How to retrieve a generic user?
+    user = None
+    pwd = random_string(min_pwd_len - 1)
+
+    try:
+        security.change_password(user, pwd, None, None)
+        pytest.fail('None password!')
+    except RestApiException as e:
+        assert e.status_code == 400
+        assert str(e) == "Wrong new password"
+
+    try:
+        security.change_password(user, pwd, pwd, None)
+        pytest.fail('None password!')
+    except RestApiException as e:
+        assert e.status_code == 400
+        assert str(e) == "Wrong password confirm"
+
+    try:
+        security.change_password(user, pwd, pwd, 'wrongconfirmation')
+        pytest.fail('wrong passwrd confirmation!?')
+    except RestApiException as e:
+        assert e.status_code == 409
+        assert str(e) == "Your password doesn't match the confirmation"
+
+    try:
+        security.change_password(user, pwd, pwd, pwd)
+        pytest.fail('Password strength not verified')
+    except RestApiException as e:
+        assert e.status_code == 409
+        assert str(e) == 'The new password cannot match the previous password'
+
+    try:
+        security.change_password(user, "currentpassword", pwd, pwd)
+        pytest.fail('Password strength not verified')
+    except RestApiException as e:
+        assert e.status_code == 409
+        assert str(e) == 'Password is too short, use at least {} characters'.format(
+            min_pwd_len
+        )

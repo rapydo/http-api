@@ -181,6 +181,12 @@ class HandleSecurity:
 
     def change_password(self, user, password, new_password, password_confirm):
 
+        if new_password is None:
+            raise RestApiException("Wrong new password", status_code=400)
+
+        if password_confirm is None:
+            raise RestApiException("Wrong password confirm", status_code=400)
+
         if new_password != password_confirm:
             msg = "Your password doesn't match the confirmation"
             raise RestApiException(msg, status_code=409)
@@ -195,19 +201,18 @@ class HandleSecurity:
             if not check:
                 raise RestApiException(msg, status_code=409)
 
-        if new_password is not None and password_confirm is not None:
-            now = datetime.now(pytz.utc)
-            user.password = BaseAuthentication.get_password_hash(new_password)
-            user.last_password_change = now
-            self.auth.save_user(user)
+        now = datetime.now(pytz.utc)
+        user.password = BaseAuthentication.get_password_hash(new_password)
+        user.last_password_change = now
+        self.auth.save_user(user)
 
-            tokens = self.auth.get_tokens(user=user)
-            for token in tokens:
-                try:
-                    self.auth.invalidate_token(token=token["token"])
-                except BaseException as e:
-                    log.error(e)
-                    log.critical("Failed to invalidate token {}")
+        tokens = self.auth.get_tokens(user=user)
+        for token in tokens:
+            try:
+                self.auth.invalidate_token(token=token["token"])
+            except BaseException as e:
+                log.error(e)
+                log.critical("Failed to invalidate token {}")
 
         return True
 
@@ -231,15 +236,13 @@ class HandleSecurity:
                 more than {} failed login attempts. Try again later""".format(
                     self.auth.MAX_LOGIN_ATTEMPTS)
             )
-            code = 401
-            raise RestApiException(msg, status_code=code)
+            raise RestApiException(msg, status_code=401)
 
     def verify_blocked_user(self, user):
 
         if self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER > 0:
             last_login = user.last_login
             now = datetime.now(pytz.utc)
-            code = 401
             if last_login is not None:
 
                 inactivity = timedelta(days=self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER)
@@ -247,7 +250,7 @@ class HandleSecurity:
 
                 if valid_until < now:
                     msg = "Sorry, this account is blocked for inactivity"
-                    raise RestApiException(msg, status_code=code)
+                    raise RestApiException(msg, status_code=401)
 
     def verify_active_user(self, user):
 
