@@ -6,15 +6,19 @@ python:
 services:
 - docker
 env:
-- PROJECT=irodstest
-- PROJECT=celerytest
-- PROJECT=neo
-- PROJECT=sql
-- PROJECT=mongo
-- PROJECT=pushpin
-- PROJECT=celerybeat
+# - PROJECT=irodstest
+# - PROJECT=celerytest
+# - PROJECT=neo
+# - PROJECT=sql
+# - PROJECT=mongo
+# - PROJECT=pushpin
+# - PROJECT=celerybeat
+# - PROJECT=wrappedresponse
 # - PROJECT=apispecs
-- PROJECT=wrappedresponse
+- PROJECT=postgres
+- PROJECT=mysql
+- PROJECT=neo4j
+- PROJECT=mongo
 
 script:
   - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
@@ -22,7 +26,7 @@ script:
 
   - mkdir $PROJECT
   - cd $PROJECT
-  - rapydo create test${PROJECT} --auth postgres --frontend no --services $PROJECT
+  - rapydo create test${PROJECT} --auth ${PROJECT} --frontend no
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
@@ -30,21 +34,22 @@ script:
   - sleep 2
   - rapydo -s backend logs
   - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
-  # Temporary, before standard tests
-  - rapydo remove --all
-  - cd ..
 
-  # template based tests (old style)
-  - BRANCH=$([ -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH")
-  - git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git rapydo_tests
-  - cd rapydo_tests
-  - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then git pull origin $TRAVIS_BRANCH; fi
-  - rapydo --project ${PROJECT} init
-  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
-  - rapydo start
-  - sleep 2
-  - rapydo -s backend logs
-  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  # # Temporary, before standard tests
+  # - rapydo remove --all
+  # - cd ..
+
+  # # template based tests (old style)
+  # - BRANCH=$([ -z "$TRAVIS_PULL_REQUEST_BRANCH" ] && echo "$TRAVIS_BRANCH" || echo "$TRAVIS_PULL_REQUEST_BRANCH")
+  # - git clone -b ${BRANCH} --depth=1 https://github.com/rapydo/tests.git rapydo_tests
+  # - cd rapydo_tests
+  # - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then git pull origin $TRAVIS_BRANCH; fi
+  # - rapydo --project ${PROJECT} init
+  # - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  # - rapydo start
+  # - sleep 2
+  # - rapydo -s backend logs
+  # - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
 
   # Continue with tests: coverage & production
   - printf "\n\n\n"
