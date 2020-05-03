@@ -32,9 +32,8 @@ class Customizer:
     Read all of available configurations and definitions.
     """
 
-    def __init__(self, testing=False):
+    def __init__(self):
 
-        self._testing = testing
         self._endpoints = []
         self._definitions = {}
         self._configurations = {}
@@ -187,37 +186,37 @@ class Customizer:
                     log.debug(
                         "Importing {} from {}.{}", class_name, apis_dir, module_file
                     )
-                    if not self._testing:
-                        skip = False
-                        for var in ep_class.depends_on:
-                            pieces = var.strip().split(' ')
-                            pieces_num = len(pieces)
-                            if pieces_num == 1:
-                                dependency = pieces.pop()
-                                negate = False
-                            elif pieces_num == 2:
-                                negate, dependency = pieces
-                                negate = negate.lower() == 'not'
-                            else:
-                                log.exit('Wrong parameter: {}', var)
 
-                            check = detector.get_bool_from_os(dependency)
-                            if negate:
-                                check = not check
+                    skip = False
+                    for var in ep_class.depends_on:
+                        pieces = var.strip().split(' ')
+                        pieces_num = len(pieces)
+                        if pieces_num == 1:
+                            dependency = pieces.pop()
+                            negate = False
+                        elif pieces_num == 2:
+                            negate, dependency = pieces
+                            negate = negate.lower() == 'not'
+                        else:
+                            log.exit('Wrong parameter: {}', var)
 
-                            # Skip if not meeting the requirements of the dependency
-                            if not check:
-                                skip = True
-                                break
+                        check = detector.get_bool_from_os(dependency)
+                        if negate:
+                            check = not check
 
-                        if skip:
-                            log.debug(
-                                "Skipping '{} {}' due to unmet dependency: {}",
-                                module_name,
-                                class_name,
-                                dependency
-                            )
-                            continue
+                        # Skip if not meeting the requirements of the dependency
+                        if not check:
+                            skip = True
+                            break
+
+                    if skip:
+                        log.debug(
+                            "Skipping '{} {}' due to unmet dependency: {}",
+                            module_name,
+                            class_name,
+                            dependency
+                        )
+                        continue
 
                     # Building endpoint
                     endpoint = EndpointElements(custom={})

@@ -51,13 +51,13 @@ def create_app(
 
     # Add commands to 'flask' binary
     if init_mode:
-        microservice.config['INIT_MODE'] = init_mode
+        # microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
     elif destroy_mode:
-        microservice.config['DESTROY_MODE'] = destroy_mode
+        # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
     elif testing_mode:
-        microservice.config['TESTING'] = testing_mode
+        # microservice.config['TESTING'] = testing_mode
         init_mode = True
     elif worker_mode:
         skip_endpoint_mapping = True
@@ -90,7 +90,7 @@ def create_app(
     if PRODUCTION:
         log.info("Production server mode is ON")
 
-    mem.customizer = Customizer(testing_mode)
+    mem.customizer = Customizer()
     mem.configuration = mem.customizer.load_configuration()
 
     # Find services and try to connect to the ones available
