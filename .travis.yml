@@ -70,7 +70,7 @@ script:
 
     elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current;
 
 
 

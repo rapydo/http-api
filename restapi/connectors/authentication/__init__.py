@@ -166,7 +166,9 @@ class HandleSecurity:
                 return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.auth.MIN_PASSWORD_LENGTH:
-            return False, "Password is too short, use at least 8 characters"
+            return False, "Password is too short, use at least {} characters".format(
+                self.auth.MIN_PASSWORD_LENGTH
+            )
 
         if not re.search("[a-z]", pwd):
             return False, "Password is too weak, missing lower case letters"
@@ -175,7 +177,6 @@ class HandleSecurity:
         if not re.search("[0-9]", pwd):
             return False, "Password is too weak, missing numbers"
 
-        # special_characters = "['\s!#$%&\"(),*+,-./:;<=>?@[\\]^_`{|}~']"
         special_characters = "[^a-zA-Z0-9]"
         if not re.search(special_characters, pwd):
             return False, "Password is too weak, missing special characters"
