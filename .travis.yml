@@ -17,7 +17,7 @@ env:
 # - PROJECT=apispecs
 
 - TEMPLATE=postgres
-# - TEMPLATE=mysql
+- TEMPLATE=mysql
 - TEMPLATE=neo4j
 - TEMPLATE=mongo
 - TEMPLATE=celery-rabbit-rabbit
