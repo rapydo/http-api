@@ -26,7 +26,12 @@ script:
 
   - mkdir $PROJECT
   - cd $PROJECT
-  - rapydo create test${PROJECT} --auth ${PROJECT} --frontend no
+  - > # this enable multiline commands
+    if [[ "$PROJECT" == "rabbit" ]]; then
+      rapydo create test${PROJECT} --auth postgres --services rabbit --frontend no
+    else
+      rapydo create test${PROJECT} --auth ${PROJECT} --frontend no
+    fi
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
