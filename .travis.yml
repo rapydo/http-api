@@ -39,7 +39,6 @@ script:
   - cd $TEMPLATE
   - > # this enable multiline commands
 
-    # AUTHENTICATION SERVICES
     if [[ "$TEMPLATE" == "postgres" ]]; then
       rapydo create prj --auth postgres --frontend no;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
@@ -49,25 +48,29 @@ script:
     elif [[ "$TEMPLATE" == "mongo" ]]; then
       rapydo create prj --auth mongo --frontend no;
 
-    # ALL CELERY COMBINATION
+
     elif [[ "$TEMPLATE" == "celery" ]]; then
       rapydo create prj --services celery --auth ${RANDOM_AUTH} --frontend no;
 
-    # IRODS
+
     elif [[ "$TEMPLATE" == "irods" ]]; then
       rapydo create prj --services irods --auth ${RANDOM_AUTH} --frontend no;
 
-    # OTHER SERVICES
+
     elif [[ "$TEMPLATE" == "extra" ]]; then
       rapydo create prj --services ftp,pushpin --auth ${RANDOM_AUTH} --frontend no;
-      # to be deprecated
+
+
+
     elif [[ "$TEMPLATE" == "wrapped" ]]; then
       rapydo create prj --auth ${RANDOM_AUTH} --wrapped --frontend no;
+
 
     else
       echo "Unknown template: ${TEMPLATE}";
       travis_terminate 1;
     fi
+
 
   - git init
   - git remote add origin https://your_remote_git/your_project.git
