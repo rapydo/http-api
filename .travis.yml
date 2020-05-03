@@ -25,7 +25,7 @@ env:
 - TEMPLATE=celery-rabbit-mongo
 - TEMPLATE=celery-redis-redis
 - TEMPLATE=celery-redis-mongo
-# - TEMPLATE=irods
+- TEMPLATE=irods
 - TEMPLATE=extra
 # to be deprecated
 - TEMPLATE=wrapped
