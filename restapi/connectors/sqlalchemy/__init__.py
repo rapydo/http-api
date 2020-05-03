@@ -9,9 +9,12 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 """
 
 import re
-# import sqlalchemy
+from sqlalchemy import create_engine
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import text
+from flask_migrate import Migrate
 from functools import wraps
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
@@ -111,7 +114,6 @@ class SqlAlchemy(Connector):
             log.exit("Could not get 'db' within {} models", self.name)
 
         try:
-            from flask_migrate import Migrate
 
             # The Alembic package, which handles the migration work, does not recognize
             # type changes in columns by default. If you want that fine level of
@@ -123,9 +125,6 @@ class SqlAlchemy(Connector):
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import scoped_session
-        from sqlalchemy.orm import sessionmaker
 
         db.engine_bis = create_engine(uri)
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
@@ -149,7 +148,6 @@ class SqlAlchemy(Connector):
         with self.app.app_context():
 
             # check connection
-            from sqlalchemy import text
 
             sql = text('SELECT 1')
             db.engine.execute(sql)
