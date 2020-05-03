@@ -19,6 +19,7 @@ env:
 - PROJECT=mysql
 - PROJECT=neo4j
 - PROJECT=mongo
+- PROJECT=rabbit
 
 script:
   - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
