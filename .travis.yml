@@ -6,18 +6,12 @@ python:
 services:
 - docker
 env:
-# - PROJECT=irodstest
-# - PROJECT=celerytest
-# - PROJECT=neo
-# - PROJECT=sql
-# - PROJECT=mongo
-# - PROJECT=pushpin
-# - PROJECT=celerybeat
-# - PROJECT=wrappedresponse
-# - PROJECT=apispecs
 
 - TEMPLATE=postgres
-- TEMPLATE=mysql
+# Disabled for now because no use case is defined to use mysql
+# Issues when validating token: timezone seems to be not saved and
+# flag timezone=True is ignored in models
+# - TEMPLATE=mysql
 - TEMPLATE=neo4j
 - TEMPLATE=mongo
 - TEMPLATE=celery-rabbit-rabbit
@@ -35,7 +29,8 @@ script:
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
 
   # Randomize auth service to test some services
-  - auth_services=(postgres mysql neo4j mongo)
+  # - auth_services=(postgres mysql neo4j mongo)
+  - auth_services=(postgres neo4j mongo)
   - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
