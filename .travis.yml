@@ -72,7 +72,7 @@ script:
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
-  - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then git pull origin $TRAVIS_BRANCH; fi
+  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
   - rapydo start
   - sleep 2
   - rapydo -s backend logs
@@ -96,7 +96,8 @@ script:
   - sleep 30
   - rapydo -s backend logs
   - printf "\n\n\n"
-  - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  # temporary disabled
+  # - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - printf "\n\n\n"
   - rapydo remove --all
 
