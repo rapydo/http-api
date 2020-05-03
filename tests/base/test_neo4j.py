@@ -26,6 +26,7 @@ def test_neo4j():
     assert neo4j.sanitize_input("x~") == "x"
     assert neo4j.sanitize_input("~x") == "x"
     assert neo4j.sanitize_input("x'") == "x\\'"
-    assert neo4j.sanitize_input("   *~ ~** x  ~~**  ") == "x"
+    assert neo4j.sanitize_input("   *~~**x~~**  ") == "x"
+    assert neo4j.sanitize_input(" x x ") == "x x"
 
     assert neo4j.fuzzy_tokenize("x AND y") == "x~1 AND y~1"
