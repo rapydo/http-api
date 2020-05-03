@@ -219,7 +219,10 @@ class CeleryExt(Connector):
                 celery_app.conf['REDBEAT_KEY_PREFIX'] = CeleryExt.REDBEAT_KEY_PREFIX
                 log.info("Celery-beat connected to Redis: {}", BEAT_BACKEND_URL)
             else:
-                log.warning("Cannot configure celery beat scheduler")
+                log.warning(
+                    "Cannot configure celery beat scheduler with backend: {}",
+                    backend
+                )
 
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app

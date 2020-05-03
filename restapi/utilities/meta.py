@@ -24,6 +24,8 @@ class Meta:
     @staticmethod
     def get_submodules_from_package(package):
         submodules = []
+        if package is None:
+            return submodules
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
                 submodules.append(modname)

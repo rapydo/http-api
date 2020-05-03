@@ -20,7 +20,11 @@ env:
 # - TEMPLATE=mysql
 - TEMPLATE=neo4j
 - TEMPLATE=mongo
-- TEMPLATE=celery
+- TEMPLATE=celery-rabbit-rabbit
+- TEMPLATE=celery-rabbit-redis
+- TEMPLATE=celery-rabbit-mongo
+- TEMPLATE=celery-redis-redis
+- TEMPLATE=celery-redis-mongo
 # - TEMPLATE=irods
 - TEMPLATE=extra
 # to be deprecated
@@ -49,8 +53,16 @@ script:
       rapydo create prj --auth mongo --frontend no;
 
 
-    elif [[ "$TEMPLATE" == "celery" ]]; then
-      rapydo create prj --services celery --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
+      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
+      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
+      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
+      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
+      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
 
 
     elif [[ "$TEMPLATE" == "irods" ]]; then
