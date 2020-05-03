@@ -147,3 +147,10 @@ def test_authentication():
         assert str(e) == 'Password is too short, use at least {} characters'.format(
             min_pwd_len
         )
+
+    try:
+        security.verify_totp(None, None)
+        pytest.fail("NULL totp accepted!")
+    except RestApiException as e:
+        assert e.status_code == 401
+        assert str(e) == 'Invalid verification code'

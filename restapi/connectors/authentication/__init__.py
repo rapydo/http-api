@@ -124,22 +124,14 @@ class HandleSecurity:
 
     def verify_totp(self, user, totp_code):
 
-        valid = True
-
         if totp_code is None:
-            valid = False
-        else:
-            secret = HandleSecurity.get_secret(user)
-            totp = pyotp.TOTP(secret)
-            if not totp.verify(totp_code):
-                if self.auth.REGISTER_FAILED_LOGIN:
-                    self.auth.register_failed_login(user.email)
-                valid = False
-
-        if not valid:
-            msg = 'Invalid verification code'
-            code = 401
-            raise RestApiException(msg, status_code=code)
+            raise RestApiException('Invalid verification code', status_code=401)
+        secret = HandleSecurity.get_secret(user)
+        totp = pyotp.TOTP(secret)
+        if not totp.verify(totp_code):
+            if self.auth.REGISTER_FAILED_LOGIN:
+                self.auth.register_failed_login(user.email)
+            raise RestApiException('Invalid verification code', status_code=401)
 
         return True
 
@@ -220,23 +212,22 @@ class HandleSecurity:
 
         if not self.auth.REGISTER_FAILED_LOGIN:
             # We do not register failed login
-            pass
-        elif self.auth.MAX_LOGIN_ATTEMPTS <= 0:
+            return False
+        if self.auth.MAX_LOGIN_ATTEMPTS <= 0:
             # We register failed login, but we do not set a max num of failures
-            pass
-            # FIXME: implement get_failed_login
-        elif self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
+            return False
+        # FIXME: implement get_failed_login
+        if self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
             # We register and set a max, but user does not reached it yet
-            pass
-        else:
-            # Dear user, you have exceeded the limit
-            msg = (
-                """
-                Sorry, this account is temporarily blocked due to
-                more than {} failed login attempts. Try again later""".format(
-                    self.auth.MAX_LOGIN_ATTEMPTS)
-            )
-            raise RestApiException(msg, status_code=401)
+            return False
+        # Dear user, you have exceeded the limit
+        msg = (
+            """
+            Sorry, this account is temporarily blocked due to
+            more than {} failed login attempts. Try again later""".format(
+                self.auth.MAX_LOGIN_ATTEMPTS)
+        )
+        raise RestApiException(msg, status_code=401)
 
     def verify_blocked_user(self, user):
 
@@ -254,9 +245,7 @@ class HandleSecurity:
 
     def verify_active_user(self, user):
 
-        if user.is_active is None:
-            log.warning("None value is_active")
-        elif not user.is_active:
+        if not user.is_active:
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise RestApiException(
