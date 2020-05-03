@@ -231,7 +231,7 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
         url = API_URI + "/" + endpoint
-        get_r, _, _, _ = self._test_endpoint(
+        self._test_endpoint(
             client,
             endpoint,
             headers,

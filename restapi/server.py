@@ -41,8 +41,7 @@ def create_app(
     """ Create the server istance for Flask application """
 
     if PRODUCTION and testing_mode:
-        if detector.get_bool_envvar("ENABLE_TESTS_IN_PRODUCTION", False):
-            log.exit("Unable to execute tests in production")
+        log.exit("Unable to execute tests in production")
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
