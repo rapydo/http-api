@@ -156,16 +156,10 @@ class HandleSecurity:
         qr_url.svg(qr_stream, scale=5)
         return qr_stream.getvalue()
 
-    def verify_password_strength(self, pwd, old_pwd=None, old_hash=None):
+    def verify_password_strength(self, pwd, old_pwd=None):
 
         if old_pwd is not None and pwd == old_pwd:
             return False, "The new password cannot match the previous password"
-        log.warning(old_hash)
-        if old_hash is not None:
-            new_hash = BaseAuthentication.get_password_hash(pwd)
-            log.warning(new_hash)
-            if old_hash == new_hash:
-                return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.auth.MIN_PASSWORD_LENGTH:
             return False, "Password is too short, use at least {} characters".format(

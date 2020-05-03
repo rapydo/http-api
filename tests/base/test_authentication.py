@@ -3,7 +3,6 @@ import os
 import random
 import string
 from restapi.connectors.authentication import HandleSecurity
-from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -71,12 +70,6 @@ def test_authentication():
 
     pwd = random_string(min_pwd_len - 1)
     ret_val, ret_text = security.verify_password_strength(pwd, old_pwd=pwd)
-    assert not ret_val
-    assert ret_text == 'The new password cannot match the previous password'
-
-    pwd = random_string(min_pwd_len - 1)
-    old_hash = BaseAuthentication.get_password_hash(pwd)
-    ret_val, ret_text = security.verify_password_strength(pwd, old_hash=old_hash)
     assert not ret_val
     assert ret_text == 'The new password cannot match the previous password'
 
