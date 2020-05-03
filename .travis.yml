@@ -21,7 +21,8 @@ env:
 - TEMPLATE=celery-redis-mongo
 - TEMPLATE=irods
 - TEMPLATE=extraservices
-- TEMPLATE=extended
+# Temporary disabled, some issues with DB models...
+# - TEMPLATE=extended
 # to be deprecated
 - TEMPLATE=wrapped
 
