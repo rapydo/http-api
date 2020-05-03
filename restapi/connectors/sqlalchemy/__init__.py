@@ -96,9 +96,19 @@ class SqlAlchemy(Connector):
         #     self.app.config['SQLALCHEMY_POOL_SIZE'] = int(pool_size)
         #     log.debug("Setting SQLALCHEMY_POOL_SIZE = {}", pool_size)
 
-        obj_name = 'db'
         # search the original sqlalchemy object into models
-        db = Meta.obj_from_models(obj_name, self.name, CUSTOM_PACKAGE)
+        db = Meta.obj_from_models('db', self.name, CUSTOM_PACKAGE)
+
+        # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
+        if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            db = Meta.obj_from_models('db', self.name, EXTENDED_PACKAGE)
+
+        if db is None:
+            log.warning("No sqlalchemy db imported in custom package")
+            db = Meta.obj_from_models('db', self.name, BACKEND_PACKAGE)
+
+        if db is None:
+            log.exit("Could not get 'db' within {} models", self.name)
 
         try:
             from flask_migrate import Migrate
@@ -110,16 +120,6 @@ class SqlAlchemy(Connector):
         except BaseException as e:
             log.warning("Flask Migrate not enabled")
             log.error(str(e))
-
-        # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
-        if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            db = Meta.obj_from_models(obj_name, self.name, EXTENDED_PACKAGE)
-
-        if db is None:
-            log.warning("No sqlalchemy db imported in custom package")
-            db = Meta.obj_from_models(obj_name, self.name, BACKEND_PACKAGE)
-        if db is None:
-            log.exit("Could not get {} within {} models", obj_name, self.name)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
