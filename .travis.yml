@@ -36,6 +36,7 @@ script:
   - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo init
+  - if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then git pull origin $TRAVIS_BRANCH; fi
   - rapydo start
   - sleep 2
   - rapydo -s backend logs
@@ -67,7 +68,7 @@ script:
   - printf "\n\n\n"
   - rapydo remove --all
   - printf "\n\n\n"
-  - rapydo --production --project ${PROJECT} init --force
+  - rapydo --production init --force
   - rapydo pull
   - rapydo start
   - rapydo ssl
