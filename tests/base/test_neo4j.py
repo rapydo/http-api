@@ -11,8 +11,8 @@ def test_neo4j():
         return False
 
     neo4j = detector.connectors_instances.get('neo4j').get_instance()
-    for u in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
-        u.inflate(neo4j.User)
+    for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
+        u = neo4j.User.inflate(row[0])
         assert u.email is not None
         break
 
