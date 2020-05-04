@@ -12,5 +12,3 @@ def test_rabbit():
 
     rabbit = detector.connectors_instances.get('rabbit').get_instance()
     assert rabbit.write_to_queue("test", "celery")
-
-    return True

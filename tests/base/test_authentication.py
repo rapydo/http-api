@@ -76,7 +76,8 @@ def test_authentication():
     assert ret_text == 'The new password cannot match the previous password'
 
     pwd = random_string(min_pwd_len - 1)
-    ret_val, ret_text = security.verify_password_strength(pwd, old_pwd='anotherpwd')
+    old_pwd = random_string(min_pwd_len)
+    ret_val, ret_text = security.verify_password_strength(pwd, old_pwd=old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too short, use at least {} characters'.format(
         min_pwd_len

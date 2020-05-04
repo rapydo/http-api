@@ -11,5 +11,3 @@ def test_pushpin():
         return False
 
     detector.connectors_instances.get('pushpin').get_instance()
-
-    return True
