@@ -16,7 +16,7 @@ if mem.TESTING and detector.check_availability('neo4j'):
         labels = ["tests"]
 
         _GET = {
-            "/tests/neo4j<test>": {
+            "/tests/neo4j/<test>": {
                 "summary": "Execute tests against the neo4j connector",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
