@@ -3,6 +3,7 @@
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.tests import API_URI
+from neobolt.exceptions import CypherSyntaxError
 # from restapi.tests import AUTH_URI, BaseAuthentication
 from restapi.utilities.logs import log
 
@@ -25,6 +26,12 @@ else:
                 u = neo4j.User.inflate(row[0])
                 assert u.email is not None
                 break
+
+            try:
+                neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+            # Query informtaion are removed from the CypherSyntaxError exception
+            except CypherSyntaxError as e:
+                assert str(e) == "Failed to execute Cypher Query"
 
             assert neo4j.createUniqueIndex('a', 'b') == 'a#_#b'
 

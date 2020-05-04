@@ -9,6 +9,7 @@ from neomodel import StructuredNode
 from neomodel.match import NodeSet
 from neomodel.exceptions import UniqueProperty, DeflateError, DoesNotExist
 from neo4j.exceptions import ServiceUnavailable
+from neobolt.exceptions import CypherSyntaxError
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
@@ -24,6 +25,8 @@ def catch_db_exceptions(func):
             # already catched and parser, raise up
             raise(e)
         except DoesNotExist as e:
+            raise (e)
+        except CypherSyntaxError as e:
             raise (e)
         except UniqueProperty as e:
 
@@ -78,11 +81,10 @@ class NeomodelClient:
         try:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
-        except DatabaseDuplicatedEntry as e:
-            raise(e)
-        except Exception as e:
-            raise Exception(
-                "Failed to execute Cypher Query: {}\n{}".format(query, e))
+        except CypherSyntaxError as e:
+            log.warning(query)
+            log.error("Failed to execute Cypher Query\n{}".format(e))
+            raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
 
     @staticmethod
