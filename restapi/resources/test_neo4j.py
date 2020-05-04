@@ -3,6 +3,8 @@
 from flask_apispec import MethodResource
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.exceptions import RestApiException
+from restapi import decorators
 from restapi.connectors.neo4j import graph_transactions
 from restapi.utilities.globals import mem
 
@@ -21,6 +23,12 @@ if mem.TESTING and detector.check_availability('neo4j'):
             },
         }
 
+        @decorators.catch_errors()
         @graph_transactions
         def get(self):
+            neo4j = self.get_service_instance('neo4j')
+            try:
+                neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+            except Exception as e:
+                raise RestApiException(str(e), status_code=400)
             return 1

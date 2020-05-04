@@ -12,7 +12,7 @@ class TestNeo4j(BaseTests):
     def _test_endpoint(self, client):
         endpoint = API_URI + '/tests/neo4j'
         r = client.get(endpoint)
-        assert r.status_code == 200
+        assert r.status_code == 400
 
     def test_connector(self):
 
