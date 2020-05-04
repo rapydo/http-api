@@ -34,7 +34,7 @@ else:
             # just to avoid hardcoded tokens warnings...
             v = neo4j.createUniqueIndex('a', 'b')
             # Create a fake token and verify that is linked to nobody
-            t = neo4j.Token(jti=v, token=v, creation=datetime.now())
+            t = neo4j.Token(jti=v, token=v, creation=datetime.now()).save()
             assert neo4j.getSingleLinkedNode(t.emitted_for) is None
 
             try:
