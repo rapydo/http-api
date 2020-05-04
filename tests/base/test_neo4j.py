@@ -39,4 +39,7 @@ else:
             assert neo4j.sanitize_input("   *~~**x~~**  ") == "x"
             assert neo4j.sanitize_input(" x x ") == "x x"
 
+            assert neo4j.fuzzy_tokenize('"x y"') == '"x y"'
             assert neo4j.fuzzy_tokenize("x AND y") == "x~1 AND y~1"
+            assert neo4j.fuzzy_tokenize("x + y") == "x~1 + y~1"
+            assert neo4j.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
