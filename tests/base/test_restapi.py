@@ -6,6 +6,7 @@ Tests for http api base (mostly authentication)
 
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
@@ -227,6 +228,10 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
     def test_08_admin_users(self, client):
+
+        if detector.get_bool_from_os("ADMINER_DISABLED"):
+            log.warning("SKipp admin/users tests")
+            return
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
