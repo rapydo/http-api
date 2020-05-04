@@ -1,32 +1,42 @@
 # -*- coding: utf-8 -*-
 
 from restapi.services.detect import detector
+from restapi.tests import BaseTests
+from restapi.tests import API_URI
+# from restapi.tests import AUTH_URI, BaseAuthentication
 from restapi.utilities.logs import log
 
 
-def test_neo4j():
+class TestNeo4j(BaseTests):
 
-    if not detector.check_availability('neo4j'):
-        log.warning("Skipping neo4j test: service not avaiable")
-        return False
+    def _test_endpoint(self, client):
+        endpoint = API_URI + '/tests/neo4j'
+        r = client.get(endpoint)
+        assert r.status_code == 200
 
-    neo4j = detector.connectors_instances.get('neo4j').get_instance()
-    for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
-        u = neo4j.User.inflate(row[0])
-        assert u.email is not None
-        break
+    def test_connector(self):
 
-    assert neo4j.createUniqueIndex('a', 'b') == 'a#_#b'
+        if not detector.check_availability('neo4j'):
+            log.warning("Skipping neo4j test: service not avaiable")
+            return False
 
-    assert neo4j.sanitize_input("x") == "x"
-    assert neo4j.sanitize_input("x ") == "x"
-    assert neo4j.sanitize_input(" x") == "x"
-    assert neo4j.sanitize_input("*x") == "x"
-    assert neo4j.sanitize_input("x*") == "x"
-    assert neo4j.sanitize_input("x~") == "x"
-    assert neo4j.sanitize_input("~x") == "x"
-    assert neo4j.sanitize_input("x'") == "x\\'"
-    assert neo4j.sanitize_input("   *~~**x~~**  ") == "x"
-    assert neo4j.sanitize_input(" x x ") == "x x"
+        neo4j = detector.connectors_instances.get('neo4j').get_instance()
+        for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
+            u = neo4j.User.inflate(row[0])
+            assert u.email is not None
+            break
 
-    assert neo4j.fuzzy_tokenize("x AND y") == "x~1 AND y~1"
+        assert neo4j.createUniqueIndex('a', 'b') == 'a#_#b'
+
+        assert neo4j.sanitize_input("x") == "x"
+        assert neo4j.sanitize_input("x ") == "x"
+        assert neo4j.sanitize_input(" x") == "x"
+        assert neo4j.sanitize_input("*x") == "x"
+        assert neo4j.sanitize_input("x*") == "x"
+        assert neo4j.sanitize_input("x~") == "x"
+        assert neo4j.sanitize_input("~x") == "x"
+        assert neo4j.sanitize_input("x'") == "x\\'"
+        assert neo4j.sanitize_input("   *~~**x~~**  ") == "x"
+        assert neo4j.sanitize_input(" x x ") == "x x"
+
+        assert neo4j.fuzzy_tokenize("x AND y") == "x~1 AND y~1"

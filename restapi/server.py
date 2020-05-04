@@ -42,6 +42,7 @@ def create_app(
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
+    mem.TESTING = testing_mode
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
