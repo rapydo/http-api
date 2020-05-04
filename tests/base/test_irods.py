@@ -18,7 +18,6 @@ def test_irods():
 
     irods = connector.get_instance()
 
-    # TESTING HOME
     home = irods.get_user_home()
 
     assert irods.get_user_home("xxyyzz") == "/tempZone/home/xxyyzz"
