@@ -109,7 +109,7 @@ script:
   - rapydo ssl
   - printf "\n\n\nBackend server is starting\n\n\n"
   - sleep 30
-  - rapydo -s proxy, backend logs
+  - rapydo -s proxy,backend logs
   - printf "\n\n\n"
   - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - printf "\n\n\n"
