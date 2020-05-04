@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pytz
 from datetime import datetime
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
@@ -34,7 +35,7 @@ else:
             # just to avoid hardcoded tokens warnings...
             v = neo4j.createUniqueIndex('a', 'b')
             # Create a fake token and verify that is linked to nobody
-            t = neo4j.Token(jti=v, token=v, creation=datetime.now()).save()
+            t = neo4j.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
             assert neo4j.getSingleLinkedNode(t.emitted_for) is None
 
             try:
