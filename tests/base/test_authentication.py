@@ -62,10 +62,15 @@ def random_string(length, low=True, up=False, digits=False, symbols=False):
 def test_authentication():
 
     if not detector.check_availability('authentication'):
-        log.warning("Skipping authentication test: service not avaiable")
+        log.warning("Skipping authentication test: service not available")
         return False
 
-    auth = detector.connectors_instances.get('authentication').get_instance()
+    connector = detector.connectors_instances.get('authentication')
+    if connector is None:
+        log.warning("Skipping authentication test: connector is not available")
+        return False
+
+    auth = connector.get_instance()
     security = HandleSecurity(auth)
 
     min_pwd_len = int(os.environ.get("AUTH_MIN_PASSWORD_LENGTH", 9999))

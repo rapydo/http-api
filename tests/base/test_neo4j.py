@@ -8,7 +8,7 @@ from neobolt.exceptions import CypherSyntaxError
 from restapi.utilities.logs import log
 
 if not detector.check_availability('neo4j'):
-    log.warning("Skipping neo4j test: service not avaiable")
+    log.warning("Skipping neo4j test: service not avaliable")
 else:
     class TestNeo4j(BaseTests):
 

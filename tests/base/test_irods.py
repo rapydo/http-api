@@ -8,7 +8,7 @@ from restapi.utilities.logs import log
 def test_irods():
 
     if not detector.check_availability('irods'):
-        log.warning("Skipping irods test: service not avaiable")
+        log.warning("Skipping irods test: service not available")
         return False
 
     irods = detector.connectors_instances.get('irods').get_instance()
