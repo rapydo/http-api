@@ -6,10 +6,11 @@ import re
 from functools import wraps
 from neomodel import db, config
 from neomodel import StructuredNode
-from neomodel.exceptions import UniqueProperty, DeflateError
+from neomodel.match import NodeSet
+from neomodel.exceptions import UniqueProperty, DeflateError, DoesNotExist
 from neo4j.exceptions import ServiceUnavailable
 from restapi.connectors import Connector
-from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
+from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
 
 
@@ -22,6 +23,8 @@ def catch_db_exceptions(func):
         except DatabaseDuplicatedEntry as e:
             # already catched and parser, raise up
             raise(e)
+        except DoesNotExist as e:
+            raise (e)
         except UniqueProperty as e:
 
             t = "already exists with label"
@@ -39,7 +42,7 @@ def catch_db_exceptions(func):
 
             log.error("Unrecognized error message: {}", e)
             raise DatabaseDuplicatedEntry("Duplicated entry")
-        except DeflateError as e:  # pragma: no cover
+        except DeflateError as e:
             log.warning(e)
             return None
 
@@ -58,7 +61,7 @@ class NeomodelClient:
     def __init__(self, db):
         self.db = db
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
-        StructuredNode.get = catch_db_exceptions(StructuredNode.get)
+        NodeSet.get = catch_db_exceptions(NodeSet.get)
 
     def refresh_connection(self):
         if self.db.url is None:
