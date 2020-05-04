@@ -111,8 +111,7 @@ script:
   - sleep 30
   - rapydo -s backend logs
   - printf "\n\n\n"
-  # temporary disabled
-  # - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - printf "\n\n\n"
   - rapydo remove --all
 
