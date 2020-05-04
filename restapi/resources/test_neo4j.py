@@ -12,7 +12,7 @@ from restapi.utilities.globals import mem
 if mem.TESTING and detector.check_availability('neo4j'):
     class TestNeo4j(MethodResource, EndpointResource):
 
-        depends_on = ["CELERY_ENABLE"]
+        depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
         _GET = {
