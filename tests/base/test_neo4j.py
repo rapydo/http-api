@@ -9,12 +9,14 @@ from restapi.utilities.logs import log
 
 class TestNeo4j(BaseTests):
 
-    def _test_endpoint(self, client):
+    @staticmethod
+    def test_endpoint(client):
         endpoint = API_URI + '/tests/neo4j'
         r = client.get(endpoint)
         assert r.status_code == 400
 
-    def test_connector(self):
+    @staticmethod
+    def test_connector():
 
         if not detector.check_availability('neo4j'):
             log.warning("Skipping neo4j test: service not avaiable")

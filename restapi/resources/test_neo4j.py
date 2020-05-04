@@ -26,9 +26,9 @@ if mem.TESTING and detector.check_availability('neo4j'):
         @decorators.catch_errors()
         @graph_transactions
         def get(self):
-            neo4j = self.get_service_instance('neo4j')
+            self.neo4j = self.get_service_instance('neo4j')
             try:
-                neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+                self.neo4j.cypher("MATCH (n) RETURN n with a syntax error")
             except Exception as e:
                 raise RestApiException(str(e), status_code=400)
             return 1

@@ -41,10 +41,7 @@ def catch_db_exceptions(func):
             raise DatabaseDuplicatedEntry("Duplicated entry")
         except DeflateError as e:  # pragma: no cover
             log.warning(e)
-            raise RestApiException(
-                "Invalid object",
-                status_code=503
-            )
+            return None
 
         except ServiceUnavailable as e:  # pragma: no cover
             # refresh_connection()
@@ -61,6 +58,7 @@ class NeomodelClient:
     def __init__(self, db):
         self.db = db
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
+        StructuredNode.get = catch_db_exceptions(StructuredNode.get)
 
     def refresh_connection(self):
         if self.db.url is None:
