@@ -2,6 +2,7 @@
 
 import pika
 import json
+import ssl
 from restapi.utilities.logs import log
 from restapi.connectors import Connector
 
@@ -66,8 +67,7 @@ class RabbitWrapper:
         try:
             ssl_options = None
             if ssl_enabled:
-                import ssl
-                log.warning("SSL not implemented for Rabbit")
+                # log.warning("SSL not implemented for Rabbit")
                 # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
                 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 # context.verify_mode = ssl.CERT_REQUIRED
@@ -79,8 +79,6 @@ class RabbitWrapper:
                 ssl_options = pika.SSLOptions(
                     context=context
                 )
-
-                ssl_options = None
 
             self.__connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
