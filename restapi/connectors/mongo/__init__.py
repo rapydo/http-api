@@ -57,13 +57,9 @@ class MongoExt(Connector):
 
     def custom_connection(self, **kwargs):
 
-        ##################
-        # mix kwargs with variables
         variables = self.variables
-        for key, value in kwargs.items():
-            variables[key] = value
+        variables.update(kwargs)
 
-        ##################
         # connect for authentication if required
         uri = "mongodb://{}:{}/{}".format(
             variables.get('host'),

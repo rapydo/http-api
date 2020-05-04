@@ -40,8 +40,8 @@ def catch_db_exceptions(func):
                 error = "A {} already exists with {} = {}".format(node, prop, val)
                 raise DatabaseDuplicatedEntry(error)
 
-            log.error("Unrecognized error message: {}", e)
-            raise DatabaseDuplicatedEntry("Duplicated entry")
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
         except DeflateError as e:
             log.warning(e)
             return None
@@ -148,10 +148,7 @@ class NeoModel(Connector):
 
     def custom_connection(self, **kwargs):
 
-        if len(kwargs) > 0:
-            variables = kwargs
-        else:
-            variables = self.variables
+        variables = kwargs or self.variables
 
         self.uri = "bolt://{}:{}@{}:{}".format(
             # User:Password

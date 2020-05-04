@@ -19,10 +19,7 @@ class PushpinExt(Connector):
 
     def custom_connection(self, **kwargs):
 
-        if len(kwargs) > 0:
-            variables = kwargs
-        else:
-            variables = self.variables
+        variables = kwargs or self.variables
 
         host = variables.get('host')
         port = variables.get('port')
