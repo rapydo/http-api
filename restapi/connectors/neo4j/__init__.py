@@ -6,9 +6,10 @@ import re
 from functools import wraps
 from neomodel import db, config
 from neomodel import StructuredNode
-from neomodel.exceptions import UniqueProperty
+from neomodel.exceptions import UniqueProperty, DeflateError
+from neo4j.exceptions import ServiceUnavailable
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry
+from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
 
 
@@ -38,6 +39,16 @@ def catch_db_exceptions(func):
 
             log.error("Unrecognized error message: {}", e)
             raise DatabaseDuplicatedEntry("Duplicated entry")
+        except DeflateError as e:  # pragma: no cover
+            log.warning(e)
+            raise RestApiException(
+                "Invalid object",
+                status_code=503
+            )
+
+        except ServiceUnavailable as e:  # pragma: no cover
+            # refresh_connection()
+            raise e
 
         except Exception as e:
             log.critical("Raised unknown exception: {}", type(e))
