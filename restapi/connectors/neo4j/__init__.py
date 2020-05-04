@@ -53,7 +53,7 @@ def catch_db_exceptions(func):
             # refresh_connection()
             raise e
 
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 

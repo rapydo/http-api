@@ -16,7 +16,7 @@ if mem.TESTING and detector.check_availability('neo4j'):
         labels = ["tests"]
 
         _GET = {
-            "/tests/neo4j": {
+            "/tests/neo4j<test>": {
                 "summary": "Execute tests against the neo4j connector",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
@@ -25,10 +25,13 @@ if mem.TESTING and detector.check_availability('neo4j'):
 
         @decorators.catch_errors()
         @graph_transactions
-        def get(self):
+        def get(self, test):
             self.neo4j = self.get_service_instance('neo4j')
             try:
-                self.neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+                if test == '1':
+                    self.neo4j.cypher("MATCH (n) RETURN n LIMIT 1")
+                elif test == '2':
+                    self.neo4j.cypher("MATCH (n) RETURN n with a syntax error")
             except Exception as e:
                 raise RestApiException(str(e), status_code=400)
             return 1

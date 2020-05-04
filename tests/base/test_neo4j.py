@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from datetime import datetime
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.tests import API_URI
@@ -15,7 +15,11 @@ else:
         @staticmethod
         def test_endpoint(client):
             endpoint = API_URI + '/tests/neo4j'
-            r = client.get(endpoint)
+
+            r = client.get(endpoint + "/1")
+            assert r.status_code == 200
+
+            r = client.get(endpoint + "/2")
             assert r.status_code == 400
 
         @staticmethod
@@ -26,6 +30,10 @@ else:
                 u = neo4j.User.inflate(row[0])
                 assert u.email is not None
                 break
+
+            # Create a fake token and verify that is linked to nobody
+            t = neo4j.Token(jti='fake', token='fake', creation=datetime.now())
+            assert neo4j.getSingleLinkedNode(t.emitted_for) is None
 
             try:
                 neo4j.cypher("MATCH (n) RETURN n with a syntax error")
