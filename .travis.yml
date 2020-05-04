@@ -85,7 +85,6 @@ script:
     fi
 
 
-  - git init
   - git remote add origin https://your_remote_git/your_project.git
   - rapydo -p prj init
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
