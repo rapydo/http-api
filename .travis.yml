@@ -106,8 +106,8 @@ script:
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  - sleep 20
-  - rapydo logs
+  - sleep 40
+  - rapydo proxy,backend logs
 
   - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - rapydo -s proxy,backend logs --tail 20
