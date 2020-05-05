@@ -30,7 +30,7 @@ script:
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
   - export TESTING=1
-  - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
+  - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
 
   - mkdir $TEMPLATE
