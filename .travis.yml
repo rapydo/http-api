@@ -27,15 +27,15 @@ env:
 - TEMPLATE=wrapped
 
 script:
-  - export TESTING=1
-  - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
-  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
-
   # Randomize auth service to test some services
   # - auth_services=(postgres mysql neo4j mongo)
   - auth_services=(postgres neo4j mongo)
   - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
+
+  - export TESTING=1
+  - CURRENT_VERSION=$(grep '"version"' src/package.json | awk {'print $2'} | tr -d '", ')
+  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
 
   - mkdir $TEMPLATE
   - cd $TEMPLATE
