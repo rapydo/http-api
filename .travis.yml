@@ -94,26 +94,23 @@ script:
   - rapydo logs
   - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
 
-  # Continue with tests: coverage & production
-  - printf "\n\n\n"
+  # Send coverage
   - rapydo dump
-  - printf "\n\n\n"
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
-  - printf "\n\n\n"
+
+  # Test production
   - rapydo remove --all
-  - printf "\n\n\n"
   - rapydo --production init --force
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  - printf "\n\n\nBackend server is starting\n\n\n"
   - sleep 30
   - rapydo logs
-  - printf "\n\n\n"
+
   - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-  - printf "\n\n\n"
+
   - rapydo remove --all
 
 notifications:
