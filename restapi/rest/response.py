@@ -9,6 +9,7 @@ from restapi import __version__ as version
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
+from restapi.models import GET_SCHEMA_KEY
 
 
 def handle_marshmallow_errors(error):
@@ -17,7 +18,7 @@ def handle_marshmallow_errors(error):
 
         params = request.get_json() or request.form or {}
 
-        get_schema = params.get("get_schema", False)
+        get_schema = params.get(GET_SCHEMA_KEY, False)
         if get_schema or str(get_schema) == "1":
 
             return ResponseMaker.respond_with_schema(
@@ -226,6 +227,8 @@ class ResponseMaker:
         fields = []
         try:
             for field, field_def in schema._declared_fields.items():
+                if field == GET_SCHEMA_KEY:
+                    continue
 
                 f = {}
 
