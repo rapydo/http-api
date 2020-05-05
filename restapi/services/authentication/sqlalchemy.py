@@ -221,10 +221,17 @@ class Authentication(BaseAuthentication):
             self.db.session.rollback()
 
     def refresh_token(self, jti):
-        now = datetime.now(pytz.utc)
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
         if token_entry is None:
             return False
+
+        # MySQL seems unable to save tz-aware datetimes...
+        if token_entry.expiration.tzinfo is None:
+            # Create a offset-naive datetime
+            now = datetime.now()
+        else:
+            # Create a offset-aware datetime
+            now = datetime.now(pytz.utc)
 
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)

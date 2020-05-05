@@ -8,10 +8,7 @@ services:
 env:
 
 - TEMPLATE=postgres
-# Disabled for now because no use case is defined to use mysql
-# Issues when validating token: timezone seems to be not saved and
-# flag timezone=True is ignored in models
-# - TEMPLATE=mysql
+- TEMPLATE=mysql
 - TEMPLATE=neo4j
 - TEMPLATE=mongo
 - TEMPLATE=celery-rabbit-rabbit
@@ -28,8 +25,7 @@ env:
 
 script:
   # Randomize auth service to test some services
-  # - auth_services=(postgres mysql neo4j mongo)
-  - auth_services=(postgres neo4j mongo)
+  - auth_services=(postgres mysql neo4j mongo)
   - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
@@ -109,7 +105,7 @@ script:
   - sleep 30
   - rapydo logs
 
-  - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - rapydo -s proxy,backend logs --tail 20
 
   - rapydo remove --all
