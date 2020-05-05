@@ -110,7 +110,7 @@ script:
   - rapydo logs
 
   - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-  - rapydo -s backend logs --tail 20
+  - rapydo -s proxy,backend logs --tail 20
 
   - rapydo remove --all
 
