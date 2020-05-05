@@ -102,17 +102,10 @@ script:
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  - sleep 30
+  - sleep 60
   - rapydo logs
 
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-
-  # Debug code: sometings curl localhost goes in timeout after 5 seconds...
-  # Problems with backend upstream? Back starts too late?
-  # A proxy restart could fix it by resetting the upstream??
-  - rapydo restart
-  - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-  ##### 
 
   - rapydo -s proxy,backend logs --tail 20
 
