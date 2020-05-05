@@ -65,7 +65,6 @@ class RabbitWrapper:
         )
 
         try:
-            ssl_options = None
             if ssl_enabled:
                 # log.warning("SSL not implemented for Rabbit")
                 # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
@@ -77,8 +76,11 @@ class RabbitWrapper:
                 # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
                 # context.load_verify_locations(cafile=client_certs)
                 ssl_options = pika.SSLOptions(
-                    context=context
+                    context=context,
+                    server_hostname=self.__variables.get('host')
                 )
+            else:
+                ssl_options = None
 
             self.__connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
@@ -90,6 +92,12 @@ class RabbitWrapper:
                 )
             )
             self._connection_retries = 0
+
+            # with pika.BlockingConnection(conn_params) as conn:
+            #     ch = conn.channel()
+            #     ch.queue_declare("foobar")
+            #     ch.basic_publish("", "foobar", "Hello, world!")
+            #     print(ch.basic_get("foobar"))
 
         except BaseException as e:
             ''' Includes AuthenticationError, ProbableAuthenticationError,

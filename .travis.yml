@@ -91,7 +91,7 @@ script:
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
   - rapydo start
   - sleep 2
-  - rapydo -s backend logs
+  - rapydo logs
   - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
 
   # Continue with tests: coverage & production
@@ -106,11 +106,11 @@ script:
   - printf "\n\n\n"
   - rapydo --production init --force
   - rapydo pull
+  - rapydo ssl --volatile
   - rapydo start
-  - rapydo ssl
   - printf "\n\n\nBackend server is starting\n\n\n"
   - sleep 30
-  - rapydo -s proxy,backend logs
+  - rapydo logs
   - printf "\n\n\n"
   - curl -k -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - printf "\n\n\n"
