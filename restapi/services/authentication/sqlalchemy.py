@@ -98,8 +98,8 @@ class Authentication(BaseAuthentication):
             # if retry <= 0:
             #     log.error(str(e))
             #     log.warning("Errors retrieving user object, retrying...")
-                # return self.get_user_object(
-                #     username=username, payload=payload, retry=1)
+            #     return self.get_user_object(
+            #         username=username, payload=payload, retry=1)
             raise e
 
         return user
