@@ -128,7 +128,7 @@ def get_service_address(variables, host_var, port_var, service):
     if port is None:
         log.exit("Cannot find any variable matching {} for {}", port_var, service)
 
-    log.debug("Checking address: {}:{} ...", host, port)
+    log.info("Connecting to {} ({}:{})...", service, host, port)
 
     return host, int(port)
 

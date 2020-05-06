@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
+import errno
+import socket
 import psutil
+import math
 from datetime import datetime
 from restapi.utilities.logs import log
 
@@ -42,21 +46,18 @@ def find_process(process_name, keywords=None, prefix=None):
 
 def wait_socket(host, port, service_name):
 
-    import time
-    import errno
-    import socket
-
-    sleep_time = 2
-    timeout = 1
+    SLEEP_TIME = 2
+    TIMEOUT = 1
 
     log.verbose("Waiting for {} ({}:{})", service_name, host, port)
 
     counter = 0
+    begin = time.time()
     while True:
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-            s.settimeout(timeout)
+            s.settimeout(TIMEOUT)
 
             try:
                 result = s.connect_ex((host, port))
@@ -70,13 +71,13 @@ def wait_socket(host, port, service_name):
             counter += 1
             if counter % 15 == 0:
                 log.warning(
-                    "'{}' service ({}:{}) still unavailable after {} seconds",
+                    "{} ({}:{}) is still unavailable after {} seconds",
                     service_name,
                     host,
                     port,
-                    (sleep_time + timeout) * counter,
+                    math.ceil(time.time() - begin),
                 )
             else:
-                log.debug("Not reachable yet: {} ({}:{})", service_name, host, port)
+                log.debug("{} ({}:{}) not reachable", service_name, host, port)
 
-            time.sleep(sleep_time)
+            time.sleep(SLEEP_TIME)

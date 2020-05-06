@@ -87,15 +87,13 @@ class Verify(EndpointResource):
     @decorators.auth.required(roles=['admin_root'])
     def get(self, service):
 
-        log.critical(detector.available_services)
         if not detector.check_availability(service):
             raise RestApiException(
                 "Unknown service: {}".format(service),
-                status_code=401,
+                status_code=404,
             )
 
-        service_instance = self.get_service_instance(service, global_instance=False)
-        log.critical(service_instance)
+        self.get_service_instance(service, global_instance=False)
         return self.response("Service is reachable: {}".format(service))
 
 
