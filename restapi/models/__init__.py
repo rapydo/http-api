@@ -18,6 +18,7 @@ class Schema(MarshmallowSchema):
     class Meta:
         ordered = True
 
+    # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
     def raise_get_schema(self, data, **kwargs):
         if GET_SCHEMA_KEY in data:

@@ -46,7 +46,7 @@ def wait_socket(host, port, service_name):
     import errno
     import socket
 
-    sleep_time = 1
+    sleep_time = 2
     timeout = 1
 
     log.verbose("Waiting for {} ({}:{})", service_name, host, port)
@@ -68,7 +68,7 @@ def wait_socket(host, port, service_name):
                 break
 
             counter += 1
-            if counter % 20 == 0:
+            if counter % 15 == 0:
                 log.warning(
                     "'{}' service ({}:{}) still unavailable after {} seconds",
                     service_name,
