@@ -203,6 +203,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_password_hash(password):
+        if not password:
+            raise RestApiException("Invalid password")
         return pwd_context.hash(password)
 
     # ########################

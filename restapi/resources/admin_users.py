@@ -341,8 +341,6 @@ class AdminUsers(MethodResource, EndpointResource):
     @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
     def put(self, user_id, **kwargs):
 
-        # log.critical(kwargs)
-
         user = self.auth.get_users(user_id)
 
         if user is None:
@@ -351,9 +349,6 @@ class AdminUsers(MethodResource, EndpointResource):
             )
 
         user = user[0]
-
-        if "password" in kwargs and kwargs["password"] == "":
-            del kwargs["password"]
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -368,8 +363,6 @@ class AdminUsers(MethodResource, EndpointResource):
             kwargs.pop(r)
 
         self.auth.link_roles(user, roles)
-        # Cannot update email address (unique username used to login-in)
-        kwargs.pop('email', None)
 
         if self.neo4j_enabled:
             self.graph = self.get_service_instance('neo4j')

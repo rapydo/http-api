@@ -330,9 +330,6 @@
 #                 "This user cannot be found or you are not authorized"
 #             )
 
-#         if "password" in kwargs and kwargs["password"] == "":
-#             del kwargs["password"]
-
 #         if "password" in kwargs:
 #             unhashed_password = kwargs["password"]
 #             kwargs["password"] = BaseAuthentication.get_password_hash(
@@ -357,8 +354,6 @@
 #                 )
 
 #         self.auth.link_roles(user, roles)
-#         # Cannot update email address (unique username used to login-in)
-#         kwargs.pop('email', None)
 
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
