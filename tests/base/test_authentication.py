@@ -170,10 +170,10 @@ def test_authentication_service():
     if detector.check_availability('neo4j'):
         from restapi.services.authentication.neo4j import Authentication
 
-    elif not detector.check_availability('sqlalchemy'):
+    elif detector.check_availability('sqlalchemy'):
         from restapi.services.authentication.sqlalchemy import Authentication
 
-    elif not detector.check_availability('mongo'):
+    elif detector.check_availability('mongo'):
         from restapi.services.authentication.mongo import Authentication
     else:
         log.warning("Skipping authentication test: no database available")
@@ -183,7 +183,8 @@ def test_authentication_service():
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
     pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
-    assert auth.get_password_hash(pwd1) != auth.get_password_hash(pwd2)
+    hash_1 = auth.get_password_hash(pwd1)
+    assert hash_1 != auth.get_password_hash(pwd2)
     assert len(auth.get_password_hash(pwd1)) > 0
     assert len(auth.get_password_hash("")) > 0
     try:
@@ -192,3 +193,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == "Invalid password"
+
+    assert auth.verify_password(pwd1, hash_1)
+    assert not auth.verify_password(None, hash_1)
+    assert not auth.verify_password(pwd1, None)
+    assert not auth.verify_password(None, None)

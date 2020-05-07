@@ -207,7 +207,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self._token
 
     @abc.abstractmethod
-    def get_user_object(self, username=None, payload=None):
+    def get_user_object(self, username=None, payload=None):  # pragma: no cover
         """
         How to retrieve the user from the current service,
         based on the unique username given, or from the content of the token
@@ -215,7 +215,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_users(self, user_id=None):
+    def get_users(self, user_id=None):  # pragma: no cover
         """
         How to retrieve users list from the current service,
         Optionally filter by the unique uuid given
@@ -223,7 +223,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None, get_all=False):
+    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
             Return the list of tokens
         """
@@ -314,7 +314,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return new_token, jti
 
     @abc.abstractmethod
-    def verify_token_custom(self, jti, user, payload):
+    def verify_token_custom(self, jti, user, payload):  # pragma: no cover
         """
             This method MUST be implemented by specific Authentication Methods
             to add more specific validation contraints
@@ -322,7 +322,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def refresh_token(self, jti):
+    def refresh_token(self, jti):  # pragma: no cover
         """
             Verify shortTTL to refresh token if not expired
             Invalidate token otherwise
@@ -401,11 +401,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
-    def save_user(self, user):
+    def save_user(self, user):  # pragma: no cover
         log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
-    def invalidate_token(self, token):
+    def invalidate_token(self, token):  # pragma: no cover
         """
             With this method the specified token must be invalidated
             as expected after a user logout
@@ -481,14 +481,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(["local_admin"], warnings=False)
 
     @abc.abstractmethod
-    def get_roles(self):
+    def get_roles(self):  # pragma: no cover
         """
         How to retrieve all the roles
         """
         return
 
     @abc.abstractmethod
-    def get_roles_from_user(self, userobj=None):
+    def get_roles_from_user(self, userobj=None):  # pragma: no cover
         """
         How to retrieve the role of a user from the current service,
         based on a user object.
@@ -501,7 +501,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
 
     @abc.abstractmethod
-    def init_users_and_roles(self):
+    def init_users_and_roles(self):  # pragma: no cover
         """
         Create roles and a user if no one exists.
         A possible algorithm:
@@ -564,8 +564,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ################
     # # Create Users #
     # ################
-    # @abc.abstractmethod
-    def create_user(self, userdata, roles):
+    @abc.abstractmethod
+    def create_user(self, userdata, roles):  # pragma: no cover
         """
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role
@@ -574,7 +574,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def link_roles(self, user, roles):
+    def link_roles(self, user, roles):  # pragma: no cover
         """
         A method to assign roles to a user
         """
