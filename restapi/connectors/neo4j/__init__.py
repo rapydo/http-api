@@ -10,6 +10,9 @@ from neomodel.match import NodeSet
 from neomodel.exceptions import UniqueProperty, DeflateError, DoesNotExist
 from neo4j.exceptions import ServiceUnavailable
 from neobolt.exceptions import CypherSyntaxError
+from neobolt.addressing import AddressError as neobolt_AddressError
+from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
+from neobolt.exceptions import AuthError as neobolt_AuthError
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
@@ -131,22 +134,12 @@ class NeomodelClient:
 class NeoModel(Connector):
     def set_connection_exception(self):
 
-        try:
-            # neomodel 3.3.1-
-            import socket
-            import neo4j
-
-            return (
-                socket.gaierror,
-                neo4j.bolt.connection.ServiceUnavailable,  # neo4j 3.2+
-                neo4j.exceptions.ServiceUnavailable,  # neo4j 3.2.2+
-            )
-        except AttributeError:
-            # neomodel 3.3.2
-            from neobolt.addressing import AddressError
-            from neobolt.exceptions import ServiceUnavailable
-
-            return (ServiceUnavailable, AddressError)
+        # from neomodel 3.3.2
+        return (
+            neobolt_ServiceUnavailable,
+            neobolt_AddressError,
+            neobolt_AuthError
+        )
 
     def custom_connection(self, **kwargs):
 
