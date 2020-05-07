@@ -186,7 +186,7 @@ def test_authentication_service():
     hash_1 = auth.get_password_hash(pwd1)
     assert hash_1 != auth.get_password_hash(pwd2)
     assert len(auth.get_password_hash(pwd1)) > 0
-    assert len(auth.get_password_hash("")) > 0
+    assert auth.get_password_hash("") == ""
     try:
         auth.get_password_hash(None)
         pytest.fail('Hashed a None password!')
