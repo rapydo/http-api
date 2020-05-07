@@ -179,4 +179,16 @@ def test_authentication_service():
         log.warning("Skipping authentication test: no database available")
         return False
 
-    Authentication()
+    auth = Authentication()
+
+    pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
+    pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
+    assert auth.get_password_hash(pwd1) != auth.get_password_hash(pwd2)
+    assert len(auth.get_password_hash(pwd1)) > 0
+    assert len(auth.get_password_hash("")) > 0
+    try:
+        auth.get_password_hash(None)
+        pytest.fail('Hashed a None password!')
+    except RestApiException as e:
+        assert e.status_code == 401
+        assert str(e) == "Invalid password"
