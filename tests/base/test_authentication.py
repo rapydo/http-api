@@ -183,10 +183,18 @@ def test_authentication_service():
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
     pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
+
     hash_1 = auth.get_password_hash(pwd1)
+    assert len(hash_1) > 0
     assert hash_1 != auth.get_password_hash(pwd2)
-    assert len(auth.get_password_hash(pwd1)) > 0
-    assert auth.get_password_hash("") == ""
+
+    try:
+        auth.get_password_hash("")
+        pytest.fail('Hashed a empty password!')
+    except RestApiException as e:
+        assert e.status_code == 401
+        assert str(e) == "Invalid password"
+
     try:
         auth.get_password_hash(None)
         pytest.fail('Hashed a None password!')
