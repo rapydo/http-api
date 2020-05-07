@@ -287,12 +287,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return encode, payload['jti']
 
-    def create_temporary_token(self, user, duration=300, token_type=None):
-        expiration = timedelta(seconds=duration)
-        payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
-        return self.create_token(payload)
-
-    def create_reset_token(self, user, token_type, duration=86400):
+    def create_temporary_token(self, user, token_type, duration=86400):
         # invalidate previous tokens with same token_type
         tokens = self.get_tokens(user=user)
         for t in tokens:
@@ -306,12 +301,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if self.invalidate_token(tok):
                 log.info("Previous token invalidated: {}", tok)
 
-        # Generate a new reset token
-        new_token, jti = self.create_temporary_token(
-            user, duration=duration, token_type=token_type
-        )
-
-        return new_token, jti
+        expiration = timedelta(seconds=duration)
+        payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
+        return self.create_token(payload)
 
     @abc.abstractmethod
     def verify_token_custom(self, jti, user, payload):  # pragma: no cover

@@ -23,7 +23,7 @@ def send_activation_link(auth, user):
         "project.title", default='Unkown title'
     )
 
-    activation_token, jti = auth.create_reset_token(user, auth.ACTIVATE_ACCOUNT)
+    activation_token, jti = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
 
     domain = os.environ.get("DOMAIN")
     if PRODUCTION:
@@ -519,7 +519,7 @@ class RecoverPassword(EndpointResource):
             "project.title", default='Unkown title'
         )
 
-        reset_token, jti = self.auth.create_reset_token(user, self.auth.PWD_RESET)
+        reset_token, jti = self.auth.create_temporary_token(user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
         if PRODUCTION:
