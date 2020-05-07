@@ -12,26 +12,9 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.connectors.authentication import HandleSecurity
 from restapi.utilities.templates import get_html_template
-# from restapi.utilities.time import timestamp_from_string
 from restapi.utilities.meta import Meta
 
 from restapi.utilities.logs import log
-
-"""
-class Profile
-    GET: Current user informations
-    POST: Create new user (registration)
-    PUT: Update profile for current user
-
-class ProfileActivate
-    PUT: active profile (user clicked the activation link)
-    POST: request activation link
-
-class RecoverPassword
-    POST: request reset link
-    PUT: set new password (user clicked the reset link)
-
-"""
 
 
 def send_activation_link(auth, user):
@@ -607,7 +590,6 @@ class RecoverPassword(EndpointResource):
             )
 
         token = token.pop(0)
-        # emitted = timestamp_from_string(token["emitted"])
         emitted = token["emitted"]
 
         last_change = None

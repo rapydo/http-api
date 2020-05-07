@@ -11,17 +11,6 @@ from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
-"""
-class Tokens
-    GET: get list of tokens for the current user
-    DELETE: invalidate a token
-
-class AdminTokens
-    GET: get tokens for all users (admin only)
-
-"""
-
-
 class TokenSchema(Schema):
     id = fields.Str()
     IP = fields.Str()

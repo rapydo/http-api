@@ -10,23 +10,6 @@ from restapi import decorators
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-"""
-class Status
-    GET: return a standard message if API are reachable
-
-class Verify
-    GET: verify connection to a single service
-
-class SwaggerSpecifications
-    GET: return swagger specs
-
-class Queue
-    GET: get list of celery tasks
-    PUT: revoke a (not running) task
-    DELETE: terminate (if running) and revoke a task
-
-"""
-
 
 class Status(MethodResource, EndpointResource):
     """ Check if APIs are online """

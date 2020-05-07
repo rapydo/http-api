@@ -215,16 +215,14 @@ class RabbitWrapper:
 
         return False
 
-    '''
-    Return existing channel (if healthy) or create and
-    return new one.
-
-    :return: An healthy channel.
-    :raises: AttributeError if the connection is None.
-    '''
-
     def __get_channel(self):
+        '''
+        Return existing channel (if healthy) or create and
+        return new one.
 
+        :return: An healthy channel.
+        :raises: AttributeError if the connection is None.
+        '''
         if self.__channel is None:
             log.verbose('Creating new channel.')
             self.__channel = self.__connection.channel()
