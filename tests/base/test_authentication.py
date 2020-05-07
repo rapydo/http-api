@@ -59,7 +59,7 @@ def random_string(length, low=True, up=False, digits=False, symbols=False):
     return randstr
 
 
-def test_authentication():
+def test_authentication_connector():
 
     if not detector.check_availability('authentication'):
         log.warning("Skipping authentication test: service not available")
@@ -160,3 +160,23 @@ def test_authentication():
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == 'Invalid verification code'
+
+
+def test_authentication_service():
+    if not detector.check_availability('authentication'):
+        log.warning("Skipping authentication test: service not available")
+        return False
+
+    if detector.check_availability('neo4j'):
+        from restapi.services.authentication.neo4j import Authentication
+
+    elif not detector.check_availability('sqlalchemy'):
+        from restapi.services.authentication.sqlalchemy import Authentication
+
+    elif not detector.check_availability('mongo'):
+        from restapi.services.authentication.mongo import Authentication
+    else:
+        log.warning("Skipping authentication test: no database available")
+        return False
+
+    Authentication()

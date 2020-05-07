@@ -64,16 +64,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         credentials = get_project_configuration("variables.backend.credentials")
 
-        # Deprecated since 0.7.0
-        if credentials.get('username') is not None:
-            log.exit("Obsolete use of variables.backend.credentials.username")
-
-        # Deprecated since 0.7.0
-        if credentials.get('password') is not None:
-            log.exit("Obsolete use of variables.backend.credentials.password")
-
-        # cls.default_user = credentials.get('username', None)
-        # cls.default_password = credentials.get('password', None)
         cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
         cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
@@ -85,14 +75,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         cls.default_roles = [roles.get('user'), roles.get('internal'), cls.role_admin]
         if cls.default_role is None or None in cls.default_roles:
             log.exit("Default roles are not available!")
-
-    # @abc.abstractmethod
-    # def __init__(self, services=None):
-    #     """
-    #     Make sure you can create an instance/connection,
-    #     or reuse one service from `server.py` operations.
-    #     """
-    #     return
 
     def make_login(self, username, password):
         """ The method which will check if credentials are good to go """
