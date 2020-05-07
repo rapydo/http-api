@@ -211,8 +211,4 @@ def test_authentication_service():
 
     assert not auth.verify_password(pwd1, None)
 
-    try:
-        auth.verify_password(None, None)
-        pytest.fail('Hashed a None password!')
-    except TypeError:
-        pass
+    assert not auth.verify_password(None, None)
