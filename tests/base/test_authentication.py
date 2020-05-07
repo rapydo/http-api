@@ -203,6 +203,20 @@ def test_authentication_service():
         assert str(e) == "Invalid password"
 
     assert auth.verify_password(pwd1, hash_1)
-    assert not auth.verify_password(None, hash_1)
-    assert not auth.verify_password(pwd1, None)
-    assert not auth.verify_password(None, None)
+    try:
+        assert not auth.verify_password(None, hash_1)
+        pytest.fail('Hashed a None password!')
+    except TypeError:
+        pass
+
+    try:
+        assert not auth.verify_password(pwd1, None)
+        pytest.fail('Hashed a None password!')
+    except TypeError:
+        pass
+
+    try:
+        assert not auth.verify_password(None, None)
+        pytest.fail('Hashed a None password!')
+    except TypeError:
+        pass
