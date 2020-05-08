@@ -5,13 +5,9 @@ import sys
 import json
 import urllib
 import re
-from restapi.confs import PRODUCTION
+from loguru import logger as log
 
-try:
-    from loguru import logger as log
-except ValueError as e:
-    print("Cannot initialize logs: {}".format(e))
-    sys.exit(1)
+from restapi.confs import PRODUCTION
 
 
 log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')

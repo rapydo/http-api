@@ -188,14 +188,6 @@ class Meta:
         return module
 
     @staticmethod
-    def class_factory(name, parents=object, attributes_and_methods=None):
-        if not isinstance(parents, tuple):
-            parents = (parents,)
-        if attributes_and_methods is None:
-            attributes_and_methods = {}
-        return type(name, parents, attributes_and_methods)
-
-    @staticmethod
     def get_celery_tasks_from_module(submodule):
         """
             Extract all celery tasks from a module.
