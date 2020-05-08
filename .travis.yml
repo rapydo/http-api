@@ -103,8 +103,8 @@ script:
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  # wait for all services to start
-  - sleep 20
+  # wait for all services to start (tried with 20... not always enough!)
+  - sleep 25
   - rapydo logs
   # too may issues with mongo in production mode... Everything seems to work,
   # but often nginx does not respond and log:
