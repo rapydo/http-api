@@ -3,6 +3,7 @@
 import os
 import re
 from urllib.parse import urlparse
+from functools import lru_cache
 
 from glom import glom
 
@@ -53,6 +54,7 @@ ABS_RESTAPI_CONFSPATH = os.path.dirname(os.path.realpath(__file__))
 ABS_RESTAPI_PATH = os.path.dirname(ABS_RESTAPI_CONFSPATH)
 
 
+@lru_cache
 def get_project_configuration(key, default=None):
     return glom(mem.configuration, key, default=default)
 
