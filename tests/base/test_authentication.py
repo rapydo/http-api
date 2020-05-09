@@ -3,6 +3,8 @@ import os
 import random
 import string
 import pytest
+from restapi.utilities.globals import mem
+from restapi.customization import Customizer
 from restapi.connectors.authentication import HandleSecurity
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
@@ -179,6 +181,9 @@ def test_authentication_service():
         log.warning("Skipping authentication test: no database available")
         return False
 
+    # mem is required by Authentication init... :-(
+    mem.customizer = Customizer()
+    mem.configuration = mem.customizer.load_configuration()
     auth = Authentication()
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
