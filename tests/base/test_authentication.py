@@ -172,15 +172,12 @@ def test_authentication_service():
 
     db_service = None
     if detector.check_availability('neo4j'):
-        # from restapi.services.authentication.neo4j import Authentication
         db_service = detector.connectors_instances.get('neo4j').get_instance()
 
     elif detector.check_availability('sqlalchemy'):
-        # from restapi.services.authentication.sqlalchemy import Authentication
         db_service = detector.connectors_instances.get('sqlalchemy').get_instance()
 
     elif detector.check_availability('mongo'):
-        # from restapi.services.authentication.mongo import Authentication
         db_service = detector.connectors_instances.get('mongo').get_instance()
 
     else:
@@ -194,14 +191,10 @@ def test_authentication_service():
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
     connector = detector.connectors_instances.get('authentication')
-    # service_instance = connector.custom_init(abackend=db_service)
-    # assert service_instance.db is not None
-    # auth = Authentication()
 
     auth = connector.get_instance(global_instance=True, authenticator=True)
     auth.db = db_service
-    security = HandleSecurity(auth)
-    # detector.get_service_instance(detector.authentication_service)
+    # security = HandleSecurity(auth)
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
     pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
@@ -243,13 +236,13 @@ def test_authentication_service():
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
     # Just to verify that the function works
-    assert not security.verify_token(user.email, "doesnotexists")
-    assert not security.verify_token(
+    assert not auth.verify_toke(user.email, "doesnotexists")
+    assert not auth.verify_toke(
         user.email,
         "doesnotexists",
         token_type=auth.PWD_RESET
     )
-    assert not security.verify_token(
+    assert not auth.verify_toke(
         user.email,
         "doesnotexists",
         token_type=auth.ACTIVATE_ACCOUNT
@@ -258,44 +251,44 @@ def test_authentication_service():
     t1 = auth.create_temporary_token(user, auth.PWD_RESET)
     assert t1 is not None
     assert isinstance(t1, str)
-    assert not security.verify_token(user.email, t1)
-    assert not security.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
-    assert security.verify_token(user.email, t1, token_type=auth.PWD_RESET)
-    assert not security.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not security.verify_token("another@nomail.org", t1)
+    assert not auth.verify_toke(user.email, t1)
+    assert not auth.verify_toke(user.email, t1, token_type=auth.FULL_TOKEN)
+    assert auth.verify_toke(user.email, t1, token_type=auth.PWD_RESET)
+    assert not auth.verify_toke(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_toke("another@nomail.org", t1)
 
     # Create another type of temporary token => t1 is still valid
     t2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
     assert t2 is not None
     assert isinstance(t2, str)
-    assert not security.verify_token(user.email, t2)
-    assert not security.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
-    assert not security.verify_token(user.email, t2, token_type=auth.PWD_RESET)
-    assert security.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not security.verify_token("another@nomail.org", t2)
+    assert not auth.verify_toke(user.email, t2)
+    assert not auth.verify_toke(user.email, t2, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_toke(user.email, t2, token_type=auth.PWD_RESET)
+    assert auth.verify_toke(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_toke("another@nomail.org", t2)
 
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
     t3 = auth.create_temporary_token(user, auth.PWD_RESET, duration=EXPIRATION)
     assert t3 is not None
     assert isinstance(t3, str)
-    assert security.verify_token(user.email, t3, token_type=auth.PWD_RESET)
-    assert not security.verify_token(user.email, t1)
-    assert not security.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
-    assert not security.verify_token(user.email, t1, token_type=auth.PWD_RESET)
-    assert not security.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+    assert auth.verify_toke(user.email, t3, token_type=auth.PWD_RESET)
+    assert not auth.verify_toke(user.email, t1)
+    assert not auth.verify_toke(user.email, t1, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_toke(user.email, t1, token_type=auth.PWD_RESET)
+    assert not auth.verify_toke(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
     t4 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
     assert t4 is not None
     assert isinstance(t4, str)
-    assert security.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not security.verify_token(user.email, t2)
-    assert not security.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
-    assert not security.verify_token(user.email, t2, token_type=auth.PWD_RESET)
-    assert not security.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+    assert auth.verify_toke(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_toke(user.email, t2)
+    assert not auth.verify_toke(user.email, t2, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_toke(user.email, t2, token_type=auth.PWD_RESET)
+    assert not auth.verify_toke(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
 
     # token expiration is only 3 seconds... let's test it
     time.sleep(EXPIRATION + 1)
-    assert not security.verify_token(user.email, t3, token_type=auth.PWD_RESET)
-    assert not security.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_toke(user.email, t3, token_type=auth.PWD_RESET)
+    assert not auth.verify_toke(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
