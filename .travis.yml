@@ -95,7 +95,12 @@ script:
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
-  - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+  # this is the recommended command from codecov. But when curl fails due to a network
+  # timeout the whole command exits with 0. As a results some jobs are all passed but
+  # the coverage stats are degraded, because one of the stages is missing!
+  # - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+  - wget https://codecov.io/bash -O codecov_report
+  - bash codecov_report -R submodules/http-api
 
   # Test production
   - rapydo remove --all
