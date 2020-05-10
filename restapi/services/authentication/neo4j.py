@@ -158,10 +158,7 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        if 'exp' in payload:
-            exp = payload['exp']
-        else:
-            exp = now + timedelta(seconds=self.shortTTL)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_node = self.db.Token()
         token_node.jti = payload['jti']
@@ -178,50 +175,40 @@ class Authentication(BaseAuthentication):
         user.save()
         token_node.emitted_for.connect(user)
 
-    def verify_token_custom(self, jti, user, payload):
+    def verify_token_validity(self, jti, user, payload):
+
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
         except self.db.Token.DoesNotExist:
             return False
+
         if not token_node.emitted_for.is_connected(user):
             return False
 
-        return True
-
-    def refresh_token(self, jti):
         now = datetime.now(pytz.utc)
-        try:
-            token_node = self.db.Token.nodes.get(jti=jti)
 
-            if now > token_node.expiration:
-                self.invalidate_token(token=token_node.token)
-                log.info(
-                    "This token is no longer valid: expired since {}",
-                    token_node.expiration.strftime("%d/%m/%Y")
+        if now > token_node.expiration:
+            self.invalidate_token(token=token_node.token)
+            log.info(
+                "This token is no longer valid: expired since {}",
+                token_node.expiration.strftime("%d/%m/%Y")
+            )
+            return False
+
+        # Verify IP validity only after grace period is expired
+        if token_node.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
+            ip = self.get_remote_ip()
+            if token_node.IP != ip:
+                log.error(
+                    "This token is emitted for IP {}, invalid use from {}",
+                    token_node.IP, ip
                 )
                 return False
 
-            # Verify IP validity only after grace period is expired
-            if token_node.last_access + timedelta(seconds=self.grace_period) < now:
-                ip = self.get_remote_ip()
-                if token_node.IP != ip:
-                    log.error(
-                        "This token is emitted for IP {}, invalid use from {}",
-                        token_node.IP, ip
-                    )
-                    return False
+        token_node.last_access = now
+        token_node.save()
 
-            exp = now + timedelta(seconds=self.shortTTL)
-
-            token_node.last_access = now
-            token_node.expiration = exp
-
-            token_node.save()
-
-            return True
-        except self.db.Token.DoesNotExist:
-            log.warning("Token {} not found", jti)
-            return False
+        return True
 
     def get_tokens(self, user=None, token_jti=None, get_all=False):
 

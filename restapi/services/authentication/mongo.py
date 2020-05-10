@@ -189,10 +189,7 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now()
-        if 'exp' in payload:
-            exp = payload['exp']
-        else:
-            exp = now + timedelta(seconds=self.shortTTL)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         if user is None:
             log.error("Trying to save an empty token")
@@ -212,11 +209,14 @@ class Authentication(BaseAuthentication):
             # Save user updated in profile endpoint
             user.save()
 
-    def refresh_token(self, jti):
+    def verify_token_validity(self, jti, user, payload):
 
         try:
             token_entry = self.db.Token.objects.raw({'jti': jti}).first()
         except self.db.Token.DoesNotExist:
+            return False
+
+        if token_entry.user_id is None or token_entry.user_id.email != user.email:
             return False
 
         now = datetime.now()
@@ -229,7 +229,7 @@ class Authentication(BaseAuthentication):
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+        if token_entry.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
                 log.error(
@@ -238,11 +238,9 @@ class Authentication(BaseAuthentication):
                 )
                 return False
 
-        exp = now + timedelta(seconds=self.shortTTL)
         token_entry.last_access = now
-        token_entry.expiration = exp
-
         token_entry.save()
+
         return True
 
     def get_tokens(self, user=None, token_jti=None, get_all=False):
@@ -292,17 +290,5 @@ class Authentication(BaseAuthentication):
             token_entry.delete()
         except self.db.Token.DoesNotExist:
             log.warning("Could not invalidate non-existing token")
-
-        return True
-
-    def verify_token_custom(self, jti, user, payload):
-
-        try:
-            token = self.db.Token.objects.raw({'jti': jti}).first()
-        except self.db.Token.DoesNotExist:
-            return False
-
-        if token.user_id is None or token.user_id.email != user.email:
-            return False
 
         return True

@@ -44,6 +44,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # Should be faster on 64bit machines
     JWT_ALGO = 'HS512'
 
+    # 1 month in seconds
+    DEFAULT_TOKEN_TTL = float(Detector.get_global_var('AUTH_JWT_TOKEN_TTL', 2592000))
+    GRACE_PERIOD = 7200  # 2 hours in seconds
+
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
@@ -54,11 +58,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
-        # Default shortTTL = 2592000     # 1 month in seconds
-        self.longTTL = float(Detector.get_global_var('TOKEN_LONG_TTL', 2592000))
-        # Default shortTTL = 604800     # 1 week in seconds
-        self.shortTTL = float(Detector.get_global_var('TOKEN_SHORT_TTL', 604800))
-        self.grace_period = 7200  # 2 hours in seconds
 
     @classmethod
     def myinit(cls):
@@ -318,18 +317,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return token, payload, full_payload
 
     @abc.abstractmethod
-    def verify_token_custom(self, jti, user, payload):  # pragma: no cover
+    def verify_token_validity(self, jti, user, payload):  # pragma: no cover
         """
             This method MUST be implemented by specific Authentication Methods
             to add more specific validation contraints
-        """
-        return
-
-    @abc.abstractmethod
-    def refresh_token(self, jti):  # pragma: no cover
-        """
-            Verify shortTTL to refresh token if not expired
-            Invalidate token otherwise
         """
         return
 
@@ -387,12 +378,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False
 
         # e.g. for graph: verify the (token <- user) link
-        if not self.verify_token_custom(
-            user=self._user, jti=payload['jti'], payload=payload
-        ):
-            return False
-
-        if not self.refresh_token(payload['jti']):
+        is_valid = self.verify_token_validity(
+            user=self._user,
+            jti=payload['jti'],
+            payload=payload
+        )
+        if not is_valid:
             return False
 
         log.verbose("User authorized")
@@ -441,7 +432,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         full_payload["t"] = token_type
 
         if expiration is None:
-            expiration = timedelta(seconds=self.longTTL)
+            expiration = timedelta(seconds=self.DEFAULT_TOKEN_TTL)
         now = datetime.now(pytz.utc)
         full_payload['iat'] = now
         full_payload['nbf'] = now  # you can add a timedelta

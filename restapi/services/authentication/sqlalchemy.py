@@ -195,12 +195,7 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        if 'exp' in payload:
-            exp = payload['exp']
-            log.critical("Debug code: exp from payload = {}", exp)
-        else:
-            exp = now + timedelta(seconds=self.shortTTL)
-            log.critical("Debug code: exp = {}", exp)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_entry = self.db.Token(
             jti=payload['jti'],
@@ -226,9 +221,14 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-    def refresh_token(self, jti):
+    def verify_token_validity(self, jti, user, payload):
+
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
+
         if token_entry is None:
+            return False
+
+        if token_entry.emitted_for is None or token_entry.emitted_for != user:
             return False
 
         # MySQL seems unable to save tz-aware datetimes...
@@ -239,7 +239,6 @@ class Authentication(BaseAuthentication):
             # Create a offset-aware datetime
             now = datetime.now(pytz.utc)
 
-        log.critical("Debug code {} > {}?", now, token_entry.expiration)
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
             log.info(
@@ -249,7 +248,7 @@ class Authentication(BaseAuthentication):
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+        if token_entry.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
                 log.error(
@@ -258,10 +257,7 @@ class Authentication(BaseAuthentication):
                 )
                 return False
 
-        exp = now + timedelta(seconds=self.shortTTL)
-
         token_entry.last_access = now
-        token_entry.expiration = exp
 
         try:
             self.db.session.add(token_entry)
@@ -329,15 +325,6 @@ class Authentication(BaseAuthentication):
 
         log.warning("Could not invalidate token")
         return False
-
-    def verify_token_custom(self, jti, user, payload):
-        token_entry = self.db.Token.query.filter_by(jti=jti).first()
-        if token_entry is None:
-            return False
-        if token_entry.emitted_for is None or token_entry.emitted_for != user:
-            return False
-
-        return True
 
     def irods_user(self, username, session):
 
