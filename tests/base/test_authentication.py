@@ -172,12 +172,16 @@ def test_authentication_service():
 
     if detector.check_availability('neo4j'):
         from restapi.services.authentication.neo4j import Authentication
+        db_service = detector.connectors_instances.get('neo4j').get_instance()
 
     elif detector.check_availability('sqlalchemy'):
         from restapi.services.authentication.sqlalchemy import Authentication
+        db_service = detector.connectors_instances.get('sqlalchemy').get_instance()
 
     elif detector.check_availability('mongo'):
         from restapi.services.authentication.mongo import Authentication
+        db_service = detector.connectors_instances.get('mongo').get_instance()
+
     else:
         log.warning("Skipping authentication test: no database available")
         return False
@@ -227,7 +231,9 @@ def test_authentication_service():
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
     connector = detector.connectors_instances.get('authentication')
-    security = HandleSecurity(connector.get_instance())
+    auth_instance = connector.get_instance()
+    auth_instance.custom_init(abackend=db_service)
+    security = HandleSecurity(auth_instance)
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
