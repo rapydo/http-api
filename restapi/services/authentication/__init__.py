@@ -314,7 +314,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         payload, full_payload = self.fill_payload(
             user, expiration=expiration, token_type=token_type)
         token = self.create_token(payload)
-        return token, payload, full_payload
+        return token, full_payload
 
     @abc.abstractmethod
     def verify_token_validity(self, jti, user):  # pragma: no cover

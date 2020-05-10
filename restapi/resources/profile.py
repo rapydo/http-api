@@ -23,7 +23,7 @@ def send_activation_link(auth, user):
         "project.title", default='Unkown title'
     )
 
-    activation_token, payload, full_payload = auth.create_temporary_token(
+    activation_token, payload = auth.create_temporary_token(
         user, auth.ACTIVATE_ACCOUNT)
 
     domain = os.environ.get("DOMAIN")
@@ -70,7 +70,7 @@ def send_activation_link(auth, user):
             raise
 
     auth.save_token(
-        user, activation_token, full_payload, token_type=auth.ACTIVATE_ACCOUNT)
+        user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
 def notify_registration(user):
@@ -521,7 +521,7 @@ class RecoverPassword(EndpointResource):
             "project.title", default='Unkown title'
         )
 
-        reset_token, payload, full_payload = self.auth.create_temporary_token(
+        reset_token, payload = self.auth.create_temporary_token(
             user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
@@ -549,7 +549,7 @@ class RecoverPassword(EndpointResource):
         ##################
         # Completing the reset task
         self.auth.save_token(
-            user, reset_token, full_payload, token_type=self.auth.PWD_RESET)
+            user, reset_token, payload, token_type=self.auth.PWD_RESET)
 
         msg = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
 

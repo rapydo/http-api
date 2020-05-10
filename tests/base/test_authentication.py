@@ -251,12 +251,12 @@ def test_authentication_service():
     verify_token_is_not_valid("doesnotexists", auth.PWD_RESET)
     verify_token_is_not_valid("doesnotexists", auth.ACTIVATE_ACCOUNT)
 
-    t1, payload1, full_payload1 = auth.create_temporary_token(
+    t1, payload1 = auth.create_temporary_token(
         user, auth.PWD_RESET)
     assert isinstance(t1, str)
     # not valid if not saved
     verify_token_is_not_valid(t1, auth.PWD_RESET)
-    auth.save_token(user, t1, full_payload1, token_type=auth.PWD_RESET)
+    auth.save_token(user, t1, payload1, token_type=auth.PWD_RESET)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
     verify_token_is_valid(t1, auth.PWD_RESET)
@@ -264,12 +264,12 @@ def test_authentication_service():
     verify_token_is_not_valid("another@nomail.org", t1)
 
     # Create another type of temporary token => t1 is still valid
-    t2, payload2, full_payload2 = auth.create_temporary_token(
+    t2, payload2 = auth.create_temporary_token(
         user, auth.ACTIVATE_ACCOUNT)
     assert isinstance(t2, str)
     # not valid if not saved
     verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
-    auth.save_token(user, t2, full_payload2, token_type=auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, t2, payload2, token_type=auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
     verify_token_is_not_valid(t2, auth.PWD_RESET)
@@ -278,12 +278,12 @@ def test_authentication_service():
 
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
-    t3, payload3, full_payload3 = auth.create_temporary_token(
+    t3, payload3 = auth.create_temporary_token(
         user, auth.PWD_RESET, duration=EXPIRATION)
     assert isinstance(t3, str)
     # not valid if not saved
     verify_token_is_not_valid(t3, auth.PWD_RESET)
-    auth.save_token(user, t3, full_payload3, token_type=auth.PWD_RESET)
+    auth.save_token(user, t3, payload3, token_type=auth.PWD_RESET)
     verify_token_is_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
@@ -291,12 +291,12 @@ def test_authentication_service():
     verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
-    t4, payload4, full_payload4 = auth.create_temporary_token(
+    t4, payload4 = auth.create_temporary_token(
         user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
     assert isinstance(t4, str)
     # not valid if not saved
     verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
-    auth.save_token(user, t4, full_payload4, token_type=auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, t4, payload4, token_type=auth.ACTIVATE_ACCOUNT)
     verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
