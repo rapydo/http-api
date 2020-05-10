@@ -3,6 +3,7 @@
 from celery import Celery
 from functools import wraps
 import traceback
+from datetime import timedelta
 
 from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.connectors import Connector
@@ -284,7 +285,22 @@ class CeleryExt(Connector):
 
                 # do conversion... run_every should be a datetime.timedelta
                 log.error("Unsupported period {} for redis beat", period)
+                raise AttributeError(
+                    "Unsupported period {} for redis beat".format(period)
+                )
 
+            # convert string to timedelta
+            if isinstance(every, str) and every.isdigit():
+                every = timedelta(seconds=int(every))
+            elif isinstance(every, int):
+                every = timedelta(seconds=every)
+
+            if not isinstance(every, timedelta):
+                raise AttributeError(
+                    "Invalid input parameter every = {} (type {})".format(
+                        every, type(every)
+                    )
+                )
             interval = schedule(run_every=every)  # seconds
             entry = RedBeatSchedulerEntry(
                 name,
