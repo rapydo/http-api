@@ -239,6 +239,7 @@ class Authentication(BaseAuthentication):
             # Create a offset-aware datetime
             now = datetime.now(pytz.utc)
 
+        log.critical("Debug code {} > {}?", now, token_entry.expiration)
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
             log.info(
