@@ -28,6 +28,7 @@ from restapi.utilities.logs import log
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+NULL_IP = "0.0.0.0"
 
 class BaseAuthentication(metaclass=abc.ABCMeta):
 
@@ -230,17 +231,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @staticmethod
-    def get_remote_ip():
+    def get_remote_ip():  # pragma: no cover
+        try:
+            if 'X-Forwarded-For' in request.headers:
+                forwarded_ips = request.headers['X-Forwarded-For']
+                ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
+                return ip
+            elif PRODUCTION:
+                log.warning("Server in production X-Forwarded-For header is missing")
 
-        if 'X-Forwarded-For' in request.headers:
-            forwarded_ips = request.headers['X-Forwarded-For']
-            ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
+            ip = request.remote_addr
             return ip
-        elif PRODUCTION:
-            log.warning("Server in production X-Forwarded-For header is missing")
-
-        ip = request.remote_addr
-        return ip
+        except RuntimeError as e:
+            # When executed from tests it raises
+            # RuntimeError: Working outside of request context.
+            # Just mock an IP address (NULL_IP = 0.0.0.0)
+            if mem.TESTING:
+                return NULL_IP
+            raise e
 
     @staticmethod
     def localize_ip(ip):

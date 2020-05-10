@@ -7,6 +7,7 @@ Mongodb based implementation
 from pytz import utc
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import NULL_IP
 from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
@@ -200,7 +201,7 @@ class Authentication(BaseAuthentication):
                 creation=now,
                 last_access=now,
                 expiration=exp,
-                IP=ip or "",
+                IP=ip or NULL_IP,
                 location=ip_loc or "Unknown",
                 user_id=user,
             ).save()

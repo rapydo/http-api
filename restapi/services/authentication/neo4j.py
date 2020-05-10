@@ -14,6 +14,7 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 from datetime import datetime, timedelta
 import pytz
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -166,7 +167,7 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-        token_node.IP = ip or ""
+        token_node.IP = ip or NULL_IP
         token_node.location = ip_loc or "Unknown"
 
         token_node.save()

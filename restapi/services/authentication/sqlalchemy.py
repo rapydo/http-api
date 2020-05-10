@@ -8,6 +8,7 @@ import pytz
 import sqlalchemy
 from datetime import datetime, timedelta
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.uuid import getUUID
@@ -203,7 +204,7 @@ class Authentication(BaseAuthentication):
             creation=now,
             last_access=now,
             expiration=exp,
-            IP=ip or "",
+            IP=ip or NULL_IP,
             location=ip_loc or "Unknown",
         )
 
