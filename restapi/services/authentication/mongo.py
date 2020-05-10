@@ -209,7 +209,7 @@ class Authentication(BaseAuthentication):
             # Save user updated in profile endpoint
             user.save()
 
-    def verify_token_validity(self, jti, user, payload):
+    def verify_token_validity(self, jti, user):
 
         try:
             token_entry = self.db.Token.objects.raw({'jti': jti}).first()

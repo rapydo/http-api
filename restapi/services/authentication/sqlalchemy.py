@@ -221,7 +221,7 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-    def verify_token_validity(self, jti, user, payload):
+    def verify_token_validity(self, jti, user):
 
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
 

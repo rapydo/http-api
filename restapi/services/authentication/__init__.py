@@ -317,7 +317,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return token, payload, full_payload
 
     @abc.abstractmethod
-    def verify_token_validity(self, jti, user, payload):  # pragma: no cover
+    def verify_token_validity(self, jti, user):  # pragma: no cover
         """
             This method MUST be implemented by specific Authentication Methods
             to add more specific validation contraints
@@ -352,7 +352,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
-        # Force token cleaning
+        # Force cleaning
+        self._token = None
+        self._jti = None
         self._user = None
 
         if token is None:
@@ -373,23 +375,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False
 
         # Get the user from payload
-        self._user = self.get_user_object(payload=payload)
-        if self._user is None:
+        user = self.get_user_object(payload=payload)
+        if user is None:
             return False
 
-        # e.g. for graph: verify the (token <- user) link
-        is_valid = self.verify_token_validity(
-            user=self._user,
-            jti=payload['jti'],
-            payload=payload
-        )
-        if not is_valid:
+        # implemented from the specific db services
+        if not self.verify_token_validity(jti=payload['jti'], user=user):
             return False
 
         log.verbose("User authorized")
 
         self._token = token
         self._jti = payload['jti']
+        self._user = user
         return True
 
     @abc.abstractmethod

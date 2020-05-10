@@ -175,7 +175,7 @@ class Authentication(BaseAuthentication):
         user.save()
         token_node.emitted_for.connect(user)
 
-    def verify_token_validity(self, jti, user, payload):
+    def verify_token_validity(self, jti, user):
 
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
