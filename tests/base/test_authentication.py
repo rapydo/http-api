@@ -258,7 +258,7 @@ def test_authentication_service():
     assert isinstance(t1, str)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
-    verify_token_is_valid(t1, auth.PWD_RESET, True)
+    verify_token_is_valid(t1, auth.PWD_RESET)
     verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid("another@nomail.org", t1)
 
@@ -271,7 +271,7 @@ def test_authentication_service():
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
     verify_token_is_not_valid(t2, auth.PWD_RESET)
-    verify_token_is_valid(t2, auth.ACTIVATE_ACCOUNT, True)
+    verify_token_is_valid(t2, auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid("another@nomail.org", t2)
 
     EXPIRATION = 3
@@ -281,7 +281,7 @@ def test_authentication_service():
     assert t3 is not None
     assert jti3 is not None
     assert isinstance(t3, str)
-    verify_token_is_valid(t3, auth.PWD_RESET, True)
+    verify_token_is_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
     verify_token_is_not_valid(t1, auth.PWD_RESET)
@@ -293,7 +293,7 @@ def test_authentication_service():
     assert t4 is not None
     assert jti4 is not None
     assert isinstance(t4, str)
-    verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT, True)
+    verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
     verify_token_is_not_valid(t2, auth.PWD_RESET)
