@@ -239,35 +239,27 @@ def test_authentication_service():
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
     # Just to verify that the function works
-    assert not auth.verify_token(user.email, "doesnotexists")
-    assert not auth.verify_token(
-        user.email,
-        "doesnotexists",
-        token_type=auth.PWD_RESET
-    )
-    assert not auth.verify_token(
-        user.email,
-        "doesnotexists",
-        token_type=auth.ACTIVATE_ACCOUNT
-    )
+    assert not auth.verify_token("doesnotexists")
+    assert not auth.verify_token("doesnotexists", token_type=auth.PWD_RESET)
+    assert not auth.verify_token("doesnotexists", token_type=auth.ACTIVATE_ACCOUNT)
 
     t1 = auth.create_temporary_token(user, auth.PWD_RESET)
     assert t1 is not None
     assert isinstance(t1, str)
-    assert not auth.verify_token(user.email, t1)
-    assert not auth.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
-    assert auth.verify_token(user.email, t1, token_type=auth.PWD_RESET)
-    assert not auth.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_token(t1)
+    assert not auth.verify_token(t1, token_type=auth.FULL_TOKEN)
+    assert auth.verify_token(t1, token_type=auth.PWD_RESET)
+    assert not auth.verify_token(t1, token_type=auth.ACTIVATE_ACCOUNT)
     assert not auth.verify_token("another@nomail.org", t1)
 
     # Create another type of temporary token => t1 is still valid
     t2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
     assert t2 is not None
     assert isinstance(t2, str)
-    assert not auth.verify_token(user.email, t2)
-    assert not auth.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
-    assert not auth.verify_token(user.email, t2, token_type=auth.PWD_RESET)
-    assert auth.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_token(t2)
+    assert not auth.verify_token(t2, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_token(t2, token_type=auth.PWD_RESET)
+    assert auth.verify_token(t2, token_type=auth.ACTIVATE_ACCOUNT)
     assert not auth.verify_token("another@nomail.org", t2)
 
     EXPIRATION = 3
@@ -275,23 +267,23 @@ def test_authentication_service():
     t3 = auth.create_temporary_token(user, auth.PWD_RESET, duration=EXPIRATION)
     assert t3 is not None
     assert isinstance(t3, str)
-    assert auth.verify_token(user.email, t3, token_type=auth.PWD_RESET)
-    assert not auth.verify_token(user.email, t1)
-    assert not auth.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
-    assert not auth.verify_token(user.email, t1, token_type=auth.PWD_RESET)
-    assert not auth.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+    assert auth.verify_token(t3, token_type=auth.PWD_RESET)
+    assert not auth.verify_token(t1)
+    assert not auth.verify_token(t1, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_token(t1, token_type=auth.PWD_RESET)
+    assert not auth.verify_token(t1, token_type=auth.ACTIVATE_ACCOUNT)
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
     t4 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
     assert t4 is not None
     assert isinstance(t4, str)
-    assert auth.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not auth.verify_token(user.email, t2)
-    assert not auth.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
-    assert not auth.verify_token(user.email, t2, token_type=auth.PWD_RESET)
-    assert not auth.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+    assert auth.verify_token(t4, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_token(t2)
+    assert not auth.verify_token(t2, token_type=auth.FULL_TOKEN)
+    assert not auth.verify_token(t2, token_type=auth.PWD_RESET)
+    assert not auth.verify_token(t2, token_type=auth.ACTIVATE_ACCOUNT)
 
     # token expiration is only 3 seconds... let's test it
     time.sleep(EXPIRATION + 1)
-    assert not auth.verify_token(user.email, t3, token_type=auth.PWD_RESET)
-    assert not auth.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not auth.verify_token(t3, token_type=auth.PWD_RESET)
+    assert not auth.verify_token(t4, token_type=auth.ACTIVATE_ACCOUNT)
