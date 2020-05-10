@@ -236,31 +236,31 @@ def test_authentication_service():
     # I don't know if this tests will be stable...
     assert ip_data == 'United States'
 
+    def verify_token_is_valid(token, ttype=None):
+        verified = auth.verify_token(token, token_type=ttype)
+        assert verified
+
+    def verify_token_is_not_valid(token, ttype=None):
+        verified = auth.verify_token(token, token_type=ttype)
+        assert not verified
+
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
     # Just to verify that the function works
-    verified = auth.verify_token("doesnotexists")
-    assert not verified
-    verified = auth.verify_token("doesnotexists", token_type=auth.PWD_RESET)
-    assert not verified
-    verified = auth.verify_token("doesnotexists", token_type=auth.ACTIVATE_ACCOUNT)
-    assert not verified
+    verify_token_is_not_valid("doesnotexists")
+    verify_token_is_not_valid("doesnotexists", auth.PWD_RESET)
+    verify_token_is_not_valid("doesnotexists", auth.ACTIVATE_ACCOUNT)
 
     t1, jti1 = auth.create_temporary_token(
         user, auth.PWD_RESET)
     assert t1 is not None
     assert jti1 is not None
     assert isinstance(t1, str)
-    verified = auth.verify_token(t1)
-    assert not verified
-    verified = auth.verify_token(t1, token_type=auth.FULL_TOKEN)
-    assert not verified
-    verified = auth.verify_token(t1, token_type=auth.PWD_RESET)
-    assert verified
-    verified = auth.verify_token(t1, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not verified
-    verified = auth.verify_token("another@nomail.org", t1)
-    assert not verified
+    verify_token_is_not_valid(t1)
+    verify_token_is_not_valid(t1, auth.FULL_TOKEN)
+    verify_token_is_valid(t1, auth.PWD_RESET, True)
+    verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
+    verify_token_is_not_valid("another@nomail.org", t1)
 
     # Create another type of temporary token => t1 is still valid
     t2, jti2 = auth.create_temporary_token(
@@ -268,16 +268,11 @@ def test_authentication_service():
     assert t2 is not None
     assert jti2 is not None
     assert isinstance(t2, str)
-    verified = auth.verify_token(t2)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.FULL_TOKEN)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.PWD_RESET)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.ACTIVATE_ACCOUNT)
-    assert verified
-    verified = auth.verify_token("another@nomail.org", t2)
-    assert not verified
+    verify_token_is_not_valid(t2)
+    verify_token_is_not_valid(t2, auth.FULL_TOKEN)
+    verify_token_is_not_valid(t2, auth.PWD_RESET)
+    verify_token_is_valid(t2, auth.ACTIVATE_ACCOUNT, True)
+    verify_token_is_not_valid("another@nomail.org", t2)
 
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
@@ -286,16 +281,11 @@ def test_authentication_service():
     assert t3 is not None
     assert jti3 is not None
     assert isinstance(t3, str)
-    verified = auth.verify_token(t3, token_type=auth.PWD_RESET)
-    assert verified
-    verified = auth.verify_token(t1)
-    assert not verified
-    verified = auth.verify_token(t1, token_type=auth.FULL_TOKEN)
-    assert not verified
-    verified = auth.verify_token(t1, token_type=auth.PWD_RESET)
-    assert not verified
-    verified = auth.verify_token(t1, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not verified
+    verify_token_is_valid(t3, auth.PWD_RESET, True)
+    verify_token_is_not_valid(t1)
+    verify_token_is_not_valid(t1, auth.FULL_TOKEN)
+    verify_token_is_not_valid(t1, auth.PWD_RESET)
+    verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
     t4, jti4 = auth.create_temporary_token(
@@ -303,20 +293,13 @@ def test_authentication_service():
     assert t4 is not None
     assert jti4 is not None
     assert isinstance(t4, str)
-    verified = auth.verify_token(t4, token_type=auth.ACTIVATE_ACCOUNT)
-    assert verified
-    verified = auth.verify_token(t2)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.FULL_TOKEN)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.PWD_RESET)
-    assert not verified
-    verified = auth.verify_token(t2, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not verified
+    verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT, True)
+    verify_token_is_not_valid(t2)
+    verify_token_is_not_valid(t2, auth.FULL_TOKEN)
+    verify_token_is_not_valid(t2, auth.PWD_RESET)
+    verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
 
     # token expiration is only 3 seconds... let's test it
     time.sleep(EXPIRATION + 1)
-    verified = auth.verify_token(t3, token_type=auth.PWD_RESET)
-    assert not verified
-    verified = auth.verify_token(t4, token_type=auth.ACTIVATE_ACCOUNT)
-    assert not verified
+    verify_token_is_not_valid(t3, auth.PWD_RESET)
+    verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
