@@ -261,7 +261,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 except BaseException:
                     log.error("Missing country.names.en in {}", data)
                     return None
-            if 'continent' in data:
+            if 'continent' in data:  # pragma: no cover
                 try:
                     c = data['continent']['names']['en']
                     return c
@@ -389,6 +389,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._jti = payload['jti']
         return True
 
+    @abc.abstractmethod
     def save_token(self, user, token, jti, token_type=None):
         log.debug("Token is not saved in base authentication")
 

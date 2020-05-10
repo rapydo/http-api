@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import time
 import random
 import string
 import pytest
@@ -217,3 +218,73 @@ def test_authentication_service():
     assert not auth.verify_password(pwd1, None)
 
     assert not auth.verify_password(None, None)
+
+    ip_data = auth.localize_ip('8.8.8.8')
+    assert ip_data is not None
+    # I don't know if this tests will be stable...
+    assert ip_data == 'United States'
+
+    # import here to prevent loading before initializing things...
+    from restapi.services.authentication import BaseAuthentication
+    connector = detector.connectors_instances.get('authentication')
+    security = HandleSecurity(connector.get_instance())
+
+    user = auth.get_user_object(username=BaseAuthentication.default_user)
+    assert user is not None
+    # Just to verify that the function works
+    assert not security.verify_token(user.email, "doesnotexists")
+    assert not security.verify_token(
+        user.email,
+        "doesnotexists",
+        token_type=auth.PWD_RESET
+    )
+    assert not security.verify_token(
+        user.email,
+        "doesnotexists",
+        token_type=auth.ACTIVATE_ACCOUNT
+    )
+
+    t1 = auth.create_temporary_token(user, auth.PWD_RESET)
+    assert t1 is not None
+    assert isinstance(t1, str)
+    assert not security.verify_token(user.email, t1)
+    assert not security.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
+    assert security.verify_token(user.email, t1, token_type=auth.PWD_RESET)
+    assert not security.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not security.verify_token("another@nomail.org", t1)
+
+    # Create another type of temporary token => t1 is still valid
+    t2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
+    assert t2 is not None
+    assert isinstance(t2, str)
+    assert not security.verify_token(user.email, t2)
+    assert not security.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
+    assert not security.verify_token(user.email, t2, token_type=auth.PWD_RESET)
+    assert security.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not security.verify_token("another@nomail.org", t2)
+
+    EXPIRATION = 3
+    # Create another token PWD_RESET, this will invalidate t1
+    t3 = auth.create_temporary_token(user, auth.PWD_RESET, duration=EXPIRATION)
+    assert t3 is not None
+    assert isinstance(t3, str)
+    assert security.verify_token(user.email, t3, token_type=auth.PWD_RESET)
+    assert not security.verify_token(user.email, t1)
+    assert not security.verify_token(user.email, t1, token_type=auth.FULL_TOKEN)
+    assert not security.verify_token(user.email, t1, token_type=auth.PWD_RESET)
+    assert not security.verify_token(user.email, t1, token_type=auth.ACTIVATE_ACCOUNT)
+
+    # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
+    t4 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
+    assert t4 is not None
+    assert isinstance(t4, str)
+    assert security.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
+    assert not security.verify_token(user.email, t2)
+    assert not security.verify_token(user.email, t2, token_type=auth.FULL_TOKEN)
+    assert not security.verify_token(user.email, t2, token_type=auth.PWD_RESET)
+    assert not security.verify_token(user.email, t2, token_type=auth.ACTIVATE_ACCOUNT)
+
+    # token expiration is only 3 seconds... let's test it
+    time.sleep(EXPIRATION + 1)
+    assert not security.verify_token(user.email, t3, token_type=auth.PWD_RESET)
+    assert not security.verify_token(user.email, t4, token_type=auth.ACTIVATE_ACCOUNT)
