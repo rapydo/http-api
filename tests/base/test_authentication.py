@@ -231,9 +231,8 @@ def test_authentication_service():
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
     connector = detector.connectors_instances.get('authentication')
-    auth_instance = connector.get_instance()
-    auth_instance.custom_init(abackend=db_service)
-    security = HandleSecurity(auth_instance)
+    connector.custom_init(abackend=db_service)
+    security = HandleSecurity(connector.get_instance())
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
