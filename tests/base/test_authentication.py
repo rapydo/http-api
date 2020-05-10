@@ -256,6 +256,9 @@ def test_authentication_service():
     assert t1 is not None
     assert jti1 is not None
     assert isinstance(t1, str)
+    # not valid if not saved
+    verify_token_is_not_valid(t1, auth.PWD_RESET)
+    auth.save_token(user, t1, jti1, token_type=auth.PWD_RESET)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
     verify_token_is_valid(t1, auth.PWD_RESET)
@@ -268,6 +271,9 @@ def test_authentication_service():
     assert t2 is not None
     assert jti2 is not None
     assert isinstance(t2, str)
+    # not valid if not saved
+    verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, t2, jti2, token_type=auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
     verify_token_is_not_valid(t2, auth.PWD_RESET)
@@ -281,6 +287,9 @@ def test_authentication_service():
     assert t3 is not None
     assert jti3 is not None
     assert isinstance(t3, str)
+    # not valid if not saved
+    verify_token_is_not_valid(t3, auth.PWD_RESET)
+    auth.save_token(user, t3, jti3, token_type=auth.PWD_RESET)
     verify_token_is_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t1)
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
@@ -293,6 +302,9 @@ def test_authentication_service():
     assert t4 is not None
     assert jti4 is not None
     assert isinstance(t4, str)
+    # not valid if not saved
+    verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, t4, jti4, token_type=auth.ACTIVATE_ACCOUNT)
     verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT)
     verify_token_is_not_valid(t2)
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
