@@ -172,15 +172,15 @@ def test_authentication_service():
 
     db_service = None
     if detector.check_availability('neo4j'):
-        from restapi.services.authentication.neo4j import Authentication
+        # from restapi.services.authentication.neo4j import Authentication
         db_service = detector.connectors_instances.get('neo4j').get_instance()
 
     elif detector.check_availability('sqlalchemy'):
-        from restapi.services.authentication.sqlalchemy import Authentication
+        # from restapi.services.authentication.sqlalchemy import Authentication
         db_service = detector.connectors_instances.get('sqlalchemy').get_instance()
 
     elif detector.check_availability('mongo'):
-        from restapi.services.authentication.mongo import Authentication
+        # from restapi.services.authentication.mongo import Authentication
         db_service = detector.connectors_instances.get('mongo').get_instance()
 
     else:
@@ -191,7 +191,17 @@ def test_authentication_service():
     # mem is required by Authentication init... :-(
     mem.customizer = Customizer()
     mem.configuration = mem.customizer.load_configuration()
-    auth = Authentication()
+    # import here to prevent loading before initializing things...
+    from restapi.services.authentication import BaseAuthentication
+    connector = detector.connectors_instances.get('authentication')
+    # service_instance = connector.custom_init(abackend=db_service)
+    # assert service_instance.db is not None
+    # auth = Authentication()
+
+    auth = connector.get_instance(global_instance=True, authenticator=True)
+    auth.db = db_service
+    security = HandleSecurity(auth)
+    # detector.get_service_instance(detector.authentication_service)
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
     pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
@@ -229,13 +239,6 @@ def test_authentication_service():
     assert ip_data is not None
     # I don't know if this tests will be stable...
     assert ip_data == 'United States'
-
-    # import here to prevent loading before initializing things...
-    from restapi.services.authentication import BaseAuthentication
-    connector = detector.connectors_instances.get('authentication')
-    service_instance = connector.custom_init(abackend=db_service)
-    assert service_instance.db is not None
-    security = HandleSecurity(service_instance)
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
