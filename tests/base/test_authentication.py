@@ -170,6 +170,7 @@ def test_authentication_service():
         log.warning("Skipping authentication test: service not available")
         return False
 
+    db_service = None
     if detector.check_availability('neo4j'):
         from restapi.services.authentication.neo4j import Authentication
         db_service = detector.connectors_instances.get('neo4j').get_instance()
@@ -186,6 +187,7 @@ def test_authentication_service():
         log.warning("Skipping authentication test: no database available")
         return False
 
+    assert db_service is not None
     # mem is required by Authentication init... :-(
     mem.customizer = Customizer()
     mem.configuration = mem.customizer.load_configuration()
@@ -232,6 +234,7 @@ def test_authentication_service():
     from restapi.services.authentication import BaseAuthentication
     connector = detector.connectors_instances.get('authentication')
     service_instance = connector.custom_init(abackend=db_service)
+    assert service_instance.db is not None
     security = HandleSecurity(service_instance)
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)

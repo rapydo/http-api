@@ -90,6 +90,8 @@ class Authenticator(Connector):
         if pdestroy:
             log.error("Destroy not implemented for authentication service")
 
+        return obj
+
 
 class HandleSecurity:
     def __init__(self, auth):
