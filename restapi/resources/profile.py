@@ -23,7 +23,8 @@ def send_activation_link(auth, user):
         "project.title", default='Unkown title'
     )
 
-    activation_token, jti = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
+    activation_token, payload, full_payload = auth.create_temporary_token(
+        user, auth.ACTIVATE_ACCOUNT)
 
     domain = os.environ.get("DOMAIN")
     if PRODUCTION:
@@ -68,7 +69,8 @@ def send_activation_link(auth, user):
             )
             raise
 
-    auth.save_token(user, activation_token, jti, token_type=auth.ACTIVATE_ACCOUNT)
+    auth.save_token(
+        user, activation_token, full_payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
 def notify_registration(user):
@@ -246,7 +248,7 @@ class Profile(EndpointResource):
             notify_registration(user)
             msg = (
                 "We are sending an email to your email address where "
-                + "you will find the link to activate your account"
+                "you will find the link to activate your account"
             )
 
         except BaseException as e:
@@ -427,7 +429,7 @@ class ProfileActivate(EndpointResource):
         if user is not None:
             send_activation_link(self.auth, user)
         msg = (
-            "We are sending an email to your email address where " +
+            "We are sending an email to your email address where "
             "you will find the link to activate your account"
         )
         return self.response(msg)
@@ -519,7 +521,8 @@ class RecoverPassword(EndpointResource):
             "project.title", default='Unkown title'
         )
 
-        reset_token, jti = self.auth.create_temporary_token(user, self.auth.PWD_RESET)
+        reset_token, payload, full_payload = self.auth.create_temporary_token(
+            user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
         if PRODUCTION:
@@ -545,7 +548,8 @@ class RecoverPassword(EndpointResource):
 
         ##################
         # Completing the reset task
-        self.auth.save_token(user, reset_token, jti, token_type=self.auth.PWD_RESET)
+        self.auth.save_token(
+            user, reset_token, full_payload, token_type=self.auth.PWD_RESET)
 
         msg = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
 

@@ -180,7 +180,7 @@ class Authentication(BaseAuthentication):
         if user is not None:
             user.save()
 
-    def save_token(self, user, token, jti, token_type=None):
+    def save_token(self, user, token, payload, token_type=None):
 
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
@@ -189,13 +189,16 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now()
-        exp = now + timedelta(seconds=self.shortTTL)
+        if 'exp' in payload:
+            exp = payload['exp']
+        else:
+            exp = now + timedelta(seconds=self.shortTTL)
 
         if user is None:
             log.error("Trying to save an empty token")
         else:
             self.db.Token(
-                jti=jti,
+                jti=payload['jti'],
                 token=token,
                 token_type=token_type,
                 creation=now,

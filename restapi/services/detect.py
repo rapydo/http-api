@@ -35,7 +35,7 @@ class Detector:
         return os.environ.get(key, default)
 
     @staticmethod
-    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
+    @lru_cache()
     def get_bool_envvar(bool_var):
 
         if isinstance(bool_var, bool):

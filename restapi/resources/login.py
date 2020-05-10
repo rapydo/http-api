@@ -125,7 +125,7 @@ class Login(EndpointResource):
         # ##################################################
         # Authentication control
         security.verify_blocked_username(username)
-        token, jti = self.auth.make_login(username, password)
+        token, payload = self.auth.make_login(username, password)
         security.verify_token(username, token)
         user = self.auth.get_user()
         security.verify_blocked_user(user)
@@ -144,7 +144,7 @@ class Login(EndpointResource):
 
             if pwd_changed:
                 password = new_password
-                token, jti = self.auth.make_login(username, password)
+                token, payload = self.auth.make_login(username, password)
 
         # ##################################################
         # Something is missing in the authentication, asking action to user
@@ -159,7 +159,7 @@ class Login(EndpointResource):
         if user.first_login is None:
             user.first_login = now
         user.last_login = now
-        self.auth.save_token(user, token, jti)
+        self.auth.save_token(user, token, payload)
 
         if WRAP_RESPONSE:
             return self.response({'token': token})

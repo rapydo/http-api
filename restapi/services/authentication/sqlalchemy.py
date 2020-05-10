@@ -186,8 +186,8 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-    def save_token(self, user, token, jti, token_type=None):
-
+    def save_token(self, user, token, payload, token_type=None):
+        # payload['jti']
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
 
@@ -195,10 +195,13 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        exp = now + timedelta(seconds=self.shortTTL)
+        if 'exp' in payload:
+            exp = payload['exp']
+        else:
+            exp = now + timedelta(seconds=self.shortTTL)
 
         token_entry = self.db.Token(
-            jti=jti,
+            jti=payload['jti'],
             token=token,
             token_type=token_type,
             creation=now,
@@ -366,7 +369,8 @@ class Authentication(BaseAuthentication):
                 user.session = session
 
         # token
-        token, jti = self.create_token(self.fill_payload(user))
+        payload, full_payload = self.fill_payload(user)
+        token = self.create_token(payload)
         now = datetime.now(pytz.utc)
         if user.first_login is None:
             user.first_login = now
@@ -378,6 +382,6 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-        self.save_token(user, token, jti)
+        self.save_token(user, token, full_payload)
 
         return token, username

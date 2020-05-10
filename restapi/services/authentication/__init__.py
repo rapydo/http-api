@@ -113,7 +113,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
-            return self.create_token(self.fill_payload(user))
+            payload, full_payload = self.fill_payload(user)
+            token = self.create_token(payload)
+            return token, full_payload
 
         # old hashing; deprecated since 0.7.2. Removed me in a near future!!
         # Probably when ALL users will be converted... uhm... never?? :-D
@@ -293,7 +295,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             'ascii'
         )
 
-        return encode, payload['jti']
+        return encode
 
     def create_temporary_token(self, user, token_type, duration=86400):
         # invalidate previous tokens with same token_type
@@ -310,8 +312,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 log.info("Previous token invalidated: {}", tok)
 
         expiration = timedelta(seconds=duration)
-        payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
-        return self.create_token(payload)
+        payload, full_payload = self.fill_payload(
+            user, expiration=expiration, token_type=token_type)
+        token = self.create_token(payload)
+        return token, payload, full_payload
 
     @abc.abstractmethod
     def verify_token_custom(self, jti, user, payload):  # pragma: no cover
@@ -398,7 +402,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def save_token(self, user, token, jti, token_type=None):
+    def save_token(self, user, token, payload, token_type=None):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
@@ -423,29 +427,35 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
+        payload = {'user_id': userobj.uuid, 'jti': getUUID()}
+        full_payload = payload.copy()
+
+        if not token_type:
+            token_type = self.FULL_TOKEN
+
+        short_token = False
+        if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
+            short_token = True
+            payload["t"] = token_type
+
+        full_payload["t"] = token_type
+
         if expiration is None:
             expiration = timedelta(seconds=self.longTTL)
+        now = datetime.now(pytz.utc)
+        full_payload['iat'] = now
+        full_payload['nbf'] = now  # you can add a timedelta
+        full_payload['exp'] = now + expiration
 
-        payload = {'user_id': userobj.uuid, 'jti': getUUID()}
-
-        short_jwt = (
-            Detector.get_global_var('AUTH_FULL_JWT_PAYLOAD', '').lower() == 'false'
-        )
-
-        if token_type is not None:
-            if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
-                short_jwt = True
-                payload["t"] = token_type
-
-        if not short_jwt:
+        if not short_token:
             now = datetime.now(pytz.utc)
-            nbf = now  # you can add a timedelta
-            exp = now + expiration
-            payload['iat'] = now
-            payload['nbf'] = nbf
-            payload['exp'] = exp
+            payload['iat'] = full_payload['iat']
+            payload['nbf'] = full_payload['nbf']
+            payload['exp'] = full_payload['exp']
 
-        return payload
+        # first used for encoding
+        # second used to store information on backend DB
+        return payload, full_payload
 
     # ##################
     # # Roles handling #
