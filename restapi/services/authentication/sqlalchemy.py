@@ -197,8 +197,10 @@ class Authentication(BaseAuthentication):
         now = datetime.now(pytz.utc)
         if 'exp' in payload:
             exp = payload['exp']
+            log.critical("Debug code: exp from payload = {}", exp)
         else:
             exp = now + timedelta(seconds=self.shortTTL)
+            log.critical("Debug code: exp = {}", exp)
 
         token_entry = self.db.Token(
             jti=payload['jti'],
