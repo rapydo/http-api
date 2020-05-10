@@ -372,18 +372,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # Get the user from payload
         self._user = self.get_user_object(payload=payload)
         if self._user is None:
-            log.error("Payload user is None")
             return False
 
         # e.g. for graph: verify the (token <- user) link
         if not self.verify_token_custom(
             user=self._user, jti=payload['jti'], payload=payload
         ):
-            log.error("Failed verify_token_custom")
             return False
 
         if not self.refresh_token(payload['jti']):
-            log.error("refresh_token")
             return False
 
         log.verbose("User authorized")
