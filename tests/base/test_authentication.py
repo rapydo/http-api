@@ -243,8 +243,10 @@ def test_authentication_service():
     assert not auth.verify_token("doesnotexists", token_type=auth.PWD_RESET)
     assert not auth.verify_token("doesnotexists", token_type=auth.ACTIVATE_ACCOUNT)
 
-    t1 = auth.create_temporary_token(user, auth.PWD_RESET)
+    t1, jti1 = auth.create_temporary_token(
+        user, auth.PWD_RESET)
     assert t1 is not None
+    assert jti1 is not None
     assert isinstance(t1, str)
     assert not auth.verify_token(t1)
     assert not auth.verify_token(t1, token_type=auth.FULL_TOKEN)
@@ -253,8 +255,10 @@ def test_authentication_service():
     assert not auth.verify_token("another@nomail.org", t1)
 
     # Create another type of temporary token => t1 is still valid
-    t2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
+    t2, jti2 = auth.create_temporary_token(
+        user, auth.ACTIVATE_ACCOUNT)
     assert t2 is not None
+    assert jti2 is not None
     assert isinstance(t2, str)
     assert not auth.verify_token(t2)
     assert not auth.verify_token(t2, token_type=auth.FULL_TOKEN)
@@ -264,8 +268,10 @@ def test_authentication_service():
 
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
-    t3 = auth.create_temporary_token(user, auth.PWD_RESET, duration=EXPIRATION)
+    t3, jti3 = auth.create_temporary_token(
+        user, auth.PWD_RESET, duration=EXPIRATION)
     assert t3 is not None
+    assert jti3 is not None
     assert isinstance(t3, str)
     assert auth.verify_token(t3, token_type=auth.PWD_RESET)
     assert not auth.verify_token(t1)
@@ -274,8 +280,10 @@ def test_authentication_service():
     assert not auth.verify_token(t1, token_type=auth.ACTIVATE_ACCOUNT)
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
-    t4 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
+    t4, jti4 = auth.create_temporary_token(
+        user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
     assert t4 is not None
+    assert jti4 is not None
     assert isinstance(t4, str)
     assert auth.verify_token(t4, token_type=auth.ACTIVATE_ACCOUNT)
     assert not auth.verify_token(t2)
