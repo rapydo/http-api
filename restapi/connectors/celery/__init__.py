@@ -25,7 +25,7 @@ class CeleryExt(Connector):
 
         broker = self.variables.get("broker")
 
-        if broker is None:
+        if broker is None:  # pragma: no cover
             log.exit("Unable to start Celery, missing broker service")
             # celery_app = None
             # return celery_app
@@ -51,12 +51,12 @@ class CeleryExt(Connector):
             BROKER_PASSWORD = None
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
-        else:
+        else:  # pragma: no cover
             log.exit("Invalid celery broker: {}", broker)
 
-        if BROKER_USER == "":
+        if BROKER_USER == "":  # pragma: no cover
             BROKER_USER = None
-        if BROKER_PASSWORD == EMPTY:
+        if BROKER_PASSWORD == EMPTY:  # pragma: no cover
             BROKER_PASSWORD = None
 
         if BROKER_VHOST != "":
@@ -84,7 +84,7 @@ class CeleryExt(Connector):
             )
             log.info(
                 "Configured Redis as Celery broker {}", obfuscate_url(BROKER_URL))
-        else:
+        else:  # pragma: no cover
             log.error("Unable to start Celery unknown broker service: {}", broker)
             celery_app = None
             return celery_app
@@ -109,7 +109,7 @@ class CeleryExt(Connector):
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
-        else:
+        else:  # pragma: no cover
             log.exit("Invalid celery backend: {}", backend)
 
         if BACKEND_USER == EMPTY:
@@ -146,7 +146,7 @@ class CeleryExt(Connector):
             )
             log.info(
                 "Configured MongoDB as Celery backend {}", obfuscate_url(BACKEND_URL))
-        else:
+        else:  # pragma: no cover
             log.exit("Unable to start Celery unknown backend service: {}", backend)
             # celery_app = None
             # return celery_app
