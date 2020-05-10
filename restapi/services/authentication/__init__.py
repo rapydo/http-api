@@ -390,7 +390,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._user = user
         return True
 
-    @abc.abstractmethod
+    @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
         log.debug("Token is not saved in base authentication")
 

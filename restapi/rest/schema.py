@@ -17,9 +17,6 @@ class RecoverSchema(EndpointResource):
         # FIXME: not from json but from query
         method = self.get_input(single_parameter='method', default='POST')
 
-        # schema_definition = self.get_endpoint_definition(
-        #     key='parameters', is_schema_url=True, method=method)
-
         custom_definition = self.get_endpoint_custom_definition(
             method=method, is_schema_url=True
         )

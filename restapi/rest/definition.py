@@ -141,13 +141,6 @@ class EndpointResource(Resource):
 
         # TODO: should I check body parameters?
 
-    @staticmethod
-    def clean_parameter(param=""):
-        """ I get parameters already with '"' quotes from curl? """
-        if param is None:
-            return param
-        return param.strip('"')
-
     def parse(self):
         """
         Parameters may be necessary at any method: Parse them all.
@@ -552,30 +545,6 @@ class EndpointResource(Resource):
             data['type'] = type(instance).__name__.lower()
 
         return data
-
-    def get_endpoint_definition(self, key=None, is_schema_url=False, method=None):
-
-        url = request.url_rule.rule
-        if is_schema_url:
-            url = mem.customizer._schemas_map[url]
-
-        if url not in mem.customizer._definitions["paths"]:
-            return None
-
-        if method is None:
-            method = request.method
-        method = method.lower()
-        if method not in mem.customizer._definitions["paths"][url]:
-            return None
-
-        tmp = mem.customizer._definitions["paths"][url][method]
-
-        if key is None:
-            return tmp
-        if key not in tmp:
-            return None
-
-        return tmp[key]
 
     def get_endpoint_custom_definition(self, is_schema_url=False, method=None):
         url = request.url_rule.rule
