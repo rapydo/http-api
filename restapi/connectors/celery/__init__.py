@@ -239,7 +239,7 @@ class CeleryExt(Connector):
                 return PeriodicTask.objects.get(name=name)
             except DoesNotExist:
                 return None
-        elif cls.CELERYBEAT_SCHEDULER == 'REDIS':
+        if cls.CELERYBEAT_SCHEDULER == 'REDIS':
             from redbeat.schedulers import RedBeatSchedulerEntry
             try:
                 task_key = "{}{}".format(cls.REDBEAT_KEY_PREFIX, name)
@@ -247,9 +247,9 @@ class CeleryExt(Connector):
                     task_key, app=CeleryExt.celery_app)
             except KeyError:
                 return None
-        else:
-            log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
+        raise AttributeError(
+            "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+        )
 
     @classmethod
     def delete_periodic_task(cls, name):
@@ -298,7 +298,7 @@ class CeleryExt(Connector):
             if not isinstance(every, timedelta):
                 raise AttributeError(
                     "Invalid input parameter every = {} (type {})".format(
-                        every, type(every)
+                        every, type(every).__name__
                     )
                 )
             interval = schedule(run_every=every)  # seconds
@@ -312,8 +312,9 @@ class CeleryExt(Connector):
             entry.save()
 
         else:
-            log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
+            raise AttributeError(
+                "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+            )
 
     @classmethod
     def create_crontab_task(
@@ -371,8 +372,9 @@ class CeleryExt(Connector):
             entry.save()
 
         else:
-            log.error(
-                "Unsupported celery-beat scheduler: {}", cls.CELERYBEAT_SCHEDULER)
+            raise AttributeError(
+                "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+            )
 
 
 def send_errors_by_email(func):
