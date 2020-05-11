@@ -212,13 +212,14 @@ def create_app(
     # Logging responses
     microservice.after_request(log_response)
 
-    # Postponed, after initializing of mem.TESTING variable
-    from restapi.services.mail import send_mail_is_active, test_smtp_client
-    if send_mail_is_active():
-        if not test_smtp_client():
-            log.critical("Bad SMTP configuration, unable to create a client")
-        else:
-            log.info("SMTP configuration verified")
+    if not init_mode and not destroy_mode:
+        # Postponed, after initializing of mem.TESTING variable
+        from restapi.services.mail import send_mail_is_active, test_smtp_client
+        if send_mail_is_active():
+            if not test_smtp_client():
+                log.critical("Bad SMTP configuration, unable to create a client")
+            else:
+                log.info("SMTP configuration verified")
 
     if SENTRY_URL is not None:
 
