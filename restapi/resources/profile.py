@@ -87,7 +87,8 @@ def notify_registration(user):
 
 
 def custom_extra_registration(variables):
-    # Add the possibility to user a custom registration extra service
+    # ? Paolo ?
+    # Add the possibility to add a custom registration extra service
     oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
     obj = Meta.get_customizer_class(
         'apis.profile', 'CustomRegister', {'client_name': oscr}

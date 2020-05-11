@@ -4,7 +4,13 @@ import socket
 import datetime
 import pytz
 
-from smtplib import SMTP, SMTP_SSL
+from restapi.utilities.globals import mem
+
+if mem.TESTING:
+    from restapi.services.mailmock import SMTP, SMTP_SSL
+else:
+    from smtplib import SMTP, SMTP_SSL
+
 from smtplib import SMTPException, SMTPAuthenticationError
 
 from email.mime.text import MIMEText
@@ -54,6 +60,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
 
 def send_mail_is_active():
+
     host = os.environ.get("SMTP_HOST")
 
     return host and host.strip()

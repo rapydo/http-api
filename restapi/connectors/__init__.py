@@ -178,7 +178,6 @@ class Connector(metaclass=abc.ABCMeta):
             obj = self.connect()
             if obj is None:
                 return None
-            # self.initialization(obj=obj)
             self.set_object(obj=obj, ref=ref)
 
             log.verbose("First connection for {}", self.name)
