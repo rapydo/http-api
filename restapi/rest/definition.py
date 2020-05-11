@@ -76,7 +76,8 @@ class EndpointResource(Resource):
 
         return auth
 
-    def get_service_instance(self, service_name, global_instance=True, **kwargs):
+    @staticmethod
+    def get_service_instance(service_name, global_instance=True, **kwargs):
         return detector.get_service_instance(
             service_name,
             global_instance=global_instance,
@@ -398,7 +399,8 @@ class EndpointResource(Resource):
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
 
-    def get_show_fields(self, obj, function_name, view_public_only, fields=None):
+    @staticmethod
+    def get_show_fields(obj, function_name, view_public_only, fields=None):
         if fields is None:
             fields = []
         if len(fields) < 1:
@@ -591,7 +593,8 @@ class EndpointResource(Resource):
 
         return properties
 
-    def update_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_properties(instance, schema, properties):
 
         for field in schema:
             if isinstance(field, str):
@@ -606,7 +609,8 @@ class EndpointResource(Resource):
             if key in properties:
                 instance.__dict__[key] = properties[key]
 
-    def update_sql_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_sql_properties(instance, schema, properties):
 
         from sqlalchemy.orm.attributes import set_attribute
         for field in schema:
@@ -622,7 +626,8 @@ class EndpointResource(Resource):
             if key in properties:
                 set_attribute(instance, key, properties[key])
 
-    def update_mongo_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_mongo_properties(instance, schema, properties):
 
         for field in schema:
             if isinstance(field, str):
@@ -663,7 +668,8 @@ class EndpointResource(Resource):
         return user
 
     # this is a simple wrapper of restapi.swagger.input_validation
-    def validate_input(self, json_parameters, definitionName):
+    @staticmethod
+    def validate_input(json_parameters, definitionName):
 
         try:
             return input_validation(json_parameters, definitionName)

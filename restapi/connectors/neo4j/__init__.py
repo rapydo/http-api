@@ -79,7 +79,8 @@ class NeomodelClient:
         return True
 
     @catch_db_exceptions
-    def cypher(self, query):
+    @staticmethod
+    def cypher(query):
         """ Execute normal neo4j queries """
         try:
             # results, meta = db.cypher_query(query)
@@ -104,13 +105,15 @@ class NeomodelClient:
         separator = "#_#"
         return separator.join(var)
 
-    def sanitize_input(self, term):
+    @staticmethod
+    def sanitize_input(term):
         '''
         Strip and clean up term from special characters.
         '''
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
-    def fuzzy_tokenize(self, term):
+    @staticmethod
+    def fuzzy_tokenize(term):
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
 

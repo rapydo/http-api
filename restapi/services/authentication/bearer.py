@@ -57,7 +57,8 @@ class HTTPTokenAuth:
         """ Returns (auth, token) """
         return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
 
-    def authenticate_roles(self, verify_roles_callback, roles, required_roles):
+    @staticmethod
+    def authenticate_roles(verify_roles_callback, roles, required_roles):
         if verify_roles_callback:
             return verify_roles_callback(roles, required_roles=required_roles)
         return False

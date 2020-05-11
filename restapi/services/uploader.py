@@ -31,7 +31,8 @@ class Uploader:
     allowed_exts = []
     # allowed_exts = ['png', 'jpg', 'jpeg', 'tiff']
 
-    def split_dir_and_extension(self, filepath):
+    @staticmethod
+    def split_dir_and_extension(filepath):
         filebase, fileext = os.path.splitext(filepath)
         return filebase, fileext.strip('.')
 

@@ -586,10 +586,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    def register_failed_login(self, username):
+    @staticmethod
+    def register_failed_login(username):
         log.critical("auth.register_failed_login: not implemented")
         return True
 
-    def get_failed_login(self, username):
+    @staticmethod
+    def get_failed_login(username):
         log.critical("auth.get_failed_login: not implemented")
         return 0

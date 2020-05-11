@@ -271,5 +271,6 @@ class IrodsPythonExt(Connector):
 
         return session
 
-    def deserialize(self, obj):
+    @staticmethod
+    def deserialize(obj):
         return iRODSSession.deserialize(obj)

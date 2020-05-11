@@ -36,10 +36,12 @@ class IrodsPythonClient:
     def connect(self):
         return self
 
-    def get_collection_from_path(self, absolute_path):
+    @staticmethod
+    def get_collection_from_path(absolute_path):
         return os.path.dirname(absolute_path)
 
-    def get_absolute_path(self, *args, root=None):
+    @staticmethod
+    def get_absolute_path(*args, root=None):
         if len(args) < 1:
             return root
         if root is None and not args[0].startswith('/'):
@@ -81,7 +83,8 @@ class IrodsPythonClient:
         except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
             raise IrodsException("{} not found or no permissions".format(path))
 
-    def getPath(self, path, prefix=None):
+    @staticmethod
+    def getPath(path, prefix=None):
         if prefix is not None and prefix != '':
             path = path[len(prefix):]
             if path[0] == "/":

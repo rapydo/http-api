@@ -53,7 +53,8 @@ class PushpinClient:
     def __init__(self, pub):
         self.pub = pub
 
-    def callback(self, result, message):
+    @staticmethod
+    def callback(result, message):
         if result:
             log.debug('Message successfully published on pushpin')
         else:
@@ -62,7 +63,7 @@ class PushpinClient:
     def publish_on_stream(self, channel, message, sync=False):
         if not sync:
             self.pub.publish_http_stream(
-                channel, message, callback=self.callback)
+                channel, message, callback=PushpinClient.callback)
             return True
 
         try:

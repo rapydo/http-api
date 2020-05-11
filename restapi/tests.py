@@ -52,7 +52,8 @@ class BaseTests:
         content = json.loads(r.data.decode('utf-8'))
         return content
 
-    def getInputSchema(self, client, endpoint, headers):
+    @staticmethod
+    def getInputSchema(client, endpoint, headers):
         """
             Retrieve a swagger-like data schema associated with a endpoint
         """
@@ -77,7 +78,8 @@ class BaseTests:
             return content['Response']['data']
         return content
 
-    def get_content(self, http_out):
+    @staticmethod
+    def get_content(http_out):
 
         try:
             response = json.loads(http_out.get_data().decode())
@@ -97,7 +99,8 @@ class BaseTests:
 
         return response
 
-    def do_login(self, client, USER, PWD, status_code=200, error=None):
+    @staticmethod
+    def do_login(client, USER, PWD, status_code=200, error=None):
         """
             Make login and return both token and authorization header
         """
@@ -217,7 +220,8 @@ class BaseTests:
     #         return content['Response']['data']
     #     return content
 
-    def get_celery(self, app):
+    @staticmethod
+    def get_celery(app):
 
         from restapi.connectors.celery import CeleryExt
         from restapi.services.detect import detector
@@ -227,7 +231,8 @@ class BaseTests:
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    def randomString(self, length=16, prefix="TEST-"):
+    @staticmethod
+    def randomString(length=16, prefix="TEST-"):
         """
             Create a random string to be used to build data for tests
         """
@@ -240,7 +245,8 @@ class BaseTests:
 
         return random_string
 
-    def checkResponse(self, response, fields, relationships):
+    @staticmethod
+    def checkResponse(response, fields, relationships):
         """
         Verify that the response contains the given fields and relationships
         """

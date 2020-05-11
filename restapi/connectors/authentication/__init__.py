@@ -145,7 +145,8 @@ class HandleSecurity:
 
         return True
 
-    def get_qrcode(self, user):
+    @staticmethod
+    def get_qrcode(user):
 
         secret = HandleSecurity.get_secret(user)
         totp = pyotp.TOTP(secret)
@@ -253,7 +254,8 @@ class HandleSecurity:
                     msg = "Sorry, this account is blocked for inactivity"
                     raise RestApiException(msg, status_code=401)
 
-    def verify_active_user(self, user):
+    @staticmethod
+    def verify_active_user(user):
 
         if not user.is_active:
             # Beware, frontend leverages on this exact message,
