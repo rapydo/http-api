@@ -120,21 +120,20 @@ class RabbitWrapper:
             self._connection_retries += 1
             raise e
 
-    '''
-    Send a log message to the RabbitMQ queue, unless
-    the dont-connect parameter is set. In that case,
-    the messages get logged into the normal log files.
-    If the connection is dead, reconnection is attempted,
-    but not eternally.
-
-    :param jmsg: JSON log message
-    :param app_name: App name (will be used for the ElasticSearch index name)
-    :param exchange: RabbitMQ exchange where the jmsg should be sent.
-                     Empty for default exchange.
-    :param queue: RabbitMQ routing key.
-    '''
-
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
+        '''
+        Send a log message to the RabbitMQ queue, unless
+        the dont-connect parameter is set. In that case,
+        the messages get logged into the normal log files.
+        If the connection is dead, reconnection is attempted,
+        but not eternally.
+
+        :param jmsg: JSON log message
+        :param app_name: App name (will be used for the ElasticSearch index name)
+        :param exchange: RabbitMQ exchange where the jmsg should be sent.
+                         Empty for default exchange.
+        :param queue: RabbitMQ routing key.
+        '''
 
         log.verbose(
             'Asked to log ({}, {}): {}',
