@@ -407,12 +407,21 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
 
+        # get a new token
+        headers, _ = self.do_login(
+            client,
+            BaseAuthentication.default_user,
+            data['new_password']
+        )
+
         # Restore the password
         data['password'] = data['new_password']
         data['password_confirm'] = BaseAuthentication.default_password
         data['new_password'] = BaseAuthentication.default_password
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
+
+        headers, _ = self.do_login(client, None, None)
 
     def test_10_registration(self, client):
 
