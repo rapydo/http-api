@@ -94,6 +94,9 @@ class BaseTests:
         if isinstance(response, dict) and len(response) == 2:
             content = glom(response, "Response.data", default=None)
 
+            if content is None:
+                content = glom(response, "Response.errors", default=None)
+
             if content is not None:
                 return content
 
