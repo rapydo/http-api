@@ -9,7 +9,7 @@ from restapi.confs import TESTING
 if TESTING:
     from restapi.services.mailmock import SMTP, SMTP_SSL
 else:
-    from smtplib import SMTP, SMTP_SSL
+    from smtplib import SMTP, SMTP_SSL  # pragma: no cover
 
 from smtplib import SMTPException, SMTPAuthenticationError
 

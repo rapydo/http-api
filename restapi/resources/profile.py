@@ -526,10 +526,7 @@ class RecoverPassword(EndpointResource):
             user, self.auth.PWD_RESET)
 
         domain = os.environ.get("DOMAIN")
-        if PRODUCTION:
-            protocol = "https"
-        else:
-            protocol = "http"
+        protocol = 'https' if PRODUCTION else 'http'
 
         rt = reset_token.replace(".", "+")
 

@@ -12,6 +12,8 @@ from restapi.utilities.logs import log
 
 
 class Downloader:
+
+    # This is good for small files
     def download(self, filename=None, subfolder=None, get=False):
 
         if not get:
@@ -37,12 +39,14 @@ class Downloader:
                 break
             yield data
 
+    # this is good for large files
     def send_file_streamed(self, path, mime):
         log.info("Providing streamed content from {}", path)
 
         f = open(path, "rb")
         return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
 
+    # this is good for media files, based on Range header
     def send_file_partial(self, path, mime):
         """
         Simple wrapper around send_file which handles HTTP 206 Partial Content
@@ -57,7 +61,7 @@ class Downloader:
         size = os.path.getsize(path)
         byte1, byte2 = 0, None
 
-        m = re.search('(\d+)-(\d*)', range_header)
+        m = re.search(r'(\d+)-(\d*)', range_header)
         g = m.groups()
 
         if g[0]:
