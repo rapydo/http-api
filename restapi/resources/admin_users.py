@@ -308,6 +308,8 @@ class AdminUsers(MethodResource, EndpointResource):
         for r in roles_keys:
             kwargs.pop(r)
 
+        email_notification = kwargs.pop('email_notification', False)
+
         unhashed_password = kwargs["password"]
 
         # If created by admins users must accept privacy at first login
@@ -330,7 +332,6 @@ class AdminUsers(MethodResource, EndpointResource):
             if group is not None:
                 user.belongs_to.connect(group)
 
-        email_notification = kwargs.get('email_notification', False)
         if email_notification and unhashed_password is not None:
             send_notification(user, unhashed_password, is_update=False)
 
@@ -362,6 +363,8 @@ class AdminUsers(MethodResource, EndpointResource):
         for r in roles_keys:
             kwargs.pop(r)
 
+        email_notification = kwargs.pop('email_notification', False)
+
         self.auth.link_roles(user, roles)
 
         if self.neo4j_enabled:
@@ -391,7 +394,6 @@ class AdminUsers(MethodResource, EndpointResource):
             else:
                 user.belongs_to.connect(group)
 
-        email_notification = kwargs.get('email_notification', False)
         if email_notification and unhashed_password is not None:
             send_notification(user, unhashed_password, is_update=True)
 
