@@ -79,7 +79,6 @@ class NeomodelClient:
         return True
 
     @catch_db_exceptions
-    @staticmethod
     def cypher(query):
         """ Execute normal neo4j queries """
         try:
