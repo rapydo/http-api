@@ -45,7 +45,7 @@ def create_app(
     if testing_mode and not config.TESTING:
         # Deprecated since 0.7.3
         log.exit(
-            "Deprecated used of testing_mode, please export env variable TESTING=1")
+            "Deprecated used of testing_mode, please export env variable APP_MODE=test")
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
