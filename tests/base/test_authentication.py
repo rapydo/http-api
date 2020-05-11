@@ -170,19 +170,25 @@ def test_authentication_service():
         log.warning("Skipping authentication test: service not available")
         return False
 
-    db_service = None
-    if detector.check_availability('neo4j'):
-        db_service = detector.connectors_instances.get('neo4j').get_instance()
+    auth_db = None
+    for check_db in ('neo4j', 'sqlalchemy', 'mongo'):
+        if detector.check_availability('neo4j'):
+            auth_db = check_db
+            break
 
-    elif detector.check_availability('sqlalchemy'):
-        db_service = detector.connectors_instances.get('sqlalchemy').get_instance()
-
-    elif detector.check_availability('mongo'):
-        db_service = detector.connectors_instances.get('mongo').get_instance()
-
-    else:
+    if not auth_db:
         log.warning("Skipping authentication test: no database available")
         return False
+
+    db_connector = detector.connectors_instances.get(auth_db)
+    if not db_connector:
+        log.warning(
+            "Skipping authentication test: {} connector is not available",
+            auth_db
+        )
+        return False
+
+    db_service = db_connector.get_instance()
 
     assert db_service is not None
     # mem is required by Authentication init... :-(
