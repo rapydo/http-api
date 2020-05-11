@@ -360,7 +360,8 @@ class Swagger:
         self._customizer._original_paths = self._original_paths
         return output
 
-    def get_models(self):
+    @staticmethod
+    def get_models():
         """ Read models from base/custom yaml files """
 
         # BASE definitions

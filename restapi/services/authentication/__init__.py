@@ -519,7 +519,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    def custom_user_properties(self, userdata):
+    @staticmethod
+    def custom_user_properties(userdata):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path)
 

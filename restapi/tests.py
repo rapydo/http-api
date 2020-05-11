@@ -42,7 +42,8 @@ class BaseTests:
 
         raise AttributeError("Class variable {} not found".format(variable))
 
-    def get_specs(self, client):
+    @staticmethod
+    def get_specs(client):
         """
             Retrieve Swagger definition by calling API/specs endpoint
         """
@@ -62,7 +63,8 @@ class BaseTests:
             return content['Response']['data']
         return content
 
-    def getDynamicInputSchema(self, client, endpoint, headers):
+    @staticmethod
+    def getDynamicInputSchema(client, endpoint, headers):
         """
             Retrieve a dynamic data schema associated with a endpoint
         """

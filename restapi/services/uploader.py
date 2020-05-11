@@ -54,8 +54,8 @@ class Uploader:
             return os.path.dirname(abs_file)
         return abs_file
 
+    @staticmethod
     def ngflow_upload(
-        self,
         filename,
         destination,
         content,
@@ -229,7 +229,8 @@ class Uploader:
             code=200,
         )
 
-    def upload_chunked(self, destination, force=False, chunk_size=None):
+    @staticmethod
+    def upload_chunked(destination, force=False, chunk_size=None):
 
         # Default chunk size, put this somewhere
         if chunk_size is None:

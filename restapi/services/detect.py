@@ -162,7 +162,8 @@ class Detector:
 
         return variables
 
-    def load_connector(self, connector, classname):
+    @staticmethod
+    def load_connector(connector, classname):
 
         module_name = "{}.connectors.{}".format(BACKEND_PACKAGE, connector)
         module = Meta.get_module_from_string(

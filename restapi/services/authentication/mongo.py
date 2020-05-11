@@ -30,14 +30,6 @@ class Authentication(BaseAuthentication):
         Connector = detector.services_classes.get(name)
         self.db = Connector().get_instance(dbname=AUTH_DB)
 
-    def custom_user_properties(self, userdata):
-        new_userdata = super(Authentication, self).custom_user_properties(userdata)
-        if not new_userdata.get('uuid'):
-            new_userdata['uuid'] = getUUID()
-        if not new_userdata.get('id'):
-            new_userdata['id'] = new_userdata['uuid']
-        return new_userdata
-
     # Also used by POST user
     def create_user(self, userdata, roles):
 
@@ -46,6 +38,12 @@ class Authentication(BaseAuthentication):
 
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
+
+        if "uuid" not in userdata:
+            userdata['uuid'] = getUUID()
+
+        if "id" not in userdata:
+            userdata['id'] = userdata['uuid']
 
         userdata = self.custom_user_properties(userdata)
         user = self.db.User(**userdata)

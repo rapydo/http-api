@@ -17,22 +17,28 @@ class SMTP:
     def __exit__(self, _type, value, tb):
         log.info("Mail mock exiting the with context")
 
-    def set_debuglevel(self, intval):
+    @staticmethod
+    def set_debuglevel(intval):
         log.info("Mail mock set debug level = {}", intval)
 
-    def connect(self, host, port):
+    @staticmethod
+    def connect(host, port):
         log.info("Mail mock connected to {}:{}", host, port)
 
-    def login(self, user, pwd):
+    @staticmethod
+    def login(user, pwd):
         log.info("Mail mock login ok")
 
-    def quit(self):
+    @staticmethod
+    def quit():
         log.info("Mail mock sent quit message")
 
-    def ehlo(self):
+    @staticmethod
+    def ehlo():
         log.info("Mail mock sent ehlo message")
 
-    def sendmail(self, from_address, dest_addresses, msg):
+    @staticmethod
+    def sendmail(from_address, dest_addresses, msg):
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
 
 

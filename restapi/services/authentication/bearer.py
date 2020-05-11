@@ -46,7 +46,8 @@ class HTTPTokenAuth:
     def authenticate_header(self):
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
-    def authenticate(self, verify_token_callback, token):
+    @staticmethod
+    def authenticate(verify_token_callback, token):
         if verify_token_callback:
             return verify_token_callback(token)
         return False

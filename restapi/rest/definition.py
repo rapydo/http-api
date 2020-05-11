@@ -546,7 +546,8 @@ class EndpointResource(Resource):
 
         return data
 
-    def get_endpoint_custom_definition(self, is_schema_url=False, method=None):
+    @staticmethod
+    def get_endpoint_custom_definition(is_schema_url=False, method=None):
         url = request.url_rule.rule
         if is_schema_url:
             url = mem.customizer._schemas_map[url]
@@ -568,7 +569,8 @@ class EndpointResource(Resource):
         return mem.customizer._parameter_schemas[url][method]
 
     # HANDLE INPUT PARAMETERS
-    def read_properties(self, schema, values, checkRequired=True):
+    @staticmethod
+    def read_properties(schema, values, checkRequired=True):
 
         properties = {}
         for field in schema:

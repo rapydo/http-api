@@ -229,5 +229,5 @@ class Meta:
             except BaseException as e:
                 log.error("Errors during customizer: {}", e)
             else:
-                log.debug("Customizer called: {}", class_name)
+                log.verbose("Customizer called: {}", class_name)
         return instance
