@@ -333,9 +333,27 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
     # tests to be completed
-    def test_09_other_endoints(self, client):
+    def test_09_profile(self, client):
+
+        if not detector.get_bool_from_os("MAIN_LOGIN_ENABLE"):
+            log.warning("Profile is disabled, skipping tests")
+            return True
 
         headers, _ = self.do_login(client, None, None)
+
+        # change profile, no auth
+        r = client.put(AUTH_URI + "/" + 'profile')
+        assert r.status_code == 401
+
+        # change profile, no auth
+        r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
+        assert r.status_code == 204
+
+    def test_10_registration(self, client):
+
+        if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
+            log.warning("User registration is disabled, skipping tests")
+            return True
 
         # registration, empty input
         r = client.post(AUTH_URI + "/" + 'profile')
@@ -347,14 +365,6 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing input: password'
 
-        # change profile, no auth
-        r = client.put(AUTH_URI + "/" + 'profile')
-        assert r.status_code == 401
-
-        # change profile, no auth
-        r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
-        assert r.status_code == 204
-
         # profile activation
         r = client.put(AUTH_URI + "/" + '/profile/activate/thisisatoken')
         # this token is not valid
@@ -365,15 +375,21 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'Empty input'
 
-        # registration, missing information
+        # activation, missing information
         r = client.post(AUTH_URI + "/" + 'profile/activate', data={'x': 'y'})
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing required input: username'
 
-        # registration, wrong username
+        # activation, wrong username
         r = client.post(AUTH_URI + "/" + 'profile/activate', data={'username': 'y'})
         # return is 200, ma no mail will be sent... how to test this??
         assert r.status_code == 200
+
+    def test_11_password_reset(self, client):
+
+        if not detector.get_bool_from_os("ALLOW_PASSWORD_RESET"):
+            log.warning("Password reset is disabled, skipping tests")
+            return True
 
         # Request password reset, missing information
         r = client.post(AUTH_URI + "/" + 'reset')

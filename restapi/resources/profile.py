@@ -202,6 +202,12 @@ class Profile(EndpointResource):
     def post(self):
         """ Register new user """
 
+        if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
+            raise RestApiException(
+                'Registration is not allowed',
+                status_code=503,
+            )
+
         if not send_mail_is_active():
             log.error("Send mail is not active")
             raise RestApiException(
@@ -334,7 +340,7 @@ class Profile(EndpointResource):
 
 
 class ProfileActivate(EndpointResource):
-    depends_on = ["not PROFILE_DISABLED"]
+    depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
@@ -455,7 +461,7 @@ def send_internal_password_reset(uri, title, reset_email):
 class RecoverPassword(EndpointResource):
 
     baseuri = "/auth"
-    depends_on = ["MAIN_LOGIN_ENABLE"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
     labels = ["authentication"]
 
     POST = {
