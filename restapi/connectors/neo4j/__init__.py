@@ -79,7 +79,7 @@ class NeomodelClient:
         return True
 
     @catch_db_exceptions
-    def cypher(query):
+    def cypher(self, query):
         """ Execute normal neo4j queries """
         try:
             # results, meta = db.cypher_query(query)
