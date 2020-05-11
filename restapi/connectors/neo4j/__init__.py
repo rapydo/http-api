@@ -132,7 +132,8 @@ class NeomodelClient:
 
 
 class NeoModel(Connector):
-    def set_connection_exception(self):
+
+    def get_connection_exception(self):
 
         # from neomodel 3.3.2
         return (
@@ -141,7 +142,13 @@ class NeoModel(Connector):
             neobolt_AuthError
         )
 
-    def custom_connection(self, **kwargs):
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def connect(self, **kwargs):
 
         variables = kwargs or self.variables
 
@@ -165,11 +172,10 @@ class NeoModel(Connector):
 
         # return db
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
-        """ Note: we ignore args here """
+    def initialize(self, pinit, pdestroy, abackend=None):
 
         # recover instance with the parent method
-        graph = super().custom_init()
+        graph = self.get_instance()
 
         # db.init_app(self.app)
 

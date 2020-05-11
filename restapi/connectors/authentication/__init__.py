@@ -29,7 +29,16 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
 
 class Authenticator(Connector):
 
-    def custom_connection(self, **kwargs):
+    def get_connection_exception(self):
+        return None
+
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def connect(self, **kwargs):
 
         # What service will hold authentication?
         auth_service = self.variables.get('service')
@@ -74,10 +83,9 @@ class Authenticator(Connector):
 
         return custom_auth
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
+    def initialize(self, pinit, pdestroy, abackend=None):
 
-        # Get the instance from the parent
-        obj = super().custom_init()
+        obj = self.get_instance()
         # NOTE: Inject the backend as the object 'db' inside the instance
         # IMPORTANT!!! this is the 'hat trick' that makes things possible
         obj.db = abackend

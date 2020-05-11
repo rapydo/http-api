@@ -21,7 +21,19 @@ class RabbitExt(Connector):
     queues are then consumed by Logstash / ElasticSearch.
     '''
 
-    def custom_connection(self, **kwargs):
+    def get_connection_exception(self):
+        return None
+
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def initialize(self, pinit, pdestroy, abackend=None):
+        return self.get_instance()
+
+    def connect(self, **kwargs):
 
         conn_wrapper = RabbitWrapper(self.variables)
         return conn_wrapper

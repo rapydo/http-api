@@ -63,10 +63,17 @@ def catch_db_exceptions(func):
 
 
 class SqlAlchemy(Connector):
-    def set_connection_exception(self):
+
+    def get_connection_exception(self):
         return (OperationalError,)
 
-    def custom_connection(self, **kwargs):
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def connect(self, **kwargs):
 
         if len(kwargs) > 0:
             print("TODO: use args for connection?", kwargs)
@@ -135,11 +142,10 @@ class SqlAlchemy(Connector):
 
         return db
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
-        """ Note: we ignore args here """
+    def initialize(self, pinit, pdestroy, abackend=None):
 
         # recover instance with the parent method
-        db = super().custom_init()
+        db = self.get_instance()
 
         # do init_app of Flask-SQLAlchemy
         db.init_app(self.app)

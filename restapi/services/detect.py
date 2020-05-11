@@ -274,8 +274,10 @@ class Detector:
 
             # Initialize the real service getting the first service object
             log.debug("Initializing {} (pinit={})", name, do_init)
-            service_instance = instance.custom_init(
-                pinit=do_init, pdestroy=project_clean, abackend=auth_backend
+            service_instance = instance.initialize(
+                pinit=do_init,
+                pdestroy=project_clean,
+                abackend=auth_backend
             )
             instances[name] = service_instance
 

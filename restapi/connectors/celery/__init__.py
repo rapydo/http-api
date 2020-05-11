@@ -18,7 +18,19 @@ class CeleryExt(Connector):
     REDBEAT_KEY_PREFIX = "redbeat:"
     celery_app = None
 
-    def custom_connection(self, **kwargs):
+    def get_connection_exception(self):
+        return None
+
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def initialize(self, pinit, pdestroy, abackend=None):
+        return self.get_instance()
+
+    def connect(self, **kwargs):
 
         # set here to avoid warnings like 'Possible hardcoded password'
         EMPTY = ""

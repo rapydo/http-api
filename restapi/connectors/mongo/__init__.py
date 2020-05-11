@@ -51,11 +51,16 @@ def catch_db_exceptions(func):
 
 class MongoExt(Connector):
 
-    # _defaultdb = 'test'
-    # _authdb = 'auth'
-    # _defaultdb = 'auth'
+    def get_connection_exception(self):
+        return None
 
-    def custom_connection(self, **kwargs):
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def connect(self, **kwargs):
 
         variables = self.variables
         variables.update(kwargs)
@@ -85,11 +90,9 @@ class MongoExt(Connector):
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
         return obj
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
-        """ Note: we ignore args here """
-
+    def initialize(self, pinit, pdestroy, abackend=None):
         # recover instance with the parent method
-        db = super().custom_init()
+        db = self.get_instance()
 
         if pdestroy:
             # massive destruction

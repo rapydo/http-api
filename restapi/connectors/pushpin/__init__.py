@@ -14,10 +14,19 @@ class ServiceUnavailable(BaseException):
 
 class PushpinExt(Connector):
 
-    def set_connection_exception(self):
+    def get_connection_exception(self):
         return ServiceUnavailable
 
-    def custom_connection(self, **kwargs):
+    def preconnect(self, **kwargs):
+        return True
+
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def initialize(self, pinit, pdestroy, abackend=None):
+        return self.get_instance()
+
+    def connect(self, **kwargs):
 
         variables = kwargs or self.variables
 

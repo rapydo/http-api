@@ -27,7 +27,11 @@ PAM_AUTH_SCHEME = 'PAM'
 
 
 class IrodsPythonExt(Connector):
-    def pre_connection(self, **kwargs):
+
+    def get_connection_exception(self):
+        return None
+
+    def preconnect(self, **kwargs):
 
         session = kwargs.get('user_session')
 
@@ -124,7 +128,10 @@ class IrodsPythonExt(Connector):
 
         return True
 
-    def custom_connection(self, **kwargs):
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    def connect(self, **kwargs):
 
         check_connection = True
         timeout = kwargs.get('timeout', 15.0)
@@ -239,8 +246,7 @@ class IrodsPythonExt(Connector):
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
-        # NOTE: we ignore args here
+    def initialize(self, pinit, pdestroy, abackend=None):
 
         # if pinit and not self.variables.get('external'):
         #     log.debug("waiting for internal certificates")
@@ -250,7 +256,7 @@ class IrodsPythonExt(Connector):
         #     time.sleep(5)
 
         # recover instance with the parent method
-        session = super().custom_init()
+        session = self.get_instance()
 
         # IF variable 'IRODS_ANONYMOUS? is set THEN
         # Check if external iRODS / B2SAFE has the 'anonymous' user available
@@ -259,7 +265,7 @@ class IrodsPythonExt(Connector):
             if not session.query_user_exists(user):
                 log.exit(
                     "Cannot find '{}' inside "
-                    + "the currently connected iRODS instance",
+                    "the currently connected iRODS instance",
                     user,
                 )
 

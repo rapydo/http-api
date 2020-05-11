@@ -21,6 +21,36 @@ class Connector(metaclass=abc.ABCMeta):
         if app is not None:
             self.init_app(app)
 
+
+    @abc.abstractmethod
+    def get_connection_exception(self):
+        return None
+
+    @abc.abstractmethod
+    def preconnect(self, **kwargs):
+        return True
+
+    @abc.abstractmethod
+    def connect(self, **kwargs):
+        return
+
+    @abc.abstractmethod
+    def postconnect(self, obj, **kwargs):
+        return True
+
+    @abc.abstractmethod
+    def initialize(self, pinit, pdestroy, abackend=None):
+        return self.get_instance()
+
+
+    def close_connection(self, ctx):
+        """ override this method if you must close
+        your connection after each request"""
+
+        # obj = self.get_object(ref=ctx)
+        # obj.close()
+        self.set_object(obj=None, ref=ctx)  # it could be overidden
+
     def set_name(self):
         """ a different name for each extended object """
         self.name = self.__class__.__name__.lower()
@@ -84,12 +114,12 @@ class Connector(metaclass=abc.ABCMeta):
         obj = self.objs.get(h, None)
         return obj
 
-    def connect(self, **kwargs):
+    def initialize_connection(self, **kwargs):
 
         obj = None
 
         # BEFORE
-        ok = self.pre_connection(**kwargs)
+        ok = self.preconnect(**kwargs)
 
         if not ok:
             log.critical("Unable to make preconnection for {}", self.name)
@@ -97,13 +127,13 @@ class Connector(metaclass=abc.ABCMeta):
 
         # Try until it's connected
         if len(kwargs) > 0:
-            obj = self.custom_connection(**kwargs)
+            obj = self.connect(**kwargs)
         else:
             obj = self.retry()
             log.verbose("Connected! {}", self.name)
 
         # AFTER
-        self.post_connection(obj, **kwargs)
+        self.postconnect(obj, **kwargs)
 
         obj.connection_time = datetime.now()
         return obj
@@ -121,14 +151,11 @@ class Connector(metaclass=abc.ABCMeta):
 
         return obj
 
-    def set_connection_exception(self):
-        return None
-
     def retry(self, retry_interval=3, max_retries=-1):
         retry_count = 0
 
         # Get the exception which will signal a missing connection
-        exceptions = self.set_connection_exception()
+        exceptions = self.get_connection_exception()
         if exceptions is None:
             exceptions = (BaseException,)
 
@@ -139,7 +166,7 @@ class Connector(metaclass=abc.ABCMeta):
                 log.verbose("testing again in {} secs", retry_interval)
 
             try:
-                obj = self.custom_connection()
+                obj = self.connect()
             except exceptions as e:
                 log.error("Catched: {}({})", e.__class__.__name__, e)
                 log.exit("Service '{}' not available", self.name)
@@ -175,7 +202,7 @@ class Connector(metaclass=abc.ABCMeta):
         # When not using the context, this is the first connection
         if ctx is None:
             # First connection, before any request
-            obj = self.connect()
+            obj = self.initialize_connection()
             if obj is None:
                 return None
             self.set_object(obj=obj, ref=ref)
@@ -201,7 +228,7 @@ class Connector(metaclass=abc.ABCMeta):
                     obj = None
 
             if obj is None:
-                obj = self.connect(**kwargs)
+                obj = self.initialize_connection(**kwargs)
                 if obj is None:
                     return None
                 self.set_object(obj=obj, ref=ref, key=unique_hash)
@@ -211,43 +238,6 @@ class Connector(metaclass=abc.ABCMeta):
         obj = self.set_models_to_service(obj)
 
         return obj
-
-    ############################
-    # OPTIONALLY
-    # to be executed only at init time?
-
-    def pre_connection(self, **kwargs):
-        return True
-
-    def post_connection(self, obj=None, **kwargs):
-        return True
-
-    def close_connection(self, ctx):
-        """ override this method if you must close
-        your connection after each request"""
-
-        # obj = self.get_object(ref=ctx)
-        # obj.close()
-        self.set_object(obj=None, ref=ctx)  # it could be overidden
-
-    ############################
-    # To be overridden
-    @abc.abstractmethod
-    def custom_connection(self, **kwargs):
-        return
-
-    ############################
-    # Already has default
-    def custom_init(self, pinit=False, pdestroy=False, abackend=None, **kwargs):
-        """
-            - A backend is needed for non-standalone services
-                e.g. authentication module
-            - Project initialization/removal could be used here
-                or carried on to low levels;
-                they get activated by specific flask cli commands
-
-        """
-        return self.get_instance()
 
 
 def get_debug_instance(MyClass):
@@ -270,6 +260,6 @@ def get_debug_instance(MyClass):
 
     #######
     instance = MyClass()
-    obj = instance.connect()
+    obj = instance.initialize_connection()
     obj = instance.set_models_to_service(obj)
     return obj
