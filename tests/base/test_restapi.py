@@ -361,9 +361,35 @@ class TestApp(BaseTests):
         assert self.get_content(r) == 'Empty input'
 
         # registration, missing information
-        r = client.post(AUTH_URI + '/profile', data={'x': 'y'})
+        data = {'x': 'y'}
+        r = client.post(AUTH_URI + '/profile', data=data)
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing input: password'
+        data = {}
+        data['password'] = self.randomString()
+        r = client.post(AUTH_URI + '/profile', data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'Missing input: email'
+        data['email'] = BaseAuthentication.default_user
+        r = client.post(AUTH_URI + '/profile', data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'Missing input: name'
+        data['name'] = 'Mr'
+        r = client.post(AUTH_URI + '/profile', data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'Missing input: surname'
+
+        data['surname'] = 'Brown'
+        r = client.post(AUTH_URI + '/profile', data=data)
+        assert r.status_code == 400
+        m = "This user already exists: {}".format(BaseAuthentication.default_user)
+        assert self.get_content(r) == m
+
+        data['email'] = 'mock@nomail.org'
+        r = client.post(AUTH_URI + '/profile', data=data)
+        # now the user is created, but inactive...
+        # how to get the token sent via email???
+        assert r.status_code == 200
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')

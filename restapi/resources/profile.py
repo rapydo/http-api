@@ -202,13 +202,13 @@ class Profile(EndpointResource):
     def post(self):
         """ Register new user """
 
-        if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
+        if not detector.get_bool_from_os("ALLOW_REGISTRATION"):  # pragma: no cover
             raise RestApiException(
                 'Registration is not allowed',
                 status_code=503,
             )
 
-        if not send_mail_is_active():
+        if not send_mail_is_active():  # pragma: no cover
             log.error("Send mail is not active")
             raise RestApiException(
                 {'Server misconfiguration': 'Registration is not allowed'},
