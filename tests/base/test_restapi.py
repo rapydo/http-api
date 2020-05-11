@@ -402,7 +402,7 @@ class TestApp(BaseTests):
         assert r.status_code == 409
 
         # Change the password
-        data['new_password'] = self.randomString()
+        data['new_password'] = "Aa1!{}".format(self.randomString())
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
