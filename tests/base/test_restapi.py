@@ -345,7 +345,7 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + "/" + 'profile')
         assert r.status_code == 401
 
-        # change profile, no auth
+        # change profile, no data
         r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
 

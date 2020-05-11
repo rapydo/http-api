@@ -324,17 +324,11 @@ class Profile(EndpointResource):
         user = self.auth.get_user()
         data = self.get_input()
 
-        has_pw_update = True
-        no_pw_data = {}
-        for key in data.keys():
-            if 'password' not in key:
-                no_pw_data[key] = data[key]
-                has_pw_update = False
-
-        if has_pw_update:
+        if 'password' in data:
             self.update_password(user, data)
-        else:
-            self.update_profile(user, no_pw_data)
+            return self.empty_response()
+
+        self.update_profile(user, data)
 
         return self.empty_response()
 
