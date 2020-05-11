@@ -24,50 +24,31 @@ def send_activation_link(auth, user):
     )
 
     activation_token, payload = auth.create_temporary_token(
-        user, auth.ACTIVATE_ACCOUNT)
+        user, auth.ACTIVATE_ACCOUNT
+    )
 
     domain = os.environ.get("DOMAIN")
-    if PRODUCTION:
-        protocol = "https"
-    else:
-        protocol = "http"
+    protocol = 'https' if PRODUCTION else 'http'
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: {}", rt)
     url = "{}://{}/public/register/{}".format(protocol, domain, rt)
     body = "Follow this link to activate your account: {}".format(url)
 
-    obj = Meta.get_customizer_class('apis.profile', 'CustomActivation')
+    # customized template
+    template_file = "activate_account.html"
+    html_body = get_html_template(template_file, {"url": url})
+    if html_body is None:
+        html_body = body
+        body = None
 
-    # NORMAL ACTIVATION
-    if obj is None:
+    # NOTE: possibility to define a different subject
+    default_subject = "{} account activation".format(title)
+    subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
-        # customized template
-        template_file = "activate_account.html"
-        html_body = get_html_template(template_file, {"url": url})
-        if html_body is None:
-            html_body = body
-            body = None
-
-        # NOTE: possibility to define a different subject
-        default_subject = "{} account activation".format(title)
-        subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
-
-        sent = send_mail(html_body, subject, user.email, plain_body=body)
-        if not sent:
-            raise BaseException("Error sending email, please retry")
-
-    # EXTERNAL SMTP/EMAIL SENDER
-    else:
-        try:
-            obj.request_activation(name=user.name, email=user.email, url=url)
-        except BaseException as e:
-            log.error(
-                "Could not send email with custom service:\n{}: {}",
-                e.__class__.__name__,
-                e,
-            )
-            raise
+    sent = send_mail(html_body, subject, user.email, plain_body=body)
+    if not sent:
+        raise BaseException("Error sending email, please retry")
 
     auth.save_token(
         user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
@@ -84,28 +65,6 @@ def notify_registration(user):
         body = "New credentials request from {}".format(user.email)
 
         send_mail(body, subject)
-
-
-def custom_extra_registration(variables):
-    # ? Paolo ?
-    # Add the possibility to add a custom registration extra service
-    oscr = detector.get_global_var('CUSTOM_REGISTER', default='noname')
-    obj = Meta.get_customizer_class(
-        'apis.profile', 'CustomRegister', {'client_name': oscr}
-    )
-    if obj is not None:
-        try:
-            obj.new_member(
-                email=variables['email'],
-                name=variables['name'],
-                surname=variables['surname'],
-            )
-        except BaseException as e:
-            log.error(
-                "Could not register your custom profile:\n{}: {}",
-                e.__class__.__name__,
-                e,
-            )
 
 
 class Profile(EndpointResource):
@@ -262,9 +221,8 @@ class Profile(EndpointResource):
             log.error("Errors during account registration: {}", str(e))
             user.delete()
             raise RestApiException(str(e))
-        else:
-            custom_extra_registration(v)
-            return self.response(msg)
+
+        return self.response(msg)
 
     def update_password(self, user, data):
 
