@@ -371,22 +371,26 @@ class TestApp(BaseTests):
         assert c.get('name') == newname
         assert c.get('uuid') != newuuid
 
-        newpwd = self.randomString()
-        data = {'password': newpwd}
+        data = {}
+        data['password'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
         assert self.get_content(r) == 'New password is missing'
 
-        data['new_password'] = self.randomString()
+        data['new_password'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
         assert self.get_content(r) == 'New password is missing'
 
-        data['password_confirm'] = self.randomString()
+        data['password_confirm'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 401
 
         data['password'] = BaseAuthentication.default_password
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 409
+
+        data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 500
 
