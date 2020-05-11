@@ -33,7 +33,6 @@ def get_auth_token():
 if not RUN_SCHEMATHESIS:
     log.warning("Skipping schemathesis")
 else:
-    os.environ['TESTING'] = "1"
     app = create_app(testing_mode=True)
     auth_header = get_auth_token()
 
