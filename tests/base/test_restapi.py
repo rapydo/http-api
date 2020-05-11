@@ -341,13 +341,30 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        # change profile, no auth
+        # update profile, no auth
         r = client.put(AUTH_URI + "/" + 'profile')
         assert r.status_code == 401
 
-        # change profile, no data
+        # update profile, no data
         r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
+
+        newname = 'newname'
+
+        r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
+        assert r.status_code == 200
+        c = self.get_content(r)
+        assert c.get('name') != newname
+
+        # update profile
+        data = {'name': 'newname'}
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 204
+
+        r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
+        assert r.status_code == 200
+        c = self.get_content(r)
+        assert c.get('name') == newname
 
     def test_10_registration(self, client):
 
