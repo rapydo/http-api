@@ -24,7 +24,6 @@ from restapi.customization import Customizer
 from restapi.rest.response import handle_marshmallow_errors, log_response
 
 from restapi.services.detect import detector
-from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -213,6 +212,8 @@ def create_app(
     # Logging responses
     microservice.after_request(log_response)
 
+    # Postponed, after initializing of mem.TESTING variable
+    from restapi.services.mail import send_mail_is_active, test_smtp_client
     if send_mail_is_active():
         if not test_smtp_client():
             log.critical("Bad SMTP configuration, unable to create a client")
