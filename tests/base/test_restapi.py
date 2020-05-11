@@ -350,14 +350,18 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         newname = 'newname'
+        newuuid = 'newuuid'
 
         r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
+        assert c.get('name') is not None
         assert c.get('name') != newname
+        assert c.get('uuid') is not None
+        assert c.get('uuid') != newuuid
 
         # update profile
-        data = {'name': 'newname'}
+        data = {'name': newname, 'uuid': newuuid}
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
 
@@ -365,6 +369,26 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         c = self.get_content(r)
         assert c.get('name') == newname
+        assert c.get('uuid') != newuuid
+
+        newpwd = self.randomString()
+        data = {'password': newpwd}
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'New password is missing'
+
+        data['new_password'] = self.randomString()
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'New password is missing'
+
+        data['password_confirm'] = self.randomString()
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 401
+
+        data['password'] = BaseAuthentication.default_password
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 500
 
     def test_10_registration(self, client):
 
