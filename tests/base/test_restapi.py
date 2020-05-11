@@ -392,7 +392,27 @@ class TestApp(BaseTests):
 
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
-        assert r.status_code == 500
+        assert r.status_code == 409
+        assert self.get_content(r) == 'Password is too short, use at least 8 characters'
+
+        # Trying to set new password == password... it is not permitted!
+        data['password_confirm'] = data['password']
+        data['new_password'] = data['password']
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 409
+
+        # Change the password
+        data['new_password'] = self.randomString()
+        data['password_confirm'] = data['new_password']
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 204
+
+        # Restore the password
+        data['password'] = data['new_password']
+        data['password_confirm'] = BaseAuthentication.default_password
+        data['new_password'] = BaseAuthentication.default_password
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 204
 
     def test_10_registration(self, client):
 
