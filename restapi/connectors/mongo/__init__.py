@@ -6,7 +6,7 @@ from pymodm.base.models import TopLevelMongoModel
 from functools import wraps
 from pymongo.errors import DuplicateKeyError
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry
+from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.utilities.logs import log
 
 AUTH_DB = 'auth'
@@ -42,6 +42,11 @@ def catch_db_exceptions(func):
         # except ValidationError as e:
         #     # not handled
         #     raise e
+        except RecursionError as e:
+            # Got some circular references? Let's try to break them,
+            # then try to understand the cause...
+            raise RestApiException(str(e), status_code=400)
+
         except BaseException as e:
             log.critical("Raised unknown exception: {}", type(e))
             raise e
