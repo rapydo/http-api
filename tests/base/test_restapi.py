@@ -368,7 +368,7 @@ class TestApp(BaseTests):
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
         # this token is not valid
-        assert r.status_code == 401
+        assert r.status_code == 400
 
         # Ask a new activation link
         r = client.post(AUTH_URI + '/profile/activate')
@@ -409,4 +409,4 @@ class TestApp(BaseTests):
         # Do password reset
         r = client.put(AUTH_URI + '/reset/thisisatoken')
         # this token is not valid
-        assert r.status_code == 401
+        assert r.status_code == 400
