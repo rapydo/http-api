@@ -216,12 +216,11 @@ def create_app(
     # Logging responses
     microservice.after_request(log_response)
 
-    if not init_mode and not destroy_mode:
-        if send_mail_is_active():
-            if not test_smtp_client():
-                log.critical("Bad SMTP configuration, unable to create a client")
-            else:
-                log.info("SMTP configuration verified")
+    if send_mail_is_active():
+        if not test_smtp_client():
+            log.critical("Bad SMTP configuration, unable to create a client")
+        else:
+            log.info("SMTP configuration verified")
 
     if SENTRY_URL is not None:
 
