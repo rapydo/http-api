@@ -9,6 +9,7 @@ from glom import glom
 
 from restapi.utilities.globals import mem
 
+TESTING = os.environ.get('TESTING', '0') == '1'
 STACKTRACE = False
 REMOVE_DATA_AT_INIT_TIME = False
 

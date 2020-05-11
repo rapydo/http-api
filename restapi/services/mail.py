@@ -4,9 +4,9 @@ import socket
 import datetime
 import pytz
 
-from restapi.utilities.globals import mem
+from restapi.confs import TESTING
 
-if mem.TESTING:
+if TESTING:
     from restapi.services.mailmock import SMTP, SMTP_SSL
 else:
     from smtplib import SMTP, SMTP_SSL

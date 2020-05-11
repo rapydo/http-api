@@ -22,6 +22,7 @@ from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
 from restapi.customization import Customizer
 from restapi.rest.response import handle_marshmallow_errors, log_response
+from restapi.services.mail import send_mail_is_active, test_smtp_client
 
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
@@ -41,7 +42,10 @@ def create_app(
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
-    mem.TESTING = testing_mode
+    if testing_mode and not config.TESTING:
+        # Deprecated since 0.7.3
+        log.exit(
+            "Deprecated used of testing_mode, please export env variable TESTING=1")
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
@@ -213,8 +217,6 @@ def create_app(
     microservice.after_request(log_response)
 
     if not init_mode and not destroy_mode:
-        # Postponed, after initializing of mem.TESTING variable
-        from restapi.services.mail import send_mail_is_active, test_smtp_client
         if send_mail_is_active():
             if not test_smtp_client():
                 log.critical("Bad SMTP configuration, unable to create a client")

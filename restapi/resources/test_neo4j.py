@@ -5,11 +5,11 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi import decorators
+from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
-from restapi.utilities.globals import mem
 
 
-if mem.TESTING and detector.check_availability('neo4j'):
+if TESTING and detector.check_availability('neo4j'):
     class TestNeo4j(MethodResource, EndpointResource):
 
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]

@@ -16,6 +16,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from flask import current_app, request
 
+from restapi.confs import TESTING
 from restapi.services.detect import Detector
 from restapi.exceptions import RestApiException
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
@@ -247,7 +248,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # When executed from tests it raises
             # RuntimeError: Working outside of request context.
             # Just mock an IP address (NULL_IP = 0.0.0.0)
-            if mem.TESTING:
+            if TESTING:
                 return NULL_IP
             raise e
 
