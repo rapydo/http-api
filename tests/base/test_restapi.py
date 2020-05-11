@@ -338,59 +338,59 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
 
         # registration, empty input
-        r = client.post(API_URI + "/" + 'profile')
+        r = client.post(AUTH_URI + "/" + 'profile')
         assert r.status_code == 400
         assert self.get_content(r) == 'Empty input'
 
         # registration, missing information
-        r = client.post(API_URI + "/" + 'profile', data={'x': 'y'})
+        r = client.post(AUTH_URI + "/" + 'profile', data={'x': 'y'})
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing input: password'
 
         # change profile, no auth
-        r = client.put(API_URI + "/" + 'profile')
+        r = client.put(AUTH_URI + "/" + 'profile')
         assert r.status_code == 401
 
         # change profile, no auth
-        r = client.put(API_URI + "/" + 'profile', data={}, headers=headers)
+        r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
 
         # profile activation
-        r = client.put(API_URI + "/" + '/profile/activate/thisisatoken')
+        r = client.put(AUTH_URI + "/" + '/profile/activate/thisisatoken')
         # this token is not valid
         assert r.status_code == 401
 
         # Ask a new activation link
-        r = client.post(API_URI + "/" + '/profile/activate')
+        r = client.post(AUTH_URI + "/" + '/profile/activate')
         assert r.status_code == 400
         assert self.get_content(r) == 'Empty input'
 
         # registration, missing information
-        r = client.post(API_URI + "/" + 'profile/activate', data={'x': 'y'})
+        r = client.post(AUTH_URI + "/" + 'profile/activate', data={'x': 'y'})
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing required input: username'
 
         # registration, wrong username
-        r = client.post(API_URI + "/" + 'profile/activate', data={'username': 'y'})
+        r = client.post(AUTH_URI + "/" + 'profile/activate', data={'username': 'y'})
         # return is 200, ma no mail will be sent... how to test this??
         assert r.status_code == 200
 
         # Request password reset, missing information
-        r = client.post(API_URI + "/" + 'reset')
+        r = client.post(AUTH_URI + "/" + 'reset')
         assert r.status_code == 403
         assert self.get_content(r) == 'Invalid reset email'
 
         # Request password reset, missing information
-        r = client.post(API_URI + "/" + 'reset', data={'x': 'y'})
+        r = client.post(AUTH_URI + "/" + 'reset', data={'x': 'y'})
         assert r.status_code == 403
         assert self.get_content(r) == 'Invalid reset email'
 
         # Request password reset, wrong email
-        r = client.post(API_URI + "/" + 'reset', data={'reset_email': 'y'})
+        r = client.post(AUTH_URI + "/" + 'reset', data={'reset_email': 'y'})
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
 
         # Do password reset
-        r = client.put(API_URI + "/" + '/reset/thisisatoken')
+        r = client.put(AUTH_URI + "/" + '/reset/thisisatoken')
         # this token is not valid
         assert r.status_code == 401
