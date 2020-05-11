@@ -356,32 +356,32 @@ class TestApp(BaseTests):
             return True
 
         # registration, empty input
-        r = client.post(AUTH_URI + "/" + 'profile')
+        r = client.post(AUTH_URI + '/profile')
         assert r.status_code == 400
         assert self.get_content(r) == 'Empty input'
 
         # registration, missing information
-        r = client.post(AUTH_URI + "/" + 'profile', data={'x': 'y'})
+        r = client.post(AUTH_URI + '/profile', data={'x': 'y'})
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing input: password'
 
         # profile activation
-        r = client.put(AUTH_URI + "/" + '/profile/activate/thisisatoken')
+        r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
         # this token is not valid
         assert r.status_code == 401
 
         # Ask a new activation link
-        r = client.post(AUTH_URI + "/" + '/profile/activate')
+        r = client.post(AUTH_URI + '/profile/activate')
         assert r.status_code == 400
         assert self.get_content(r) == 'Empty input'
 
         # activation, missing information
-        r = client.post(AUTH_URI + "/" + 'profile/activate', data={'x': 'y'})
+        r = client.post(AUTH_URI + '/profile/activate', data={'x': 'y'})
         assert r.status_code == 400
         assert self.get_content(r) == 'Missing required input: username'
 
         # activation, wrong username
-        r = client.post(AUTH_URI + "/" + 'profile/activate', data={'username': 'y'})
+        r = client.post(AUTH_URI + '/profile/activate', data={'username': 'y'})
         # return is 200, ma no mail will be sent... how to test this??
         assert r.status_code == 200
 
@@ -392,21 +392,21 @@ class TestApp(BaseTests):
             return True
 
         # Request password reset, missing information
-        r = client.post(AUTH_URI + "/" + 'reset')
+        r = client.post(AUTH_URI + '/reset')
         assert r.status_code == 403
         assert self.get_content(r) == 'Invalid reset email'
 
         # Request password reset, missing information
-        r = client.post(AUTH_URI + "/" + 'reset', data={'x': 'y'})
+        r = client.post(AUTH_URI + '/reset', data={'x': 'y'})
         assert r.status_code == 403
         assert self.get_content(r) == 'Invalid reset email'
 
         # Request password reset, wrong email
-        r = client.post(AUTH_URI + "/" + 'reset', data={'reset_email': 'y'})
+        r = client.post(AUTH_URI + '/reset', data={'reset_email': 'y'})
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
 
         # Do password reset
-        r = client.put(AUTH_URI + "/" + '/reset/thisisatoken')
+        r = client.put(AUTH_URI + '/reset/thisisatoken')
         # this token is not valid
         assert r.status_code == 401
