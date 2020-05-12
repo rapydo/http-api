@@ -137,6 +137,9 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid = self.get_content(r).get('uuid')
 
-        data = {'password': BaseAuthentication.default_password}
+        data = {
+            'password': BaseAuthentication.default_password,
+            'roles_admin_root': True
+        }
         r = client.put(url + "/" + uuid, data=data, headers=headers)
         assert r.status_code == 204
