@@ -105,7 +105,7 @@ class BaseTests:
     @staticmethod
     def do_login(client, USER, PWD,
                  status_code=200, error=None,
-                 user_key='username', pwd_key='password'):
+                 user_field='username', pwd_field='password'):
         """
             Make login and return both token and authorization header
         """
@@ -125,7 +125,7 @@ class BaseTests:
         # AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=0
         # AUTH_MAX_PASSWORD_VALIDITY=0
 
-        data = {user_key: USER, pwd_key: PWD}
+        data = {user_field: USER, pwd_field: PWD}
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
 
