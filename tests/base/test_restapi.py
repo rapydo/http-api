@@ -85,7 +85,7 @@ class TestApp(BaseTests):
         assert "put" not in specs["paths"]["/auth/login"]
         assert "delete" not in specs["paths"]["/auth/login"]
 
-    def test_03_GET_login(self, client):
+    def test_03_login(self, client):
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
@@ -145,7 +145,7 @@ class TestApp(BaseTests):
         r = client.get(endpoint)
         assert r.status_code == 401
 
-    def test_05_GET_logout(self, client):
+    def test_05_logout(self, client):
         """ Check that you can logout with a valid token """
 
         endpoint = AUTH_URI + '/logout'
@@ -266,16 +266,20 @@ class TestApp(BaseTests):
         r = client.post(url, data=data, headers=headers)
         assert r.status_code == 409
 
-        # Create another user to test duplicates
+        # Create another user
         data2 = self.buildData(schema)
         r = client.post(url, data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
 
+        # send and invalid user_id
+        r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
+        assert r.status_code == 204
+
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
         assert r.status_code == 204
 
-        # email cannot be modiied
+        # email cannot be modified
         new_data = {'email': data.get('email')}
         r = client.put(url + "/" + uuid2, data=new_data, headers=headers)
         assert r.status_code == 204
@@ -288,17 +292,26 @@ class TestApp(BaseTests):
         assert users_list[0].get("email") != data.get('email').lower()
         assert users_list[0].get("email") == data2.get('email').lower()
 
+        r = client.delete(url + "/invalid", headers=headers)
+        assert r.status_code == 404
+
         r = client.delete(url + "/" + uuid, headers=headers)
         assert r.status_code == 204
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 404
 
+        # change password of user2
+        newpwd = "bB2=" + self.randomString()
+        data = {'password': newpwd}
+        r = client.put(url + "/" + uuid2, data=data, headers=headers)
+        assert r.status_code == 204
+
         # login with a newly created user
         headers2, _ = self.do_login(
             client,
             data2.get("email"),
-            data2.get("password")
+            newpwd
         )
 
         # normal users cannot access to this endpoint

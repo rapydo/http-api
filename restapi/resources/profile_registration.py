@@ -103,8 +103,7 @@ class ProfileRegistration(EndpointResource):
             )
 
         except BaseException as e:
-            log.error("Errors during account registration: {}", str(e))
             user.delete()
-            raise RestApiException(str(e))
+            raise RestApiException("Errors during account registration: {}".format(e))
 
         return self.response(msg)

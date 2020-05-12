@@ -80,12 +80,10 @@ class Login(EndpointResource):
                 message['actions'].append('PASSWORD EXPIRED')
                 message['errors'].append("Your password is expired, please change it")
 
-        if not message['errors']:
-            return None
+        if message['errors']:
+            return self.response(errors=message, code=403)
 
-        return self.response(
-            errors=message, code=403
-        )
+        return None
 
     @decorators.catch_errors()
     def post(self):
