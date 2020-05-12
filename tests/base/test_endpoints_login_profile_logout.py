@@ -54,19 +54,19 @@ class TestApp(BaseTests):
         # use alternative keys
         self.do_login(
             client, None, None,
-            user_key='email',
-            pwd_key='pwd'
+            user_field='email',
+            pwd_field='pwd'
         )
 
         # missing credentials
         self.do_login(
             client, USER, PWD.upper(),
-            user_key='wrong',
+            user_field='wrong',
             status_code=401,
         )
         self.do_login(
             client, USER, PWD.upper(),
-            pwd_key='wrong',
+            pwd_field='wrong',
             status_code=401,
         )
 

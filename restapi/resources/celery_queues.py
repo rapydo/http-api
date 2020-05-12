@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from restapi.rest.definition import EndpointResource
-from restapi import decorators
-from restapi.services.detect import detector
-from restapi.utilities.logs import log
+# from restapi.rest.definition import EndpointResource
+# from restapi import decorators
+# from restapi.services.detect import detector
+# from restapi.utilities.logs import log
 
 ###########################
 # In case you have celery queue,
