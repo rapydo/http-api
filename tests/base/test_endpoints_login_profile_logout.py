@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
@@ -52,7 +53,7 @@ class TestApp(BaseTests):
 
         # use alternative keys
         self.do_login(
-            client, USER, PWD.upper(),
+            client, None, None,
             user_key='email',
             pwd_key='pwd'
         )
@@ -84,7 +85,7 @@ class TestApp(BaseTests):
         r = client.get(endpoint)
         assert r.status_code == 401
 
-   def test_03_change_profile(self, client):
+    def test_03_change_profile(self, client):
 
         if not detector.get_bool_from_os("MAIN_LOGIN_ENABLE"):
             log.warning("Profile is disabled, skipping tests")
