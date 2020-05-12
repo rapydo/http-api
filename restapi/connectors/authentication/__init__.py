@@ -195,8 +195,12 @@ class HandleSecurity:
 
             log.critical(new_password)
             log.critical(password_confirm)
+            log.critical(new_password != password_confirm)
+            log.critical(type(new_password))
+            log.critical(type(password_confirm))
 
         if new_password != password_confirm:
+            log.critical("Your password doesn't match the confirmation")
             msg = "Your password doesn't match the confirmation"
             raise RestApiException(msg, status_code=409)
 
