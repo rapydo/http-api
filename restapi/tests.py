@@ -126,30 +126,32 @@ class BaseTests:
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
         content = json.loads(r.data.decode('utf-8'))
 
-        if r.status_code == 403 and isinstance(content, dict) and content.get('action'):
-            action = content.get('action')
-            if action == 'FIRST LOGIN':
-                newpwd = "Aa1!{}".format(self.randomString())
-                headers, _ = self.do_login(
-                    client, None, None,
-                    data={
-                        'new_password': newpwd,
-                        'password_confirm': format(self.randomString()),
-                    },
-                    status_code=409,
-                )
-                return self.do_login(
-                    client, None, None,
-                    data={
-                        'new_password': newpwd,
-                        'password_confirm': newpwd,
-                    },
-                    status_code=409,
-                )
-            else:
-                pytest.fail(
-                    "Unknown post log action requested: {}".format(action)
-                )
+        if r.status_code == 403:
+            if isinstance(content, dict) and content.get('actions'):
+                action = content.get('actions')[0]
+
+                if action == 'FIRST LOGIN':
+                    newpwd = "Aa1!{}".format(self.randomString())
+                    headers, _ = self.do_login(
+                        client, None, None,
+                        data={
+                            'new_password': newpwd,
+                            'password_confirm': format(self.randomString()),
+                        },
+                        status_code=409,
+                    )
+                    return self.do_login(
+                        client, None, None,
+                        data={
+                            'new_password': newpwd,
+                            'password_confirm': newpwd,
+                        },
+                        status_code=409,
+                    )
+                else:
+                    pytest.fail(
+                        "Unknown post log action requested: {}".format(action)
+                    )
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
