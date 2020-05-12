@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, API_URI, AUTH_URI
+from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -122,4 +123,20 @@ class TestApp(BaseTests):
         endpoint = AUTH_URI + '/logout'
 
         r = client.get(endpoint, headers=headers)
+        assert r.status_code == 204
+
+        # when FORCE_FIRST_PASSWORD_CHANGE is on the do_login utility will silently
+        # change the initial password (i.e. BaseAuthentication.default_password)
+        # when exchanging the token.
+        # As a result other tests running after this will fail at login
+        # => restore the initial default password
+        # (please note that it could be skipped when FORCE_FIRST_PASSWORD_CHANGE is off
+        # but... who cares??
+        # Check success
+        r = client.get(AUTH_URI + '/profile', headers=self.get("auth_header"))
+        assert r.status_code == 200
+        uuid = self.get_content(r).get('uuid')
+
+        data = {'password': BaseAuthentication.default_password}
+        r = client.put(url + "/" + uuid, data=data, headers=headers)
         assert r.status_code == 204
