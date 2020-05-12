@@ -36,7 +36,7 @@ class Login(EndpointResource):
         }
     }
 
-    def verify_information(self, user, security, totp_auth, totp_code, now=None):
+    def verify_information(self, user, security, totp_auth, totp_code):
 
         message = {
             'actions': [],
@@ -74,8 +74,14 @@ class Login(EndpointResource):
 
                 valid_until = last_pwd_change + td
 
-                if now is None:
+                # MySQL seems unable to save tz-aware datetimes...
+                if last_pwd_change.expiration.tzinfo is None:
+                    # Create a offset-naive datetime
+                    now = datetime.now()
+                else:
+                    # Create a offset-aware datetime
                     now = datetime.now(pytz.utc)
+
                 expired = valid_until < now
 
             if expired:
@@ -107,6 +113,7 @@ class Login(EndpointResource):
             raise RestApiException(msg, status_code=401)
 
         username = username.lower()
+
         now = datetime.now(pytz.utc)
 
         new_password = jargs.get('new_password')
@@ -149,7 +156,7 @@ class Login(EndpointResource):
         # ##################################################
         # Something is missing in the authentication, asking action to user
         ret = self.verify_information(
-            user, security, totp_authentication, totp_code, now
+            user, security, totp_authentication, totp_code
         )
         if ret is not None:
             return ret
