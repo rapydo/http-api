@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
-from restapi.tests import AuthorizationActionsRequested
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
