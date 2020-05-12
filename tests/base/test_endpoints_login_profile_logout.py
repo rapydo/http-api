@@ -159,13 +159,27 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
 
-        BaseAuthentication.default_password = data['new_password']
+        # verify the new password
+        headers, _ = self.do_login(
+            client,
+            BaseAuthentication.default_user,
+            data['new_password']
+        )
+
+        # restore the previous password
+        data['password'] = data['new_password']
+        data['new_password'] = BaseAuthentication.default_password
+        data['password_confirm'] = BaseAuthentication.default_password
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 204
+
         # verify the new password
         headers, _ = self.do_login(
             client,
             BaseAuthentication.default_user,
             BaseAuthentication.default_password
         )
+
         self.save("auth_header", headers)
 
     def test_04_logout(self, client):
