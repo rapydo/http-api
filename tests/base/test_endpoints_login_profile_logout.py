@@ -166,6 +166,7 @@ class TestApp(BaseTests):
             BaseAuthentication.default_user,
             BaseAuthentication.default_password
         )
+        self.save("auth_header", headers)
 
     def test_04_logout(self, client):
         """ Check that you can logout with a valid token """
