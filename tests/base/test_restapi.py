@@ -293,7 +293,7 @@ class TestApp(BaseTests):
 
         # send and invalid user_id
         r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
-        assert r.status_code == 204
+        assert r.status_code == 404
 
         r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
         assert r.status_code == 204
