@@ -82,7 +82,7 @@ class TestApp(BaseTests):
 
         # change password of user2
         newpwd = "bB2=" + self.randomString()
-        data = {'password': newpwd}
+        data = {'password': newpwd, 'email_notification': True}
         r = client.put(url + "/" + uuid2, data=data, headers=headers)
         assert r.status_code == 204
 
