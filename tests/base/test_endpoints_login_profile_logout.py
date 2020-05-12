@@ -22,10 +22,7 @@ class TestApp(BaseTests):
         )
 
         log.info("*** VERIFY valid credentials")
-        try:
-            headers, _ = self.do_login(client, None, None)
-        except AuthorizationActionsRequested as e:
-            assert e == 'debug'
+        headers, _ = self.do_login(client, None, None)
 
         self.save("auth_header", headers)
 

@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 import pytz
 
+from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.connectors.authentication import HandleSecurity
@@ -67,9 +68,11 @@ class Login(EndpointResource):
             if last_pwd_change == epoch:
                 expired = True
             else:
-                valid_until = last_pwd_change + timedelta(
-                    days=self.auth.MAX_PASSWORD_VALIDITY
-                )
+                td = timedelta(days=self.auth.MAX_PASSWORD_VALIDITY)
+                if TESTING:
+                    td = timedelta(seconds=self.auth.MAX_PASSWORD_VALIDITY)
+
+                valid_until = last_pwd_change + td
 
                 if now is None:
                     now = datetime.now(pytz.utc)
@@ -109,16 +112,6 @@ class Login(EndpointResource):
         new_password = jargs.get('new_password')
         password_confirm = jargs.get('password_confirm')
 
-        totp_authentication = (
-            self.auth.SECOND_FACTOR_AUTHENTICATION is not None
-            and self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
-        )
-
-        if totp_authentication:
-            totp_code = jargs.get('totp_code')
-        else:
-            totp_code = None
-
         security = HandleSecurity(self.auth)
         # ##################################################
         # Authentication control
@@ -129,8 +122,17 @@ class Login(EndpointResource):
         security.verify_blocked_user(user)
         security.verify_active_user(user)
 
-        if totp_authentication and totp_code is not None:
-            security.verify_totp(user, totp_code)
+        if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
+            totp_authentication = True
+            totp_code = jargs.get('totp_code')
+
+            # if None will be verified later
+            if totp_code is not None:
+                security.verify_totp(user, totp_code)
+
+        else:
+            totp_authentication = False
+            totp_code = None
 
         # ##################################################
         # If requested, change the password

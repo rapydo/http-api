@@ -15,9 +15,6 @@ SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
 API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
-class AuthorizationActionsRequested(Exception):
-    pass
-
 
 class BaseTests:
     def save(self, variable, value, read_only=False):
@@ -105,8 +102,7 @@ class BaseTests:
 
         return response
 
-    @staticmethod
-    def do_login(client, USER, PWD,
+    def do_login(self, client, USER, PWD,
                  status_code=200, error=None,
                  user_field='username', pwd_field='password',
                  data=None):
@@ -131,7 +127,29 @@ class BaseTests:
         content = json.loads(r.data.decode('utf-8'))
 
         if r.status_code == 403 and isinstance(content, dict) and content.get('action'):
-            raise AuthorizationActionsRequested(content)
+            action = content.get('action')
+            if action == 'FIRST LOGIN':
+                newpwd = "Aa1!{}".format(self.randomString())
+                headers, _ = self.do_login(
+                    client, None, None,
+                    data={
+                        'new_password': newpwd,
+                        'password_confirm': format(self.randomString()),
+                    },
+                    status_code=409,
+                )
+                return self.do_login(
+                    client, None, None,
+                    data={
+                        'new_password': newpwd,
+                        'password_confirm': newpwd,
+                    },
+                    status_code=409,
+                )
+            else:
+                pytest.fail(
+                    "Unknown post log action requested: {}".format(action)
+                )
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
