@@ -108,7 +108,8 @@ class BaseTests:
     @staticmethod
     def do_login(client, USER, PWD,
                  status_code=200, error=None,
-                 user_field='username', pwd_field='password'):
+                 user_field='username', pwd_field='password',
+                 data=None):
         """
             Make login and return both token and authorization header
         """
@@ -120,15 +121,11 @@ class BaseTests:
             if PWD is None:
                 PWD = BaseAuthentication.default_password
 
-        # AUTH_MAX_LOGIN_ATTEMPTS=0
-        # AUTH_REGISTER_FAILED_LOGIN=False
+        if data is None:
+            data = {}
 
-        # AUTH_SECOND_FACTOR_AUTHENTICATION=None
-
-        # AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=0
-        # AUTH_MAX_PASSWORD_VALIDITY=0
-
-        data = {user_field: USER, pwd_field: PWD}
+        data[user_field] = USER
+        data[pwd_field] = PWD
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
         content = json.loads(r.data.decode('utf-8'))

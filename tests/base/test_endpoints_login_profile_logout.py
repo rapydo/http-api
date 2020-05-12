@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
+from restapi.tests import AuthorizationActionsRequested
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -21,7 +22,11 @@ class TestApp(BaseTests):
         )
 
         log.info("*** VERIFY valid credentials")
-        headers, _ = self.do_login(client, None, None)
+        try:
+            headers, _ = self.do_login(client, None, None)
+        except AuthorizationActionsRequested as e:
+            assert e == 'debug'
+
         self.save("auth_header", headers)
 
         # Verify credentials
