@@ -75,7 +75,7 @@ class Login(EndpointResource):
                 valid_until = last_pwd_change + td
 
                 # MySQL seems unable to save tz-aware datetimes...
-                if last_pwd_change.expiration.tzinfo is None:
+                if last_pwd_change.tzinfo is None:
                     # Create a offset-naive datetime
                     now = datetime.now()
                 else:
