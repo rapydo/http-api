@@ -15,6 +15,9 @@ SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
 API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
+class AuthorizationActionsRequested(Exception):
+    pass
+
 
 class BaseTests:
     def save(self, variable, value, read_only=False):
@@ -128,6 +131,10 @@ class BaseTests:
         data = {user_field: USER, pwd_field: PWD}
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
+        content = json.loads(r.data.decode('utf-8'))
+
+        if r.status_code == 403 and isinstance(content, dict) and content.get('action'):
+            raise AuthorizationActionsRequested(content)
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
@@ -139,7 +146,6 @@ class BaseTests:
 
         assert r.status_code == status_code
 
-        content = json.loads(r.data.decode('utf-8'))
         if error is not None:
             if 'Response' in content:
                 errors = content['Response']['errors']
