@@ -130,6 +130,25 @@ class TestApp(BaseTests):
             status_code=401,
         )
 
+        # use alternative keys
+        self.do_login(
+            client, USER, PWD.upper(),
+            user_key='email',
+            pwd_key='pwd'
+        )
+
+        # missing credentials
+        self.do_login(
+            client, USER, PWD.upper(),
+            user_key='wrong',
+            status_code=401,
+        )
+        self.do_login(
+            client, USER, PWD.upper(),
+            pwd_key='wrong',
+            status_code=401,
+        )
+
     def test_04_GET_profile(self, client):
         """ Check if you can use your token for protected endpoints """
 
