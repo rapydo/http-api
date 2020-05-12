@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from flask import Response, request
-try:
-    from gripcontrol import WebSocketEvent
-    from gripcontrol import decode_websocket_events, encode_websocket_events
-    from gripcontrol import websocket_control_message, create_grip_channel_header
-except ImportError as e:
-    print(str(e))
+from gripcontrol import WebSocketEvent
+from gripcontrol import decode_websocket_events, encode_websocket_events
+from gripcontrol import websocket_control_message, create_grip_channel_header
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException

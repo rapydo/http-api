@@ -62,12 +62,17 @@ class Tokens(MethodResource, EndpointResource):
         for token in tokens:
             if token["id"] != token_id:
                 continue
-            if not self.auth.invalidate_token(token=token["token"]):
-                raise RestApiException(
-                    "Failed token invalidation: '{}'".format(token),
-                    status_code=400
-                )
-            return self.empty_response()
+
+            if self.auth.invalidate_token(token=token["token"]):
+                return self.empty_response()
+
+            # Added just to make very sure, but it can never happen because
+            # invalidate_token can only fail if the token is invalid
+            # since this is an authenticated endpoint the token is already verified
+            raise RestApiException(  # pragma: no cover
+                "Failed token invalidation: '{}'".format(token),
+                status_code=400
+            )
 
         raise RestApiException(
             "Token not emitted for your account or does not exist",
