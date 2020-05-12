@@ -133,7 +133,7 @@ class BaseTests:
                 if action == 'FIRST LOGIN':
                     newpwd = "Aa1!{}".format(self.randomString())
                     headers, _ = self.do_login(
-                        client, None, None,
+                        client, USER, PWD,
                         data={
                             'new_password': newpwd,
                             'password_confirm': format(self.randomString()),
@@ -141,7 +141,7 @@ class BaseTests:
                         status_code=409,
                     )
                     return self.do_login(
-                        client, None, None,
+                        client, USER, PWD,
                         data={
                             'new_password': newpwd,
                             'password_confirm': newpwd,
