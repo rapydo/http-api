@@ -145,8 +145,7 @@ class BaseTests:
                         data={
                             'new_password': newpwd,
                             'password_confirm': newpwd,
-                        },
-                        status_code=409,
+                        }
                     )
                 else:
                     pytest.fail(
