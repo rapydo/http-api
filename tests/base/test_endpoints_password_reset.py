@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from restapi.tests import BaseTests, AUTH_URI
+from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -22,10 +22,38 @@ class TestApp(BaseTests):
         assert r.status_code == 403
         assert self.get_content(r) == 'Invalid reset email'
 
+        headers, _ = self.do_login(client, None, None)
+
+        # Save the current number of tokens to verify the creation of activation tokens
+        r = client.get(API_URI + "/admin/tokens", headers=headers)
+        assert r.status_code == 200
+        tokens_snapshot = self.get_content(r)
+        num_tokens = len(tokens_snapshot)
+
         # Request password reset, wrong email
-        r = client.post(AUTH_URI + '/reset', data={'reset_email': 'y'})
+        data = {'reset_email': 'y'}
+        r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
+
+        r = client.get(API_URI + "/admin/tokens", headers=headers)
+        assert r.status_code == 200
+        tokens = self.get_content(r)
+        assert len(tokens) == num_tokens
+
+        # Request password reset, correct email
+        data = {'reset_email': BaseAuthentication.default_user}
+        r = client.post(AUTH_URI + '/reset', data=data)
+        assert r.status_code == 200
+        reset_message = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
+        assert self.get_content(r) == reset_message
+
+        r = client.get(API_URI + "/admin/tokens", headers=headers)
+        assert r.status_code == 200
+        tokens = self.get_content(r)
+
+        # to be enabled
+        # assert len(tokens) == num_tokens + 1
 
         # Do password reset
         r = client.put(AUTH_URI + '/reset/thisisatoken')
