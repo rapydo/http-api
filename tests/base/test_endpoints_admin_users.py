@@ -109,7 +109,7 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         assert 'Subject: YourProject: password changed' in mail.get("headers")
         assert 'Username: "{}"'.format(data2.get('email').lower()) in mail.get('body')
-        assert 'Password: "{}"'.format(data2.get('password')) in mail.get('body')
+        assert 'Password: "{}"'.format(newpwd) in mail.get('body')
 
         # login with a newly created user
         headers2, _ = self.do_login(
