@@ -72,14 +72,14 @@ class ProfileActivation(EndpointResource):
     }
 
     @decorators.catch_errors()
-    def put(self, token_id):
+    def put(self, token):
 
-        token_id = token_id.replace("+", ".")
+        token = token.replace("+", ".")
         try:
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token_id, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
+                token, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
             )
 
         # If token is expired
@@ -111,7 +111,7 @@ class ProfileActivation(EndpointResource):
 
         # If user logged is already active, invalidate the token
         if self.auth._user.is_active is not None and self.auth._user.is_active:
-            self.auth.invalidate_token(token_id)
+            self.auth.invalidate_token(token)
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',
                 status_code=400,
@@ -122,7 +122,7 @@ class ProfileActivation(EndpointResource):
         self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset activation are valid only once)
-        self.auth.invalidate_token(token_id)
+        self.auth.invalidate_token(token)
 
         return self.response("Account activated")
 
