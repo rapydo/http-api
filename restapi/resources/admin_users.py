@@ -100,10 +100,13 @@ def parse_roles(properties):
     for p in properties.copy():
         if not p.startswith("roles_"):
             continue
+        log.critical(p)
         if properties.get(p):
             roles.append(p[6:])
+            log.critical(p)
         properties.pop(p)
 
+    log.critical(roles)
     return roles
 
 
