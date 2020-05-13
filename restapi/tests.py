@@ -150,7 +150,7 @@ class BaseTests:
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
-                    self.do_login(
+                    return self.do_login(
                         client, USER, newpwd,
                         data={
                             'new_password': PWD,
