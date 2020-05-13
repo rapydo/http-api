@@ -133,3 +133,9 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
         # this token is not valid
         assert r.status_code == 400
+
+        # profile activation
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        # this token is not valid
+        assert r.status_code == 200
+        assert self.get_content(r) == "Account activated"

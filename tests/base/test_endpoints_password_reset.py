@@ -72,3 +72,8 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/reset/thisisatoken')
         # this token is not valid
         assert r.status_code == 400
+
+        # profile activation
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        # this token is not valid
+        assert r.status_code == 204

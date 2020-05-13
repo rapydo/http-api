@@ -37,7 +37,7 @@ class TestApp(BaseTests):
 
         mail = self.read_mock_email()
         parsed = mail.get('parsed_message')
-        assert parsed == 'debug code'
+        assert 'Subject' in parsed.keys()
         assert parsed.get("Subject") == 'YourProject: new credentials'
         body = mail.get('body')
         assert body is not None
