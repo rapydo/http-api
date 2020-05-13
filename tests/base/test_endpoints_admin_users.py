@@ -40,7 +40,7 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert 'Subject: YourProject: new credentials' in mail.get("headers")
-        assert 'Username: "{}"'.format(data.get('email')) in mail.get('body')
+        assert 'Username: "{}"'.format(data.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(data.get('password')) in mail.get('body')
 
         r = client.get(url + "/" + uuid, headers=headers)
@@ -108,7 +108,7 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert 'Subject: YourProject: password changed' in mail.get("headers")
-        assert 'Username: "{}"'.format(data.get('email')) in mail.get('body')
+        assert 'Username: "{}"'.format(data.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(data.get('password')) in mail.get('body')
 
         # login with a newly created user
