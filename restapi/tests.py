@@ -429,6 +429,7 @@ class BaseTests:
 
         return get_r, post_r, put_r, delete_r
 
+    @staticmethod
     def read_mock_email():
         fpath = "/tmp/mock.mail.lastsent.json"
         with open(fpath, 'r') as file:
