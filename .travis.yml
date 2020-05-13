@@ -41,16 +41,19 @@ script:
 
   - mkdir $TEMPLATE
   - cd $TEMPLATE
+  # Note that  --env REGISTER_FAILED_LOGIN=True is set only for certain templates,
+  # to have different use cases during tests
+
   - > # this enable multiline commands
 
     if [[ "$TEMPLATE" == "postgres" ]]; then
-      rapydo create prj --auth postgres --frontend no;
+      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
-      rapydo create prj --auth mysql --frontend no;
+      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
-      rapydo create prj --auth neo4j --frontend no;
+      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
-      rapydo create prj --auth mongo --frontend no;
+      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
@@ -66,7 +69,7 @@ script:
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
-      rapydo create prj --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3;
+      rapydo create prj --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,DISABLE_UNUSED_CREDENTIALS_AFTER=30,REGISTER_FAILED_LOGIN=True,MAX_LOGIN_ATTEMPTS=5;
 
     elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
