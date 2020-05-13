@@ -96,8 +96,10 @@ def get_roles(auth):
 
 def parse_roles(properties):
 
+    log.critical(properties)
     roles = []
     for p in properties.copy():
+        log.critical(p)
         if not p.startswith("roles_"):
             continue
         log.critical(p)
