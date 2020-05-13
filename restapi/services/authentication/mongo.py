@@ -4,8 +4,10 @@
 Mongodb based implementation
 """
 
-from pytz import utc
+import pytz
 from datetime import datetime, timedelta
+
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.authentication import NULL_IP
 from restapi.connectors.mongo import AUTH_DB
@@ -145,7 +147,11 @@ class Authentication(BaseAuthentication):
                 roles.append(role.name)
                 log.info("Role already exists: {}", role.name)
             except self.db.Role.DoesNotExist:
-                role = self.db.Role(name=role_name, description="automatic")
+                role_description = "automatic" if not TESTING else role_name
+                role = self.db.Role(
+                    name=role_name,
+                    description=role_description
+                )
                 role.save()
                 roles.append(role.name)
                 log.warning("Injected default role: {}", role.name)
@@ -164,7 +170,7 @@ class Authentication(BaseAuthentication):
                         'name': 'Default',
                         'surname': 'User',
                         'password': self.default_password,
-                        'last_password_change': datetime.now(utc),
+                        'last_password_change': datetime.now(pytz.utc),
                     },
                     roles=roles,
                 )

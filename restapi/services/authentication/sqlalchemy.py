@@ -4,9 +4,11 @@
 Sql handling authentication process
 """
 
-import pytz
 import sqlalchemy
+import pytz
 from datetime import datetime, timedelta
+
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
@@ -154,9 +156,13 @@ class Authentication(BaseAuthentication):
             # if no roles
             missing_role = not self.db.Role.query.first()
             if missing_role:
-                for role in self.default_roles:
-                    sqlrole = self.db.Role(name=role, description="automatic")
-                    self.db.session.add(sqlrole)
+                for role_name in self.default_roles:
+                    role_description = "automatic" if not TESTING else role_name
+                    role = self.db.Role(
+                        name=role_name,
+                        description=role_description
+                    )
+                    self.db.session.add(role)
                 log.warning("Injected default roles")
 
             # if no users

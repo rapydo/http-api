@@ -505,17 +505,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def init_users_and_roles(self):  # pragma: no cover
         """
         Create roles and a user if no one exists.
-        A possible algorithm:
-
-        if not exist_one_role():
-            for role in self.DEFAULT_ROLES:
-                create_role(role)
-        if not exist_one_user():
-            create_user(
-                email=self.DEFAULT_USER,
-                name="Whatever", surname="YouLike",
-                password=self.DEFAULT_PASSWORD,
-                roles=DEFAULT_ROLES)
         """
         return
 

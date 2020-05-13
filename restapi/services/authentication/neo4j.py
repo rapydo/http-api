@@ -11,8 +11,9 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 """
 
-from datetime import datetime, timedelta
 import pytz
+from datetime import datetime, timedelta
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
@@ -109,11 +110,6 @@ class Authentication(BaseAuthentication):
                 raise Exception("Graph role {} does not exist".format(role))
             user.roles.connect(role_obj)
 
-    def create_role(self, role, description="automatic"):
-        role = self.db.Role(name=role, description=description)
-        role.save()
-        return role
-
     def init_users_and_roles(self):
 
         # Handle system roles
@@ -124,10 +120,15 @@ class Authentication(BaseAuthentication):
 
         log.info("Current roles: {}", current_roles)
 
-        for role in self.default_roles:
-            if role not in current_roles:
-                log.info("Creating role: {}", role)
-                self.create_role(role)
+        for role_name in self.default_roles:
+            if role_name not in current_roles:
+                log.info("Creating role: {}", role_name)
+                role_description = "automatic" if not TESTING else role_name
+                role = self.db.Role(
+                    name=role_name,
+                    description=role_description
+                )
+                role.save()
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
