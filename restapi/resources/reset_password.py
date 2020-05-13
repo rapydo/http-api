@@ -12,12 +12,11 @@ from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.connectors.authentication import HandleSecurity
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.meta import Meta
 
 from restapi.utilities.logs import log
 
 
-def send_internal_password_reset(uri, title, reset_email):
+def send_password_reset_link(uri, title, reset_email):
     # Internal templating
     body = "Follow this link to reset password: {}".format(uri)
     html_body = get_html_template("reset_password.html", {"url": uri})
@@ -29,7 +28,8 @@ def send_internal_password_reset(uri, title, reset_email):
 
     # Internal email sending
     c = send_mail(html_body, subject, reset_email, plain_body=body)
-    if not c:
+    # it cannot fail during tests, because the email sending is mocked
+    if not c:  # pragma: no cover
         raise RestApiException("Error sending email, please retry")
 
 
@@ -64,7 +64,8 @@ class RecoverPassword(EndpointResource):
     @decorators.catch_errors()
     def post(self):
 
-        if not send_mail_is_active():
+        # always active (and mocked) during tests, cannot be tested
+        if not send_mail_is_active():  # pragma: no cover
             log.error("Send mail is not active")
             raise RestApiException(
                 {'Server misconfiguration': 'Password cannot be reset'},
@@ -115,15 +116,7 @@ class RecoverPassword(EndpointResource):
         uri = detector.get_global_var(key=var, default='/public/reset')
         complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
 
-        ##################
-        # Send email with internal or external SMTP
-        obj = Meta.get_customizer_class('apis.profile', 'CustomReset')
-        if obj is None:
-            # normal activation + internal smtp
-            send_internal_password_reset(complete_uri, title, reset_email)
-        else:
-            # external smtp
-            obj.request_reset(user.name, user.email, complete_uri)
+        send_password_reset_link(complete_uri, title, reset_email)
 
         ##################
         # Completing the reset task

@@ -42,7 +42,7 @@ def send_activation_link(auth, user):
     subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
     sent = send_mail(html_body, subject, user.email, plain_body=body)
-    if not sent:
+    if not sent:  # pragma: no cover
         raise BaseException("Error sending email, please retry")
 
     auth.save_token(
