@@ -58,7 +58,7 @@ class TestApp(BaseTests):
         # Also password reset is not allowed
         data = {'reset_email': 'mock@nomail.org'}
         r = client.post(AUTH_URI + '/reset', data=data)
-        assert r.status_code == 403
+        assert r.status_code == 401
         assert self.get_content(r) == 'Sorry, this account is not active'
 
         # Ask a new activation link
@@ -91,7 +91,6 @@ class TestApp(BaseTests):
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200
         tokens = self.get_content(r)
-
         assert len(tokens) == num_tokens
 
         # request activation, correct username
