@@ -120,11 +120,6 @@ class TestApp(BaseTests):
         r = client.delete(url + "/" + uuid2, headers=headers)
         assert r.status_code == 204
 
-        endpoint = AUTH_URI + '/logout'
-
-        r = client.get(endpoint, headers=headers)
-        assert r.status_code == 204
-
         # when FORCE_FIRST_PASSWORD_CHANGE is on the do_login utility will silently
         # change the initial password (i.e. BaseAuthentication.default_password)
         # when exchanging the token.
@@ -143,4 +138,7 @@ class TestApp(BaseTests):
             'roles_admin_root': True
         }
         r = client.put(url + "/" + uuid, data=data, headers=headers)
+        assert r.status_code == 204
+
+        r = client.get(AUTH_URI + '/logout', headers=headers)
         assert r.status_code == 204
