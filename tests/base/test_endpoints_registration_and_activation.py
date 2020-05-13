@@ -110,7 +110,13 @@ class TestApp(BaseTests):
         mail = self.read_mock_email()
         parsed = mail.get('parsed_message')
         assert parsed.get("Subject") == 'YourProject account activation'
-        assert mail.get('unparsed') == "debug code"
+        activation_message = "Follow this link to activate your account: "
+        activation_message += "http://localhost/public/register/"
+        body = mail.get('body')
+        assert body is not None
+        assert body.startswith(activation_message)
+
+        token = activation_message[1 + activation_message.rfind("/"):]
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')

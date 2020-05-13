@@ -439,12 +439,11 @@ class BaseTests:
         else:
             data['msg'] = []
         data['parsed_message'] = {}
-        data['unparsed'] = []
         for d in data['msg']:
             tokens = d.split(": ")
             if len(tokens) == 2:
                 data['parsed_message'][tokens[0]] = tokens[1]
             else:
-                data['unparsed'].append(d)
+                data['body'] = d
 
         return data
