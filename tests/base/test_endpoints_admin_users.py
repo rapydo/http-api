@@ -133,12 +133,13 @@ class TestApp(BaseTests):
         # (please note that it could be skipped when FORCE_FIRST_PASSWORD_CHANGE is off
         # but... who cares??
         # Check success
-        r = client.get(AUTH_URI + '/profile', headers=self.get("auth_header"))
+        r = client.get(AUTH_URI + '/profile', headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r).get('uuid')
 
         data = {
             'password': BaseAuthentication.default_password,
+            # very important, otherwise the default user will lose its admin role
             'roles_admin_root': True
         }
         r = client.put(url + "/" + uuid, data=data, headers=headers)
