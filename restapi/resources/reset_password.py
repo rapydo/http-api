@@ -96,7 +96,7 @@ class RecoverPassword(EndpointResource):
             # do not modified it without fix also on frontend side
             raise RestApiException(
                 "Sorry, this account is not active",
-                status_code=401,
+                status_code=403,
             )
 
         title = get_project_configuration(

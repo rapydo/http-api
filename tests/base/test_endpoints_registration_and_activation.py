@@ -52,13 +52,13 @@ class TestApp(BaseTests):
             client,
             data['email'],
             data['password'],
-            status_code=401,
+            status_code=403,
             # error='Sorry, this account is not active'
         )
         # Also password reset is not allowed
         data = {'reset_email': 'mock@nomail.org'}
         r = client.post(AUTH_URI + '/reset', data=data)
-        assert r.status_code == 401
+        assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, this account is not active'
 
         # Ask a new activation link
