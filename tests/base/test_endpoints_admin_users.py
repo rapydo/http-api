@@ -36,13 +36,12 @@ class TestApp(BaseTests):
         uuid = self.get_content(r)
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert 'Subject' in parsed.keys()
-        assert parsed.get("Subject") == 'YourProject: new credentials'
-        body = mail.get('body')
-        assert body is not None
-        assert 'Username: "{}"'.format(data.get('email')) in body
-        assert 'Password: "{}"'.format(data.get('password')) in body
+        # Subject: is a key in the MIMEText
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        assert 'Subject: YourProject: new credentials' in mail.get("headers")
+        assert 'Username: "{}"'.format(data.get('email')) in mail.get('body')
+        assert 'Password: "{}"'.format(data.get('password')) in mail.get('body')
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 200
@@ -62,12 +61,12 @@ class TestApp(BaseTests):
         uuid2 = self.get_content(r)
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert parsed.get("Subject") == 'YourProject: new credentials'
-        body = mail.get('body')
-        assert body is not None
-        assert 'Username: "{}"'.format(data2.get('email')) in body
-        assert 'Password: "{}"'.format(data2.get('password')) in body
+        # Subject: is a key in the MIMEText
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        assert 'Subject: YourProject: new credentials' in mail.get("headers")
+        assert 'Username: "{}"'.format(data2.get('email')) in mail.get('body')
+        assert 'Password: "{}"'.format(data2.get('password')) in mail.get('body')
 
         # send and invalid user_id
         r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
@@ -105,12 +104,12 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert parsed.get("Subject") == 'YourProject: password changed'
-        body = mail.get('body')
-        assert body is not None
-        assert 'Username: "{}"'.format(data.get('email')) in body
-        assert 'Password: "{}"'.format(data.get('password')) in body
+        # Subject: is a key in the MIMEText
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        assert 'Subject: YourProject: password changed' in mail.get("headers")
+        assert 'Username: "{}"'.format(data.get('email')) in mail.get('body')
+        assert 'Password: "{}"'.format(data.get('password')) in mail.get('body')
 
         # login with a newly created user
         headers2, _ = self.do_login(

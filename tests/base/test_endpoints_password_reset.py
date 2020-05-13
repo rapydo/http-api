@@ -51,13 +51,13 @@ class TestApp(BaseTests):
         assert self.get_content(r) == reset_message
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert parsed.get("Subject") == 'YourProject Password Reset'
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: YourProject Password Reset' in mail.get("headers")
         activation_message = "Follow this link to reset your password: "
         activation_message += "http://localhost/public/reset/"
-        body = mail.get('body')
-        assert body is not None
-        assert body.startswith(activation_message)
+        assert mail.get('body').startswith(activation_message)
 
         token = activation_message[1 + activation_message.rfind("/"):]
 

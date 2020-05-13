@@ -47,13 +47,13 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert parsed.get("Subject") == 'YourProject account activation'
-        message = "Follow this link to activate your account: "
-        message += "http://localhost/public/register/"
-        body = mail.get('body')
-        assert body is not None
-        assert body.startswith(message)
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: YourProject account activation' in mail.get("headers")
+        activation_message = "Follow this link to activate your account: "
+        activation_message += "http://localhost/public/register/"
+        assert mail.get('body').startswith(activation_message)
 
         # This will fail because the user is not active
         self.do_login(
@@ -119,13 +119,13 @@ class TestApp(BaseTests):
         # assert len(tokens) == num_tokens + 1
 
         mail = self.read_mock_email()
-        parsed = mail.get('parsed_message')
-        assert parsed.get("Subject") == 'YourProject account activation'
+        assert mail.get('body') is not None
+        assert mail.get('headers') is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: YourProject account activation' in mail.get("headers")
         activation_message = "Follow this link to activate your account: "
         activation_message += "http://localhost/public/register/"
-        body = mail.get('body')
-        assert body is not None
-        assert body.startswith(activation_message)
+        assert mail.get('body').startswith(activation_message)
 
         token = activation_message[1 + activation_message.rfind("/"):]
 

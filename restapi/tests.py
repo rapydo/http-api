@@ -438,16 +438,9 @@ class BaseTests:
         with open(fpath, 'r') as file:
             data = json.load(file)
         if 'msg' in data:
-            data['msg'] = data['msg'].split("\n")
-        else:
-            data['msg'] = []
-        data['parsed_message'] = {}
-        for d in data['msg']:
-            tokens = d.split(": ")
-            if len(tokens) == 2:
-                data['parsed_message'][tokens[0]] = tokens[1]
-            else:
-                data['body'] = d
+            tokens = data['msg'].split("\n\n")
+            data['headers'] = tokens[0]
+            data['body'] = tokens[1]
 
         os.unlink(fpath)
         return data
