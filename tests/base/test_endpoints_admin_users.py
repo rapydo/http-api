@@ -65,7 +65,7 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert 'Subject: YourProject: new credentials' in mail.get("headers")
-        assert 'Username: "{}"'.format(data2.get('email')) in mail.get('body')
+        assert 'Username: "{}"'.format(data2.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(data2.get('password')) in mail.get('body')
 
         # send and invalid user_id
