@@ -111,6 +111,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # Users are not authorized to /admin/tokens
+        # This test should be moved in test_endpoints_tokens.py
         r = client.get(API_URI + "/admin/tokens", headers=headers2)
         assert r.status_code == 401
         r = client.delete(API_URI + "/admin/tokens/xyz", headers=headers2)

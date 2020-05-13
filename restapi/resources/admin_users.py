@@ -360,6 +360,8 @@ class AdminUsers(MethodResource, EndpointResource):
             unhashed_password = None
 
         roles, roles_keys = parse_roles(kwargs)
+        log.critical(roles)
+        log.critical(roles_keys)
         for r in roles_keys:
             kwargs.pop(r)
 
