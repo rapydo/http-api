@@ -106,7 +106,8 @@ class MongoExt(Connector):
             from pymongo import MongoClient
 
             client = MongoClient(
-                self.variables.get('host'), int(self.variables.get('port'))
+                self.variables.get('host'),
+                int(self.variables.get('port'))
             )
 
             system_dbs = ['admin', 'local', 'config']
@@ -121,52 +122,52 @@ class MongoExt(Connector):
         return db
 
 
-class Converter:
-    def __init__(self, mongo_model):
-        self._model = mongo_model
+# class Converter:
+#     def __init__(self, mongo_model):
+#         self._model = mongo_model
 
-    @classmethod
-    def recursive_inspect(cls, obj, **kwargs):
+#     @classmethod
+#     def recursive_inspect(cls, obj, **kwargs):
 
-        from bson import ObjectId
-        from datetime import datetime
+#         from bson import ObjectId
+#         from datetime import datetime
 
-        ###############
-        tobehidden = ['_cls', 'password']
-        hide_user = kwargs.get('hide_user', True)
-        if hide_user:
-            tobehidden.append('user')
-        hide_fields = kwargs.get('hide_fields')
-        if hide_fields is not None and isinstance(hide_fields, list):
-            tobehidden += hide_fields
+#         ###############
+#         tobehidden = ['_cls', 'password']
+#         hide_user = kwargs.get('hide_user', True)
+#         if hide_user:
+#             tobehidden.append('user')
+#         hide_fields = kwargs.get('hide_fields')
+#         if hide_fields is not None and isinstance(hide_fields, list):
+#             tobehidden += hide_fields
 
-        ###############
-        if isinstance(obj, dict):
+#         ###############
+#         if isinstance(obj, dict):
 
-            for key, value in obj.copy().items():
+#             for key, value in obj.copy().items():
 
-                if key in tobehidden:
-                    obj.pop(key)
-                    continue
-                elif isinstance(value, datetime):
-                    newvalue = value.timestamp()
-                elif isinstance(value, ObjectId):
-                    newvalue = str(value)
-                elif isinstance(value, list):
-                    newvalue = []
-                    for element in value:
-                        newvalue.append(cls.recursive_inspect(element, **kwargs))
-                else:
-                    newvalue = value
+#                 if key in tobehidden:
+#                     obj.pop(key)
+#                     continue
+#                 elif isinstance(value, datetime):
+#                     newvalue = value.timestamp()
+#                 elif isinstance(value, ObjectId):
+#                     newvalue = str(value)
+#                 elif isinstance(value, list):
+#                     newvalue = []
+#                     for element in value:
+#                         newvalue.append(cls.recursive_inspect(element, **kwargs))
+#                 else:
+#                     newvalue = value
 
-                obj[key] = newvalue
+#                 obj[key] = newvalue
 
-        ###############
-        return obj
+#         ###############
+#         return obj
 
-    def asdict(self, *args, **kwargs):
-        return self.recursive_inspect(
-            # src: https://jira.mongodb.org/browse/PYMODM-105
-            dict(self._model.to_son()),
-            **kwargs,
-        )
+#     def asdict(self, *args, **kwargs):
+#         return self.recursive_inspect(
+#             # src: https://jira.mongodb.org/browse/PYMODM-105
+#             dict(self._model.to_son()),
+#             **kwargs,
+#         )
