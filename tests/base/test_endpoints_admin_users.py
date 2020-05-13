@@ -121,14 +121,8 @@ class TestApp(BaseTests):
         r = client.delete(url + "/" + uuid2, headers=headers)
         assert r.status_code == 204
 
-        # when FORCE_FIRST_PASSWORD_CHANGE is on the do_login utility will silently
-        # change the initial password (i.e. BaseAuthentication.default_password)
-        # when exchanging the token.
-        # As a result other tests running after this will fail at login
-        # => restore the initial default password
-        # (please note that it could be skipped when FORCE_FIRST_PASSWORD_CHANGE is off
-        # but... who cares??
-        # Check success
+        # Restore the default password, if it changed due to FORCE_FIRST_PASSWORD_CHANGE
+        # or MAX_PASSWORD_VALIDITY errors
         r = client.get(AUTH_URI + '/profile', headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r).get('uuid')

@@ -10,4 +10,9 @@ def test_sqlalchemy():
         log.warning("Skipping sqlalchemy test: service not available")
         return False
 
-    detector.connectors_instances.get('sqlalchemy').get_instance()
+    connector = detector.connectors_instances.get('sqlalchemy')
+    if connector is None:
+        log.warning("Skipping sqlalchemy test: connector not available")
+        return False
+
+    connector.get_instance()

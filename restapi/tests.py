@@ -140,11 +140,21 @@ class BaseTests:
                         },
                         status_code=409,
                     )
-                    return self.do_login(
+                    # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
+                    self.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
                             'password_confirm': newpwd,
+                        }
+                    )
+                    # Change again to restore the default password
+                    # and keep all other tests fully working
+                    self.do_login(
+                        client, USER, newpwd,
+                        data={
+                            'new_password': PWD,
+                            'password_confirm': PWD,
                         }
                     )
                 else:
