@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
@@ -37,7 +35,13 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid = self.get_content(r)
 
-        pytest.fail("Check email!")
+        mail = self.read_mock_email()
+        parsed = mail.get('parsed_message')
+        assert parsed.get("Subject") == 'YourProject: new credentials'
+        body = mail.get('body')
+        assert body is not None
+        assert 'Username: "{}"'.format(data.get('email')) in body
+        assert 'Password: "{}"'.format(data.get('password')) in body
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 200
@@ -56,7 +60,13 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid2 = self.get_content(r)
 
-        pytest.fail("Check email!")
+        mail = self.read_mock_email()
+        parsed = mail.get('parsed_message')
+        assert parsed.get("Subject") == 'YourProject: new credentials'
+        body = mail.get('body')
+        assert body is not None
+        assert 'Username: "{}"'.format(data2.get('email')) in body
+        assert 'Password: "{}"'.format(data2.get('password')) in body
 
         # send and invalid user_id
         r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
@@ -93,7 +103,13 @@ class TestApp(BaseTests):
         r = client.put(url + "/" + uuid2, data=data, headers=headers)
         assert r.status_code == 204
 
-        pytest.fail("Check email!")
+        mail = self.read_mock_email()
+        parsed = mail.get('parsed_message')
+        assert parsed.get("Subject") == 'YourProject: password changed'
+        body = mail.get('body')
+        assert body is not None
+        assert 'Username: "{}"'.format(data.get('email')) in body
+        assert 'Password: "{}"'.format(data.get('password')) in body
 
         # login with a newly created user
         headers2, _ = self.do_login(

@@ -18,7 +18,7 @@ from restapi.utilities.logs import log
 
 def send_password_reset_link(uri, title, reset_email):
     # Internal templating
-    body = "Follow this link to reset password: {}".format(uri)
+    body = "Follow this link to reset your password: {}".format(uri)
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")

@@ -50,7 +50,16 @@ class TestApp(BaseTests):
         reset_message = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
         assert self.get_content(r) == reset_message
 
-        pytest.fail("Check email!")
+        mail = self.read_mock_email()
+        parsed = mail.get('parsed_message')
+        assert parsed.get("Subject") == 'YourProject Password Reset'
+        activation_message = "Follow this link to reset your password: "
+        activation_message += "http://localhost/public/reset/"
+        body = mail.get('body')
+        assert body is not None
+        assert body.startswith(activation_message)
+
+        token = activation_message[1 + activation_message.rfind("/"):]
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200

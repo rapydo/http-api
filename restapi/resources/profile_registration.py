@@ -95,8 +95,8 @@ class ProfileRegistration(EndpointResource):
 
         try:
             self.auth.custom_post_handle_user_input(user, v)
-            send_activation_link(self.auth, user)
             notify_registration(user)
+            send_activation_link(self.auth, user)
             msg = (
                 "We are sending an email to your email address where "
                 "you will find the link to activate your account"
