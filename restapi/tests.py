@@ -130,7 +130,7 @@ class BaseTests:
             if isinstance(content, dict) and content.get('actions'):
                 action = content.get('actions')[0]
 
-                if action == 'FIRST LOGIN':
+                if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
                     newpwd = "Aa1!{}".format(self.randomString())
                     headers, _ = self.do_login(
                         client, USER, PWD,
