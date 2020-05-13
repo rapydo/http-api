@@ -81,16 +81,30 @@ def parseAutocomplete(properties, key, id_key='value', split_char=None):
     return value.split(split_char)
 
 
+def get_roles(auth):
+
+    roles = {}
+    for r in auth.get_roles():
+
+        if r.description == 'automatic':
+            continue
+
+        roles["roles_{}".format(r.name)] = r.description
+
+    return roles
+
+
 def parse_roles(properties):
 
-    keys = []
     roles = []
-    for p in properties:
-        if p.startswith("roles_"):
-            keys.append(p)
-            if properties.get(p, False):
-                roles.append(p[6:])
-    return roles, keys
+    for p in properties.copy():
+        if not p.startswith("roles_"):
+            continue
+        if properties.get(p):
+            roles.append(p[6:])
+        properties.pop(p)
+
+    return roles
 
 
 def parse_group(v, neo4j):
@@ -110,19 +124,6 @@ def parse_group(v, neo4j):
         )
 
     return group
-
-
-def get_roles(auth):
-
-    roles = {}
-    for r in auth.get_roles():
-
-        if r.description == 'automatic':
-            continue
-
-        roles["roles_{}".format(r.name)] = r.description
-
-    return roles
 
 
 def get_groups():
@@ -304,9 +305,7 @@ class AdminUsers(MethodResource, EndpointResource):
     @use_kwargs(get_input_schema())
     def post(self, **kwargs):
 
-        roles, roles_keys = parse_roles(kwargs)
-        for r in roles_keys:
-            kwargs.pop(r)
+        roles = parse_roles(kwargs)
 
         email_notification = kwargs.pop('email_notification', False)
 
@@ -359,11 +358,7 @@ class AdminUsers(MethodResource, EndpointResource):
         else:
             unhashed_password = None
 
-        roles, roles_keys = parse_roles(kwargs)
-        log.critical(roles)
-        log.critical(roles_keys)
-        for r in roles_keys:
-            kwargs.pop(r)
+        roles = parse_roles(kwargs)
 
         email_notification = kwargs.pop('email_notification', False)
 
