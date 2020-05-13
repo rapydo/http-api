@@ -40,7 +40,7 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address, dest_addresses, msg):
-        fpath = "/tmp/mock.mail.lastsent.json"
+        fpath = "/code/mock.mail.lastsent.json"
         data = {
             'from': from_address,
             'cc': dest_addresses,

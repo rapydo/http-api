@@ -431,7 +431,7 @@ class BaseTests:
 
     @staticmethod
     def read_mock_email():
-        fpath = "/tmp/mock.mail.lastsent.json"
+        fpath = "/code/mock.mail.lastsent.json"
         if not os.path.exists(fpath):
             return None
 
