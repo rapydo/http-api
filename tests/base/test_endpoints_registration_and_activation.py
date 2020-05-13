@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -46,6 +48,8 @@ class TestApp(BaseTests):
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
 
+        pytest.fail("Check email!")
+
         # This will fail because the user is not active
         self.do_login(
             client,
@@ -86,6 +90,10 @@ class TestApp(BaseTests):
         # but it respond with the activation msg and hides the non existence of the user
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
+
+        assert self.read_mock_email() is None
+
+        pytest.fail("Check no email!")
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200

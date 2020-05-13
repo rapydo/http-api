@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 import pytest
 import json
 import string
@@ -432,6 +432,9 @@ class BaseTests:
     @staticmethod
     def read_mock_email():
         fpath = "/tmp/mock.mail.lastsent.json"
+        if not os.path.exists(fpath):
+            return None
+
         with open(fpath, 'r') as file:
             data = json.load(file)
         if 'msg' in data:
@@ -446,4 +449,5 @@ class BaseTests:
             else:
                 data['body'] = d
 
+        os.unlink(fpath)
         return data

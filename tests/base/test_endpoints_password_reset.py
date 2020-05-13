@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -47,6 +49,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         reset_message = "You will receive an email shortly with a link to a page where you can create a new password, please check your spam/junk folder."
         assert self.get_content(r) == reset_message
+
+        pytest.fail("Check email!")
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
@@ -35,6 +37,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid = self.get_content(r)
 
+        pytest.fail("Check email!")
+
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
@@ -51,6 +55,8 @@ class TestApp(BaseTests):
         r = client.post(url, data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
+
+        pytest.fail("Check email!")
 
         # send and invalid user_id
         r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
@@ -86,6 +92,8 @@ class TestApp(BaseTests):
         data = {'password': newpwd, 'email_notification': True}
         r = client.put(url + "/" + uuid2, data=data, headers=headers)
         assert r.status_code == 204
+
+        pytest.fail("Check email!")
 
         # login with a newly created user
         headers2, _ = self.do_login(

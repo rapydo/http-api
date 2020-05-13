@@ -37,7 +37,6 @@ def send_activation_link(auth, user):
         html_body = body
         body = None
 
-    # TODO: define a different subject
     default_subject = "{} account activation".format(title)
     subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
