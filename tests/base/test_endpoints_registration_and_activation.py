@@ -53,7 +53,7 @@ class TestApp(BaseTests):
             data['email'],
             data['password'],
             status_code=401,
-            error='Sorry, this account is not active'
+            # error='Sorry, this account is not active'
         )
 
         # Ask a new activation link
