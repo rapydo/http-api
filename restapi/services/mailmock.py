@@ -50,7 +50,7 @@ class SMTP:
         with open(fpath, 'w+') as file:
             file.write(json.dumps(data))
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
-        log.info("i.e. mail from in /tmp/")
+        log.info("Mail mock mail written in {}", fpath)
 
 
 class SMTP_SSL(SMTP):

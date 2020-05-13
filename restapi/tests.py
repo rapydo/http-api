@@ -434,4 +434,17 @@ class BaseTests:
         fpath = "/tmp/mock.mail.lastsent.json"
         with open(fpath, 'r') as file:
             data = json.load(file)
+        if 'msg' in data:
+            data['msg'] = data['msg'].split("\n")
+        else:
+            data['msg'] = []
+        data['parsed_message'] = {}
+        data['unparsed'] = []
+        for d in data['msg']:
+            tokens = d.split(": ")
+            if len(tokens) == 2:
+                data['parsed_message'][tokens[0]] = tokens[1]
+            else:
+                data['unparsed'].append(d)
+
         return data

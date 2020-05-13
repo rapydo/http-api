@@ -108,7 +108,9 @@ class TestApp(BaseTests):
         # assert len(tokens) == num_tokens + 1
 
         mail = self.read_mock_email()
-        assert mail.get('msg') == 'debug code'
+        parsed = mail.get('parsed_message')
+        assert parsed.get("Subject") == 'YourProject account activation'
+        assert mail.get('unparsed') == "debug code"
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
