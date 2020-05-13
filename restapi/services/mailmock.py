@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from restapi.utilities.logs import log
 
 
@@ -39,7 +40,17 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address, dest_addresses, msg):
+        fpath = "/tmp/mock.mail.lastsent.json"
+        data = {
+            'from': from_address,
+            'cc': dest_addresses,
+            'msg': msg
+        }
+        log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)
+        with open(fpath, 'w+') as file:
+            file.write(json.dumps(data))
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
+        log.info("i.e. mail from in /tmp/")
 
 
 class SMTP_SSL(SMTP):

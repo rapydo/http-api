@@ -428,3 +428,9 @@ class BaseTests:
             assert delete_r.status_code == del_status
 
         return get_r, post_r, put_r, delete_r
+
+    def read_mock_email():
+        fpath = "/tmp/mock.mail.lastsent.json"
+        with open(fpath, 'r') as file:
+            data = json.load(file)
+        return data

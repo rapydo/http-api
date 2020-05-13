@@ -97,7 +97,6 @@ class TestApp(BaseTests):
             AUTH_URI + '/profile/activate',
             data={'username': registration_data['email']}
         )
-        # return is 200, but no token will be generated and no mail will be sent
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
 
@@ -107,6 +106,9 @@ class TestApp(BaseTests):
 
         # to be enabled
         # assert len(tokens) == num_tokens + 1
+
+        mail = self.read_mock_email()
+        assert mail.get('msg') == 'debug code'
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
