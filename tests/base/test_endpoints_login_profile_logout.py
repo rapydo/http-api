@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -21,6 +22,10 @@ class TestApp(BaseTests):
         )
 
         log.info("*** VERIFY valid credentials")
+        headers, _ = self.do_login(client, None, None)
+
+        time.sleep(5)
+        # Verify MAX_PASSWORD_VALIDITY, if set
         headers, _ = self.do_login(client, None, None)
 
         self.save("auth_header", headers)
