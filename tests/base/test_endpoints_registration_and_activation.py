@@ -139,3 +139,8 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 200
         assert self.get_content(r) == "Account activated"
+
+        # Activation token is no longer valid
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 200
+        assert self.get_content(r) == "Account activated"

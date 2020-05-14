@@ -147,6 +147,9 @@ class Profile(EndpointResource):
             self.update_password(user, data)
             return self.empty_response()
 
+        if 'new_password' in data or 'password_confirm' in data:
+            raise RestApiException("Invalid request", status_code=400)
+
         self.update_profile(user, data)
 
         return self.empty_response()

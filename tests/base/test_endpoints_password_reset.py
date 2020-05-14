@@ -100,13 +100,14 @@ class TestApp(BaseTests):
             min_pwd_len
         )
 
-        data['new_password'] = "Cc!4" + self.randomString(length=min_pwd_len)
-        data['password_confirm'] = data['new_password']
+        new_pwd = "Cc!4" + self.randomString(length=min_pwd_len)
+        data['new_password'] = new_pwd
+        data['password_confirm'] = new_pwd
         r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
         assert r.status_code == 200
 
         self.do_login(client, None, None, status_code=401)
-        headers, _ = self.do_login(client, None, data['new_password'])
+        headers, _ = self.do_login(client, None, new_pwd)
 
         # Token is no longer valid
         r = client.put(AUTH_URI + '/reset/{}'.format(token))
@@ -115,7 +116,11 @@ class TestApp(BaseTests):
         assert c == 'Invalid reset token: this request is no longer valid'
 
         # Restore the default password
+        data['password'] = new_pwd
         data['new_password'] = BaseAuthentication.default_password
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
+
+        self.do_login(client, None, new_pwd, status_code=401)
+        self.do_login(client, None, None)
