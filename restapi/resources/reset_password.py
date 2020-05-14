@@ -162,15 +162,15 @@ class RecoverPassword(EndpointResource):
             )
 
         # Recovering token object from jti
-        token = self.auth.get_tokens(token_jti=self.auth._jti)
-        if len(token) == 0:
+        token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
+        if len(token_obj) == 0:
             raise RestApiException(
                 'Invalid reset token: this request is no longer valid',
                 status_code=400,
             )
 
-        token = token.pop(0)
-        emitted = token["emitted"]
+        token_obj = token_obj.pop(0)
+        emitted = token_obj["emitted"]
 
         last_change = None
         # If user logged in after the token emission invalidate the token

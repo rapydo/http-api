@@ -102,8 +102,8 @@ class ProfileActivation(EndpointResource):
             )
 
         # Recovering token object from jti
-        token = self.auth.get_tokens(token_jti=self.auth._jti)
-        if len(token) == 0:
+        token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
+        if len(token_obj) == 0:
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',
                 status_code=400,
