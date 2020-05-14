@@ -31,6 +31,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 NULL_IP = "0.0.0.0"
 
+
+class InvalidToken(BaseException):
+    pass
+
+
 class BaseAuthentication(metaclass=abc.ABCMeta):
 
     """
@@ -359,11 +364,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._user = None
 
         if token is None:
+            if raiseErrors:
+                raise InvalidToken("Missing token")
             return False
 
         # Decode the current token
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
+            if raiseErrors:
+                raise InvalidToken("Invalid payload")
             return False
 
         payload_type = payload.get("t", self.FULL_TOKEN)
@@ -373,15 +382,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if token_type != payload_type:
             log.error("Invalid token type {}, required: {}", payload_type, token_type)
+            if raiseErrors:
+                raise InvalidToken("Invalid token type")
             return False
 
         # Get the user from payload
         user = self.get_user_object(payload=payload)
         if user is None:
+            if raiseErrors:
+                raise InvalidToken("No user from payload")
             return False
 
         # implemented from the specific db services
         if not self.verify_token_validity(jti=payload['jti'], user=user):
+            if raiseErrors:
+                raise InvalidToken("Token is not valid")
             return False
 
         log.verbose("User authorized")

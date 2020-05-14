@@ -135,11 +135,9 @@ class RecoverPassword(EndpointResource):
         try:
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
-            valid = self.auth.verify_token(
+            self.auth.verify_token(
                 token_id, raiseErrors=True, token_type=self.auth.PWD_RESET
             )
-            if not valid:
-                raise RestApiException("Invalid reset token", status_code=403)
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError:
