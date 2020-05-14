@@ -73,6 +73,7 @@ class ProfileActivation(EndpointResource):
     @decorators.catch_errors()
     def put(self, token):
 
+        token = token.replace("%2B", ".")
         token = token.replace("+", ".")
         try:
             # Unpack and verify token. If ok, self.auth will be added with

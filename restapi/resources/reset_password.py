@@ -50,7 +50,7 @@ class RecoverPassword(EndpointResource):
         }
     }
     PUT = {
-        "/reset/<token_id>": {
+        "/reset/<token>": {
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",
             "responses": {
@@ -129,14 +129,15 @@ class RecoverPassword(EndpointResource):
         return self.response(msg)
 
     @decorators.catch_errors()
-    def put(self, token_id):
+    def put(self, token):
 
-        token_id = token_id.replace("+", ".")
+        token = token.replace("%2B", ".")
+        token = token.replace("+", ".")
         try:
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token_id, raiseErrors=True, token_type=self.auth.PWD_RESET
+                token, raiseErrors=True, token_type=self.auth.PWD_RESET
             )
 
         # If token is expired
@@ -191,7 +192,7 @@ class RecoverPassword(EndpointResource):
                 expired = pytz.utc.localize(last_change) >= emitted
 
             if expired:
-                self.auth.invalidate_token(token_id)
+                self.auth.invalidate_token(token)
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
                     status_code=400,
@@ -226,6 +227,6 @@ class RecoverPassword(EndpointResource):
         self.auth.save_user(self.auth._user)
 
         # Bye bye token (reset tokens are valid only once)
-        self.auth.invalidate_token(token_id)
+        self.auth.invalidate_token(token)
 
         return self.response("Password changed")
