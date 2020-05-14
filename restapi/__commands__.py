@@ -213,6 +213,17 @@ def tests(wait, core, file, folder):
         "Running all tests and computing coverage.\n" + "This may take some minutes."
     )
 
+    num_opt = 0
+    if core:
+        num_opt += 1
+    if file is not None:
+        num_opt += 1
+    if folder is not None:
+        num_opt += 1
+
+    if num_opt > 1:
+        log.exit("Please specify only one option between --core, --file and --folder")
+
     parameters = ["tests/tests.sh"]
     if core:
         parameters.append(current_package)
