@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+import jwt
+import uuid
 import urllib.parse
+import pytz
+from datetime import datetime, timedelta
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -145,3 +149,24 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 400
         assert self.get_content(r) == 'Invalid activation token'
+
+        payload = {
+            'user_id': str(uuid.uuid4()),
+            'jti': str(uuid.uuid4())
+        }
+        payload["t"] = "a"
+        now = datetime.now(pytz.utc)
+        payload['iat'] = now
+        payload['nbf'] = now  # you can add a timedelta
+        payload['exp'] = now + timedelta(seconds=10)
+
+        token = jwt.encode(
+            payload,
+            BaseAuthentication.JWT_SECRET,
+            algorithm=BaseAuthentication.JWT_ALGO
+        ).decode('ascii')
+
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid activation token: this request is no longer valid'
