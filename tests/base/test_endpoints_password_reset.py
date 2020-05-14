@@ -131,6 +131,28 @@ class TestApp(BaseTests):
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
+        # Token created for another user
+        token = self.get_crafted_token("x")
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token'
+
+        # Token created for another user
+        token = self.get_crafted_token("r", wrong_algorithm=True)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token'
+
+        # Token created for another user
+        token = self.get_crafted_token("r", wrong_secret=True)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token'
+
+        headers, _ = self.do_login(client, None, None)
         r = client.get(AUTH_URI + '/profile', headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r).get('uuid')
@@ -140,7 +162,7 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/reset/{}'.format(token))
         assert r.status_code == 400
         c = self.get_content(r)
-        assert c == 'Invalid reset token: this request is no longer valid'
+        assert c == 'Invalid reset token'
 
         # Immature token
         token = self.get_crafted_token("r", user_id=uuid, immature=True)

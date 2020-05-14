@@ -449,9 +449,20 @@ class BaseTests:
         os.unlink(fpath)
         return data
 
-    @staticmethod
-    def get_crafted_token(token_type, user_id=None, expired=False, immature=False):
-        f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
+    def get_crafted_token(self, token_type, user_id=None,
+                          expired=False, immature=False,
+                          wrong_secret=False, wrong_algorithm=False):
+
+        if wrong_secret:
+            secret = self.randomString()
+        else:
+            f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
+            secret = open(f, 'rb').read()
+
+        if wrong_algorithm:
+            algorithm = "HS256"
+        else:
+            algorithm = BaseAuthentication.JWT_ALGO
 
         if user_id is None:
             user_id = str(uuid.uuid4())
@@ -474,8 +485,8 @@ class BaseTests:
 
         token = jwt.encode(
             payload,
-            open(f, 'rb').read(),
-            algorithm=BaseAuthentication.JWT_ALGO
+            secret,
+            algorithm=algorithm
         ).decode('ascii')
 
         return token
