@@ -182,17 +182,25 @@ class RecoverPassword(EndpointResource):
 
         if last_change is not None:
 
+            log.critical(last_change)
             try:
+                log.critical(emitted)
                 expired = last_change >= emitted
-            except TypeError:
+                log.critical(expired)
+            except TypeError as e:
+                log.critical(e)
                 # pymongo has problems here:
                 # http://api.mongodb.com/python/current/examples/
                 #  datetimes.html#reading-time
+                log.critical("Localizing last password change")
                 log.debug("Localizing last password change")
+                log.critical(pytz.utc.localize(last_change))
                 expired = pytz.utc.localize(last_change) >= emitted
 
             if expired:
                 self.auth.invalidate_token(token)
+                log.critical(token)
+                log.critical(expired)
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
                     status_code=400,
