@@ -37,6 +37,7 @@ else:
             # Create a fake token and verify that is linked to nobody
             t = neo4j.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
             assert neo4j.getSingleLinkedNode(t.emitted_for) is None
+            t.delete()
 
             try:
                 neo4j.cypher("MATCH (n) RETURN n with a syntax error")
