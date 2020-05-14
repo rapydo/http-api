@@ -112,7 +112,7 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/reset/{}'.format(token))
         assert r.status_code == 400
         c = self.get_content(r)
-        assert c == 'Invalid reset token: this request is no longer valid'
+        assert c == 'Invalid reset token'
 
         # Restore the default password
         data['password'] = new_pwd
