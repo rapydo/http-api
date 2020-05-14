@@ -139,7 +139,7 @@ class RecoverPassword(EndpointResource):
                 token_id, raiseErrors=True, token_type=self.auth.PWD_RESET
             )
             if not valid:
-                raise RestApiException("Invalid activation token", status_code=403)
+                raise RestApiException("Invalid reset token", status_code=403)
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError:
@@ -149,13 +149,15 @@ class RecoverPassword(EndpointResource):
             )
 
         # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError:
+        except jwt.exceptions.ImmatureSignatureError as e:
+            log.error(e)
             raise RestApiException(
                 'Invalid reset token', status_code=400
             )
 
         # if token does not exist (or other generic errors)
-        except Exception:
+        except Exception as e:
+            log.error(e)
             raise RestApiException(
                 'Invalid reset token', status_code=400
             )
