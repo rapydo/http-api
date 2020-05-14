@@ -123,3 +123,35 @@ class TestApp(BaseTests):
 
         self.do_login(client, None, new_pwd, status_code=401)
         self.do_login(client, None, None)
+
+        # Token created for another user
+        token = self.get_crafted_token("r")
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token'
+
+        r = client.get(AUTH_URI + '/profile', headers=headers)
+        assert r.status_code == 200
+        uuid = self.get_content(r).get('uuid')
+
+        # token created for the correct user, but from outside the system!!
+        token = self.get_crafted_token("r", user_id=uuid)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token: this request is no longer valid'
+
+        # Immature token
+        token = self.get_crafted_token("r", user_id=uuid, immature=True)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token'
+
+        # Expired token
+        token = self.get_crafted_token("r", user_id=uuid, expired=True)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token: this request is expired'

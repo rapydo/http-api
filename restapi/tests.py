@@ -450,18 +450,27 @@ class BaseTests:
         return data
 
     @staticmethod
-    def get_crafted_token():
+    def get_crafted_token(token_type, user_id=None, expired=False, immature=False):
         f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
 
+        if user_id is None:
+            user_id = str(uuid.uuid4())
+
         payload = {
-            'user_id': str(uuid.uuid4()),
+            'user_id': user_id,
             'jti': str(uuid.uuid4())
         }
-        payload["t"] = "a"
+        payload["t"] = token_type
         now = datetime.now(pytz.utc)
         payload['iat'] = now
-        payload['nbf'] = now  # you can add a timedelta
-        payload['exp'] = now + timedelta(seconds=10)
+        if immature:
+            payload['nbf'] = now + timedelta(seconds=999)
+        else:
+            payload['nbf'] = now - timedelta(seconds=999)
+        if expired:
+            payload['exp'] = now - timedelta(seconds=999)
+        else:
+            payload['exp'] = now + timedelta(seconds=999)
 
         token = jwt.encode(
             payload,

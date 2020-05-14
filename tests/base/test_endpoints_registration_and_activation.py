@@ -146,9 +146,34 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'Invalid activation token'
 
-        token = self.get_crafted_token()
+        # Token created for another user
+        token = self.get_crafted_token("a")
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid activation tokend'
 
+        r = client.get(AUTH_URI + '/profile', headers=headers)
+        assert r.status_code == 200
+        uuid = self.get_content(r).get('uuid')
+
+        # token created for the correct user, but from outside the system!!
+        token = self.get_crafted_token("a", user_id=uuid)
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token: this request is no longer valid'
+
+        # Immature token
+        token = self.get_crafted_token("a", user_id=uuid, immature=True)
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid activation token'
+
+        # Expired token
+        token = self.get_crafted_token("a", user_id=uuid, expired=True)
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid activation token: this request is expired'
