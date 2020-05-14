@@ -122,7 +122,6 @@ class BaseTests:
 
         data[user_field] = USER
         data[pwd_field] = PWD
-        log.critical(PWD)
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
         content = json.loads(r.data.decode('utf-8'))
