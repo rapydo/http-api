@@ -150,7 +150,6 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         uuid = self.get_content(r).get('uuid')
 
-        # Token created for another user
         token = self.get_crafted_token("x", user_id=uuid)
         r = client.put(AUTH_URI + '/reset/{}'.format(token))
         assert r.status_code == 400
