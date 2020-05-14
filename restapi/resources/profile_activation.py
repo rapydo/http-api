@@ -77,9 +77,11 @@ class ProfileActivation(EndpointResource):
         try:
             # Unpack and verify token. If ok, self.auth will be added with
             # auth._user auth._token and auth._jti
-            self.auth.verify_token(
+            valid = self.auth.verify_token(
                 token, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
             )
+            if not valid:
+                raise RestApiException("Invalid activation token", status_code=403)
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError:
