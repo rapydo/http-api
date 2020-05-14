@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import urllib.parse
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
@@ -61,7 +62,7 @@ class TestApp(BaseTests):
         activation_message += "http://localhost/public/reset/"
         assert body.startswith(activation_message)
 
-        token = body[1 + body.rfind("/"):]
+        token = urllib.parse.unquote(body[1 + body.rfind("/"):])
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200

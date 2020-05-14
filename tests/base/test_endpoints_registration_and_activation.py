@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import urllib.parse
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -128,7 +129,7 @@ class TestApp(BaseTests):
         activation_message += "http://localhost/public/register/"
         assert body.startswith(activation_message)
 
-        token = body[1 + body.rfind("/"):]
+        token = urllib.parse.unquote(body[1 + body.rfind("/"):])
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
