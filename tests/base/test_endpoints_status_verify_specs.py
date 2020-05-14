@@ -25,6 +25,7 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # Check HTML response to status if agent/request is text/html
+        # this is a ApiSpec endpoint
         headers = {"Accept": 'text/html'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 200
@@ -88,3 +89,11 @@ class TestApp(BaseTests):
                 assert r.status_code == 200
             else:
                 assert r.status_code == 404
+
+        # this is a Flask endpoint
+        headers = {"Accept": 'text/html'}
+        r = client.get(API_URI + '/status/x', headers=headers)
+        assert r.status_code == 401
+        output = r.data.decode('utf-8')
+        assert "<html" in output
+        assert "<body>" in output

@@ -90,15 +90,6 @@ class ResponseMaker:
         return ['*/*']
 
     @staticmethod
-    def add_to_dict(mydict, content, key='content'):
-        if content is None:
-            content = {}
-        elif not isinstance(content, dict):
-            content = {key: content}
-        mydict.update(content)
-        return mydict
-
-    @staticmethod
     def get_html(content, code, headers):
 
         if isinstance(content, list):
