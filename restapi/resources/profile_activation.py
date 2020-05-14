@@ -95,7 +95,7 @@ class ProfileActivation(EndpointResource):
             )
 
         # if token does not exist (or other generic errors)
-        except Exception:
+        except BaseException:
             raise RestApiException(
                 'Invalid activation token', status_code=400
             )

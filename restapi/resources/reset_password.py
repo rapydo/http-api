@@ -154,7 +154,7 @@ class RecoverPassword(EndpointResource):
             )
 
         # if token does not exist (or other generic errors)
-        except Exception as e:
+        except BaseException as e:
             log.error(e)
             raise RestApiException(
                 'Invalid reset token', status_code=400
