@@ -85,10 +85,53 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid token")
         r = client.get(endpoint, headers=self.get("auth_header"))
         assert r.status_code == 200
+        uuid = self.get_content(r).get('uuid')
 
         # Check failure
         log.info("*** VERIFY invalid token")
         r = client.get(endpoint)
+        assert r.status_code == 401
+
+        # Token created for a fake user
+        token = self.get_crafted_token("f")
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # Token created for another user
+        token = self.get_crafted_token("x")
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # Token created for another user
+        token = self.get_crafted_token("f", wrong_algorithm=True)
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # Token created for another user
+        token = self.get_crafted_token("f", wrong_secret=True)
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # token created for the correct user, but from outside the system!!
+        token = self.get_crafted_token("f", user_id=uuid)
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # Immature token
+        token = self.get_crafted_token("f", user_id=uuid, immature=True)
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
+        assert r.status_code == 401
+
+        # Expired token
+        token = self.get_crafted_token("f", user_id=uuid, expired=True)
+        headers = {'Authorization': 'Bearer {}'.format(token)}
+        r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
     def test_03_change_profile(self, client):
