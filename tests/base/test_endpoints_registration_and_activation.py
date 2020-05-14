@@ -176,7 +176,7 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 400
         c = self.get_content(r)
-        assert c == 'Invalid activation tokea'
+        assert c == 'Invalid activation token'
 
         # token created for the correct user, but from outside the system!!
         token = self.get_crafted_token("a", user_id=uuid)
