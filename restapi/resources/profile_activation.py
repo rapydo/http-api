@@ -62,7 +62,7 @@ class ProfileActivation(EndpointResource):
         }
     }
     PUT = {
-        "/profile/activate/<token_id>": {
+        "/profile/activate/<token>": {
             "summary": "Activate your account by providing the activation token",
             "responses": {
                 "200": {"description": "Account successfully activated"}

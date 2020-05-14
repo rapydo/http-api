@@ -114,9 +114,7 @@ class TestApp(BaseTests):
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200
         tokens = self.get_content(r)
-
-        # to be enabled
-        # assert len(tokens) == num_tokens + 1
+        assert len(tokens) == num_tokens + 1
 
         mail = self.read_mock_email()
         body = mail.get('body')
