@@ -2,7 +2,6 @@
 
 import os
 import jwt
-import pytz
 
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
@@ -182,16 +181,7 @@ class RecoverPassword(EndpointResource):
 
         if last_change is not None:
 
-            try:
-                expired = last_change > emitted
-            except TypeError:
-                # pymongo has problems here:
-                # http://api.mongodb.com/python/current/examples/
-                #  datetimes.html#reading-time
-                log.debug("Localizing last password change")
-                expired = pytz.utc.localize(last_change) > emitted
-
-            if expired:
+            if last_change > emitted:
                 self.auth.invalidate_token(token)
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
