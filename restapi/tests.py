@@ -4,6 +4,10 @@ import pytest
 import json
 import string
 import random
+import jwt
+import uuid
+import pytz
+from datetime import datetime, timedelta
 from glom import glom
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
@@ -444,3 +448,25 @@ class BaseTests:
 
         os.unlink(fpath)
         return data
+
+    @staticmethod
+    def get_crafted_token():
+        f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
+
+        payload = {
+            'user_id': str(uuid.uuid4()),
+            'jti': str(uuid.uuid4())
+        }
+        payload["t"] = "a"
+        now = datetime.now(pytz.utc)
+        payload['iat'] = now
+        payload['nbf'] = now  # you can add a timedelta
+        payload['exp'] = now + timedelta(seconds=10)
+
+        token = jwt.encode(
+            payload,
+            open(f, 'rb').read(),
+            algorithm=BaseAuthentication.JWT_ALGO
+        ).decode('ascii')
+
+        return token
