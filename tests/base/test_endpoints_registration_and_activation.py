@@ -119,15 +119,16 @@ class TestApp(BaseTests):
         # assert len(tokens) == num_tokens + 1
 
         mail = self.read_mock_email()
-        assert mail.get('body') is not None
+        body = mail.get('body')
+        assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: YourProject account activation' in mail.get("headers")
         activation_message = "Follow this link to activate your account: "
         activation_message += "http://localhost/public/register/"
-        assert mail.get('body').startswith(activation_message)
+        assert body.startswith(activation_message)
 
-        token = activation_message[1 + activation_message.rfind("/"):]
+        token = body[1 + body.rfind("/"):]
 
         # profile activation
         r = client.put(AUTH_URI + '/profile/activate/thisisatoken')
@@ -135,6 +136,6 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # profile activation
-        # r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
-        # assert r.status_code == 200
-        # assert self.get_content(r) == "Account activated"
+        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        assert r.status_code == 200
+        assert self.get_content(r) == "Account activated"

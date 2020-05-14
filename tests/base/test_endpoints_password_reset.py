@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import pytest
+import os
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
@@ -52,15 +52,16 @@ class TestApp(BaseTests):
         assert self.get_content(r) == resetmsg
 
         mail = self.read_mock_email()
-        assert mail.get('body') is not None
+        body = mail.get('body')
+        assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: YourProject Password Reset' in mail.get("headers")
         activation_message = "Follow this link to reset your password: "
         activation_message += "http://localhost/public/reset/"
-        assert mail.get('body').startswith(activation_message)
+        assert body.startswith(activation_message)
 
-        token = activation_message[1 + activation_message.rfind("/"):]
+        token = body[1 + body.rfind("/"):]
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200
@@ -74,6 +75,47 @@ class TestApp(BaseTests):
         # this token is not valid
         assert r.status_code == 400
 
-        # profile activation
-        # r = client.put(AUTH_URI + '/reset/{}'.format(token))
-        # assert r.status_code == 204
+        # Check if token is valid
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 204
+
+        # Token is still valid because no password still sent
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 204
+
+        data = {}
+        data['new_password'] = self.randomString(length=2)
+        data['password_confirm'] = self.randomString(length=2)
+        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'New password does not match with confirmation'
+
+        min_pwd_len = int(os.environ.get("AUTH_MIN_PASSWORD_LENGTH", 9999))
+
+        data['password_confirm'] = data['new_password']
+        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        assert r.status_code == 409
+        ret_text = self.get_content(r)
+        assert ret_text == 'Password is too short, use at least {} characters'.format(
+            min_pwd_len
+        )
+
+        data['new_password'] = "Cc!4" + self.randomString(length=min_pwd_len)
+        data['password_confirm'] = data['new_password']
+        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        assert r.status_code == 200
+
+        self.do_login(client, None, None, status_code=401)
+        headers, _ = self.do_login(client, None, data['new_password'])
+
+        # Token is no longer valid
+        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        assert r.status_code == 400
+        c = self.get_content(r)
+        assert c == 'Invalid reset token: this request is no longer valid'
+
+        # Restore the default password
+        data['new_password'] = BaseAuthentication.default_password
+        data['password_confirm'] = data['new_password']
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 204
