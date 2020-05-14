@@ -121,7 +121,7 @@ class ProfileActivation(EndpointResource):
         self.auth._user.is_active = True
         self.auth.save_user(self.auth._user)
 
-        # Bye bye token (reset activation are valid only once)
+        # Bye bye token (activation tokens are valid only once)
         self.auth.invalidate_token(token)
 
         return self.response("Account activated")
