@@ -25,7 +25,9 @@ if TESTING:
             "/tests/upload": {
                 "summary": "Execute tests with the uploader",
                 "description": "Only enabled in testing mode",
-                "responses": {"200": {"description": "Tests executed"}},
+                "responses": {
+                    "200": {"description": "Tests executed"},
+                },
             },
         }
 

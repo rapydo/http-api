@@ -157,7 +157,7 @@ class Uploader:
 
             raise RestApiException(
                 "No files specified",
-                status_code=405,
+                status_code=400,
             )
 
         myfile = request.files['file']
