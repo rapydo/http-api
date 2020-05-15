@@ -16,7 +16,7 @@ import os
 
 # import shutil
 from flask import request  # , send_from_directory
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from werkzeug.http import parse_content_range_header
 from restapi.confs import UPLOAD_PATH, PRODUCTION
 from restapi.services.detect import detector
