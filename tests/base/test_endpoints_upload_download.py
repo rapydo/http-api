@@ -61,7 +61,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
 
         # no filename provided
-        r = client.get(endpoint)
+        r = client.get(API_URI + '/tests/download')
         assert r.status_code == 400
 
         r = client.get(endpoint + self.fname)
