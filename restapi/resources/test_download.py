@@ -25,7 +25,7 @@ if TESTING:
 
         _GET = {
             "/tests/download": {
-                "summary": "Execute tests with the downloader",
+                "summary": "Test missing filename",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
             },
@@ -37,7 +37,7 @@ if TESTING:
         }
 
         @decorators.catch_errors()
-        @use_kwargs(Input)
+        @use_kwargs(Input, locations=['query'])
         def get(self, fname=None, **kwargs):
 
             stream = kwargs.get('stream', False)

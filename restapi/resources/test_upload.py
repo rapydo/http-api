@@ -36,7 +36,8 @@ if TESTING:
                 "summary": "Initialize tests on chunked upload",
                 "description": "Only enabled in testing mode",
                 "responses": {
-                    "200": {"description": "Upload initialized"},
+                    "200": {"description": "Schema retrieved"},
+                    "201": {"description": "Upload initialized"},
                 },
             },
         }
