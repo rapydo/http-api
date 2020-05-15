@@ -18,6 +18,7 @@ if TESTING:
     class Input(Schema):
 
         stream = fields.Bool()
+        partial = fields.Bool()
 
     class TestDownload(MethodResource, EndpointResource, Downloader):
 
@@ -41,8 +42,14 @@ if TESTING:
         def get(self, fname=None, **kwargs):
 
             stream = kwargs.get('stream', False)
+            partial = kwargs.get('partial', False)
+
             if stream:
                 fpath = Uploader.absolute_upload_file(fname, subfolder=UPLOAD_PATH)
                 return self.send_file_streamed(fpath)
+
+            if partial:
+                fpath = Uploader.absolute_upload_file(fname, subfolder=UPLOAD_PATH)
+                return self.send_file_partial(fpath)
 
             return self.download(fname)

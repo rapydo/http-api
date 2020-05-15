@@ -81,6 +81,8 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(endpoint + self.fname, data={'stream': True})
         assert r.status_code == 200
+        content = r.data.decode('utf-8')
+        assert content == new_content
 
         r = client.get(endpoint + 'doesnotexist', data={'stream': True})
         assert r.status_code == 400
@@ -140,6 +142,62 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get('type') == 'text/plain'
 
         r = client.get(API_URI + '/tests/download/' + uploaded_filename)
+        assert r.status_code == 200
+        content = r.data.decode('utf-8')
+        assert content == up_data
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True}
+        )
+        assert r.status_code == 200
+        content = r.data.decode('utf-8')
+        assert content == up_data
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': ''}
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': '0-9'}
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': 'bytes=0-9999999999999999'}
+        )
+        assert r.status_code == 200
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': 'bytes=0-4'}
+        )
+        assert r.status_code == 206
+        content = r.data.decode('utf-8')
+        assert content == up_data[0:5]
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': 'bytes=5-9'}
+        )
+        assert r.status_code == 206
+        content = r.data.decode('utf-8')
+        assert content == up_data[5:]
+
+        r = client.get(
+            API_URI + '/tests/download/' + uploaded_filename,
+            data={'chunked': True},
+            headers={'Range': 'bytes=0-9'}
+        )
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == up_data
