@@ -148,7 +148,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True}
+            data={'partial': True}
         )
         assert r.status_code == 200
         content = r.data.decode('utf-8')
@@ -156,28 +156,28 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': ''}
         )
         assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': '0-9'}
         )
         assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': 'bytes=0-9999999999999999'}
         )
         assert r.status_code == 200
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': 'bytes=0-4'}
         )
         assert r.status_code == 206
@@ -186,7 +186,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': 'bytes=5-9'}
         )
         assert r.status_code == 206
@@ -195,12 +195,14 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'chunked': True},
+            data={'partial': True},
             headers={'Range': 'bytes=0-9'}
         )
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == up_data
+
+        assert 1 == 0
 
         r = client.post(API_URI + '/tests/upload')
         assert r.status_code == 400

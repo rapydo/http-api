@@ -58,14 +58,14 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
 
                 return from_restapi_exception(self, e)
 
-            except werkzeug.exceptions.BadRequest as e:
+            except werkzeug.exceptions.BadRequest:
                 # do not stop werkzeug BadRequest
-                raise e
+                raise
 
-            except werkzeug.exceptions.UnprocessableEntity as e:
+            except werkzeug.exceptions.UnprocessableEntity:
                 # do not stop werkzeug UnprocessableEntity, it will be
                 # catched by handle_marshmallow_errors
-                raise e
+                raise
 
             # raised in case of malformed Range header
             except werkzeug.exceptions.RequestedRangeNotSatisfiable:

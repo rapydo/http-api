@@ -62,6 +62,8 @@ class Downloader:
         return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
 
     # this is good for media files, based on Range header
+
+    # to be deprecated --- use self.download instead!
     def send_file_partial(self, path, mime=None):
         """
         Simple wrapper around send_file which handles HTTP 206 Partial Content
@@ -78,7 +80,6 @@ class Downloader:
         if not range_header:
             return self.send_file_streamed(path, mime)
 
-        log.critical(range_header)
         size = os.path.getsize(path)
         byte1, byte2 = 0, None
 
