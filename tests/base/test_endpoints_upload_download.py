@@ -202,8 +202,6 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode('utf-8')
         assert content == up_data
 
-        assert 1 == 0
-
         r = client.post(API_URI + '/tests/upload')
         assert r.status_code == 400
         err = "File '{}' already exists".format(uploaded_filename)
