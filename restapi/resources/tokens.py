@@ -1,120 +1,80 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app
-from restapi import decorators as decorate
+from flask_apispec import MethodResource
+from flask_apispec import marshal_with
+from marshmallow import fields
+from restapi.models import Schema
+from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi.protocols.bearer import authentication
 
-from restapi.utilities.htmlcodes import hcodes
-
-"""
-class Tokens
-    GET: get list of tokens for the current link
-    DELETE: invalidate a token
-
-"""
+# from restapi.utilities.logs import log
 
 
-class Tokens(EndpointResource):
+class TokenSchema(Schema):
+    id = fields.Str()
+    IP = fields.Str()
+    location = fields.Str()
+    token = fields.Str()
+    emitted = fields.DateTime()
+    expiration = fields.DateTime()
+    last_access = fields.DateTime()
+
+
+class Tokens(MethodResource, EndpointResource):
     """ List all active tokens for a user """
 
     baseuri = "/auth"
     labels = ["authentication"]
 
-    GET = {
+    _GET = {
         "/tokens": {
-            "summary": "Show all tokens emitted for logged user",
+            "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
-        },
-        "/tokens/<token_id>": {
-            "summary": "Show specified token if available for logged user",
-            "responses": {"200": {"description": "Details on the specified token"}},
-        },
+        }
     }
-    DELETE = {
-        "/tokens": {
-            "summary": "Remove all tokens emitted for a user",
-            "description": "Note: only allowed for testing",
-            "responses": {"200": {"description": "All tokens have been invalidated"}},
-        },
+    _DELETE = {
         "/tokens/<token_id>": {
             "summary": "Remove specified token and make it invalid from now on",
-            "responses": {"200": {"description": "Token has been invalidated"}},
+            "responses": {"204": {"description": "Token has been invalidated"}},
         },
     }
 
-    def get_user(self):
+    @marshal_with(TokenSchema(many=True), code=200)
+    @decorators.catch_errors()
+    @decorators.auth.required()
+    def get(self):
 
-        iamadmin = self.auth.verify_admin()
-
-        if iamadmin:
-            username = self.get_input(single_parameter='username')
-            if username is not None:
-                username = username.lower()
-                return self.auth.get_user_object(username=username)
-
-        return self.get_current_user()
-
-    # token_id = uuid associated to the token you want to select
-    @decorate.catch_error()
-    @authentication.required()
-    def get(self, token_id=None):
-
-        user = self.get_user()
-        if user is None:
-            raise RestApiException(
-                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
-            )
+        user = self.get_current_user()
 
         tokens = self.auth.get_tokens(user=user)
-        if token_id is None:
-            return tokens
 
-        for token in tokens:
-            if token["id"] == token_id:
-                return token
-
-        raise RestApiException(
-            'This token was not emitted for your account or it does not exist',
-            status_code=hcodes.HTTP_BAD_NOTFOUND
-        )
+        return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
-    @decorate.catch_error()
-    @authentication.required()
-    def delete(self, token_id=None):
-        """
-            For additional security, tokens are invalidated both
-            by chanding the user UUID and by removing single tokens
-        """
+    @decorators.catch_errors()
+    @decorators.auth.required()
+    def delete(self, token_id):
 
-        user = self.get_user()
-        if user is None:
-            raise RestApiException(
-                'Invalid username', status_code=hcodes.HTTP_BAD_REQUEST
-            )
-
-        if token_id is None:
-            # NOTE: this is allowed only in removing tokens in unittests
-            if not current_app.config['TESTING']:
-                raise KeyError("TESTING IS FALSE! Specify a valid token")
-            self.auth.invalidate_all_tokens(user=user)
-            return self.empty_response()
-
+        user = self.get_current_user()
         tokens = self.auth.get_tokens(user=user)
 
         for token in tokens:
             if token["id"] != token_id:
                 continue
-            if not self.auth.invalidate_token(token=token["token"], user=user):
-                raise RestApiException(
-                    "Failed token invalidation: '{}'".format(token),
-                    status_code=hcodes.HTTP_BAD_REQUEST
-                )
-            return self.empty_response()
+
+            if self.auth.invalidate_token(token=token["token"]):
+                return self.empty_response()
+
+            # Added just to make very sure, but it can never happen because
+            # invalidate_token can only fail if the token is invalid
+            # since this is an authenticated endpoint the token is already verified
+            raise RestApiException(  # pragma: no cover
+                "Failed token invalidation: '{}'".format(token),
+                status_code=400
+            )
 
         raise RestApiException(
             "Token not emitted for your account or does not exist",
-            status_code=hcodes.HTTP_BAD_UNAUTHORIZED
+            status_code=401
         )

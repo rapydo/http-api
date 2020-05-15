@@ -6,16 +6,18 @@ we could provide back then
 """
 
 from datetime import datetime
-from flask import current_app
-# from flask import make_response
+from flask import Response, make_response
 from flask_restful import request, Resource, reqparse
+from flask_apispec import MethodResource
 from jsonschema.exceptions import ValidationError
-from restapi.confs import API_URL
+from typing import List, Dict
+from neomodel import StructuredNode
+
+from restapi.confs import API_URL, WRAP_RESPONSE
 from restapi.exceptions import RestApiException
-# from restapi.rest.response import ResponseMaker
-from restapi.rest.response import ResponseElements
+from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
-from restapi.utilities.htmlcodes import hcodes
+from restapi.services.authentication.bearer import HTTPTokenAuth
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector
@@ -44,15 +46,9 @@ class EndpointResource(Resource):
     """
 
     def __init__(self):
-
-        self.services = current_app.services_instances
-        if len(self.services) < 1:
-            raise AttributeError("No services available for requests...")
-
-        # Init original class
         super(EndpointResource, self).__init__()
 
-        self.load_authentication()
+        self.auth = self.load_authentication()
         try:
             self.init_parameters()
         except RuntimeError:
@@ -64,29 +60,29 @@ class EndpointResource(Resource):
             pass
 
         # Custom init
-        custom_method = getattr(self, 'custom_init', None)
-        if custom_method is not None:
-            custom_method()
+        if hasattr(self, 'custom_init'):
+            self.custom_init()
 
     def myname(self):
         return self.__class__.__name__
 
-    def load_authentication(self):
+    @staticmethod
+    def load_authentication():
         # Authentication instance is always needed at each request
-        self.auth = self.get_service_instance(
+        auth = detector.get_service_instance(
             detector.authentication_name, authenticator=True
         )
-        auth_backend = self.get_service_instance(detector.authentication_service)
-        self.auth.db = auth_backend
+        auth.db = detector.get_service_instance(detector.authentication_service)
 
-        # Set parameters to be used
+        return auth
 
-    def get_service_instance(self, service_name, global_instance=True, **kwargs):
-        farm = self.services.get(service_name)
-        if farm is None:
-            raise AttributeError("Service {} not found".format(service_name))
-        instance = farm.get_instance(global_instance=global_instance, **kwargs)
-        return instance
+    @staticmethod
+    def get_service_instance(service_name, global_instance=True, **kwargs):
+        return detector.get_service_instance(
+            service_name,
+            global_instance=global_instance,
+            **kwargs
+        )
 
     def init_parameters(self):
         # Make sure you can parse arguments at every call
@@ -111,9 +107,6 @@ class EndpointResource(Resource):
 
         if len(current_params) > 0:
 
-            # Basic options
-            basevalue = str  # Python3
-            # basevalue = unicode  #Python2
             act = 'store'  # store is normal, append is a list
             loc = ['headers', 'values']  # multiple locations
             trim = True
@@ -127,7 +120,7 @@ class EndpointResource(Resource):
                 if tmptype == 'number':
                     mytype = int
                 else:
-                    mytype = basevalue
+                    mytype = str
 
                 # TO CHECK: I am creating an option to handle arrays
                 if tmptype == 'select':
@@ -145,13 +138,6 @@ class EndpointResource(Resource):
                 log.verbose("Accept param '{}' type {}", param, mytype)
 
         # TODO: should I check body parameters?
-
-    @staticmethod
-    def clean_parameter(param=""):
-        """ I get parameters already with '"' quotes from curl? """
-        if param is None:
-            return param
-        return param.strip('"')
 
     def parse(self):
         """
@@ -216,7 +202,7 @@ class EndpointResource(Resource):
 
         if force_read_parameters:
             self.get_input()
-        # NOTE: you have to call self.get_input prior to use this method
+        # NOTE: you have to call self.get_input before to use this method
         limit = self._args.get(PERPAGE_KEY, DEFAULT_PERPAGE)
         current_page = self._args.get(CURRENTPAGE_KEY, DEFAULT_CURRENTPAGE)
 
@@ -241,20 +227,6 @@ class EndpointResource(Resource):
 
         return (current_page, limit)
 
-    def get_input_properties(self):
-        """
-        NOTE: usefull to use for swagger validation?
-        """
-
-        # get body definition name
-        parameters = self.get_endpoint_custom_definition().copy()
-        parameter = parameters.pop()
-        ref = parameter.get('schema', {}).get('$ref')
-        refname = ref.split('/').pop()
-        # get body definition properties
-        definitions = mem.customizer._definitions.get('definitions')
-        return definitions.get(refname).get('properties')
-
     def get_current_user(self):
         """
         Return the associated User OBJECT if:
@@ -268,70 +240,127 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
+    @staticmethod
+    def obj_serialize(obj: StructuredNode, keys: List[str]) -> Dict[str, str]:
+        attributes: Dict[str, str] = {}
+        for k in keys:
+            attributes[k] = EndpointResource.serialize(obj, k)
+
+        return attributes
+
+    @staticmethod
+    def serialize(obj: StructuredNode, key: str) -> str:
+
+        attribute = getattr(obj, key)
+        if attribute is None:
+            return None
+
+        # Datetimes
+        if isinstance(attribute, datetime):
+            return string_from_timestamp(attribute.strftime('%s'))
+
+        # Based on neomodel choices:
+        # http://neomodel.readthedocs.io/en/latest/properties.html#choices
+        choice_function = "get_{}_display".format(key)
+
+        # Normal attribute
+        if not hasattr(obj, choice_function):
+            return attribute
+
+        # Choice attribute
+        fn = getattr(obj, choice_function)
+        description = fn()
+
+        return {"key": attribute, "description": description}
+
     def force_response(self, content=None, errors=None,
-                       code=None, headers=None, head_method=False,
-                       elements=None, meta=None):
-        """
-        Helper function to let the developer define
-        how to respond with the REST and HTTP protocol
+                       code=None, headers=None, head_method=False, meta=None):
 
-        Build a ResponseElements instance.
-        """
+        # Deprecated since 0.7.3
+        log.warning("Deprecated use of self.forse_respose, replace with self.response")
+        return self.response(
+            content=content,
+            errors=errors,
+            code=code,
+            headers=code,
+            head_method=head_method,
+            meta=meta
+        )
 
-        if elements is not None:
-            log.warning("Deprecated use of elements in force_response")
+    def response(self, content=None, errors=None,
+                 code=None, headers=None, head_method=False,
+                 meta=None, wrap_response=False):
+
+        # Deprecated since 0.7.2
         if meta is not None:
-            log.warning("Deprecated use of meta in force_response")
-
-        if content and errors:
-            log.warning("Deprecated use of warning messages in force_response")
+            log.warning("Deprecated use of meta in response")
 
         if headers is None:
             headers = {}
 
-        rv = ResponseElements(
-            defined_content=content,
+        if wrap_response or WRAP_RESPONSE:
+            response_wrapper = ResponseMaker.wrapped_response
+        else:
+            response_wrapper = None
+
+        if code is None:
+            code = 200
+
+        if errors is None and content is None:
+            if not head_method or code is None:
+                log.warning("RESPONSE: Warning, no data and no errors")
+                code = 204
+        elif errors is None:
+            if code >= 300:
+                log.warning("Forcing 200 OK because no errors are raised")
+                code = 200
+        elif content is None:
+            if code < 400:
+                log.warning("Forcing 500 SERVER ERROR because only errors are returned")
+                code = 500
+
+        # Request from a ApiSpec endpoint, skipping all flask-related following steps
+        if isinstance(self, MethodResource):
+            if content is None:
+                content = errors
+
+            # Do not bypass FlaskApiSpec response management otherwise marshalling
+            # will be not applied. Consider the following scenario:
+            # @marshal(OnlyOneFieldSchema)
+            # def get():
+            #    return self.response(all_information)
+            # If you bypass the marshalling you will expose the all_information by
+            # retrieving it from a browser (or by forcing the Accept header)
+            # i.e. html responses will only work on non-MethodResource endpoints
+            # If you accept the risk or you do not use marshalling add to endpoint class
+            # ALLOW_HTML_RESPONSE = True
+            if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
+                accepted_formats = ResponseMaker.get_accepted_formats()
+                if 'text/html' in accepted_formats:
+                    content, headers = ResponseMaker.get_html(content, code, headers)
+                    return Response(
+                        content,
+                        mimetype='text/html',
+                        status=code,
+                        headers=headers
+                    )
+
+            return (content, code, headers)
+
+        # Convert the response in a Flask response, i.e. make_response(tuple)
+        r = ResponseMaker.generate_response(
+            content=content,
             code=code,
             errors=errors,
             headers=headers,
             head_method=head_method,
-            elements=elements,
-            meta=meta
+            meta=meta,
+            response_wrapper=response_wrapper
         )
 
-        return rv
-
-        """
-        responder = ResponseMaker(rv)
-
-        # Avoid duplicating the response generation
-        # or the make_response replica.
-        # This happens with Flask exceptions
-        if responder.already_converted():
-            # # Note: this response could be a class ResponseElements
-            # return rv
-
-            log.warning("already_converted !?")
-            # The responder instead would have already found the right element
-            return responder.get_original_response()
-
-        r = responder.generate_response()
-
-        # !!! IMPORTANT, TO BE VERIFIED
-        # Is the following issue still happening??
-
-        # TOFIX: avoid duplicated Content-type
-        # the jsonify in respose.py#force_type force the content-type
-        # to be application/json. If content-type is already specified in headers
-        # the header will have a duplicated Content-type. We should fix by avoding
-        # jsonfy for more specific mimetypes
-        # For now I will simply remove the duplicates
-
-        # !!! IMPORTANT, PLEASE NOT THAT THE FOLLOWING BLOCK WAS APPLIED TO:
-        # response = super().make_response(r)
         response = make_response(r)
-        # HOW WE HAVE a tuple (content, code, headers)
 
+        # Avoid duplicated Content-type
         content_type = None
         for idx, val in enumerate(response.headers):
             if val[0] != 'Content-Type':
@@ -347,42 +376,14 @@ class EndpointResource(Resource):
             response.headers.pop(content_type)
             break
 
-        log.critical(response)
         return response
-        """
 
     def empty_response(self):
         """ Empty response as defined by the protocol """
-        return self.force_response("", code=hcodes.HTTP_OK_NORESPONSE)
+        return self.response("", code=204)
 
-    def formatJsonResponse(self, instances, resource_type=None):
-        """
-        Format specifications can be found here:
-        http://jsonapi.org
-        """
-
-        json_data = {}
-        endpoint = request.url
-        json_data["links"] = {"self": endpoint, "next": None, "last": None}
-
-        json_data["content"] = []
-        if not isinstance(instances, list):
-            raise AttributeError("Expecting a list of objects to format")
-        if len(instances) < 1:
-            return json_data
-
-        for instance in instances:
-            json_data["content"].append(self.getJsonResponse(instance))
-
-        # FIXME: get pages FROM SELF ARGS?
-        # json_data["links"]["next"] = \
-        #     endpoint + '?currentpage=2&perpage=1',
-        # json_data["links"]["last"] = \
-        #     endpoint + '?currentpage=' + str(len(instances)) + '&perpage=1',
-
-        return json_data
-
-    def get_show_fields(self, obj, function_name, view_public_only, fields=None):
+    @staticmethod
+    def get_show_fields(obj, function_name, view_public_only, fields=None):
         if fields is None:
             fields = []
         if len(fields) < 1:
@@ -424,11 +425,11 @@ class EndpointResource(Resource):
 
         return attributes
 
+    # NOTE: only used by imc
     def getJsonResponse(
         self,
         instance,
         fields=None,
-        resource_type=None,
         skip_missing_ids=False,
         view_public_only=False,
         relationship_depth=0,
@@ -441,8 +442,9 @@ class EndpointResource(Resource):
         Very important: this method only works with customized neo4j models
         """
 
-        if resource_type is None:
-            resource_type = type(instance).__name__.lower()
+        # to be deprecated
+        # log.warning("Deprecated use of getJsonResponse")
+        log.info("Use of getJsonResponse is discouraged and it will be deprecated soon")
 
         # Get id
         verify_attribute = hasattr
@@ -453,31 +455,13 @@ class EndpointResource(Resource):
         elif verify_attribute(instance, "id"):
             res_id = str(instance.id)
         else:
-            res_id = "-"
+            res_id = None
 
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "type": resource_type,
-            "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
-        }
-
-        if skip_missing_ids and res_id == '-':
-            del data['id']
-
-        # TO FIX: for now is difficult to compute self links for relationships
-        if relationship_depth == 0:
-            self_uri = request.url
-            if not self_uri.endswith(res_id):
-                self_uri += '/' + res_id
-            data["links"] = {"self": self_uri}
-
-        data["attributes"] = self.get_show_fields(
+        data = self.get_show_fields(
             instance, 'show_fields', view_public_only, fields
         )
+        if not skip_missing_ids or res_id is not None:
+            data['id'] = res_id
 
         # Relationships
         max_depth_reached = relationship_depth >= max_relationship_depth
@@ -485,21 +469,11 @@ class EndpointResource(Resource):
         relationships = []
         if not max_depth_reached:
 
-            function_name = 'follow_relationships'
-            if hasattr(instance, function_name):
-                fn = getattr(instance, function_name)
-                relationships = fn(view_public_only=view_public_only)
+            relationships = instance.follow_relationships(
+                view_public_only=view_public_only
+            )
 
-            else:
-
-                if view_public_only:
-                    field_name = '_public_relationships_to_follow'
-                else:
-                    field_name = '_relationships_to_follow'
-
-                if hasattr(instance, field_name):
-                    log.warning("Obsolete use of {} into models", field_name)
-                    relationships = getattr(instance, field_name)
+        # Used by IMC
         elif relationships_expansion is not None:
             for e in relationships_expansion:
                 if e.startswith("{}.".format(relationship_name)):
@@ -512,7 +486,6 @@ class EndpointResource(Resource):
                     )
                     relationships.append(expansion_rel)
 
-        linked = {}
         for relationship in relationships:
             subrelationship = []
 
@@ -542,119 +515,25 @@ class EndpointResource(Resource):
                 attrs = self.get_show_fields(r, 'show_fields', view_public_only)
 
                 for k in attrs:
-                    if k in subnode['attributes']:
+                    if k in subnode:
                         log.warning(
                             "Name collision {} on node {}, model {}, property model={}",
                             k, subnode, type(node), type(r)
                         )
-                    subnode['attributes'][k] = attrs[k]
+                    subnode[k] = attrs[k]
 
-                # subnode['attributes']['pippo'] = 'boh'
                 subrelationship.append(subnode)
 
             if len(subrelationship) > 0:
-                linked[relationship] = subrelationship
+                data["_{}".format(relationship)] = subrelationship
 
-        if len(linked) > 0:
-            data['relationships'] = linked
-
-        return data
-
-    def getJsonResponseFromSql(self, instance):
-
-        resource_type = type(instance).__name__.lower()
-
-        # Get id
-        verify_attribute = hasattr
-        if isinstance(instance, dict):
-            verify_attribute = dict.get
-        if verify_attribute(instance, "uuid"):
-            res_id = str(instance.uuid)
-        elif verify_attribute(instance, "id"):
-            res_id = str(instance.id)
-        else:
-            res_id = "-"
-
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "type": resource_type,
-            "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
-        }
-        for c in instance.__table__.columns._data:
-            if c == 'password':
-                continue
-
-            data["attributes"][c] = getattr(instance, c)
+        if 'type' not in data:
+            data['type'] = type(instance).__name__.lower()
 
         return data
 
-    def getJsonResponseFromMongo(self, instance):
-
-        resource_type = type(instance).__name__.lower()
-
-        # Get id
-        verify_attribute = hasattr
-        if isinstance(instance, dict):
-            verify_attribute = dict.get
-        if verify_attribute(instance, "uuid"):
-            res_id = str(instance.uuid)
-        elif verify_attribute(instance, "id"):
-            res_id = str(instance.id)
-        else:
-            res_id = "-"
-
-        if res_id is None:
-            res_id = "-"
-
-        data = {
-            "id": res_id,
-            "type": resource_type,
-            "attributes": {}
-            # "links": {"self": request.url + '/' + res_id},
-        }
-        # log.critical(instance._data._members)
-        for c in instance._data._members:
-            if c == 'password':
-                continue
-
-            attribute = getattr(instance, c)
-
-            if isinstance(attribute, list):
-                continue
-
-            data["attributes"][c] = attribute
-
-        return data
-
-    def get_endpoint_definition(self, key=None, is_schema_url=False, method=None):
-
-        url = request.url_rule.rule
-        if is_schema_url:
-            url = mem.customizer._schemas_map[url]
-
-        if url not in mem.customizer._definitions["paths"]:
-            return None
-
-        if method is None:
-            method = request.method
-        method = method.lower()
-        if method not in mem.customizer._definitions["paths"][url]:
-            return None
-
-        tmp = mem.customizer._definitions["paths"][url][method]
-
-        if key is None:
-            return tmp
-        if key not in tmp:
-            return None
-
-        return tmp[key]
-
-    def get_endpoint_custom_definition(self, is_schema_url=False, method=None):
+    @staticmethod
+    def get_endpoint_custom_definition(is_schema_url=False, method=None):
         url = request.url_rule.rule
         if is_schema_url:
             url = mem.customizer._schemas_map[url]
@@ -666,17 +545,18 @@ class EndpointResource(Resource):
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(
                 "No parameters schema defined for {}".format(url),
-                status_code=hcodes.HTTP_BAD_NOTFOUND,
+                status_code=404,
             )
         if method not in mem.customizer._parameter_schemas[url]:
             raise RestApiException(
                 "No parameters schema defined for method {} in {}".format(method, url),
-                status_code=hcodes.HTTP_BAD_NOTFOUND,
+                status_code=404,
             )
         return mem.customizer._parameter_schemas[url][method]
 
     # HANDLE INPUT PARAMETERS
-    def read_properties(self, schema, values, checkRequired=True):
+    @staticmethod
+    def read_properties(schema, values, checkRequired=True):
 
         properties = {}
         for field in schema:
@@ -692,86 +572,59 @@ class EndpointResource(Resource):
             # this field is missing but required!
             elif checkRequired and field["required"]:
                 raise RestApiException(
-                    'Missing field: {}'.format(k), status_code=hcodes.HTTP_BAD_REQUEST
+                    'Missing field: {}'.format(k), status_code=400
                 )
 
         return properties
 
-    def update_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_properties(instance, schema, properties):
 
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
             if key in properties:
                 instance.__dict__[key] = properties[key]
 
-    def update_sql_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_sql_properties(instance, schema, properties):
 
+        from sqlalchemy.orm.attributes import set_attribute
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
-            from sqlalchemy.orm.attributes import set_attribute
             if key in properties:
                 set_attribute(instance, key, properties[key])
 
-    def update_mongo_properties(self, instance, schema, properties):
+    @staticmethod
+    def update_mongo_properties(instance, schema, properties):
 
         for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-            key = field["name"]
+            if isinstance(field, str):
+                key = field
+            else:
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
 
             if key in properties:
                 setattr(instance, key, properties[key])
-
-    def parseAutocomplete(self, properties, key, id_key='value', split_char=None):
-        value = properties.get(key, None)
-
-        ids = []
-
-        if value is None:
-            return ids
-
-        # Multiple autocomplete
-        if isinstance(value, list):
-            for v in value:
-                if v is None:
-                    return None
-                if id_key in v:
-                    ids.append(v[id_key])
-                else:
-                    ids.append(v)
-            return ids
-
-        # Single autocomplete
-        if id_key in value:
-            return [value[id_key]]
-
-        # Command line input
-        if split_char is None:
-            return [value]
-
-        return value.split(split_char)
-
-    def get_roles(self, properties):
-
-        roles = []
-        ids = self.parseAutocomplete(properties, 'roles', id_key='name', split_char=',')
-
-        if ids is None:
-            return roles
-
-        return ids
 
     def get_user_if_logged(self):
         """
@@ -787,8 +640,6 @@ class EndpointResource(Resource):
         if request.method == 'OPTIONS':
             return user
 
-        from restapi.protocols.bearer import HTTPTokenAuth
-
         http = HTTPTokenAuth()
         auth_type, token = http.get_authorization_token()
 
@@ -801,9 +652,10 @@ class EndpointResource(Resource):
         return user
 
     # this is a simple wrapper of restapi.swagger.input_validation
-    def validate_input(self, json_parameters, definitionName):
+    @staticmethod
+    def validate_input(json_parameters, definitionName):
 
         try:
             return input_validation(json_parameters, definitionName)
         except ValidationError as e:
-            raise RestApiException(e.message, status_code=hcodes.HTTP_BAD_REQUEST)
+            raise RestApiException(e.message, status_code=400)

@@ -1,23 +1,247 @@
 # -*- coding: utf-8 -*-
 
-import re
-from sqlalchemy.exc import IntegrityError
+from collections import OrderedDict
+from flask_apispec import MethodResource
+from flask_apispec import marshal_with
+from flask_apispec import use_kwargs
+from marshmallow import fields, validate
+from restapi.models import Schema
 
-from restapi import decorators as decorate
-from restapi.protocols.bearer import authentication
+from restapi import decorators
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 from restapi.confs import get_project_configuration
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.utilities.meta import Meta
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.htmlcodes import hcodes
 
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 
-class AdminUsers(EndpointResource):
+def send_notification(user, unhashed_password, is_update=False):
+
+    title = get_project_configuration(
+        "project.title", default='Unkown title'
+    )
+
+    if is_update:
+        subject = "{}: password changed".format(title)
+        template = "update_credentials.html"
+    else:
+        subject = "{}: new credentials".format(title)
+        template = "new_credentials.html"
+
+    replaces = {"username": user.email, "password": unhashed_password}
+
+    html = get_html_template(template, replaces)
+
+    body = """
+Username: "{}"
+Password: "{}"
+    """.format(
+        user.email,
+        unhashed_password,
+    )
+
+    if html is None:
+        send_mail(body, subject, user.email)
+    else:
+        send_mail(html, subject, user.email, plain_body=body)
+
+
+def parseAutocomplete(properties, key, id_key='value', split_char=None):
+    value = properties.get(key, None)
+
+    ids = []
+
+    if value is None:
+        return ids
+
+    # Multiple autocomplete
+    if isinstance(value, list):
+        for v in value:
+            if v is None:
+                return None
+            if id_key in v:
+                ids.append(v[id_key])
+            else:
+                ids.append(v)
+        return ids
+
+    # Single autocomplete
+    if id_key in value:
+        return [value[id_key]]
+
+    # Command line input
+    if split_char is None:
+        return [value]
+
+    return value.split(split_char)
+
+
+def get_roles(auth):
+
+    roles = {}
+    for r in auth.get_roles():
+
+        if r.description == 'automatic':
+            continue
+
+        roles["roles_{}".format(r.name)] = r.description
+
+    return roles
+
+
+def parse_roles(properties):
+
+    roles = []
+    for p in properties.copy():
+        if not p.startswith("roles_"):
+            continue
+        if properties.get(p):
+            roles.append(p[6:])
+        properties.pop(p)
+
+    return roles
+
+
+def parse_group(v, neo4j):
+    groups = parseAutocomplete(v, 'group', id_key='id')
+
+    if groups is None:
+        raise RestApiException(
+            'Group not found', status_code=400
+        )
+
+    group_id = groups.pop()
+    group = neo4j.Group.nodes.get_or_none(uuid=group_id)
+
+    if group is None:
+        raise RestApiException(
+            'Group not found', status_code=400
+        )
+
+    return group
+
+
+def get_groups():
+    auth_service = detector.authentication_service
+
+    if auth_service == 'neo4j':
+
+        neo4j = detector.get_service_instance('neo4j')
+        if not hasattr(neo4j, "Group"):
+            return None
+
+        groups = {}
+        for g in neo4j.Group.nodes.all():
+            group_name = "{} - {}".format(g.shortname, g.fullname)
+            groups[g.uuid] = group_name
+
+        return groups
+
+    if auth_service == 'sqlalchemy':
+        return None
+
+    if auth_service == 'mongo':
+        return None
+
+    log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
+
+
+class Role(Schema):
+
+    name = fields.Str()
+    description = fields.Str()
+
+
+class Group(Schema):
+    uuid = fields.Str()
+    fullname = fields.Str()
+    shortname = fields.Str()
+
+
+def get_output_schema():
+    attributes = OrderedDict()
+
+    attributes['uuid'] = fields.Str()
+    attributes['email'] = fields.Email()
+    attributes['name'] = fields.Str()
+    attributes['surname'] = fields.Str()
+    attributes['first_login'] = fields.DateTime(allow_none=True)
+    attributes['last_login'] = fields.DateTime(allow_none=True)
+    attributes['last_password_change'] = fields.DateTime(allow_none=True)
+    attributes['is_active'] = fields.Boolean()
+    attributes['privacy_accepted'] = fields.Boolean()
+    attributes['roles'] = fields.List(fields.Nested(Role))
+
+    attributes['belongs_to'] = fields.List(fields.Nested(Group), data_key='group')
+
+    obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+    if obj is not None and hasattr(obj, "get_custom_fields"):
+        try:
+            custom_fields = obj.get_custom_fields(False)
+            if custom_fields:
+                attributes.update(custom_fields)
+        except BaseException as e:
+            log.error("Could not retrieve custom profile fields:\n{}", e)
+
+    schema = Schema.from_dict(attributes)
+    return schema(many=True)
+
+
+def get_input_schema(strip_required=False, exclude_email=False):
+
+    auth = EndpointResource.load_authentication()
+
+    set_required = not strip_required
+
+    attributes = OrderedDict()
+    if not exclude_email:
+        attributes["email"] = fields.Email(required=set_required)
+    attributes["password"] = fields.Str(
+        required=set_required,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    attributes["name"] = fields.Str(
+        required=set_required, validate=validate.Length(min=1))
+    attributes["surname"] = fields.Str(
+        required=set_required, validate=validate.Length(min=1))
+
+    for key, label in get_roles(auth).items():
+        attributes[key] = fields.Bool(label=label)
+
+    groups = get_groups()
+    if groups:
+        attributes["group"] = fields.Str(
+            required=set_required,
+            validate=validate.OneOf(
+                choices=groups.keys(),
+                labels=groups.values()
+            )
+        )
+
+    obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+    if obj is not None and hasattr(obj, "get_custom_fields"):
+        try:
+            custom_fields = obj.get_custom_fields(strip_required)
+            if custom_fields:
+                attributes.update(custom_fields)
+        except BaseException as e:
+            log.error("Could not retrieve custom profile fields:\n{}", e)
+
+    if send_mail_is_active():
+        attributes["email_notification"] = fields.Bool(
+            label="Notify password by email"
+        )
+
+    return Schema.from_dict(attributes)
+
+
+class AdminUsers(MethodResource, EndpointResource):
 
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == 'neo4j'
@@ -26,9 +250,8 @@ class AdminUsers(EndpointResource):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
-    # expose_schema = True
 
-    GET = {
+    _GET = {
         "/admin/users": {
             "summary": "List of users",
             "responses": {
@@ -42,414 +265,81 @@ class AdminUsers(EndpointResource):
             },
         },
     }
-    POST = {
+    _POST = {
         "/admin/users": {
             "summary": "Create a new user",
-            "custom_parameters": ["AdminUsers"],
             "responses": {
-                "200": {"description": "The uuid of the new user is returned"}
+                "200": {"description": "The uuid of the new user is returned"},
+                "409": {"description": "This user already exists"},
             },
         }
     }
-    PUT = {
+    _PUT = {
         "/admin/users/<user_id>": {
             "summary": "Modify a user",
-            "custom_parameters": ["AdminUsers"],
             "responses": {"200": {"description": "User successfully modified"}},
         }
     }
-    DELETE = {
+    _DELETE = {
         "/admin/users/<user_id>": {
             "summary": "Delete a user",
             "responses": {"200": {"description": "User successfully deleted"}},
         }
     }
 
-    def parse_roles(self, properties):
-
-        if 'roles' in properties:
-            return self.parseAutocomplete(
-                properties, 'roles', id_key='name', split_char=','
-            )
-        else:
-            roles = []
-            for p in properties:
-                if p.startswith("roles_"):
-                    if properties.get(p, False):
-                        roles.append(p[6:])
-            return roles
-
-    def parse_group(self, v):
-        groups = self.parseAutocomplete(v, 'group', id_key='id')
-
-        if groups is None:
-            raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
-            )
-
-        group_id = groups.pop()
-        group = self.graph.Group.nodes.get_or_none(uuid=group_id)
-
-        if group is None:
-            raise RestApiException(
-                'Group not found', status_code=hcodes.HTTP_BAD_REQUEST
-            )
-
-        return group
-
-    def check_permissions(self, user, node, is_admin, is_local_admin):
-
-        if node is None:
-            return False
-
-        # an ADMIN is always authorized
-        if is_admin:
-            return True
-
-        # You are neither an ADMIN nor a LOCAL ADMIN
-        if not is_local_admin:
-            return False
-
-        # If you are not an ADMIN, you cannot modify yourself...
-        # use the profile instead!
-        if user == node:
-            return False
-
-        # If you are not an ADMIN, you cannot modify ADMINs
-        if self.auth.role_admin in self.auth.get_roles_from_user(node):
-            return False
-
-        # FIXME: groups management is only implemented for neo4j
-        if self.neo4j_enabled:
-            # You are a local admin... but the group matches??
-            for g in user.coordinator.all():
-                if node.belongs_to.is_connected(g):
-                    return True
-
-            # All local admins have rights on general users
-            g = self.graph.Group.nodes.get_or_none(shortname="default")
-            if g is not None:
-                if node.belongs_to.is_connected(g):
-                    return True
-
-        return False
-
-    def send_notification(self, user, unhashed_password, is_update=False):
-
-        title = get_project_configuration(
-            "project.title", default='Unkown title'
-        )
-
-        if is_update:
-            subject = "{}: password changed".format(title)
-            template = "update_credentials.html"
-        else:
-            subject = "{}: new credentials".format(title)
-            template = "new_credentials.html"
-
-        replaces = {"username": user.email, "password": unhashed_password}
-
-        html = get_html_template(template, replaces)
-
-        body = """
-Username: "{}"
-Password: "{}"
-        """.format(
-            user.email,
-            unhashed_password,
-        )
-
-        if html is None:
-            send_mail(body, subject, user.email)
-        else:
-            send_mail(html, subject, user.email, plain_body=body)
-
-    @decorate.catch_error()
-    @authentication.required()
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    @marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
-
-        data = []
-
-        is_admin = self.auth.verify_admin()
-        is_local_admin = self.auth.verify_local_admin()
-        if not is_admin and not is_local_admin:
-            extra_debug = "is_admin = {};".format(is_admin)
-            extra_debug += " is_local_admin = {};".format(is_local_admin)
-            extra_debug += " roles = {};".format(self.auth.get_roles_from_user())
-            raise RestApiException(
-                "You are not authorized: missing privileges. {}".format(extra_debug),
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
-            )
 
         users = self.auth.get_users(user_id)
         if users is None:
             raise RestApiException(
                 "This user cannot be found or you are not authorized"
             )
-        if self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
 
-        current_user = self.get_current_user()
-        for u in users:
+        return self.response(users)
 
-            is_authorized = self.check_permissions(
-                current_user, u, is_admin, is_local_admin
-            )
-            if not is_authorized:
-                continue
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    @use_kwargs(get_input_schema())
+    def post(self, **kwargs):
 
-            if self.neo4j_enabled:
-                user = self.getJsonResponse(u, max_relationship_depth=1)
-            elif self.sql_enabled:
-                user = self.getJsonResponseFromSql(u)
-                user['relationships'] = {}
-                user['relationships']['roles'] = []
-                for role in u.roles:
-                    r = self.getJsonResponseFromSql(role)
-                    user['relationships']['roles'].append(r)
-            elif self.mongo_enabled:
-                user = self.getJsonResponseFromMongo(u)
-                user['relationships'] = {}
-                user['relationships']['roles'] = self.auth.get_roles_from_user(u)
-            else:
-                raise RestApiException(
-                    "Invalid auth backend, all known db are disabled"
-                )
+        roles = parse_roles(kwargs)
 
-            data.append(user)
+        email_notification = kwargs.pop('email_notification', False)
 
-        return self.force_response(data)
+        unhashed_password = kwargs["password"]
 
-    @decorate.catch_error()
-    @authentication.required()
-    def post(self):
-
-        v = self.get_input()
-        if len(v) == 0:
-            raise RestApiException('Empty input', status_code=hcodes.HTTP_BAD_REQUEST)
-
-        if self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
-
-        is_admin = self.auth.verify_admin()
-        is_local_admin = self.auth.verify_local_admin()
-        if not is_admin and not is_local_admin:
-            raise RestApiException(
-                "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
-            )
-
-        schema = self.get_endpoint_custom_definition()
-
-        if 'get_schema' in v:
-
-            new_schema = schema[:]
-
-            if send_mail_is_active():
-                new_schema.append(
-                    {
-                        "name": "email_notification",
-                        "description": "Notify password by email",
-                        "type": "boolean",
-                        "default": False,
-                        "custom": {
-                            "htmltype": "checkbox",
-                            "label": "Notify password by email",
-                        },
-                    }
-                )
-
-            if 'autocomplete' in v and not v['autocomplete']:
-                for idx, val in enumerate(new_schema):
-                    # FIXME: groups management is only implemented for neo4j
-                    if val["name"] == "group":
-                        new_schema[idx]["default"] = None
-
-                        if "custom" not in new_schema[idx]:
-                            new_schema[idx]["custom"] = {}
-
-                        new_schema[idx]["custom"]["htmltype"] = "select"
-                        new_schema[idx]["custom"]["label"] = "Group"
-                        new_schema[idx]["enum"] = []
-
-                        for g in self.graph.Group.nodes.all():
-                            group_name = "{} - {}".format(g.shortname, g.fullname)
-                            new_schema[idx]["enum"].append({g.uuid: group_name})
-                            if new_schema[idx]["default"] is None:
-                                new_schema[idx]["default"] = g.uuid
-
-                    # Roles as multi checkbox
-                    if val["name"] == "roles":
-
-                        roles = self.auth.get_roles()
-                        is_admin = self.auth.verify_admin()
-                        allowed_roles = get_project_configuration(
-                            "variables.backend.allowed_roles",
-                            default=[],
-                        )
-                        del new_schema[idx]
-
-                        for r in roles:
-
-                            if is_admin:
-                                if r.description == 'automatic':
-                                    continue
-                            else:
-                                if r.name not in allowed_roles:
-                                    continue
-
-                            role = {
-                                "type": "checkbox",
-                                "name": "roles_{}".format(r.name),
-                                "custom": {"label": r.description},
-                            }
-
-                            new_schema.insert(idx, role)
-
-            if is_admin:
-                return self.force_response(new_schema)
-
-            current_user = self.get_current_user()
-            for idx, val in enumerate(new_schema):
-                # FIXME: groups management is only implemented for neo4j
-                if val["name"] == "group":
-                    new_schema[idx]["default"] = None
-                    if "custom" not in new_schema[idx]:
-                        new_schema[idx]["custom"] = {}
-
-                    new_schema[idx]["custom"]["htmltype"] = "select"
-                    new_schema[idx]["custom"]["label"] = "Group"
-                    new_schema[idx]["enum"] = []
-
-                    default_group = self.graph.Group.nodes.get_or_none(
-                        shortname="default"
-                    )
-
-                    defg = None
-                    if default_group is not None:
-                        new_schema[idx]["enum"].append(
-                            {default_group.uuid: default_group.shortname}
-                        )
-                        # new_schema[idx]["default"] = default_group.uuid
-                        defg = default_group.uuid
-
-                    for g in current_user.coordinator.all():
-
-                        if g == default_group:
-                            continue
-
-                        group_name = "{} - {}".format(g.shortname, g.fullname)
-                        new_schema[idx]["enum"].append({g.uuid: group_name})
-                        if defg is None:
-                            defg = g.uuid
-                        # if new_schema[idx]["default"] is None:
-                        #     new_schema[idx]["default"] = g.uuid
-                    if (len(new_schema[idx]["enum"])) == 1:
-                        new_schema[idx]["default"] = defg
-
-            return self.force_response(new_schema)
-
-        # INIT #
-        properties = self.read_properties(schema, v)
-
-        roles = self.parse_roles(v)
-        if not is_admin:
-            allowed_roles = get_project_configuration(
-                "variables.backend.allowed_roles",
-                default=[],
-            )
-
-            for r in roles:
-                if r not in allowed_roles:
-                    raise RestApiException(
-                        "You are not allowed to assign users to this role"
-                    )
-
-        if "password" in properties and properties["password"] == "":
-            del properties["password"]
-
-        if "password" in properties:
-            unhashed_password = properties["password"]
-        else:
-            unhashed_password = None
+        # If created by admins users must accept privacy at first login
+        kwargs['privacy_accepted'] = False
 
         try:
-            user = self.auth.create_user(properties, roles)
-        except AttributeError as e:
-
-            # Duplicated from decorators
-            prefix = "Can't create user .*:\nNode\([0-9]+\) already exists with label"
-            m = re.search("{} `(.+)` and property `(.+)` = '(.+)'".format(prefix), str(e))
-
-            if m:
-                node = m.group(1)
-                prop = m.group(2)
-                val = m.group(3)
-                error = "A {} already exists with {} = {}".format(node, prop, val)
-                raise RestApiException(error, status_code=hcodes.HTTP_BAD_CONFLICT)
-            else:
-                raise e
-
-        if self.sql_enabled:
-
-            try:
+            user = self.auth.create_user(kwargs, roles)
+            if self.sql_enabled:
                 self.auth.db.session.commit()
-            except IntegrityError:
+        except DatabaseDuplicatedEntry as e:
+            if self.sql_enabled:
                 self.auth.db.session.rollback()
-                raise RestApiException("This user already exists")
-
-        # If created by admins, credentials
-        # must accept privacy at the login
-        if "privacy_accepted" in v:
-            if not v["privacy_accepted"]:
-                if hasattr(user, 'privacy_accepted'):
-                    user.privacy_accepted = False
-                    self.auth.save_user(user)
+            raise RestApiException(str(e), status_code=409)
 
         # FIXME: groups management is only implemented for neo4j
-        group = None
-        if 'group' in v:
-            group = self.parse_group(v)
-
-        if group is not None:
-            if not is_admin and group.shortname != "default":
-                current_user = self.get_current_user()
-                if not group.coordinator.is_connected(current_user):
-                    raise RestApiException(
-                        "You are not allowed to assign users to this group"
-                    )
-
-            user.belongs_to.connect(group)
-
-        email_notification = v.get('email_notification', False)
-        if email_notification and unhashed_password is not None:
-            self.send_notification(user, unhashed_password, is_update=False)
-
-        return self.force_response(user.uuid)
-
-    @decorate.catch_error()
-    @authentication.required()
-    def put(self, user_id=None):
-
-        if user_id is None:
-
-            raise RestApiException(
-                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
-            )
-
-        schema = self.get_endpoint_custom_definition()
-        if self.neo4j_enabled:
+        if 'group' in kwargs and self.neo4j_enabled:
             self.graph = self.get_service_instance('neo4j')
+            group = parse_group(kwargs, self.graph)
 
-        is_admin = self.auth.verify_admin()
-        is_local_admin = self.auth.verify_local_admin()
-        if not is_admin and not is_local_admin:
-            raise RestApiException(
-                "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
-            )
+            if group is not None:
+                user.belongs_to.connect(group)
 
-        v = self.get_input()
+        if email_notification and unhashed_password is not None:
+            send_notification(user, unhashed_password, is_update=False)
+
+        return self.response(user.uuid)
+
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
+    def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
 
@@ -460,65 +350,38 @@ Password: "{}"
 
         user = user[0]
 
-        current_user = self.get_current_user()
-        is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_local_admin
-        )
-        if not is_authorized:
-            raise RestApiException(
-                "This user cannot be found or you are not authorized"
+        if "password" in kwargs:
+            unhashed_password = kwargs["password"]
+            kwargs["password"] = BaseAuthentication.get_password_hash(
+                kwargs["password"]
             )
-
-        if "password" in v and v["password"] == "":
-            del v["password"]
-
-        if "password" in v:
-            unhashed_password = v["password"]
-            v["password"] = BaseAuthentication.get_password_hash(v["password"])
         else:
             unhashed_password = None
 
-        if "email" in v:
-            v["email"] = v["email"].lower()
+        roles = parse_roles(kwargs)
 
-        roles = self.parse_roles(v)
-        if not is_admin:
-            allowed_roles = get_project_configuration(
-                "variables.backend.allowed_roles",
-                default=[],
-            )
-
-            for r in roles:
-                if r not in allowed_roles:
-                    raise RestApiException(
-                        "You are not allowed to assign users to this role"
-                    )
+        email_notification = kwargs.pop('email_notification', False)
 
         self.auth.link_roles(user, roles)
-        # Cannot update email address (unique username used to login-in)
-        v.pop('email', None)
 
         if self.neo4j_enabled:
-            self.update_properties(user, schema, v)
+            self.graph = self.get_service_instance('neo4j')
+            self.update_properties(user, kwargs, kwargs)
         elif self.sql_enabled:
-            self.update_sql_properties(user, schema, v)
+            self.update_sql_properties(user, kwargs, kwargs)
         elif self.mongo_enabled:
-            self.update_mongo_properties(user, schema, v)
+            self.update_mongo_properties(user, kwargs, kwargs)
         else:
-            raise RestApiException("Invalid auth backend, all known db are disabled")
+            raise RestApiException(  # pragma: no cover
+                "Invalid auth backend, all known db are disabled"
+            )
 
         self.auth.save_user(user)
 
         # FIXME: groups management is only implemented for neo4j
-        if 'group' in v:
+        if 'group' in kwargs and self.neo4j_enabled:
 
-            group = self.parse_group(v)
-
-            if not is_admin and group.shortname != "default":
-                if not group.coordinator.is_connected(current_user):
-                    raise RestApiException(
-                        "You are not allowed to assign users to this group"
-                    )
+            group = parse_group(kwargs, self.graph)
 
             p = None
             for p in user.belongs_to.all():
@@ -530,32 +393,14 @@ Password: "{}"
             else:
                 user.belongs_to.connect(group)
 
-        email_notification = v.get('email_notification', False)
         if email_notification and unhashed_password is not None:
-            self.send_notification(user, unhashed_password, is_update=True)
+            send_notification(user, unhashed_password, is_update=True)
 
         return self.empty_response()
 
-    @decorate.catch_error()
-    @authentication.required()
-    def delete(self, user_id=None):
-
-        if user_id is None:
-
-            raise RestApiException(
-                "Please specify a user id", status_code=hcodes.HTTP_BAD_REQUEST
-            )
-
-        if self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
-
-        is_admin = self.auth.verify_admin()
-        is_local_admin = self.auth.verify_local_admin()
-        if not is_admin and not is_local_admin:
-            raise RestApiException(
-                "You are not authorized: missing privileges",
-                status_code=hcodes.HTTP_BAD_UNAUTHORIZED,
-            )
+    @decorators.catch_errors()
+    @decorators.auth.required(roles=['admin_root'])
+    def delete(self, user_id):
 
         user = self.auth.get_users(user_id)
 
@@ -566,79 +411,14 @@ Password: "{}"
 
         user = user[0]
 
-        current_user = self.get_current_user()
-        is_authorized = self.check_permissions(
-            current_user, user, is_admin, is_local_admin
-        )
-        if not is_authorized:
-            raise RestApiException(
-                "This user cannot be found or you are not authorized"
-            )
-
-        if self.neo4j_enabled:
+        if self.neo4j_enabled or self.mongo_enabled:
             user.delete()
         elif self.sql_enabled:
             self.auth.db.session.delete(user)
             self.auth.db.session.commit()
-        elif self.mongo_enabled:
-            user.delete()
         else:
-            raise RestApiException("Invalid auth backend, all known db are disabled")
+            raise RestApiException(  # pragma: no cover
+                "Invalid auth backend, all known db are disabled"
+            )
 
         return self.empty_response()
-
-
-class UserRole(EndpointResource):
-
-    depends_on = ["not ADMINER_DISABLED"]
-    labels = ["miscellaneous"]
-    # expose_schema = True
-
-    GET = {
-        "/role": {
-            "summary": "List of existing roles",
-            "responses": {
-                "200": {"description": "List of roles successfully retrieved"}
-            },
-        },
-        "/role/<query>": {
-            "summary": "List of existing roles matching a substring query",
-            "responses": {
-                "200": {"description": "Matching roles successfully retrieved"}
-            },
-        },
-    }
-
-    @decorate.catch_error(exception=Exception, catch_generic=True)
-    @authentication.required()
-    def get(self, query=None):
-
-        if self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
-
-        data = []
-
-        cypher = "MATCH (r:Role)"
-        if not self.auth.verify_admin():
-            allowed_roles = get_project_configuration(
-                "variables.backend.allowed_roles",
-                default=[],
-            )
-            # cypher += " WHERE r.name = 'Archive' or r.name = 'Researcher'"
-            cypher += " WHERE r.name in {}".format(allowed_roles)
-        # Admin only
-        elif query is not None:
-            cypher += " WHERE r.description <> 'automatic'"
-            cypher += " AND r.name =~ '(?i).*{}.*'".format(query)
-
-        cypher += " RETURN r ORDER BY r.name ASC"
-
-        if query is None:
-            cypher += " LIMIT 20"
-
-        result = self.graph.cypher(cypher)
-        for row in result:
-            r = self.graph.Role.inflate(row[0])
-            data.append({"name": r.name, "description": r.description})
-
-        return self.force_response(data)

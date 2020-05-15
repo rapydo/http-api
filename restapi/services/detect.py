@@ -23,13 +23,10 @@ class Detector:
 
         self.authentication_service = None
         self.authentication_name = 'authentication'
-        self.task_service_name = 'celery'
         self.services_configuration = []
-        self.services = {}
         self.services_classes = {}
-        self.extensions_instances = {}
+        self.connectors_instances = {}
         self.available_services = {}
-        self.meta = Meta()
         self.check_configuration()
         self.load_classes()
 
@@ -38,7 +35,7 @@ class Detector:
         return os.environ.get(key, default)
 
     @staticmethod
-    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
+    @lru_cache()
     def get_bool_envvar(bool_var):
 
         if isinstance(bool_var, bool):
@@ -70,30 +67,41 @@ class Detector:
         bool_var = os.environ.get(name, False)
         return Detector.get_bool_envvar(bool_var)
 
-    @staticmethod
-    def prefix_name(service):
-        return service.get('name'), service.get('prefix').lower() + '_'
+    def get_service_instance(self, service_name, global_instance=True, **kwargs):
+        farm = self.connectors_instances.get(service_name)
+        if farm is None:
+            raise AttributeError("Service {} not found".format(service_name))
+        instance = farm.get_instance(global_instance=global_instance, **kwargs)
+        return instance
 
     def check_configuration(self):
 
         try:
             self.services_configuration = load_yaml_file(
-                file='services.yaml', path=ABS_RESTAPI_CONFSPATH)
+                file='connectors.yaml', path=ABS_RESTAPI_CONFSPATH)
         except AttributeError as e:
             log.exit(e)
 
         for service in self.services_configuration:
 
-            name, prefix = self.prefix_name(service)
+            name = service.get('name')
+            prefix = "{}_".format(service.get('prefix'))
+
+            variables = Detector.load_variables(prefix=prefix)
+
+            connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
+            if not connect:
+                log.info("{} connector is disabled", name)
+                continue
 
             # Was this service enabled from the developer?
-            enable_var = str(prefix + 'enable').upper()
-            self.available_services[name] = self.get_bool_from_os(enable_var)
+            enabled = Detector.get_bool_envvar(variables.get("enable", False))
+            external = variables.get("external", False)
+
+            self.available_services[name] = enabled or external
 
             if self.available_services[name]:
 
-                # read variables
-                variables = self.load_variables(service, enable_var, prefix)
                 service['variables'] = variables
 
                 # set auth service
@@ -104,7 +112,7 @@ class Detector:
             log.info("No service defined for authentication")
         else:
             log.info(
-                "Authentication based on '{}' service",
+                "Authentication is based on '{}' service",
                 self.authentication_service
             )
 
@@ -128,55 +136,42 @@ class Detector:
             return {}
 
     @staticmethod
-    def load_variables(service, enable_var=None, prefix=None):
+    def load_variables(prefix):
 
-        variables = {}
-        host = None
-
-        if prefix is None:
-            _, prefix = Detector.prefix_name(service)
+        variables = {
+            'external': False
+        }
 
         for var, value in os.environ.items():
-            if enable_var is not None and var == enable_var:
-                continue
+
             var = var.lower()
 
-            # This is the case when a variable belongs to a service 'prefix'
-            if var.startswith(prefix):
+            if not var.startswith(prefix):
+                continue
 
-                # Fix key and value before saving
-                key = var[len(prefix) :]
-                # One thing that we must avoid is any quote around our value
-                value = value.strip('"').strip("'")
-                # save
-                variables[key] = value
+            # Fix key and value before saving
+            key = var[len(prefix):]
+            # One thing that we must avoid is any quote around our value
+            value = value.strip('"').strip("'")
+            # save
+            variables[key] = value
 
-                if key == 'host':
-                    host = value
-
-        # Verify if service is EXTERNAL
-        variables['external'] = False
-        if isinstance(host, str):  # and host.count('.') > 2:
-            if not host.endswith('dockerized.io'):
+            if key == 'host' and not value.endswith('.dockerized.io'):
                 variables['external'] = True
-                log.verbose("Service {} detected as external: {}", service, host)
+                log.verbose("Service {} detected as external: {}", prefix, value)
 
         return variables
 
-    def load_class_from_module(self, classname, service=None):
+    @staticmethod
+    def load_connector(connector, classname):
 
-        if service is None:
-            flaskext = ''
-        else:
-            flaskext = '.' + service.get('extension')
-
-        # Try inside our extensions
+        module_name = "{}.connectors.{}".format(BACKEND_PACKAGE, connector)
         module = Meta.get_module_from_string(
-            modulestring=BACKEND_PACKAGE + '.flask_ext' + flaskext,
+            modulestring=module_name,
             exit_on_fail=True
         )
         if module is None:
-            log.exit("Missing {} for {}", flaskext, service)
+            log.exit("Failed to load {}", module_name)
 
         return getattr(module, classname)
 
@@ -184,35 +179,35 @@ class Detector:
 
         for service in self.services_configuration:
 
-            name, _ = self.prefix_name(service)
+            name = service.get('name')
 
             if not self.available_services.get(name):
                 continue
             log.verbose("Looking for class {}", name)
 
             variables = service.get('variables')
-            ext_name = service.get('class')
+            class_name = service.get('class')
+            connector_name = service.get('name')
 
             # Get the existing class
             try:
-                MyClass = self.load_class_from_module(ext_name, service=service)
+                MyClass = self.load_connector(connector_name, class_name)
 
                 # Passing variables
                 MyClass.set_variables(variables)
 
                 if service.get('load_models'):
 
-                    base_models = self.meta.import_models(
+                    base_models = Meta.import_models(
                         name, BACKEND_PACKAGE, exit_on_fail=True
                     )
                     if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
                         extended_models = {}
                     else:
-                        extended_models = self.meta.import_models(
+                        extended_models = Meta.import_models(
                             name, EXTENDED_PACKAGE, exit_on_fail=False
                         )
-
-                    custom_models = self.meta.import_models(
+                    custom_models = Meta.import_models(
                         name, CUSTOM_PACKAGE, exit_on_fail=False
                     )
 
@@ -220,7 +215,7 @@ class Detector:
 
             except AttributeError as e:
                 log.error(str(e))
-                log.exit('Invalid Extension class: {}', ext_name)
+                log.exit('Invalid connector class: {}', class_name)
 
             # Save
             self.services_classes[name] = MyClass
@@ -240,7 +235,7 @@ class Detector:
 
         for service in self.services_configuration:
 
-            name, _ = self.prefix_name(service)
+            name = service.get('name')
 
             if not self.available_services.get(name):
                 continue
@@ -256,17 +251,17 @@ class Detector:
                     )
 
             args = {}
-            if name == self.task_service_name:
+            if name == 'celery':
                 args['worker_mode'] = worker_mode
 
-            # Get extension class and build the extension object
-            ExtClass = self.services_classes.get(name)
+            # Get connectors class and build the connector object
+            Connector = self.services_classes.get(name)
             try:
-                ext_instance = ExtClass(app, **args)
+                instance = Connector(app, **args)
             except TypeError as e:
                 log.exit('Your class {} is not compliant:\n{}', name, e)
             else:
-                self.extensions_instances[name] = ext_instance
+                self.connectors_instances[name] = instance
 
             if not project_init:
                 do_init = False
@@ -279,41 +274,37 @@ class Detector:
 
             # Initialize the real service getting the first service object
             log.debug("Initializing {} (pinit={})", name, do_init)
-            service_instance = ext_instance.custom_init(
-                pinit=do_init, pdestroy=project_clean, abackend=auth_backend
+            service_instance = instance.initialize(
+                pinit=do_init,
+                pdestroy=project_clean,
+                abackend=auth_backend
             )
             instances[name] = service_instance
 
             if name == self.authentication_service:
                 auth_backend = service_instance
 
-            # NOTE: commented, looks like a duplicate from try/expect above
-            # self.extensions_instances[name] = ext_instance
-
-            # Injecting into the Celery Extension Class
-            # all celery tasks found in *vanilla_package/tasks*
-            if name == self.task_service_name:
+            # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
+            if name == 'celery':
                 do_init = True
 
                 task_package = "{}.tasks".format(CUSTOM_PACKAGE)
 
-                submodules = self.meta.import_submodules_from_package(
+                submodules = Meta.import_submodules_from_package(
                     task_package, exit_on_fail=True
                 )
                 for submodule in submodules:
                     tasks = Meta.get_celery_tasks_from_module(submodule)
 
                     for func_name, funct in tasks.items():
-                        setattr(ExtClass, func_name, funct)
+                        setattr(Connector, func_name, funct)
 
-        if len(self.extensions_instances) < 1:
+        if len(self.connectors_instances) < 1:
             raise KeyError("No instances available for modules")
 
         # Only once in a lifetime
         if project_init:
             self.project_initialization(instances, app=app)
-
-        return self.extensions_instances
 
     def check_availability(self, name):
 
@@ -333,16 +324,13 @@ class Detector:
         """
 
         try:
-            # NOTE: this might be a pattern
-            # see in meta.py:get_customizer_class
             module_path = "{}.{}.{}".format(
                 CUSTOM_PACKAGE,
                 'initialization',
                 'initialization',
             )
             module = Meta.get_module_from_string(module_path)
-            meta = Meta()
-            Initializer = meta.get_class_from_string(
+            Initializer = Meta.get_class_from_string(
                 'Initializer', module, skip_error=True
             )
             if Initializer is None:

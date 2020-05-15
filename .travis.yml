@@ -1,47 +1,134 @@
-language: python
-sudo: required
+os: linux
 dist: bionic
+language: python
 python:
 - 3.8
 services:
 - docker
-jobs:
-  include:
-  - stage: backend-test
-    script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=irodstest
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=celerytest
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=neo
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=sql
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=mongo
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=pushpin
-  - script: scripts/test_and_coverage.sh
-    env:
-    - PROJECT=celerybeat
+env:
 
-  - stage: deploy
-    script: skip
-    deploy:
-      provider: pypi
-      user: pdonorio
-      password:
-        secure: YNjvWPNpfab00FD7EUwzDgXyorPFkefCk3C7PFDfB9yDaZFz6d/+Mk+HzJce84pqk0Nr0T8rrKVe7c69Ib+PgiYWrtYstnvKthZbN+IpFieEm/f72adG8rdSjLVb5gLNd49cqxfDIBD64V/DgkrJ5+Xif8j0D7d8CohKRqgFYdsAm0G9TiiAXqbaRGiUqEl6aJo1V2/8tDUNikWu3zCaHiCWYerHBf2IfeCdcsbX3qXwUje+g4ECRFH3kZbVD6YDS+47ib4GBuhJGGRMZDdICdk+MHXP1cRUv2EybmH5Q7cH8DZ+JoMuZNP/gQ3xT2Mt2wZ1n1le0wWfCNpkIdTPuOQTFrtxcZQycjDnVupu+mTDa4XCYgr3N0JFSJBVo9G+gYf9fswrt1BTtVBDpYUb0QGtZehFW+wuftNu10lvuibB1B3o1Vqf2TYO8CEgSfQy0c+VRt3oj0BuXnh+C5BxTFVYJpYoIlkDr4u0nomWosmMRyrSRP8i8CkJg4WEtlB//ZaU+9QkurQW3zPr8HetcRz5eIzX1rJPHLO4XIXGuCnc954OhXa6EaaouAHtGeYwYhYP1/wTtJKlBQUdADoYf37B4U8Mttxd6V9x/uRJXLhyt+hSKPPFsS0/PkRnum/B0Mfa70RPfibvgXxjLhq+vspWYty0J4wpxWJNbAQ7NVU=
-      on:
-        tags: true
+- TEMPLATE=postgres
+- TEMPLATE=mysql
+- TEMPLATE=neo4j
+- TEMPLATE=mongo
+- TEMPLATE=celery-rabbit-rabbit
+- TEMPLATE=celery-rabbit-redis
+- TEMPLATE=celery-rabbit-mongo
+- TEMPLATE=celery-redis-redis
+- TEMPLATE=celery-redis-mongo
+# this enabled extra services like irods, ftp and pushin
+# and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
+# html email templates and more in the future
+- TEMPLATE=extraoptions
+# Temporary disabled, some issues with DB models...
+# - TEMPLATE=extended
+# to be deprecated
+- TEMPLATE=wrapped
+
+script:
+  # Randomize auth service to test some services
+  # double neo4j to balance with sql databases
+  # mongo is only tested on the mongo TEMPLATE for two reasons:
+  #  - no need to test it too much (no project is really using it as backend)
+  #  - prevent celery-rabbit-rabbit template to become a celery-rabbit-mongo template
+  - auth_services=(postgres mysql neo4j neo4j)
+  - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
+  - echo "Selected random authentication service = ${RANDOM_AUTH}"
+
+  - export TESTING=1
+  - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
+  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+
+  - mkdir $TEMPLATE
+  - cd $TEMPLATE
+  # Note that  --env REGISTER_FAILED_LOGIN=True is set only for certain templates,
+  # to have different use cases during tests
+
+  - > # this enable multiline commands
+
+    if [[ "$TEMPLATE" == "postgres" ]]; then
+      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True;
+    elif [[ "$TEMPLATE" == "mysql" ]]; then
+      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True;
+    elif [[ "$TEMPLATE" == "neo4j" ]]; then
+      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True;
+    elif [[ "$TEMPLATE" == "mongo" ]]; then
+      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True;
+
+
+    elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
+      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
+      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
+      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
+      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
+    elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
+      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
+
+
+    elif [[ "$TEMPLATE" == "extraoptions" ]]; then
+      rapydo create prj --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,DISABLE_UNUSED_CREDENTIALS_AFTER=30,REGISTER_FAILED_LOGIN=True,MAX_LOGIN_ATTEMPTS=5;
+
+    elif [[ "$TEMPLATE" == "extended" ]]; then
+      rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current;
+
+
+
+    elif [[ "$TEMPLATE" == "wrapped" ]]; then
+      rapydo create prj --auth ${RANDOM_AUTH} --wrapped --frontend no;
+
+
+    else
+      echo "Unknown template: ${TEMPLATE}";
+      travis_terminate 1;
+    fi
+
+
+  - git remote add origin https://your_remote_git/your_project.git
+  - rapydo -p prj init
+  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  - rapydo start
+  - sleep 2
+  - rapydo logs
+  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+
+  # Send coverage
+  - rapydo dump
+  - backend_container=$(docker-compose ps -q backend)
+  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
+  # this is the recommended command from codecov. But when curl fails due to a network
+  # timeout the whole command exits with 0. As a results some jobs are all passed but
+  # the coverage stats are degraded, because one of the stages is missing!
+  # - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+  - wget https://codecov.io/bash -O codecov_report
+  - bash codecov_report -R submodules/http-api
+
+  # Test production
+  - rapydo remove --all
+  - rapydo --production init --force
+  - rapydo pull
+  - rapydo ssl --volatile
+  - rapydo start
+  # wait for all services to start (tried with 20... not always enough!)
+  - sleep 25
+  - rapydo logs
+  # too may issues with mongo in production mode... Everything seems to work,
+  # but often nginx does not respond and log:
+  # "GET /api/status HTTP/2.0" 499 0 "-" "curl/7.58.0" "-"
+  # So... just skip this test with mongo...
+  - if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
+
+  - rapydo -s proxy,backend logs --tail 20
+
+  - rapydo remove --all
+
 notifications:
   email: false
   slack:
-    secure: WJ0T3PK+e7TPMWuouNFr2/4Aef7HPjr2KHdiVe1QZPrbeFwSohKQRj76GUydn6SRoRw0O1tK6ZYiHeN5wTmlPEHR2MLO3GtenQ9VXEkKwU9Ck25AuQcv2bf1v96g2bd61NwmJjctJn465uUGX410Gw7CT0kxCkVu5oiXFgX3n79mMUNWYiu0Xl31RPLul3ar+Si7pd6GqzvMr4b2jHxNR1osdT4xQBrYrelQV9YGFVnaTrODfd1axj0jB0ISvmVpFEMBFDINYK4Xf+LfmdBNOJ1j57bUXtfl4MmgpauMoD1d+Lk+v1vJMJInaaugvjlbHbc4BxsZeiOmg+Y+gswain50hnbUo/MszmBwlfYLoaavj+T+yZnkakglaaYDat9Hsp+OJvJnmOZWrysfxSylIthhvBca37nRQg2SPfKQRBr9l3PLgvwJkwIhKzzSdVs4w8Uz3To3X6c82bkVC0Q/9yPEky5Wxoiwt+qpxPY6xpndjz2VcHkL1wj8DmTkB1kh1ILJ3ri/Wtah51JlWh3r5VGwszIl6kFt7f4sbSXVH+S9CNBNIp1SGZC3Budwp3af6foYwFc1OCjbLefuGxF1Q0pR4TN46nKB8oeUJ6sM2XQvZWvEmpYvsMs7A17QpGPEz2Wd5Tw5y4P0xmOKikT9AOtx1fZjI92DUNXe9JaPtP4=
+    rooms:
+      secure: WJ0T3PK+e7TPMWuouNFr2/4Aef7HPjr2KHdiVe1QZPrbeFwSohKQRj76GUydn6SRoRw0O1tK6ZYiHeN5wTmlPEHR2MLO3GtenQ9VXEkKwU9Ck25AuQcv2bf1v96g2bd61NwmJjctJn465uUGX410Gw7CT0kxCkVu5oiXFgX3n79mMUNWYiu0Xl31RPLul3ar+Si7pd6GqzvMr4b2jHxNR1osdT4xQBrYrelQV9YGFVnaTrODfd1axj0jB0ISvmVpFEMBFDINYK4Xf+LfmdBNOJ1j57bUXtfl4MmgpauMoD1d+Lk+v1vJMJInaaugvjlbHbc4BxsZeiOmg+Y+gswain50hnbUo/MszmBwlfYLoaavj+T+yZnkakglaaYDat9Hsp+OJvJnmOZWrysfxSylIthhvBca37nRQg2SPfKQRBr9l3PLgvwJkwIhKzzSdVs4w8Uz3To3X6c82bkVC0Q/9yPEky5Wxoiwt+qpxPY6xpndjz2VcHkL1wj8DmTkB1kh1ILJ3ri/Wtah51JlWh3r5VGwszIl6kFt7f4sbSXVH+S9CNBNIp1SGZC3Budwp3af6foYwFc1OCjbLefuGxF1Q0pR4TN46nKB8oeUJ6sM2XQvZWvEmpYvsMs7A17QpGPEz2Wd5Tw5y4P0xmOKikT9AOtx1fZjI92DUNXe9JaPtP4=
   on_success: change # default: always
   on_failure: always # default: always

@@ -4,7 +4,13 @@ import socket
 import datetime
 import pytz
 
-from smtplib import SMTP, SMTP_SSL
+from restapi.confs import TESTING
+
+if TESTING:
+    from restapi.services.mailmock import SMTP, SMTP_SSL
+else:
+    from smtplib import SMTP, SMTP_SSL  # pragma: no cover
+
 from smtplib import SMTPException, SMTPAuthenticationError
 
 from email.mime.text import MIMEText
@@ -15,17 +21,15 @@ from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
 # TODO: configure HOST with gmail, search example online
-
-"""
-Sending e-mails in python, more info:
-https://pymotw.com/3/smtplib/
-"""
+# Sending e-mails in python, more info: https://pymotw.com/3/smtplib
 
 
 def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
     ###################
     # https://stackabuse.com/how-to-send-emails-with-gmail-using-python/
-    if smtp_port == '465':
+    if not smtp_port:
+        smtp = SMTP(smtp_host)
+    elif smtp_port == '465':
         smtp = SMTP_SSL(smtp_host)
     else:
         smtp = SMTP(smtp_host)
@@ -34,15 +38,18 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
     ###################
     smtp.set_debuglevel(0)
-    log.verbose("Connecting to {}:{}", smtp_host, smtp_port)
-    try:
-        smtp.connect(smtp_host, smtp_port)
-        smtp.ehlo()
-    except socket.gaierror as e:
-        log.error(str(e))
-        return None
+    if not smtp_port:
+        log.verbose("Connecting to {}", smtp_host)
+    else:
+        log.verbose("Connecting to {}:{}", smtp_host, smtp_port)
+        try:
+            smtp.connect(smtp_host, smtp_port)
+            smtp.ehlo()
+        except socket.gaierror as e:
+            log.error(str(e))
+            return None
 
-    if username is not None and password is not None:
+    if username and password:
         log.verbose("Authenticating SMTP")
         try:
             smtp.login(username, password)
@@ -53,19 +60,10 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
 
 def send_mail_is_active():
+
     host = os.environ.get("SMTP_HOST")
-    port = os.environ.get("SMTP_PORT")
 
-    if host is None or port is None:
-        return False
-
-    if host.strip() == '':
-        return False
-
-    if port.strip() == '':
-        return False
-
-    return True
+    return host and host.strip()
 
 
 def test_smtp_client():
@@ -96,15 +94,15 @@ def send(
     plain_body=None,
 ):
 
-    if smtp_host is None:
+    if not smtp_host:
         log.error("Skipping send email: smtp host not configured")
         return False
 
-    if from_address is None:
+    if not from_address:
         log.error("Skipping send email: from address not configured")
         return False
 
-    if to_address is None:
+    if not to_address:
         log.error("Skipping send email: destination address not configured")
         return False
 
@@ -200,12 +198,12 @@ def send_mail(
         username = os.environ.get("SMTP_USERNAME")
         password = os.environ.get("SMTP_PASSWORD")
 
-        if from_address is None:
+        if not from_address:
             from_address = os.environ.get("SMTP_NOREPLY")
-        if from_address is None:
+        if not from_address:
             from_address = os.environ.get("SMTP_ADMIN")
 
-        if to_address is None:
+        if not to_address:
             to_address = os.environ.get("SMTP_ADMIN")
 
         if plain_body is None:

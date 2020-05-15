@@ -4,10 +4,13 @@
 Mongodb based implementation
 """
 
-from pytz import utc
+import pytz
 from datetime import datetime, timedelta
+
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
-from restapi.flask_ext.flask_mongo import AUTH_DB
+from restapi.services.authentication import NULL_IP
+from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -26,14 +29,8 @@ class Authentication(BaseAuthentication):
         # Get the instance for mongodb
         name = __name__.split('.')[::-1][0]  # returns 'mongo'
 
-        extension = detector.services_classes.get(name)
-        self.db = extension().get_instance(dbname=AUTH_DB)
-
-    def custom_user_properties(self, userdata):
-        new_userdata = super(Authentication, self).custom_user_properties(userdata)
-        if not new_userdata.get('uuid'):
-            new_userdata['uuid'] = getUUID()
-        return new_userdata
+        Connector = detector.services_classes.get(name)
+        self.db = Connector().get_instance(dbname=AUTH_DB)
 
     # Also used by POST user
     def create_user(self, userdata, roles):
@@ -44,22 +41,26 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
 
+        if "uuid" not in userdata:
+            userdata['uuid'] = getUUID()
+
+        if "id" not in userdata:
+            userdata['id'] = userdata['uuid']
+
         userdata = self.custom_user_properties(userdata)
         user = self.db.User(**userdata)
 
         self.link_roles(user, roles)
 
         user.save()
+
         return user
 
     def link_roles(self, user, roles):
 
-        if roles is None or len(roles) == 0:
-            roles = self.default_roles
-
         roles_obj = []
         for role_name in roles:
-            role_obj = self.db.Role.objects.get({'_id': role_name})
+            role_obj = self.db.Role.objects.get({'name': role_name})
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
@@ -70,7 +71,7 @@ class Authentication(BaseAuthentication):
         if username is not None:
             # NOTE: email is the key, so to query use _id
             try:
-                user = self.db.User.objects.raw({'_id': username}).first()
+                user = self.db.User.objects.raw({'email': username}).first()
             except self.db.User.DoesNotExist:
                 # don't do things, user will remain 'None'
                 pass
@@ -109,8 +110,11 @@ class Authentication(BaseAuthentication):
     def get_roles(self):
         roles = []
         for role_name in self.default_roles:
-            role = self.db.Role.objects.get({'name': role_name})
-            roles.append(role)
+            try:
+                role = self.db.Role.objects.get({'name': role_name})
+                roles.append(role)
+            except self.db.Role.DoesNotExist:
+                log.warning("Role not found: {}", role_name)
 
         return roles
 
@@ -124,6 +128,10 @@ class Authentication(BaseAuthentication):
                 log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
+        # No user for on authenticated endpoints -> return no role
+        if userobj is None:
+            return roles
+
         for role in userobj.roles:
             roles.append(role.name)
             # roles.append(role)
@@ -131,65 +139,52 @@ class Authentication(BaseAuthentication):
 
     def init_users_and_roles(self):
 
-        missing_role = missing_user = False
         roles = []
-        # transactions = []
+
+        for role_name in self.default_roles:
+            try:
+                role = self.db.Role.objects.get({'name': role_name})
+                roles.append(role.name)
+                log.info("Role already exists: {}", role.name)
+            except self.db.Role.DoesNotExist:
+                role_description = "automatic" if not TESTING else role_name
+                role = self.db.Role(
+                    name=role_name,
+                    description=role_description
+                )
+                role.save()
+                roles.append(role.name)
+                log.warning("Injected default role: {}", role.name)
 
         try:
 
-            # if no roles
-            cursor = self.db.Role.objects.all()
-            fetch_roles = list(cursor)
-            missing_role = len(fetch_roles) < 1
-
-            if missing_role:
-                log.warning("No roles inside mongo. Injected defaults.")
-                for role in self.default_roles:
-                    roles.append(
-                        self.db.Role(name=role, description="automatic").save().name
-                    )
-                    # if missing_role:
-                    #     transactions.append(role)
-                    # roles.append(role)
-            else:
-                # roles = fetch_roles
-                for role_obj in fetch_roles:
-                    roles.append(role_obj.name)
-
             # if no users
             cursor = self.db.User.objects.all()
-            missing_user = len(list(cursor)) < 1
-
-            if missing_user:
+            if len(list(cursor)) > 0:
+                log.info("No user injected")
+            else:
 
                 self.create_user(
                     {
                         'email': self.default_user,
-                        # 'authmethod': 'credentials',
                         'name': 'Default',
                         'surname': 'User',
                         'password': self.default_password,
-                        'last_password_change': datetime.now(utc),
+                        'last_password_change': datetime.now(pytz.utc),
                     },
                     roles=roles,
                 )
 
-                log.warning("No users inside mongo. Injected default one.")
+                log.warning("Injected default user")
 
         except BaseException as e:
-            # raise e
             raise AttributeError("Models for auth are wrong:\n{}".format(e))
-
-        # if missing_user or missing_role:
-        #     for transaction in transactions:
-        #         transaction.save()
-        #     log.info("Saved init transactions")
 
     def save_user(self, user):
         if user is not None:
             user.save()
 
-    def save_token(self, user, token, jti, token_type=None):
+    def save_token(self, user, token, payload, token_type=None):
 
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
@@ -198,33 +193,34 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now()
-        exp = now + timedelta(seconds=self.shortTTL)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         if user is None:
             log.error("Trying to save an empty token")
         else:
             self.db.Token(
-                jti=jti,
+                jti=payload['jti'],
                 token=token,
                 token_type=token_type,
                 creation=now,
                 last_access=now,
                 expiration=exp,
-                IP=ip,
-                hostname=ip_loc,
+                IP=ip or NULL_IP,
+                location=ip_loc or "Unknown",
                 user_id=user,
             ).save()
 
             # Save user updated in profile endpoint
             user.save()
 
-            log.debug("Token stored inside mongo")
-
-    def refresh_token(self, jti):
+    def verify_token_validity(self, jti, user):
 
         try:
             token_entry = self.db.Token.objects.raw({'jti': jti}).first()
         except self.db.Token.DoesNotExist:
+            return False
+
+        if token_entry.user_id is None or token_entry.user_id.email != user.email:
             return False
 
         now = datetime.now()
@@ -232,12 +228,12 @@ class Authentication(BaseAuthentication):
             self.invalidate_token(token=token_entry.token)
             log.info(
                 "This token is no longer valid: expired since {}",
-                token_entry.strftime("%d/%m/%Y")
+                token_entry.expiration.strftime("%d/%m/%Y")
             )
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+        if token_entry.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
                 log.error(
@@ -246,21 +242,21 @@ class Authentication(BaseAuthentication):
                 )
                 return False
 
-        exp = now + timedelta(seconds=self.shortTTL)
         token_entry.last_access = now
-        token_entry.expiration = exp
-
         token_entry.save()
+
         return True
 
-    def get_tokens(self, user=None, token_jti=None):
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
 
-        returning_tokens = []
+        tokens_list = []
         tokens = []
 
-        if user is not None:
+        if get_all:
+            tokens = self.db.Token.objects.all()
+        elif user is not None:
             try:
-                tokens = self.db.Token.objects.raw({'user_id': user.email}).all()
+                tokens = self.db.Token.objects.raw({'user_id': user.id}).all()
             except self.db.Token.DoesNotExist:
                 pass
         elif token_jti is not None:
@@ -269,55 +265,34 @@ class Authentication(BaseAuthentication):
             except self.db.Token.DoesNotExist:
                 pass
 
+        if tokens is None:
+            return tokens_list
+
         for token in tokens:
             t = {}
             t["id"] = token.jti
             t["token"] = token.token
             t["token_type"] = token.token_type
-            t["emitted"] = token.creation.strftime('%s')
-            t["last_access"] = token.last_access.strftime('%s')
-            if token.expiration is not None:
-                t["expiration"] = token.expiration.strftime('%s')
+            # t["emitted"] = token.creation.strftime('%s')
+            # t["last_access"] = token.last_access.strftime('%s')
+            # if token.expiration is not None:
+            #     t["expiration"] = token.expiration.strftime('%s')
+            t["emitted"] = token.creation
+            t["last_access"] = token.last_access
+            t["expiration"] = token.expiration
             t["IP"] = token.IP
-            t["hostname"] = token.hostname
-            returning_tokens.append(t)
+            t["location"] = token.location
+            if get_all:
+                t['user'] = token.user_id
+            tokens_list.append(t)
 
-        return returning_tokens
+        return tokens_list
 
-    def invalidate_all_tokens(self, user=None):
-        """
-            To invalidate all tokens the user uuid is changed
-        """
-        if user is None:
-            user = self._user
-        user.uuid = getUUID()
-        user.save()
-        log.warning("User uuid changed to: {}", user.uuid)
-        return True
-
-    def invalidate_token(self, token, user=None):
-        if user is None:
-            user = self.get_user()
-
+    def invalidate_token(self, token):
         try:
             token_entry = self.db.Token.objects.raw({'token': token}).first()
-            # NOTE: Other auth db (sqlalchemy, neo4j) delete the token instead
-            # of keep it without the user association
-            token_entry.user_id = None
-            token_entry.save()
+            token_entry.delete()
         except self.db.Token.DoesNotExist:
             log.warning("Could not invalidate non-existing token")
-
-        return True
-
-    def verify_token_custom(self, jti, user, payload):
-
-        try:
-            token = self.db.Token.objects.raw({'jti': jti}).first()
-        except self.db.Token.DoesNotExist:
-            return False
-
-        if token.user_id is None or token.user_id.email != user.email:
-            return False
 
         return True

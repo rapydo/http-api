@@ -2,7 +2,7 @@
 
 """ Models for graph database """
 
-from restapi.services.neo4j.models import (
+from restapi.connectors.neo4j.types import (
     StructuredNode,
     IdentifiedNode,
     StringProperty,
@@ -16,12 +16,11 @@ from neomodel import OneOrMore, ZeroOrMore, ZeroOrOne
 
 
 class User(IdentifiedNode):
-    # uuid = StringProperty(required=True, unique_index=True)
     email = EmailProperty(required=True, unique_index=True, show=True)
     name = StringProperty(required=True, show=True)
     surname = StringProperty(required=True, show=True)
     authmethod = StringProperty(required=True)
-    password = StringProperty()  # Hashed from a custom function
+    password = StringProperty()  # Hashed by a custom function
     first_login = DateTimeProperty(show=True)
     last_login = DateTimeProperty(show=True)
     last_password_change = DateTimeProperty(show=True)
@@ -39,7 +38,9 @@ class Token(StructuredNode):
     expiration = DateTimeProperty()
     last_access = DateTimeProperty()
     IP = StringProperty()
+    # no longer used
     hostname = StringProperty()
+    location = StringProperty()
     emitted_for = RelationshipFrom('User', 'HAS_TOKEN', cardinality=ZeroOrOne)
 
 

@@ -10,7 +10,8 @@ https://docs.mongodb.com/manual/applications/data-models-relationships
 
 from pymodm import fields
 from pymodm import MongoModel
-from restapi.flask_ext.flask_mongo import AUTH_DB
+from pymongo.operations import IndexModel
+from restapi.connectors.mongo import AUTH_DB
 
 # from pymongo.write_concern import WriteConcern
 
@@ -18,18 +19,23 @@ from restapi.flask_ext.flask_mongo import AUTH_DB
 ####################
 # Base Models
 class Role(MongoModel):
-    name = fields.CharField(primary_key=True)
+    name = fields.CharField()
     description = fields.CharField()
 
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
+        indexes = [IndexModel('name', unique=True)]
+
 
 class User(MongoModel):
-    email = fields.EmailField(primary_key=True)
+    # To be enabled after completed the output serialization,
+    # otherwise will raise this error: Object of type UUID is not JSON serializable
+    # uuid = fields.UUIDField()
+    id = fields.CharField(primary_key=True)
     uuid = fields.CharField()
-    # uuid = fields.UUIDField(default=getUUID())
+    email = fields.EmailField()
     name = fields.CharField()
     surname = fields.CharField()
     authmethod = fields.CharField()
@@ -38,11 +44,17 @@ class User(MongoModel):
     last_login = fields.DateTimeField()
     last_password_change = fields.DateTimeField()
     is_active = fields.BooleanField(default=True)
-    roles = fields.EmbeddedDocumentListField(Role)
+    privacy_accepted = fields.BooleanField(default=True)
+    roles = fields.EmbeddedDocumentListField(Role, blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
+
+        indexes = [
+            IndexModel('uuid', unique=True),
+            IndexModel('email', unique=True)
+        ]
 
 
 class Token(MongoModel):
@@ -53,10 +65,13 @@ class Token(MongoModel):
     expiration = fields.DateTimeField()
     last_access = fields.DateTimeField()
     IP = fields.CharField()
+    # no longer used
     hostname = fields.CharField(blank=True)
+    location = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User, blank=True)
-    # emitted_for = fields.EmbeddedDocumentField(User, blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
+
+        indexes = [IndexModel('token', unique=True)]

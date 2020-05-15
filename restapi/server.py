@@ -5,78 +5,30 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import os
-from urllib import parse as urllib_parse
-from flask import Flask as OriginalFlask, request
+import logging
+from flask import Flask
 from flask_cors import CORS
+from flask_restful import Api
+from apispec import APISpec
+from flask_apispec import FlaskApiSpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+# from apispec_webframeworks.flask import FlaskPlugin
 from werkzeug.middleware.proxy_fix import ProxyFix
-from glom import glom
 from geolite2 import geolite2
-from restapi import __version__
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from restapi import confs as config
 from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
 from restapi.confs import get_project_configuration
-from restapi.rest.response import InternalResponse
-from restapi.rest.response import ResponseElements, ResponseMaker
 from restapi.customization import Customizer
-
-from restapi.protocols.restful import Api
-from restapi.services.detect import detector
+from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.mail import send_mail_is_active, test_smtp_client
+
+from restapi.services.detect import detector
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log, handle_log_output, MAX_CHAR_LEN
+from restapi.utilities.logs import log
 
 
-class Flask(OriginalFlask):
-    def make_response(self, rv):
-        """
-        Hack original flask response generator to read our internal response
-        and build what is needed:
-        the tuple (data, status, headers) to be eaten by make_response()
-        """
-
-        responder = ResponseMaker(rv)
-
-        # Avoid duplicating the response generation
-        # or the make_response replica.
-        # This happens with Flask exceptions
-        if responder.already_converted():
-            return responder.get_original_response()
-
-        if not isinstance(rv, ResponseElements):
-            log.warning(
-                "Deprecated endpoint output, please use self.force_respose() wrapper"
-            )
-
-        # Note: jsonify gets done when calling the make_response,
-        # so make sure that the data is written in the right format!
-        r = responder.generate_response()
-        response = super().make_response(r)
-        # TOFIX: avoid duplicated Content-type
-        # the jsonify in respose.py#force_type force the content-type
-        # to be application/json. If content-type is already specified in headers
-        # the header will have a duplicated Content-type. We should fix by avoding
-        # jsonfy for more specific mimetypes
-        # For now I will simply remove the duplicates
-        content_type = None
-        for idx, val in enumerate(response.headers):
-            if val[0] != 'Content-Type':
-                continue
-            if content_type is None:
-                content_type = idx
-                continue
-            log.warning(
-                "Duplicated Content-Type, removing {} and keeping {}",
-                response.headers[content_type][1],
-                val[1],
-            )
-            response.headers.pop(content_type)
-            break
-        return response
-
-
-########################
-# Flask App factory    #
-########################
 def create_app(
     name=__name__,
     init_mode=False,
@@ -90,12 +42,10 @@ def create_app(
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
-
-    # Initialize reading of all files
-    mem.customizer = Customizer(testing_mode, init_mode)
-    mem.geo_reader = geolite2.reader()
-    # when to close??
-    # geolite2.close()
+    if testing_mode and not config.TESTING:
+        # Deprecated since 0.7.3
+        log.exit(
+            "Deprecated use of testing_mode, please export env variable APP_MODE=test")
 
     # Add template dir for output in HTML
     kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
@@ -105,13 +55,13 @@ def create_app(
 
     # Add commands to 'flask' binary
     if init_mode:
-        microservice.config['INIT_MODE'] = init_mode
+        # microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
     elif destroy_mode:
-        microservice.config['DESTROY_MODE'] = destroy_mode
+        # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
     elif testing_mode:
-        microservice.config['TESTING'] = testing_mode
+        # microservice.config['TESTING'] = testing_mode
         init_mode = True
     elif worker_mode:
         skip_endpoint_mapping = True
@@ -122,16 +72,20 @@ def create_app(
     # CORS
     if not PRODUCTION:
         cors = CORS(
-            allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'x-upload-content-length', 'x-upload-content-type', 'content-range'],
+            allow_headers=[
+                'Content-Type',
+                'Authorization',
+                'X-Requested-With',
+                'x-upload-content-length',
+                'x-upload-content-type',
+                'content-range'
+            ],
             supports_credentials=['true'],
             methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         )
 
         cors.init_app(microservice)
         log.verbose("FLASKING! Injected CORS")
-
-    # Enabling our internal Flask customized response
-    microservice.response_class = InternalResponse
 
     # Flask configuration from config file
     microservice.config.from_object(config)
@@ -140,19 +94,26 @@ def create_app(
     if PRODUCTION:
         log.info("Production server mode is ON")
 
+    mem.customizer = Customizer()
+    mem.configuration = mem.customizer.load_configuration()
+
     # Find services and try to connect to the ones available
-    extensions = detector.init_services(
+    detector.init_services(
         app=microservice,
         worker_mode=worker_mode,
         project_init=init_mode,
         project_clean=destroy_mode,
     )
 
-    if worker_mode:
-        microservice.extensions = extensions
+    # Initialize reading of all files
+    mem.geo_reader = geolite2.reader()
+    # when to close??
+    # geolite2.close()
 
     # Restful plugin
     if not skip_endpoint_mapping:
+
+        mem.customizer.load_swagger()
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 
@@ -181,28 +142,13 @@ def create_app(
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
-        microservice.services_instances = {}
-        for m in detector.services_classes:
-            ExtClass = detector.services_classes.get(m)
-            microservice.services_instances[m] = ExtClass(microservice)
-
-        # FlaskApiSpec experimentation
-        from apispec import APISpec
-        from flask_apispec import FlaskApiSpec
-        from apispec.ext.marshmallow import MarshmallowPlugin
-        # from apispec_webframeworks.flask import FlaskPlugin
-
         microservice.config.update({
             'APISPEC_SPEC': APISpec(
-                title=glom(
-                    mem.customizer._configurations,
-                    'project.title',
-                    default='0.0.1'
+                title=get_project_configuration(
+                    'project.title', default='Your application name'
                 ),
-                version=glom(
-                    mem.customizer._configurations,
-                    'project.version',
-                    default='Your application name'
+                version=get_project_configuration(
+                    'project.version', default='0.0.1'
                 ),
                 openapi_version="2.0",
                 # OpenApi 3 not working with FlaskApiSpec
@@ -212,6 +158,7 @@ def create_app(
                 # **FASTAPI**
                 # openapi_version="3.0.2",
                 plugins=[
+                    # FlaskPlugin(),
                     MarshmallowPlugin()
                 ],
             ),
@@ -222,6 +169,33 @@ def create_app(
         })
         docs = FlaskApiSpec(microservice)
 
+        # Clean app routes
+        ignore_verbs = {"HEAD", "OPTIONS"}
+
+        for rule in microservice.url_map.iter_rules():
+
+            rulename = str(rule)
+            # Skip rules that are only exposing schemas
+            if '/schemas/' in rulename:
+                continue
+
+            endpoint = microservice.view_functions[rule.endpoint]
+            if not hasattr(endpoint, 'view_class'):
+                continue
+            newmethods = ignore_verbs.copy()
+
+            for verb in rule.methods - ignore_verbs:
+                method = verb.lower()
+                if method in mem.customizer._original_paths[rulename]:
+                    # remove from flask mapping
+                    # to allow 405 response
+                    newmethods.add(verb)
+                else:
+                    log.verbose("Removed method {}.{} from mapping", rulename, verb)
+
+            rule.methods = newmethods
+
+        # Register swagger. Note: after method mapping cleaning
         with microservice.app_context():
             for resource in mem.customizer._endpoints:
                 urls = list(resource.uris.values())
@@ -234,108 +208,31 @@ def create_app(
                     # **FASTAPI**
                     log.verbose("{} on {}", type(e), resource.cls)
 
-    # Clean app routes
-    ignore_verbs = {"HEAD", "OPTIONS"}
+    # marshmallow errors handler
+    microservice.register_error_handler(422, handle_marshmallow_errors)
 
-    for rule in microservice.url_map.iter_rules():
-
-        rulename = str(rule)
-        # Skip rules that are only exposing schemas
-        if '/schemas/' in rulename:
-            continue
-
-        endpoint = microservice.view_functions[rule.endpoint]
-        if not hasattr(endpoint, 'view_class'):
-            continue
-        newmethods = ignore_verbs.copy()
-
-        for verb in rule.methods - ignore_verbs:
-            method = verb.lower()
-            if method in mem.customizer._original_paths[rulename]:
-                # remove from flask mapping
-                # to allow 405 response
-                newmethods.add(verb)
-            else:
-                log.verbose("Removed method {}.{} from mapping", rulename, verb)
-
-        rule.methods = newmethods
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
     # Logging responses
-    @microservice.after_request
-    def log_response(response):
-
-        response.headers["_RV"] = str(__version__)
-
-        PROJECT_VERSION = get_project_configuration(
-            "project.version", default=None
-        )
-        if PROJECT_VERSION is not None:
-            response.headers["Version"] = str(PROJECT_VERSION)
-        # NOTE: if it is an upload,
-        # I must NOT consume request.data or request.json,
-        # otherwise the content gets lost
-        do_not_log_types = ['application/octet-stream', 'multipart/form-data']
-
-        if request.mimetype in do_not_log_types:
-            data = 'STREAM_UPLOAD'
-        else:
-            try:
-                data = handle_log_output(request.data)
-                # Limit the parameters string size, sometimes it's too big
-                for k in data:
-                    try:
-                        if isinstance(data[k], dict):
-                            for kk in data[k]:
-                                v = str(data[k][kk])
-                                if len(v) > MAX_CHAR_LEN:
-                                    v = v[:MAX_CHAR_LEN] + "..."
-                                data[k][kk] = v
-                            continue
-
-                        if not isinstance(data[k], str):
-                            data[k] = str(data[k])
-
-                        if len(data[k]) > MAX_CHAR_LEN:
-                            data[k] = data[k][:MAX_CHAR_LEN] + "..."
-                    except IndexError:
-                        pass
-            except Exception:
-                data = 'OTHER_UPLOAD'
-
-        # Obfuscating query parameters
-        url = urllib_parse.urlparse(request.url)
-        try:
-            params = urllib_parse.unquote(
-                urllib_parse.urlencode(handle_log_output(url.query))
-            )
-            url = url._replace(query=params)
-        except TypeError:
-            log.error("Unable to url encode the following parameters:")
-            print(url.query)
-
-        url = urllib_parse.urlunparse(url)
-        log.info("{} {} {} {}", request.method, url, data, response)
-
-        return response
+    microservice.after_request(log_response)
 
     if send_mail_is_active():
         if not test_smtp_client():
             log.critical("Bad SMTP configuration, unable to create a client")
         else:
             log.info("SMTP configuration verified")
-    # and the flask App is ready now:
-    log.info("Boot completed")
 
     if SENTRY_URL is not None:
 
         if not PRODUCTION:
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
         else:
-            import sentry_sdk
-            from sentry_sdk.integrations.flask import FlaskIntegration
 
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
             log.info("Enabled Sentry {}", SENTRY_URL)
+
+    # and the flask App is ready now:
+    log.info("Boot completed")
 
     # return our flask app
     return microservice

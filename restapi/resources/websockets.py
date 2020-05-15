@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from flask import Response, request
-try:
-    from gripcontrol import WebSocketEvent
-    from gripcontrol import decode_websocket_events, encode_websocket_events
-    from gripcontrol import websocket_control_message, create_grip_channel_header
-except ImportError as e:
-    print(str(e))
+from gripcontrol import WebSocketEvent
+from gripcontrol import decode_websocket_events, encode_websocket_events
+from gripcontrol import websocket_control_message, create_grip_channel_header
 
-from restapi.protocols.bearer import authentication
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi import decorators as decorate
+from restapi import decorators
 
 from restapi.utilities.logs import log
 
@@ -33,7 +29,7 @@ class PushpinWebSocket(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, channel):
 
         pushpin = self.get_service_instance('pushpin')
@@ -43,8 +39,8 @@ class PushpinWebSocket(EndpointResource):
 
         return "Message received: {}".format(published)
 
-    @decorate.catch_error()
-    @authentication.required(allow_access_token_parameter=True)
+    @decorators.catch_errors()
+    @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 
         in_events = decode_websocket_events(request.data)
@@ -97,6 +93,7 @@ class PushpinHTTPStream(EndpointResource):
     POST = {
         "/stream/<channel>": {
             "description": "Open a HTTP Stream for Long polling",
+            "produces": ['application/json', 'text/plain'],
             "responses": {"200": {"description": "HTTP Stream connection accepted"}},
         }
     }
@@ -107,7 +104,7 @@ class PushpinHTTPStream(EndpointResource):
         }
     }
 
-    @decorate.catch_error()
+    @decorators.catch_errors()
     def put(self, channel):
 
         pushpin = self.get_service_instance('pushpin')
@@ -117,8 +114,8 @@ class PushpinHTTPStream(EndpointResource):
 
         return "Message received: {}".format(published)
 
-    @decorate.catch_error()
-    @authentication.required(allow_access_token_parameter=True)
+    @decorators.catch_errors()
+    @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 
         headers = {}

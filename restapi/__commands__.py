@@ -3,10 +3,9 @@
 import os
 import time
 import click
-import pretty_errors
 from flask.cli import FlaskGroup
-from restapi.processes import wait_socket
 from restapi import __package__ as current_package
+from restapi.utilities.processes import wait_socket, find_process
 from restapi.utilities.logs import log
 
 BIND_INTERFACE = "0.0.0.0"
@@ -37,18 +36,20 @@ def flask_cli(options=None):
     from restapi.server import create_app
 
     if options is None:
-        options = {'name': 'RESTful HTTP API server'}
-        app = create_app(**options)
+        app = create_app(name='RESTful HTTP API server')
         app.run(host=BIND_INTERFACE, threaded=True)
     else:
         create_app(**options)
     log.debug("cli execution completed")
 
 
-def starting_up():
-    from restapi.processes import find as find_process
+def initializing():
 
-    return find_process(current_package, suffixes=['wait', 'init'], local_bin=True)
+    return find_process(
+        current_package,
+        keywords=['init'],
+        prefix='/usr/local/bin/'
+    )
 
 
 @cli.command()
@@ -57,6 +58,9 @@ def starting_up():
 # def launch(wait):
 def launch():
     """Launch the RAPyDo-based HTTP API server"""
+
+    mywait()
+
     args = [
         'run',
         '--host',
@@ -69,8 +73,8 @@ def launch():
         '--with-threads',
     ]
 
-    if starting_up():
-        log.exit("Please wait few more seconds: resources are still starting up")
+    if initializing():
+        log.exit("Please wait few more seconds: initialization is still in progress")
     else:
         main(args)
         log.warning("Server shutdown")
@@ -89,7 +93,7 @@ def verify(services):
     for service in services:
         myclass = detector.services_classes.get(service)
         if myclass is None:
-            log.exit("Service \"{}\" was NOT detected", service)
+            log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
         host, port = get_service_address(myclass.variables, 'host', 'port', service)
         wait_socket(host, port, service)
@@ -124,7 +128,7 @@ def get_service_address(variables, host_var, port_var, service):
     if port is None:
         log.exit("Cannot find any variable matching {} for {}", port_var, service)
 
-    log.debug("Checking address: {}:{}", host, port)
+    log.info("Connecting to {} ({}:{})...", service, host, port)
 
     return host, int(port)
 
@@ -146,9 +150,9 @@ def mywait():
             broker = myclass.variables.get('broker')
 
             if broker == 'RABBIT':
-                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+                service_vars = detector.load_variables(prefix='rabbitmq_')
             elif broker == 'REDIS':
-                service_vars = detector.load_variables({'prefix': 'redis'})
+                service_vars = detector.load_variables(prefix='redis_')
             else:
                 log.exit("Invalid celery broker: {}", broker)
 
@@ -158,11 +162,11 @@ def mywait():
 
             backend = myclass.variables.get('backend')
             if backend == 'RABBIT':
-                service_vars = detector.load_variables({'prefix': 'rabbitmq'})
+                service_vars = detector.load_variables(prefix='rabbitmq_')
             elif backend == 'REDIS':
-                service_vars = detector.load_variables({'prefix': 'redis'})
+                service_vars = detector.load_variables(prefix='redis_')
             elif backend == 'MONGODB':
-                service_vars = detector.load_variables({'prefix': 'mongo'})
+                service_vars = detector.load_variables(prefix='mongo_')
             else:
                 log.exit("Invalid celery backend: {}", backend)
 
@@ -199,19 +203,28 @@ def tests(wait, core, file, folder):
     """Compute tests and coverage"""
 
     if wait:
-        while starting_up():
-            log.debug('Waiting service startup')
+        while initializing():
+            log.debug('Waiting services initialization')
             time.sleep(5)
         mywait()
-
-    log.debug("Starting unit tests: {}", pretty_errors)
 
     # launch unittests and also compute coverage
     log.warning(
         "Running all tests and computing coverage.\n" + "This may take some minutes."
     )
 
-    parameters = []
+    num_opt = 0
+    if core:
+        num_opt += 1
+    if file is not None:
+        num_opt += 1
+    if folder is not None:
+        num_opt += 1
+
+    if num_opt > 1:
+        log.exit("Please specify only one option between --core, --file and --folder")
+
+    parameters = ["tests/tests.sh"]
     if core:
         parameters.append(current_package)
     elif file is not None:
@@ -229,11 +242,9 @@ def tests(wait, core, file, folder):
 
     try:
 
-        # TODO: convert the `pyunittests` script from the docker image into python
-        # Pattern in plumbum library for executing a shell command
         from plumbum import local
-        command = local["pyunittests"]
-        log.verbose("Executing command pyunittests {}", parameters)
+        command = local["bash"]
+        log.verbose("Executing tests {}", parameters)
         output = command(parameters)
 
     except Exception as e:

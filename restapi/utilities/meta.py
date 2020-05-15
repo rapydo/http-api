@@ -17,18 +17,24 @@ from restapi.utilities.logs import log
 class Meta:
     """Utilities with meta in mind"""
 
-    def get_submodules_from_package(self, package):
+    def __init__(self):
+        # Deprecated since 0.7.3
+        log.warning("Deprecated initialization of Meta package")
+
+    @staticmethod
+    def get_submodules_from_package(package):
         submodules = []
+        if package is None:
+            return submodules
         for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if not ispkg:
                 submodules.append(modname)
         return submodules
 
-    def get_classes_from_module(self, module):
+    @staticmethod
+    def get_classes_from_module(module):
         """
         Find classes inside a python module file.
-
-        Note: this method returns a dict.
         """
 
         classes = {}
@@ -45,15 +51,14 @@ class Meta:
 
         return classes
 
-    def get_new_classes_from_module(self, module):
+    @staticmethod
+    def get_new_classes_from_module(module):
         """
         Skip classes not originated inside the module.
-
-        Note: this method returns a list.
         """
 
         classes = {}
-        for key, value in self.get_classes_from_module(module).items():
+        for key, value in Meta.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
                 classes[key] = value
         return classes
@@ -74,17 +79,10 @@ class Meta:
         if prefix_package:
             modulestring = BACKEND_PACKAGE + '.' + modulestring.lstrip('.')
 
-        # which version of python is this?
-        # Retrocompatibility for Python < 3.6
-        try:
-            import_exceptions = (ModuleNotFoundError, ImportError)
-        except NameError:
-            import_exceptions = ImportError
-
         try:
             # Meta language for dinamically import
             module = import_module(modulestring)
-        except import_exceptions as e:  # pylint:disable=catching-non-exception
+        except ModuleNotFoundError as e:  # pylint:disable=catching-non-exception
             if exit_on_fail:
                 raise e
             elif exit_if_not_found:
@@ -99,14 +97,15 @@ class Meta:
 
         return module
 
+    @staticmethod
     def import_submodules_from_package(
-        self, package_name, exit_if_not_found=False, exit_on_fail=False
+        package_name, exit_if_not_found=False, exit_on_fail=False
     ):
 
         submodules = []
         package = Meta.get_module_from_string(package_name)
 
-        for module_name in self.get_submodules_from_package(package):
+        for module_name in Meta.get_submodules_from_package(package):
             module_path = package_name + '.' + module_name
             log.debug("Loading module '{}'", module_path)
 
@@ -117,16 +116,6 @@ class Meta:
             )
             submodules.append(submod)
         return submodules
-
-    @staticmethod
-    def get_methods_inside_instance(instance, private_methods=False):
-        methods = {}
-        all_methods = inspect.getmembers(instance, predicate=inspect.ismethod)
-        for name, method in all_methods:
-            if not private_methods and name[0] == '_':
-                continue
-            methods[name] = method
-        return methods
 
     @staticmethod
     def get_class_from_string(classname, module, skip_error=False):
@@ -161,25 +150,29 @@ class Meta:
         return None
 
     @staticmethod
-    def models_module(name, package):
-        module_name = "{}.models.{}".format(package, name)
-        return Meta.get_module_from_string(module_name, exit_on_fail=True)
-
     def obj_from_models(obj_name, module_name, package):
-        module = Meta.models_module(module_name, package)
+        module_name = "{}.models.{}".format(package, module_name)
+        module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+
         obj = getattr(module, obj_name, None)
         return obj
 
-    def import_models(self, name, package, exit_on_fail=True):
+    @staticmethod
+    def import_models(name, package, exit_on_fail=True):
 
         models = {}
-        module = Meta.models_module(name, package)
+        module_name = "{}.models.{}".format(package, name)
+        try:
+            module = Meta.get_module_from_string(module_name, exit_on_fail=True)
+        except BaseException as e:
+            log.error("Cannot load {} models")
+            if exit_on_fail:
+                log.exit(e)
 
-        if module is not None:
-            models = self.get_new_classes_from_module(module)
-        elif exit_on_fail:
-            log.error("Missing module associated to requested models")
-            exit(1)
+            log.warning(e)
+            return {}
+
+        models = Meta.get_new_classes_from_module(module)
 
         return models
 
@@ -187,20 +180,12 @@ class Meta:
     def get_authentication_module(auth_service):
 
         module_name = "services.authentication.{}".format(auth_service)
-        log.verbose("Loading auth extension: {}", module_name)
+        log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )
 
         return module
-
-    @staticmethod
-    def class_factory(name, parents=object, attributes_and_methods=None):
-        if not isinstance(parents, tuple):
-            parents = (parents,)
-        if attributes_and_methods is None:
-            attributes_and_methods = {}
-        return type(name, parents, attributes_and_methods)
 
     @staticmethod
     def get_celery_tasks_from_module(submodule):
@@ -222,10 +207,11 @@ class Meta:
             tasks[func[0]] = func[1]
         return tasks
 
-    def get_customizer_class(self, module_relpath, class_name, args=None):
+    @staticmethod
+    def get_customizer_class(module_relpath, class_name, args=None):
 
         abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
-        MyClass = self.get_class_from_string(
+        MyClass = Meta.get_class_from_string(
             class_name,
             Meta.get_module_from_string(abspath),
             skip_error=True,
@@ -243,5 +229,5 @@ class Meta:
             except BaseException as e:
                 log.error("Errors during customizer: {}", e)
             else:
-                log.debug("Customizer called: {}", class_name)
+                log.verbose("Customizer called: {}", class_name)
         return instance

@@ -15,17 +15,25 @@ import pytz
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from flask import current_app, request
+
+from restapi.confs import TESTING
 from restapi.services.detect import Detector
+from restapi.exceptions import RestApiException
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
-from restapi.attributes import ALL_ROLES, ANY_ROLE
+from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
+
 from restapi.utilities.meta import Meta
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.globals import mem
-
 from restapi.utilities.logs import log
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+NULL_IP = "0.0.0.0"
+
+
+class InvalidToken(BaseException):
+    pass
 
 
 class BaseAuthentication(metaclass=abc.ABCMeta):
@@ -42,6 +50,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # Should be faster on 64bit machines
     JWT_ALGO = 'HS512'
 
+    # 1 month in seconds
+    DEFAULT_TOKEN_TTL = float(Detector.get_global_var('AUTH_JWT_TOKEN_TTL', 2592000))
+    GRACE_PERIOD = 7200  # 2 hours in seconds
+
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
@@ -52,25 +64,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
-        # Default shortTTL = 2592000     # 1 month in seconds
-        self.longTTL = float(Detector.get_global_var('TOKEN_LONG_TTL', 2592000))
-        # Default shortTTL = 604800     # 1 week in seconds
-        self.shortTTL = float(Detector.get_global_var('TOKEN_SHORT_TTL', 604800))
-        self.grace_period = 7200  # 2 hours in seconds
 
     @classmethod
     def myinit(cls):
 
         credentials = get_project_configuration("variables.backend.credentials")
 
-        if credentials.get('username') is not None:
-            log.exit("Obsolete use of variables.backend.credentials.username")
-
-        if credentials.get('password') is not None:
-            log.exit("Obsolete use of variables.backend.credentials.password")
-
-        # cls.default_user = credentials.get('username', None)
-        # cls.default_password = credentials.get('password', None)
         cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
         cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
@@ -83,27 +82,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.default_role is None or None in cls.default_roles:
             log.exit("Default roles are not available!")
 
-    # @abc.abstractmethod
-    # def __init__(self, services=None):
-    #     """
-    #     Make sure you can create an instance/connection,
-    #     or reuse one service from `server.py` operations.
-    #     """
-    #     return
-
     def make_login(self, username, password):
         """ The method which will check if credentials are good to go """
 
         try:
             user = self.get_user_object(username=username)
+        except ValueError as e:
+            # SqlAlchemy can raise the following error:
+            # A string literal cannot contain NUL (0x00) characters.
+            log.error(e)
+            raise RestApiException(
+                "Invalid input received",
+                status_code=400,
+            )
         except BaseException as e:
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
             # log.critical("Please reinitialize backend tables")
-            from restapi.exceptions import RestApiException
 
             raise RestApiException(
                 "Unable to connect to auth backend",
-                status_code=hcodes.HTTP_SERVER_ERROR,
+                status_code=500,
             )
 
         if user is None:
@@ -120,9 +118,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
-            return self.create_token(self.fill_payload(user))
+            payload, full_payload = self.fill_payload(user)
+            token = self.create_token(payload)
+            return token, full_payload
 
-        # old hashing; since 0.7.2. Removed me in a near future!!
+        # old hashing; deprecated since 0.7.2. Removed me in a near future!!
+        # Probably when ALL users will be converted... uhm... never?? :-D
         if self.check_old_password(user.password, password):
             log.warning(
                 "Old password encoding for user {}, automatic convertion", user.email)
@@ -192,6 +193,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_password_hash(password):
+        if not password:
+            raise RestApiException("Invalid password", status_code=401)
         return pwd_context.hash(password)
 
     # ########################
@@ -212,7 +215,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self._token
 
     @abc.abstractmethod
-    def get_user_object(self, username=None, payload=None):
+    def get_user_object(self, username=None, payload=None):  # pragma: no cover
         """
         How to retrieve the user from the current service,
         based on the unique username given, or from the content of the token
@@ -220,7 +223,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_users(self, user_id=None):
+    def get_users(self, user_id=None):  # pragma: no cover
         """
         How to retrieve users list from the current service,
         Optionally filter by the unique uuid given
@@ -228,56 +231,64 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None):
+    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
-            Return the list of all active tokens
+            Return the list of tokens
         """
         return
 
     @staticmethod
-    def get_remote_ip():
+    def get_remote_ip():  # pragma: no cover
+        try:
+            if 'X-Forwarded-For' in request.headers:
+                forwarded_ips = request.headers['X-Forwarded-For']
+                ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
+                return ip
+            elif PRODUCTION:
+                log.warning("Server in production X-Forwarded-For header is missing")
 
-        if 'X-Forwarded-For' in request.headers:
-            forwarded_ips = request.headers['X-Forwarded-For']
-            ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
+            ip = request.remote_addr
             return ip
-        elif PRODUCTION:
-            log.warning("Server in production X-Forwarded-For header is missing")
-
-        ip = request.remote_addr
-        return ip
+        except RuntimeError as e:
+            # When executed from tests it raises
+            # RuntimeError: Working outside of request context.
+            # Just mock an IP address (NULL_IP = 0.0.0.0)
+            if TESTING:
+                return NULL_IP
+            raise e
 
     @staticmethod
     def localize_ip(ip):
+
+        if ip is None:
+            return None
 
         try:
             data = mem.geo_reader.get(ip)
 
             if data is None:
-                return "Unknown"
+                return None
 
-            # if 'city' in data:
-            #     try:
-            #         return data['city']['names']['en']
-            #     except BaseException:
-            #         log.error("Missing city.names.en in {}", data)
-            #         return "Unknown city"
             if 'country' in data:
                 try:
-                    return data['country']['names']['en']
+                    c = data['country']['names']['en']
+                    return c
                 except BaseException:
                     log.error("Missing country.names.en in {}", data)
-                    return "Unknown country"
-            if 'continent' in data:
+                    return None
+            if 'continent' in data:  # pragma: no cover
                 try:
-                    return data['continent']['names']['en']
+                    c = data['continent']['names']['en']
+                    return c
+
                 except BaseException:
                     log.error("Missing continent.names.en in {}", data)
-                    return "Unknown continent"
+                    return None
+            return None
         except BaseException as e:
-            log.error(e)
+            log.error("{}. Input was {}", e, ip)
 
-        return "Unknown"
+        return None
 
     # ###################
     # # Tokens handling #
@@ -289,14 +300,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             'ascii'
         )
 
-        return encode, payload['jti']
+        return encode
 
-    def create_temporary_token(self, user, duration=300, token_type=None):
-        expiration = timedelta(seconds=duration)
-        payload = self.fill_payload(user, expiration=expiration, token_type=token_type)
-        return self.create_token(payload)
-
-    def create_reset_token(self, user, token_type, duration=86400):
+    def create_temporary_token(self, user, token_type, duration=86400):
         # invalidate previous tokens with same token_type
         tokens = self.get_tokens(user=user)
         for t in tokens:
@@ -310,26 +316,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if self.invalidate_token(tok):
                 log.info("Previous token invalidated: {}", tok)
 
-        # Generate a new reset token
-        new_token, jti = self.create_temporary_token(
-            user, duration=duration, token_type=token_type
-        )
-
-        return new_token, jti
+        expiration = timedelta(seconds=duration)
+        payload, full_payload = self.fill_payload(
+            user, expiration=expiration, token_type=token_type)
+        token = self.create_token(payload)
+        return token, full_payload
 
     @abc.abstractmethod
-    def verify_token_custom(self, jti, user, payload):
+    def verify_token_validity(self, jti, user):  # pragma: no cover
         """
             This method MUST be implemented by specific Authentication Methods
             to add more specific validation contraints
-        """
-        return
-
-    @abc.abstractmethod
-    def refresh_token(self, jti):
-        """
-            Verify shortTTL to refresh token if not expired
-            Invalidate token otherwise
         """
         return
 
@@ -361,15 +358,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
-        # Force token cleaning
+        # Force cleaning
+        self._token = None
+        self._jti = None
         self._user = None
 
         if token is None:
+            if raiseErrors:
+                raise InvalidToken("Missing token")
             return False
 
         # Decode the current token
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
+            if raiseErrors:
+                raise InvalidToken("Invalid payload")
             return False
 
         payload_type = payload.get("t", self.FULL_TOKEN)
@@ -379,45 +382,40 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if token_type != payload_type:
             log.error("Invalid token type {}, required: {}", payload_type, token_type)
+            if raiseErrors:
+                raise InvalidToken("Invalid token type")
             return False
 
         # Get the user from payload
-        self._user = self.get_user_object(payload=payload)
-        if self._user is None:
+        user = self.get_user_object(payload=payload)
+        if user is None:
+            if raiseErrors:
+                raise InvalidToken("No user from payload")
             return False
 
-        if not self.verify_token_custom(
-            user=self._user, jti=payload['jti'], payload=payload
-        ):
-            return False
-        # e.g. for graph: verify the (token <- user) link
-
-        if not self.refresh_token(payload['jti']):
+        # implemented from the specific db services
+        if not self.verify_token_validity(jti=payload['jti'], user=user):
+            if raiseErrors:
+                raise InvalidToken("Token is not valid")
             return False
 
         log.verbose("User authorized")
 
         self._token = token
         self._jti = payload['jti']
+        self._user = user
         return True
 
-    def save_token(self, user, token, jti, token_type=None):
+    @abc.abstractmethod  # pragma: no cover
+    def save_token(self, user, token, payload, token_type=None):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
-    def save_user(self, user):
+    def save_user(self, user):  # pragma: no cover
         log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
-    def invalidate_all_tokens(self, user=None):
-        """
-            With this method all token emitted for this user must be
-            invalidated (no longer valid starting from now)
-        """
-        return
-
-    @abc.abstractmethod
-    def invalidate_token(self, token, user=None):
+    def invalidate_token(self, token):  # pragma: no cover
         """
             With this method the specified token must be invalidated
             as expected after a user logout
@@ -434,29 +432,35 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        if expiration is None:
-            expiration = timedelta(seconds=self.longTTL)
-
         payload = {'user_id': userobj.uuid, 'jti': getUUID()}
+        full_payload = payload.copy()
 
-        short_jwt = (
-            Detector.get_global_var('AUTH_FULL_JWT_PAYLOAD', '').lower() == 'false'
-        )
+        if not token_type:
+            token_type = self.FULL_TOKEN
 
-        if token_type is not None:
-            if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
-                short_jwt = True
-                payload["t"] = token_type
+        short_token = False
+        if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
+            short_token = True
+            payload["t"] = token_type
 
-        if not short_jwt:
+        full_payload["t"] = token_type
+
+        if expiration is None:
+            expiration = timedelta(seconds=self.DEFAULT_TOKEN_TTL)
+        now = datetime.now(pytz.utc)
+        full_payload['iat'] = now
+        full_payload['nbf'] = now  # you can add a timedelta
+        full_payload['exp'] = now + expiration
+
+        if not short_token:
             now = datetime.now(pytz.utc)
-            nbf = now  # you can add a timedelta
-            exp = now + expiration
-            payload['iat'] = now
-            payload['nbf'] = nbf
-            payload['exp'] = exp
+            payload['iat'] = full_payload['iat']
+            payload['nbf'] = full_payload['nbf']
+            payload['exp'] = full_payload['exp']
 
-        return payload
+        # first used for encoding
+        # second used to store information on backend DB
+        return payload, full_payload
 
     # ##################
     # # Roles handling #
@@ -493,14 +497,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(["local_admin"], warnings=False)
 
     @abc.abstractmethod
-    def get_roles(self):
+    def get_roles(self):  # pragma: no cover
         """
         How to retrieve all the roles
         """
         return
 
     @abc.abstractmethod
-    def get_roles_from_user(self, userobj=None):
+    def get_roles_from_user(self, userobj=None):  # pragma: no cover
         """
         How to retrieve the role of a user from the current service,
         based on a user object.
@@ -513,34 +517,27 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
 
     @abc.abstractmethod
-    def init_users_and_roles(self):
+    def init_users_and_roles(self):  # pragma: no cover
         """
         Create roles and a user if no one exists.
-        A possible algorithm:
-
-        if not exist_one_role():
-            for role in self.DEFAULT_ROLES:
-                create_role(role)
-        if not exist_one_user():
-            create_user(
-                email=self.DEFAULT_USER,
-                name="Whatever", surname="YouLike",
-                password=self.DEFAULT_PASSWORD,
-                roles=DEFAULT_ROLES)
         """
         return
 
-    def custom_user_properties(self, userdata):
+    @staticmethod
+    def custom_user_properties(userdata):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path)
 
-        meta = Meta()
-        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
-        if Customizer is None:
+        CustomizerClass = Meta.get_class_from_string(
+            'Customizer',
+            module,
+            skip_error=True
+        )
+        if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
             try:
-                userdata = Customizer().custom_user_properties(userdata)
+                userdata = CustomizerClass().custom_user_properties(userdata)
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 
@@ -553,21 +550,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
         module = Meta.get_module_from_string(module_path)
 
-        meta = Meta()
-        Customizer = meta.get_class_from_string('Customizer', module, skip_error=True)
-        if Customizer is None:
+        CustomizerClass = Meta.get_class_from_string(
+            'Customizer',
+            module,
+            skip_error=True
+        )
+        if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
             try:
-                Customizer().custom_post_handle_user_input(self, user_node, input_data)
+                CustomizerClass().custom_post_handle_user_input(
+                    self,
+                    user_node,
+                    input_data
+                )
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 
     # ################
     # # Create Users #
     # ################
-    # @abc.abstractmethod
-    def create_user(self, userdata, roles):
+    @abc.abstractmethod
+    def create_user(self, userdata, roles):  # pragma: no cover
         """
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role
@@ -576,7 +580,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def link_roles(self, user, roles):
+    def link_roles(self, user, roles):  # pragma: no cover
         """
         A method to assign roles to a user
         """
@@ -586,10 +590,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    def register_failed_login(self, username):
+    @staticmethod
+    def register_failed_login(username):
         log.critical("auth.register_failed_login: not implemented")
         return True
 
-    def get_failed_login(self, username):
+    @staticmethod
+    def get_failed_login(username):
         log.critical("auth.get_failed_login: not implemented")
         return 0

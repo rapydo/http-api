@@ -13,11 +13,12 @@ import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
-from restapi.attributes import ExtraAttributes
+
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.confs import get_project_configuration
+from restapi.confs.attributes import ExtraAttributes
 from restapi.utilities.globals import mem
-
 from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.logs import log
 
@@ -33,7 +34,7 @@ def input_validation(json_parameters, definitionName):
     validate_object(spec, definition, json_parameters)
 
 
-class BeSwagger:
+class Swagger:
     """Swagger class in our own way:
 
     Fewer methods than the original swagger reading,
@@ -121,6 +122,7 @@ class BeSwagger:
 
             ###########################
             # Read Form Data Custom parameters
+            # TO BE DEPRECATED AFTER APISPEC
             cparam = specs.pop('custom_parameters', None)
             if cparam is not None:
                 for fdp in cparam:
@@ -301,13 +303,13 @@ class BeSwagger:
             "security": [{"Bearer": []}],
         }
 
-        ###################
-        # Set existing values
-        proj = self._customizer._configurations['project']
-        if 'version' in proj:
-            output['info']['version'] = proj['version']
-        if 'title' in proj:
-            output['info']['title'] = proj['title']
+        version = get_project_configuration('project.version')
+        title = get_project_configuration('project.title')
+
+        if version is not None:
+            output['info']['version'] = version
+        if title is not None:
+            output['info']['title'] = title
 
         ###################
         models = self.get_models()
@@ -358,7 +360,8 @@ class BeSwagger:
         self._customizer._original_paths = self._original_paths
         return output
 
-    def get_models(self):
+    @staticmethod
+    def get_models():
         """ Read models from base/custom yaml files """
 
         # BASE definitions

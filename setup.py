@@ -23,7 +23,7 @@ setup(
     ),
     package_data={
         main_package: [
-            'confs/services.yaml',
+            'confs/connectors.yaml',
             'models/swagger.yaml',
             'templates/index.html'
         ],
@@ -34,9 +34,9 @@ setup(
     '''.format(main_package, app),
     install_requires=[
         # Flask and plugins
-        "Flask==1.1.1",
+        "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.8.5",
+        "flask-apispec==0.8.7",
         "Flask-Cors==3.0.8",
         "Flask-SQLAlchemy==2.4.1",
         "Flask-Migrate",
@@ -45,9 +45,14 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
-        "authlib==0.13",
+        "authlib==0.14.1",
 
-        "PyYAML==5.3",
+        "PyYAML==5.3.1",
+
+        "Werkzeug==0.16.1",
+        "pytest-flask==1.0.0",
+        "pytest-cov==2.8.1",
+        "schemathesis==1.2.0",
 
         # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
@@ -72,15 +77,13 @@ setup(
         "glom",
         "psutil",
         "plumbum",
-        "pretty_errors",
         "maxminddb-geolite2",
 
         # Web sockets
         "websocket-client",
         "gripcontrol==4.0.0",
 
-        # Sentry
-        "sentry-sdk[flask]==0.14.0"
+        "sentry-sdk[flask]==0.14.3"
     ],
     classifiers=[
         'Programming Language :: Python',

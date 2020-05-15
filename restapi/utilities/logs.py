@@ -5,22 +5,19 @@ import sys
 import json
 import urllib
 import re
+from loguru import logger as log
 
-try:
-    from loguru import logger as log
-except ValueError as e:
-    print("Cannot initialize logs: {}".format(e))
-    sys.exit(1)
+from restapi.confs import PRODUCTION
 
 
 log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
 LOGS_FOLDER = "/logs"
 HOSTNAME = os.environ.get("HOSTNAME", "backend")
 CONTAINER_ID = os.environ.get("CONTAINER_ID", "")
-CELERY_HOST = os.environ.get("CELERY_HOST", "0")
+IS_CELERY_CONTAINER = os.environ.get("IS_CELERY_CONTAINER", "0")
 
 # BACKEND-SERVER
-if CELERY_HOST == '0':
+if IS_CELERY_CONTAINER == '0':
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:
@@ -60,15 +57,61 @@ log.verbose = verbose
 log.exit = critical_exit
 
 log.remove()
-if LOGS_PATH is not None:
-    log.add(LOGS_PATH, level="WARNING", rotation="1 week", retention="4 weeks")
+
+
+# Prevent exceptions on standard sink
+def print_message_on_stderr(record):
+    return record.get("exception") is None
+
+
+fmt = ""
+fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
+fmt += "[<level>{level}</level> "
+fmt += "<fg #666>{name}:{line}</fg #666>] "
+fmt += "<fg #FFF>{message}</fg #FFF>"
 
 log.add(
     sys.stderr,
     level=log_level,
     colorize=True,
-    format="<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> [<level>{level}</level> <fg #666>{name}:{line}</fg #666>] <fg #FFF>{message}</fg #FFF>"
+    format=fmt,
+    # If True the exception trace is extended upward, beyond the catching point
+    # to show the full stacktrace which generated the error.
+    backtrace=False,
+    # Display variables values in exception trace to eases the debugging.
+    # Disabled in production to avoid leaking sensitive data.
+    # Note: enabled in development mode on the File Logger
+    diagnose=False,
+    filter=print_message_on_stderr
 )
+
+if LOGS_PATH is not None:
+    try:
+        log.add(
+            LOGS_PATH,
+            level="WARNING",
+            rotation="1 week",
+            retention="4 weeks",
+            # If True the exception trace is extended upward, beyond the catching point
+            # to show the full stacktrace which generated the error.
+            backtrace=False,
+            # Display variables values in exception trace to eases the debugging.
+            # Disabled in production to avoid leaking sensitive data.
+            diagnose=not PRODUCTION,
+            # Messages pass through a multiprocess-safe queue before reaching the sink
+            # This is useful while logging to a file through multiple processes.
+            # This also has the advantage of making logging calls non-blocking.
+            # Unfortunately it fails to serialize some exceptions with pickle
+            enqueue=False,
+            # Errors occurring while sink handles logs messages are automatically caught
+            # an exception message is displayed on sys.stderr but the exception
+            # is not propagated to the caller, preventing your app to crash.
+            # This is the case when picle fails to serialize before sending to the queue
+            catch=True,
+        )
+    except PermissionError as p:
+        log.error(p)
+        LOGS_PATH = None
 
 # Logs utilities
 

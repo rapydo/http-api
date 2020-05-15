@@ -11,10 +11,11 @@ MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a
 
 """
 
-from datetime import datetime, timedelta
 import pytz
-from restapi.utilities.uuid import getUUID
+from datetime import datetime, timedelta
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -25,22 +26,18 @@ if not detector.check_availability(__name__):
 class Authentication(BaseAuthentication):
     def get_user_object(self, username=None, payload=None):
 
-        from neomodel.exceptions import DeflateError
-        from neo4j.exceptions import ServiceUnavailable
+        if username is None and payload is None:
+            return None
 
         user = None
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
-            if payload is not None and 'user_id' in payload:
+            elif payload is not None and 'user_id' in payload:
                 user = self.db.User.nodes.get(uuid=payload['user_id'])
-        except ServiceUnavailable as e:
-            self.db.refresh_connection()
-            raise e
-        except DeflateError:
-            log.warning("Invalid username '{}'", username)
         except self.db.User.DoesNotExist:
-            log.warning("Could not find user for '{}'", username)
+            log.warning(
+                "Could not find user for username={}, payload={}", username, payload)
         return user
 
     def get_users(self, user_id=None):
@@ -73,6 +70,10 @@ class Authentication(BaseAuthentication):
                 log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
+        # No user for on authenticated endpoints -> return no role
+        if userobj is None:
+            return roles
+
         for role in userobj.roles.all():
             roles.append(role.name)
         return roles
@@ -89,12 +90,7 @@ class Authentication(BaseAuthentication):
         userdata = self.custom_user_properties(userdata)
 
         user_node = self.db.User(**userdata)
-        try:
-            user_node.save()
-        except Exception as e:
-            message = "Can't create user {}:\n{}".format(userdata['email'], e)
-            log.error(message)
-            raise AttributeError(message)
+        user_node.save()
 
         self.link_roles(user_node, roles)
 
@@ -114,11 +110,6 @@ class Authentication(BaseAuthentication):
                 raise Exception("Graph role {} does not exist".format(role))
             user.roles.connect(role_obj)
 
-    def create_role(self, role, description="automatic"):
-        role = self.db.Role(name=role, description=description)
-        role.save()
-        return role
-
     def init_users_and_roles(self):
 
         # Handle system roles
@@ -129,17 +120,20 @@ class Authentication(BaseAuthentication):
 
         log.info("Current roles: {}", current_roles)
 
-        for role in self.default_roles:
-            if role not in current_roles:
-                log.info("Creating role: {}", role)
-                self.create_role(role)
+        for role_name in self.default_roles:
+            if role_name not in current_roles:
+                log.info("Creating role: {}", role_name)
+                role_description = "automatic" if not TESTING else role_name
+                role = self.db.Role(
+                    name=role_name,
+                    description=role_description
+                )
+                role.save()
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
-            log.warning("No users inside graphdb. Injecting default.")
             self.create_user(
                 {
-                    # 'uuid': getUUID(),
                     'email': self.default_user,
                     # 'authmethod': 'credentials',
                     'name': 'Default',
@@ -148,6 +142,7 @@ class Authentication(BaseAuthentication):
                 },
                 roles=self.default_roles,
             )
+            log.warning("Injected default user")
         else:
             log.debug("Users already created")
 
@@ -155,7 +150,7 @@ class Authentication(BaseAuthentication):
         if user is not None:
             user.save()
 
-    def save_token(self, user, token, jti, token_type=None):
+    def save_token(self, user, token, payload, token_type=None):
 
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
@@ -164,75 +159,66 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        exp = now + timedelta(seconds=self.shortTTL)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_node = self.db.Token()
-        token_node.jti = jti
+        token_node.jti = payload['jti']
         token_node.token = token
         token_node.token_type = token_type
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-        token_node.IP = ip
-        token_node.hostname = ip_loc
+        token_node.IP = ip or NULL_IP
+        token_node.location = ip_loc or "Unknown"
 
         token_node.save()
         # Save user updated in profile endpoint
         user.save()
         token_node.emitted_for.connect(user)
 
-    def verify_token_custom(self, jti, user, payload):
+    def verify_token_validity(self, jti, user):
+
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
         except self.db.Token.DoesNotExist:
             return False
+
         if not token_node.emitted_for.is_connected(user):
             return False
 
-        return True
-
-    def refresh_token(self, jti):
         now = datetime.now(pytz.utc)
-        try:
-            token_node = self.db.Token.nodes.get(jti=jti)
 
-            if now > token_node.expiration:
-                self.invalidate_token(token=token_node.token)
-                log.info(
-                    "This token is no longer valid: expired since {}",
-                    token_node.expiration.strftime("%d/%m/%Y")
+        if now > token_node.expiration:
+            self.invalidate_token(token=token_node.token)
+            log.info(
+                "This token is no longer valid: expired since {}",
+                token_node.expiration.strftime("%d/%m/%Y")
+            )
+            return False
+
+        # Verify IP validity only after grace period is expired
+        if token_node.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
+            ip = self.get_remote_ip()
+            if token_node.IP != ip:
+                log.error(
+                    "This token is emitted for IP {}, invalid use from {}",
+                    token_node.IP, ip
                 )
                 return False
 
-            # Verify IP validity only after grace period is expired
-            if token_node.last_access + timedelta(seconds=self.grace_period) < now:
-                ip = self.get_remote_ip()
-                if token_node.IP != ip:
-                    log.error(
-                        "This token is emitted for IP {}, invalid use from {}",
-                        token_node.IP, ip
-                    )
-                    return False
+        token_node.last_access = now
+        token_node.save()
 
-            exp = now + timedelta(seconds=self.shortTTL)
+        return True
 
-            token_node.last_access = now
-            token_node.expiration = exp
-
-            token_node.save()
-
-            return True
-        except self.db.Token.DoesNotExist:
-            log.warning("Token {} not found", jti)
-            return False
-
-    def get_tokens(self, user=None, token_jti=None):
-        # FIXME: TTL should be considered?
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
 
         tokens_list = []
         tokens = None
 
-        if user is not None:
+        if get_all:
+            tokens = self.db.Token.nodes.all()
+        elif user is not None:
             tokens = user.tokens.all()
         elif token_jti is not None:
             try:
@@ -240,34 +226,32 @@ class Authentication(BaseAuthentication):
             except self.db.Token.DoesNotExist:
                 pass
 
-        if tokens is not None:
-            for token in tokens:
-                t = {}
+        if tokens is None:
+            return tokens_list
 
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation.strftime('%s')
-                t["last_access"] = token.last_access.strftime('%s')
-                if token.expiration is not None:
-                    t["expiration"] = token.expiration.strftime('%s')
-                t["IP"] = token.IP
-                t["hostname"] = token.hostname
-                tokens_list.append(t)
+        for token in tokens:
+            t = {}
+
+            t["id"] = token.jti
+            t["token"] = token.token
+            t["token_type"] = token.token_type
+            # t["emitted"] = token.creation.strftime('%s')
+            # t["last_access"] = token.last_access.strftime('%s')
+            # if token.expiration is not None:
+            #     t["expiration"] = token.expiration.strftime('%s')
+            t["emitted"] = token.creation
+            t["last_access"] = token.last_access
+            t["expiration"] = token.expiration
+            t["IP"] = token.IP
+            t["location"] = token.location
+            if get_all:
+                t['user'] = self.db.getSingleLinkedNode(token.emitted_for)
+
+            tokens_list.append(t)
 
         return tokens_list
 
-    def invalidate_all_tokens(self, user=None):
-        if user is None:
-            user = self.get_user()
-
-        user.uuid = getUUID()
-        user.save()
-        return True
-
-    def invalidate_token(self, token, user=None):
-        # if user is None:
-        #     user = self.get_user()
+    def invalidate_token(self, token):
         try:
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()

@@ -4,13 +4,15 @@
 Sql handling authentication process
 """
 
-import pytz
 import sqlalchemy
+import pytz
 from datetime import datetime, timedelta
+
+from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import NULL_IP
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.logs import log
 
@@ -93,14 +95,14 @@ class Authentication(BaseAuthentication):
                 log.error(str(e))
                 raise RestApiException(
                     "Backend database is unavailable",
-                    status_code=hcodes.HTTP_SERVICE_UNAVAILABLE,
+                    status_code=503,
                 )
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             # if retry <= 0:
             #     log.error(str(e))
             #     log.warning("Errors retrieving user object, retrying...")
-                # return self.get_user_object(
-                #     username=username, payload=payload, retry=1)
+            #     return self.get_user_object(
+            #         username=username, payload=payload, retry=1)
             raise e
 
         return user
@@ -136,6 +138,10 @@ class Authentication(BaseAuthentication):
                 log.warning("Roles check: invalid current user.\n{}", e)
                 return roles
 
+        # No user for on authenticated endpoints -> return no role
+        if userobj is None:
+            return roles
+
         for role in userobj.roles:
             roles.append(role.name)
         return roles
@@ -150,18 +156,20 @@ class Authentication(BaseAuthentication):
             # if no roles
             missing_role = not self.db.Role.query.first()
             if missing_role:
-                log.warning("No roles inside db. Injected defaults.")
-                for role in self.default_roles:
-                    sqlrole = self.db.Role(name=role, description="automatic")
-                    self.db.session.add(sqlrole)
+                for role_name in self.default_roles:
+                    role_description = "automatic" if not TESTING else role_name
+                    role = self.db.Role(
+                        name=role_name,
+                        description=role_description
+                    )
+                    self.db.session.add(role)
+                log.warning("Injected default roles")
 
             # if no users
             missing_user = not self.db.User.query.first()
             if missing_user:
-                log.warning("No users inside db. Injected default.")
                 self.create_user(
                     {
-                        # 'uuid': getUUID(),
                         'email': self.default_user,
                         # 'authmethod': 'credentials',
                         'name': 'Default',
@@ -170,6 +178,7 @@ class Authentication(BaseAuthentication):
                     },
                     roles=self.default_roles,
                 )
+                log.warning("Injected default user")
 
             if missing_user or missing_role:
                 self.db.session.commit()
@@ -181,32 +190,28 @@ class Authentication(BaseAuthentication):
     def save_user(self, user):
         if user is not None:
             self.db.session.add(user)
-            # try:
             self.db.session.commit()
-            # except IntegrityError:
-            #     self.auth.db.session.rollback()
-            #     raise RestApiException("This user already exists")
 
-    def save_token(self, user, token, jti, token_type=None):
-
+    def save_token(self, user, token, payload, token_type=None):
+        # payload['jti']
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
 
-        now = datetime.now()
-        exp = now + timedelta(seconds=self.shortTTL)
+        now = datetime.now(pytz.utc)
+        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_entry = self.db.Token(
-            jti=jti,
+            jti=payload['jti'],
             token=token,
             token_type=token_type,
             creation=now,
             last_access=now,
             expiration=exp,
-            IP=ip,
-            hostname=ip_loc,
+            IP=ip or NULL_IP,
+            location=ip_loc or "Unknown",
         )
 
         token_entry.emitted_for = user
@@ -222,22 +227,34 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-    def refresh_token(self, jti):
-        now = datetime.now()
+    def verify_token_validity(self, jti, user):
+
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
+
         if token_entry is None:
             return False
+
+        if token_entry.emitted_for is None or token_entry.emitted_for != user:
+            return False
+
+        # MySQL seems unable to save tz-aware datetimes...
+        if token_entry.expiration.tzinfo is None:
+            # Create a offset-naive datetime
+            now = datetime.now()
+        else:
+            # Create a offset-aware datetime
+            now = datetime.now(pytz.utc)
 
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
             log.info(
                 "This token is no longer valid: expired since {}",
-                token_entry.strftime("%d/%m/%Y")
+                token_entry.expiration.strftime("%d/%m/%Y")
             )
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_entry.last_access + timedelta(seconds=self.grace_period) < now:
+        if token_entry.last_access + timedelta(seconds=self.GRACE_PERIOD) < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
                 log.error(
@@ -246,10 +263,7 @@ class Authentication(BaseAuthentication):
                 )
                 return False
 
-        exp = now + timedelta(seconds=self.shortTTL)
-
         token_entry.last_access = now
-        token_entry.expiration = exp
 
         try:
             self.db.session.add(token_entry)
@@ -260,54 +274,47 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def get_tokens(self, user=None, token_jti=None):
-        # FIXME: TTL should be considered?
+    def get_tokens(self, user=None, token_jti=None, get_all=False):
 
         tokens_list = []
         tokens = None
 
-        if user is not None:
+        if get_all:
+            tokens = self.db.Token.query.all()
+        elif user is not None:
             tokens = user.tokens.all()
         elif token_jti is not None:
             tokens = [self.db.Token.query.filter_by(jti=token_jti).first()]
 
-        if tokens is not None:
-            for token in tokens:
+        if tokens is None:
+            return tokens_list
 
-                t = {}
+        for token in tokens:
 
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation.strftime('%s')
-                t["last_access"] = token.last_access.strftime('%s')
-                if token.expiration is not None:
-                    t["expiration"] = token.expiration.strftime('%s')
-                t["IP"] = token.IP
-                t["hostname"] = token.hostname
-                tokens_list.append(t)
+            if token is None:
+                continue
+
+            t = {}
+
+            t["id"] = token.jti
+            t["token"] = token.token
+            t["token_type"] = token.token_type
+            # t["emitted"] = token.creation.strftime('%s')
+            # t["last_access"] = token.last_access.strftime('%s')
+            # if token.expiration is not None:
+            #     t["expiration"] = token.expiration.strftime('%s')
+            t["emitted"] = token.creation
+            t["last_access"] = token.last_access
+            t["expiration"] = token.expiration
+            t["IP"] = token.IP
+            t["location"] = token.location
+            if get_all:
+                t['user'] = token.emitted_for
+            tokens_list.append(t)
 
         return tokens_list
 
-    def invalidate_all_tokens(self, user=None):
-        """
-            To invalidate all tokens the user uuid is changed
-        """
-        if user is None:
-            user = self._user
-        user.uuid = getUUID()
-        try:
-            self.db.session.add(user)
-            self.db.session.commit()
-            log.warning("User uuid changed to: {}", user.uuid)
-        except BaseException as e:
-            log.error("DB error ({}), rolling back", e)
-            self.db.session.rollback()
-        return True
-
-    def invalidate_token(self, token, user=None):
-        # if user is None:
-        #     user = self.get_user()
+    def invalidate_token(self, token):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry is not None:
@@ -324,15 +331,6 @@ class Authentication(BaseAuthentication):
 
         log.warning("Could not invalidate token")
         return False
-
-    def verify_token_custom(self, jti, user, payload):
-        token_entry = self.db.Token.query.filter_by(jti=jti).first()
-        if token_entry is None:
-            return False
-        if token_entry.emitted_for is None or token_entry.emitted_for != user:
-            return False
-
-        return True
 
     def irods_user(self, username, session):
 
@@ -354,7 +352,6 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.commit()
                 log.info('Cached iRODS user: {}', username)
-            # except sqlalchemy.exc.IntegrityError:
             except BaseException as e:
                 self.db.session.rollback()
                 log.error("Errors saving iRODS user: {}", username)
@@ -368,7 +365,8 @@ class Authentication(BaseAuthentication):
                 user.session = session
 
         # token
-        token, jti = self.create_token(self.fill_payload(user))
+        payload, full_payload = self.fill_payload(user)
+        token = self.create_token(payload)
         now = datetime.now(pytz.utc)
         if user.first_login is None:
             user.first_login = now
@@ -380,6 +378,6 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-        self.save_token(user, token, jti)
+        self.save_token(user, token, full_payload)
 
         return token, username
