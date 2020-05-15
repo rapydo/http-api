@@ -159,14 +159,14 @@ class TestUploadAndDownload(BaseTests):
             data={'chunked': True},
             headers={'Range': ''}
         )
-        assert r.status_code == 400
+        assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
             data={'chunked': True},
             headers={'Range': '0-9'}
         )
-        assert r.status_code == 400
+        assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,

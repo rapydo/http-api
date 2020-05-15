@@ -33,7 +33,11 @@ if TESTING:
             "/tests/download/<fname>": {
                 "summary": "Execute tests with the downloader",
                 "description": "Only enabled in testing mode",
-                "responses": {"200": {"description": "Tests executed"}},
+                "responses": {
+                    "200": {"description": "Tests executed"},
+                    "206": {"description": "Sent partial content"},
+                    "416": {"description": "Range Not Satisfiable"},
+                },
             },
         }
 

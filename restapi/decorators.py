@@ -67,6 +67,9 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 # catched by handle_marshmallow_errors
                 raise e
 
+            # raised in case of malformed Range header
+            except werkzeug.exceptions.RequestedRangeNotSatisfiable:
+                raise
             # Catch any other exception
             except Exception as e:
 
