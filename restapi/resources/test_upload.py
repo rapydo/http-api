@@ -22,5 +22,5 @@ if TESTING:
         }
 
         @decorators.catch_errors()
-        def get(self, test):
+        def get(self):
             return 1
