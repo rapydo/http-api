@@ -39,9 +39,31 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
+        c = self.get_content(r)
+        assert c.get('filename') == self.fname
+        meta = c.get('meta')
+        assert meta is not None
+        assert meta.get('charset') == 'binary'
+        assert meta.get('type') == 'application/octet-stream'
+
+        r = client.post(API_URI + '/tests/upload')
+        assert r.status_code == 201
+        assert self.get_content(r) == ''
+
+        # r.headers should contain "Location": url
+        # assert r.headers ??
+
     def test_download(self, client):
 
         endpoint = API_URI + '/tests/download/'
+
+        r = client.get(endpoint + 'doesnotexist')
+        assert r.status_code == 400
+
+        # no filename provided
+        r = client.get(endpoint)
+        assert r.status_code == 400
+
         r = client.get(endpoint + self.fname)
         assert r.status_code == 200
         content = r.data.decode('utf-8')
@@ -63,9 +85,8 @@ class TestUploadAndDownload(BaseTests):
         assert content != self.fcontent
         assert content == new_content
 
-        r = client.get(endpoint + 'doesnotexist')
-        assert r.status_code == 400
+        r = client.get(endpoint + self.fname, data={'stream': True})
+        assert r.status_code == 200
 
-        # no filename provided
-        r = client.get(endpoint)
+        r = client.get(endpoint + 'doesnotexist', data={'stream': True})
         assert r.status_code == 400

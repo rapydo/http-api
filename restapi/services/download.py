@@ -6,6 +6,7 @@ Download data from APIs.
 
 import os
 import re
+from mimetypes import MimeTypes
 from flask import request, send_from_directory, stream_with_context, Response
 
 from restapi.services.uploader import Uploader
@@ -49,8 +50,13 @@ class Downloader:
             yield data
 
     # this is good for large files
-    def send_file_streamed(self, path, mime):
-        log.info("Providing streamed content from {}", path)
+    def send_file_streamed(self, path, mime=None):
+        if mime is None:
+            mime = MimeTypes()
+            mime_type = mime.guess_type(path)
+            mime = mime_type[0]
+
+        log.info("Providing streamed content from {} (mime={})", path, mime)
 
         f = open(path, "rb")
         return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
