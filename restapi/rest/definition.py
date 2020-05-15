@@ -107,9 +107,6 @@ class EndpointResource(Resource):
 
         if len(current_params) > 0:
 
-            # Basic options
-            basevalue = str  # Python3
-            # basevalue = unicode  #Python2
             act = 'store'  # store is normal, append is a list
             loc = ['headers', 'values']  # multiple locations
             trim = True
@@ -123,7 +120,7 @@ class EndpointResource(Resource):
                 if tmptype == 'number':
                     mytype = int
                 else:
-                    mytype = basevalue
+                    mytype = str
 
                 # TO CHECK: I am creating an option to handle arrays
                 if tmptype == 'select':
@@ -205,7 +202,7 @@ class EndpointResource(Resource):
 
         if force_read_parameters:
             self.get_input()
-        # NOTE: you have to call self.get_input prior to use this method
+        # NOTE: you have to call self.get_input before to use this method
         limit = self._args.get(PERPAGE_KEY, DEFAULT_PERPAGE)
         current_page = self._args.get(CURRENTPAGE_KEY, DEFAULT_CURRENTPAGE)
 
@@ -229,20 +226,6 @@ class EndpointResource(Resource):
             current_page = DEFAULT_CURRENTPAGE
 
         return (current_page, limit)
-
-    def get_input_properties(self):
-        """
-        NOTE: usefull to use for swagger validation?
-        """
-
-        # get body definition name
-        parameters = self.get_endpoint_custom_definition().copy()
-        parameter = parameters.pop()
-        ref = parameter.get('schema', {}).get('$ref')
-        refname = ref.split('/').pop()
-        # get body definition properties
-        definitions = mem.customizer._definitions.get('definitions')
-        return definitions.get(refname).get('properties')
 
     def get_current_user(self):
         """
@@ -442,6 +425,7 @@ class EndpointResource(Resource):
 
         return attributes
 
+    # NOTE: only used by imc
     def getJsonResponse(
         self,
         instance,
