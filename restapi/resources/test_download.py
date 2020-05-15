@@ -14,7 +14,12 @@ if TESTING:
         labels = ["tests"]
 
         _GET = {
-            "/tests/download": {
+            "/tests/download/": {
+                "summary": "Execute tests with the downloader",
+                "description": "Only enabled in testing mode",
+                "responses": {"200": {"description": "Tests executed"}},
+            },
+            "/tests/download/<fname>": {
                 "summary": "Execute tests with the downloader",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
@@ -22,5 +27,6 @@ if TESTING:
         }
 
         @decorators.catch_errors()
-        def get(self):
-            return 1
+        def get(self, fname=None):
+
+            return self.download(fname)

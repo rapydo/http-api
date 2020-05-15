@@ -8,6 +8,8 @@ import os
 import re
 from flask import request, send_from_directory, stream_with_context, Response
 
+from restapi.services.uploader import Uploader
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
@@ -16,13 +18,20 @@ class Downloader:
     # This is good for small files
     def download(self, filename=None, subfolder=None, get=False):
 
-        if not get:
-            return self.response("No flow chunks for now", code=202)
+        # if not get:
+        #     return self.response("No flow chunks for now", code=202)
 
         if filename is None:
-            return self.response(errors="No filename specified to download")
+            raise RestApiException(
+                "No filename specified to download",
+                status_code=400
+            )
 
-        path = self.absolute_upload_file(filename, subfolder=subfolder, onlydir=True)
+        path = Uploader.absolute_upload_file(
+            filename,
+            subfolder=subfolder,
+            onlydir=True
+        )
         log.info("Provide '{}' from '{}'", filename, path)
 
         return send_from_directory(path, filename)
