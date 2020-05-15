@@ -10,7 +10,7 @@ from restapi.services.uploader import Uploader
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.confs import UPLOAD_PATH
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 class Input(Schema):
 
@@ -30,6 +30,13 @@ if TESTING:
                     "200": {"description": "Tests executed"},
                 },
             },
+            "/tests/upload/<chunked>": {
+                "summary": "Execute tests with the chunked uploader",
+                "description": "Only enabled in testing mode",
+                "responses": {
+                    "200": {"description": "Tests executed"},
+                },
+            },
         }
         _POST = {
             "/tests/upload": {
@@ -44,16 +51,19 @@ if TESTING:
 
         @decorators.catch_errors()
         @use_kwargs(Input)
-        def put(self, **kwargs):
+        def put(self, chunked=None, **kwargs):
 
             force = kwargs.get('force', False)
-            # if request.mimetype != 'application/octet-stream':
 
-            # Read the request
-            # request.get_data()
+            if chunked:
+                filename = 'fixed.filename'
+                completed, response = self.chunk_upload(UPLOAD_PATH, filename)
 
-            # response = self.upload(subfolder=r.username, force=force)
-            response = self.upload(force=force)
+                if completed:
+                    log.info("Upload completed")
+
+            else:
+                response = self.upload(force=force)
             return response
 
         @decorators.catch_errors()
@@ -62,4 +72,6 @@ if TESTING:
 
             force = kwargs.get('force', False)
             filename = 'fixed.filename'
-            return self.init_chunk_upload(UPLOAD_PATH, filename, force=force)
+            return self.init_chunk_upload(
+                UPLOAD_PATH, filename, force=force
+            )
