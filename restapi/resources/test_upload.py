@@ -14,7 +14,7 @@ if TESTING:
         labels = ["tests"]
 
         _GET = {
-            "/upload": {
+            "/tests/upload": {
                 "summary": "Execute tests with the uploader",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
