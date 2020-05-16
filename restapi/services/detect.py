@@ -263,14 +263,12 @@ class Detector:
             else:
                 self.connectors_instances[name] = instance
 
-            if not project_init:
-                do_init = False
-            elif name == self.authentication_service:
+            do_init = False
+            if project_init and name in (
+                self.authentication_service,
+                self.authentication_name
+            ):
                 do_init = True
-            elif name == self.authentication_name:
-                do_init = True
-            else:
-                do_init = False
 
             # Initialize the real service getting the first service object
             log.debug("Initializing {} (pinit={})", name, do_init)
@@ -286,7 +284,6 @@ class Detector:
 
             # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
             if name == 'celery':
-                do_init = True
 
                 task_package = "{}.tasks".format(CUSTOM_PACKAGE)
 

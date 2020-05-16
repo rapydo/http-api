@@ -14,6 +14,7 @@ from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neobolt.exceptions import AuthError as neobolt_AuthError
 from restapi.connectors import Connector
+from restapi.services.authentication.neo4j import Authentication
 from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.utilities.logs import log
 
