@@ -7,13 +7,13 @@ Docs:
 https://pymodm.readthedocs.io
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
-
+import os
 from pymodm import fields
 from pymodm import MongoModel
 from pymongo.operations import IndexModel
-from restapi.connectors.mongo import AUTH_DB
 
 # from pymongo.write_concern import WriteConcern
+AUTH_DB = os.environ.get('MONGO_DATABASE')
 
 
 ####################

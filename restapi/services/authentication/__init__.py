@@ -59,12 +59,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
 
-    def __init__(self, variables):
+    def __init__(self):
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
         self._jti = None
         self._user = None
+
+        variables = Detector.load_variables(prefix="auth_")
 
         self.import_secret(SECRET_KEY_FILE)
 
