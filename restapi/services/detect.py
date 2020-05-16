@@ -27,8 +27,7 @@ class Detector:
         self.services_classes = {}
         self.connectors_instances = {}
         self.available_services = {}
-        self.check_configuration()
-        self.load_classes()
+        self.load_services()
 
     @staticmethod
     def get_global_var(key, default=None):
@@ -74,7 +73,7 @@ class Detector:
         instance = farm.get_instance(global_instance=global_instance, **kwargs)
         return instance
 
-    def check_configuration(self):
+    def load_services(self):
 
         try:
             self.services_configuration = load_yaml_file(
@@ -107,6 +106,53 @@ class Detector:
                 # set auth service
                 if name == self.authentication_name:
                     self.authentication_service = variables.get('service')
+
+        for service in self.services_configuration:
+
+            name = service.get('name')
+
+            if not self.available_services.get(name):
+                continue
+            log.verbose("Looking for class {}", name)
+
+            variables = service.get('variables')
+            class_name = service.get('class')
+            connector_name = service.get('name')
+
+            # Get the existing class
+            try:
+                MyClass = self.load_connector(connector_name, class_name)
+
+                # Passing variables
+                MyClass.set_variables(variables)
+
+                if service.get('load_models'):
+
+                    base_models = Meta.import_models(
+                        name, BACKEND_PACKAGE, exit_on_fail=True
+                    )
+                    if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                        extended_models = {}
+                    else:
+                        extended_models = Meta.import_models(
+                            name, EXTENDED_PACKAGE, exit_on_fail=False
+                        )
+                    custom_models = Meta.import_models(
+                        name, CUSTOM_PACKAGE, exit_on_fail=False
+                    )
+
+                    MyClass.set_models(base_models, extended_models, custom_models)
+
+            except AttributeError as e:
+                log.error(str(e))
+                log.exit('Invalid connector class: {}', class_name)
+
+            # Save
+            self.services_classes[name] = MyClass
+            log.debug("Got class definition for {}", MyClass)
+
+        if len(self.services_classes) < 1:
+            raise KeyError("No classes were recovered!")
 
         if self.authentication_service is None:
             log.info("No service defined for authentication")
@@ -174,57 +220,6 @@ class Detector:
             log.exit("Failed to load {}", module_name)
 
         return getattr(module, classname)
-
-    def load_classes(self):
-
-        for service in self.services_configuration:
-
-            name = service.get('name')
-
-            if not self.available_services.get(name):
-                continue
-            log.verbose("Looking for class {}", name)
-
-            variables = service.get('variables')
-            class_name = service.get('class')
-            connector_name = service.get('name')
-
-            # Get the existing class
-            try:
-                MyClass = self.load_connector(connector_name, class_name)
-
-                # Passing variables
-                MyClass.set_variables(variables)
-
-                if service.get('load_models'):
-
-                    base_models = Meta.import_models(
-                        name, BACKEND_PACKAGE, exit_on_fail=True
-                    )
-                    if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                        extended_models = {}
-                    else:
-                        extended_models = Meta.import_models(
-                            name, EXTENDED_PACKAGE, exit_on_fail=False
-                        )
-                    custom_models = Meta.import_models(
-                        name, CUSTOM_PACKAGE, exit_on_fail=False
-                    )
-
-                    MyClass.set_models(base_models, extended_models, custom_models)
-
-            except AttributeError as e:
-                log.error(str(e))
-                log.exit('Invalid connector class: {}', class_name)
-
-            # Save
-            self.services_classes[name] = MyClass
-            log.debug("Got class definition for {}", MyClass)
-
-        if len(self.services_classes) < 1:
-            raise KeyError("No classes were recovered!")
-
-        return self.services_classes
 
     def init_services(
         self, app, worker_mode=False, project_init=False, project_clean=False
