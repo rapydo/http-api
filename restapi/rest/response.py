@@ -97,21 +97,19 @@ class ResponseMaker:
 
         headers['Content-Type'] = "text/html; charset=UTF-8"
 
-        html_data = {'body_content': content, 'is_error': code >= 300}
+        html_data = {'body_content': content, 'is_error': code >= 400}
         html_page = render_template('index.html', **html_data)
 
         return html_page, headers
 
     @staticmethod
-    def respond_to_browser(content, errors, code, headers):
+    def respond_to_browser(content, code, headers):
         log.debug("Request from a browser: reply with HTML.")
 
-        if errors:
-            if isinstance(content, list):
-                errors = errors.pop()
-            html_data = {'body_content': errors, 'is_error': True}
-        else:
-            html_data = {'body_content': content, 'is_error': False}
+        is_error = code >= 400
+        if isinstance(content, list):
+            content = content.pop()
+        html_data = {'body_content': content, 'is_error': is_error}
         html_page = render_template('index.html', **html_data)
         return Response(
             html_page,
@@ -121,7 +119,7 @@ class ResponseMaker:
         )
 
     @staticmethod
-    def generate_response(content, code, errors, headers, head_method):
+    def generate_response(content, code, headers, head_method):
         """
         Generating from our user/custom/internal response
         the data necessary for a Flask response (make_response() method):
@@ -131,29 +129,24 @@ class ResponseMaker:
         accepted_formats = ResponseMaker.get_accepted_formats()
 
         if 'text/html' in accepted_formats:
-            return ResponseMaker.respond_to_browser(content, errors, code, headers)
-
-        if content is not None:
-            final_content = content
-        else:
-            final_content = errors
+            return ResponseMaker.respond_to_browser(content, code, headers)
 
         if '*/*' in accepted_formats or 'application/json' in accepted_formats:
-            final_content = jsonify(final_content)
+            content = jsonify(content)
 
         elif 'application/xml' in accepted_formats:
-            # TODO: we should convert final_content in XML
+            # TODO: we should convert content in XML
             pass
 
         elif 'text/csv' in accepted_formats:
-            # TODO: we should convert final_content in CSV
+            # TODO: we should convert content in CSV
             pass
 
         else:
             log.warning("Unknown accepted format: {}", accepted_formats)
 
         # return a standard flask response tuple(content, code, headers)
-        return (final_content, code, headers)
+        return (content, code, headers)
 
     @staticmethod
     def respond_with_schema(schema):
@@ -230,7 +223,6 @@ class ResponseMaker:
                 fields.append(f)
             return ResponseMaker.generate_response(
                 content=fields,
-                errors=None,
                 code=200,
                 headers={},
                 head_method=False
@@ -238,8 +230,7 @@ class ResponseMaker:
         except BaseException as e:
             log.error(e)
             return ResponseMaker.generate_response(
-                content=None,
-                errors={"Server internal error": "Failed to retrieve input schema"},
+                content={"Server internal error": "Failed to retrieve input schema"},
                 code=500,
                 headers={},
                 head_method=False

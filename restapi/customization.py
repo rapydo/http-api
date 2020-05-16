@@ -11,8 +11,8 @@ from flask_apispec.views import MethodResourceMeta
 from flask_apispec.utils import Annotation
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
-from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
-from restapi.confs.attributes import EndpointElements, ExtraAttributes
+from restapi.confs import CUSTOM_PACKAGE
+from restapi.confs.attributes import EndpointElements
 from restapi.services.detect import detector
 from restapi.swagger import Swagger
 

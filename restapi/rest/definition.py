@@ -296,23 +296,23 @@ class EndpointResource(Resource):
         if code is None:
             code = 200
 
-        if errors is None and content is None:
-            if not head_method or code is None:
-                log.warning("RESPONSE: Warning, no data and no errors")
-                code = 204
-        elif errors is None:
-            if code >= 300:
-                log.warning("Forcing 200 OK because no errors are raised")
-                code = 200
-        elif content is None:
+        # Deprecated since 0.7.4
+        if errors is not None:
+            log.warning(
+                "Deprecated use of errors in response, use raise RestApiException or "
+                "response(content, code>=400"
+            )
+            content = errors
             if code < 400:
-                log.warning("Forcing 500 SERVER ERROR because only errors are returned")
+                log.warning("Forcing 500 SERVER ERROR because errors are returned")
                 code = 500
+
+        if content is None and code != 204 and not head_method:
+            log.warning("RESPONSE: Warning, no data and no errors")
+            code = 204
 
         # Request from a ApiSpec endpoint, skipping all flask-related following steps
         if isinstance(self, MethodResource):
-            if content is None:
-                content = errors
 
             # Do not bypass FlaskApiSpec response management otherwise marshalling
             # will be not applied. Consider the following scenario:
@@ -341,7 +341,6 @@ class EndpointResource(Resource):
         r = ResponseMaker.generate_response(
             content=content,
             code=code,
-            errors=errors,
             headers=headers,
             head_method=head_method
         )
