@@ -58,12 +58,42 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
 
-    def __init__(self):
+    def __init__(self, variables):
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
         self._jti = None
         self._user = None
+
+        self.TOTP = 'TOTP'
+
+        self.MIN_PASSWORD_LENGTH = int(
+            variables.get("min_password_length", 8)
+        )
+        self.FORCE_FIRST_PASSWORD_CHANGE = (
+            variables.get("force_first_password_change", False) == 'True'
+        )
+        self.VERIFY_PASSWORD_STRENGTH = (
+            variables.get("verify_password_strength", False) == 'True'
+        )
+        self.MAX_PASSWORD_VALIDITY = int(
+            variables.get("max_password_validity", 0)
+        )
+        self.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
+            variables.get("disable_unused_credentials_after", 0)
+        )
+        self.REGISTER_FAILED_LOGIN = (
+            variables.get("register_failed_login", False) == 'True'
+        )
+        self.MAX_LOGIN_ATTEMPTS = int(
+            variables.get("max_login_attempts", 0)
+        )
+        self.SECOND_FACTOR_AUTHENTICATION = variables.get(
+            "second_factor_authentication", None
+        )
+
+        if self.SECOND_FACTOR_AUTHENTICATION == "None":
+            self.SECOND_FACTOR_AUTHENTICATION = None
 
     @classmethod
     def myinit(cls):

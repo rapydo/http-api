@@ -43,43 +43,13 @@ class Authenticator(Connector):
         # What service will hold authentication?
         auth_service = self.variables.get('service')
         auth_module = Meta.get_authentication_module(auth_service)
-        custom_auth = auth_module.Authentication()
+        custom_auth = auth_module.Authentication(self.variables)
 
         secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
 
         # Install self.app secret for oauth2
         # !?
         self.app.secret_key = secret + '_app'
-
-        custom_auth.TOTP = 'TOTP'
-
-        custom_auth.MIN_PASSWORD_LENGTH = int(
-            self.variables.get("min_password_length", 8)
-        )
-        custom_auth.FORCE_FIRST_PASSWORD_CHANGE = (
-            self.variables.get("force_first_password_change", False) == 'True'
-        )
-        custom_auth.VERIFY_PASSWORD_STRENGTH = (
-            self.variables.get("verify_password_strength", False) == 'True'
-        )
-        custom_auth.MAX_PASSWORD_VALIDITY = int(
-            self.variables.get("max_password_validity", 0)
-        )
-        custom_auth.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
-            self.variables.get("disable_unused_credentials_after", 0)
-        )
-        custom_auth.REGISTER_FAILED_LOGIN = (
-            self.variables.get("register_failed_login", False) == 'True'
-        )
-        custom_auth.MAX_LOGIN_ATTEMPTS = int(
-            self.variables.get("max_login_attempts", 0)
-        )
-        custom_auth.SECOND_FACTOR_AUTHENTICATION = self.variables.get(
-            "second_factor_authentication", None
-        )
-
-        if custom_auth.SECOND_FACTOR_AUTHENTICATION == "None":
-            custom_auth.SECOND_FACTOR_AUTHENTICATION = None
 
         return custom_auth
 
