@@ -83,8 +83,8 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         data = {}
-        data['new_password'] = "A" + self.randomString(length=2)
-        data['password_confirm'] = "B" + self.randomString(length=2)
+        data['new_password'] = "Aa1!" + self.randomString(length=2)
+        data['password_confirm'] = "Bb1!" + self.randomString(length=2)
         r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
         assert r.status_code == 400
         assert self.get_content(r) == 'New password does not match with confirmation'
