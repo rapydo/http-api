@@ -60,27 +60,14 @@ class Swagger:
 
     def read_my_swagger(self, method, endpoint, mapping=None):
 
-        # content has to be a dictionary
         if not isinstance(mapping, dict):
             raise TypeError("Wrong type: {}".format(type(mapping)))
 
-        # read common
-        commons = mapping.pop('common', {})
-        if commons:
-            # Deprecated since 0.7.0
-            log.warning("Commons specs are deprecated")
-
-        # Check if there is at least one except for common
         if len(mapping) < 1:
             raise ValueError("No definition found in: {}".format(mapping))
 
-        ################################
-        # Using 'attrs': a way to save external attributes
-
-        # Instance
         extra = ExtraAttributes()
 
-        ################################
         # Specs should contain only labels written in spec before
 
         pattern = re.compile(r'\<([^\>]+)\>')
