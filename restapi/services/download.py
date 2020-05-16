@@ -16,7 +16,8 @@ class Downloader:
 
     # This is good for small files
     # It is also good for media files by sending Range header
-    def download(self, filename=None, subfolder=None, mime=None):
+    @staticmethod
+    def download(filename=None, subfolder=None, mime=None):
 
         if filename is None:
             raise RestApiException(
@@ -46,7 +47,8 @@ class Downloader:
             yield data
 
     # this is good for large files
-    def send_file_streamed(self, path, mime=None):
+    @staticmethod
+    def send_file_streamed(path, mime=None):
         if mime is None:
             mime = MimeTypes()
             mime_type = mime.guess_type(path)
@@ -55,4 +57,7 @@ class Downloader:
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
         f = open(path, "rb")
-        return Response(stream_with_context(self.read_in_chunks(f)), mimetype=mime)
+        return Response(
+            stream_with_context(Downloader.read_in_chunks(f)),
+            mimetype=mime
+        )
