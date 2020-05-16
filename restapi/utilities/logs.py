@@ -32,12 +32,6 @@ log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
 
 
-def get_logger(not_used):
-    # Deprecated since 0.7.1
-    log.warning("Deprecated get_logger, import log instead")
-    return log
-
-
 def verbose(*args, **kwargs):
     log.log("VERBOSE", *args, **kwargs)
 
