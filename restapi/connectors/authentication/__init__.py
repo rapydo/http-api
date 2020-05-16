@@ -43,7 +43,7 @@ class Authenticator(Connector):
         # What service will hold authentication?
         auth_service = self.variables.get('service')
         auth_module = Meta.get_authentication_module(auth_service)
-        return auth_module.Authentication(self.variables)
+        return auth_module.Authentication()
 
     def initialize(self, pinit, pdestroy, abackend=None):
 

@@ -16,11 +16,11 @@ from datetime import datetime, timedelta
 from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.authentication import NULL_IP
-from restapi.services.detect import detector
+# from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-if not detector.check_availability(__name__):
-    log.exit("No neo4j GraphDB service found for authentication")
+# if not detector.check_availability(__name__):
+#     log.exit("No neo4j GraphDB service found for authentication")
 
 
 class Authentication(BaseAuthentication):
@@ -259,7 +259,3 @@ class Authentication(BaseAuthentication):
             log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
-
-    # def clean_pending_tokens(self):
-    #     log.debug("Removing all pending tokens")
-    #     return self.cypher("MATCH (a:Token) WHERE NOT (a)<-[]-() DELETE a")
