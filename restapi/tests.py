@@ -93,17 +93,6 @@ class BaseTests:
                 "Malformed response: {}".format(http_out)
             )
 
-        # Should be {Response: DATA, Meta: RESPONSE_METADATA}
-        # To be removed when WRAP_RESPONSE will be removed
-        if isinstance(response, dict) and len(response) == 2:
-            content = glom(response, "Response.data", default=None)
-
-            if content is None:
-                content = glom(response, "Response.errors", default=None)
-
-            if content is not None:
-                return content
-
         return response
 
     def do_login(self, client, USER, PWD,

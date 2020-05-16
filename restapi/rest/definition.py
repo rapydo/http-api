@@ -13,7 +13,7 @@ from jsonschema.exceptions import ValidationError
 from typing import List, Dict
 from neomodel import StructuredNode
 
-from restapi.confs import API_URL, WRAP_RESPONSE
+from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
@@ -289,7 +289,7 @@ class EndpointResource(Resource):
 
     def response(self, content=None, errors=None,
                  code=None, headers=None, head_method=False,
-                 meta=None, wrap_response=False):
+                 meta=None):
 
         # Deprecated since 0.7.2
         if meta is not None:
@@ -297,11 +297,6 @@ class EndpointResource(Resource):
 
         if headers is None:
             headers = {}
-
-        if wrap_response or WRAP_RESPONSE:
-            response_wrapper = ResponseMaker.wrapped_response
-        else:
-            response_wrapper = None
 
         if code is None:
             code = 200
@@ -354,8 +349,7 @@ class EndpointResource(Resource):
             errors=errors,
             headers=headers,
             head_method=head_method,
-            meta=meta,
-            response_wrapper=response_wrapper
+            meta=meta
         )
 
         response = make_response(r)

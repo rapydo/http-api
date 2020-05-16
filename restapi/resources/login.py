@@ -8,7 +8,6 @@ from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.connectors.authentication import HandleSecurity
 from restapi import decorators
-from restapi.confs import WRAP_RESPONSE
 
 
 class Login(EndpointResource):
@@ -168,6 +167,4 @@ class Login(EndpointResource):
         user.last_login = now
         self.auth.save_token(user, token, payload)
 
-        if WRAP_RESPONSE:
-            return self.response({'token': token})
         return self.response(token)

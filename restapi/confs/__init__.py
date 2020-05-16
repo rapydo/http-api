@@ -15,8 +15,6 @@ PRODUCTION = APP_MODE == 'production'
 STACKTRACE = False
 REMOVE_DATA_AT_INIT_TIME = False
 
-WRAP_RESPONSE = os.environ.get('WRAP_RESPONSE', '0') == '1'
-#################
 # ENDPOINTS bases
 API_URL = '/api'
 AUTH_URL = '/auth'

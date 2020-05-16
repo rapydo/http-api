@@ -122,7 +122,7 @@ class ResponseMaker:
 
     @staticmethod
     def generate_response(content, code, errors, headers,
-                          head_method, meta, response_wrapper=None):
+                          head_method, meta):
         """
         Generating from our user/custom/internal response
         the data necessary for a Flask response (make_response() method):
@@ -134,10 +134,7 @@ class ResponseMaker:
         if 'text/html' in accepted_formats:
             return ResponseMaker.respond_to_browser(content, errors, code, headers)
 
-        if response_wrapper is not None:
-            # {Response: DEFINED_CONTENT, Meta: HEADERS_AND_STATUS}
-            final_content = response_wrapper(content, code, errors, meta)
-        elif content is not None:
+        if content is not None:
             final_content = content
         else:
             final_content = errors
@@ -158,59 +155,6 @@ class ResponseMaker:
 
         # return a standard flask response tuple(content, code, headers)
         return (final_content, code, headers)
-
-    @staticmethod
-    def wrapped_response(
-        content=None, code=None, errors=None, custom_metas=None
-    ):
-
-        if isinstance(content, WerkzeugResponse):
-            return content
-
-        # Our normal content
-        try:
-            data_type = str(type(content))
-
-            if content is None:
-                elements = 0
-            elif isinstance(content, str):
-                elements = 1
-            else:
-                elements = len(content)
-
-            if errors is None:
-                total_errors = 0
-            else:
-                total_errors = len(errors)
-
-            code = int(code)
-        except Exception as e:
-            log.critical("Could not build response! {}", e)
-            # Revert to defaults
-            content = None
-            errors = ['Failed to build response {}'.format(e)]
-            data_type = str(type(content))
-            elements = 0
-            total_errors = 1
-            code = 503
-
-        resp = {
-            "Response": {
-                'data': content,
-                'errors': errors
-            },
-            "Meta": {
-                'data_type': data_type,
-                'elements': elements,
-                'errors': total_errors,
-                'status': code,
-            },
-        }
-
-        if custom_metas is not None:
-            resp['Meta'].update(custom_metas)
-
-        return resp
 
     @staticmethod
     def respond_with_schema(schema):
