@@ -113,7 +113,8 @@ def create_app(
     # Restful plugin
     if not skip_endpoint_mapping:
 
-        mem.customizer.load_swagger()
+        mem.customizer.find_endpoints()
+        mem.customizer.do_swagger()
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 
@@ -132,12 +133,6 @@ def create_app(
             rest_api.add_resource(resource.cls, *urls)
 
             log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
-
-        # Enable all schema endpoints to be mapped with this extra step
-        if len(mem.customizer._schema_endpoint.uris) > 0:
-            log.debug("Found one or more schema to expose")
-            urls = [uri for _, uri in mem.customizer._schema_endpoint.uris.items()]
-            rest_api.add_resource(mem.customizer._schema_endpoint.cls, *urls)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)

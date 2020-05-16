@@ -38,7 +38,6 @@ class Customizer:
         self._definitions = {}
         self._configurations = {}
         self._query_params = {}
-        self._schemas_map = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -60,34 +59,6 @@ class Customizer:
             log.exit(e)
 
         return self._configurations
-
-    def load_swagger(self):
-
-        self.do_schema()
-        self.find_endpoints()
-        self.do_swagger()
-
-    def do_schema(self):
-        """ Schemas exposing, if requested """
-
-        name = '{}.rest.schema'.format(BACKEND_PACKAGE)
-        module = Meta.get_module_from_string(
-            name, exit_if_not_found=True, exit_on_fail=True
-        )
-        schema_class = getattr(module, 'RecoverSchema')
-
-        self._schema_endpoint = EndpointElements(
-            cls=schema_class,
-            exists=True,
-            custom={
-                'methods': {
-                    'get': ExtraAttributes(auth=None),
-                    # WHY DOES POST REQUEST AUTHENTICATION
-                    # 'post': ExtraAttributes(auth=None)
-                }
-            },
-            methods={},
-        )
 
     def find_endpoints(self):
 
@@ -215,6 +186,8 @@ class Customizer:
                     # Building endpoint
                     endpoint = EndpointElements(custom={})
 
+                    endpoint.uris = {}
+                    endpoint.methods = {}
                     endpoint.cls = ep_class
                     endpoint.exists = True
                     endpoint.iscore = iscore
@@ -228,14 +201,8 @@ class Customizer:
                         log.warning("Invalid base {}", base)
                         base = API_URL
                     base = base.strip('/')
+
                     endpoint.base_uri = base
-
-                    endpoint.uris = {}  # attrs python lib bug?
-                    endpoint.custom['schema'] = {
-                        'expose': ep_class.expose_schema
-                    }
-
-                    endpoint.methods = {}
 
                     mapping_lists = []
                     for m in ep_class.methods:
@@ -334,16 +301,6 @@ class Customizer:
 
                         mapping_lists.extend(kk)
                         endpoint.methods[method_fn] = copy.deepcopy(conf)
-
-                    if endpoint.custom['schema']['expose']:
-                        for uri in mapping_lists:
-                            total_uri = '/{}{}'.format(endpoint.base_uri, uri)
-                            schema_uri = '{}/schemas{}'.format(API_URL, uri)
-
-                            p = hex(id(endpoint.cls))
-                            self._schema_endpoint.uris[uri + p] = schema_uri
-
-                            self._schemas_map[schema_uri] = total_uri
 
                     self._endpoints.append(endpoint)
 

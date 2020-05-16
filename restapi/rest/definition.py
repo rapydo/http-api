@@ -36,9 +36,7 @@ DEFAULT_PERPAGE = 10
 class EndpointResource(Resource):
 
     baseuri = API_URL
-    # labels = []
     depends_on = []
-    expose_schema = False
     labels = ["undefined"]
     """
     Implements a generic Resource for our Restful APIs model
@@ -518,10 +516,8 @@ class EndpointResource(Resource):
         return data
 
     @staticmethod
-    def get_endpoint_custom_definition(is_schema_url=False, method=None):
+    def get_endpoint_custom_definition(method=None):
         url = request.url_rule.rule
-        if is_schema_url:
-            url = mem.customizer._schemas_map[url]
 
         if method is None:
             method = request.method

@@ -161,14 +161,6 @@ class Swagger:
 
                     self._parameter_schemas[uri][method].append(param.copy())
 
-                extrainfo = param.pop('custom', {})
-
-                if len(extrainfo) and endpoint.custom['schema']['expose']:
-
-                    if uri not in endpoint.custom['params']:
-                        endpoint.custom['params'][uri] = {}
-                    endpoint.custom['params'][uri][method] = extrainfo
-
                 enum = param.pop("enum", None)
                 if enum is not None:
                     param["enum"] = []
