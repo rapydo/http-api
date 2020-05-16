@@ -19,7 +19,8 @@ from flask import current_app, request
 from restapi.confs import TESTING
 from restapi.services.detect import Detector
 from restapi.exceptions import RestApiException
-from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, get_project_configuration
+from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, SECRET_KEY_FILE
+from restapi.confs import get_project_configuration
 from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
 
 from restapi.utilities.meta import Meta
@@ -64,6 +65,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._token = None
         self._jti = None
         self._user = None
+
+        self.import_secret(SECRET_KEY_FILE)
 
         self.TOTP = 'TOTP'
 

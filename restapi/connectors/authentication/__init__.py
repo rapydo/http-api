@@ -43,15 +43,7 @@ class Authenticator(Connector):
         # What service will hold authentication?
         auth_service = self.variables.get('service')
         auth_module = Meta.get_authentication_module(auth_service)
-        custom_auth = auth_module.Authentication(self.variables)
-
-        secret = str(custom_auth.import_secret(self.app.config['SECRET_KEY_FILE']))
-
-        # Install self.app secret for oauth2
-        # !?
-        self.app.secret_key = secret + '_app'
-
-        return custom_auth
+        return auth_module.Authentication(self.variables)
 
     def initialize(self, pinit, pdestroy, abackend=None):
 
