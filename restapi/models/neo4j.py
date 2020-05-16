@@ -2,32 +2,36 @@
 
 """ Models for graph database """
 
-from restapi.connectors.neo4j.types import (
+from neomodel import (
     StructuredNode,
-    IdentifiedNode,
     StringProperty,
     DateTimeProperty,
     EmailProperty,
     BooleanProperty,
     RelationshipTo,
     RelationshipFrom,
+
+    OneOrMore,
+    ZeroOrMore,
+    ZeroOrOne
 )
-from neomodel import OneOrMore, ZeroOrMore, ZeroOrOne
+
+from restapi.connectors.neo4j.types import IdentifiedNode
 
 
 class User(IdentifiedNode):
-    email = EmailProperty(required=True, unique_index=True, show=True)
-    name = StringProperty(required=True, show=True)
-    surname = StringProperty(required=True, show=True)
+    email = EmailProperty(required=True, unique_index=True)
+    name = StringProperty(required=True)
+    surname = StringProperty(required=True)
     authmethod = StringProperty(required=True)
     password = StringProperty()  # Hashed by a custom function
-    first_login = DateTimeProperty(show=True)
-    last_login = DateTimeProperty(show=True)
-    last_password_change = DateTimeProperty(show=True)
-    is_active = BooleanProperty(default=True, show=True)
-    privacy_accepted = BooleanProperty(default=True, show=True)
+    first_login = DateTimeProperty()
+    last_login = DateTimeProperty()
+    last_password_change = DateTimeProperty()
+    is_active = BooleanProperty(default=True)
+    privacy_accepted = BooleanProperty(default=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
-    roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore, show=True)
+    roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore)
 
 
 class Token(StructuredNode):
@@ -45,6 +49,6 @@ class Token(StructuredNode):
 
 
 class Role(StructuredNode):
-    name = StringProperty(required=True, unique_index=True, show=True)
-    description = StringProperty(default='No description', show=True)
+    name = StringProperty(required=True, unique_index=True)
+    description = StringProperty(default='No description')
     privileged = RelationshipFrom(User, 'HAS_ROLE', cardinality=OneOrMore)
