@@ -39,7 +39,6 @@ class EndpointResource(Resource):
     # labels = []
     depends_on = []
     expose_schema = False
-    publish = True
     labels = ["undefined"]
     """
     Implements a generic Resource for our Restful APIs model

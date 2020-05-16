@@ -17,7 +17,6 @@ ANY_ROLE = 'any'
 @ClassOfAttributes
 class ExtraAttributes:
     auth = attribute(default=[])
-    publish = attribute(default=True)
     schema = attribute(default={})
     whatever = attribute(default=None)
     required_roles = attribute(default=ALL_ROLES)

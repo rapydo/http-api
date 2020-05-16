@@ -89,12 +89,6 @@ class Customizer:
             methods={},
         )
 
-        # TODO: find a way to map authentication
-        # as in the original endpoint for the schema 'get' method
-
-        # TODO: find a way to publish on swagger the schema
-        # if endpoint is enabled to publish and the developer asks for it
-
     def find_endpoints(self):
 
         ##################
@@ -238,8 +232,7 @@ class Customizer:
 
                     endpoint.uris = {}  # attrs python lib bug?
                     endpoint.custom['schema'] = {
-                        'expose': ep_class.expose_schema,
-                        'publish': {},
+                        'expose': ep_class.expose_schema
                     }
 
                     endpoint.methods = {}

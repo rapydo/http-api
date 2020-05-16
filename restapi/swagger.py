@@ -47,7 +47,7 @@ class Swagger:
         self._endpoints = endpoints
         self._customizer = customizer
 
-        # Swagger paths to be publish
+        # Swagger paths
         self._paths = {}
         # Original paths as flask should map
         self._original_paths = {}
@@ -79,26 +79,13 @@ class Swagger:
             if uri not in endpoint.uris:
                 endpoint.uris[uri] = uri
 
-            ################################
-            # add common elements to all specs
-            for key, value in commons.items():
-                if key not in specs:
-                    specs[key] = value
-
-            ################################
             # Separate external definitions
 
             # Find any custom part which is not swagger definition
-            custom = specs.pop('custom', {})
-
-            # Publish the specs on the final Swagger JSON
-            # Default is to do it if not otherwise specified
-            extra.publish = custom.get('publish', True)
-            if not extra.publish:
-                # Deprecated since 0.7.0
-                log.warning("Publish setting is deprecated")
-
-            # extra.auth = None
+            # Deprecated since 0.7.4
+            if 'custom' in specs:
+                log.warning("Deprecated use of custom in specs")
+                specs.pop('custom', {})
 
             ###########################
             # Strip the uri of the parameter
@@ -178,9 +165,6 @@ class Swagger:
 
                 if len(extrainfo) and endpoint.custom['schema']['expose']:
 
-                    # TODO: read a 'custom.publish' in every yaml
-                    # to decide if the /schema uri should be in swagger
-
                     if uri not in endpoint.custom['params']:
                         endpoint.custom['params'][uri] = {}
                     endpoint.custom['params'][uri][method] = extrainfo
@@ -215,12 +199,6 @@ class Swagger:
             if uri not in self._original_paths:
                 self._original_paths[uri] = {}
             self._original_paths[uri][method] = specs
-
-            ##################
-            # Skip what the developers does not want to be public in swagger
-            # NOTE: do not skip if in testing mode
-            if not extra.publish and not self._customizer._testing:
-                continue
 
             # Handle global tags
             if 'tags' not in specs and len(endpoint.tags) > 0:
