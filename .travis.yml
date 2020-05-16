@@ -22,8 +22,6 @@ env:
 - TEMPLATE=extraoptions
 # Temporary disabled, some issues with DB models...
 # - TEMPLATE=extended
-# to be deprecated
-- TEMPLATE=wrapped
 
 script:
   # Randomize auth service to test some services
@@ -74,11 +72,6 @@ script:
     elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
       rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current;
-
-
-
-    elif [[ "$TEMPLATE" == "wrapped" ]]; then
-      rapydo create prj --auth ${RANDOM_AUTH} --wrapped --frontend no;
 
 
     else
