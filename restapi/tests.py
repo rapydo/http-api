@@ -192,7 +192,7 @@ class BaseTests:
         return CeleryExt
 
     @staticmethod
-    def randomString(length=16, prefix="TEST-"):
+    def randomString(length=16, prefix=""):
         """
             Create a random string to be used to build data for tests
         """
