@@ -147,8 +147,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True}
+            API_URI + '/tests/download/' + uploaded_filename
         )
         assert r.status_code == 200
         content = r.data.decode('utf-8')
@@ -156,28 +155,24 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': ''}
         )
         assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': '0-9'}
         )
         assert r.status_code == 416
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': 'bytes=0-9999999999999999'}
         )
         assert r.status_code == 200
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': 'bytes=0-4'}
         )
         assert r.status_code == 206
@@ -186,7 +181,6 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': 'bytes=5-9'}
         )
         assert r.status_code == 206
@@ -195,7 +189,6 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
             headers={'Range': 'bytes=0-9'}
         )
         assert r.status_code == 200
