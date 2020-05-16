@@ -121,8 +121,7 @@ class ResponseMaker:
         )
 
     @staticmethod
-    def generate_response(content, code, errors, headers,
-                          head_method, meta):
+    def generate_response(content, code, errors, headers, head_method):
         """
         Generating from our user/custom/internal response
         the data necessary for a Flask response (make_response() method):
@@ -234,8 +233,7 @@ class ResponseMaker:
                 errors=None,
                 code=200,
                 headers={},
-                head_method=False,
-                meta=None
+                head_method=False
             )
         except BaseException as e:
             log.error(e)
@@ -244,8 +242,7 @@ class ResponseMaker:
                 errors={"Server internal error": "Failed to retrieve input schema"},
                 code=500,
                 headers={},
-                head_method=False,
-                meta=None
+                head_method=False
             )
 
     @staticmethod

@@ -274,7 +274,7 @@ class EndpointResource(Resource):
         return {"key": attribute, "description": description}
 
     def force_response(self, content=None, errors=None,
-                       code=None, headers=None, head_method=False, meta=None):
+                       code=None, headers=None, head_method=False):
 
         # Deprecated since 0.7.3
         log.warning("Deprecated use of self.forse_respose, replace with self.response")
@@ -284,16 +284,10 @@ class EndpointResource(Resource):
             code=code,
             headers=code,
             head_method=head_method,
-            meta=meta
         )
 
     def response(self, content=None, errors=None,
-                 code=None, headers=None, head_method=False,
-                 meta=None):
-
-        # Deprecated since 0.7.2
-        if meta is not None:
-            log.warning("Deprecated use of meta in response")
+                 code=None, headers=None, head_method=False):
 
         if headers is None:
             headers = {}
@@ -348,8 +342,7 @@ class EndpointResource(Resource):
             code=code,
             errors=errors,
             headers=headers,
-            head_method=head_method,
-            meta=meta
+            head_method=head_method
         )
 
         response = make_response(r)
