@@ -68,16 +68,7 @@ class MongoExt(Connector):
         variables = self.variables
         variables.update(kwargs)
 
-        # connect for authentication if required
-        uri = "mongodb://{}:{}/{}".format(
-            variables.get('host'),
-            variables.get('port'),
-            AUTH_DB,
-        )
-        mongodb.connect(uri, alias=AUTH_DB)
-
-        ##################
-        db = variables.get('database', 'UNKNOWN')
+        db = variables.get('database', 'auth')
         uri = "mongodb://{}:{}/{}".format(
             variables.get('host'),
             variables.get('port'), db
