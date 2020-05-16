@@ -225,6 +225,10 @@ class EndpointResource(Resource):
         return (current_page, limit)
 
     def get_current_user(self):
+
+        # Deprecated since 0.7.4
+        log.critical(
+            "self.get_current_user() is deprecated, replace with self.auth.get_user()")
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
