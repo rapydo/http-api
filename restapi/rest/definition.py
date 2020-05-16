@@ -442,9 +442,8 @@ class EndpointResource(Resource):
         Very important: this method only works with customized neo4j models
         """
 
-        # to be deprecated
-        # log.warning("Deprecated use of getJsonResponse")
-        log.info("Use of getJsonResponse is discouraged and it will be deprecated soon")
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of getJsonResponse")
 
         # Get id
         verify_attribute = hasattr
