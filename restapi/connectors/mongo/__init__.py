@@ -9,8 +9,6 @@ from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.utilities.logs import log
 
-AUTH_DB = 'auth'
-
 
 def catch_db_exceptions(func):
     @wraps(func)

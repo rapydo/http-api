@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from restapi.confs import TESTING
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.authentication import NULL_IP
-from restapi.connectors.mongo import AUTH_DB
 from restapi.utilities.uuid import getUUID
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -21,16 +20,6 @@ if not detector.check_availability(__name__):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
-
-        # Read init credentials and configuration
-        super().__init__()
-
-        # Get the instance for mongodb
-        name = __name__.split('.')[::-1][0]  # returns 'mongo'
-
-        Connector = detector.services_classes.get(name)
-        self.db = Connector().get_instance(dbname=AUTH_DB)
 
     # Also used by POST user
     def create_user(self, userdata, roles):
