@@ -215,13 +215,12 @@ class Customizer:
                                     "{} configuration not found in {}", m, class_name
                                 )
                                 continue
-                            # Enable this warning to start conversions GET -> _GET
-                            # Find other warning like this by searching:
-                            # **FASTAPI**
-                            # else:
-                            #     log.warning(
-                            #         "Obsolete dict {} in {}", m, class_name
-                            #     )
+                            # convert GET -> _GET
+                            # Deprecated since 0.7.4
+                            else:
+                                log.warning(
+                                    "Obsolete dict {} in {}", m, class_name
+                                )
 
                         # get, post, put, patch, delete
                         method_fn = m.lower()
