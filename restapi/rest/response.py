@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from flask import Response, request, render_template, jsonify
-from werkzeug.wrappers import Response as WerkzeugResponse
 from marshmallow import fields, validate
 from urllib import parse as urllib_parse
 

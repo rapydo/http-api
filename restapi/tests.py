@@ -125,7 +125,7 @@ class BaseTests:
 
                 if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
                     newpwd = "Aa1!{}".format(self.randomString())
-                    headers, _ = self.do_login(
+                    self.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
