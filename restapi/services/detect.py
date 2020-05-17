@@ -33,6 +33,8 @@ class Detector:
                 self.authentication_service
             )
 
+        self.authentication_instance = None
+
         self.available_services = {}
         self.services_classes = {}
         self.connectors_instances = {}
@@ -85,6 +87,9 @@ class Detector:
         return Detector.get_bool_envvar(bool_var)
 
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
+        if service_name == AUTH_NAME:
+            return self.authentication_instance
+
         farm = self.connectors_instances.get(service_name)
         if farm is None:
             raise AttributeError("Service {} not found".format(service_name))
@@ -237,16 +242,16 @@ class Detector:
             else:
                 self.connectors_instances[name] = instance
 
-            do_init = project_init and name == self.authentication_service
+            # do_init = project_init and name == self.authentication_service
 
             # Initialize the real service getting the first service object
-            log.debug("Initializing {} (pinit={})", name, do_init)
-            service_instance = instance.initialize(
-                pinit=do_init,
-                pdestroy=project_clean,
-                abackend=None
-            )
-            instances[name] = service_instance
+            # log.debug("Initializing {} (pinit={})", name, do_init)
+            # service_instance = instance.initialize(
+            #     pinit=do_init,
+            #     pdestroy=project_clean,
+            #     abackend=None
+            # )
+            instances[name] = instance.get_instance()
 
             # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
             if name == 'celery':
@@ -262,28 +267,28 @@ class Detector:
                     for func_name, funct in tasks.items():
                         setattr(Connector, func_name, funct)
 
-        if self.authentication_service not in instances:
-            if self.authentication_service is None:
-                log.warning("No authentication")
-            else:
-                log.exit(
-                    "Auth service '{}' is unreachable".format(
-                        self.authentication_service)
-                )
+        if self.authentication_service is None:
+            log.warning("No authentication service configured")
+        elif self.authentication_service not in instances:
+            log.exit("Auth service '{}' is unreachable", self.authentication_service)
 
-        from restapi.connectors.authentication import Authenticator as AuthConnector
-        instance = AuthConnector(app)
-        variables = Detector.load_variables(prefix='auth_')
-        AuthConnector.set_variables(variables)
-        self.connectors_instances[AUTH_NAME] = instance
+        auth_module = Meta.get_authentication_module(self.authentication_service)
+        db = instances[self.authentication_service]
+        self.authentication_instance = auth_module.Authentication(db)
 
-        service_instance = instance.initialize(
-            pinit=project_init,
-            pdestroy=project_clean,
-            abackend=instances[self.authentication_service]
-        )
-        if len(self.connectors_instances) < 1:
-            raise KeyError("No instances available for modules")
+        if project_init:
+
+            connector = self.connectors_instances[self.authentication_service]
+            log.debug("Initializing {}", self.authentication_service)
+            connector.initialize(
+                pinit=True,
+                pdestroy=project_clean,
+                abackend=None
+            )
+
+            with app.app_context():
+                self.authentication_instance.init_users_and_roles()
+                log.info("Initialized authentication module")
 
         # Only once in a lifetime
         if project_init:

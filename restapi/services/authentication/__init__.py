@@ -73,7 +73,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
 
-    def __init__(self):
+    def __init__(self, backend_database):
+        self.db = backend_database
         self.myinit()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None

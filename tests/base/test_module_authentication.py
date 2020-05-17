@@ -68,12 +68,13 @@ def test_authentication_connector():
         log.warning("Skipping authentication test: service not available")
         return False
 
-    connector = detector.connectors_instances.get('authentication')
-    if connector is None:
-        log.warning("Skipping authentication test: connector is not available")
-        return False
+    # connector = detector.connectors_instances.get('authentication')
+    # if connector is None:
+    #     log.warning("Skipping authentication test: connector is not available")
+    #     return False
 
-    auth = connector.get_instance()
+    # auth = connector.get_instance()
+    auth = detector.get_service_instance('authentication')
     security = HandleSecurity(auth)
 
     min_pwd_len = int(os.environ.get("AUTH_MIN_PASSWORD_LENGTH", 9999))
@@ -170,40 +171,38 @@ def test_authentication_service():
         log.warning("Skipping authentication test: service not available")
         return False
 
-    auth_db = None
-    for check_db in ('neo4j', 'sqlalchemy', 'mongo'):
-        if detector.check_availability('neo4j'):
-            auth_db = check_db
-            break
+    # auth_db = None
+    # for check_db in ('neo4j', 'sqlalchemy', 'mongo'):
+    #     if detector.check_availability('neo4j'):
+    #         auth_db = check_db
+    #         break
 
-    if not auth_db:
-        log.warning("Skipping authentication test: no database available")
-        return False
+    # if not auth_db:
+    #     log.warning("Skipping authentication test: no database available")
+    #     return False
 
-    db_connector = detector.connectors_instances.get(auth_db)
-    if not db_connector:
-        log.warning(
-            "Skipping authentication test: {} connector is not available",
-            auth_db
-        )
-        return False
+    # db_connector = detector.connectors_instances.get(auth_db)
+    # if not db_connector:
+    #     log.warning(
+    #         "Skipping authentication test: {} connector is not available",
+    #         auth_db
+    #     )
+    #     return False
 
-    db_service = db_connector.get_instance()
+    # db_service = db_connector.get_instance()
 
-    assert db_service is not None
+    # assert db_service is not None
     # mem is required by Authentication init... :-(
     mem.customizer = Customizer()
     mem.configuration = mem.customizer.load_configuration()
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
-    connector = detector.connectors_instances.get('authentication')
-    # assert service_instance.db is not None
-    # auth = Authentication()
+    # connector = detector.connectors_instances.get('authentication')
 
-    auth = connector.get_instance(global_instance=True, authenticator=True)
-    auth.db = db_service
-    # security = HandleSecurity(auth)
-    # detector.get_service_instance(detector.authentication_service)
+    # auth = connector.get_instance(global_instance=True, authenticator=True)
+    # auth.db = db_service
+
+    auth = detector.get_service_instance('authentication')
 
     pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
     pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)

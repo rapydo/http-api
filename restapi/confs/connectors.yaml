@@ -51,13 +51,3 @@
 # # OTHERS?
 # "elastic",
 # "redis",
-
-# ##############################
-# NOTE: THIS HAS TO BE THE LAST ONE
-# ##############################
-
-  # authentication
-# - name: authentication
-#   load_models: 0
-#   prefix: auth
-#   class: Authenticator
