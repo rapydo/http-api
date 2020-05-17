@@ -17,7 +17,7 @@ from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
 from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
-from restapi.services.authentication.bearer import HTTPTokenAuth
+from restapi.rest.bearer import HTTPTokenAuth
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector, AUTH_NAME
