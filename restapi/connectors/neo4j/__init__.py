@@ -175,7 +175,7 @@ class NeoModel(Connector):
 
         # return db
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
 
         # recover instance with the parent method
         graph = self.get_instance()

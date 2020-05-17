@@ -39,7 +39,7 @@ class Connector(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
         return self.get_instance()
 
 
