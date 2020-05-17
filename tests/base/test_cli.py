@@ -37,7 +37,7 @@ def test_cli():
 
     response = runner.invoke(cli.clean, [])
     assert response.exit_code == 1
-    'Do you want to continue? [y/N]:' in response.output
+    assert 'Do you want to continue? [y/N]:' in response.output
 
     response = runner.invoke(cli.tests, ["--file", "x"])
     assert response.exit_code == 1
