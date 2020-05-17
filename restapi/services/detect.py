@@ -103,9 +103,8 @@ class Detector:
         for service in self.services_configuration:
 
             name = service.get('name')
-            prefix = "{}_".format(service.get('prefix'))
 
-            variables = Detector.load_variables(prefix=prefix)
+            variables = Detector.load_variables(prefix=name)
 
             connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
             if not connect:
@@ -178,6 +177,8 @@ class Detector:
 
     @staticmethod
     def load_variables(prefix):
+
+        prefix += "_"
 
         variables = {
             'external': False

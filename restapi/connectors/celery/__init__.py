@@ -49,7 +49,7 @@ class CeleryExt(Connector):
         from restapi.services.detect import Detector
 
         if broker == 'RABBIT':
-            service_vars = Detector.load_variables(prefix='rabbitmq_')
+            service_vars = Detector.load_variables(prefix='rabbitmq')
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
             BROKER_USER = service_vars.get("user", "")
@@ -59,7 +59,7 @@ class CeleryExt(Connector):
                 service_vars.get("ssl_enabled", False)
             )
         elif broker == 'REDIS':
-            service_vars = Detector.load_variables(prefix='redis_')
+            service_vars = Detector.load_variables(prefix='redis')
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = int(service_vars.get("port"))
             BROKER_USER = None
@@ -107,19 +107,19 @@ class CeleryExt(Connector):
         backend = self.variables.get("backend", broker)
 
         if backend == 'RABBIT':
-            service_vars = Detector.load_variables(prefix='rabbitmq_')
+            service_vars = Detector.load_variables(prefix='rabbitmq')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
         elif backend == 'REDIS':
-            service_vars = Detector.load_variables(prefix='redis_')
+            service_vars = Detector.load_variables(prefix='redis')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = ""
             BACKEND_PASSWORD = None
         elif backend == 'MONGODB':
-            service_vars = Detector.load_variables(prefix='mongo_')
+            service_vars = Detector.load_variables(prefix='mongo')
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
