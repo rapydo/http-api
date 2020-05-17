@@ -14,13 +14,12 @@ class Connector(metaclass=abc.ABCMeta):
     def __init__(self, app=None, **kwargs):
 
         self.objs = {}
-        self.set_name()
+        self.name = self.__class__.__name__.lower()
         self.args = kwargs
 
         self.app = app
         if app is not None:
             self.init_app(app)
-
 
     @abc.abstractmethod
     def get_connection_exception(self):
@@ -53,10 +52,6 @@ class Connector(metaclass=abc.ABCMeta):
         # obj = self.get_object(ref=ctx)
         # obj.close()
         self.set_object(obj=None, ref=ctx)  # it could be overidden
-
-    def set_name(self):
-        """ a different name for each extended object """
-        self.name = self.__class__.__name__.lower()
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
