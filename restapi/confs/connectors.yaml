@@ -6,38 +6,45 @@
 # ####################################
 
   # sqlalchemy relational databases
-- name: alchemy
+- name: sqlalchemy
   load_models: 1
+  prefix: alchemy
   class: SqlAlchemy
 
   # neo4j graphdb ORM
 - name: neo4j
   load_models: 1
+  prefix: neo4j
   class: NeoModel
 
   # celery tasks
 - name: celery
   load_models: 0
+  prefix: celery
   class: CeleryExt
 
   # mongo database
 - name: mongo
   load_models: 1
+  prefix: mongo
   class: MongoExt
 
   # rabbitmq message queue
-- name: rabbitmq
+- name: rabbit
   load_models: 0
+  prefix: rabbitmq
   class: RabbitExt
 
   # irods file system commands
 - name: irods
   load_models: 0
+  prefix: irods
   class: IrodsPythonExt
 
   # pushpin websockets and HTTP stream
 - name: pushpin
   load_models: 0
+  prefix: pushpin
   class: PushpinExt
 
 ##############################
