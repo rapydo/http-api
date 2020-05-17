@@ -9,7 +9,6 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
-from restapi.services.authentication import HandleSecurity
 from restapi.utilities.templates import get_html_template
 
 from restapi.utilities.logs import log
@@ -209,9 +208,7 @@ class RecoverPassword(EndpointResource):
                 status_code=400,
             )
 
-        security = HandleSecurity(self.auth)
-
-        security.change_password(self.auth._user, None, new_password, password_confirm)
+        self.auth.change_password(self.auth._user, None, new_password, password_confirm)
         # I really don't know why this save is required... since it is already
         # in change_password ... But if I remove it the new pwd is not saved...
         self.auth.save_user(self.auth._user)

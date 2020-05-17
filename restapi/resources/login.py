@@ -6,7 +6,6 @@ import pytz
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import HandleSecurity
 from restapi import decorators
 
 
@@ -35,7 +34,7 @@ class Login(EndpointResource):
         }
     }
 
-    def verify_information(self, user, security, totp_auth, totp_code):
+    def verify_information(self, user, totp_auth, totp_code):
 
         message = {
             'actions': [],
@@ -58,7 +57,7 @@ class Login(EndpointResource):
 
             if totp_auth:
 
-                qr_code = security.get_qrcode(user)
+                qr_code = self.auth.get_qrcode(user)
 
                 message["qr_code"] = qr_code
 
@@ -118,15 +117,13 @@ class Login(EndpointResource):
         new_password = jargs.get('new_password')
         password_confirm = jargs.get('password_confirm')
 
-        security = HandleSecurity(self.auth)
         # ##################################################
         # Authentication control
-        security.verify_blocked_username(username)
+        self.auth.verify_blocked_username(username)
         token, payload = self.auth.make_login(username, password)
-        security.verify_token(username, token)
         user = self.auth.get_user()
-        security.verify_blocked_user(user)
-        security.verify_active_user(user)
+        self.auth.verify_blocked_user(user)
+        self.auth.verify_active_user(user)
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
             totp_authentication = True
@@ -134,7 +131,7 @@ class Login(EndpointResource):
 
             # if None will be verified later
             if totp_code is not None:
-                security.verify_totp(user, totp_code)
+                self.auth.verify_totp(user, totp_code)
 
         else:
             totp_authentication = False
@@ -144,7 +141,7 @@ class Login(EndpointResource):
         # If requested, change the password
         if new_password is not None and password_confirm is not None:
 
-            pwd_changed = security.change_password(
+            pwd_changed = self.auth.change_password(
                 user, password, new_password, password_confirm
             )
 
@@ -155,7 +152,7 @@ class Login(EndpointResource):
         # ##################################################
         # Something is missing in the authentication, asking action to user
         ret = self.verify_information(
-            user, security, totp_authentication, totp_code
+            user, totp_authentication, totp_code
         )
         if ret is not None:
             return ret
