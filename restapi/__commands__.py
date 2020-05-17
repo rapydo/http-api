@@ -142,9 +142,6 @@ def mywait():
 
     for name, myclass in detector.services_classes.items():
 
-        if name == 'authentication':
-            continue
-
         if name == 'celery':
 
             broker = myclass.variables.get('broker')
@@ -154,7 +151,7 @@ def mywait():
             elif broker == 'REDIS':
                 service_vars = detector.load_variables(prefix='redis')
             else:
-                log.exit("Invalid celery broker: {}", broker)
+                log.exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
             host, port = get_service_address(service_vars, 'host', 'port', broker)
 
@@ -168,7 +165,7 @@ def mywait():
             elif backend == 'MONGODB':
                 service_vars = detector.load_variables(prefix='mongo')
             else:
-                log.exit("Invalid celery backend: {}", backend)
+                log.exit("Invalid celery backend: {}", backend)  # pragma: no cover
 
             host, port = get_service_address(service_vars, 'host', 'port', backend)
 
@@ -230,15 +227,13 @@ def tests(wait, core, file, folder):
     elif file is not None:
         if not os.path.isfile(os.path.join("tests", file)):
             log.exit("File not found: {}", file)
-        else:
-            parameters.append("default")
-            parameters.append(file)
+        parameters.append("default")
+        parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
             log.exit("Folder not found: {}", folder)
-        else:
-            parameters.append("default")
-            parameters.append(folder)
+        parameters.append("default")
+        parameters.append(folder)
 
     try:
 
