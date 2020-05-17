@@ -81,7 +81,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._jti = None
         self._user = None
 
-        variables = Detector.load_variables(prefix="auth_")
+        variables = Detector.load_variables(prefix="auth")
 
         self.import_secret(SECRET_KEY_FILE)
 
