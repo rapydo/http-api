@@ -142,30 +142,27 @@ class SqlAlchemy(Connector):
 
         return db
 
-    def initialize(self, pinit, pdestroy):
+    def initialize(self):
 
-        # recover instance with the parent method
         db = self.get_instance()
+        # db.init_app(self.app)
 
-        # do init_app of Flask-SQLAlchemy
-        db.init_app(self.app)
-
-        # careful on what you do with app context on sqlalchemy
         with self.app.app_context():
-
-            # check connection
 
             sql = text('SELECT 1')
             db.engine.execute(sql)
 
-            if pdestroy:
-                # massive destruction
-                log.critical("Destroy current SQL data")
-                db.drop_all()
+            db.create_all()
 
-            if pinit:
-                # all is fine: now create table
-                # because they should not exist yet
-                db.create_all()
+    def destroy(self):
 
-        return db
+        db = self.get_instance()
+
+        with self.app.app_context():
+
+            sql = text('SELECT 1')
+            db.engine.execute(sql)
+
+            # massive destruction
+            log.critical("Destroy current SQL data")
+            db.drop_all()

@@ -27,8 +27,11 @@ class CeleryExt(Connector):
     def postconnect(self, obj, **kwargs):
         return True
 
-    def initialize(self, pinit, pdestroy):
-        return self.get_instance()
+    def initialize(self):
+        pass
+
+    def destroy(self):
+        pass
 
     def connect(self, **kwargs):
 

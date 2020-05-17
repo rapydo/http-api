@@ -175,34 +175,31 @@ class NeoModel(Connector):
 
         # return db
 
-    def initialize(self, pinit, pdestroy):
+    def initialize(self):
 
-        # recover instance with the parent method
         graph = self.get_instance()
-
-        # db.init_app(self.app)
 
         with self.app.app_context():
 
-            if pdestroy:
-                log.critical("Destroy current Neo4j data")
-                from neomodel import clear_neo4j_database
+            auto_index = self.variables.get("autoindexing", 'True') == 'True'
 
-                clear_neo4j_database(graph.db)
+            if auto_index:
+                try:
+                    from neomodel import remove_all_labels, install_all_labels
+                    remove_all_labels()
+                    install_all_labels()
+                except BaseException as e:
+                    log.exit(str(e))
 
-            if pinit:
+    def destroy(self):
 
-                auto_index = self.variables.get("autoindexing", 'True') == 'True'
+        graph = self.get_instance()
 
-                if auto_index:
-                    try:
-                        from neomodel import remove_all_labels, install_all_labels
-                        remove_all_labels()
-                        install_all_labels()
-                    except BaseException as e:
-                        log.exit(str(e))
+        with self.app.app_context():
+            log.critical("Destroy current Neo4j data")
+            from neomodel import clear_neo4j_database
 
-        return graph
+            clear_neo4j_database(graph.db)
 
 
 def graph_transactions(func):
