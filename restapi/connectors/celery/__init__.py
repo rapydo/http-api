@@ -7,8 +7,10 @@ from datetime import timedelta
 
 from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.connectors import Connector
+from restapi.confs import CUSTOM_PACKAGE
 from restapi.confs import get_project_configuration
 
+from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log, obfuscate_url
 
 
@@ -17,6 +19,20 @@ class CeleryExt(Connector):
     CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"
     celery_app = None
+
+    @classmethod
+    def init_class(cls):
+
+        task_package = "{}.tasks".format(CUSTOM_PACKAGE)
+
+        submodules = Meta.import_submodules_from_package(
+            task_package, exit_on_fail=True
+        )
+        for submodule in submodules:
+            tasks = Meta.get_celery_tasks_from_module(submodule)
+
+            for func_name, funct in tasks.items():
+                setattr(CeleryExt, func_name, funct)
 
     def get_connection_exception(self):
         return None
