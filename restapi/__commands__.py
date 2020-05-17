@@ -52,11 +52,9 @@ def initializing():
     )
 
 
+# Too dangerous to launch it during tests... skipping tests
 @cli.command()
-# @click.option(
-#     '--wait/--no-wait', default=False, help='Wait for startup to finish')
-# def launch(wait):
-def launch():
+def launch():  # pragma: no cover
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
@@ -142,9 +140,6 @@ def mywait():
 
     for name, myclass in detector.services_classes.items():
 
-        if name == 'authentication':
-            continue
-
         if name == 'celery':
 
             broker = myclass.variables.get('broker')
@@ -154,7 +149,7 @@ def mywait():
             elif broker == 'REDIS':
                 service_vars = detector.load_variables(prefix='redis')
             else:
-                log.exit("Invalid celery broker: {}", broker)
+                log.exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
             host, port = get_service_address(service_vars, 'host', 'port', broker)
 
@@ -168,7 +163,7 @@ def mywait():
             elif backend == 'MONGODB':
                 service_vars = detector.load_variables(prefix='mongo')
             else:
-                log.exit("Invalid celery backend: {}", backend)
+                log.exit("Invalid celery backend: {}", backend)  # pragma: no cover
 
             host, port = get_service_address(service_vars, 'host', 'port', backend)
 
@@ -179,15 +174,16 @@ def mywait():
             wait_socket(host, port, name)
 
 
+# Too dangerous to launch it during tests... skipping tests
 @cli.command()
 @click.confirmation_option(help='Are you sure you want to drop data?')
-def clean():
+def clean():  # pragma: no cover
     """Destroy current services data"""
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 
 
 @cli.command()
-def forced_clean():
+def forced_clean():  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 
@@ -230,15 +226,13 @@ def tests(wait, core, file, folder):
     elif file is not None:
         if not os.path.isfile(os.path.join("tests", file)):
             log.exit("File not found: {}", file)
-        else:
-            parameters.append("default")
-            parameters.append(file)
+        parameters.append("default")
+        parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
             log.exit("Folder not found: {}", folder)
-        else:
-            parameters.append("default")
-            parameters.append(folder)
+        parameters.append("default")
+        parameters.append(folder)
 
     try:
 
