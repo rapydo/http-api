@@ -26,6 +26,8 @@ GSI_AUTH_SCHEME = 'GSI'
 PAM_AUTH_SCHEME = 'PAM'
 
 
+# Excluded from coverage because it is only used by a very specific service
+# No further tests will be included in the core
 class IrodsPythonExt(Connector):
 
     def get_connection_exception(self):
