@@ -170,6 +170,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.verify_password(password, user.password):
             payload, full_payload = self.fill_payload(user)
             token = self.create_token(payload)
+
+            if token is None:
+
+                if self.REGISTER_FAILED_LOGIN:
+                    self.register_failed_login(username)
+
+                raise RestApiException(
+                    'Invalid username or password',
+                    status_code=401,
+                    is_warning=True
+                )
+
             return token, full_payload
 
         # old hashing; deprecated since 0.7.2. Removed me in a near future!!
@@ -650,11 +662,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.critical("auth.get_failed_login: not implemented")
         return 0
 
-
-class HandleSecurity:
-    def __init__(self, auth):
-        self.auth = auth
-
     @staticmethod
     def get_secret(user):
 
@@ -673,24 +680,15 @@ class HandleSecurity:
 
         # return base64.b32encode(user.name.encode('utf-8'))
 
-    def verify_token(self, username, token):
-        if token is None:
-
-            if self.auth.REGISTER_FAILED_LOGIN:
-                self.auth.register_failed_login(username)
-            msg = 'Invalid username or password'
-            code = 401
-            raise RestApiException(msg, status_code=code, is_warning=True)
-
     def verify_totp(self, user, totp_code):
 
         if totp_code is None:
             raise RestApiException('Invalid verification code', status_code=401)
-        secret = HandleSecurity.get_secret(user)
+        secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code):
-            if self.auth.REGISTER_FAILED_LOGIN:
-                self.auth.register_failed_login(user.email)
+            if self.REGISTER_FAILED_LOGIN:
+                self.register_failed_login(user.email)
             raise RestApiException('Invalid verification code', status_code=401)
 
         return True
@@ -698,7 +696,7 @@ class HandleSecurity:
     @staticmethod
     def get_qrcode(user):
 
-        secret = HandleSecurity.get_secret(user)
+        secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration('project.title', "No project name")
@@ -714,9 +712,9 @@ class HandleSecurity:
         if old_pwd is not None and pwd == old_pwd:
             return False, "The new password cannot match the previous password"
 
-        if len(pwd) < self.auth.MIN_PASSWORD_LENGTH:
+        if len(pwd) < self.MIN_PASSWORD_LENGTH:
             return False, "Password is too short, use at least {} characters".format(
-                self.auth.MIN_PASSWORD_LENGTH
+                self.MIN_PASSWORD_LENGTH
             )
 
         if not re.search("[a-z]", pwd):
@@ -744,7 +742,7 @@ class HandleSecurity:
             msg = "Your password doesn't match the confirmation"
             raise RestApiException(msg, status_code=409)
 
-        if self.auth.VERIFY_PASSWORD_STRENGTH:
+        if self.VERIFY_PASSWORD_STRENGTH:
 
             check, msg = self.verify_password_strength(
                 new_password,
@@ -757,12 +755,12 @@ class HandleSecurity:
         now = datetime.now(pytz.utc)
         user.password = BaseAuthentication.get_password_hash(new_password)
         user.last_password_change = now
-        self.auth.save_user(user)
+        self.save_user(user)
 
-        tokens = self.auth.get_tokens(user=user)
+        tokens = self.get_tokens(user=user)
         for token in tokens:
             try:
-                self.auth.invalidate_token(token=token["token"])
+                self.invalidate_token(token=token["token"])
             except BaseException as e:
                 log.error(e)
                 log.critical("Failed to invalidate token {}")
@@ -771,14 +769,14 @@ class HandleSecurity:
 
     def verify_blocked_username(self, username):
 
-        if not self.auth.REGISTER_FAILED_LOGIN:
+        if not self.REGISTER_FAILED_LOGIN:
             # We do not register failed login
             return False
-        if self.auth.MAX_LOGIN_ATTEMPTS <= 0:
+        if self.MAX_LOGIN_ATTEMPTS <= 0:
             # We register failed login, but we do not set a max num of failures
             return False
         # FIXME: implement get_failed_login
-        if self.auth.get_failed_login(username) < self.auth.MAX_LOGIN_ATTEMPTS:
+        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             # We register and set a max, but user does not reached it yet
             return False
         # Dear user, you have exceeded the limit
@@ -786,18 +784,18 @@ class HandleSecurity:
             """
             Sorry, this account is temporarily blocked due to
             more than {} failed login attempts. Try again later""".format(
-                self.auth.MAX_LOGIN_ATTEMPTS)
+                self.MAX_LOGIN_ATTEMPTS)
         )
         raise RestApiException(msg, status_code=401)
 
     def verify_blocked_user(self, user):
 
-        if self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER > 0:
+        if self.DISABLE_UNUSED_CREDENTIALS_AFTER > 0:
             last_login = user.last_login
             now = datetime.now(pytz.utc)
             if last_login is not None:
 
-                inactivity = timedelta(days=self.auth.DISABLE_UNUSED_CREDENTIALS_AFTER)
+                inactivity = timedelta(days=self.DISABLE_UNUSED_CREDENTIALS_AFTER)
                 valid_until = last_login + inactivity
 
                 if valid_until < now:

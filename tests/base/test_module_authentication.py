@@ -4,7 +4,6 @@ import time
 import random
 import string
 import pytest
-from restapi.services.authentication import HandleSecurity
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
@@ -60,52 +59,51 @@ def random_string(length, low=True, up=False, digits=False, symbols=False):
     return randstr
 
 
-def test_authentication_connector():
+def test_authentication_service():
 
     if not detector.check_availability('authentication'):
         log.warning("Skipping authentication test: service not available")
         return False
 
     auth = detector.get_service_instance('authentication')
-    security = HandleSecurity(auth)
 
     min_pwd_len = int(os.environ.get("AUTH_MIN_PASSWORD_LENGTH", 9999))
 
     pwd = random_string(min_pwd_len - 1)
-    ret_val, ret_text = security.verify_password_strength(pwd, old_pwd=pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=pwd)
     assert not ret_val
     assert ret_text == 'The new password cannot match the previous password'
 
     pwd = random_string(min_pwd_len - 1)
     old_pwd = random_string(min_pwd_len)
-    ret_val, ret_text = security.verify_password_strength(pwd, old_pwd=old_pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too short, use at least {} characters'.format(
         min_pwd_len
     )
 
     pwd = random_string(min_pwd_len, low=False, up=True)
-    ret_val, ret_text = security.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing lower case letters'
 
     pwd = random_string(min_pwd_len, low=True)
-    ret_val, ret_text = security.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing upper case letters'
 
     pwd = random_string(min_pwd_len, low=True, up=True)
-    ret_val, ret_text = security.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing numbers'
 
     pwd = random_string(min_pwd_len, low=True, up=True, digits=True)
-    ret_val, ret_text = security.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing special characters'
 
     pwd = random_string(min_pwd_len, low=True, up=True, digits=True, symbols=True)
-    ret_val, ret_text = security.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd)
     assert ret_val
     assert ret_text is None
 
@@ -114,35 +112,35 @@ def test_authentication_connector():
     pwd = random_string(min_pwd_len - 1)
 
     try:
-        security.change_password(user, pwd, None, None)
+        auth.change_password(user, pwd, None, None)
         pytest.fail('None password!')
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Wrong new password"
 
     try:
-        security.change_password(user, pwd, pwd, None)
+        auth.change_password(user, pwd, pwd, None)
         pytest.fail('None password!')
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Wrong password confirm"
 
     try:
-        security.change_password(user, pwd, pwd, 'wrongconfirmation')
+        auth.change_password(user, pwd, pwd, 'wrongconfirmation')
         pytest.fail('wrong passwrd confirmation!?')
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == "Your password doesn't match the confirmation"
 
     try:
-        security.change_password(user, pwd, pwd, pwd)
+        auth.change_password(user, pwd, pwd, pwd)
         pytest.fail('Password strength not verified')
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == 'The new password cannot match the previous password'
 
     try:
-        security.change_password(user, "currentpassword", pwd, pwd)
+        auth.change_password(user, "currentpassword", pwd, pwd)
         pytest.fail('Password strength not verified')
     except RestApiException as e:
         assert e.status_code == 409
@@ -151,17 +149,11 @@ def test_authentication_connector():
         )
 
     try:
-        security.verify_totp(None, None)
+        auth.verify_totp(None, None)
         pytest.fail("NULL totp accepted!")
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == 'Invalid verification code'
-
-
-def test_authentication_service():
-    if not detector.check_availability('authentication'):
-        log.warning("Skipping authentication test: service not available")
-        return False
 
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication

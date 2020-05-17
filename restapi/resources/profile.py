@@ -3,7 +3,6 @@
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import HandleSecurity
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
@@ -100,19 +99,16 @@ class Profile(EndpointResource):
         else:
             totp_code = None
 
-        security = HandleSecurity(self.auth)
-
         if new_password is None or password_confirm is None:
             msg = "New password is missing"
             raise RestApiException(msg, status_code=400)
 
         if totp_authentication:
-            security.verify_totp(user, totp_code)
+            self.auth.verify_totp(user, totp_code)
         else:
             token, _ = self.auth.make_login(user.email, password)
-            security.verify_token(user.email, token)
 
-        security.change_password(user, password, new_password, password_confirm)
+        self.auth.change_password(user, password, new_password, password_confirm)
 
         # NOTE already in change_password
         # but if removed new pwd is not saved
