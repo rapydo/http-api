@@ -168,18 +168,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # this will raise a RestApiException
             self.failed_login(username)
 
-        try:
-            # Check if Oauth2 is enabled
-            if user.authmethod != 'credentials':
-                raise RestApiException(
-                    "Invalid authentication method",
-                    status_code=400,
-                )
-        except BaseException:
-            # Missing authmethod as requested for authentication
-            log.critical("Current authentication db models are broken!")
-            # this will raise a RestApiException without register the failure
-            self.failed_login(username=None)
+        # Check if Oauth2 is enabled
+        if user.authmethod != 'credentials':
+            raise RestApiException("Invalid authentication method", status_code=400)
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
@@ -194,7 +185,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # old hashing; deprecated since 0.7.2. Removed me in a near future!!
         # Probably when ALL users will be converted... uhm... never?? :-D
-        if self.check_old_password(user.password, password):
+        if self.check_old_password(user.password, password):  # pragma: no cover
             log.warning(
                 "Old password encoding for user {}, automatic convertion", user.email)
 

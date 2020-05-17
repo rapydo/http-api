@@ -157,6 +157,7 @@ def test_authentication_service():
 
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
+    from restapi.services.authentication import InvalidToken
 
     auth = detector.get_service_instance('authentication')
 
@@ -268,3 +269,10 @@ def test_authentication_service():
     time.sleep(EXPIRATION + 1)
     verify_token_is_not_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
+
+    assert not auth.verify_token(None, raiseErrors=False)
+    try:
+        auth.verify_token(None, raiseErrors=True)
+        pytest.fail("No exception raised!")
+    except InvalidToken as e:
+        assert str(e) == 'Missing token'
