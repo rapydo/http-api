@@ -145,7 +145,7 @@ class SqlAlchemy(Connector):
     def initialize(self):
 
         db = self.get_instance()
-        # db.init_app(self.app)
+        db.init_app(self.app)
 
         with self.app.app_context():
 
@@ -157,6 +157,7 @@ class SqlAlchemy(Connector):
     def destroy(self):
 
         db = self.get_instance()
+        db.init_app(self.app)
 
         with self.app.app_context():
 
