@@ -3,7 +3,7 @@
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
-from restapi.connectors.authentication import HandleSecurity
+from restapi.services.authentication import HandleSecurity
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 

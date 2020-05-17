@@ -6,7 +6,7 @@ import string
 import pytest
 from restapi.utilities.globals import mem
 from restapi.customization import Customizer
-from restapi.connectors.authentication import HandleSecurity
+from restapi.services.authentication import HandleSecurity
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
