@@ -100,7 +100,6 @@ def create_app(
     # Find services and try to connect to the ones available
     detector.init_services(
         app=microservice,
-        worker_mode=worker_mode,
         project_init=init_mode,
         project_clean=destroy_mode,
     )

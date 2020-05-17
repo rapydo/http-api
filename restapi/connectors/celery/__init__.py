@@ -169,14 +169,6 @@ class CeleryExt(Connector):
         celery_app = Celery('RestApiQueue', broker=BROKER_URL, backend=BACKEND_URL)
         celery_app.conf['broker_use_ssl'] = BROKER_USE_SSL
 
-        # if not worker_mode:
-
-        #     from celery.task.control import inspect
-
-        #     insp = inspect()
-        #     if not insp.stats():
-        #         log.warning("No running Celery workers were found")
-
         # Skip initial warnings, avoiding pickle format (deprecated)
         celery_app.conf.accept_content = ['json']
         celery_app.conf.task_serializer = 'json'

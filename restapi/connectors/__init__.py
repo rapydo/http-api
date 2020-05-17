@@ -11,11 +11,10 @@ class Connector(metaclass=abc.ABCMeta):
 
     models = {}  # I get models on a cls level, instead of instances
 
-    def __init__(self, app=None, **kwargs):
+    def __init__(self, app=None):
 
         self.objs = {}
         self.name = self.__class__.__name__.lower()
-        self.args = kwargs
 
         self.app = app
         if app is not None:

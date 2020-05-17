@@ -217,9 +217,7 @@ class Detector:
 
         return getattr(module, classname)
 
-    def init_services(
-        self, app, worker_mode=False, project_init=False, project_clean=False
-    ):
+    def init_services(self, app, project_init=False, project_clean=False):
 
         instances = {}
 
@@ -230,14 +228,10 @@ class Detector:
             if not self.available_services.get(name):
                 continue
 
-            args = {}
-            if name == 'celery':
-                args['worker_mode'] = worker_mode
-
             # Get connectors class and build the connector object
             Connector = self.services_classes.get(name)
             try:
-                instance = Connector(app, **args)
+                instance = Connector(app)
             except TypeError as e:
                 log.exit('Your class {} is not compliant:\n{}', name, e)
             else:
