@@ -235,32 +235,12 @@ class Detector:
                 instance = Connector(app)
             except TypeError as e:
                 log.exit('Your class {} is not compliant:\n{}', name, e)
-            else:
-                self.connectors_instances[name] = instance
 
-            # do_init = project_init and name == self.authentication_service
+            self.connectors_instances[name] = instance
 
-            # Initialize the real service getting the first service object
-            # log.debug("Initializing {} (pinit={})", name, do_init)
-            # service_instance = instance.initialize(
-            #     pinit=do_init,
-            #     pdestroy=project_clean,
-            # )
             instances[name] = instance.get_instance()
 
-            # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
-            if name == 'celery':
-
-                task_package = "{}.tasks".format(CUSTOM_PACKAGE)
-
-                submodules = Meta.import_submodules_from_package(
-                    task_package, exit_on_fail=True
-                )
-                for submodule in submodules:
-                    tasks = Meta.get_celery_tasks_from_module(submodule)
-
-                    for func_name, funct in tasks.items():
-                        setattr(Connector, func_name, funct)
+            Connector.init_class()
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")

@@ -11,14 +11,19 @@ class Connector(metaclass=abc.ABCMeta):
 
     models = {}  # I get models on a cls level, instead of instances
 
-    def __init__(self, app=None):
+    def __init__(self, app):
 
         self.objs = {}
         self.name = self.__class__.__name__.lower()
 
         self.app = app
-        if app is not None:
-            self.init_app(app)
+        self.init_app(app)
+
+    # Optional: you can override this method to implement initialization at class level
+    # For example it is used in Celery to inject tasks into the Connector class
+    @classmethod
+    def init_class(cls):
+        pass
 
     @abc.abstractmethod
     def get_connection_exception(self):
