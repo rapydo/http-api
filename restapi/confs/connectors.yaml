@@ -6,7 +6,7 @@
 # ####################################
 
   # sqlalchemy relational databases
-- name: sqlalchemy
+- name: alchemy
   load_models: 1
   class: SqlAlchemy
 
@@ -26,7 +26,7 @@
   class: MongoExt
 
   # rabbitmq message queue
-- name: rabbit
+- name: rabbitmq
   load_models: 0
   class: RabbitExt
 
