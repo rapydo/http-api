@@ -20,7 +20,7 @@ from restapi.utilities.logs import log
 app = Flask("beat")
 
 detector.init_services(
-    app=app, worker_mode=True, project_init=False, project_clean=False
+    app=app, project_init=False, project_clean=False
 )
 
 celery_app = detector.connectors_instances.get('celery').celery_app
