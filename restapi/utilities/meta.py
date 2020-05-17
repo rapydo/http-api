@@ -179,7 +179,7 @@ class Meta:
     @staticmethod
     def get_authentication_module(auth_service):
 
-        module_name = "services.authentication.{}".format(auth_service)
+        module_name = "connectors.{}".format(auth_service)
         log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True

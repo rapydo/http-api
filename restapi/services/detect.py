@@ -100,7 +100,6 @@ class Detector:
 
         self.available_services[AUTH_NAME] = Detector.get_bool_from_os('AUTH_ENABLE')
 
-        log.critical(self.services_configuration)
         for service in self.services_configuration:
 
             name = service.get('name')
