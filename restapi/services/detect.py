@@ -104,8 +104,9 @@ class Detector:
         for service in self.services_configuration:
 
             name = service.get('name')
+            prefix = service.get('prefix')
 
-            variables = Detector.load_variables(prefix=name)
+            variables = Detector.load_variables(prefix=prefix)
 
             connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
             if not connect:
