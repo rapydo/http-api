@@ -142,7 +142,7 @@ class SqlAlchemy(Connector):
 
         return db
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
 
         # recover instance with the parent method
         db = self.get_instance()

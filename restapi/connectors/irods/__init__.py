@@ -246,7 +246,7 @@ class IrodsPythonExt(Connector):
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
 
         # if pinit and not self.variables.get('external'):
         #     log.debug("waiting for internal certificates")

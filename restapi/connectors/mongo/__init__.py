@@ -84,7 +84,7 @@ class MongoExt(Connector):
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
         return obj
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
         # recover instance with the parent method
         db = self.get_instance()
 

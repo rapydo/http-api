@@ -249,7 +249,6 @@ class Detector:
             # service_instance = instance.initialize(
             #     pinit=do_init,
             #     pdestroy=project_clean,
-            #     abackend=None
             # )
             instances[name] = instance.get_instance()
 
@@ -276,22 +275,20 @@ class Detector:
         db = instances[self.authentication_service]
         self.authentication_instance = auth_module.Authentication(db)
 
+        # Only once in a lifetime
         if project_init:
 
             connector = self.connectors_instances[self.authentication_service]
             log.debug("Initializing {}", self.authentication_service)
             connector.initialize(
-                pinit=True,
+                pinit=project_init,
                 pdestroy=project_clean,
-                abackend=None
             )
 
             with app.app_context():
                 self.authentication_instance.init_users_and_roles()
                 log.info("Initialized authentication module")
 
-        # Only once in a lifetime
-        if project_init:
             self.project_initialization(instances, app=app)
 
     def check_availability(self, name):

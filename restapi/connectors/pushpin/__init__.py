@@ -23,7 +23,7 @@ class PushpinExt(Connector):
     def postconnect(self, obj, **kwargs):
         return True
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+    def initialize(self, pinit, pdestroy):
         return self.get_instance()
 
     def connect(self, **kwargs):
