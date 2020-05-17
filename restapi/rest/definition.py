@@ -73,6 +73,17 @@ class EndpointResource(Resource):
 
     @staticmethod
     def get_service_instance(service_name, global_instance=True, **kwargs):
+
+        # Deprecated since 0.7.4
+        if service_name == 'sqlalchemy':
+            log.warning("Deprecated use of sqlalchemy service, use alchemy instead")
+            service_name = 'alchemy'
+
+        # Deprecated since 0.7.4
+        if service_name == 'rabbit':
+            log.warning("Deprecated use of rabbit service, use rabbitmq instead")
+            service_name = 'rabbitmq'
+
         return detector.get_service_instance(
             service_name,
             global_instance=global_instance,
