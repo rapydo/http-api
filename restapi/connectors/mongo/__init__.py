@@ -84,79 +84,25 @@ class MongoExt(Connector):
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
         return obj
 
-    def initialize(self, pinit, pdestroy):
-        # recover instance with the parent method
+    def initialize(self):
+        pass
+
+    def destroy(self):
+
         db = self.get_instance()
 
-        if pdestroy:
-            # massive destruction
-            client = db.connection.database
+        # massive destruction
+        client = db.connection.database
 
-            from pymongo import MongoClient
+        from pymongo import MongoClient
 
-            client = MongoClient(
-                self.variables.get('host'),
-                int(self.variables.get('port'))
-            )
+        client = MongoClient(
+            self.variables.get('host'),
+            int(self.variables.get('port'))
+        )
 
-            system_dbs = ['admin', 'local', 'config']
-            for db in client.database_names():
-                if db not in system_dbs:
-                    client.drop_database(db)
-                    log.critical("Dropped db '{}'", db)
-
-        # if pinit:
-        #     pass
-
-        return db
-
-
-# class Converter:
-#     def __init__(self, mongo_model):
-#         self._model = mongo_model
-
-#     @classmethod
-#     def recursive_inspect(cls, obj, **kwargs):
-
-#         from bson import ObjectId
-#         from datetime import datetime
-
-#         ###############
-#         tobehidden = ['_cls', 'password']
-#         hide_user = kwargs.get('hide_user', True)
-#         if hide_user:
-#             tobehidden.append('user')
-#         hide_fields = kwargs.get('hide_fields')
-#         if hide_fields is not None and isinstance(hide_fields, list):
-#             tobehidden += hide_fields
-
-#         ###############
-#         if isinstance(obj, dict):
-
-#             for key, value in obj.copy().items():
-
-#                 if key in tobehidden:
-#                     obj.pop(key)
-#                     continue
-#                 elif isinstance(value, datetime):
-#                     newvalue = value.timestamp()
-#                 elif isinstance(value, ObjectId):
-#                     newvalue = str(value)
-#                 elif isinstance(value, list):
-#                     newvalue = []
-#                     for element in value:
-#                         newvalue.append(cls.recursive_inspect(element, **kwargs))
-#                 else:
-#                     newvalue = value
-
-#                 obj[key] = newvalue
-
-#         ###############
-#         return obj
-
-#     def asdict(self, *args, **kwargs):
-#         return self.recursive_inspect(
-#             # src: https://jira.mongodb.org/browse/PYMODM-105
-#             dict(self._model.to_son()),
-#             **kwargs,
-#         )
+        system_dbs = ['admin', 'local', 'config']
+        for db in client.database_names():
+            if db not in system_dbs:
+                client.drop_database(db)
+                log.critical("Dropped db '{}'", db)

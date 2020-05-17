@@ -39,9 +39,12 @@ class Connector(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def initialize(self, pinit, pdestroy):
-        return self.get_instance()
+    def initialize(self):
+        pass
 
+    @abc.abstractmethod
+    def destroy(self):
+        pass
 
     def close_connection(self, ctx):
         """ override this method if you must close

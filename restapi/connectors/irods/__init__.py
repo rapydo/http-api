@@ -246,30 +246,11 @@ class IrodsPythonExt(Connector):
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
-    def initialize(self, pinit, pdestroy):
+    def initialize(self):
+        pass
 
-        # if pinit and not self.variables.get('external'):
-        #     log.debug("waiting for internal certificates")
-        #     # should actually connect with user and password
-        #     # and verify if GSI is already registered with admin rodsminer
-        #     import time
-        #     time.sleep(5)
-
-        # recover instance with the parent method
-        session = self.get_instance()
-
-        # IF variable 'IRODS_ANONYMOUS? is set THEN
-        # Check if external iRODS / B2SAFE has the 'anonymous' user available
-        user = 'anonymous'
-        if self.variables.get('external') and self.variables.get(user):
-            if not session.query_user_exists(user):
-                log.exit(
-                    "Cannot find '{}' inside "
-                    "the currently connected iRODS instance",
-                    user,
-                )
-
-        return session
+    def destroy(self):
+        pass
 
     @staticmethod
     def deserialize(obj):

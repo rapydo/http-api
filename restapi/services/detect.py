@@ -280,16 +280,18 @@ class Detector:
 
             connector = self.connectors_instances[self.authentication_service]
             log.debug("Initializing {}", self.authentication_service)
-            connector.initialize(
-                pinit=project_init,
-                pdestroy=project_clean,
-            )
+            connector.initialize()
 
             with app.app_context():
                 self.authentication_instance.init_users_and_roles()
                 log.info("Initialized authentication module")
 
             self.project_initialization(instances, app=app)
+
+        if project_clean:
+            connector = self.connectors_instances[self.authentication_service]
+            log.debug("Destroying {}", self.authentication_service)
+            connector.destroy()
 
     def check_availability(self, name):
 
