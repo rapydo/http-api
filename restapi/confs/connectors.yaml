@@ -57,7 +57,7 @@
 # ##############################
 
   # authentication
-- name: authentication
-  load_models: 0
-  prefix: auth
-  class: Authenticator
+# - name: authentication
+#   load_models: 0
+#   prefix: auth
+#   class: Authenticator

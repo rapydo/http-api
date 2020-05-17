@@ -17,16 +17,34 @@ from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import load_yaml_file
 from restapi.utilities.logs import log
 
+AUTH_NAME = 'authentication'
+
 
 class Detector:
     def __init__(self):
 
-        self.authentication_service = None
-        self.authentication_name = 'authentication'
-        self.services_configuration = []
+        self.authentication_service = Detector.get_global_var("AUTH_SERVICE")
+
+        if self.authentication_service is None:
+            log.info("No service defined for authentication")
+        else:
+            log.info(
+                "Authentication is based on '{}' service",
+                self.authentication_service
+            )
+
+        self.available_services = {}
         self.services_classes = {}
         self.connectors_instances = {}
-        self.available_services = {}
+
+        try:
+            self.services_configuration = load_yaml_file(
+                file='connectors.yaml',
+                path=ABS_RESTAPI_CONFSPATH
+            )
+        except AttributeError as e:
+            log.exit(e)
+
         self.load_services()
 
     @staticmethod
@@ -75,11 +93,7 @@ class Detector:
 
     def load_services(self):
 
-        try:
-            self.services_configuration = load_yaml_file(
-                file='connectors.yaml', path=ABS_RESTAPI_CONFSPATH)
-        except AttributeError as e:
-            log.exit(e)
+        self.available_services[AUTH_NAME] = Detector.get_bool_from_os('AUTH_ENABLE')
 
         for service in self.services_configuration:
 
@@ -99,23 +113,13 @@ class Detector:
 
             self.available_services[name] = enabled or external
 
-            if self.available_services[name]:
-
-                service['variables'] = variables
-
-                # set auth service
-                if name == self.authentication_name:
-                    self.authentication_service = variables.get('service')
-
-        for service in self.services_configuration:
-
-            name = service.get('name')
-
             if not self.available_services.get(name):
                 continue
+
+            service['variables'] = variables
+
             log.verbose("Looking for class {}", name)
 
-            variables = service.get('variables')
             class_name = service.get('class')
             connector_name = service.get('name')
 
@@ -126,41 +130,34 @@ class Detector:
                 # Passing variables
                 MyClass.set_variables(variables)
 
-                if service.get('load_models'):
-
-                    base_models = Meta.import_models(
-                        name, BACKEND_PACKAGE, exit_on_fail=True
-                    )
-                    if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                        extended_models = {}
-                    else:
-                        extended_models = Meta.import_models(
-                            name, EXTENDED_PACKAGE, exit_on_fail=False
-                        )
-                    custom_models = Meta.import_models(
-                        name, CUSTOM_PACKAGE, exit_on_fail=False
-                    )
-
-                    MyClass.set_models(base_models, extended_models, custom_models)
-
             except AttributeError as e:
                 log.error(str(e))
                 log.exit('Invalid connector class: {}', class_name)
 
+            if service.get('load_models'):
+
+                base_models = Meta.import_models(
+                    name, BACKEND_PACKAGE, exit_on_fail=True
+                )
+                if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                    extended_models = {}
+                else:
+                    extended_models = Meta.import_models(
+                        name, EXTENDED_PACKAGE, exit_on_fail=False
+                    )
+                custom_models = Meta.import_models(
+                    name, CUSTOM_PACKAGE, exit_on_fail=False
+                )
+
+                MyClass.set_models(base_models, extended_models, custom_models)
+
             # Save
             self.services_classes[name] = MyClass
+
             log.debug("Got class definition for {}", MyClass)
 
         if len(self.services_classes) < 1:
             raise KeyError("No classes were recovered!")
-
-        if self.authentication_service is None:
-            log.info("No service defined for authentication")
-        else:
-            log.info(
-                "Authentication is based on '{}' service",
-                self.authentication_service
-            )
 
     @staticmethod
     def load_group(label):
@@ -173,13 +170,6 @@ class Detector:
                 value = value.strip('"').strip("'")
                 variables[key] = value
         return variables
-
-    def output_service_variables(self, service_name):
-        service_class = self.services_classes.get(service_name, {})
-        try:
-            return service_class.variables
-        except BaseException:
-            return {}
 
     @staticmethod
     def load_variables(prefix):
@@ -226,7 +216,6 @@ class Detector:
     ):
 
         instances = {}
-        auth_backend = None
 
         for service in self.services_configuration:
 
@@ -234,16 +223,6 @@ class Detector:
 
             if not self.available_services.get(name):
                 continue
-
-            if name == self.authentication_name and auth_backend is None:
-                if self.authentication_service is None:
-                    log.warning("No authentication")
-                    continue
-                else:
-                    log.exit(
-                        "Auth service '{}' is unreachable".format(
-                            self.authentication_service)
-                    )
 
             args = {}
             if name == 'celery':
@@ -258,24 +237,16 @@ class Detector:
             else:
                 self.connectors_instances[name] = instance
 
-            do_init = False
-            if project_init and name in (
-                self.authentication_service,
-                self.authentication_name
-            ):
-                do_init = True
+            do_init = project_init and name == self.authentication_service
 
             # Initialize the real service getting the first service object
             log.debug("Initializing {} (pinit={})", name, do_init)
             service_instance = instance.initialize(
                 pinit=do_init,
                 pdestroy=project_clean,
-                abackend=auth_backend
+                abackend=None
             )
             instances[name] = service_instance
-
-            if name == self.authentication_service:
-                auth_backend = service_instance
 
             # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
             if name == 'celery':
@@ -291,6 +262,26 @@ class Detector:
                     for func_name, funct in tasks.items():
                         setattr(Connector, func_name, funct)
 
+        if self.authentication_service not in instances:
+            if self.authentication_service is None:
+                log.warning("No authentication")
+            else:
+                log.exit(
+                    "Auth service '{}' is unreachable".format(
+                        self.authentication_service)
+                )
+
+        from restapi.connectors.authentication import Authenticator as AuthConnector
+        instance = AuthConnector(app)
+        variables = Detector.load_variables(prefix='auth_')
+        AuthConnector.set_variables(variables)
+        self.connectors_instances[AUTH_NAME] = instance
+
+        service_instance = instance.initialize(
+            pinit=project_init,
+            pdestroy=project_clean,
+            abackend=instances[self.authentication_service]
+        )
         if len(self.connectors_instances) < 1:
             raise KeyError("No instances available for modules")
 
