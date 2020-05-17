@@ -9,7 +9,7 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
-from restapi.connectors.authentication import HandleSecurity
+from restapi.services.authentication import HandleSecurity
 from restapi.utilities.templates import get_html_template
 
 from restapi.utilities.logs import log

@@ -6,7 +6,7 @@ import pytz
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
-from restapi.connectors.authentication import HandleSecurity
+from restapi.services.authentication import HandleSecurity
 from restapi import decorators
 
 
