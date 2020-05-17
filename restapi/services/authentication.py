@@ -132,6 +132,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.default_role is None or None in cls.default_roles:
             log.exit("Default roles are not available!")
 
+    def failed_login(self, username):
+        if self.REGISTER_FAILED_LOGIN and username is not None:
+            self.register_failed_login(username)
+
+        raise RestApiException(
+            'Invalid username or password',
+            status_code=401,
+            is_warning=True
+        )
+
     def make_login(self, username, password):
         """ The method which will check if credentials are good to go """
 
@@ -155,16 +165,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             )
 
         if user is None:
-            return None, None
+            # this will raise a RestApiException
+            self.failed_login(username)
 
         try:
             # Check if Oauth2 is enabled
             if user.authmethod != 'credentials':
-                return None, None
+                raise RestApiException(
+                    "Invalid authentication method",
+                    status_code=400,
+                )
         except BaseException:
             # Missing authmethod as requested for authentication
             log.critical("Current authentication db models are broken!")
-            return None, None
+            # this will raise a RestApiException without register the failure
+            self.failed_login(username=None)
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
@@ -172,15 +187,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             token = self.create_token(payload)
 
             if token is None:
-
-                if self.REGISTER_FAILED_LOGIN:
-                    self.register_failed_login(username)
-
-                raise RestApiException(
-                    'Invalid username or password',
-                    status_code=401,
-                    is_warning=True
-                )
+                # this will raise a RestApiException
+                self.failed_login(username)
 
             return token, full_payload
 
@@ -197,7 +205,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             return self.make_login(username, password)
 
-        return None, None
+        self.failed_login(username)
 
     # ########################
     # # Configure Secret Key #
