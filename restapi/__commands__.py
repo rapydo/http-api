@@ -187,7 +187,7 @@ def clean():
 
 
 @cli.command()
-def forced_clean():
+def forced_clean():  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 

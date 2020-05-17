@@ -28,3 +28,19 @@ def test_cli():
 
         response = runner.invoke(cli.verify, ["--services", service])
         assert response.exit_code == 0
+
+    response = runner.invoke(cli.wait, [])
+    assert response.exit_code == 0
+
+    response = runner.invoke(cli.init, [])
+    assert response.exit_code == 0
+
+    response = runner.invoke(cli.clean, [])
+    assert response.exit_code == 1
+    'Do you want to continue? [y/N]:' in response.output
+
+    response = runner.invoke(cli.tests, ["--file", "x"])
+    assert response.exit_code == 1
+
+    response = runner.invoke(cli.tests, ["--folder", "x"])
+    assert response.exit_code == 1
