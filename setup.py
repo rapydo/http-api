@@ -6,8 +6,6 @@ from restapi import \
     __version__ as current_version
 
 
-app = '{}.__commands__'.format(main_package)
-
 setup(
     name='rapydo_http',
     version=current_version,
@@ -31,7 +29,7 @@ setup(
     entry_points='''
         [console_scripts]
         {}={}:cli
-    '''.format(main_package, app),
+    '''.format(main_package, 'cli_commands'),
     install_requires=[
         # Flask and plugins
         "Flask==1.1.2",
