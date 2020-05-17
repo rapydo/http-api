@@ -52,11 +52,9 @@ def initializing():
     )
 
 
+# Too dangerous to launch it during tests... skipping tests
 @cli.command()
-# @click.option(
-#     '--wait/--no-wait', default=False, help='Wait for startup to finish')
-# def launch(wait):
-def launch():
+def launch():  # pragma: no cover
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
@@ -176,9 +174,10 @@ def mywait():
             wait_socket(host, port, name)
 
 
+# Too dangerous to launch it during tests... skipping tests
 @cli.command()
 @click.confirmation_option(help='Are you sure you want to drop data?')
-def clean():
+def clean():  # pragma: no cover
     """Destroy current services data"""
     flask_cli({'name': 'Removing data', 'destroy_mode': True})
 

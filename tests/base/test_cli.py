@@ -53,6 +53,3 @@ def test_cli():
 
     response = runner.invoke(cli.tests, ["--core", "--file", "x"])
     assert response.exit_code == 1
-
-    # response = runner.invoke(cli.launch, [])
-    # assert response.exit_code == 1
