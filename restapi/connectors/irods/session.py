@@ -6,7 +6,9 @@ from irods.pool import Pool
 from irods.session import iRODSSession
 
 
-class iRODSPickleSession(iRODSSession):
+# Excluded from coverage because it is only used by a very specific service
+# No tests for this will be included in the core
+class iRODSPickleSession(iRODSSession):  # pragma: no cover
     """
         Manipulate irods session as a string, to be saved inside a database.
     """

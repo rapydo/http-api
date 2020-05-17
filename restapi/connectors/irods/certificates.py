@@ -21,7 +21,9 @@ except ImportError as e:
     log.exit("\nThis module requires an extra package:\n{}", e)
 
 
-class Certificates:
+# Excluded from coverage because it is only used by a very specific service
+# To tests for this will be included in the core
+class Certificates:  # pragma: no cover
 
     _dir = os.environ.get('CERTDIR')
     _proxyfile = 'userproxy.crt'
