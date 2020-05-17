@@ -20,7 +20,7 @@ from restapi.swagger import input_validation
 from restapi.services.authentication.bearer import HTTPTokenAuth
 from restapi.utilities.globals import mem
 from restapi.utilities.time import string_from_timestamp
-from restapi.services.detect import detector
+from restapi.services.detect import detector, AUTH_NAME
 from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
@@ -66,9 +66,7 @@ class EndpointResource(Resource):
     @staticmethod
     def load_authentication():
         # Authentication instance is always needed at each request
-        auth = detector.get_service_instance(
-            detector.authentication_name, authenticator=True
-        )
+        auth = detector.get_service_instance(AUTH_NAME, authenticator=True)
         auth.db = detector.get_service_instance(detector.authentication_service)
 
         return auth
