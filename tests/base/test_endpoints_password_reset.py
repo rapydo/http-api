@@ -65,7 +65,7 @@ class TestApp(BaseTests):
         assert html in body or plain in body
 
         # token = body[1 + body.rfind("/"):]
-        token = re.search(r".*https?://.*/register/([^']*).*", body)[1]
+        token = re.search(r".*https?://.*/reset/([^']*).*", body)[1]
         token = urllib.parse.unquote(token)
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
