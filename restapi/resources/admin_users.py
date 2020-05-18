@@ -239,7 +239,7 @@ def get_input_schema(strip_required=False, exclude_email=False):
         )
 
     attributes['is_active'] = fields.Bool(
-        label="Active user",
+        label="Activate user",
         default=True,
         required=False
     )
