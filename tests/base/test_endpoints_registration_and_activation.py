@@ -239,8 +239,8 @@ class TestApp(BaseTests):
         for u in users:
             if u.get('email') == registration_data['email']:
                 uuid = u.get('uuid')
-
                 break
+
         assert uuid is not None
         r = client.put(
             API_URI + "/admin/users/" + uuid,
@@ -254,15 +254,38 @@ class TestApp(BaseTests):
         c = self.get_content(r)
         assert c == "Invalid activation token: this request is no longer valid"
 
-        # Testing the following use case:
-        # 1 - after registration the token is invalidated
-        # 3 - user tries to activate and fails because the token does not exist
+        r = client.get(API_URI + "/admin/tokens", headers=headers)
+        content = self.get_content(r)
 
-        r = client.put(
-            API_URI + "/admin/users/" + uuid,
-            data={'is_active': False},
-            headers=headers
-        )
+        uuid = None
+        for t in content:
+            if t.get('token') == token:
+                uuid = t.get(id)
+                break
+        # The token is invalidated by the error above => no user correspondance found
+        assert uuid is None
+
+        # Testing the following use case:
+        # 1 - user registration
+        # 2 - after registration the token is invalidated
+        # 3 - user tries to activate and fails because the token does not exist
+        registration_data['email'] = 'newmock@nomail.org'
+        r = client.post(AUTH_URI + '/profile', data=registration_data)
+        # now the user is created but INACTIVE, activation endpoint is needed
+        assert r.status_code == 200
+
+        mail = self.read_mock_email()
+        body = mail.get('body')
+        assert body is not None
+        assert mail.get('headers') is not None
+        assert "http://localhost/public/register/" in body
+        html = ">click here</a> to activate your account"
+
+        if html in body:
+            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
+        else:
+            token = body[1 + body.rfind("/"):]
+        token = urllib.parse.unquote(token)
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         content = self.get_content(r)
