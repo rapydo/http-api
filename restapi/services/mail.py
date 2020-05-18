@@ -112,7 +112,12 @@ def send(
         log.error("Skipping send email: destination address not configured")
         return False
 
-    with get_smtp_client(smtp_host, smtp_port, username, password) as smtp:
+    smtp_client = get_smtp_client(smtp_host, smtp_port, username, password)
+    if smtp_client is None:
+        log.error("Cannot send mail to {}:{}", smtp_host, smtp_port)
+        return False
+
+    with smtp_client as smtp:
 
         if smtp is None:
             log.error("Unable to send email: client initialization failed")
