@@ -191,7 +191,7 @@ class TestUploadAndDownload(BaseTests):
             API_URI + '/tests/download/' + uploaded_filename,
             headers={'Range': 'bytes=0-9'}
         )
-        assert r.status_code == 200
+        assert r.status_code == 206
         content = r.data.decode('utf-8')
         assert content == up_data
 
