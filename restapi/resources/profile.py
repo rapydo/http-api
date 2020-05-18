@@ -40,7 +40,7 @@ class Profile(EndpointResource):
     @decorators.auth.required()
     def get(self):
 
-        current_user = self.get_current_user()
+        current_user = self.auth.get_user()
         data = {
             'uuid': current_user.uuid,
             'status': "Valid user",
