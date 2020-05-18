@@ -14,7 +14,7 @@ class Profile(EndpointResource):
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profile"]
 
-    GET = {
+    _GET = {
         "/profile": {
             "summary": "List profile attributes",
             "responses": {
@@ -22,7 +22,7 @@ class Profile(EndpointResource):
             },
         }
     }
-    PUT = {
+    _PUT = {
         "/profile": {
             "summary": "Update profile attributes",
             "parameters": [

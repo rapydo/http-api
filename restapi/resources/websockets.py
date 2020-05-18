@@ -16,13 +16,13 @@ class PushpinWebSocket(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
-    POST = {
+    _POST = {
         "/socket/<channel>": {
             "description": "Open a websocket",
             "responses": {"200": {"description": "Websocket connection accepted"}},
         }
     }
-    PUT = {
+    _PUT = {
         "/socket/<channel>": {
             "description": "Push to socket",
             "responses": {"200": {"description": "Message sent"}},
@@ -90,14 +90,14 @@ class PushpinHTTPStream(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
-    POST = {
+    _POST = {
         "/stream/<channel>": {
             "description": "Open a HTTP Stream for Long polling",
             "produces": ['application/json', 'text/plain'],
             "responses": {"200": {"description": "HTTP Stream connection accepted"}},
         }
     }
-    PUT = {
+    _PUT = {
         "/stream/<channel>": {
             "description": "Push to stream",
             "responses": {"200": {"description": "Message sent"}},

@@ -30,7 +30,7 @@ class ProfileRegistration(EndpointResource):
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profile"]
 
-    POST = {
+    _POST = {
         "/profile": {
             "summary": "Register new user",
             "custom_parameters": ["User"],

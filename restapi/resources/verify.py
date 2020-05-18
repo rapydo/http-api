@@ -10,7 +10,7 @@ class Verify(EndpointResource):
     """ Service connection testing """
 
     labels = ["helpers"]
-    GET = {
+    _GET = {
         "/status/<service>": {
             "summary": "Check if the API server is able to reach a given service",
             "description": "Use this URI to check the connection between APIs and services",

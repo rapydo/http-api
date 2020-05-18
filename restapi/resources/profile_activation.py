@@ -53,7 +53,7 @@ class ProfileActivation(EndpointResource):
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
-    POST = {
+    _POST = {
         "/profile/activate": {
             "summary": "Ask a new activation link",
             "responses": {
@@ -61,7 +61,7 @@ class ProfileActivation(EndpointResource):
             },
         }
     }
-    PUT = {
+    _PUT = {
         "/profile/activate/<token>": {
             "summary": "Activate your account by providing the activation token",
             "responses": {
