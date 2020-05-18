@@ -169,7 +169,7 @@ class TestUploadAndDownload(BaseTests):
             API_URI + '/tests/download/' + uploaded_filename,
             headers={'Range': 'bytes=0-9999999999999999'}
         )
-        assert r.status_code == 200
+        assert r.status_code == 206
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
