@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import urllib.parse
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
@@ -63,7 +64,9 @@ class TestApp(BaseTests):
         html = ">click here</a> to reset your password"
         assert html in body or plain in body
 
-        token = urllib.parse.unquote(body[1 + body.rfind("/"):])
+        # token = body[1 + body.rfind("/"):]
+        token = re.search(r".*https?://.*/reset/([^']*).*", body)[1]
+        token = urllib.parse.unquote(token)
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200
