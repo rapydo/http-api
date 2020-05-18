@@ -75,6 +75,10 @@ class TestApp(BaseTests):
         assert not _send_mail("body", "subject", "to_address", "from_address", None)
         assert not _send_mail("body", "subject", "to_address", None, "locahost")
         assert not _send_mail("body", "subject", None, "from_address", "locahost")
+
+        assert not _send_mail(
+            "body", "subject", "to_address", "from_address", "locahost", smtp_port="x")
+
         # standard port
         assert _send_mail(
             "body", "subject", "to_address", "from_address", "locahost")
