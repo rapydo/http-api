@@ -2,6 +2,7 @@
 
 from flask import Response, request, render_template, jsonify
 from marshmallow import fields, validate
+from marshmallow.utils import _Missing
 from urllib import parse as urllib_parse
 
 from restapi import __version__ as version
@@ -179,6 +180,13 @@ class ResponseMaker:
                 f["required"] = "true" if field_def.required else "false"
 
                 f["type"] = ResponseMaker.get_schema_type(field_def)
+
+                if field_def.default is None:
+                    pass
+                elif isinstance(field_def.default, _Missing):
+                    pass
+                else:
+                    f["default"] = field_def.default
 
                 if field_def.validate is not None:
                     if isinstance(field_def.validate, validate.Length):
