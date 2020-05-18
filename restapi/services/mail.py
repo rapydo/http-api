@@ -112,14 +112,14 @@ def send(
 
     smtp_client = get_smtp_client(smtp_host, smtp_port, username, password)
     if smtp_client is None:
-        log.error("Cannot send mail to {}:{}", smtp_host, smtp_port)
+        log.error(
+            "Unable to send email: client initialization failed ({}:{})",
+            smtp_host,
+            smtp_port
+        )
         return False
 
     with smtp_client as smtp:
-
-        if smtp is None:
-            log.error("Unable to send email: client initialization failed")
-            return False
 
         try:
 
