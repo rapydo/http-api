@@ -72,22 +72,24 @@ class TestApp(BaseTests):
         # d = date_from_string("1/1/1970")
         # assert isinstance(d, datetime)
 
-        assert not _send_mail("body", "subject", "to_address", "from_address", None)
-        assert not _send_mail("body", "subject", "to_address", None, "locahost")
-        assert not _send_mail("body", "subject", None, "from_address", "locahost")
+        assert not _send_mail("body", "subject", "to_addr", "from_addr", None)
+        assert not _send_mail("body", "subject", "to_addr", None, "myhost")
+        assert not _send_mail("body", "subject", None, "from_addr", "myhost")
 
         assert not _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost", smtp_port="x")
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x")
 
         # standard port
         assert _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost")
+            "body", "subject", "to_addr", "from_addr", "myhost")
         # local server (no port)
         assert _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost", smtp_port=None)
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None)
         # TLS port
         assert _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost", smtp_port=465)
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465)
+        assert _send_mail(
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465")
 
         mail = self.read_mock_email()
         body = mail.get('body')
@@ -96,12 +98,12 @@ class TestApp(BaseTests):
         assert headers is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_address"
-        assert mail.get('cc') == ['to_address']
+        assert mail.get('from') == "from_addr"
+        assert mail.get('cc') == ['to_addr']
         assert mail.get('bcc') is None
 
         assert _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost",
+            "body", "subject", "to_addr", "from_addr", "myhost",
             cc="test1", bcc="test2"
         )
 
@@ -112,12 +114,12 @@ class TestApp(BaseTests):
         assert headers is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_address"
+        assert mail.get('from') == "from_addr"
         # format is [to, [cc...], [bcc...]]
-        assert mail.get('cc') == ['to_address', ['test1'], ['test2']]
+        assert mail.get('cc') == ['to_addr', ['test1'], ['test2']]
 
         assert _send_mail(
-            "body", "subject", "to_address", "from_address", "locahost",
+            "body", "subject", "to_addr", "from_addr", "myhost",
             cc=["test1", "test2"], bcc=["test3", "test4"]
         )
 
@@ -128,6 +130,6 @@ class TestApp(BaseTests):
         assert headers is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_address"
+        assert mail.get('from') == "from_addr"
         # format is [to, [cc...], [bcc...]]
-        assert mail.get('cc') == ['to_address', ['test1', "test2"], ['test3', "test4"]]
+        assert mail.get('cc') == ['to_addr', ['test1', "test2"], ['test3', "test4"]]
