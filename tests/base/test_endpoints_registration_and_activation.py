@@ -257,7 +257,7 @@ class TestApp(BaseTests):
         # 3 - user tries to activate and fails because the token does not exist
 
         r = client.put(
-            API_URI + "/admin/users" + uuid,
+            API_URI + "/admin/users/" + uuid,
             data={'is_active': False},
             headers=headers
         )
@@ -276,4 +276,3 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid activation token: this request is no longer valid"
-
