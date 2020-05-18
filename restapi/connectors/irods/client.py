@@ -679,7 +679,7 @@ class IrodsPythonClient:  # pragma: no cover
         if not append_user:
             user = ""
         elif user is None:
-            user = self.auth.get_user()
+            user = self.get_current_user()
 
         return os.path.join(zone, home, user)
 
