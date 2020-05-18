@@ -133,8 +133,10 @@ class TestApp(BaseTests):
         html = ">click here</a> to activate your account"
         assert html in body or plain in body
 
-        # token = body[1 + body.rfind("/"):]
-        token = re.search(r".*https?://.*/register/([^']*).*", body)[1]
+        if html in body:
+            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
+        else:
+            token = body[1 + body.rfind("/"):]
         token = urllib.parse.unquote(token)
 
         # profile activation
