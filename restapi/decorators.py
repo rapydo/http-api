@@ -2,6 +2,7 @@
 
 from functools import wraps
 import werkzeug.exceptions
+from amqp.exceptions import AccessRefused
 from sentry_sdk import capture_exception
 from restapi.confs import SENTRY_URL
 from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
@@ -71,6 +72,16 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             except werkzeug.exceptions.RequestedRangeNotSatisfiable:
                 raise
             # Catch any other exception
+
+            # errors with RabbitMQ credentials raised when sending Celery tasks
+            except AccessRefused as e:
+                if catch_generic:
+                    log.critical(e)
+                    return self.response(
+                        "Unexpected Server Error", code=500
+                    )
+                else:
+                    raise e
             except Exception as e:
 
                 if SENTRY_URL is not None:
