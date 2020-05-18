@@ -70,7 +70,6 @@ setup(
         "swagger-spec-validator",
 
         # Utilities
-        "attrs",
         "loguru",
         "glom",
         "psutil",
