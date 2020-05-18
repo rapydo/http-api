@@ -95,3 +95,35 @@ class TestApp(BaseTests):
         assert mail.get('from') == "from_address"
         assert mail.get('cc') == ['to_address']
         assert mail.get('bcc') is None
+
+        assert _send_mail(
+            "body", "subject", "to_address", "from_address", "locahost",
+            cc="test1", bcc="test2"
+        )
+
+        mail = self.read_mock_email()
+        body = mail.get('body')
+        headers = mail.get('headers')
+        assert body is not None
+        assert headers is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: subject' in headers
+        assert mail.get('from') == "from_address"
+        assert mail.get('cc') == ['to_address', 'test1']
+        assert mail.get('bcc') == ['test2']
+
+        assert _send_mail(
+            "body", "subject", "to_address", "from_address", "locahost",
+            cc=["test1", "test2"], bcc=["test3", "test4"]
+        )
+
+        mail = self.read_mock_email()
+        body = mail.get('body')
+        headers = mail.get('headers')
+        assert body is not None
+        assert headers is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: subject' in headers
+        assert mail.get('from') == "from_address"
+        assert mail.get('cc') == ['to_address', 'test1', "test2"]
+        assert mail.get('bcc') == ['test3', "test4"]
