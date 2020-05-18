@@ -112,7 +112,9 @@ script:
   # but often nginx does not respond and log:
   # "GET /api/status HTTP/2.0" 499 0 "-" "curl/7.58.0" "-"
   # So... just skip this test with mongo...
-  - if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
+  # - if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
+  # Let's try to enable again the production test on mongo
+  - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
 
   - rapydo -s proxy,backend logs --tail 20
 
