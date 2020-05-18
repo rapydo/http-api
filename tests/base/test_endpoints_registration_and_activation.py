@@ -291,8 +291,9 @@ class TestApp(BaseTests):
         content = self.get_content(r)
 
         uuid = None
+        converted_token = token.replace("%2B", ".").replace("+", ".")
         for t in content:
-            if t.get('token') == token:
+            if t.get('token') == converted_token:
                 uuid = t.get(id)
                 break
         assert uuid is not None
