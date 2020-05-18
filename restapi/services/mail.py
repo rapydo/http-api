@@ -35,7 +35,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
     if not smtp_port:
         smtp = SMTP(smtp_host)
-    elif smtp_port == '465':
+    elif smtp_port == 465:
         smtp = SMTP_SSL(smtp_host)
     else:
         smtp = SMTP(smtp_host)
