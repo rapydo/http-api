@@ -13,7 +13,7 @@
 
 #         depends_on = ["CELERY_ENABLE"]
 #         labels = ["tasks"]
-#         GET = {
+#         _GET = {
 #             "/queue": {
 #                 "summary": "List tasks in the queue",
 #                 "description": "Base implementation of a CELERY queue.",
@@ -24,13 +24,13 @@
 #                 "responses": {"200": {"description": "task information"}},
 #             },
 #         }
-#         PUT = {
+#         _PUT = {
 #             "/queue/<task_id>": {
 #                 "summary": "Revoke a task from its id",
 #                 "responses": {"204": {"description": "The task was revoked"}},
 #             }
 #         }
-#         DELETE = {
+#         _DELETE = {
 #             "/queue/<task_id>": {
 #                 "summary": "Delete a task",
 #                 "responses": {

@@ -37,7 +37,7 @@ class RecoverPassword(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
     labels = ["authentication"]
 
-    POST = {
+    _POST = {
         "/reset": {
             "summary": "Request password reset via email",
             "description": "Request password reset via email",
@@ -47,7 +47,7 @@ class RecoverPassword(EndpointResource):
             },
         }
     }
-    PUT = {
+    _PUT = {
         "/reset/<token>": {
             "summary": "Change password as conseguence of a reset request",
             "description": "Change password as conseguence of a reset request",

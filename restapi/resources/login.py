@@ -16,7 +16,7 @@ class Login(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    POST = {
+    _POST = {
         "/login": {
             "summary": "Login with basic credentials",
             "description": "Normal credentials (username and password) login endpoint",

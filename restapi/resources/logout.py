@@ -10,7 +10,7 @@ class Logout(EndpointResource):
     baseuri = "/auth"
     labels = ["authentication"]
 
-    GET = {
+    _GET = {
         "/logout": {
             "summary": "Logout from current credentials",
             "description": "Invalidate current registered token",

@@ -12,7 +12,7 @@ class SwaggerSpecifications(EndpointResource):
 
     labels = ["specifications"]
 
-    GET = {
+    _GET = {
         "/specs": {
             "summary": "Specifications output throught Swagger (open API) standards",
             "responses": {
