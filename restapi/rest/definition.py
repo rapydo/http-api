@@ -226,7 +226,7 @@ class EndpointResource(Resource):
 
         # Deprecated since 0.7.4
         log.warning(
-            "self.get_current_user() is deprecated, replace with self.auth.get_user()")
+            "self.auth.get_user() is deprecated, replace with self.auth.get_user()")
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
@@ -479,7 +479,7 @@ class EndpointResource(Resource):
         if auth_type is not None:
             if http.authenticate(self.auth.verify_token, token):
                 # we have a valid token in header
-                user = self.get_current_user()
+                user = self.auth.get_user()
                 log.debug("Logged user: {}", user.email)
 
         return user

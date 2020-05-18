@@ -45,7 +45,7 @@ class Tokens(MethodResource, EndpointResource):
     @decorators.auth.required()
     def get(self):
 
-        user = self.get_current_user()
+        user = self.auth.get_user()
 
         tokens = self.auth.get_tokens(user=user)
 
@@ -56,7 +56,7 @@ class Tokens(MethodResource, EndpointResource):
     @decorators.auth.required()
     def delete(self, token_id):
 
-        user = self.get_current_user()
+        user = self.auth.get_user()
         tokens = self.auth.get_tokens(user=user)
 
         for token in tokens:

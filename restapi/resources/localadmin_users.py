@@ -48,7 +48,7 @@
 #         groups = []
 #         neo4j = detector.get_service_instance('neo4j')
 
-#         # current_user = self.get_current_user()
+#         # current_user = self.auth.get_user()
 #         # for idx, val in enumerate(new_schema):
 #         #     # FIXME: groups management is only implemented for neo4j
 #         #     if val["name"] == "group":
@@ -244,7 +244,7 @@
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 
-#         current_user = self.get_current_user()
+#         current_user = self.auth.get_user()
 #         for user in users:
 
 #             if not self.is_authorized(current_user, user, is_admin):
@@ -295,7 +295,7 @@
 
 #             if group is not None:
 #                 if group.shortname != "default":
-#                     current_user = self.get_current_user()
+#                     current_user = self.auth.get_user()
 #                     if not group.coordinator.is_connected(current_user):
 #                         raise RestApiException(
 #                             "You are not allowed to assign users to this group"
@@ -323,7 +323,7 @@
 
 #         user = user[0]
 
-#         current_user = self.get_current_user()
+#         current_user = self.auth.get_user()
 #         is_admin = self.auth.verify_admin()
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
@@ -411,7 +411,7 @@
 
 #         user = user[0]
 
-#         current_user = self.get_current_user()
+#         current_user = self.auth.get_user()
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
