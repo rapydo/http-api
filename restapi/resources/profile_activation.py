@@ -110,7 +110,7 @@ class ProfileActivation(EndpointResource):
             )
 
         # If user logged is already active, invalidate the token
-        if self.auth._user.is_active is not None and self.auth._user.is_active:
+        if self.auth._user.is_active:
             self.auth.invalidate_token(token)
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',

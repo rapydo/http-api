@@ -235,17 +235,19 @@ class TestApp(BaseTests):
         r = client.get(API_URI + "/admin/users", headers=headers)
         assert r.status_code == 200
         users = self.get_content(r)
+        uuid = None
         for u in users:
             if u.get('email') == registration_data['email']:
                 uuid = u.get('uuid')
 
-            r = client.put(
-                API_URI + "/admin/users/" + uuid,
-                data={'is_active': True},
-                headers=headers
-            )
-            assert r.status_code == 204
-            break
+                break
+        assert uuid is not None
+        r = client.put(
+            API_URI + "/admin/users/" + uuid,
+            data={'is_active': True},
+            headers=headers
+        )
+        assert r.status_code == 204
 
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 400
@@ -265,12 +267,14 @@ class TestApp(BaseTests):
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         content = self.get_content(r)
 
+        uuid = None
         for t in content:
             if t.get('token') == token:
                 uuid = t.get(id)
-                r = client.delete(API_URI + "/admin/tokens/" + uuid, headers=headers)
-                assert r.status_code == 204
                 break
+        assert uuid is not None
+        r = client.delete(API_URI + "/admin/tokens/" + uuid, headers=headers)
+        assert r.status_code == 204
 
         r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
         assert r.status_code == 400
