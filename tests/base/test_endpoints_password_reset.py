@@ -58,9 +58,10 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: YourProject Password Reset' in mail.get("headers")
-        activation_message = "Follow this link to reset your password: "
-        activation_message += "http://localhost/public/reset/"
-        assert body.startswith(activation_message)
+        assert "http://localhost/public/reset/" in body
+        plain = "Follow this link to reset your password: "
+        html = ">click here</a> to reset your password"
+        assert html in body or plain in body
 
         token = urllib.parse.unquote(body[1 + body.rfind("/"):])
 

@@ -38,8 +38,8 @@ def send_notification(user, unhashed_password, is_update=False):
     html = get_html_template(template, replaces)
 
     body = """
-Username: "{}"
-Password: "{}"
+Username: {}
+Password: {}
     """.format(
         user.email,
         unhashed_password,

@@ -363,7 +363,7 @@ class BaseTests:
         if 'msg' in data:
             tokens = data['msg'].split("\n\n")
             data['headers'] = tokens[0]
-            data['body'] = tokens[1]
+            data['body'] = ''.join(tokens[1:])
 
         os.unlink(fpath)
         return data
