@@ -269,7 +269,7 @@ class TestApp(BaseTests):
         # 1 - user registration
         # 2 - after registration the token is invalidated
         # 3 - user tries to activate and fails because the token does not exist
-        registration_data['email'] = 'newmock@nomail.org'
+        registration_data['email'] = 'thirdmock@nomail.org'
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
