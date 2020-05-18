@@ -48,13 +48,15 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         mail = self.read_mock_email()
-        assert mail.get('body') is not None
+        body = mail.get('body')
+        assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: YourProject account activation' in mail.get("headers")
-        activation_message = "Follow this link to activate your account: "
-        activation_message += "http://localhost/public/register/"
-        assert mail.get('body').startswith(activation_message)
+        assert "http://localhost/public/register/" in body
+        plain = "Follow this link to activate your account: "
+        html = ">click here</a> to activate your account"
+        assert html in body or plain in body
 
         # This will fail because the user is not active
         self.do_login(
@@ -125,9 +127,10 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: YourProject account activation' in mail.get("headers")
-        activation_message = "Follow this link to activate your account: "
-        activation_message += "http://localhost/public/register/"
-        assert body.startswith(activation_message)
+        assert "http://localhost/public/register/" in body
+        plain = "Follow this link to activate your account: "
+        html = ">click here</a> to activate your account"
+        assert html in body or plain in body
 
         token = urllib.parse.unquote(body[1 + body.rfind("/"):])
 
