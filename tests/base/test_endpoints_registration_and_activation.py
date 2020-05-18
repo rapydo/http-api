@@ -240,7 +240,7 @@ class TestApp(BaseTests):
                 uuid = u.get('uuid')
 
             r = client.put(
-                API_URI + "/admin/users" + uuid,
+                API_URI + "/admin/users/" + uuid,
                 data={'is_active': True},
                 headers=headers
             )
