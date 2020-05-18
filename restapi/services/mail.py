@@ -39,10 +39,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
         smtp = SMTP_SSL(smtp_host)
     else:
         smtp = SMTP(smtp_host)
-        # if this is 587 we might need also
-        # smtp.starttls()
 
-    ###################
     smtp.set_debuglevel(0)
     if not smtp_port:
         log.verbose("Connecting to {}", smtp_host)
@@ -78,11 +75,12 @@ def test_smtp_client():
     username = os.environ.get("SMTP_USERNAME")
     password = os.environ.get("SMTP_PASSWORD")
 
-    with get_smtp_client(host, port, username, password) as smtp:
-        if smtp is None:
-            return False
-        smtp.quit()
-        return True
+    smtp = get_smtp_client(host, port, username, password)
+    if smtp is None:
+        return False
+
+    smtp.quit()
+    return True
 
 
 def send(
