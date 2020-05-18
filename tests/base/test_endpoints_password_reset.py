@@ -64,8 +64,10 @@ class TestApp(BaseTests):
         html = ">click here</a> to reset your password"
         assert html in body or plain in body
 
-        # token = body[1 + body.rfind("/"):]
-        token = re.search(r".*https?://.*/reset/([^']*).*", body)[1]
+        if html in body:
+            token = re.search(r".*https?://.*/reset/(.*)\n", body)[1]
+        else:
+            token = body[1 + body.rfind("/"):]
         token = urllib.parse.unquote(token)
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
