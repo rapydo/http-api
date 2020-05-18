@@ -238,6 +238,12 @@ def get_input_schema(strip_required=False, exclude_email=False):
             label="Notify password by email"
         )
 
+    attributes['is_active'] = fields.Bool(
+        label="Active user",
+        default=True,
+        required=False
+    )
+
     return Schema.from_dict(attributes)
 
 
