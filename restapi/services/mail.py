@@ -193,7 +193,8 @@ def send(
             log.error(str(e))
             return False
 
-    return False
+    # Cannot be tested because smtplib is mocked
+    return False  # pragma: no cover
 
 
 def send_mail(
@@ -247,6 +248,7 @@ def send_mail(
                 plain_body=plain_body,
             )
 
-    except BaseException as e:
+    # Cannot be tested because smtplib is mocked
+    except BaseException as e:  # pragma: no cover
         log.error(str(e))
         return False
