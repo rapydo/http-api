@@ -155,5 +155,5 @@ class TestApp(BaseTests):
         # body -> no errors
         assert _send_mail(
             "body", "subject", "to_addr", "from_addr", "myhost",
-            html=True, play_body=None
+            html=True, plain_body=None
         )
