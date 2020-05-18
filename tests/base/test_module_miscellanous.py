@@ -93,5 +93,5 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
         assert mail.get('from') == "from_address"
-        assert mail.get('cc') is None
+        assert mail.get('cc') == ['to_address']
         assert mail.get('bcc') is None
