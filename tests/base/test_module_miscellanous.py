@@ -146,6 +146,14 @@ class TestApp(BaseTests):
         assert headers is not None
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
+        # cc and bcc with wrong type (int in this case!) are ignored
         assert mail.get('from') == "from_addr"
         # format is [to, [cc...], [bcc...]]
         assert mail.get('cc') == ['to_addr']
+
+        # HTML emails require a plain body, if not provided it default with the html
+        # body -> no errors
+        assert _send_mail(
+            "body", "subject", "to_addr", "from_addr", "myhost",
+            html=True, play_body=None
+        )
