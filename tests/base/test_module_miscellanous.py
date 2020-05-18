@@ -109,8 +109,8 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
         assert mail.get('from') == "from_address"
-        assert mail.get('cc') == ['to_address', 'test1']
-        assert mail.get('bcc') == ['test2']
+        # format is [to, [cc...], [bcc...]]
+        assert mail.get('cc') == ['to_address', ['test1'], ['test2']]
 
         assert _send_mail(
             "body", "subject", "to_address", "from_address", "locahost",
@@ -125,5 +125,5 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert 'Subject: subject' in headers
         assert mail.get('from') == "from_address"
-        assert mail.get('cc') == ['to_address', 'test1', "test2"]
-        assert mail.get('bcc') == ['test3', "test4"]
+        # format is [to, [cc...], [bcc...]]
+        assert mail.get('cc') == ['to_address', ['test1', "test2"], ['test3', "test4"]]
