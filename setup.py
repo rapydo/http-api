@@ -45,7 +45,6 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
-        # "authlib==0.14.1",
 
         "PyYAML==5.3.1",
 
@@ -62,9 +61,8 @@ setup(
         "redis",
         "pika",
         "celery",
-        "flower==0.9.3",
-        "celery-redbeat==0.13.0",
-        # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
+        "flower==0.9.4",
+        "celery-redbeat==1.0.0",
         "celerybeat-mongo==0.2.0",
 
         # Swagger
@@ -83,7 +81,7 @@ setup(
         "websocket-client",
         "gripcontrol==4.0.0",
 
-        "sentry-sdk[flask]==0.14.3"
+        "sentry-sdk[flask]==0.14.4"
     ],
     classifiers=[
         'Programming Language :: Python',
