@@ -133,3 +133,19 @@ class TestApp(BaseTests):
         assert mail.get('from') == "from_addr"
         # format is [to, [cc...], [bcc...]]
         assert mail.get('cc') == ['to_addr', ['test1', "test2"], ['test3', "test4"]]
+
+        assert _send_mail(
+            "body", "subject", "to_addr", "from_addr", "myhost",
+            cc=10, bcc=20
+        )
+
+        mail = self.read_mock_email()
+        body = mail.get('body')
+        headers = mail.get('headers')
+        assert body is not None
+        assert headers is not None
+        # Subject: is a key in the MIMEText
+        assert 'Subject: subject' in headers
+        assert mail.get('from') == "from_addr"
+        # format is [to, [cc...], [bcc...]]
+        assert mail.get('cc') == ['to_addr']
