@@ -51,7 +51,7 @@ setup(
         "Werkzeug==1.0.1",
         "pytest-flask==1.0.0",
         "pytest-cov==2.8.1",
-        "schemathesis==1.2.0",
+        "schemathesis==1.6.2",
 
         # DB and services drivers
         "neomodel>=3.2.9, <=3.3.2",
