@@ -66,8 +66,9 @@ class HTTPTokenAuth:
     def get_authorization_token(self, allow_access_token_parameter=False):
 
         # If token is unavailable, clearly state it in response to user
-        token = "EMPTY"
+        # token = "EMPTY"
         auth_type = None
+        token = None
 
         auth = request.authorization
         if auth is not None:
@@ -86,8 +87,7 @@ class HTTPTokenAuth:
 
         if ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
             token = request.args.get("access_token")
-            # We are assuming that received access token is always Bearer
-            auth_type = 'Bearer'
+            auth_type = HTTPAUTH_DEFAULT_SCHEME
 
         if token is None:
             auth_type = None
