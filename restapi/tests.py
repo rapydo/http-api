@@ -365,7 +365,7 @@ class BaseTests:
             data['headers'] = tokens[0]
             data['body'] = ''.join(tokens[1:])
 
-        # os.unlink(fpath)
+        os.unlink(fpath)
         return data
 
     def get_crafted_token(self, token_type, user_id=None,
