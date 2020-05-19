@@ -13,7 +13,7 @@ from apispec import APISpec
 from flask_apispec import FlaskApiSpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 # from apispec_webframeworks.flask import FlaskPlugin
-from werkzeug.middleware.proxy_fix import ProxyFix
+# from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -67,7 +67,7 @@ def create_app(
         skip_endpoint_mapping = True
 
     # Fix proxy wsgi for production calls
-    microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
+    # microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
     # CORS
     if not PRODUCTION:
