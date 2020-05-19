@@ -88,7 +88,7 @@ class Login(EndpointResource):
                 message['errors'].append("Your password is expired, please change it")
 
         if message['errors']:
-            return self.response(errors=message, code=403)
+            return self.response(message, code=403)
 
         return None
 

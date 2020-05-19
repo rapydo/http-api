@@ -19,7 +19,7 @@ def from_restapi_exception(self, e):
     else:
         log.exception(e)
         log.error(e)
-    return self.response(errors=e.args[0], code=e.status_code)
+    return self.response(e.args[0], code=e.status_code)
 
 
 def catch_errors(exception=None, catch_generic=True, **kwargs):
@@ -52,7 +52,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 else:
                     error_code = 400
 
-                return self.response(errors=str(e), code=error_code)
+                return self.response(str(e), code=error_code)
 
             # Catch the basic API exception
             except RestApiException as e:
@@ -98,7 +98,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                         error = 'Server failure; please contact admin.'
                     else:
                         error = {excname: message}
-                    return self.response(errors=error, code=400)
+                    return self.response(error, code=400)
                 else:
                     raise e
 
