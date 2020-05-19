@@ -17,7 +17,7 @@ RUN_SCHEMATHESIS = os.getenv("RUN_SCHEMATHESIS", "1") == "1"
 
 def get_auth_token():
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
-    BaseAuthentication.myinit()
+    BaseAuthentication.load_default_user()
     USER = BaseAuthentication.default_user
     PWD = BaseAuthentication.default_password
     data = {'username': USER, 'password': PWD}

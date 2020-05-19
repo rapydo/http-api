@@ -79,7 +79,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def __init__(self, backend_database):
         self.db = backend_database
-        self.myinit()
+        self.load_default_user()
+        self.load_roles()
         # Create variables to be fulfilled by the authentication decorator
         self._token = None
         self._jti = None
@@ -121,12 +122,22 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @classmethod
     def myinit(cls):
+        # Deprecated since 0.7.4
+        log.warning(
+            "Deprecated use of BaseAuthentication.myinit use load_default_user instead")
+        cls.load_default_user()
+        cls.load_roles()
+
+    @classmethod
+    def load_default_user(cls):
 
         cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
         cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
             log.exit("Default credentials are unavailable!")
 
+    @classmethod
+    def load_roles(cls):
         cls.roles_data = get_project_configuration("variables.roles")
         if not cls.roles_data:
             log.exit("No roles configured")
