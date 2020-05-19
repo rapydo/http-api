@@ -67,7 +67,7 @@ script:
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
-      rapydo create prj --services ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,DISABLE_UNUSED_CREDENTIALS_AFTER=30,REGISTER_FAILED_LOGIN=True,MAX_LOGIN_ATTEMPTS=5;
+      rapydo create prj --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,DISABLE_UNUSED_CREDENTIALS_AFTER=30,REGISTER_FAILED_LOGIN=True,MAX_LOGIN_ATTEMPTS=5,WSGI_SERVER=GUNICORN;
 
     elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
