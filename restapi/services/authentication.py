@@ -45,6 +45,10 @@ if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 NULL_IP = "0.0.0.0"
+ROLE_DISABLED = 'disabled'
+ADMIN_ROLE = 'admin_root'
+LOCAL_ADMIN_ROLE = 'local_admin'
+USER_ROLE = 'normal_user'
 
 
 class InvalidToken(BaseException):
@@ -118,19 +122,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @classmethod
     def myinit(cls):
 
-        credentials = get_project_configuration("variables.backend.credentials")
-
         cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
         cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:
             log.exit("Default credentials are unavailable!")
 
-        roles = credentials.get('roles', {})
-        cls.default_role = roles.get('default')
-        cls.role_admin = roles.get('admin')
-        cls.default_roles = [roles.get('user'), roles.get('internal'), cls.role_admin]
-        if cls.default_role is None or None in cls.default_roles:
-            log.exit("Default roles are not available!")
+        cls.roles_data = get_project_configuration("roles", default={})
+        cls.default_role = cls.roles_data.pop('default')
+        cls.roles = list(cls.roles_data.keys())
+
+        if cls.default_role is None or None in cls.roles:
+            log.exit("Default role {} not available!", cls.default_role)
 
     def failed_login(self, username):
         if self.REGISTER_FAILED_LOGIN and username is not None:
@@ -552,10 +554,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_admin(self):
         """ Check if current user has administration role """
-        return self.verify_roles([self.role_admin], warnings=False)
+        return self.verify_roles([ADMIN_ROLE], warnings=False)
 
     def verify_local_admin(self):
-        return self.verify_roles(["local_admin"], warnings=False)
+        return self.verify_roles([LOCAL_ADMIN_ROLE], warnings=False)
 
     @abc.abstractmethod
     def get_roles(self):  # pragma: no cover

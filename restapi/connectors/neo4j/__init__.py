@@ -18,8 +18,7 @@ from neobolt.exceptions import AuthError as neobolt_AuthError
 
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import BaseAuthentication, NULL_IP
-from restapi.confs import TESTING
+from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.utilities.logs import log
 
 
@@ -329,10 +328,10 @@ class Authentication(BaseAuthentication):
 
         log.info("Current roles: {}", current_roles)
 
-        for role_name in self.default_roles:
+        for role_name in self.roles:
             if role_name not in current_roles:
                 log.info("Creating role: {}", role_name)
-                role_description = "automatic" if not TESTING else role_name
+                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
                 role = self.db.Role(
                     name=role_name,
                     description=role_description
@@ -349,7 +348,7 @@ class Authentication(BaseAuthentication):
                     'surname': 'User',
                     'password': self.default_password,
                 },
-                roles=self.default_roles,
+                roles=self.roles,
             )
             log.warning("Injected default user")
         else:

@@ -9,8 +9,7 @@ from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import BaseAuthentication, NULL_IP
-from restapi.confs import TESTING
+from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.logs import log
 
@@ -192,7 +191,7 @@ class Authentication(BaseAuthentication):
 
     def get_roles(self):
         roles = []
-        for role_name in self.default_roles:
+        for role_name in self.roles:
             try:
                 role = self.db.Role.objects.get({'name': role_name})
                 roles.append(role)
@@ -224,13 +223,13 @@ class Authentication(BaseAuthentication):
 
         roles = []
 
-        for role_name in self.default_roles:
+        for role_name in self.roles:
             try:
                 role = self.db.Role.objects.get({'name': role_name})
                 roles.append(role.name)
                 log.info("Role already exists: {}", role.name)
             except self.db.Role.DoesNotExist:
-                role_description = "automatic" if not TESTING else role_name
+                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
                 role = self.db.Role(
                     name=role_name,
                     description=role_description
