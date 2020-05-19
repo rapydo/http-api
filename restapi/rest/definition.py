@@ -56,10 +56,6 @@ class EndpointResource(Resource):
             #     "self.init_parameters should be removed since handle by webargs")
             pass
 
-        # Custom init
-        if hasattr(self, 'custom_init'):
-            self.custom_init()
-
     def myname(self):
         return self.__class__.__name__
 
