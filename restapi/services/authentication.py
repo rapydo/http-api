@@ -138,11 +138,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @classmethod
     def load_roles(cls):
-        cls.roles_data = get_project_configuration("variables.roles")
+        cls.roles_data = get_project_configuration("variables.roles").copy()
         if not cls.roles_data:
             log.exit("No roles configured")
 
-        log.critical(cls.roles_data)
         cls.default_role = cls.roles_data.pop('default')
         cls.roles = []
         for role, description in cls.roles_data.items():
