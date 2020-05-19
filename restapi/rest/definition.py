@@ -226,7 +226,7 @@ class EndpointResource(Resource):
 
         # Deprecated since 0.7.4
         log.warning(
-            "self.auth.get_user() is deprecated, replace with self.auth.get_user()")
+            "self.get_current_user() is deprecated, replace with self.auth.get_user()")
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
