@@ -39,8 +39,8 @@ setup(
         "flask-apispec==0.8.8",
         "Flask-Cors==3.0.8",
         "Flask-SQLAlchemy==2.4.1",
-        "Flask-Migrate",
-        "uWSGI",
+        "Flask-Migrate==2.5.3",
+        "uWSGI==2.0.18",
 
         "PyJWT",
         "pyOpenSSL",
@@ -54,7 +54,7 @@ setup(
         "schemathesis==1.6.2",
 
         # DB and services drivers
-        "neomodel>=3.2.9, <=3.3.2",
+        "neomodel==3.3.2",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
