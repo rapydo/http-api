@@ -142,6 +142,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not cls.roles_data:
             log.exit("No roles configured")
 
+        log.critical(cls.roles_data)
         cls.default_role = cls.roles_data.pop('default')
         cls.roles = []
         for role, description in cls.roles_data.items():
