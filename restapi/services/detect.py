@@ -51,7 +51,7 @@ class Detector:
 
     @staticmethod
     def get_global_var(key, default=None):
-        return os.environ.get(key, default)
+        return os.getenv(key, default)
 
     @staticmethod
     @lru_cache()
@@ -83,7 +83,7 @@ class Detector:
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
     def get_bool_from_os(name):
 
-        bool_var = os.environ.get(name, False)
+        bool_var = os.getenv(name, False)
         return Detector.get_bool_envvar(bool_var)
 
     def get_service_instance(self, service_name, global_instance=True, **kwargs):

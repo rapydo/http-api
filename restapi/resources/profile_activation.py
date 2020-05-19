@@ -22,7 +22,7 @@ def send_activation_link(auth, user):
         user, auth.ACTIVATE_ACCOUNT
     )
 
-    domain = os.environ.get("DOMAIN")
+    domain = os.getenv("DOMAIN")
     protocol = 'https' if PRODUCTION else 'http'
 
     rt = activation_token.replace(".", "+")
@@ -38,7 +38,7 @@ def send_activation_link(auth, user):
         body = None
 
     default_subject = "{} account activation".format(title)
-    subject = os.environ.get('EMAIL_ACTIVATION_SUBJECT', default_subject)
+    subject = os.getenv('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
     sent = send_mail(html_body, subject, user.email, plain_body=body)
     if not sent:  # pragma: no cover

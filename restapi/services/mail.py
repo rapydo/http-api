@@ -66,16 +66,16 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
 
 def send_mail_is_active():
 
-    host = os.environ.get("SMTP_HOST")
+    host = os.getenv("SMTP_HOST")
 
     return host and host.strip()
 
 
 def test_smtp_client():
-    host = os.environ.get("SMTP_HOST")
-    port = os.environ.get("SMTP_PORT")
-    username = os.environ.get("SMTP_USERNAME")
-    password = os.environ.get("SMTP_PASSWORD")
+    host = os.getenv("SMTP_HOST")
+    port = os.getenv("SMTP_PORT")
+    username = os.getenv("SMTP_USERNAME")
+    password = os.getenv("SMTP_PASSWORD")
 
     smtp = get_smtp_client(host, port, username, password)
     # Cannot be tested because smtplib is mocked
@@ -208,18 +208,18 @@ def send_mail(
 ):
 
     try:
-        host = os.environ.get("SMTP_HOST")
-        port = os.environ.get("SMTP_PORT")
-        username = os.environ.get("SMTP_USERNAME")
-        password = os.environ.get("SMTP_PASSWORD")
+        host = os.getenv("SMTP_HOST")
+        port = os.getenv("SMTP_PORT")
+        username = os.getenv("SMTP_USERNAME")
+        password = os.getenv("SMTP_PASSWORD")
 
         if not from_address:
-            from_address = os.environ.get("SMTP_NOREPLY")
+            from_address = os.getenv("SMTP_NOREPLY")
         if not from_address:
-            from_address = os.environ.get("SMTP_ADMIN")
+            from_address = os.getenv("SMTP_ADMIN")
 
         if not to_address:
-            to_address = os.environ.get("SMTP_ADMIN")
+            to_address = os.getenv("SMTP_ADMIN")
 
         if plain_body is None:
             return send(

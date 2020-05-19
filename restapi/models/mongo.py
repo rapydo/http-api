@@ -13,7 +13,7 @@ from pymodm import MongoModel
 from pymongo.operations import IndexModel
 
 # from pymongo.write_concern import WriteConcern
-AUTH_DB = os.environ.get('MONGO_DATABASE')
+AUTH_DB = os.getenv('MONGO_DATABASE')
 
 
 ####################

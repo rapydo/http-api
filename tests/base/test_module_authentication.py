@@ -67,7 +67,7 @@ def test_authentication_service():
 
     auth = detector.get_service_instance('authentication')
 
-    min_pwd_len = int(os.environ.get("AUTH_MIN_PASSWORD_LENGTH", 9999))
+    min_pwd_len = int(os.getenv("AUTH_MIN_PASSWORD_LENGTH", 9999))
 
     pwd = random_string(min_pwd_len - 1)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=pwd)

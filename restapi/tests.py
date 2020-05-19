@@ -375,7 +375,7 @@ class BaseTests:
         if wrong_secret:
             secret = self.randomString()
         else:
-            f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
+            f = os.getenv('JWT_APP_SECRETS') + "/secret.key"
             secret = open(f, 'rb').read()
 
         if wrong_algorithm:
