@@ -137,69 +137,6 @@ class Uploader:
             code=200,
         )
 
-    # no one is using this
-    # @staticmethod
-    # def upload_chunked(destination, force=False, chunk_size=None):
-
-    #     # Default chunk size, put this somewhere
-    #     if chunk_size is None:
-    #         chunk_size = 1048576
-
-    #     if os.path.exists(destination):
-
-    #         log.warning("Already exists")
-    #         if force:
-    #             os.remove(destination)
-    #             log.debug("Forced removal")
-    #         else:
-    #             log.error("File '{}' already exists", destination)
-    #             return False
-
-    #     with open(destination, "ab") as f:
-    #         while True:
-    #             chunk = request.stream.read(chunk_size)
-    #             if not chunk:
-    #                 break
-    #             f.write(chunk)
-
-    #     # Check exists
-    #     if not os.path.exists(destination):
-    #         log.error("Unable to recover the uploaded file: {}", destination)
-    #         return False
-
-    #     log.info("File uploaded: {}", destination)
-    #     return True
-
-    # no one is using this
-    # def remove(self, filename, subfolder=None, skip_response=False):
-    #     """ Remove the file if requested """
-
-    #     abs_file = self.absolute_upload_file(filename, subfolder)
-
-    #     # Check file existence
-    #     if not os.path.exists(abs_file):
-    #         log.critical("File '{}' not found", abs_file)
-    #         return self.response(
-    #             errors="Requested file does not exists",
-    #             code=404,
-    #         )
-
-    #     # Remove the real file
-    #     try:
-    #         os.remove(abs_file)
-    #     except Exception:
-    #         log.critical("Cannot remove local file {}", abs_file)
-    #         return self.response(
-    #             errors="Permission denied: failed to remove the file",
-    #             code=503,
-    #         )
-    #     log.warning("Removed '{}'", abs_file)
-
-    #     if skip_response:
-    #         return
-
-    #     return self.response("Deleted", code=200)
-
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
     # and with https://www.npmjs.com/package/ngx-uploadx and with
@@ -219,7 +156,7 @@ class Uploader:
                 log.debug("Forced removal")
             else:
                 return self.response(
-                    errors="File '{}' already exists".format(filename),
+                    "File '{}' already exists".format(filename),
                     code=400,
                 )
 

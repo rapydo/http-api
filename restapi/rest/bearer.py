@@ -121,11 +121,7 @@ class HTTPTokenAuth:
                         )
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return decorated_self.response(
-                        errors=msg,
-                        code=401,
-                        headers=headers,
-                    )
+                    return decorated_self.response(msg, code=401, headers=headers)
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
@@ -140,9 +136,7 @@ class HTTPTokenAuth:
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
                         return decorated_self.response(
-                            errors="Invalid token received",
-                            code=401,
-                            headers=headers
+                            "Invalid token received", code=401, headers=headers
                         )
 
                 # Check roles
@@ -151,7 +145,7 @@ class HTTPTokenAuth:
                     if not self.authenticate_roles(roles_fn, roles, required_roles):
                         log.info("Unauthorized request: missing privileges")
                         return decorated_self.response(
-                            errors="You are not authorized: missing privileges",
+                            "You are not authorized: missing privileges",
                             code=401,
                         )
 
