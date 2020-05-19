@@ -198,6 +198,10 @@ class Authentication(BaseAuthentication):
         return user
 
     def link_roles(self, user, roles):
+
+        if not roles:
+            roles = [BaseAuthentication.default_role]
+
         # link roles into users
         user.roles = []
         for role in roles:
