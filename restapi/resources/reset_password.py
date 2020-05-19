@@ -105,7 +105,7 @@ class RecoverPassword(EndpointResource):
         reset_token, payload = self.auth.create_temporary_token(
             user, self.auth.PWD_RESET)
 
-        domain = os.environ.get("DOMAIN")
+        domain = os.getenv("DOMAIN")
         protocol = 'https' if PRODUCTION else 'http'
 
         rt = reset_token.replace(".", "+")

@@ -9,7 +9,7 @@ from glom import glom
 
 from restapi.utilities.globals import mem
 
-APP_MODE = os.environ.get('APP_MODE', 'debug')
+APP_MODE = os.getenv('APP_MODE', 'debug')
 TESTING = APP_MODE == 'test'
 PRODUCTION = APP_MODE == 'production'
 STACKTRACE = False
@@ -26,8 +26,8 @@ BASE_URLS = [API_URL, AUTH_URL]
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = '8080'
 USER_HOME = os.environ['HOME']
-UPLOAD_PATH = os.environ.get('UPLOAD_PATH')
-SECRET_KEY_FILE = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
+UPLOAD_PATH = os.getenv('UPLOAD_PATH')
+SECRET_KEY_FILE = os.getenv('JWT_APP_SECRETS') + "/secret.key"
 
 #################
 
@@ -37,8 +37,8 @@ CONF_PATH = 'confs'
 EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = 'restapi'  # package inside rapydo-http
 
-CUSTOM_PACKAGE = os.environ.get('VANILLA_PACKAGE', 'custom')
-EXTENDED_PACKAGE = os.environ.get('EXTENDED_PACKAGE', None)
+CUSTOM_PACKAGE = os.getenv('VANILLA_PACKAGE', 'custom')
+EXTENDED_PACKAGE = os.getenv('EXTENDED_PACKAGE', None)
 #################
 # SQLALCHEMY
 BASE_DB_DIR = '/dbs'
@@ -46,7 +46,7 @@ SQLLITE_DBFILE = 'backend.db'
 dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + dbfile
 
-SENTRY_URL = os.environ.get('SENTRY_URL')
+SENTRY_URL = os.getenv('SENTRY_URL')
 if SENTRY_URL is not None and SENTRY_URL.strip() == '':
     SENTRY_URL = None
 

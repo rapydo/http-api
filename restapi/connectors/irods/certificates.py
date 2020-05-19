@@ -25,7 +25,7 @@ except ImportError as e:
 # To tests for this will be included in the core
 class Certificates:  # pragma: no cover
 
-    _dir = os.environ.get('CERTDIR')
+    _dir = os.getenv('CERTDIR')
     _proxyfile = 'userproxy.crt'
 
     def __init__(self):

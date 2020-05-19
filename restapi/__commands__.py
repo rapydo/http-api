@@ -20,7 +20,7 @@ def cli():
 
 def main(args):
 
-    current_app = os.environ.get('FLASK_APP')
+    current_app = os.getenv('FLASK_APP')
     if current_app is None or current_app.strip() == '':
         os.environ['FLASK_APP'] = '{}.__main__'.format(current_package)
 
@@ -64,7 +64,7 @@ def launch():  # pragma: no cover
         '--host',
         BIND_INTERFACE,
         '--port',
-        os.environ.get('FLASK_PORT'),
+        os.getenv('FLASK_PORT'),
         '--reload',
         '--no-debugger',
         '--eager-loading',

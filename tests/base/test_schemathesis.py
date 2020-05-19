@@ -12,7 +12,7 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
 
 
-RUN_SCHEMATHESIS = os.environ.get("RUN_SCHEMATHESIS", "1") == "1"
+RUN_SCHEMATHESIS = os.getenv("RUN_SCHEMATHESIS", "1") == "1"
 
 
 def get_auth_token():

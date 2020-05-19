@@ -10,11 +10,11 @@ from loguru import logger as log
 from restapi.confs import PRODUCTION
 
 
-log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
+log_level = os.getenv('DEBUG_LEVEL', 'DEBUG')
 LOGS_FOLDER = "/logs"
-HOSTNAME = os.environ.get("HOSTNAME", "backend")
-CONTAINER_ID = os.environ.get("CONTAINER_ID", "")
-IS_CELERY_CONTAINER = os.environ.get("IS_CELERY_CONTAINER", "0")
+HOSTNAME = os.getenv("HOSTNAME", "backend")
+CONTAINER_ID = os.getenv("CONTAINER_ID", "")
+IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
 
 # BACKEND-SERVER
 if IS_CELERY_CONTAINER == '0':
