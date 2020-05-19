@@ -11,7 +11,7 @@ class TestApp(BaseTests):
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
-        BaseAuthentication.myinit()
+        BaseAuthentication.load_default_user()
         USER = BaseAuthentication.default_user
         PWD = BaseAuthentication.default_password
         self.do_login(client, USER.upper(), PWD)

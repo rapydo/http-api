@@ -104,7 +104,7 @@ class BaseTests:
         """
 
         if USER is None or PWD is None:
-            BaseAuthentication.myinit()
+            BaseAuthentication.load_default_user()
             if USER is None:
                 USER = BaseAuthentication.default_user
             if PWD is None:
