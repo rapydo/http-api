@@ -47,7 +47,6 @@ setup(
 
         "PyYAML==5.3.1",
 
-        "Werkzeug==1.0.1",
         "pytest-flask==1.0.0",
         "pytest-cov==2.8.1",
         "schemathesis==1.6.2",
