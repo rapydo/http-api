@@ -1002,29 +1002,3 @@ class IrodsPythonClient:  # pragma: no cover
             return None
         else:
             return data
-
-
-def get_and_verify_irods_session(function, parameters):
-
-    obj = None
-    username = parameters.get('user')
-
-    try:
-        obj = function(**parameters)
-
-    except iexceptions.CAT_INVALID_USER:
-        log.warning("Invalid user: {}", username)
-    except iexceptions.UserDoesNotExist:
-        log.warning("Invalid iCAT user: {}", username)
-    except iexceptions.CAT_INVALID_AUTHENTICATION:
-        log.warning("Invalid password for {}", username)
-    except BaseException as e:
-        log.warning("Failed with unknown reason:\n[{}] \"{}\"", type(e), e)
-        error = 'Failed to verify credentials against B2SAFE. ' + 'Unknown error: '
-        if str(e).strip() == '':
-            error += e.__class__.__name__
-        else:
-            error += str(e)
-        raise IrodsException(error)
-
-    return obj
