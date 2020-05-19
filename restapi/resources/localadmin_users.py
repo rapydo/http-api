@@ -209,7 +209,7 @@
 #             return False
 
 #         # You cannot modify ADMINs
-#         if self.auth.role_admin in self.auth.get_roles_from_user(user):
+#         if ADMIN_ROLE in self.auth.get_roles_from_user(user):
 #             return False
 
 #         # FIXME: groups management is only implemented for neo4j

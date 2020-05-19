@@ -22,8 +22,7 @@ from sqlalchemy import text
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.utilities.meta import Meta
-from restapi.services.authentication import BaseAuthentication, NULL_IP
-from restapi.confs import TESTING
+from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.utilities.uuid import getUUID
@@ -277,7 +276,7 @@ class Authentication(BaseAuthentication):
 
     def get_roles(self):
         roles = []
-        for role_name in self.default_roles:
+        for role_name in self.roles:
             role = self.db.Role.query.filter_by(name=role_name).first()
             roles.append(role)
 
@@ -311,8 +310,8 @@ class Authentication(BaseAuthentication):
             # if no roles
             missing_role = not self.db.Role.query.first()
             if missing_role:
-                for role_name in self.default_roles:
-                    role_description = "automatic" if not TESTING else role_name
+                for role_name in self.roles:
+                    role_description = self.roles_data.get(role_name, ROLE_DISABLED)
                     role = self.db.Role(
                         name=role_name,
                         description=role_description
@@ -331,7 +330,7 @@ class Authentication(BaseAuthentication):
                         'surname': 'User',
                         'password': self.default_password,
                     },
-                    roles=self.default_roles,
+                    roles=self.roles,
                 )
                 log.warning("Injected default user")
 

@@ -11,7 +11,7 @@ from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 from restapi.confs import get_project_configuration
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, ROLE_DISABLED
 from restapi.services.detect import detector
 from restapi.utilities.meta import Meta
 from restapi.services.mail import send_mail, send_mail_is_active
@@ -86,7 +86,7 @@ def get_roles(auth):
     roles = {}
     for r in auth.get_roles():
 
-        if r.description == 'automatic':
+        if r.description == ROLE_DISABLED:
             continue
 
         roles["roles_{}".format(r.name)] = r.description
