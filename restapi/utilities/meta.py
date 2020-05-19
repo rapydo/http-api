@@ -154,27 +154,27 @@ class Meta:
         module_name = "{}.models.{}".format(package, module_name)
         module = Meta.get_module_from_string(module_name, exit_on_fail=True)
 
-        obj = getattr(module, obj_name, None)
-        return obj
+        return getattr(module, obj_name, None)
 
     @staticmethod
     def import_models(name, package, exit_on_fail=True):
 
-        models = {}
-        module_name = "{}.models.{}".format(package, name)
+        if package == BACKEND_PACKAGE:
+            module_name = "{}.connectors.{}.models".format(package, name)
+        else:
+            module_name = "{}.models.{}".format(package, name)
+
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
-            log.error("Cannot load {} models")
+            log.error("Cannot load {} models from {}", name, module_name)
             if exit_on_fail:
                 log.exit(e)
 
             log.warning(e)
             return {}
 
-        models = Meta.get_new_classes_from_module(module)
-
-        return models
+        return Meta.get_new_classes_from_module(module)
 
     @staticmethod
     def get_authentication_module(auth_service):
