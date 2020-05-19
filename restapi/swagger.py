@@ -368,20 +368,20 @@ class Swagger:
         if len(swag_dict['paths']) < 1:
             raise AttributeError("Swagger 'paths' definition is empty")
 
-        filepath = os.path.join(tempfile.gettempdir(), 'test.json')
+        # filepath = os.path.join(tempfile.gettempdir(), 'test.json')
 
-        try:
-            # Fix jsonschema validation problem
-            # expected string or bytes-like object
-            # http://j.mp/2hEquZy
-            swag_dict = json.loads(json.dumps(swag_dict))
-            # write it down
-            # FIXME: can we do better than this?
-            with open(filepath, 'w') as f:
-                json.dump(swag_dict, f)
-        except Exception as e:
-            raise e
-            # log.warning("Failed to temporary save the swagger definition")
+        # try:
+        #     # Fix jsonschema validation problem
+        #     # expected string or bytes-like object
+        #     # http://j.mp/2hEquZy
+        #     swag_dict = json.loads(json.dumps(swag_dict))
+        #     # write it down
+        #     # FIXME: can we do better than this?
+        #     with open(filepath, 'w') as f:
+        #         json.dump(swag_dict, f)
+        # except Exception as e:
+        #     raise e
+        #     # log.warning("Failed to temporary save the swagger definition")
 
         bravado_config = {
             'validate_swagger_spec': True,
@@ -391,6 +391,7 @@ class Swagger:
         }
 
         try:
+            swag_dict = json.loads(json.dumps(swag_dict))
             self._customizer._validated_spec = Spec.from_dict(
                 swag_dict, config=bravado_config
             )
@@ -400,7 +401,7 @@ class Swagger:
             error = str(e).split('\n')[0]
             log.error("Failed to validate:\n{}\n", error)
             return False
-        finally:
-            os.remove(filepath)
+        # finally:
+        #     os.remove(filepath)
 
         return True
