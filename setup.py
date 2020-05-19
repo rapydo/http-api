@@ -40,7 +40,6 @@ setup(
         "Flask-Cors==3.0.8",
         "Flask-SQLAlchemy==2.4.1",
         "Flask-Migrate==2.5.3",
-        "uWSGI==2.0.18",
 
         "PyJWT",
         "pyOpenSSL",
