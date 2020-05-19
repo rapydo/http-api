@@ -45,25 +45,25 @@ script:
   - > # this enable multiline commands
 
     if [[ "$TEMPLATE" == "postgres" ]]; then
-      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True;
+      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True,WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
-      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True;
+      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True,WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
-      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True;
+      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True,WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
-      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True;
+      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True,WSGI_SERVER=GUNICORN;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
-      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no --env WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
-      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no --env WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
-      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no --env WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
-      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no --env WSGI_SERVER=GUNICORN;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
-      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no --env WSGI_SERVER=GUNICORN;
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
@@ -71,7 +71,7 @@ script:
 
     elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current;
+      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current --env WSGI_SERVER=GUNICORN;
 
 
     else
