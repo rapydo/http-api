@@ -310,10 +310,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_remote_ip():  # pragma: no cover
         try:
-            if 'X-Forwarded-For' in request.headers:
-                forwarded_ips = request.headers['X-Forwarded-For']
-                ip = current_app.wsgi_app.get_remote_addr([forwarded_ips])
-                return ip
+            if request.headers.getlist("X-Forwarded-For"):
+                ip = request.headers.getlist("X-Forwarded-For")[0]
             elif PRODUCTION:
                 log.warning("Server in production X-Forwarded-For header is missing")
 
