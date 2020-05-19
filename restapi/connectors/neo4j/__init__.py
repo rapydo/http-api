@@ -307,6 +307,9 @@ class Authentication(BaseAuthentication):
     # Also used by PUT user
     def link_roles(self, user, roles):
 
+        if not roles:
+            roles = [self.default_role]
+
         for p in user.roles.all():
             user.roles.disconnect(p)
 

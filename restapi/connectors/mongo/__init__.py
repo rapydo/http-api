@@ -140,6 +140,9 @@ class Authentication(BaseAuthentication):
 
     def link_roles(self, user, roles):
 
+        if not roles:
+            roles = [BaseAuthentication.default_role]
+
         roles_obj = []
         for role_name in roles:
             role_obj = self.db.Role.objects.get({'name': role_name})
