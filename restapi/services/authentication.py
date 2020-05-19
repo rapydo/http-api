@@ -127,7 +127,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.default_user is None or cls.default_password is None:
             log.exit("Default credentials are unavailable!")
 
-        cls.roles_data = get_project_configuration("roles", default={})
+        cls.roles_data = get_project_configuration("variables.roles")
+        if not cls.roles_data:
+            log.exit("No roles configured")
+
         cls.default_role = cls.roles_data.pop('default')
         cls.roles = list(cls.roles_data.keys())
 
