@@ -55,7 +55,7 @@ class Swagger:
         # Save schemas for parameters before to remove the custom sections
         # It is used to provide schemas for unittests and automatic forms
         self._parameter_schemas = {}
-        self._used_swagger_tags = {}
+        self._used_swagger_tags = set()
 
     def read_my_swagger(self, method, endpoint, mapping=None):
 
@@ -192,12 +192,10 @@ class Swagger:
 
             # Handle global tags
             if endpoint.tags:
-                specs.setdefault('tags', set())
-                for tag in endpoint.tags:
-                    self._used_swagger_tags[tag] = True
-                    specs['tags'].add(tag)
-                # Object of type set is not JSON serializable
-                specs['tags'] = list(specs['tags'])
+                specs.setdefault('tags', list())
+                specs['tags'].extend(endpoint.tags)
+                # A global set with all used occurrences
+                self._used_swagger_tags.update(endpoint.tags)
 
             ##################
             # NOTE: whatever is left inside 'specs' will be
