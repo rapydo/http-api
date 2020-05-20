@@ -9,7 +9,6 @@ https://raw.githubusercontent.com/gangverk/flask-swagger/master/flask_swagger.py
 
 import re
 import os
-import tempfile
 import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
