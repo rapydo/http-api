@@ -15,7 +15,7 @@ import re
 
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from flask import current_app, request
+from flask import request
 
 from restapi.confs import TESTING
 from restapi.services.detect import Detector
