@@ -224,6 +224,9 @@ def tests(wait, core, file, folder):
     if core:
         parameters.append(current_package)
     elif file is not None:
+        if file.startswith("tests/"):
+            file = file[6:]
+
         if not os.path.isfile(os.path.join("tests", file)):
             log.exit("File not found: {}", file)
         parameters.append("default")
