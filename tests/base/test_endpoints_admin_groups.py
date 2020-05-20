@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
-from restapi.tests import BaseTests, API_URI
+from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.detect import detector
 # from restapi.utilities.logs import log
 
@@ -48,8 +48,13 @@ if detector.check_availability('neo4j'):
 
             assert fullname is not None
 
-            data = {'fullname': 'newfullname'}
-            r = client.put(url + "/" + uuid, data=data, headers=headers)
+            newdata = {
+                'fullname': 'newfullname',
+                # we should change the coordinator...
+                # But set again the same coordinator is enough for now
+                'coordinator': data.get('coordinator')
+            }
+            r = client.put(url + "/" + uuid, data=newdata, headers=headers)
             assert r.status_code == 204
 
             r = client.get(url, headers=headers)
@@ -58,7 +63,8 @@ if detector.check_availability('neo4j'):
             for g in groups:
                 if g.get('uuid') == uuid:
 
-                    assert g.get('fullname') == data.get('fullname')
+                    assert g.get('fullname') == newdata.get('fullname')
+                    assert g.get('fullname') != data.get('fullname')
                     assert g.get('fullname') != fullname
 
             r = client.put(url + "/xyz", data=data, headers=headers)
@@ -76,3 +82,26 @@ if detector.check_availability('neo4j'):
 
             r = client.delete(url + "/xyz", headers=headers)
             assert r.status_code == 404
+
+            # Create a group and assign it to the main user
+            # Profile and AdminUsers will react to this change
+            # Very important: admin_groups must be tested before admin_users and profile
+
+            r = client.get(AUTH_URI + '/profile', headers=headers)
+            assert r.status_code == 200
+            user_uuid = self.get_content(r).get('uuid')
+
+            data = {
+                'fullname': 'Default group',
+                'shortname': 'default',
+                'coordinator': user_uuid,
+            }
+            data = self.buildData(schema)
+            r = client.post(url, data=data, headers=headers)
+            assert r.status_code == 200
+            uuid = self.get_content(r)
+
+            url = API_URI + "/admin/users/" + user_uuid
+            data = {'group': uuid}
+            r = client.put(url, data=data, headers=headers)
+            assert r.status_code == 204
