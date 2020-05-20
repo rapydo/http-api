@@ -280,8 +280,7 @@ class Customizer:
                                 if responses is not None:
                                     for code, resp in responses.items():
                                         if code not in docs['responses']:
-                                            if 'responses' not in missing:
-                                                missing['responses'] = {}
+                                            missing.setdefault('responses', {})
                                             missing['responses'][code] = resp
 
                             # mimic the behaviour of @docs decorator
@@ -313,10 +312,8 @@ class Customizer:
         # duplicates are found while filling the dictionaries
         for endpoint in self._endpoints:
             for method, uris in endpoint.methods.items():
-                if method not in mappings:
-                    mappings[method] = set()
-                if method not in classes:
-                    classes[method] = {}
+                mappings.setdefault(method, set())
+                classes.setdefault(method, {})
 
                 for uri in uris.keys():
                     uri = "/{}{}".format(endpoint.base_uri, uri)

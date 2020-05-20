@@ -31,11 +31,6 @@ if detector.check_availability('neo4j'):
             assert r.status_code == 200
             uuid = self.get_content(r)
 
-            data = self.buildData(schema)
-            data['coordinator'] = 'wrong!'
-            r = client.post(url, data=data, headers=headers)
-            assert r.status_code == 400
-
             r = client.get(url, headers=headers)
             assert r.status_code == 200
             groups = self.get_content(r)
@@ -87,6 +82,11 @@ if detector.check_availability('neo4j'):
 
             r = client.delete(url + "/xyz", headers=headers)
             assert r.status_code == 404
+
+            data = self.buildData(schema)
+            data['coordinator'] = 'wrong!'
+            r = client.post(url, data=data, headers=headers)
+            assert r.status_code == 400
 
             # Create a group and assign it to the main user
             # Profile and AdminUsers will react to this change
