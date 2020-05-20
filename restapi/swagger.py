@@ -195,7 +195,7 @@ class Swagger:
                 specs.setdefault('tags', set())
                 for tag in endpoint.tags:
                     self._used_swagger_tags[tag] = True
-                    specs['tags'].append(tag)
+                    specs['tags'].add(tag)
 
             ##################
             # NOTE: whatever is left inside 'specs' will be
