@@ -32,6 +32,17 @@ class User(IdentifiedNode):
     privacy_accepted = BooleanProperty(default=True)
     tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
     roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore)
+    belongs_to = RelationshipTo('Group', 'BELONGS_TO')
+    coordinator = RelationshipTo('Group', 'PI_FOR', cardinality=ZeroOrMore)
+
+
+class Group(IdentifiedNode):
+    fullname = StringProperty(required=True, unique_index=False)
+    shortname = StringProperty(required=True, unique_index=True)
+    # prefix = StringProperty(required=True, unique_index=True)
+
+    members = RelationshipFrom('User', 'BELONGS_TO', cardinality=ZeroOrMore)
+    coordinator = RelationshipFrom('User', 'PI_FOR', cardinality=ZeroOrMore)
 
 
 class Token(StructuredNode):
