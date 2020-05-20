@@ -93,15 +93,18 @@ if detector.check_availability('neo4j'):
 
             data = {
                 'fullname': 'Default group',
-                'shortname': 'default',
+                'shortname': self.randomString(),
                 'coordinator': user_uuid,
             }
-            data = self.buildData(schema)
             r = client.post(url, data=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
 
             url = API_URI + "/admin/users/" + user_uuid
-            data = {'group': uuid}
+            data = {
+                'group': uuid,
+                # very important, otherwise the default user will lose its admin role
+                'roles_admin_root': True
+            }
             r = client.put(url, data=data, headers=headers)
             assert r.status_code == 204
