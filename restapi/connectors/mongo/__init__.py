@@ -118,9 +118,11 @@ class Authentication(BaseAuthentication):
     def create_user(self, userdata, roles):
 
         userdata.setdefault("authmethod", "credentials")
-        userdata.setdefault("password", self.get_password_hash(userdata["password"]))
         userdata.setdefault('uuid', getUUID())
         userdata.setdefault('id', userdata['uuid'])
+
+        if "password" in userdata:
+            userdata["password"] = self.get_password_hash(userdata["password"])
 
         userdata = self.custom_user_properties(userdata)
 
