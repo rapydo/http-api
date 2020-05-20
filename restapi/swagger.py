@@ -196,6 +196,8 @@ class Swagger:
                 for tag in endpoint.tags:
                     self._used_swagger_tags[tag] = True
                     specs['tags'].add(tag)
+                # Object of type set is not JSON serializable
+                specs['tags'] = list(specs['tags'])
 
             ##################
             # NOTE: whatever is left inside 'specs' will be
