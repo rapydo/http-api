@@ -117,19 +117,13 @@ class Authentication(BaseAuthentication):
     # Also used by POST user
     def create_user(self, userdata, roles):
 
-        if "authmethod" not in userdata:
-            userdata["authmethod"] = "credentials"
-
-        if "password" in userdata:
-            userdata["password"] = self.get_password_hash(userdata["password"])
-
-        if "uuid" not in userdata:
-            userdata['uuid'] = getUUID()
-
-        if "id" not in userdata:
-            userdata['id'] = userdata['uuid']
+        userdata.setdefault("authmethod", "credentials")
+        userdata.setdefault("password", self.get_password_hash(userdata["password"]))
+        userdata.setdefault('uuid', getUUID())
+        userdata.setdefault('id', userdata['uuid'])
 
         userdata = self.custom_user_properties(userdata)
+
         user = self.db.User(**userdata)
 
         self.link_roles(user, roles)

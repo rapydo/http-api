@@ -75,8 +75,7 @@ class Swagger:
 
             uri = '/{}{}'.format(endpoint.base_uri, label)
             # This will be used by server.py.add
-            if uri not in endpoint.uris:
-                endpoint.uris[uri] = uri
+            endpoint.uris.setdefault(uri, uri)
 
             # Separate external definitions
 
@@ -90,8 +89,7 @@ class Swagger:
             # Strip the uri of the parameter
             # and add it to 'parameters'
             newuri = uri[:]  # create a copy
-            if 'parameters' not in specs:
-                specs['parameters'] = []
+            specs.setdefault('parameters', [])
 
             ###########################
             # Read Form Data Custom parameters
@@ -152,19 +150,14 @@ class Swagger:
             for param in specs['parameters']:
 
                 if param["in"] != 'path':
-                    if uri not in self._parameter_schemas:
-                        self._parameter_schemas[uri] = {}
-
-                    if method not in self._parameter_schemas[uri]:
-                        self._parameter_schemas[uri][method] = []
-
+                    self._parameter_schemas.setdefault(uri, {})
+                    self._parameter_schemas[uri].setdefault(method, [])
                     self._parameter_schemas[uri][method].append(param.copy())
 
                 extrainfo = param.pop('custom', {})
 
                 if extrainfo:
-                    if uri not in endpoint.custom['params']:
-                        endpoint.custom['params'][uri] = {}
+                    endpoint.custom['params'].setdefault(uri, {})
                     endpoint.custom['params'][uri][method] = extrainfo
 
                 enum = param.pop("enum", None)
@@ -194,25 +187,24 @@ class Swagger:
 
             ##################
             # Save definition for checking
-            if uri not in self._original_paths:
-                self._original_paths[uri] = {}
+            self._original_paths.setdefault(uri, {})
             self._original_paths[uri][method] = specs
 
             # Handle global tags
-            if 'tags' not in specs and len(endpoint.tags) > 0:
-                specs['tags'] = []
-            for tag in endpoint.tags:
-                self._used_swagger_tags[tag] = True
-                if tag not in specs['tags']:
-                    specs['tags'].append(tag)
+            if endpoint.tags:
+                specs.setdefault('tags', set())
+                for tag in endpoint.tags:
+                    self._used_swagger_tags[tag] = True
+                    specs['tags'].add(tag)
+                # Object of type set is not JSON serializable
+                specs['tags'] = list(specs['tags'])
 
             ##################
             # NOTE: whatever is left inside 'specs' will be
             # passed later on to Swagger Validator...
 
             # Save definition for publishing
-            if newuri not in self._paths:
-                self._paths[newuri] = {}
+            self._paths.setdefault(newuri, {})
             self._paths[newuri][method] = specs
 
             log.verbose("Built definition '{}:{}'", method.upper(), newuri)
@@ -227,17 +219,15 @@ class Swagger:
         """
 
         clsname = cls.__name__
-        if clsname not in self._qparams:
-            self._qparams[clsname] = {}
-        if uri not in self._qparams[clsname]:
-            self._qparams[clsname][uri] = {}
-        if method not in self._qparams[clsname][uri]:
-            self._qparams[clsname][uri][method] = {}
+        self._qparams.setdefault(clsname, {})
+        self._qparams[clsname].setdefault(uri, {})
+        self._qparams[clsname][uri].setdefault(method, {})
 
         for param in params:
-            name = param['name']
-            if name not in self._qparams[clsname][uri][method]:
-                self._qparams[clsname][uri][method][name] = param
+            self._qparams[clsname][uri][method].setdefault(
+                param['name'],
+                param
+            )
 
     def swaggerish(self):
         """
