@@ -51,36 +51,6 @@ Password: {}
         send_mail(html, subject, user.email, plain_body=body)
 
 
-def parseAutocomplete(properties, key, id_key='value', split_char=None):
-    value = properties.get(key, None)
-
-    ids = []
-
-    if value is None:
-        return ids
-
-    # Multiple autocomplete
-    if isinstance(value, list):
-        for v in value:
-            if v is None:
-                return None
-            if id_key in v:
-                ids.append(v[id_key])
-            else:
-                ids.append(v)
-        return ids
-
-    # Single autocomplete
-    if id_key in value:
-        return [value[id_key]]
-
-    # Command line input
-    if split_char is None:
-        return [value]
-
-    return value.split(split_char)
-
-
 def get_roles(auth):
 
     roles = {}
@@ -108,14 +78,11 @@ def parse_roles(properties):
 
 
 def parse_group(v, neo4j):
-    groups = parseAutocomplete(v, 'group', id_key='id')
-
-    if groups is None:
+    group_id = v.pop('group', None)
+    if group_id is None:
         raise RestApiException(
             'Group not found', status_code=400
         )
-
-    group_id = groups.pop()
     group = neo4j.Group.nodes.get_or_none(uuid=group_id)
 
     if group is None:
@@ -132,8 +99,6 @@ def get_groups():
     if auth_service == 'neo4j':
 
         neo4j = detector.get_service_instance('neo4j')
-        if not hasattr(neo4j, "Group"):
-            return None
 
         groups = {}
         for g in neo4j.Group.nodes.all():
