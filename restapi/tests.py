@@ -249,8 +249,12 @@ class BaseTests:
                     value = default
                 elif len(d["enum"]) > 0:
                     # get first key
-                    for value in d["enum"][0]:
-                        break
+                    if isinstance(d["enum"], list):
+                        for value in d["enum"][0]:
+                            break
+                    else:
+                        for value in d["enum"]:
+                            break
                 else:
                     value = "NOT_FOUND"
             elif field_type == "number" or field_type == "int":
