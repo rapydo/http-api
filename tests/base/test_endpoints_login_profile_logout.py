@@ -167,6 +167,17 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
 
+        # Sending a new password or a password confirmation without a password
+        data = {'new_password': 'new_password'}
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 400
+        data = {'password_confirm': 'new_password'}
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 400
+        data = {'new_password': 'new_password', 'password_confirm': 'new_password'}
+        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        assert r.status_code == 400
+
         r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
