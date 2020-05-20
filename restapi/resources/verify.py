@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from restapi.rest.definition import EndpointResource
+from flask_apispec import MethodResource
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi import decorators
 
 
-class Verify(EndpointResource):
+class Verify(MethodResource, EndpointResource):
     """ Service connection testing """
 
+    ALLOW_HTML_RESPONSE = True
     labels = ["helpers"]
     _GET = {
         "/status/<service>": {
