@@ -192,7 +192,11 @@ def get_output_schema():
     return schema(many=True)
 
 
-def get_input_schema(strip_required=False, exclude_email=False):
+# Note that this is a callable returning a model, not a model!
+# It will be excuted a runtime
+def getInputSchema(req):
+    strip_required = req.method == 'PUT'
+    exclude_email = req.method == 'PUT'
 
     auth = EndpointResource.load_authentication()
 
@@ -308,7 +312,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
-    @use_kwargs(get_input_schema())
+    @use_kwargs(getInputSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -344,7 +348,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
-    @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
+    @use_kwargs(getInputSchema)
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)

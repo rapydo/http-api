@@ -61,6 +61,10 @@ if detector.check_availability('neo4j'):
             )
         )
 
+    def getInputGroup(req):
+        strip_required = req.method == 'PUT'
+        return InputGroup(strip_required=strip_required)
+
     class AdminGroups(MethodResource, EndpointResource):
 
         auth_service = detector.authentication_service
@@ -137,7 +141,7 @@ if detector.check_availability('neo4j'):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=['admin_root'])
-        @use_kwargs(InputGroup)
+        @use_kwargs(getInputGroup)
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance('neo4j')
@@ -160,7 +164,7 @@ if detector.check_availability('neo4j'):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=['admin_root'])
-        @use_kwargs(InputGroup(strip_required=True))
+        @use_kwargs(getInputGroup)
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance('neo4j')
@@ -168,6 +172,8 @@ if detector.check_availability('neo4j'):
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
             if group is None:
                 raise RestApiException("Group not found")
+
+            coordinator_uuid = kwargs.pop('coordinator', None)
 
             if self.neo4j_enabled:
                 self.graph = self.get_service_instance('neo4j')
@@ -183,10 +189,9 @@ if detector.check_availability('neo4j'):
 
             group.save()
 
-            if 'coordinator' in kwargs:
+            if coordinator_uuid:
 
-                coordinator = self.graph.User.nodes.get_or_none(
-                    uuid=kwargs['coordinator'])
+                coordinator = self.graph.User.nodes.get_or_none(uuid=coordinator_uuid)
 
                 p = None
                 for p in group.coordinator.all():
