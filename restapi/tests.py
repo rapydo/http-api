@@ -96,9 +96,7 @@ class BaseTests:
         return response
 
     def do_login(self, client, USER, PWD,
-                 status_code=200, error=None,
-                 user_field='username', pwd_field='password',
-                 data=None):
+                 status_code=200, error=None, data=None):
         """
             Make login and return both token and authorization header
         """
@@ -114,8 +112,8 @@ class BaseTests:
         if data is None:
             data = {}
 
-        data[user_field] = USER
-        data[pwd_field] = PWD
+        data['username'] = USER
+        data['password'] = PWD
 
         r = client.post(AUTH_URI + '/login', data=json.dumps(data))
         content = json.loads(r.data.decode('utf-8'))

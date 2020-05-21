@@ -3,8 +3,9 @@
 import pytz
 from datetime import datetime, timedelta
 from flask_apispec import MethodResource
+from restapi.models import Schema
 from flask_apispec import use_kwargs
-from marshmallow import fields
+from marshmallow import fields, validate
 
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
@@ -12,7 +13,30 @@ from restapi.exceptions import RestApiException
 from restapi import decorators
 
 
-class Login(EndpointResource):
+auth = EndpointResource.load_authentication()
+
+
+class Credentials(Schema):
+    username = fields.Email(required=True)
+    password = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    new_password = fields.Str(
+        required=False,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    password_confirm = fields.Str(
+        required=False,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    totp_code = fields.Str(required=False)
+
+
+class Login(MethodResource, EndpointResource):
     """ Let a user login by using the configured method """
 
     baseuri = "/auth"
@@ -23,19 +47,74 @@ class Login(EndpointResource):
         "/login": {
             "summary": "Login with basic credentials",
             "description": "Normal credentials (username and password) login endpoint",
-            "parameters": [
-                {
-                    "name": "credentials",
-                    "in": "body",
-                    "schema": {"$ref": "#/definitions/Credentials"},
-                }
-            ],
             "responses": {
                 "200": {"description": "Credentials are valid"},
                 "401": {"description": "Invalid username or password"},
             },
         }
     }
+
+    @decorators.catch_errors()
+    @use_kwargs(Credentials)
+    def post(self, **kwargs):
+
+        username = kwargs.get('username').lower()
+        password = kwargs.get('password')
+
+        now = datetime.now(pytz.utc)
+
+        new_password = kwargs.get('new_password')
+        password_confirm = kwargs.get('password_confirm')
+
+        # ##################################################
+        # Authentication control
+        self.auth.verify_blocked_username(username)
+        token, payload = self.auth.make_login(username, password)
+        user = self.auth.get_user()
+
+        self.auth.verify_blocked_user(user)
+        self.auth.verify_active_user(user)
+
+        if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
+            totp_authentication = True
+            totp_code = kwargs.get('totp_code')
+
+            # if None will be verified later
+            if totp_code is not None:
+                self.auth.verify_totp(user, totp_code)
+
+        else:
+            totp_authentication = False
+            totp_code = None
+
+        # ##################################################
+        # If requested, change the password
+        if new_password is not None and password_confirm is not None:
+
+            pwd_changed = self.auth.change_password(
+                user, password, new_password, password_confirm
+            )
+
+            if pwd_changed:
+                password = new_password
+                token, payload = self.auth.make_login(username, password)
+
+        # ##################################################
+        # Something is missing in the authentication, asking action to user
+        ret = self.verify_information(
+            user, totp_authentication, totp_code
+        )
+        if ret is not None:
+            return ret
+
+        # Everything is ok, let's save authentication information
+
+        if user.first_login is None:
+            user.first_login = now
+        user.last_login = now
+        self.auth.save_token(user, token, payload)
+
+        return self.response(token)
 
     def verify_information(self, user, totp_auth, totp_code):
 
@@ -94,78 +173,3 @@ class Login(EndpointResource):
             return self.response(message, code=403)
 
         return None
-
-    @decorators.catch_errors()
-    def post(self):
-
-        jargs = self.get_input()
-
-        username = jargs.get('username')
-        if username is None:
-            username = jargs.get('email')
-
-        password = jargs.get('password')
-        if password is None:
-            password = jargs.get('pwd')
-
-        # Now credentials are checked at every request
-        if username is None or password is None:
-            msg = "Missing username or password"
-            raise RestApiException(msg, status_code=401)
-
-        username = username.lower()
-
-        now = datetime.now(pytz.utc)
-
-        new_password = jargs.get('new_password')
-        password_confirm = jargs.get('password_confirm')
-
-        # ##################################################
-        # Authentication control
-        self.auth.verify_blocked_username(username)
-        token, payload = self.auth.make_login(username, password)
-        user = self.auth.get_user()
-
-        self.auth.verify_blocked_user(user)
-        self.auth.verify_active_user(user)
-
-        if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
-            totp_authentication = True
-            totp_code = jargs.get('totp_code')
-
-            # if None will be verified later
-            if totp_code is not None:
-                self.auth.verify_totp(user, totp_code)
-
-        else:
-            totp_authentication = False
-            totp_code = None
-
-        # ##################################################
-        # If requested, change the password
-        if new_password is not None and password_confirm is not None:
-
-            pwd_changed = self.auth.change_password(
-                user, password, new_password, password_confirm
-            )
-
-            if pwd_changed:
-                password = new_password
-                token, payload = self.auth.make_login(username, password)
-
-        # ##################################################
-        # Something is missing in the authentication, asking action to user
-        ret = self.verify_information(
-            user, totp_authentication, totp_code
-        )
-        if ret is not None:
-            return ret
-
-        # Everything is ok, let's save authentication information
-
-        if user.first_login is None:
-            user.first_login = now
-        user.last_login = now
-        self.auth.save_token(user, token, payload)
-
-        return self.response(token)

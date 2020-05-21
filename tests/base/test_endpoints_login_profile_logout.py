@@ -37,16 +37,6 @@ class TestApp(BaseTests):
         c = self.get_content(r)
         assert isinstance(c, bool) and c
 
-        # Check failure
-        log.info("*** VERIFY invalid credentials")
-
-        self.do_login(
-            client,
-            'ABC-Random-User-XYZ',
-            'ABC-Random-Pass-XYZ',
-            status_code=401,
-        )
-
         # this check verifies a BUG with neo4j causing crash of auth module
         # when using a non-email-username to authenticate
         log.info("*** VERIFY with a non-email-username")
@@ -55,25 +45,16 @@ class TestApp(BaseTests):
             client,
             'notanemail',
             '[A-Za-z0-9]+',
-            status_code=401,
+            status_code=400,
         )
 
-        # use alternative keys
-        self.do_login(
-            client, None, None,
-            user_field='email',
-            pwd_field='pwd'
-        )
+        # Check failure
+        log.info("*** VERIFY invalid credentials")
 
-        # missing credentials
         self.do_login(
-            client, USER, PWD.upper(),
-            user_field='wrong',
-            status_code=401,
-        )
-        self.do_login(
-            client, USER, PWD.upper(),
-            pwd_field='wrong',
+            client,
+            'sample@nomail.org',
+            'ABC-Random-Pass-XYZ',
             status_code=401,
         )
 
