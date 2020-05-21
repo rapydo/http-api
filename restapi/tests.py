@@ -115,7 +115,7 @@ class BaseTests:
         data['username'] = USER
         data['password'] = PWD
 
-        r = client.post(AUTH_URI + '/login', data=json.dumps(data))
+        r = client.post(AUTH_URI + '/login', data=data)
         content = json.loads(r.data.decode('utf-8'))
 
         if r.status_code == 403:
@@ -172,12 +172,10 @@ class BaseTests:
             else:
                 assert content == error
 
-        token = ''
-        if content is not None:
-            token = glom(content, "Response.data.token", default=None)
-            if token is None:
-                token = content
-        return {'Authorization': 'Bearer {}'.format(token)}, token
+        # when 200 OK content is the token
+        assert content is not None
+
+        return {'Authorization': 'Bearer {}'.format(content)}, content
 
     @staticmethod
     def get_celery(app):
