@@ -182,7 +182,7 @@ class TestApp(BaseTests):
 
         data['password_confirm'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
-        assert r.status_code == 401
+        assert r.status_code == 400
 
         data['password'] = BaseAuthentication.default_password
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
