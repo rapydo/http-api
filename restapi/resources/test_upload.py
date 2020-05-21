@@ -3,7 +3,6 @@
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
 from marshmallow import fields
-from restapi.models import Schema
 from restapi.rest.definition import EndpointResource
 from restapi.services.uploader import Uploader
 # from restapi.exceptions import RestApiException
@@ -11,10 +10,6 @@ from restapi import decorators
 from restapi.confs import TESTING
 from restapi.confs import UPLOAD_PATH
 from restapi.utilities.logs import log
-
-class Input(Schema):
-
-    force = fields.Bool()
 
 
 if TESTING:
@@ -50,10 +45,8 @@ if TESTING:
         }
 
         @decorators.catch_errors()
-        @use_kwargs(Input)
-        def put(self, chunked=None, **kwargs):
-
-            force = kwargs.get('force', False)
+        @use_kwargs({'force': fields.Bool()})
+        def put(self, chunked=None, force=False):
 
             if chunked:
                 filename = 'fixed.filename'
@@ -67,10 +60,9 @@ if TESTING:
             return response
 
         @decorators.catch_errors()
-        @use_kwargs(Input)
-        def post(self, **kwargs):
+        @use_kwargs({'force': fields.Bool()})
+        def post(self, force=False):
 
-            force = kwargs.get('force', False)
             filename = 'fixed.filename'
             return self.init_chunk_upload(
                 UPLOAD_PATH, filename, force=force

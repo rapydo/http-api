@@ -132,19 +132,14 @@ class Profile(MethodResource, EndpointResource):
     @decorators.catch_errors()
     @decorators.auth.required()
     @use_kwargs(NewPassword)
-    def put(self, **kwargs):
+    def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
         user = self.auth.get_user()
 
-        password = kwargs.get('password')
-        new_password = kwargs.get('new_password')
-        password_confirm = kwargs.get('password_confirm')
-
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
         if totp_authentication:
-            totp_code = kwargs.get('totp_code')
             self.auth.verify_totp(user, totp_code)
         else:
             self.auth.make_login(user.email, password)
