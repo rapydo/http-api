@@ -87,7 +87,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         raise RestApiException("Cannot understand websocket request")
 
 
-class PushpinHTTPStream(EndpointResource):
+class PushpinHTTPStream(MethodResource, EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
