@@ -3,6 +3,9 @@
 import os
 import jwt
 
+from flask_apispec import MethodResource
+from flask_apispec import use_kwargs
+from marshmallow import fields  # , validate
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
@@ -31,189 +34,179 @@ def send_password_reset_link(uri, title, reset_email):
         raise RestApiException("Error sending email, please retry")
 
 
-class RecoverPassword(EndpointResource):
+# This endpoint require the server to send the reset token via email
+if send_mail_is_active():
+    class RecoverPassword(MethodResource, EndpointResource):
 
-    baseuri = "/auth"
-    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
-    labels = ["authentication"]
+        baseuri = "/auth"
+        depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
+        labels = ["authentication"]
 
-    _POST = {
-        "/reset": {
-            "summary": "Request password reset via email",
-            "description": "Request password reset via email",
-            "responses": {
-                "200": {"description": "Reset email is valid"},
-                "401": {"description": "Invalid reset email"},
-            },
+        _POST = {
+            "/reset": {
+                "summary": "Request password reset via email",
+                "description": "Request password reset via email",
+                "responses": {
+                    "200": {"description": "Reset email is valid"},
+                    "401": {"description": "Invalid reset email"},
+                },
+            }
         }
-    }
-    _PUT = {
-        "/reset/<token>": {
-            "summary": "Change password as conseguence of a reset request",
-            "description": "Change password as conseguence of a reset request",
-            "responses": {
-                "200": {"description": "Reset token is valid, password changed"},
-                "401": {"description": "Invalid reset token"},
-                "503": {"description": "Server misconfiguration, password cannot be reset"},
-            },
+        _PUT = {
+            "/reset/<token>": {
+                "summary": "Change password as conseguence of a reset request",
+                "description": "Change password as conseguence of a reset request",
+                "responses": {
+                    "200": {"description": "Reset token is valid, password changed"},
+                    "401": {"description": "Invalid reset token"},
+                },
+            }
         }
-    }
 
-    @decorators.catch_errors()
-    def post(self):
+        @decorators.catch_errors()
+        @use_kwargs({'reset_email': fields.Email(required=True)})
+        def post(self, **kwargs):
 
-        # always active (and mocked) during tests, cannot be tested
-        if not send_mail_is_active():  # pragma: no cover
-            log.error("Send mail is not active")
-            raise RestApiException(
-                {'Server misconfiguration': 'Password cannot be reset'},
-                status_code=503,
+            reset_email = kwargs.get('reset_email')
+            reset_email = reset_email.lower()
+
+            user = self.auth.get_user_object(username=reset_email)
+
+            if user is None:
+                raise RestApiException(
+                    'Sorry, {} is not recognized as a valid username'.format(
+                        reset_email
+                    ),
+                    # FORBIDDEN
+                    status_code=403,
+                )
+
+            if user.is_active is not None and not user.is_active:
+                # Beware, frontend leverages on this exact message,
+                # do not modified it without fix also on frontend side
+                raise RestApiException(
+                    "Sorry, this account is not active",
+                    status_code=403,
+                )
+
+            title = get_project_configuration(
+                "project.title", default='Unkown title'
             )
 
-        reset_email = self.get_input(single_parameter='reset_email')
+            reset_token, payload = self.auth.create_temporary_token(
+                user, self.auth.PWD_RESET)
 
-        if reset_email is None:
-            raise RestApiException(
-                'Invalid reset email',
-                # FORBIDDEN
-                status_code=403
-            )
+            domain = os.getenv("DOMAIN")
+            protocol = 'https' if PRODUCTION else 'http'
 
-        reset_email = reset_email.lower()
+            rt = reset_token.replace(".", "+")
 
-        user = self.auth.get_user_object(username=reset_email)
+            var = "RESET_PASSWORD_URI"
+            uri = detector.get_global_var(key=var, default='/public/reset')
+            complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
 
-        if user is None:
-            raise RestApiException(
-                'Sorry, {} is not recognized as a valid username'.format(reset_email),
-                # FORBIDDEN
-                status_code=403,
-            )
+            send_password_reset_link(complete_uri, title, reset_email)
 
-        if user.is_active is not None and not user.is_active:
-            # Beware, frontend leverages on this exact message,
-            # do not modified it without fix also on frontend side
-            raise RestApiException(
-                "Sorry, this account is not active",
-                status_code=403,
-            )
+            ##################
+            # Completing the reset task
+            self.auth.save_token(
+                user, reset_token, payload, token_type=self.auth.PWD_RESET)
 
-        title = get_project_configuration(
-            "project.title", default='Unkown title'
-        )
+            msg = "You will shortly receive an email with a link to a page where "
+            msg += "you can create a new password, please check your spam/junk folder."
 
-        reset_token, payload = self.auth.create_temporary_token(
-            user, self.auth.PWD_RESET)
+            return self.response(msg)
 
-        domain = os.getenv("DOMAIN")
-        protocol = 'https' if PRODUCTION else 'http'
+        @decorators.catch_errors()
+        def put(self, token):
 
-        rt = reset_token.replace(".", "+")
+            token = token.replace("%2B", ".")
+            token = token.replace("+", ".")
+            try:
+                # Unpack and verify token. If ok, self.auth will be added with
+                # auth._user auth._token and auth._jti
+                self.auth.verify_token(
+                    token, raiseErrors=True, token_type=self.auth.PWD_RESET
+                )
 
-        var = "RESET_PASSWORD_URI"
-        uri = detector.get_global_var(key=var, default='/public/reset')
-        complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
+            # If token is expired
+            except jwt.exceptions.ExpiredSignatureError:
+                raise RestApiException(
+                    'Invalid reset token: this request is expired',
+                    status_code=400,
+                )
 
-        send_password_reset_link(complete_uri, title, reset_email)
+            # if token is not yet active
+            except jwt.exceptions.ImmatureSignatureError as e:
+                log.error(e)
+                raise RestApiException(
+                    'Invalid reset token', status_code=400
+                )
 
-        ##################
-        # Completing the reset task
-        self.auth.save_token(
-            user, reset_token, payload, token_type=self.auth.PWD_RESET)
+            # if token does not exist (or other generic errors)
+            except BaseException as e:
+                log.error(e)
+                raise RestApiException(
+                    'Invalid reset token', status_code=400
+                )
 
-        msg = "You will shortly receive an email with a link to a page where "
-        msg += "you can create a new password, please check your spam/junk folder."
-
-        return self.response(msg)
-
-    @decorators.catch_errors()
-    def put(self, token):
-
-        token = token.replace("%2B", ".")
-        token = token.replace("+", ".")
-        try:
-            # Unpack and verify token. If ok, self.auth will be added with
-            # auth._user auth._token and auth._jti
-            self.auth.verify_token(
-                token, raiseErrors=True, token_type=self.auth.PWD_RESET
-            )
-
-        # If token is expired
-        except jwt.exceptions.ExpiredSignatureError:
-            raise RestApiException(
-                'Invalid reset token: this request is expired',
-                status_code=400,
-            )
-
-        # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError as e:
-            log.error(e)
-            raise RestApiException(
-                'Invalid reset token', status_code=400
-            )
-
-        # if token does not exist (or other generic errors)
-        except BaseException as e:
-            log.error(e)
-            raise RestApiException(
-                'Invalid reset token', status_code=400
-            )
-
-        # Recovering token object from jti
-        token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
-        if len(token_obj) == 0:
-            raise RestApiException(
-                'Invalid reset token: this request is no longer valid',
-                status_code=400,
-            )
-
-        token_obj = token_obj.pop(0)
-        emitted = token_obj["emitted"]
-
-        last_change = None
-        # If user logged in after the token emission invalidate the token
-        if self.auth._user.last_login is not None:
-            last_change = self.auth._user.last_login
-        # If user changed the pwd after the token emission invalidate the token
-        elif self.auth._user.last_password_change is not None:
-            last_change = self.auth._user.last_password_change
-
-        if last_change is not None:
-
-            if last_change > emitted:
-                self.auth.invalidate_token(token)
+            # Recovering token object from jti
+            token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
+            if len(token_obj) == 0:
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
                     status_code=400,
                 )
 
-        # The reset token is valid, do something
-        data = self.get_input()
-        new_password = data.get("new_password")
-        password_confirm = data.get("password_confirm")
+            token_obj = token_obj.pop(0)
+            emitted = token_obj["emitted"]
 
-        # No password to be changed, just a token verification
-        if new_password is None and password_confirm is None:
-            return self.empty_response()
+            last_change = None
+            # If user logged in after the token emission invalidate the token
+            if self.auth._user.last_login is not None:
+                last_change = self.auth._user.last_login
+            # If user changed the pwd after the token emission invalidate the token
+            elif self.auth._user.last_password_change is not None:
+                last_change = self.auth._user.last_password_change
 
-        # Something is missing
-        if new_password is None or password_confirm is None:
-            raise RestApiException(
-                'Invalid password', status_code=400
+            if last_change is not None:
+
+                if last_change > emitted:
+                    self.auth.invalidate_token(token)
+                    raise RestApiException(
+                        'Invalid reset token: this request is no longer valid',
+                        status_code=400,
+                    )
+
+            # The reset token is valid, do something
+            data = self.get_input()
+            new_password = data.get("new_password")
+            password_confirm = data.get("password_confirm")
+
+            # No password to be changed, just a token verification
+            if new_password is None and password_confirm is None:
+                return self.empty_response()
+
+            # Something is missing
+            if new_password is None or password_confirm is None:
+                raise RestApiException(
+                    'Invalid password', status_code=400
+                )
+
+            if new_password != password_confirm:
+                raise RestApiException(
+                    'New password does not match with confirmation',
+                    status_code=400,
+                )
+
+            self.auth.change_password(
+                self.auth._user, None, new_password, password_confirm
             )
+            # I really don't know why this save is required... since it is already
+            # in change_password ... But if I remove it the new pwd is not saved...
+            self.auth.save_user(self.auth._user)
 
-        if new_password != password_confirm:
-            raise RestApiException(
-                'New password does not match with confirmation',
-                status_code=400,
-            )
+            # Bye bye token (reset tokens are valid only once)
+            self.auth.invalidate_token(token)
 
-        self.auth.change_password(self.auth._user, None, new_password, password_confirm)
-        # I really don't know why this save is required... since it is already
-        # in change_password ... But if I remove it the new pwd is not saved...
-        self.auth.save_user(self.auth._user)
-
-        # Bye bye token (reset tokens are valid only once)
-        self.auth.invalidate_token(token)
-
-        return self.response("Password changed")
+            return self.response("Password changed")
