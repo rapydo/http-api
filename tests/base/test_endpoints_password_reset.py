@@ -35,7 +35,7 @@ class TestApp(BaseTests):
         # Request password reset, wrong email
         data = {'reset_email': 'y'}
         r = client.post(AUTH_URI + '/reset', data=data)
-        assert r.status_code == 403
+        assert r.status_code == 400
         assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
