@@ -2,6 +2,10 @@
 import os
 import jwt
 
+from flask_apispec import MethodResource
+from flask_apispec import use_kwargs
+from marshmallow import fields
+
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
@@ -48,7 +52,7 @@ def send_activation_link(auth, user):
         user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
-class ProfileActivation(EndpointResource):
+class ProfileActivation(MethodResource, EndpointResource):
     depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
     baseuri = "/auth"
     labels = ["base", "profiles"]
@@ -129,22 +133,14 @@ class ProfileActivation(EndpointResource):
         return self.response("Account activated")
 
     @decorators.catch_errors()
-    def post(self):
+    @use_kwargs({'username': fields.Email(required=True)})
+    def post(self, **kwargs):
 
-        v = self.get_input()
-        if len(v) == 0:
-            raise RestApiException('Empty input', status_code=400)
+        email = kwargs.get('username')
+        user = self.auth.get_user_object(username=email)
 
-        if 'username' not in v:
-            raise RestApiException(
-                'Missing required input: username', status_code=400
-            )
-
-        user = self.auth.get_user_object(username=v['username'])
-
-        # if user is None this endpoint does nothing and the response
-        # remain the same (we are sending an email bla bla)
-        # => security to avoid user guessing
+        # if user is None this endpoint does nothing but the response
+        # remain the same to prevent any user guessing
         if user is not None:
             send_activation_link(self.auth, user)
         msg = (

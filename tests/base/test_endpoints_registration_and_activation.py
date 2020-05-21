@@ -72,15 +72,13 @@ class TestApp(BaseTests):
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, this account is not active'
 
-        # Ask a new activation link
+        # Activation, missing or wrong information
         r = client.post(AUTH_URI + '/profile/activate')
         assert r.status_code == 400
-        assert self.get_content(r) == 'Empty input'
-
-        # activation, missing information
         r = client.post(AUTH_URI + '/profile/activate', data={'x': 'y'})
         assert r.status_code == 400
-        assert self.get_content(r) == 'Missing required input: username'
+        r = client.post(AUTH_URI + '/profile/activate', data={'username': 'y'})
+        assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
 
@@ -93,7 +91,10 @@ class TestApp(BaseTests):
         activation_message = "We are sending an email to your email address where "
         activation_message += "you will find the link to activate your account"
         # request activation, wrong username
-        r = client.post(AUTH_URI + '/profile/activate', data={'username': 'y'})
+        r = client.post(
+            AUTH_URI + '/profile/activate',
+            data={'username': 'sample@nomail.org'}
+        )
         # return is 200, but no token will be generated and no mail will be sent
         # but it respond with the activation msg and hides the non existence of the user
         assert r.status_code == 200
