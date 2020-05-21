@@ -23,11 +23,10 @@ def get_auth_token():
     PWD = BaseAuthentication.default_password
     data = {'username': USER, 'password': PWD}
 
-    r = client.post('/auth/login', data=json.dumps(data))
-    content = json.loads(r.data.decode('utf-8'))
-    token = glom(content, "Response.data.token", default=None)
-    if token is None:
-        token = content
+    r = client.post('/auth/login', data=data)
+    token = json.loads(r.data.decode('utf-8'))
+    assert token is not None
+
     return {'Authorization': 'Bearer {}'.format(token)}
 
 
