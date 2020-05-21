@@ -52,7 +52,6 @@ class TestApp(BaseTests):
         assert "produces" in specs
         assert "application/json" in specs["consumes"]
         assert "application/json" in specs["produces"]
-        assert "definitions" in specs
         assert "host" in specs
         assert "info" in specs
         assert "schemes" in specs
