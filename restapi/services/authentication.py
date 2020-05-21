@@ -22,13 +22,14 @@ from restapi.services.detect import Detector
 from restapi.exceptions import RestApiException
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, SECRET_KEY_FILE
 from restapi.confs import get_project_configuration
-from restapi.confs.attributes import ALL_ROLES, ANY_ROLE
 
 from restapi.utilities.meta import Meta
 from restapi.utilities.uuid import getUUID
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
+ALL_ROLES = 'all'
+ANY_ROLE = 'any'
 
 if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     try:
