@@ -30,7 +30,7 @@
   class: MongoExt
 
   # rabbitmq message queue
-- name: rabbit
+- name: rabbitmq
   load_models: 0
   prefix: rabbitmq
   class: RabbitExt
