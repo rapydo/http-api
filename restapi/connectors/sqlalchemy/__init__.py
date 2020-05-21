@@ -18,6 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy import text
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
@@ -65,6 +66,23 @@ def catch_db_exceptions(func):
             raise e
 
     return wrapper
+
+
+def update_properties(instance, schema, properties):
+
+    for field in schema:
+        if isinstance(field, str):
+            key = field
+        else:
+            # to be deprecated
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+        if key in properties:
+            set_attribute(instance, key, properties[key])
 
 
 class SqlAlchemy(Connector):
@@ -142,6 +160,7 @@ class SqlAlchemy(Connector):
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)
         db.session.flush = catch_db_exceptions(db.session.flush)
+        db.update_properties = update_properties
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 

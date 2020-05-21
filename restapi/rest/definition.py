@@ -404,55 +404,6 @@ class EndpointResource(Resource):
 
         return properties
 
-    @staticmethod
-    def update_properties(instance, schema, properties):
-
-        for field in schema:
-            if isinstance(field, str):
-                key = field
-            else:
-                if 'custom' in field:
-                    if 'islink' in field['custom']:
-                        if field['custom']['islink']:
-                            continue
-                key = field["name"]
-
-            if key in properties:
-                instance.__dict__[key] = properties[key]
-
-    @staticmethod
-    def update_sql_properties(instance, schema, properties):
-
-        from sqlalchemy.orm.attributes import set_attribute
-        for field in schema:
-            if isinstance(field, str):
-                key = field
-            else:
-                if 'custom' in field:
-                    if 'islink' in field['custom']:
-                        if field['custom']['islink']:
-                            continue
-                key = field["name"]
-
-            if key in properties:
-                set_attribute(instance, key, properties[key])
-
-    @staticmethod
-    def update_mongo_properties(instance, schema, properties):
-
-        for field in schema:
-            if isinstance(field, str):
-                key = field
-            else:
-                if 'custom' in field:
-                    if 'islink' in field['custom']:
-                        if field['custom']['islink']:
-                            continue
-                key = field["name"]
-
-            if key in properties:
-                setattr(instance, key, properties[key])
-
     def get_user_if_logged(self):
         """
         Helper to be used inside an endpoint that doesn't explicitly

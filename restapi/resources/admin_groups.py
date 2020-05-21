@@ -69,11 +69,6 @@ if detector.check_availability('neo4j'):
 
     class AdminGroups(MethodResource, EndpointResource):
 
-        auth_service = detector.authentication_service
-        neo4j_enabled = auth_service == 'neo4j'
-        sql_enabled = auth_service == 'sqlalchemy'
-        mongo_enabled = auth_service == 'mongo'
-
         labels = ["admin"]
         _GET = {
             "/admin/groups": {
@@ -177,17 +172,8 @@ if detector.check_availability('neo4j'):
 
             coordinator_uuid = kwargs.pop('coordinator', None)
 
-            if self.neo4j_enabled:
-                self.graph = self.get_service_instance('neo4j')
-                self.update_properties(group, kwargs, kwargs)
-            # elif self.sql_enabled:
-            #     self.update_sql_properties(group, kwargs, kwargs)
-            # elif self.mongo_enabled:
-            #     self.update_mongo_properties(group, kwargs, kwargs)
-            else:
-                raise RestApiException(  # pragma: no cover
-                    "Invalid auth backend, all known db are disabled"
-                )
+            db = self.get_service_instance(detector.authentication_service)
+            db.update_properties(group, kwargs, kwargs)
 
             group.save()
 

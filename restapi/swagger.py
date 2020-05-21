@@ -91,6 +91,7 @@ class Swagger:
             ###########################
             # Read Form Data Custom parameters
             # TO BE DEPRECATED AFTER APISPEC
+            # Already removed from core
             cparam = specs.pop('custom_parameters', None)
             if cparam is not None:
                 for fdp in cparam:

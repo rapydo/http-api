@@ -52,7 +52,6 @@ if send_mail_is_active():
         _POST = {
             "/profile": {
                 "summary": "Register new user",
-                "custom_parameters": ["User"],
                 "responses": {
                     "200": {"description": "ID of new user"},
                     "409": {"description": "This user already exists"},

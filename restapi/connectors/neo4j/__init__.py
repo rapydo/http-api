@@ -108,6 +108,23 @@ class NeomodelClient:
         self.db.set_connection(self.db.url)
         return True
 
+    @staticmethod
+    def update_properties(instance, schema, properties):
+
+        for field in schema:
+            if isinstance(field, str):
+                key = field
+            else:
+                # to be deprecated
+                if 'custom' in field:
+                    if 'islink' in field['custom']:
+                        if field['custom']['islink']:
+                            continue
+                key = field["name"]
+
+            if key in properties:
+                instance.__dict__[key] = properties[key]
+
     @catch_db_exceptions
     def cypher(self, query):
         """ Execute normal neo4j queries """
