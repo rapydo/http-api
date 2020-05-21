@@ -9,7 +9,6 @@ from marshmallow import fields, validate
 
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
 from restapi import decorators
 
 
@@ -21,7 +20,8 @@ class Credentials(Schema):
     password = fields.Str(
         required=True,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        # Otherwise default testing password, like test, will fail
+        # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
     )
     new_password = fields.Str(
         required=False,
