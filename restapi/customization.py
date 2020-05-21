@@ -9,10 +9,10 @@ import copy
 from flask.views import MethodViewType
 from flask_apispec.views import MethodResourceMeta
 from flask_apispec.utils import Annotation
+from attr import s as ClassOfAttributes, ib as attribute
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import CUSTOM_PACKAGE
-from restapi.confs.attributes import EndpointElements
 from restapi.services.detect import detector
 from restapi.swagger import Swagger
 
@@ -23,14 +23,17 @@ from restapi.utilities.logs import log
 CONF_FOLDERS = detector.load_group(label='project_confs')
 
 
-########################
-# Customization on the table
-########################
+@ClassOfAttributes
+class EndpointElements:
+    iscore = attribute(default=False)
+    cls = attribute(default=None)
+    uris = attribute(default={})
+    methods = attribute(default={})
+    tags = attribute(default=[])
+    base_uri = attribute(default='')
+
+
 class Customizer:
-    """
-    Customize your BACKEND:
-    Read all of available configurations and definitions.
-    """
 
     def __init__(self):
 
@@ -183,18 +186,6 @@ class Customizer:
                         )
                         continue
 
-                    # Building endpoint
-                    endpoint = EndpointElements(custom={})
-
-                    endpoint.uris = {}
-                    endpoint.methods = {}
-                    endpoint.cls = ep_class
-                    endpoint.exists = True
-                    endpoint.iscore = iscore
-
-                    # Global tags to be applied to all methods
-                    endpoint.tags = ep_class.labels
-
                     # base URI
                     base = ep_class.baseuri
                     if base not in BASE_URLS:
@@ -202,7 +193,15 @@ class Customizer:
                         base = API_URL
                     base = base.strip('/')
 
-                    endpoint.base_uri = base
+                    # Building endpoint
+                    endpoint = EndpointElements(
+                        uris={},
+                        methods={},
+                        cls=ep_class,
+                        iscore=iscore,
+                        tags=ep_class.labels,
+                        base_uri=base,
+                    )
 
                     mapping_lists = []
                     for m in ep_class.methods:

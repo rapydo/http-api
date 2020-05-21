@@ -16,7 +16,6 @@ from bravado_core.validate import validate_object
 from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.confs import get_project_configuration
-from restapi.confs.attributes import ExtraAttributes
 from restapi.utilities.globals import mem
 from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.logs import log
@@ -64,8 +63,6 @@ class Swagger:
 
         if len(mapping) < 1:
             raise ValueError("No definition found in: {}".format(mapping))
-
-        extra = ExtraAttributes()
 
         # Specs should contain only labels written in spec before
 
@@ -154,11 +151,8 @@ class Swagger:
                     self._parameter_schemas[uri].setdefault(method, [])
                     self._parameter_schemas[uri][method].append(param.copy())
 
-                extrainfo = param.pop('custom', {})
-
-                if extrainfo:
-                    endpoint.custom['params'].setdefault(uri, {})
-                    endpoint.custom['params'][uri][method] = extrainfo
+                # Remove custom attributes from parameters to prevent validation errors
+                param.pop('custom', None)
 
                 enum = param.pop("enum", None)
                 if enum is not None:
@@ -207,7 +201,6 @@ class Swagger:
 
             log.verbose("Built definition '{}:{}'", method.upper(), newuri)
 
-        endpoint.custom['methods'][method] = extra
         return endpoint
 
     def query_parameters(self, cls, method, uri, params):
@@ -282,9 +275,6 @@ class Swagger:
         ###################
         # Read endpoints swagger files
         for key, endpoint in enumerate(self._endpoints):
-
-            endpoint.custom['methods'] = {}
-            endpoint.custom['params'] = {}
 
             for method, mapping in endpoint.methods.items():
                 # add the custom part to the endpoint

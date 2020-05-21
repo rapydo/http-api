@@ -364,12 +364,10 @@ class EndpointResource(Resource):
         return self.response("", code=204)
 
     @staticmethod
-    def get_endpoint_custom_definition(method=None):
+    def get_endpoint_custom_definition():
         url = request.url_rule.rule
 
-        if method is None:
-            method = request.method
-        method = method.lower()
+        method = request.method.lower()
 
         if url not in mem.customizer._parameter_schemas:
             raise RestApiException(

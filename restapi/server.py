@@ -123,15 +123,15 @@ def create_app(
 
             raise AttributeError("Follow the docs and define your endpoints")
 
-        for resource in mem.customizer._endpoints:
+        for endpoint in mem.customizer._endpoints:
             # urls = [uri for _, uri in resource.uris.items()]
-            urls = list(resource.uris.values())
+            urls = list(endpoint.uris.values())
 
             # Create the restful resource with it;
             # this method is from RESTful plugin
-            rest_api.add_resource(resource.cls, *urls)
+            rest_api.add_resource(endpoint.cls, *urls)
 
-            log.verbose("Map '{}' to {}", resource.cls.__name__, urls)
+            log.verbose("Map '{}' to {}", endpoint.cls.__name__, urls)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
@@ -191,16 +191,21 @@ def create_app(
 
         # Register swagger. Note: after method mapping cleaning
         with microservice.app_context():
-            for resource in mem.customizer._endpoints:
-                urls = list(resource.uris.values())
+            for endpoint in mem.customizer._endpoints:
+                urls = list(endpoint.uris.values())
                 try:
-                    docs.register(resource.cls)
+                    docs.register(endpoint.cls)
                 except TypeError as e:
-                    # log.warning("{} on {}", type(e), resource.cls)
+                    # log.warning("{} on {}", type(e), endpoint.cls)
                     # Enable this warning to start conversion to FlaskFastApi
                     # Find other warning like this by searching:
                     # **FASTAPI**
-                    log.verbose("{} on {}", type(e), resource.cls)
+                    # for m, v in endpoint.custom['params'].items():
+                    #     log.critical("{} = {}", m, v)
+                    if endpoint.iscore:
+                        log.warning("{} on {}", type(e), endpoint.cls)
+                    else:
+                        log.verbose("{} on {}", type(e), endpoint.cls)
 
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
