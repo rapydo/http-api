@@ -9,5 +9,5 @@ def test_rabbit():
         log.warning("Skipping rabbit test: service not available")
         return False
 
-    rabbit = detector.get_service_instance("rabbit")
+    rabbit = detector.get_service_instance("rabbitmq")
     assert rabbit.write_to_queue("test", "celery")
