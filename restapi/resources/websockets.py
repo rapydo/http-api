@@ -4,6 +4,7 @@ from flask import Response, request
 from gripcontrol import WebSocketEvent
 from gripcontrol import decode_websocket_events, encode_websocket_events
 from gripcontrol import websocket_control_message, create_grip_channel_header
+from flask_apispec import MethodResource
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
@@ -12,7 +13,7 @@ from restapi import decorators
 from restapi.utilities.logs import log
 
 
-class PushpinWebSocket(EndpointResource):
+class PushpinWebSocket(MethodResource, EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
