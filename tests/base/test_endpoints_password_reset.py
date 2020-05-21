@@ -35,7 +35,7 @@ class TestApp(BaseTests):
         # Request password reset, wrong email
         data = {'reset_email': 'sample@nomail.org'}
         r = client.post(AUTH_URI + '/reset', data=data)
-        assert r.status_code == 400
+        assert r.status_code == 403
         msg = 'Sorry, sample@nomail.org is not recognized as a valid username'
         assert self.get_content(r) == msg
 
