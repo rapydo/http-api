@@ -66,9 +66,8 @@ if send_mail_is_active():
 
         @decorators.catch_errors()
         @use_kwargs({'reset_email': fields.Email(required=True)})
-        def post(self, **kwargs):
+        def post(self, reset_email):
 
-            reset_email = kwargs.get('reset_email')
             reset_email = reset_email.lower()
 
             user = self.auth.get_user_object(username=reset_email)

@@ -56,15 +56,12 @@ class Login(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @use_kwargs(Credentials)
-    def post(self, **kwargs):
+    def post(self, username, password,
+             new_password=None, password_confirm=None, totp_code=None):
 
-        username = kwargs.get('username').lower()
-        password = kwargs.get('password')
+        username = username.lower()
 
         now = datetime.now(pytz.utc)
-
-        new_password = kwargs.get('new_password')
-        password_confirm = kwargs.get('password_confirm')
 
         # ##################################################
         # Authentication control
@@ -77,7 +74,6 @@ class Login(MethodResource, EndpointResource):
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
             totp_authentication = True
-            totp_code = kwargs.get('totp_code')
 
             # if None will be verified later
             if totp_code is not None:

@@ -134,10 +134,9 @@ class ProfileActivation(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @use_kwargs({'username': fields.Email(required=True)})
-    def post(self, **kwargs):
+    def post(self, username):
 
-        email = kwargs.get('username')
-        user = self.auth.get_user_object(username=email)
+        user = self.auth.get_user_object(username=username)
 
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
