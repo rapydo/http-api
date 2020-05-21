@@ -3,7 +3,6 @@
 import os
 import time
 import click
-from glom import glom
 from flask.cli import FlaskGroup
 from restapi import __package__ as current_package
 from restapi.utilities.processes import wait_socket, find_process
@@ -90,8 +89,10 @@ def verify(services):
         log.info("Provide list of services by using --services option")
 
     for service in services:
-        key = "{}.class".format(service)
-        myclass = glom(detector.services, key)
+        if service not in detector.services:
+            log.exit("Service {} not detected", service)
+
+        myclass = detector.services[service].get('class')
         if myclass is None:
             log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)

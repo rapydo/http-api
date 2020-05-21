@@ -4,6 +4,7 @@ from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
+from marshmallow import Schema as MarshmallowSchema
 from restapi.models import Schema
 
 from restapi import decorators
@@ -40,10 +41,18 @@ if detector.check_availability('neo4j'):
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
-    class Group(Schema):
+    class Coordinator(MarshmallowSchema):
+        uuid = fields.Str()
+        email = fields.Email(required=True)
+        name = fields.Str(required=True)
+        surname = fields.Str(required=True)
+
+    class Group(MarshmallowSchema):
         uuid = fields.Str()
         fullname = fields.Str()
         shortname = fields.Str()
+
+        coordinator = fields.Nested(Coordinator)
         # prefix = fields.Str()
 
     class InputGroup(Schema):
@@ -110,29 +119,10 @@ if detector.check_availability('neo4j'):
         def get(self):
 
             self.graph = self.get_service_instance('neo4j')
-            groups = self.graph.Group.nodes.all()
+            groups = self.graph.Group.nodes.all().copy()
+            for g in groups:
+                g.coordinator = g.coordinator.single()
             return self.response(groups)
-
-            # data = []
-            # if nodeset is not None:
-            #     for n in nodeset.all():
-            #         g = {
-            #             'id': n.uuid,
-            #             'fullname': n.fullname,
-            #             'shortname': n.shortname,
-            #             'prefix': n.prefix,
-            #         }
-            #         coordinator = self.graph.getSingleLinkedNode(n.coordinator)
-            #         if coordinator is not None:
-            #             g['_coordinator'] = {
-            #                 'email': coordinator.email,
-            #                 'name': coordinator.name,
-            #                 'surname': coordinator.surname,
-            #             }
-
-            #         data.append(g)
-
-            # return self.response(data)
 
         @decorators.catch_errors()
         @decorators.catch_graph_exceptions

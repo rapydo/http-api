@@ -42,7 +42,7 @@ class Group(IdentifiedNode):
     # prefix = StringProperty(required=True, unique_index=True)
 
     members = RelationshipFrom('User', 'BELONGS_TO', cardinality=ZeroOrMore)
-    coordinator = RelationshipFrom('User', 'PI_FOR', cardinality=ZeroOrMore)
+    coordinator = RelationshipFrom('User', 'PI_FOR', cardinality=ZeroOrOne)
 
 
 class Token(StructuredNode):
