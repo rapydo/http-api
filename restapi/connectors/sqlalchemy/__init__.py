@@ -318,7 +318,7 @@ class Authentication(BaseAuthentication):
                         description=role_description
                     )
                     self.db.session.add(role)
-                log.warning("Injected default roles")
+                log.info("Injected default roles")
 
             # if no users
             missing_user = not self.db.User.query.first()
@@ -333,7 +333,7 @@ class Authentication(BaseAuthentication):
                     },
                     roles=self.roles,
                 )
-                log.warning("Injected default user")
+                log.info("Injected default user")
 
             if missing_user or missing_role:
                 self.db.session.commit()
