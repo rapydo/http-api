@@ -344,6 +344,9 @@ class AdminUsers(MethodResource, EndpointResource):
 
         self.auth.link_roles(user, roles)
         db = self.get_service_instance(detector.authentication_service)
+        if self.neo4j_enabled:
+            self.graph = db
+
         db.update_properties(user, kwargs, kwargs)
 
         self.auth.save_user(user)
