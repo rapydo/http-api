@@ -12,7 +12,7 @@ def test_celery():
         log.warning("Skipping celery test: service not available")
         return False
 
-    detector.connectors_instances.get('celery').get_instance()
+    detector.get_service_instance("celery")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 

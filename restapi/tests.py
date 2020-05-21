@@ -183,7 +183,7 @@ class BaseTests:
         from restapi.connectors.celery import CeleryExt
         from restapi.services.detect import detector
 
-        celery = detector.connectors_instances.get('celery')
+        celery = glom(detector.services, "celery.connector")
         celery.celery_app.app = app
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt

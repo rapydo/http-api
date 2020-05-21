@@ -3,6 +3,7 @@
 import os
 import time
 import click
+from glom import glom
 from flask.cli import FlaskGroup
 from restapi import __package__ as current_package
 from restapi.utilities.processes import wait_socket, find_process
@@ -89,7 +90,8 @@ def verify(services):
         log.info("Provide list of services by using --services option")
 
     for service in services:
-        myclass = detector.services_classes.get(service)
+        key = "{}.class".format(service)
+        myclass = glom(detector.services, key)
         if myclass is None:
             log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
@@ -138,7 +140,11 @@ def mywait():
     """
     from restapi.services.detect import detector
 
-    for name, myclass in detector.services_classes.items():
+    for name, service in detector.services.items():
+
+        myclass = service.get('class')
+        if myclass is None:
+            continue
 
         if name == 'celery':
 
