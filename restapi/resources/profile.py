@@ -1,18 +1,55 @@
 # -*- coding: utf-8 -*-
 
+from flask_apispec import MethodResource
+from flask_apispec import use_kwargs
+from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
+from restapi.models import Schema
 from restapi import decorators
+from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
+auth = EndpointResource.load_authentication()
 
-class Profile(EndpointResource):
+
+class NewPassword(Schema):
+    password = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    new_password = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    password_confirm = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+    )
+    totp_code = fields.Str(required=False)
+
+
+class UserProfile(Schema):
+    name = fields.Str()
+    surname = fields.Str()
+    privacy_accepted = fields.Boolean()
+
+
+class Profile(MethodResource, EndpointResource):
     """ Current user informations """
 
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profile"]
+
+    auth_service = detector.authentication_service
+    neo4j_enabled = auth_service == 'neo4j'
+    sql_enabled = auth_service == 'sqlalchemy'
+    mongo_enabled = auth_service == 'mongo'
 
     _GET = {
         "/profile": {
@@ -24,15 +61,14 @@ class Profile(EndpointResource):
     }
     _PUT = {
         "/profile": {
-            "summary": "Update profile attributes",
-            "parameters": [
-                {
-                    "name": "credentials",
-                    "in": "body",
-                    "schema": {"$ref": "#/definitions/ProfileUpdate"},
-                }
-            ],
-            "responses": {"204": {"description": "Updated has been successful"}},
+            "summary": "Update user password",
+            "responses": {"204": {"description": "Password updated"}},
+        }
+    }
+    _PATCH = {
+        "/profile": {
+            "summary": "Update profile information",
+            "responses": {"204": {"description": "Profile updated"}},
         }
     }
 
@@ -43,7 +79,6 @@ class Profile(EndpointResource):
         current_user = self.auth.get_user()
         data = {
             'uuid': current_user.uuid,
-            'status': "Valid user",
             'email': current_user.email,
         }
 
@@ -86,66 +121,52 @@ class Profile(EndpointResource):
 
         return self.response(data)
 
-    def update_password(self, user, data):
+    @decorators.catch_errors()
+    @decorators.auth.required()
+    @use_kwargs(NewPassword)
+    def put(self, **kwargs):
+        """ Update password for current user """
 
-        password = data.get('password')
-        new_password = data.get('new_password')
-        password_confirm = data.get('password_confirm')
+        user = self.auth.get_user()
+
+        password = kwargs.get('password')
+        new_password = kwargs.get('new_password')
+        password_confirm = kwargs.get('password_confirm')
 
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
         if totp_authentication:
-            totp_code = data.get('totp_code')
-        else:
-            totp_code = None
-
-        if new_password is None or password_confirm is None:
-            msg = "New password is missing"
-            raise RestApiException(msg, status_code=400)
-
-        if totp_authentication:
+            totp_code = kwargs.get('totp_code')
             self.auth.verify_totp(user, totp_code)
         else:
             self.auth.make_login(user.email, password)
 
         self.auth.change_password(user, password, new_password, password_confirm)
 
-        # NOTE already in change_password
-        # but if removed new pwd is not saved
-        return self.auth.save_user(user)
-
-    def update_profile(self, user, data):
-
-        avoid_update = ['uuid', 'authmethod', 'is_active', 'roles']
-
-        try:
-            for key, value in data.items():
-                if key.startswith('_') or key in avoid_update:
-                    continue
-                log.debug("Profile new value: {}={}", key, value)
-                setattr(user, key, value)
-        except BaseException as e:
-            log.error("Failed to update profile:\n{}: {}", e.__class__.__name__, e)
-        else:
-            log.info("Profile updated")
-
         self.auth.save_user(user)
+
+        return self.empty_response()
 
     @decorators.catch_errors()
     @decorators.auth.required()
-    def put(self):
+    @use_kwargs(UserProfile)
+    def patch(self, **kwargs):
         """ Update profile for current user """
 
         user = self.auth.get_user()
-        data = self.get_input()
 
-        if 'password' in data:
-            self.update_password(user, data)
-            return self.empty_response()
+        if self.neo4j_enabled:
+            self.update_properties(user, kwargs, kwargs)
+        elif self.sql_enabled:
+            self.update_sql_properties(user, kwargs, kwargs)
+        elif self.mongo_enabled:
+            self.update_mongo_properties(user, kwargs, kwargs)
+        else:
+            raise RestApiException(  # pragma: no cover
+                "Invalid auth backend, all known db are disabled"
+            )
+        log.info("Profile updated")
 
-        if 'new_password' in data or 'password_confirm' in data:
-            raise RestApiException("Invalid request", status_code=400)
-
-        self.update_profile(user, data)
+        self.auth.save_user(user)
 
         return self.empty_response()
