@@ -18,8 +18,7 @@ class TestApp(BaseTests):
 
         # Request password reset, missing information
         r = client.post(AUTH_URI + '/reset')
-        assert r.status_code == 403
-        assert self.get_content(r) == 'Invalid reset email'
+        assert r.status_code == 400
 
         # Request password reset, missing information
         r = client.post(AUTH_URI + '/reset', data={'x': 'y'})
