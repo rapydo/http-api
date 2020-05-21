@@ -19,6 +19,7 @@ from restapi.confs import ABS_RESTAPI_PATH
 from restapi.utilities.logs import log
 
 AUTH_NAME = 'authentication'
+CONNECTORS_FOLDER = 'connectors'
 
 
 class Detector:
@@ -36,10 +37,24 @@ class Detector:
 
         self.authentication_instance = None
 
-        self.services = {}
+        self.services = {
+            AUTH_NAME: {
+                'available': Detector.get_bool_from_os('AUTH_ENABLE')
+            }
+        }
 
-        path = os.path.join(ABS_RESTAPI_PATH, 'connectors')
-        self.load_services(path, "restapi.connectors")
+        self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
+
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            self.load_services(
+                os.path.join(os.curdir, EXTENDED_PACKAGE),
+                EXTENDED_PACKAGE
+            )
+
+        self.load_services(
+            os.path.join(os.curdir, CUSTOM_PACKAGE),
+            CUSTOM_PACKAGE
+        )
 
     @staticmethod
     def get_global_var(key, default=None):
@@ -95,15 +110,17 @@ class Detector:
         instance = farm.get_instance(global_instance=global_instance, **kwargs)
         return instance
 
-    def load_services(self, path, modules):
+    def load_services(self, path, module):
 
-        self.services[AUTH_NAME] = {
-            'available': Detector.get_bool_from_os('AUTH_ENABLE')
-        }
+        main_folder = os.path.join(path, CONNECTORS_FOLDER)
+        if not os.path.isdir(main_folder):
+            log.debug("Connectors folder not found: {}", main_folder)
+            return False
 
         # Looking for all file in apis folder
-        for connector in os.listdir(path):
-            if not os.path.isdir(os.path.join(path, connector)):
+        for connector in os.listdir(main_folder):
+            connector_path = os.path.join(path, CONNECTORS_FOLDER, connector)
+            if not os.path.isdir(connector_path):
                 continue
             if connector.startswith("_"):
                 continue
@@ -130,9 +147,11 @@ class Detector:
             if not self.services[connector]['available']:
                 continue
 
-            log.verbose("Looking for connector class in {}/{}", path, connector)
-            module = Meta.get_module_from_string("{}.{}".format(modules, connector))
-            classes = Meta.get_new_classes_from_module(module)
+            log.verbose("Looking for connector class in {}", connector_path)
+            connector_module = Meta.get_module_from_string(
+                ".".join((module, CONNECTORS_FOLDER, connector))
+            )
+            classes = Meta.get_new_classes_from_module(connector_module)
             for class_name, connector_class in classes.items():
                 if not issubclass(connector_class, Connector):
                     continue
@@ -148,8 +167,14 @@ class Detector:
 
             connector_class.set_variables(variables)
 
-            models_file = os.path.join(path, connector, "models.py")
-            if os.path.isfile(models_file):
+            # NOTE: module loading algoritm is based on core connectors
+            # if you need project connectors with models please review this part
+            models_file = os.path.join(connector_path, "models.py")
+
+            if not os.path.isfile(models_file):
+                log.verbose("No model found in {}", connector_path)
+            else:
+                log.debug("Loading models from {}", connector_path)
 
                 base_models = Meta.import_models(
                     connector, BACKEND_PACKAGE, exit_on_fail=True
@@ -169,6 +194,8 @@ class Detector:
             self.services[connector]['class'] = connector_class
 
             log.debug("Got class definition for {}", connector_class)
+
+        return True
 
     @staticmethod
     def load_group(label):
@@ -305,11 +332,11 @@ class Detector:
         """
 
         try:
-            module_path = "{}.{}.{}".format(
+            module_path = ".".join((
                 CUSTOM_PACKAGE,
                 'initialization',
                 'initialization',
-            )
+            ))
             module = Meta.get_module_from_string(module_path)
             Initializer = Meta.get_class_from_string(
                 'Initializer', module, skip_error=True

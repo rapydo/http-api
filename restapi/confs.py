@@ -50,8 +50,7 @@ SENTRY_URL = os.getenv('SENTRY_URL')
 if SENTRY_URL is not None and SENTRY_URL.strip() == '':
     SENTRY_URL = None
 
-ABS_RESTAPI_CONFSPATH = os.path.dirname(os.path.realpath(__file__))
-ABS_RESTAPI_PATH = os.path.dirname(ABS_RESTAPI_CONFSPATH)
+ABS_RESTAPI_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 @lru_cache
