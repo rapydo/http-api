@@ -7,13 +7,12 @@ from restapi.rest.definition import EndpointResource
 from restapi.models import Schema
 from restapi import decorators
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import get_project_configuration
 from restapi.resources.profile_activation import send_activation_link
 
-from restapi.utilities.logs import log
+# from restapi.utilities.logs import log
 
 
 def notify_registration(user):
