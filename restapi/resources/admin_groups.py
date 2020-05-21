@@ -61,9 +61,11 @@ if detector.check_availability('neo4j'):
             )
         )
 
-    def getInputGroup(req):
-        strip_required = req.method == 'PUT'
-        return InputGroup(strip_required=strip_required)
+    def get_POST_input(request):
+        return InputGroup(strip_required=False)
+
+    def get_PUT_input(request):
+        return InputGroup(strip_required=True)
 
     class AdminGroups(MethodResource, EndpointResource):
 
@@ -141,7 +143,7 @@ if detector.check_availability('neo4j'):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=['admin_root'])
-        @use_kwargs(getInputGroup)
+        @use_kwargs(get_POST_input)
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance('neo4j')
@@ -164,7 +166,7 @@ if detector.check_availability('neo4j'):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=['admin_root'])
-        @use_kwargs(getInputGroup)
+        @use_kwargs(get_PUT_input)
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance('neo4j')
