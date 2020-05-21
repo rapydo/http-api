@@ -5,7 +5,7 @@ import jwt
 
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
-from marshmallow import fields  # , validate
+from marshmallow import fields
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
