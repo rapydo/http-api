@@ -146,10 +146,10 @@ class TestApp(BaseTests):
         # update profile, no auth
         r = client.put(AUTH_URI + "/" + 'profile')
         assert r.status_code == 401
+        # update profile, no auth
+        r = client.patch(AUTH_URI + "/" + 'profile')
+        assert r.status_code == 401
 
-        # update profile, no data
-        r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
-        assert r.status_code == 200
         # update profile, no data
         r = client.patch(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
@@ -176,6 +176,9 @@ class TestApp(BaseTests):
         assert c.get('name') == newname
         assert c.get('uuid') != newuuid
 
+        # change password, no data
+        r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
+        assert r.status_code == 400
         # Sending a new password or a password confirmation without a password
         data = {'new_password': 'new_password'}
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
