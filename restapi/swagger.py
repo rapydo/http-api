@@ -303,38 +303,27 @@ class Swagger:
 
     @staticmethod
     def get_models():
-        """ Read models from base/custom yaml files """
-
-        # BASE definitions
-        path = os.path.join(ABS_RESTAPI_PATH, MODELS_DIR)
-        try:
-            data = load_yaml_file('swagger.yaml', path=path)
-        except AttributeError as e:
-            log.exit(e)
-
-        # EXTENDED definitions, if any
-        extended_models = None
-        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
-            # NOTE: with logger=False I skip the warning if this file doesn't exist
-            try:
-                extended_models = load_yaml_file('swagger.yaml', path=path)
-            except AttributeError as e:
-                log.verbose(e)
+        """ Read swagger.yaml models from extended and custom projects """
 
         # CUSTOM definitions
         path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
         try:
-            custom_models = load_yaml_file('swagger.yaml', path=path)
+            models = load_yaml_file('swagger.yaml', path=path)
         except AttributeError as e:
             log.verbose(e)
-            custom_models = {}
+            models = {}
 
-        if extended_models is None:
-            return mix(data, custom_models)
+        if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+            return models
 
-        m1 = mix(data, extended_models)
-        return mix(m1, custom_models)
+        path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
+        try:
+            base_models = load_yaml_file('swagger.yaml', path=path)
+            return mix(base_models, models)
+        except AttributeError as e:
+            log.verbose(e)
+
+        return models
 
     def validation(self, swag_dict):
         """
