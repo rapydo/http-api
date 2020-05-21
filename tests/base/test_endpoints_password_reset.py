@@ -36,7 +36,8 @@ class TestApp(BaseTests):
         data = {'reset_email': 'sample@nomail.org'}
         r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 400
-        assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
+        msg = 'Sorry, sample@nomail.org is not recognized as a valid username'
+        assert self.get_content(r) == msg
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
         assert r.status_code == 200
