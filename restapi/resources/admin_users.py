@@ -343,18 +343,8 @@ class AdminUsers(MethodResource, EndpointResource):
         email_notification = kwargs.pop('email_notification', False)
 
         self.auth.link_roles(user, roles)
-
-        if self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
-            self.update_properties(user, kwargs, kwargs)
-        elif self.sql_enabled:
-            self.update_sql_properties(user, kwargs, kwargs)
-        elif self.mongo_enabled:
-            self.update_mongo_properties(user, kwargs, kwargs)
-        else:
-            raise RestApiException(  # pragma: no cover
-                "Invalid auth backend, all known db are disabled"
-            )
+        db = self.get_service_instance(detector.authentication_service)
+        db.update_properties(user, kwargs, kwargs)
 
         self.auth.save_user(user)
 

@@ -71,8 +71,6 @@ class Profile(MethodResource, EndpointResource):
 
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == 'neo4j'
-    sql_enabled = auth_service == 'sqlalchemy'
-    mongo_enabled = auth_service == 'mongo'
 
     _GET = {
         "/profile": {
@@ -158,16 +156,9 @@ class Profile(MethodResource, EndpointResource):
 
         user = self.auth.get_user()
 
-        if self.neo4j_enabled:
-            self.update_properties(user, kwargs, kwargs)
-        elif self.sql_enabled:
-            self.update_sql_properties(user, kwargs, kwargs)
-        elif self.mongo_enabled:
-            self.update_mongo_properties(user, kwargs, kwargs)
-        else:
-            raise RestApiException(  # pragma: no cover
-                "Invalid auth backend, all known db are disabled"
-            )
+        db = self.get_service_instance(detector.authentication_service)
+        db.update_properties(user, kwargs, kwargs)
+
         log.info("Profile updated")
 
         self.auth.save_user(user)

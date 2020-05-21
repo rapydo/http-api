@@ -56,6 +56,23 @@ def catch_db_exceptions(func):
     return wrapper
 
 
+def update_properties(instance, schema, properties):
+
+    for field in schema:
+        if isinstance(field, str):
+            key = field
+        else:
+            # to be deprecated
+            if 'custom' in field:
+                if 'islink' in field['custom']:
+                    if field['custom']['islink']:
+                        continue
+            key = field["name"]
+
+        if key in properties:
+            setattr(instance, key, properties[key])
+
+
 class MongoExt(Connector):
 
     def get_connection_exception(self):
@@ -86,6 +103,8 @@ class MongoExt(Connector):
             connection = link
 
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
+
+        obj.update_properties = update_properties
         return obj
 
     def initialize(self):
