@@ -27,7 +27,7 @@ else:
         @staticmethod
         def test_connector():
 
-            neo4j = glom(detector.services, "neo4j.instance").get_instance()
+            neo4j = detector.get_service_instance("neo4j")
             for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = neo4j.User.inflate(row[0])
                 assert u.email is not None

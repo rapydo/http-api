@@ -10,7 +10,6 @@ a flask templating framework like ours.
 So we made some improvement along the code.
 
 """
-from glom import glom
 from restapi.server import create_app
 # from restapi.confs import CUSTOM_PACKAGE
 from restapi.services.detect import detector
@@ -22,7 +21,7 @@ from restapi.utilities.logs import log
 # This is necessary to have the app context available
 app = create_app(worker_mode=True)
 
-celery_app = glom(detector.services, "celery.instance").celery_app
+celery_app = detector.get_connector("celery").celery_app
 celery_app.app = app
 
 

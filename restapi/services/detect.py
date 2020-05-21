@@ -93,22 +93,30 @@ class Detector:
         bool_var = os.getenv(name, False)
         return Detector.get_bool_envvar(bool_var)
 
+    def get_connector(self, name):
+
+        service = self.services.get(name)
+
+        if service is None:
+            raise AttributeError("Service {} not found".format(name))
+
+        if not service.get('available', False):
+            raise AttributeError("Service {} is not available".format(name))
+
+        connector = service.get('connector')
+
+        if connector is None:
+            raise AttributeError("Connector {} is not available".format(name))
+
+        return connector
+
     def get_service_instance(self, service_name, global_instance=True, **kwargs):
         if service_name == AUTH_NAME:
             return self.authentication_instance
 
-        service = self.services.get(service_name)
-        if service is None:
-            raise AttributeError("Service {} not found".format(service_name))
+        connector = self.get_connector(service_name)
 
-        if not service.get('available', False):
-            raise AttributeError("Service {} not available".format(service_name))
-
-        farm = service.get('instance')
-        if farm is None:
-            raise AttributeError("Service {} not available".format(service_name))
-        instance = farm.get_instance(global_instance=global_instance, **kwargs)
-        return instance
+        return connector.get_instance(global_instance=global_instance, **kwargs)
 
     def load_services(self, path, module):
 
@@ -254,7 +262,6 @@ class Detector:
     def init_services(self, app, project_init=False, project_clean=False):
 
         instances = {}
-
         for connector_name, service in self.services.items():
 
             if not service.get('available', False):
@@ -273,20 +280,21 @@ class Detector:
                 continue
 
             try:
-                instance = ConnectorClass(app)
+                connector_instance = ConnectorClass(app)
             except TypeError as e:
                 log.exit('Your class {} is not compliant:\n{}', connector_name, e)
 
-            self.services[connector_name]['instance'] = instance
+            self.services[connector_name]['connector'] = connector_instance
 
-            instances[connector_name] = instance.get_instance()
-
+            instances[connector_name] = connector_instance.get_instance()
             ConnectorClass.init_class()
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")
-        elif self.authentication_service not in instances:
+        elif self.authentication_service not in self.services:
             log.exit("Auth service '{}' is unreachable", self.authentication_service)
+        elif not self.services[self.authentication_service].get('available', False):
+            log.exit("Auth service '{}' is not available", self.authentication_service)
 
         if self.authentication_service is not None:
             auth_module = Meta.get_authentication_module(self.authentication_service)
@@ -296,7 +304,8 @@ class Detector:
             # Only once in a lifetime
             if project_init:
 
-                connector = instances[self.authentication_service]
+                connector = self.services.get(
+                    self.authentication_service).get('connector')
                 log.debug("Initializing {}", self.authentication_service)
                 connector.initialize()
 
@@ -307,7 +316,8 @@ class Detector:
                 self.project_initialization(instances, app=app)
 
             if project_clean:
-                connector = instances[self.authentication_service]
+                connector = self.services.get(
+                    self.authentication_service).get('connector')
                 log.debug("Destroying {}", self.authentication_service)
                 connector.destroy()
 

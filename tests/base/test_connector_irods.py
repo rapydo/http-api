@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-from glom import glom
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -12,12 +11,7 @@ def test_irods():
         log.warning("Skipping irods test: service not available")
         return False
 
-    connector = glom(detector.services, "irods.instance")
-    if connector is None:
-        log.warning("Skipping irods test: connector is not available")
-        return False
-
-    irods = connector.get_instance()
+    irods = detector.get_service_instance("irods")
 
     home = irods.get_user_home()
 

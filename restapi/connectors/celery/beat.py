@@ -12,7 +12,6 @@ So we made some improvement along the code.
 """
 
 from flask import Flask
-from glom import glom
 
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -23,7 +22,7 @@ detector.init_services(
     app=app, project_init=False, project_clean=False
 )
 
-celery_app = glom(detector.services, "celery.instance").celery_app
+celery_app = detector.get_connector("celery").celery_app
 celery_app.app = app
 
 

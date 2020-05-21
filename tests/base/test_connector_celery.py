@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 from datetime import timedelta
-from glom import glom
 from restapi.connectors.celery import CeleryExt
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -13,7 +12,7 @@ def test_celery():
         log.warning("Skipping celery test: service not available")
         return False
 
-    glom(detector.services, "celery.instance").get_instance()
+    detector.get_service_instance("celery")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
