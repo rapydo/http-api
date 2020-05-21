@@ -17,29 +17,28 @@ class TestApp(BaseTests):
         # registration, empty input
         r = client.post(AUTH_URI + '/profile')
         assert r.status_code == 400
-        assert self.get_content(r) == 'Empty input'
 
         # registration, missing information
         r = client.post(AUTH_URI + '/profile', data={'x': 'y'})
         assert r.status_code == 400
-        assert self.get_content(r) == 'Missing input: password'
         registration_data = {}
-        registration_data['password'] = self.randomString()
+        registration_data['password'] = 'short'
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
-        assert self.get_content(r) == 'Missing input: email'
         registration_data['email'] = BaseAuthentication.default_user
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
-        assert self.get_content(r) == 'Missing input: name'
         registration_data['name'] = 'Mr'
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
-        assert self.get_content(r) == 'Missing input: surname'
 
         registration_data['surname'] = 'Brown'
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
+
+        registration_data['password'] = self.randomString()
+        r = client.post(AUTH_URI + '/profile', data=registration_data)
+        assert r.status_code == 409
         m = "This user already exists: {}".format(BaseAuthentication.default_user)
         assert self.get_content(r) == m
 

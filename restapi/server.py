@@ -209,10 +209,11 @@ def create_app(
                             e
                         )
                     elif endpoint.iscore:
-                        log.verbose(
-                            "Core endpoint: {}",
-                            endpoint.cls.__name__
-                        )
+                        if endpoint.cls.__name__ != 'SwaggerSpecifications':
+                            log.warning(
+                                "Core endpoint: {}",
+                                endpoint.cls.__name__
+                            )
                     else:
                         log.verbose("{} on {}", type(e), endpoint.cls)
 
