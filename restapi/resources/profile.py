@@ -2,6 +2,7 @@
 
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
+from flask_apispec import marshal_with
 from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.models import Schema
@@ -39,6 +40,28 @@ class UserProfile(Schema):
     privacy_accepted = fields.Boolean()
 
 
+class Group(Schema):
+    uuid = fields.Str()
+    shortname = fields.Str()
+    fullname = fields.Str()
+
+
+class ProfileData(Schema):
+    uuid = fields.Str(required=True)
+    email = fields.Email(required=True)
+    name = fields.Str(required=True)
+    surname = fields.Str(required=True)
+    isAdmin = fields.Boolean(required=True)
+    isLocalAdmin = fields.Boolean(required=True)
+    privacy_accepted = fields.Boolean(required=True)
+    roles = fields.Dict(required=True)
+
+    group = fields.Nested(Group, required=False)
+
+    SECOND_FACTOR = fields.Str(required=False)
+    # Add custom fields from CustomProfile
+
+
 class Profile(MethodResource, EndpointResource):
     """ Current user informations """
 
@@ -74,43 +97,28 @@ class Profile(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required()
+    @marshal_with(ProfileData, code=200)
     def get(self):
 
         current_user = self.auth.get_user()
         data = {
             'uuid': current_user.uuid,
             'email': current_user.email,
+            'name': current_user.name,
+            'surname': current_user.surname,
+            'isAdmin': self.auth.verify_admin(),
+            'isLocalAdmin': self.auth.verify_local_admin(),
+            'privacy_accepted': current_user.privacy_accepted,
+            # Convert list of Roles into a dict with name: description
+            'roles': {
+                role.name: role.description for role in current_user.roles
+            }
         }
-
-        # roles = []
-        roles = {}
-        for role in current_user.roles:
-            # roles.append(role.name)
-            roles[role.name] = role.description
-        data["roles"] = roles
-
-        try:
-            for g in current_user.belongs_to.all():
-                data["group"] = {
-                    "uuid": g.uuid,
-                    "shortname": g.shortname,
-                    "fullname": g.fullname,
-                }
-        except BaseException as e:
-            log.verbose(e)
-
-        data["isAdmin"] = self.auth.verify_admin()
-        data["isLocalAdmin"] = self.auth.verify_local_admin()
-        data["privacy_accepted"] = current_user.privacy_accepted
-
-        if hasattr(current_user, 'name'):
-            data["name"] = current_user.name
-
-        if hasattr(current_user, 'surname'):
-            data["surname"] = current_user.surname
+        if self.neo4j_enabled:
+            data["group"] = current_user.belongs_to.single()
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
+            data['SECOND_FACTOR'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
         if obj is not None:
