@@ -149,6 +149,9 @@ class TestApp(BaseTests):
 
         # update profile, no data
         r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
+        assert r.status_code == 200
+        # update profile, no data
+        r = client.patch(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
 
         newname = 'newname'
@@ -164,8 +167,14 @@ class TestApp(BaseTests):
 
         # update profile
         data = {'name': newname, 'uuid': newuuid}
-        r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
+        r = client.patch(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
+
+        r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
+        assert r.status_code == 200
+        c = self.get_content(r)
+        assert c.get('name') == newname
+        assert c.get('uuid') != newuuid
 
         # Sending a new password or a password confirmation without a password
         data = {'new_password': 'new_password'}
@@ -178,22 +187,14 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
 
-        r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
-        assert r.status_code == 200
-        c = self.get_content(r)
-        assert c.get('name') == newname
-        assert c.get('uuid') != newuuid
-
         data = {}
         data['password'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
-        assert self.get_content(r) == 'New password is missing'
 
         data['new_password'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
-        assert self.get_content(r) == 'New password is missing'
 
         data['password_confirm'] = self.randomString(length=2)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)

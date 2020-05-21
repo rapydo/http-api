@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime, timedelta
 import pytz
+from datetime import datetime, timedelta
+from flask_apispec import MethodResource
+from flask_apispec import use_kwargs
+from marshmallow import fields
 
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
