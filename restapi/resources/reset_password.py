@@ -49,6 +49,7 @@ if send_mail_is_active():
                 "responses": {
                     "200": {"description": "Reset email is valid"},
                     "401": {"description": "Invalid reset email"},
+                    "403": {"description": "Account not found or already active"},
                 },
             }
         }
