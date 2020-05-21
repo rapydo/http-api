@@ -33,7 +33,7 @@ class TestApp(BaseTests):
         num_tokens = len(tokens_snapshot)
 
         # Request password reset, wrong email
-        data = {'reset_email': 'y'}
+        data = {'reset_email': 'sample@nomail.org'}
         r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 400
         assert self.get_content(r) == 'Sorry, y is not recognized as a valid username'
