@@ -12,7 +12,10 @@ class Schema(MarshmallowSchema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
     # A fake field user to force return of schemas
-    get_schema = fields.Bool(required=False)
+    get_schema = fields.Bool(
+        required=False,
+        description="Request schema specifications"
+    )
 
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:

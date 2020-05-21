@@ -10,7 +10,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
-from flask_apispec import FlaskApiSpec
+from flask_apispec import FlaskApiSpec, MethodResource
 from apispec.ext.marshmallow import MarshmallowPlugin
 # from apispec_webframeworks.flask import FlaskPlugin
 # from werkzeug.middleware.proxy_fix import ProxyFix
@@ -202,8 +202,17 @@ def create_app(
                     # **FASTAPI**
                     # for m, v in endpoint.custom['params'].items():
                     #     log.critical("{} = {}", m, v)
-                    if endpoint.iscore:
-                        log.warning("{} on {}", type(e), endpoint.cls)
+                    if MethodResource in endpoint.cls.__bases__:
+                        log.error(
+                            "Cannot register {}: {}",
+                            endpoint.cls.__name__,
+                            e
+                        )
+                    elif endpoint.iscore:
+                        log.verbose(
+                            "Core endpoint: {}",
+                            endpoint.cls.__name__
+                        )
                     else:
                         log.verbose("{} on {}", type(e), endpoint.cls)
 

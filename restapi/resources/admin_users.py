@@ -157,18 +157,23 @@ def get_output_schema():
     return schema(many=True)
 
 
-# Note that this is a callable returning a model, not a model!
-# It will be excuted a runtime
-def getInputSchema(req):
-    strip_required = req.method == 'PUT'
-    exclude_email = req.method == 'PUT'
+# Note that these are callables returning a model, not models!
+# They will be excuted a runtime
+def getPOSTSchema(request):
+    return getInputSchema(is_put_method=False)
 
+
+def getPUTSchema(request):
+    return getInputSchema(is_put_method=True)
+
+
+def getInputSchema(is_put_method):
     auth = EndpointResource.load_authentication()
 
-    set_required = not strip_required
+    set_required = not is_put_method
 
     attributes = OrderedDict()
-    if not exclude_email:
+    if not is_put_method:
         attributes["email"] = fields.Email(required=set_required)
     attributes["password"] = fields.Str(
         required=set_required,
@@ -196,7 +201,7 @@ def getInputSchema(req):
     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
-            custom_fields = obj.get_custom_fields(strip_required)
+            custom_fields = obj.get_custom_fields(is_put_method)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
@@ -277,7 +282,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
-    @use_kwargs(getInputSchema)
+    @use_kwargs(getPOSTSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -313,7 +318,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required(roles=['admin_root'])
-    @use_kwargs(getInputSchema)
+    @use_kwargs(getPUTSchema)
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
