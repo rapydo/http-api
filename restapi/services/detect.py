@@ -11,10 +11,11 @@ Note: docker links and automatic variables removed as unsafe with compose V3
 import os
 from functools import lru_cache
 
-from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
+from restapi.confs import EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
+from restapi.connectors import Connector
 from restapi.utilities.meta import Meta
-from restapi.utilities.configuration import load_yaml_file
+from restapi.confs import ABS_RESTAPI_PATH
 from restapi.utilities.logs import log
 
 AUTH_NAME = 'authentication'
@@ -35,19 +36,10 @@ class Detector:
 
         self.authentication_instance = None
 
-        self.available_services = {}
-        self.services_classes = {}
-        self.connectors_instances = {}
+        self.services = {}
 
-        try:
-            self.services_configuration = load_yaml_file(
-                file='connectors.yaml',
-                path=ABS_RESTAPI_CONFSPATH
-            )
-        except AttributeError as e:
-            log.exit(e)
-
-        self.load_services()
+        path = os.path.join(ABS_RESTAPI_PATH, 'connectors')
+        self.load_services(path, "restapi.connectors")
 
     @staticmethod
     def get_global_var(key, default=None):
@@ -90,79 +82,93 @@ class Detector:
         if service_name == AUTH_NAME:
             return self.authentication_instance
 
-        farm = self.connectors_instances.get(service_name)
-        if farm is None:
+        service = self.services.get(service_name)
+        if service is None:
             raise AttributeError("Service {} not found".format(service_name))
+
+        if not service.get('available', False):
+            raise AttributeError("Service {} not available".format(service_name))
+
+        farm = service.get('instance')
+        if farm is None:
+            raise AttributeError("Service {} not available".format(service_name))
         instance = farm.get_instance(global_instance=global_instance, **kwargs)
         return instance
 
-    def load_services(self):
+    def load_services(self, path, modules):
 
-        self.available_services[AUTH_NAME] = Detector.get_bool_from_os('AUTH_ENABLE')
+        self.services[AUTH_NAME] = {
+            'available': Detector.get_bool_from_os('AUTH_ENABLE')
+        }
 
-        for service in self.services_configuration:
+        # Looking for all file in apis folder
+        for connector in os.listdir(path):
+            if not os.path.isdir(os.path.join(path, connector)):
+                continue
+            if connector.startswith("_"):
+                continue
 
-            name = service.get('name')
-            prefix = service.get('prefix')
+            # This is the only exception... we should rename sqlalchemy as alchemy
+            if connector == 'sqlalchemy':
+                prefix = 'alchemy'
+            else:
+                prefix = connector
 
             variables = Detector.load_variables(prefix=prefix)
 
-            connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
-            if not connect:
-                log.info("{} connector is disabled", name)
+            if not Detector.get_bool_envvar(variables.get("enable_connector", True)):
+                log.info("{} connector is disabled", connector)
                 continue
 
             # Was this service enabled from the developer?
             enabled = Detector.get_bool_envvar(variables.get("enable", False))
             external = variables.get("external", False)
 
-            self.available_services[name] = enabled or external
+            self.services.setdefault(connector, {})
+            self.services[connector]['available'] = enabled or external
 
-            if not self.available_services.get(name):
+            if not self.services[connector]['available']:
                 continue
 
-            service['variables'] = variables
+            log.verbose("Looking for connector class in {}/{}", path, connector)
+            module = Meta.get_module_from_string("{}.{}".format(modules, connector))
+            classes = Meta.get_new_classes_from_module(module)
+            for class_name, connector_class in classes.items():
+                if not issubclass(connector_class, Connector):
+                    continue
 
-            log.verbose("Looking for class {}", name)
+                log.verbose("Found connector clas: {}", class_name)
+                break
+            else:
+                log.error("No connector class found in {}/{}", path, connector)
+                self.services[connector]['available'] = False
+                continue
 
-            class_name = service.get('class')
-            connector_name = service.get('name')
+            self.services[connector]['variables'] = variables
 
-            # Get the existing class
-            try:
-                MyClass = self.load_connector(connector_name, class_name)
+            connector_class.set_variables(variables)
 
-                # Passing variables
-                MyClass.set_variables(variables)
-
-            except AttributeError as e:
-                log.error(str(e))
-                log.exit('Invalid connector class: {}', class_name)
-
-            if service.get('load_models'):
+            models_file = os.path.join(path, connector, "models.py")
+            if os.path.isfile(models_file):
 
                 base_models = Meta.import_models(
-                    name, BACKEND_PACKAGE, exit_on_fail=True
+                    connector, BACKEND_PACKAGE, exit_on_fail=True
                 )
                 if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
                     extended_models = {}
                 else:
                     extended_models = Meta.import_models(
-                        name, EXTENDED_PACKAGE, exit_on_fail=False
+                        connector, EXTENDED_PACKAGE, exit_on_fail=False
                     )
                 custom_models = Meta.import_models(
-                    name, CUSTOM_PACKAGE, exit_on_fail=False
+                    connector, CUSTOM_PACKAGE, exit_on_fail=False
                 )
 
-                MyClass.set_models(base_models, extended_models, custom_models)
+                connector_class.set_models(base_models, extended_models, custom_models)
 
-            # Save
-            self.services_classes[name] = MyClass
+            self.services[connector]['class'] = connector_class
 
-            log.debug("Got class definition for {}", MyClass)
-
-        if len(self.services_classes) < 1:
-            raise KeyError("No classes were recovered!")
+            log.debug("Got class definition for {}", connector_class)
 
     @staticmethod
     def load_group(label):
@@ -222,25 +228,33 @@ class Detector:
 
         instances = {}
 
-        for service in self.services_configuration:
+        for connector_name, service in self.services.items():
 
-            name = service.get('name')
-
-            if not self.available_services.get(name):
+            if not service.get('available', False):
                 continue
 
             # Get connectors class and build the connector object
-            Connector = self.services_classes.get(name)
+            ConnectorClass = service.get('class')
+
+            if ConnectorClass is None:
+                if connector_name != AUTH_NAME:  # pragma: no cover
+                    log.exit(
+                        "Connector misconfiguration {} {}",
+                        connector_name,
+                        service
+                    )
+                continue
+
             try:
-                instance = Connector(app)
+                instance = ConnectorClass(app)
             except TypeError as e:
-                log.exit('Your class {} is not compliant:\n{}', name, e)
+                log.exit('Your class {} is not compliant:\n{}', connector_name, e)
 
-            self.connectors_instances[name] = instance
+            self.services[connector_name]['instance'] = instance
 
-            instances[name] = instance.get_instance()
+            instances[connector_name] = instance.get_instance()
 
-            Connector.init_class()
+            ConnectorClass.init_class()
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")
@@ -255,7 +269,7 @@ class Detector:
             # Only once in a lifetime
             if project_init:
 
-                connector = self.connectors_instances[self.authentication_service]
+                connector = instances[self.authentication_service]
                 log.debug("Initializing {}", self.authentication_service)
                 connector.initialize()
 
@@ -266,7 +280,7 @@ class Detector:
                 self.project_initialization(instances, app=app)
 
             if project_clean:
-                connector = self.connectors_instances[self.authentication_service]
+                connector = instances[self.authentication_service]
                 log.debug("Destroying {}", self.authentication_service)
                 connector.destroy()
 
@@ -277,7 +291,10 @@ class Detector:
             # e.g. restapi.services.mongodb
             name = name.split('.')[::-1][0]
 
-        return self.available_services.get(name)
+        if name not in self.services:
+            return False
+
+        return self.services.get(name).get('available', False)
 
     @classmethod
     def project_initialization(self, instances, app=None):

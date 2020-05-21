@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytz
 from datetime import datetime
+from glom import glom
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.tests import API_URI
@@ -26,7 +27,7 @@ else:
         @staticmethod
         def test_connector():
 
-            neo4j = detector.connectors_instances.get('neo4j').get_instance()
+            neo4j = glom(detector.services, "neo4j.instance").get_instance()
             for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = neo4j.User.inflate(row[0])
                 assert u.email is not None
