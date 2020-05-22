@@ -2,6 +2,7 @@
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
+from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
 
@@ -12,6 +13,10 @@ class TestApp(BaseTests):
         if detector.get_bool_from_os("ADMINER_DISABLED"):
             log.warning("Skipping admin/users tests")
             return
+
+        project_tile = get_project_configuration(
+            'project.title', default='YourProject'
+        )
 
         headers, _ = self.do_login(client, None, None)
         endpoint = "admin/users"
@@ -39,7 +44,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
-        assert 'Subject: YourProject: new credentials' in mail.get("headers")
+        assert f'Subject: {project_tile}: new credentials' in mail.get("headers")
         assert 'Username: "{}"'.format(data.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(data.get('password')) in mail.get('body')
 
@@ -64,7 +69,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
-        assert 'Subject: YourProject: new credentials' in mail.get("headers")
+        assert f'Subject: {project_tile}: new credentials' in mail.get("headers")
         assert 'Username: "{}"'.format(data2.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(data2.get('password')) in mail.get('body')
 
@@ -107,7 +112,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
-        assert 'Subject: YourProject: password changed' in mail.get("headers")
+        assert f'Subject: {project_tile}: password changed' in mail.get("headers")
         assert 'Username: "{}"'.format(data2.get('email').lower()) in mail.get('body')
         assert 'Password: "{}"'.format(newpwd) in mail.get('body')
 
