@@ -176,7 +176,10 @@ if detector.check_availability('neo4j'):
                     if p == coordinator:
                         continue
 
-                if p is None:
+                # None can not be tested because coordinator is required in post
+                # => it is not possible to have a group without a coordinator.
+                # This is an extra security check
+                if p is None:  # pragma: no cover
                     group.coordinator.connect(coordinator)
                 else:
                     group.coordinator.reconnect(p, coordinator)

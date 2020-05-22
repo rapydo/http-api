@@ -68,7 +68,7 @@ class TestApp(BaseTests):
 
         headers = {'Authorization': 'Basic ' + encoded_credentials}
 
-        r = client.get(
+        r = client.post(
             AUTH_URI + '/login',
             headers=headers
         )
