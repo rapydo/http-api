@@ -3,6 +3,8 @@ from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, pre_load, fields
 
 GET_SCHEMA_KEY = 'get_schema'
+# ISO 8601 format with Zulu time (default Javascript output)
+ISO8601UTC = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 class Schema(MarshmallowSchema):

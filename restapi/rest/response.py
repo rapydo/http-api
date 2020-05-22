@@ -258,6 +258,7 @@ class ResponseMaker:
         #     return 'any'
         if isinstance(schema, fields.Date):
             return 'date'
+        # Include both AwareDateTime and NaiveDateTime that extend DateTime
         if isinstance(schema, fields.DateTime):
             return 'date'
         if isinstance(schema, fields.Decimal):
