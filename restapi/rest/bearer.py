@@ -47,53 +47,33 @@ class HTTPTokenAuth:
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
     @staticmethod
-    def authenticate(verify_token_callback, token):
-        if verify_token_callback:
-            return verify_token_callback(token)
-        return False
-
-    @staticmethod
     def get_authentication_from_headers():
         """ Returns (auth, token) """
         return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
 
-    @staticmethod
-    def authenticate_roles(verify_roles_callback, roles, required_roles):
-        if verify_roles_callback:
-            return verify_roles_callback(roles, required_roles=required_roles)
-        return False
-
     def get_authorization_token(self, allow_access_token_parameter=False):
-
-        # If token is unavailable, clearly state it in response to user
-        # token = "EMPTY"
-        auth_type = None
-        token = None
-
-        auth = request.authorization
-        if auth is not None:
-            # Basic authenticaton is now allowed
-            return auth_type, token
+        # Basic authenticaton is now allowed
+        if request.authorization is not None:
+            return None, None
 
         if HTTPAUTH_AUTH_FIELD in request.headers:
             # Flask/Werkzeug do not recognize any authentication types
             # other than Basic or Digest, so here we parse the header by hand
             try:
-                auth_type, token = self.get_authentication_from_headers()
-                return auth_type, token
+                auth_header = request.headers.get(HTTPAUTH_AUTH_FIELD)
+                return auth_header.split(None, 1)
             except ValueError:
                 # The Authorization header is either empty or has no token
-                pass
+                return None, None
 
-        if ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
+        elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
             token = request.args.get("access_token")
-            auth_type = HTTPAUTH_DEFAULT_SCHEME
 
-        if token is None:
-            auth_type = None
-            return auth_type, token
+            if token is None:
+                return None, None
+            return token, HTTPAUTH_DEFAULT_SCHEME
 
-        return auth_type, token
+        return None, None
 
     def required(
             self, roles=None, required_roles=None, allow_access_token_parameter=False):
@@ -111,7 +91,7 @@ class HTTPTokenAuth:
                 # Base header for errors
                 headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
                 # Internal API 'self' reference
-                decorated_self = Meta.get_self_reference_from_args(*args)
+                caller = Meta.get_self_reference_from_args(*args)
 
                 if auth_type is None or auth_type.lower() != self._scheme.lower():
                     # Wrong authentication string
@@ -121,33 +101,30 @@ class HTTPTokenAuth:
                         )
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return decorated_self.response(msg, code=401, headers=headers)
+                    return caller.response(msg, code=401, headers=headers)
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != 'OPTIONS':
 
                     # Check authentication
-                    token_fn = decorated_self.auth.verify_token
-                    if not self.authenticate(token_fn, token):
+                    if not caller.auth.verify_token(token):
                         # Clear TCP receive buffer of any pending data
                         log.verbose(request.data)
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
-                        return decorated_self.response(
+                        return caller.response(
                             "Invalid token received", code=401, headers=headers
                         )
 
                 # Check roles
-                if roles:
-                    roles_fn = decorated_self.auth.verify_roles
-                    if not self.authenticate_roles(roles_fn, roles, required_roles):
-                        log.info("Unauthorized request: missing privileges")
-                        return decorated_self.response(
-                            "You are not authorized: missing privileges",
-                            code=401,
-                        )
+                if not caller.auth.verify_roles(roles, required_roles=required_roles):
+                    log.info("Unauthorized request: missing privileges")
+                    return caller.response(
+                        "You are not authorized: missing privileges",
+                        code=401,
+                    )
 
                 return func(*args, **kwargs)
 

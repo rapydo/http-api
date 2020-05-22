@@ -547,6 +547,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     def verify_roles(self, roles, required_roles=None, warnings=True):
 
+        if not roles:
+            return True
+
         if required_roles is None:
             required_roles = ALL_ROLES
 
