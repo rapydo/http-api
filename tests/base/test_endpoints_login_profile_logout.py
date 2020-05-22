@@ -60,20 +60,24 @@ class TestApp(BaseTests):
         )
 
         # Testing Basic Authentication (not allowed)
-        valid_credentials = base64.b64encode(
-            b'{}:{}'.format(
-                BaseAuthentication.default_user,
-                BaseAuthentication.default_password,
-            )
-        ).decode('utf-8')
+        credentials = '{}:{}'.format(
+            BaseAuthentication.default_user,
+            BaseAuthentication.default_password
+        )
+        encoded_credentials = base64.b64encode(str.encode(credentials)).decode('utf-8')
 
-        headers = {'Authorization': 'Basic ' + valid_credentials}
+        headers = {'Authorization': 'Basic ' + encoded_credentials}
 
-        r = client.get(
+        r = client.post(
             AUTH_URI + '/login',
             headers=headers
         )
-        assert r.status_code == 401
+        # Response is:
+        # {
+        #     'password': ['Missing data for required field.'],
+        #     'username': ['Missing data for required field.']
+        # }
+        assert r.status_code == 400
 
         r = client.get(
             AUTH_URI + '/status',

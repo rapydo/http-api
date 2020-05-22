@@ -84,9 +84,10 @@ if detector.check_availability('neo4j'):
             assert r.status_code == 404
 
             data = self.buildData(schema)
-            data['coordinator'] = 'wrong!'
+            data['coordinator'] = 'wrong@nomail.org'
             r = client.post(url, data=data, headers=headers)
             assert r.status_code == 400
+            assert self.get_content(r) == 'User not found'
 
             # Create a group and assign it to the main user
             # Profile and AdminUsers will react to this change

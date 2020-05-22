@@ -46,11 +46,6 @@ class HTTPTokenAuth:
     def authenticate_header(self):
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
-    @staticmethod
-    def get_authentication_from_headers():
-        """ Returns (auth, token) """
-        return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
-
     def get_authorization_token(self, allow_access_token_parameter=False):
         # Basic authenticaton is now allowed
         if request.authorization is not None:
