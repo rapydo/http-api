@@ -80,7 +80,7 @@ class HTTPTokenAuth:
         # required_roles = 'all', 'any'
         def decorator(func):
             # it is used in Customization to verify if an endpoint is requiring
-            # authentication and inject 401 errors if missing in explicint conf
+            # authentication and inject 401 errors
             func.__dict__['auth.required'] = True
 
             @wraps(func)
