@@ -72,7 +72,12 @@ class TestApp(BaseTests):
             AUTH_URI + '/login',
             headers=headers
         )
-        assert r.status_code == 401
+        # Response is:
+        # {
+        #     'password': ['Missing data for required field.'],
+        #     'username': ['Missing data for required field.']
+        # }
+        assert r.status_code == 400
 
         r = client.get(
             AUTH_URI + '/status',
