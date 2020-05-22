@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+from requests.auth import HTTPBasicAuth
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -57,6 +58,24 @@ class TestApp(BaseTests):
             'ABC-Random-Pass-XYZ',
             status_code=401,
         )
+
+        r = client.get(
+            AUTH_URI + '/login',
+            auth=HTTPBasicAuth(
+                BaseAuthentication.default_user,
+                BaseAuthentication.default_password,
+            )
+        )
+        assert r.status_code == 401
+
+        r = client.get(
+            AUTH_URI + '/status',
+            auth=HTTPBasicAuth(
+                BaseAuthentication.default_user,
+                BaseAuthentication.default_password,
+            )
+        )
+        assert r.status_code == 401
 
     def test_02_GET_profile(self, client):
         """ Check if you can use your token for protected endpoints """
