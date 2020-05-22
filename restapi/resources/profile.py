@@ -118,12 +118,9 @@ class Profile(MethodResource, EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data['SECOND_FACTOR'] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
-        if obj is not None:
-            try:
-                data = obj.manipulate(ref=self, user=current_user, data=data)
-            except BaseException as e:
-                log.error("Could not custom manipulate profile:\n{}", e)
+        CustomProfile = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+        if CustomProfile is not None:
+            data = CustomProfile.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
 
