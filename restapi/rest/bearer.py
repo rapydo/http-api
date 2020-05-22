@@ -47,12 +47,6 @@ class HTTPTokenAuth:
         return '{0} realm="{1}"'.format(self._scheme, self._realm)
 
     @staticmethod
-    def authenticate(verify_token_callback, token):
-        if verify_token_callback:
-            return verify_token_callback(token)
-        return False
-
-    @staticmethod
     def get_authentication_from_headers():
         """ Returns (auth, token) """
         return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
@@ -128,8 +122,7 @@ class HTTPTokenAuth:
                 if request.method != 'OPTIONS':
 
                     # Check authentication
-                    token_fn = decorated_self.auth.verify_token
-                    if not self.authenticate(token_fn, token):
+                    if not decorated_self.auth.verify_token(token):
                         # Clear TCP receive buffer of any pending data
                         log.verbose(request.data)
                         # Mimic the response from a normal endpoint

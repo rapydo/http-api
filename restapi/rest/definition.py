@@ -416,16 +416,20 @@ class EndpointResource(Resource):
             return user
 
         if request.method == 'OPTIONS':
-            return user
+            return None
 
         http = HTTPTokenAuth()
         auth_type, token = http.get_authorization_token()
 
-        if auth_type is not None:
-            if http.authenticate(self.auth.verify_token, token):
-                # we have a valid token in header
-                user = self.auth.get_user()
-                log.debug("Logged user: {}", user.email)
+        if auth_type is None:
+            return None
+
+        if not self.auth.verify_token(token):
+            return None
+
+        # we have a valid token in header
+        user = self.auth.get_user()
+        log.debug("Logged user: {}", user.email)
 
         return user
 
