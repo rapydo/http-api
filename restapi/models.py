@@ -39,7 +39,7 @@ class Schema(MarshmallowSchema):
 
 class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
-        super(Schema, self).__init__(**kwargs)
+        super(Neo4jSchema, self).__init__(**kwargs)
 
         if not fields:
             fields = ()
@@ -133,7 +133,6 @@ class Neo4jChoice(fields.Field):
             # the value correspondance from choices_dict or value as default
             "description": self.choices_dict.get(value, value),
         }
-        return value.title()
 
     def _deserialize(self, value, attr, data, **kwargs):
         log.warning("Neo4jChoice deserialization is not implemented")
