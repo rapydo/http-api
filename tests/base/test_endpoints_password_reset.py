@@ -5,6 +5,7 @@ import urllib.parse
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
+from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
 
@@ -15,6 +16,10 @@ class TestApp(BaseTests):
         if not detector.get_bool_from_os("ALLOW_PASSWORD_RESET"):
             log.warning("Password reset is disabled, skipping tests")
             return True
+
+        project_tile = get_project_configuration(
+            'project.title', default='YourProject'
+        )
 
         # Request password reset, missing information
         r = client.post(AUTH_URI + '/reset')
@@ -57,7 +62,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: YourProject Password Reset' in mail.get("headers")
+        assert f'Subject: {project_tile} Password Reset' in mail.get("headers")
         assert "http://localhost/public/reset/" in body
         plain = "Follow this link to reset your password: "
         html = ">click here</a> to reset your password"

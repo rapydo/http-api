@@ -3,6 +3,7 @@ import re
 import urllib.parse
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
 from restapi.services.detect import detector
+from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
 
@@ -13,6 +14,10 @@ class TestApp(BaseTests):
         if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
             log.warning("User registration is disabled, skipping tests")
             return True
+
+        project_tile = get_project_configuration(
+            'project.title', default='YourProject'
+        )
 
         # registration, empty input
         r = client.post(AUTH_URI + '/profile')
@@ -52,7 +57,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: YourProject account activation' in mail.get("headers")
+        assert f'Subject: {project_tile} account activation' in mail.get("headers")
         assert "http://localhost/public/register/" in body
         plain = "Follow this link to activate your account: "
         html = ">click here</a> to activate your account"
@@ -127,7 +132,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: YourProject account activation' in mail.get("headers")
+        assert f'Subject: {project_tile} account activation' in mail.get("headers")
         assert "http://localhost/public/register/" in body
         plain = "Follow this link to activate your account: "
         html = ">click here</a> to activate your account"
