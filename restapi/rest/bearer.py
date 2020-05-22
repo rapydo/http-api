@@ -51,12 +51,6 @@ class HTTPTokenAuth:
         """ Returns (auth, token) """
         return request.headers.get(HTTPAUTH_AUTH_FIELD).split(None, 1)
 
-    @staticmethod
-    def authenticate_roles(verify_roles_callback, roles, required_roles):
-        if verify_roles_callback:
-            return verify_roles_callback(roles, required_roles=required_roles)
-        return False
-
     def get_authorization_token(self, allow_access_token_parameter=False):
 
         # If token is unavailable, clearly state it in response to user
@@ -105,7 +99,7 @@ class HTTPTokenAuth:
                 # Base header for errors
                 headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
                 # Internal API 'self' reference
-                decorated_self = Meta.get_self_reference_from_args(*args)
+                caller = Meta.get_self_reference_from_args(*args)
 
                 if auth_type is None or auth_type.lower() != self._scheme.lower():
                     # Wrong authentication string
@@ -115,32 +109,30 @@ class HTTPTokenAuth:
                         )
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return decorated_self.response(msg, code=401, headers=headers)
+                    return caller.response(msg, code=401, headers=headers)
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != 'OPTIONS':
 
                     # Check authentication
-                    if not decorated_self.auth.verify_token(token):
+                    if not caller.auth.verify_token(token):
                         # Clear TCP receive buffer of any pending data
                         log.verbose(request.data)
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
-                        return decorated_self.response(
+                        return caller.response(
                             "Invalid token received", code=401, headers=headers
                         )
 
                 # Check roles
-                if roles:
-                    roles_fn = decorated_self.auth.verify_roles
-                    if not self.authenticate_roles(roles_fn, roles, required_roles):
-                        log.info("Unauthorized request: missing privileges")
-                        return decorated_self.response(
-                            "You are not authorized: missing privileges",
-                            code=401,
-                        )
+                if not caller.auth.verify_roles(roles, required_roles=required_roles):
+                    log.info("Unauthorized request: missing privileges")
+                    return caller.response(
+                        "You are not authorized: missing privileges",
+                        code=401,
+                    )
 
                 return func(*args, **kwargs)
 
