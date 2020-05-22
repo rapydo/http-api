@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-from requests.auth import HTTPBasicAuth
+import base64
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -59,23 +59,42 @@ class TestApp(BaseTests):
             status_code=401,
         )
 
-        # r = client.get(
-        #     AUTH_URI + '/login',
-        #     auth=HTTPBasicAuth(
-        #         BaseAuthentication.default_user,
-        #         BaseAuthentication.default_password,
-        #     )
-        # )
-        # assert r.status_code == 401
+        # Testing Basic Authentication (not allowed)
+        valid_credentials = base64.b64encode(
+            b'{}:{}'.format(
+                BaseAuthentication.default_user,
+                BaseAuthentication.default_password,
+            )
+        ).decode('utf-8')
 
-        # r = client.get(
-        #     AUTH_URI + '/status',
-        #     auth=HTTPBasicAuth(
-        #         BaseAuthentication.default_user,
-        #         BaseAuthentication.default_password,
-        #     )
-        # )
-        # assert r.status_code == 401
+        headers = {'Authorization': 'Basic ' + valid_credentials}
+
+        r = client.get(
+            AUTH_URI + '/login',
+            headers=headers
+        )
+        assert r.status_code == 401
+
+        r = client.get(
+            AUTH_URI + '/status',
+            headers=headers
+        )
+        assert r.status_code == 401
+
+        # Sending malformed tokens
+        headers = {'Authorization': 'Bearer'}
+        r = client.get(
+            AUTH_URI + '/status',
+            headers=headers
+        )
+        assert r.status_code == 401
+
+        headers = {'Authorization': 'Bearer \'inject'}
+        r = client.get(
+            AUTH_URI + '/status',
+            headers=headers
+        )
+        assert r.status_code == 401
 
     def test_02_GET_profile(self, client):
         """ Check if you can use your token for protected endpoints """
