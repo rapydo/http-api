@@ -57,12 +57,12 @@ class Swagger:
         self._parameter_schemas = {}
         self._used_swagger_tags = set()
 
-    def read_my_swagger(self, method, endpoint, mapping=None):
+    def read_my_swagger(self, method, endpoint, mapping):
 
-        if not isinstance(mapping, dict):
+        if not isinstance(mapping, dict):  # pragma: no cover
             raise TypeError("Wrong type: {}".format(type(mapping)))
 
-        if len(mapping) < 1:
+        if len(mapping) < 1:  # pragma: no cover
             raise ValueError("No definition found in: {}".format(mapping))
 
         # Specs should contain only labels written in spec before
@@ -74,39 +74,18 @@ class Swagger:
             uri = '/{}{}'.format(endpoint.base_uri, label)
             # This will be used by server.py.add
             endpoint.uris.setdefault(uri, uri)
-
-            # Separate external definitions
-
-            # Find any custom part which is not swagger definition
-            # Deprecated since 0.7.4
-            if 'custom' in specs:
-                log.warning("Deprecated use of custom in specs")
-                specs.pop('custom', {})
-
-            ###########################
-            # Strip the uri of the parameter
-            # and add it to 'parameters'
-            newuri = uri[:]  # create a copy
             specs.setdefault('parameters', [])
+            newuri = uri[:]  # create a copy
 
-            ###########################
-            # Read Form Data Custom parameters
-            # TO BE DEPRECATED AFTER APISPEC
-            # Already removed from core
+            # Deprecated since 0.7.4
+            custom_specs = specs.pop('custom', None)
+            if custom_specs is not None:
+                log.warning("Deprecated use of custom in specs")
+
+            # Deprecated since 0.7.4
             cparam = specs.pop('custom_parameters', None)
             if cparam is not None:
-                for fdp in cparam:
-
-                    params = self._fdp.get(fdp)
-                    if params is None:
-                        log.exit("No custom form data '{}'", fdp)
-                    else:
-                        # Unable to extend with list by using extends() because
-                        # it add references to the original object and do not
-                        # create copies. Without copying, the same objects will
-                        # be modified several times leading to errors
-                        for p in params:
-                            specs['parameters'].append(p.copy())
+                log.warning("Deprecated use of custom in specs")
 
             ###########################
             # Read normal parameters
