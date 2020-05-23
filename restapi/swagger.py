@@ -53,6 +53,7 @@ class Swagger:
         self._qparams = {}
         # Save schemas for parameters before to remove the custom sections
         # It is used to provide schemas for unittests and automatic forms
+        # To be deprecated: only used by IMC, once converted remove this
         self._parameter_schemas = {}
         self._used_swagger_tags = set()
 
