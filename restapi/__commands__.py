@@ -14,11 +14,12 @@ BIND_INTERFACE = "0.0.0.0"
 @click.group()
 # @click.option('--debug/--no-debug', default=False)
 # def cli(debug):
-def cli():
+def cli():  # pragma: no cover
     click.echo('*** RESTful HTTP API ***')
 
 
-def main(args):
+# Too dangerous to launch it during tests... skipping tests
+def main(args):  # pragma: no cover
 
     current_app = os.getenv('FLASK_APP')
     if current_app is None or current_app.strip() == '':
@@ -31,15 +32,11 @@ def main(args):
     fg_cli.main(**options)
 
 
-def flask_cli(options=None):
+def flask_cli(options):
     log.info("Launching the app")
     from restapi.server import create_app
 
-    if options is None:
-        app = create_app(name='RESTful HTTP API server')
-        app.run(host=BIND_INTERFACE, threaded=True)
-    else:
-        create_app(**options)
+    create_app(**options)
     log.debug("cli execution completed")
 
 
