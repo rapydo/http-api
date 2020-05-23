@@ -22,7 +22,7 @@ HTTPAUTH_SCHEME = "Bearer"
 HTTPAUTH_AUTH_FIELD = 'Authorization'
 # Base header for errors
 HTTPAUTH_ERR_HEADER = {
-    'WWW-Authenticate': '{HTTPAUTH_SCHEME} realm="Authentication Required"'
+    'WWW-Authenticate': f'{HTTPAUTH_SCHEME} realm="Authentication Required"'
 }
 ALLOW_ACCESS_TOKEN_PARAMETER = (
     Detector.get_global_var('ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
