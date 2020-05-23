@@ -71,7 +71,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     JWT_ALGO = 'HS512'
 
     # 1 month in seconds
-    DEFAULT_TOKEN_TTL = float(Detector.get_global_var('AUTH_JWT_TOKEN_TTL', 2592000))
+    DEFAULT_TOKEN_TTL = float(Detector.get_global_var('AUTH_JWT_TOKEN_TTL', 2_592_000))
     GRACE_PERIOD = 7200  # 2 hours in seconds
 
     FULL_TOKEN = "f"

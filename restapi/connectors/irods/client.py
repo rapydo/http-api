@@ -24,7 +24,7 @@ class IrodsPythonClient:  # pragma: no cover
 
     anonymous_user = 'anonymous'
 
-    def __init__(self, prc, variables, default_chunk_size=1048576):
+    def __init__(self, prc, variables, default_chunk_size=1_048_576):
         self.prc = prc
         self.variables = variables
         self.chunk_size = self.variables.get('chunksize', default_chunk_size)
