@@ -4,7 +4,6 @@ from datetime import datetime
 import dateutil.parser
 import pytz
 
-from restapi.utilities.logs import log
 
 def date_from_string(date, fmt="%d/%m/%Y"):
 
@@ -21,14 +20,3 @@ def date_from_string(date, fmt="%d/%m/%Y"):
         return pytz.utc.localize(return_date)
 
     return return_date
-
-
-def string_from_timestamp(timestamp):
-    if timestamp == "":
-        return ""
-    try:
-        date = datetime.fromtimestamp(float(timestamp))
-        return date.isoformat()
-    except BaseException:
-        log.warning("Errors parsing {}", timestamp)
-        return ""
