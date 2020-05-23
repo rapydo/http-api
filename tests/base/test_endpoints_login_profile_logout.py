@@ -28,9 +28,10 @@ class TestApp(BaseTests):
 
         time.sleep(5)
         # Verify MAX_PASSWORD_VALIDITY, if set
-        headers, _ = self.do_login(client, None, None)
+        headers, token = self.do_login(client, None, None)
 
         self.save("auth_header", headers)
+        self.save("auth_token", token)
 
         # Verify credentials
         r = client.get(AUTH_URI + '/status', headers=headers)
@@ -58,47 +59,6 @@ class TestApp(BaseTests):
             'ABC-Random-Pass-XYZ',
             status_code=401,
         )
-
-        # Testing Basic Authentication (not allowed)
-        credentials = '{}:{}'.format(
-            BaseAuthentication.default_user,
-            BaseAuthentication.default_password
-        )
-        encoded_credentials = base64.b64encode(str.encode(credentials)).decode('utf-8')
-
-        headers = {'Authorization': 'Basic ' + encoded_credentials}
-
-        r = client.post(
-            AUTH_URI + '/login',
-            headers=headers
-        )
-        # Response is:
-        # {
-        #     'password': ['Missing data for required field.'],
-        #     'username': ['Missing data for required field.']
-        # }
-        assert r.status_code == 400
-
-        r = client.get(
-            AUTH_URI + '/status',
-            headers=headers
-        )
-        assert r.status_code == 401
-
-        # Sending malformed tokens
-        headers = {'Authorization': 'Bearer'}
-        r = client.get(
-            AUTH_URI + '/status',
-            headers=headers
-        )
-        assert r.status_code == 401
-
-        headers = {'Authorization': 'Bearer \'inject'}
-        r = client.get(
-            AUTH_URI + '/status',
-            headers=headers
-        )
-        assert r.status_code == 401
 
     def test_02_GET_profile(self, client):
         """ Check if you can use your token for protected endpoints """
@@ -157,6 +117,64 @@ class TestApp(BaseTests):
         headers = {'Authorization': 'Bearer {}'.format(token)}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
+
+        # Sending malformed tokens
+        headers = {'Authorization': 'Bearer'}
+        r = client.get(
+            AUTH_URI + '/status',
+            headers=headers
+        )
+        assert r.status_code == 401
+
+        headers = {'Authorization': 'Bearer \'inject'}
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 401
+
+        # Bearer realm is expected to be case sensitive
+        token = self.get("auth_token")
+        headers = {'Authorization': f'Bearer {token}'}
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 200
+
+        headers = {'Authorization': f'bearer {token}'}
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 401
+
+        headers = {'Authorization': f'BEARER {token}'}
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 401
+
+        token = self.get("auth_token")
+        headers = {'Authorization': f'Bear {token}'}
+        r = client.get(AUTH_URI + '/status', headers=headers)
+        assert r.status_code == 401
+
+        # Testing Basic Authentication (not allowed)
+        credentials = '{}:{}'.format(
+            BaseAuthentication.default_user,
+            BaseAuthentication.default_password
+        )
+        encoded_credentials = base64.b64encode(str.encode(credentials)).decode('utf-8')
+
+        headers = {'Authorization': 'Basic ' + encoded_credentials}
+
+        r = client.post(
+            AUTH_URI + '/login',
+            headers=headers
+        )
+        # Response is:
+        # {
+        #     'password': ['Missing data for required field.'],
+        #     'username': ['Missing data for required field.']
+        # }
+        assert r.status_code == 400
+
+        r = client.get(
+            AUTH_URI + '/status',
+            headers=headers
+        )
+        assert r.status_code == 401
+
 
     def test_03_change_profile(self, client):
 
