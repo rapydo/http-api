@@ -57,18 +57,6 @@ class BaseTests:
         return content
 
     @staticmethod
-    def getInputSchema(client, endpoint, headers):
-        """
-            Retrieve a swagger-like data schema associated with a endpoint
-        """
-        r = client.get(API_URI + '/schemas/' + endpoint, headers=headers)
-        assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
-        if 'Response' in content:
-            return content['Response']['data']
-        return content
-
-    @staticmethod
     def getDynamicInputSchema(client, endpoint, headers):
         """
             Retrieve a dynamic data schema associated with a endpoint
@@ -78,8 +66,6 @@ class BaseTests:
         r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
         assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
-        if 'Response' in content:
-            return content['Response']['data']
         return content
 
     @staticmethod
@@ -87,7 +73,7 @@ class BaseTests:
 
         try:
             response = json.loads(http_out.get_data().decode())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(
                 "Malformed response: {}".format(http_out)
@@ -157,20 +143,12 @@ class BaseTests:
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
             c = json.loads(r.data.decode('utf-8'))
-            if 'Response' in c:
-                log.error(c['Response']['errors'])
-            else:
-                log.error(c)
+            log.error(c)
 
         assert r.status_code == status_code
 
         if error is not None:
-            if 'Response' in content:
-                errors = content['Response']['errors']
-                if errors is not None:
-                    assert errors[0] == error
-            else:
-                assert content == error
+            assert content == error
 
         # when 200 OK content is the token
         assert content is not None
@@ -201,20 +179,6 @@ class BaseTests:
             random_string += rand.choice(charset)
 
         return random_string
-
-    @staticmethod
-    def checkResponse(response, fields, relationships):
-        """
-        Verify that the response contains the given fields and relationships
-        """
-
-        for f in fields:
-            if f not in response[0]:
-                pytest.fail("Missing property: {}".format(f))
-
-        for r in relationships:
-            if "_{}".format(r) not in response[0]:
-                pytest.fail("Missing relationship: {}".format(r))
 
     def buildData(self, schema):
         """
