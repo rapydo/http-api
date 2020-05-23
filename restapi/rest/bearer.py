@@ -21,7 +21,7 @@ from restapi.utilities.logs import log
 # Few costants
 HTTPAUTH_DEFAULT_SCHEME = "Bearer"
 HTTPAUTH_DEFAULT_REALM = "Authentication Required"
-HTTPAUTH_TOKEN_KEY = 'Token'
+# HTTPAUTH_TOKEN_KEY = 'Token'
 HTTPAUTH_AUTH_HEADER = 'WWW-Authenticate'
 HTTPAUTH_AUTH_FIELD = 'Authorization'
 
@@ -56,7 +56,13 @@ class HTTPTokenAuth:
             # other than Basic or Digest, so here we parse the header by hand
             try:
                 auth_header = request.headers.get(HTTPAUTH_AUTH_FIELD)
-                return auth_header.split(None, 1)
+                # Do not return directly auth_header.split
+                # Otherwise in case of malformed tokens the exception will be raised
+                # outside this function and probably not properly catched
+                # e.g. {'Authorization': 'Bearer'}  # no token provided
+                # will raise not enough values to unpack (expected 2, got 1)
+                auth_type, token = auth_header.split(None, 1)
+                return auth_type, token
             except ValueError:
                 # The Authorization header is either empty or has no token
                 return None, None
@@ -66,7 +72,7 @@ class HTTPTokenAuth:
 
             if token is None:
                 return None, None
-            return token, HTTPAUTH_DEFAULT_SCHEME
+            return HTTPAUTH_DEFAULT_SCHEME, token
 
         return None, None
 
@@ -82,7 +88,8 @@ class HTTPTokenAuth:
             def wrapper(*args, **kwargs):
                 # Recover the auth object
                 auth_type, token = self.get_authorization_token(
-                    allow_access_token_parameter=allow_access_token_parameter)
+                    allow_access_token_parameter=allow_access_token_parameter
+                )
                 # Base header for errors
                 headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
                 # Internal API 'self' reference
