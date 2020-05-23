@@ -95,7 +95,8 @@ class TestApp(BaseTests):
         d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%sZ"))
         assert isinstance(d, datetime)
         assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
+        # Uhmm
+        assert d.tzinfo != pytz.utc
         assert today.strftime(fmt) == d.strftime(fmt)
 
         today = datetime.now(pytz.timezone('Europe/Rome'))
