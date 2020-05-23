@@ -18,13 +18,12 @@ from restapi.services.detect import Detector
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
-# Few costants
-HTTPAUTH_DEFAULT_SCHEME = "Bearer"
-HTTPAUTH_DEFAULT_REALM = "Authentication Required"
-# HTTPAUTH_TOKEN_KEY = 'Token'
-HTTPAUTH_AUTH_HEADER = 'WWW-Authenticate'
+HTTPAUTH_SCHEME = "Bearer"
 HTTPAUTH_AUTH_FIELD = 'Authorization'
-
+# Base header for errors
+HTTPAUTH_ERR_HEADER = {
+    'WWW-Authenticate': '{HTTPAUTH_SCHEME} realm="Authentication Required"'
+}
 ALLOW_ACCESS_TOKEN_PARAMETER = (
     Detector.get_global_var('ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
 )
@@ -36,17 +35,8 @@ class HTTPTokenAuth:
     Started on a draft of the great miguel: http://bit.ly/2nTqQKA
     """
 
-    def __init__(self, scheme=None, realm=None):
-        self._scheme = scheme or HTTPAUTH_DEFAULT_SCHEME
-        self._realm = realm or HTTPAUTH_DEFAULT_REALM
-
-    def get_scheme(self):
-        return self._scheme
-
-    def authenticate_header(self):
-        return '{0} realm="{1}"'.format(self._scheme, self._realm)
-
-    def get_authorization_token(self, allow_access_token_parameter=False):
+    @staticmethod
+    def get_authorization_token(allow_access_token_parameter=False):
         # Basic authenticaton is now allowed
         if request.authorization is not None:
             return None, None
@@ -72,12 +62,12 @@ class HTTPTokenAuth:
 
             if token is None:
                 return None, None
-            return HTTPAUTH_DEFAULT_SCHEME, token
+            return HTTPAUTH_SCHEME, token
 
         return None, None
 
-    def required(
-            self, roles=None, required_roles=None, allow_access_token_parameter=False):
+    @staticmethod
+    def required(roles=None, required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
         def decorator(func):
             # it is used in Customization to verify if an endpoint is requiring
@@ -87,23 +77,22 @@ class HTTPTokenAuth:
             @wraps(func)
             def wrapper(*args, **kwargs):
                 # Recover the auth object
-                auth_type, token = self.get_authorization_token(
+                auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
                 )
-                # Base header for errors
-                headers = {HTTPAUTH_AUTH_HEADER: self.authenticate_header()}
+
                 # Internal API 'self' reference
                 caller = Meta.get_self_reference_from_args(*args)
 
-                if auth_type is None or auth_type.lower() != self._scheme.lower():
+                if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
                     msg = (
                         "Missing credentials in headers, e.g. {}: '{} TOKEN'".format(
-                            HTTPAUTH_AUTH_FIELD, HTTPAUTH_DEFAULT_SCHEME
+                            HTTPAUTH_AUTH_FIELD, HTTPAUTH_SCHEME
                         )
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return caller.response(msg, code=401, headers=headers)
+                    return caller.response(msg, code=401, headers=HTTPAUTH_ERR_HEADER)
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
@@ -117,7 +106,9 @@ class HTTPTokenAuth:
                         # To use the same standards
                         log.info("Invalid token received '{}'", token)
                         return caller.response(
-                            "Invalid token received", code=401, headers=headers
+                            "Invalid token received",
+                            headers=HTTPAUTH_ERR_HEADER,
+                            code=401,
                         )
 
                 # Check roles
@@ -133,8 +124,3 @@ class HTTPTokenAuth:
             return wrapper
 
         return decorator
-
-
-authentication = HTTPTokenAuth()
-
-log.info("{} authentication class initizialized", authentication.get_scheme())

@@ -418,8 +418,7 @@ class EndpointResource(Resource):
         if request.method == 'OPTIONS':
             return None
 
-        http = HTTPTokenAuth()
-        auth_type, token = http.get_authorization_token()
+        auth_type, token = HTTPTokenAuth.get_authorization_token()
 
         if auth_type is None:
             return None
