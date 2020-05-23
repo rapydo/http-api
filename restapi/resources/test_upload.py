@@ -16,6 +16,8 @@ if TESTING:
     class TestUpload(MethodResource, EndpointResource, Uploader):
 
         labels = ["tests"]
+        # Set an invalid baseuri to test the automatic fallback to /api
+        baseuri = "/invalid"
 
         _PUT = {
             "/tests/upload": {

@@ -17,6 +17,8 @@ if TESTING:
     class TestDownload(MethodResource, EndpointResource, Downloader):
 
         labels = ["tests"]
+        # Set an invalid baseuri to test the automatic fallback to /api
+        baseuri = "/invalid"
 
         _GET = {
             "/tests/download": {
