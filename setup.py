@@ -28,6 +28,7 @@ setup(
             'templates/index.html'
         ],
     },
+    python_requires='>=3.6.0',
     entry_points='''
         [console_scripts]
         {}={}:cli
@@ -85,8 +86,8 @@ setup(
         'Intended Audience :: Developers',
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ]
 )
