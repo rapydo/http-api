@@ -136,9 +136,13 @@ if detector.check_availability('neo4j'):
             coordinator_uuid = kwargs.pop('coordinator')
             coordinator = self.graph.User.nodes.get_or_none(uuid=coordinator_uuid)
 
-            if coordinator is None:
+            # Can not be tested because coordinator values are filtered by webargs
+            # Only valid uuid will be provided here.
+            # This is an extra-security check
+            if not coordinator:  # pragma: no cover
                 raise RestApiException(
-                    'User not found', status_code=hcodes.HTTP_BAD_REQUEST
+                    'User not found',
+                    status_code=hcodes.HTTP_BAD_REQUEST
                 )
 
             # GRAPH #
