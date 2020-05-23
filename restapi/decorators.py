@@ -7,7 +7,7 @@ from sentry_sdk import capture_exception
 from restapi.confs import SENTRY_URL
 from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 # imported here as utility for endpoints
-from restapi.rest.bearer import authentication as auth
+from restapi.rest.bearer import HTTPTokenAuth as auth
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
