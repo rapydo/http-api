@@ -5,13 +5,10 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
-from datetime import datetime
 from flask import Response, make_response
 from flask_restful import request, Resource, reqparse
 from flask_apispec import MethodResource
 from jsonschema.exceptions import ValidationError
-from typing import List, Dict
-from neomodel import StructuredNode
 
 from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
@@ -19,7 +16,6 @@ from restapi.rest.response import ResponseMaker
 from restapi.swagger import input_validation
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.utilities.globals import mem
-from restapi.utilities.time import string_from_timestamp
 from restapi.services.detect import detector, AUTH_NAME
 from restapi.utilities.logs import log, obfuscate_dict
 
@@ -185,10 +181,6 @@ class EndpointResource(Resource):
             log.verbose("Parameters {}", obfuscate_dict(self._args))
         return self._args
 
-    def set_method_id(self, name='myid', idtype='string'):
-        """ How to have api/method/:id route possible"""
-        self.endtype = idtype + ':' + name
-
     def get_paging(self, force_read_parameters=False):
 
         if force_read_parameters:
@@ -316,47 +308,6 @@ class EndpointResource(Resource):
     def empty_response(self):
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
-
-    @staticmethod
-    def get_endpoint_custom_definition():
-        url = request.url_rule.rule
-
-        method = request.method.lower()
-
-        if url not in mem.customizer._parameter_schemas:
-            raise RestApiException(
-                "No parameters schema defined for {}".format(url),
-                status_code=404,
-            )
-        if method not in mem.customizer._parameter_schemas[url]:
-            raise RestApiException(
-                "No parameters schema defined for method {} in {}".format(method, url),
-                status_code=404,
-            )
-        return mem.customizer._parameter_schemas[url][method]
-
-    # HANDLE INPUT PARAMETERS
-    @staticmethod
-    def read_properties(schema, values, checkRequired=True):
-
-        properties = {}
-        for field in schema:
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
-                        continue
-
-            k = field["name"]
-            if k in values:
-                properties[k] = values[k]
-
-            # this field is missing but required!
-            elif checkRequired and field["required"]:
-                raise RestApiException(
-                    'Missing field: {}'.format(k), status_code=400
-                )
-
-        return properties
 
     def get_user_if_logged(self):
         """
