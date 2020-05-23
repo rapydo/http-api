@@ -73,7 +73,7 @@ class BaseTests:
 
         try:
             response = json.loads(http_out.get_data().decode())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(
                 "Malformed response: {}".format(http_out)
@@ -179,20 +179,6 @@ class BaseTests:
             random_string += rand.choice(charset)
 
         return random_string
-
-    @staticmethod
-    def checkResponse(response, fields, relationships):
-        """
-        Verify that the response contains the given fields and relationships
-        """
-
-        for f in fields:
-            if f not in response[0]:
-                pytest.fail("Missing property: {}".format(f))
-
-        for r in relationships:
-            if "_{}".format(r) not in response[0]:
-                pytest.fail("Missing relationship: {}".format(r))
 
     def buildData(self, schema):
         """
