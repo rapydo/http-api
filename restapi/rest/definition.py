@@ -236,14 +236,6 @@ class EndpointResource(Resource):
         return self.auth.get_user()
 
     @staticmethod
-    def obj_serialize(obj: StructuredNode, keys: List[str]) -> Dict[str, str]:
-        attributes: Dict[str, str] = {}
-        for k in keys:
-            attributes[k] = EndpointResource.serialize(obj, k)
-
-        return attributes
-
-    @staticmethod
     def serialize(obj: StructuredNode, key: str) -> str:
 
         attribute = getattr(obj, key)
