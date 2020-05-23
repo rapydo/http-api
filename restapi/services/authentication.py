@@ -134,13 +134,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
         cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
-        if cls.default_user is None or cls.default_password is None:
+        if cls.default_user is None or cls.default_password is None:  # pragma: no cover
             log.exit("Default credentials are unavailable!")
 
     @classmethod
     def load_roles(cls):
         cls.roles_data = get_project_configuration("variables.roles").copy()
-        if not cls.roles_data:
+        if not cls.roles_data:  # pragma: no cover
             log.exit("No roles configured")
 
         cls.default_role = cls.roles_data.pop('default')
@@ -150,7 +150,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 continue
             cls.roles.append(role)
 
-        if cls.default_role is None or None in cls.roles:
+        if cls.default_role is None or None in cls.roles:  # pragma: no cover
             log.exit("Default role {} not available!", cls.default_role)
 
     def failed_login(self, username):
@@ -168,7 +168,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         try:
             user = self.get_user_object(username=username)
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
@@ -176,7 +176,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "Invalid input received",
                 status_code=400,
             )
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
             # log.critical("Please reinitialize backend tables")
 
@@ -190,7 +190,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.failed_login(username)
 
         # Check if Oauth2 is enabled
-        if user.authmethod != 'credentials':
+        if user.authmethod != 'credentials':  # pragma: no cover
             raise RestApiException("Invalid authentication method", status_code=400)
 
         # New hashing algorithm, based on bcrypt
@@ -230,7 +230,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
             return self.JWT_SECRET
-        except IOError:
+        except IOError:  # pragma: no cover
             log.exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
@@ -268,7 +268,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_password(plain_password, hashed_password):
         try:
             return pwd_context.verify(plain_password, hashed_password)
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             log.error(e)
 
             return False
@@ -353,7 +353,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 try:
                     c = data['country']['names']['en']
                     return c
-                except BaseException:
+                except BaseException:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
             if 'continent' in data:  # pragma: no cover
@@ -364,11 +364,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 except BaseException:
                     log.error("Missing continent.names.en in {}", data)
                     return None
-            return None
-        except BaseException as e:
+            return None  # pragma: no cover
+        except BaseException as e:  # pragma: no cover
             log.error("{}. Input was {}", e, ip)
 
-        return None
+        return None  # pragma: no cover
 
     # ###################
     # # Tokens handling #
