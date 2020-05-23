@@ -58,7 +58,7 @@ class Customizer:
                     projects_path=projects_path,
                     submodules_path=submodules_path
                 )
-        except AttributeError as e:
+        except AttributeError as e:  # pragma: no cover
             log.exit(e)
 
         return self._configurations
@@ -138,17 +138,15 @@ class Customizer:
                         exit_on_fail=True,
                         exit_if_not_found=True
                     )
-                except BaseException as e:
+                except BaseException as e:  # pragma: no cover
                     log.exit("Cannot import {}\nError: {}", module_name, e)
 
                 # Extract classes from the module
                 classes = Meta.get_new_classes_from_module(module)
                 for class_name in classes:
-                    ep_class = classes.get(class_name)
+                    epclss = classes.get(class_name)
                     # Filtering out classes without expected data
-                    if not hasattr(ep_class, "methods"):
-                        continue
-                    if ep_class.methods is None:
+                    if not hasattr(epclss, "methods") or epclss.methods is None:
                         continue
 
                     log.debug(
@@ -156,7 +154,7 @@ class Customizer:
                     )
 
                     skip = False
-                    for var in ep_class.depends_on:
+                    for var in epclss.depends_on:
                         pieces = var.strip().split(' ')
                         pieces_num = len(pieces)
                         if pieces_num == 1:
@@ -165,8 +163,8 @@ class Customizer:
                         elif pieces_num == 2:
                             negate, dependency = pieces
                             negate = negate.lower() == 'not'
-                        else:
-                            log.exit('Wrong parameter: {}', var)
+                        else:  # pragma: no cover
+                            log.exit('Wrong depends_on parameter: {}', var)
 
                         check = detector.get_bool_from_os(dependency)
                         if negate:
@@ -187,7 +185,7 @@ class Customizer:
                         continue
 
                     # base URI
-                    base = ep_class.baseuri
+                    base = epclss.baseuri
                     if base not in BASE_URLS:
                         log.warning("Invalid base {}", base)
                         base = API_URL
@@ -197,19 +195,19 @@ class Customizer:
                     endpoint = EndpointElements(
                         uris={},
                         methods={},
-                        cls=ep_class,
+                        cls=epclss,
                         iscore=iscore,
-                        tags=ep_class.labels,
+                        tags=epclss.labels,
                         base_uri=base,
                     )
 
                     mapping_lists = []
-                    for m in ep_class.methods:
+                    for m in epclss.methods:
                         method_name = "_{}".format(m)
-                        if not hasattr(ep_class, method_name):
+                        if not hasattr(epclss, method_name):
 
                             method_name = m
-                            if not hasattr(ep_class, method_name):
+                            if not hasattr(epclss, method_name):
                                 log.warning(
                                     "{} configuration not found in {}", m, class_name
                                 )
@@ -225,19 +223,18 @@ class Customizer:
                         method_fn = m.lower()
 
                         # conf from GET, POST, ... dictionaries
-                        conf = getattr(ep_class, method_name)
+                        conf = getattr(epclss, method_name)
 
                         # endpoint uris /api/bar, /api/food
                         kk = conf.keys()
 
                         # get, post, put, patch, delete functions
-                        fn = getattr(ep_class, method_fn)
+                        fn = getattr(epclss, method_fn)
 
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get('auth.required', False)
                         for u, c in conf.items():
-                            if 'responses' not in c:
-                                conf[u]['responses'] = {}
+                            conf[u]['responses'].setdefault({})
 
                             if auth_required and '401' not in conf[u]['responses']:
                                 conf[u]['responses']['401'] = ERROR_401
@@ -251,7 +248,7 @@ class Customizer:
 
                         # inject _METHOD dictionaries into __apispec__ attribute
                         # __apispec__ is normally populated by using @docs decorator
-                        if isinstance(ep_class, MethodResourceMeta):
+                        if isinstance(epclss, MethodResourceMeta):
 
                             # retrieve attributes already set with @docs decorator
                             fn.__apispec__ = fn.__dict__.get('__apispec__', {})
@@ -293,8 +290,8 @@ class Customizer:
                             )
                             fn.__apispec__['docs'].insert(0, annotation)
 
-                        elif not isinstance(ep_class, MethodViewType):
-                            log.warning("Unknown class type: {}", type(ep_class))
+                        elif not isinstance(epclss, MethodViewType):  # pragma: no cover
+                            log.warning("Unknown class type: {}", type(epclss))
 
                         mapping_lists.extend(kk)
                         endpoint.methods[method_fn] = copy.deepcopy(conf)
@@ -375,7 +372,7 @@ class Customizer:
         self._endpoints = swag._endpoints[:]
 
         # SWAGGER validation
-        if not swag.validation(swag_dict):
+        if not swag.validation(swag_dict):  # pragma: no cover
             log.exit("Current swagger definition is invalid")
 
         self._definitions = swag_dict
