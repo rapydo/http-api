@@ -234,7 +234,7 @@ class Customizer:
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get('auth.required', False)
                         for u, c in conf.items():
-                            conf[u]['responses'].setdefault({})
+                            conf[u].setdefault('responses', {})
 
                             if auth_required and '401' not in conf[u]['responses']:
                                 conf[u]['responses']['401'] = ERROR_401
