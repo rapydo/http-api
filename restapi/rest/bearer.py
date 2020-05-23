@@ -86,11 +86,8 @@ class HTTPTokenAuth:
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
-                    msg = (
-                        "Missing credentials in headers, e.g. {}: '{} TOKEN'".format(
-                            HTTPAUTH_AUTH_FIELD, HTTPAUTH_SCHEME
-                        )
-                    )
+                    msg = "Missing credentials in headers" \
+                          f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
                     log.debug("Unauthorized request: missing credentials")
                     return caller.response(msg, code=401, headers=HTTPAUTH_ERR_HEADER)
 
