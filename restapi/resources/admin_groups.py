@@ -11,7 +11,6 @@ from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
 from restapi.connectors.neo4j import graph_transactions
-from restapi.utilities.htmlcodes import hcodes
 from restapi.services.detect import detector
 
 from restapi.utilities.logs import log
@@ -142,7 +141,7 @@ if detector.check_availability('neo4j'):
             if not coordinator:  # pragma: no cover
                 raise RestApiException(
                     'User not found',
-                    status_code=hcodes.HTTP_BAD_REQUEST
+                    status_code=401
                 )
 
             # GRAPH #

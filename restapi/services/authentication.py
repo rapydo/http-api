@@ -34,6 +34,7 @@ ANY_ROLE = 'any'
 if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     try:
         import pyotp
+        # to be replaced, last release is Jun 2016
         import pyqrcode
 
         # import base64

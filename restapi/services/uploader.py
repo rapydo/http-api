@@ -73,7 +73,7 @@ class Uploader:
 
         # Check file name
         filename = secure_filename(myfile.filename)
-        abs_file = self.absolute_upload_file(filename, subfolder)
+        abs_file = Uploader.absolute_upload_file(filename, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
         # ## IMPORTANT NOTE TO SELF:
