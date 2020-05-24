@@ -14,7 +14,7 @@ from restapi.confs import TESTING
 
 if TESTING:
 
-    class TestDownload(MethodResource, EndpointResource, Downloader):
+    class TestDownload(MethodResource, EndpointResource):
 
         labels = ["tests"]
         # Set an invalid baseuri to test the automatic fallback to /api
@@ -43,6 +43,6 @@ if TESTING:
 
             if stream:
                 fpath = Uploader.absolute_upload_file(fname, subfolder=UPLOAD_PATH)
-                return self.send_file_streamed(fpath)
+                return Downloader.send_file_streamed(fpath)
 
-            return self.download(fname)
+            return Downloader.download(fname)
