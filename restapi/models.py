@@ -117,8 +117,8 @@ class Neo4jChoice(fields.Field):
     """
 
     # choice_model is the same used in neo4j model as choices=
-    def __init__(self, choices_model):
-        super(Neo4jChoice, self).__init__()
+    def __init__(self, choices_model, **kwargs):
+        super(Neo4jChoice, self).__init__(**kwargs)
         if isinstance(choices_model, dict):
             self.choices_dict = choices_model
         else:

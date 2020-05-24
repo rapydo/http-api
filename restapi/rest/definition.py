@@ -181,6 +181,7 @@ class EndpointResource(Resource):
             log.verbose("Parameters {}", obfuscate_dict(self._args))
         return self._args
 
+    # to be reimplemented as a decorator (wrapper for use_kwargs)
     def get_paging(self, force_read_parameters=False):
 
         if force_read_parameters:
