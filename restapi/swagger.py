@@ -13,7 +13,7 @@ import json
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 
-from restapi.confs import PRODUCTION, ABS_RESTAPI_PATH, MODELS_DIR
+from restapi.confs import PRODUCTION, MODELS_DIR
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.confs import get_project_configuration
 from restapi.utilities.globals import mem
@@ -315,21 +315,6 @@ class Swagger:
         if len(swag_dict['paths']) < 1:
             raise AttributeError("Swagger 'paths' definition is empty")
 
-        # filepath = os.path.join(tempfile.gettempdir(), 'test.json')
-
-        # try:
-        #     # Fix jsonschema validation problem
-        #     # expected string or bytes-like object
-        #     # http://j.mp/2hEquZy
-        #     swag_dict = json.loads(json.dumps(swag_dict))
-        #     # write it down
-        #     # FIXME: can we do better than this?
-        #     with open(filepath, 'w') as f:
-        #         json.dump(swag_dict, f)
-        # except Exception as e:
-        #     raise e
-        #     # log.warning("Failed to temporary save the swagger definition")
-
         bravado_config = {
             'validate_swagger_spec': True,
             'validate_requests': False,
@@ -344,11 +329,8 @@ class Swagger:
             )
             log.debug("Swagger configuration is validated")
         except Exception as e:
-            # raise e
             error = str(e).split('\n')[0]
             log.error("Failed to validate:\n{}\n", error)
             return False
-        # finally:
-        #     os.remove(filepath)
 
         return True
