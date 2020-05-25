@@ -183,6 +183,9 @@ class Uploader:
 
         try:
             range_header = request.headers.get("Content-Range")
+            if range_header is None:
+                return False, self.response("Invalid request", code=400)
+
             # content_length = request.headers.get("Content-Length")
             content_range = parse_content_range_header(range_header)
 
