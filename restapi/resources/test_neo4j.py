@@ -12,14 +12,14 @@ from restapi.exceptions import RestApiException
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
-
+from restapi.utilities.logs import log
 
 if TESTING and detector.check_availability('neo4j'):
 
     from restapi.connectors.neo4j.models import User, Group
 
     class Input(Schema):
-        test = fields.Integer()
+        test = fields.Str()
 
     CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
 
@@ -55,13 +55,17 @@ if TESTING and detector.check_availability('neo4j'):
         @decorators.catch_errors()
         @graph_transactions
         @use_kwargs(Input, locations=['query'])
-        def get(self, test=0):
+        def get(self, test="0"):
             self.neo4j = self.get_service_instance('neo4j')
             try:
-                if test == 1:
+                if test == "1":
+                    log.info("First Test")
                     self.neo4j.cypher("MATCH (n) RETURN n LIMIT 1")
-                elif test == 2:
+                elif test == "2":
+                    log.info("Second Test")
                     self.neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+                else:
+                    log.info("No Test")
             except Exception as e:
                 raise RestApiException(str(e), status_code=400)
             return 1
