@@ -181,17 +181,19 @@ def obfuscate_dict(parameters, urlencoded=False):
 
         if key in OBSCURED_FIELDS:
             value = OBSCURE_VALUE
-        elif isinstance(value, str):
-            try:
-                if len(value) > MAX_CHAR_LEN:
-                    value = value[:MAX_CHAR_LEN] + "..."
-            except IndexError:
-                pass
         elif urlencoded and isinstance(value, list):
             # urllib.parse.parse_qs converts all elements in single-elements lists...
             # converting back to the original element
             if len(value) == 1:
                 value = value[0]
+        else:
+            value = str(value)
+            try:
+                if len(value) > MAX_CHAR_LEN:
+                    value = value[:MAX_CHAR_LEN] + "..."
+            except IndexError:
+                pass
+
         output[key] = value
 
     return output
