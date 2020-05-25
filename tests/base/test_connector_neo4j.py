@@ -18,10 +18,10 @@ else:
         def test_endpoint(client):
             endpoint = API_URI + '/tests/neo4j'
 
-            r = client.get(endpoint + "/1")
+            r = client.get(endpoint, {"test": 1})
             assert r.status_code == 200
 
-            r = client.get(endpoint + "/2")
+            r = client.get(endpoint, {"test": 2})
             assert r.status_code == 400
 
         @staticmethod
