@@ -16,21 +16,28 @@ from restapi.connectors.neo4j import graph_transactions
 
 if TESTING and detector.check_availability('neo4j'):
 
-    from restapi.connectors.neo4j.models import User
+    from restapi.connectors.neo4j.models import User, Group
 
     class Input(Schema):
         test = fields.Integer()
+
+    CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
 
     class Output(Schema):
         val = fields.Integer()
         user = Neo4jSchema(
             User,
             fields=(
+                'uuid',
                 'email',
                 'name',
                 'surname',
+                'is_active',
+                'last_password_change',
             )
         )
+        group = Neo4jSchema(Group, fields="*")
+        choices = Neo4jChoice(CHOICES)
 
     class TestNeo4j(MethodResource, EndpointResource):
 
