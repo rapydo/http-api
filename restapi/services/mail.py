@@ -26,7 +26,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
     ###################
     # https://stackabuse.com/how-to-send-emails-with-gmail-using-python/
 
-    if smtp_port is not None:
+    if smtp_port:
         if isinstance(smtp_port, str) and smtp_port.isnumeric():
             smtp_port = int(smtp_port)
         if not isinstance(smtp_port, int):
