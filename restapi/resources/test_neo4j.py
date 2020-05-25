@@ -55,7 +55,7 @@ if TESTING and detector.check_availability('neo4j'):
         @decorators.catch_errors()
         @graph_transactions
         @use_kwargs(Input, locations=['query'])
-        def get(self, test):
+        def get(self, test=0):
             self.neo4j = self.get_service_instance('neo4j')
             try:
                 if test == 1:
