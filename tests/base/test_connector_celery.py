@@ -21,12 +21,16 @@ def test_celery():
             pytest.fail("get_periodic_task with unknown CELERYBEAT_SCHEDULER")
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
+        except BaseException:
+            pytest.fail("Unexpected exception raised")
 
         try:
             CeleryExt.delete_periodic_task('does_not_exist')
             pytest.fail("delete_periodic_task with unknown CELERYBEAT_SCHEDULER")
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
+        except BaseException:
+            pytest.fail("Unexpected exception raised")
 
         try:
             CeleryExt.create_periodic_task(
@@ -37,6 +41,8 @@ def test_celery():
             pytest.fail("create_periodic_task with unknown CELERYBEAT_SCHEDULER")
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
+        except BaseException:
+            pytest.fail("Unexpected exception raised")
 
         try:
             CeleryExt.create_crontab_task(
@@ -48,6 +54,8 @@ def test_celery():
             pytest.fail("create_crontab_task with unknown CELERYBEAT_SCHEDULER")
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
+        except BaseException:
+            pytest.fail("Unexpected exception raised")
 
     else:
         assert CeleryExt.get_periodic_task('does_not_exist') is None

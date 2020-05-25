@@ -117,6 +117,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Wrong new password"
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.change_password(user, pwd, pwd, None)
@@ -124,6 +126,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Wrong password confirm"
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.change_password(user, pwd, pwd, 'wrongconfirmation')
@@ -131,6 +135,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == "Your password doesn't match the confirmation"
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.change_password(user, pwd, pwd, pwd)
@@ -138,6 +144,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == 'The new password cannot match the previous password'
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.change_password(user, "currentpassword", pwd, pwd)
@@ -147,6 +155,8 @@ def test_authentication_service():
         assert str(e) == 'Password is too short, use at least {} characters'.format(
             min_pwd_len
         )
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.verify_totp(None, None)
@@ -154,6 +164,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == 'Invalid verification code'
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     # import here to prevent loading before initializing things...
     from restapi.services.authentication import BaseAuthentication
@@ -174,6 +186,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == "Invalid password"
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     try:
         auth.get_password_hash(None)
@@ -181,6 +195,8 @@ def test_authentication_service():
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == "Invalid password"
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     assert auth.verify_password(pwd1, hash_1)
     try:
@@ -188,6 +204,8 @@ def test_authentication_service():
         pytest.fail('Hashed a None password!')
     except TypeError:
         pass
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
 
     assert not auth.verify_password(pwd1, None)
 
@@ -276,3 +294,5 @@ def test_authentication_service():
         pytest.fail("No exception raised!")
     except InvalidToken as e:
         assert str(e) == 'Missing token'
+    except BaseException:
+        pytest.fail("Unexpected exception raised")
