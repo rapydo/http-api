@@ -233,18 +233,15 @@ class Customizer:
 
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get('auth.required', False)
-                        for u, c in conf.items():
+                        for u in conf:
                             conf[u].setdefault('responses', {})
 
-                            if auth_required and '401' not in conf[u]['responses']:
-                                conf[u]['responses']['401'] = ERROR_401
-                            if '400' not in conf[u]['responses']:
-                                conf[u]['responses']['400'] = ERROR_400
-                            if '404' not in conf[u]['responses']:
-                                if auth_required:
-                                    conf[u]['responses']['404'] = ERROR_404_AUTH
-                                else:
-                                    conf[u]['responses']['404'] = ERROR_404
+                            conf[u]['responses'].setdefault('400', ERROR_400)
+                            if auth_required:
+                                conf[u]['responses'].setdefault('401', ERROR_401)
+                                conf[u]['responses'].setdefault('404', ERROR_404_AUTH)
+                            else:
+                                conf[u]['responses'].setdefault('404', ERROR_404)
 
                         # inject _METHOD dictionaries into __apispec__ attribute
                         # __apispec__ is normally populated by using @docs decorator
