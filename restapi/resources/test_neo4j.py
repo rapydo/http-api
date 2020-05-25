@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
 from marshmallow import fields
+from flask_apispec import marshal_with
 
 from restapi.rest.definition import EndpointResource
 from restapi.models import Schema, Neo4jSchema, Neo4jChoice
@@ -17,9 +17,6 @@ from restapi.utilities.logs import log
 if TESTING and detector.check_availability('neo4j'):
 
     from restapi.connectors.neo4j.models import User, Group
-
-    class Input(Schema):
-        test = fields.Str()
 
     CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
 
@@ -45,7 +42,7 @@ if TESTING and detector.check_availability('neo4j'):
         labels = ["tests"]
 
         _GET = {
-            "/tests/neo4j": {
+            "/tests/neo4j/<test>": {
                 "summary": "Execute tests against the neo4j connector",
                 "description": "Only enabled in testing mode",
                 "responses": {"200": {"description": "Tests executed"}},
@@ -54,8 +51,8 @@ if TESTING and detector.check_availability('neo4j'):
 
         @decorators.catch_errors()
         @graph_transactions
-        @use_kwargs(Input, locations=['query'])
-        def get(self, test="0"):
+        @marshal_with(Output, code=200)
+        def get(self, test):
             self.neo4j = self.get_service_instance('neo4j')
             try:
                 if test == "1":
@@ -68,4 +65,4 @@ if TESTING and detector.check_availability('neo4j'):
                     log.info("No Test")
             except Exception as e:
                 raise RestApiException(str(e), status_code=400)
-            return 1
+            return {"val": 1}
