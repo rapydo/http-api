@@ -27,6 +27,15 @@ def handle_marshmallow_errors(error):
     except BaseException as e:
         log.error(e)
 
+    for k, msg in error.data.get("messages").items():
+        msg_len = len(msg)
+        if msg_len == 0:  # pragma: no cover
+            continue
+        elif len(msg) == 1:
+            log.info("{}: {}", k, msg[0])
+        else:
+            log.info("{}: {}", k, msg)
+
     return (error.data.get("messages"), 400, {})
 
 
