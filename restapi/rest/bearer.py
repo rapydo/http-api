@@ -101,7 +101,8 @@ class HTTPTokenAuth:
                         log.verbose(request.data)
                         # Mimic the response from a normal endpoint
                         # To use the same standards
-                        log.info("Invalid token received '{}'", token)
+                        # log.info("Invalid token received '{}'", token)
+                        log.debug("Invalid token received")
                         return caller.response(
                             "Invalid token received",
                             headers=HTTPAUTH_ERR_HEADER,
