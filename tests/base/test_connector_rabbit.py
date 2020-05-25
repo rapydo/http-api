@@ -5,7 +5,7 @@ from restapi.utilities.logs import log
 
 def test_rabbit():
 
-    if not detector.check_availability('rabbit'):
+    if not detector.check_availability('rabbitmq'):
         log.warning("Skipping rabbit test: service not available")
         return False
 

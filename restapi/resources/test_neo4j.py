@@ -18,7 +18,8 @@ if TESTING and detector.check_availability('neo4j'):
 
     from restapi.connectors.neo4j.models import User, Group
 
-    CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
+    CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
+    CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
 
     class Output(Schema):
         val = fields.Integer()
@@ -33,8 +34,16 @@ if TESTING and detector.check_availability('neo4j'):
                 'last_password_change',
             )
         )
-        group = Neo4jSchema(Group, fields="*")
-        choices = Neo4jChoice(CHOICES)
+        group1 = Neo4jSchema(Group, fields="*")
+        group2 = Neo4jSchema(Group, fields=("*",))
+        group3 = Neo4jSchema(Group, fields=["*"])
+        group4 = Neo4jSchema(Group, fields=[])
+        group5 = Neo4jSchema(Group, fields="")
+        group6 = Neo4jSchema(Group, fields=None)
+        group7 = Neo4jSchema(Group, fields=1)
+
+        choices1 = Neo4jChoice(CHOICES_tuple)
+        choices2 = Neo4jChoice(CHOICES_dict)
 
     class TestNeo4j(MethodResource, EndpointResource):
 
