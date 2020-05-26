@@ -2,7 +2,6 @@
 import os
 import pytest
 import json
-import string
 import random
 import jwt
 import uuid
@@ -115,12 +114,12 @@ class BaseTests:
                 action = content.get('actions')[0]
 
                 if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
-                    newpwd = "Aa1!{}".format(self.randomString())
+                    newpwd = self.fake.password(strong=True)
                     self.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
-                            'password_confirm': format(self.randomString()),
+                            'password_confirm': self.fake.password(strong=True),
                         },
                         status_code=409,
                     )
@@ -180,56 +179,35 @@ class BaseTests:
 
     def buildData(self, schema):
         """
-            Input: a Swagger-like schema
+            Input: a webargs schema
             Output: a dictionary of random data
         """
         data = {}
         for d in schema:
 
-            key = d.get("name")
-            if key is None:
-                key = d.get("key")
+            key = d.get("key")
             field_type = d.get("type")
-            field_format = d.get("format", "")
-            default = d.get("default", None)
-            custom = d.get("custom", {})
-            autocomplete = custom.get("autocomplete", False)
-            test_with = custom.get("test_with", None)
 
-            if autocomplete and test_with is None:
-                continue
-
-            value = None
-            if test_with is not None:
-                value = test_with
-            elif 'enum' in d:
-                if default is not None:
-                    value = default
-                elif len(d["enum"]) > 0:
-                    # get first key
-                    if isinstance(d["enum"], list):
-                        for value in d["enum"][0]:
-                            break
-                    else:
-                        for value in d["enum"]:
-                            break
+            if 'enum' in d:
+                if len(d["enum"]) > 0:
+                    data[key] = self.fake.random_element(list(d["enum"].keys()))
                 else:
-                    value = "NOT_FOUND"
+                    pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
-                value = random.SystemRandom().randrange(0, 1000, 1)
-            elif field_format == "date":
-                value = "1969-07-20"  # 20:17:40 UTC
-            elif field_type == "email" or field_format == "email":
-                value = self.randomString()
-                value += "@nomail.com"
-            elif field_type == "multi_section":
-                continue
+                data[key] = self.fake.random_int()
+            elif field_type == "date":
+                data[key] = self.fake.date(pattern='%Y-%m-%d')
+            elif field_type == "email":
+                data[key] = self.fake.ascii_email()
             elif field_type == "boolean":
-                value = True
+                data[key] = self.fake.random_elements((True, False))
+            elif field_type == "password":
+                data[key] = self.fake.password(strong=True)
+            elif field_type == "string":
+                # a totally random string is something like a strong password
+                data[key] = self.fake.password(strong=True)
             else:
-                value = self.randomString()
-
-            data[key] = value
+                pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
         return data
 
@@ -317,7 +295,7 @@ class BaseTests:
                           wrong_secret=False, wrong_algorithm=False):
 
         if wrong_secret:
-            secret = self.randomString()
+            secret = self.fake.password()
         else:
             f = os.getenv('JWT_APP_SECRETS') + "/secret.key"
             secret = open(f, 'rb').read()
