@@ -51,9 +51,7 @@ class PasswordProvider(BaseProvider):
         randstr = ''.join(rand.choices(charset, k=length))
         if low and not any(s in randstr for s in string.ascii_lowercase):
             log.warning(
-                "String {} not strong enough, missing lower case characters".format(
-                    randstr
-                )
+                f"{randstr} is not strong enough: missing lower case. Sampling again..."
             )
             return self.password(
                 length, strong=strong,
@@ -61,9 +59,7 @@ class PasswordProvider(BaseProvider):
             )
         if up and not any(s in randstr for s in string.ascii_uppercase):
             log.warning(
-                "String {} not strong enough, missing upper case characters".format(
-                    randstr
-                )
+                f"{randstr} is not strong enough: missing upper case. Sampling again..."
             )
             return self.password(
                 length, strong=strong,
@@ -71,9 +67,7 @@ class PasswordProvider(BaseProvider):
             )
         if digits and not any(s in randstr for s in string.digits):
             log.warning(
-                "String {} not strong enough, missing digits".format(
-                    randstr
-                )
+                f"{randstr} is not strong enough: missing digits. Sampling again..."
             )
             return self.password(
                 length, strong=strong,
@@ -81,9 +75,7 @@ class PasswordProvider(BaseProvider):
             )
         if symbols and not any(s in randstr for s in string.punctuation):
             log.warning(
-                "String {} not strong enough, missing symbols".format(
-                    randstr
-                )
+                f"{randstr} is not strong enough: missing symbols. Sampling again..."
             )
             return self.password(
                 length, strong=strong,

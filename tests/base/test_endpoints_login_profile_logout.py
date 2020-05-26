@@ -8,7 +8,7 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
 
-    def test_01_login(self, client):
+    def test_01_login(self, client, fake):
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
@@ -55,8 +55,8 @@ class TestApp(BaseTests):
 
         self.do_login(
             client,
-            'sample@nomail.org',
-            'ABC-Random-Pass-XYZ',
+            fake.ascii_email(),
+            fake.password(strong=True),
             status_code=401,
         )
 

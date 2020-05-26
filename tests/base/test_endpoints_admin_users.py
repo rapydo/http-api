@@ -8,7 +8,7 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
 
-    def test_admin_users(self, client):
+    def test_admin_users(self, client, fake):
 
         if detector.get_bool_from_os("ADMINER_DISABLED"):
             log.warning("Skipping admin/users tests")
@@ -36,6 +36,8 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, endpoint, headers)
         data = self.buildData(schema)
+        data['email_notification'] = True
+        data['is_active'] = True
 
         r = client.post(url, data=data, headers=headers)
         assert r.status_code == 200
@@ -62,6 +64,8 @@ class TestApp(BaseTests):
 
         # Create another user
         data2 = self.buildData(schema)
+        data2['email_notification'] = True
+        data2['is_active'] = True
         r = client.post(url, data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
@@ -75,10 +79,10 @@ class TestApp(BaseTests):
         assert 'Password: {}'.format(data2.get('password')) in mail.get('body')
 
         # send and invalid user_id
-        r = client.put(url + "/invalid", data={'name': 'Changed'}, headers=headers)
+        r = client.put(url + "/invalid", data={'name': fake.name()}, headers=headers)
         assert r.status_code == 404
 
-        r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers)
+        r = client.put(url + "/" + uuid, data={'name': fake.name()}, headers=headers)
         assert r.status_code == 204
 
         # email cannot be modified
@@ -104,7 +108,7 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # change password of user2
-        newpwd = "bB2=" + self.randomString()
+        newpwd = fake.password(strong=True)
         data = {'password': newpwd, 'email_notification': True}
         r = client.put(url + "/" + uuid2, data=data, headers=headers)
         assert r.status_code == 204
@@ -134,7 +138,7 @@ class TestApp(BaseTests):
         r = client.post(url, data=data, headers=headers2)
         assert r.status_code == 401
 
-        r = client.put(url + "/" + uuid, data={'name': 'Changed'}, headers=headers2)
+        r = client.put(url + "/" + uuid, data={'name': fake.name()}, headers=headers2)
         assert r.status_code == 401
 
         r = client.delete(url + "/" + uuid, headers=headers2)
