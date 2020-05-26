@@ -19,11 +19,13 @@ def fake():
 
     # Create a random password to be used to build data for tests
     class PasswordProvider(BaseProvider):
-        def password(self, length,
+        def password(self, length=8,
                      strong=False,  # this enable all low, up, digits and symbols
                      low=True, up=False, digits=False, symbols=False):
 
             if strong:
+                if length < 16:
+                    length = 16
                 low = True
                 up = True
                 digits = True
