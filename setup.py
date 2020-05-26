@@ -46,8 +46,6 @@ setup(
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
 
-        "PyYAML==5.3.1",
-
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.8.1",
@@ -71,16 +69,16 @@ setup(
         "swagger-spec-validator",
 
         # Utilities
+        "PyYAML==5.3.1",
         "loguru",
         "glom",
         "psutil",
         "plumbum",
         "maxminddb-geolite2",
 
-        # Web sockets
+        # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-
         "sentry-sdk[flask]==0.14.4"
     ],
     classifiers=[

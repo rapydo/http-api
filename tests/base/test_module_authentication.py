@@ -1,63 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import time
-import random
-import string
 import pytest
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
-
-
-def random_string(length, low=True, up=False, digits=False, symbols=False):
-    """
-        Create a random string to be used to build data for tests
-    """
-
-    charset = ""
-    if low:
-        charset += string.ascii_lowercase
-    if up:
-        charset += string.ascii_uppercase
-    if digits:
-        charset += string.digits
-    if symbols:
-        charset += string.punctuation
-
-    rand = random.SystemRandom()
-
-    randstr = ''.join(rand.choices(charset, k=length))
-    if low and not any(s in randstr for s in string.ascii_lowercase):
-        log.warning(
-            "String {} not strong enough, missing lower case characters".format(
-                randstr
-            )
-        )
-        return random_string(length, low=low, up=up, digits=digits, symbols=symbols)
-    if up and not any(s in randstr for s in string.ascii_uppercase):
-        log.warning(
-            "String {} not strong enough, missing upper case characters".format(
-                randstr
-            )
-        )
-        return random_string(length, low=low, up=up, digits=digits, symbols=symbols)
-    if digits and not any(s in randstr for s in string.digits):
-        log.warning(
-            "String {} not strong enough, missing digits".format(
-                randstr
-            )
-        )
-        return random_string(length, low=low, up=up, digits=digits, symbols=symbols)
-    if symbols and not any(s in randstr for s in string.punctuation):
-        log.warning(
-            "String {} not strong enough, missing symbols".format(
-                randstr
-            )
-        )
-        return random_string(length, low=low, up=up, digits=digits, symbols=symbols)
-
-    return randstr
-
 
 def test_authentication_service(fake):
 
@@ -74,42 +21,42 @@ def test_authentication_service(fake):
     assert not ret_val
     assert ret_text == 'The new password cannot match the previous password'
 
-    pwd = random_string(min_pwd_len - 1)
-    old_pwd = random_string(min_pwd_len)
+    pwd = fake.password(min_pwd_len - 1)
+    old_pwd = fake.password(min_pwd_len)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too short, use at least {} characters'.format(
         min_pwd_len
     )
 
-    pwd = random_string(min_pwd_len, low=False, up=True)
+    pwd = fake.password(min_pwd_len, low=False, up=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing lower case letters'
 
-    pwd = random_string(min_pwd_len, low=True)
+    pwd = fake.password(min_pwd_len, low=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing upper case letters'
 
-    pwd = random_string(min_pwd_len, low=True, up=True)
+    pwd = fake.password(min_pwd_len, low=True, up=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing numbers'
 
-    pwd = random_string(min_pwd_len, low=True, up=True, digits=True)
+    pwd = fake.password(min_pwd_len, low=True, up=True, digits=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing special characters'
 
-    pwd = random_string(min_pwd_len, low=True, up=True, digits=True, symbols=True)
+    pwd = fake.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
     assert ret_val
     assert ret_text is None
 
     # How to retrieve a generic user?
     user = None
-    pwd = random_string(min_pwd_len - 1)
+    pwd = fake.password(min_pwd_len - 1)
 
     try:
         auth.change_password(user, pwd, None, None)
@@ -173,8 +120,8 @@ def test_authentication_service(fake):
 
     auth = detector.get_service_instance('authentication')
 
-    pwd1 = random_string(8, low=True, up=True, digits=True, symbols=True)
-    pwd2 = random_string(8, low=True, up=True, digits=True, symbols=True)
+    pwd1 = fake.password(8, low=True, up=True, digits=True, symbols=True)
+    pwd2 = fake.password(8, low=True, up=True, digits=True, symbols=True)
 
     hash_1 = auth.get_password_hash(pwd1)
     assert len(hash_1) > 0

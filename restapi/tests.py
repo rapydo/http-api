@@ -20,7 +20,13 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
+@pytest.mark.usefixtures("fake")
 class BaseTests:
+
+    @pytest.fixture(autouse=True)
+    def _faker(self, fake):
+        self.fake = fake
+
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests
@@ -166,19 +172,11 @@ class BaseTests:
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    @staticmethod
-    def randomString(length=16, prefix=""):
-        """
-            Create a random string to be used to build data for tests
-        """
-        rand = random.SystemRandom()
-        charset = string.ascii_uppercase + string.digits
-
-        random_string = prefix
-        for _ in range(length):
-            random_string += rand.choice(charset)
-
-        return random_string
+    def randomString(self, length=16, prefix=""):
+        log.warning("Deprecated, use self.fake.password instead")
+        return prefix + self.fake.password(
+            length, low=False, up=True, digits=True, symbols=False
+        )
 
     def buildData(self, schema):
         """
@@ -234,25 +232,6 @@ class BaseTests:
             data[key] = value
 
         return data
-
-    # only used by nig
-    # def getPartialData(self, schema, data):
-    #     """
-    #         Following directives contained in the schema and
-    #         taking as input a pre-built data dictionary, this method
-    #         remove one of the required fields from data
-    #     """
-    #     partialData = data.copy()
-    #     for d in schema:
-    #         if not d['required']:
-    #             continue
-
-    #         # key = d["key"]
-    #         key = d["name"]
-
-    #         del partialData[key]
-    #         return partialData
-    #     return None
 
     @staticmethod
     def method_exists(status):
