@@ -4,10 +4,11 @@ from restapi.tests import BaseTests, API_URI
 
 
 class TestUploadAndDownload(BaseTests):
-    fname = "myfile.txt"
-    fcontent = "v"
 
-    def test_upload(self, client):
+    def test_upload(self, client, fake):
+
+        self.fname = fake.file_name()
+        self.fcontent = fake.paragraph()
 
         r = client.put(
             API_URI + '/tests/upload',
@@ -87,13 +88,13 @@ class TestUploadAndDownload(BaseTests):
         r = client.get(endpoint + 'doesnotexist', data={'stream': True})
         assert r.status_code == 400
 
-    def test_chunked(self, client):
+    def test_chunked(self, client, fake):
 
         r = client.post(API_URI + '/tests/upload', data={'force': True})
         assert r.status_code == 201
         assert self.get_content(r) == ''
 
-        with io.StringIO('massive-body') as f:
+        with io.StringIO(fake.text()) as f:
             r = client.put(
                 API_URI + '/tests/upload/chunked',
                 data=f
@@ -101,7 +102,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'Invalid request'
 
-        with io.StringIO('massive-body') as f:
+        with io.StringIO(fake.text()) as f:
             r = client.put(
                 API_URI + '/tests/upload/chunked',
                 data=f,
@@ -112,13 +113,14 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'Invalid request'
 
-        up_data = "HelloWorld"
+        up_data = fake.pystr(min_chars=24, max_chars=48)
+        STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
                 API_URI + '/tests/upload/chunked',
                 data=f,
                 headers={
-                    "Content-Range": 'bytes 0-5/10'
+                    "Content-Range": f'bytes 0-5/{STR_LEN}'
                 }
             )
         assert r.status_code == 206
@@ -129,7 +131,7 @@ class TestUploadAndDownload(BaseTests):
                 API_URI + '/tests/upload/chunked',
                 data=f,
                 headers={
-                    "Content-Range": 'bytes 5-10/10'
+                    "Content-Range": f'bytes 5-{STR_LEN}/{STR_LEN}'
                 }
             )
         assert r.status_code == 200
@@ -161,7 +163,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            headers={'Range': '0-9'}
+            headers={'Range': f'0-{STR_LEN - 1}'}
         )
         assert r.status_code == 416
 
@@ -189,7 +191,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            headers={'Range': 'bytes=5-9'}
+            headers={'Range': f'bytes=5-{STR_LEN - 1}'}
         )
         assert r.status_code == 206
         content = r.data.decode('utf-8')
@@ -197,7 +199,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(
             API_URI + '/tests/download/' + uploaded_filename,
-            headers={'Range': 'bytes=0-9'}
+            headers={'Range': f'bytes=0-{STR_LEN - 1}'}
         )
         if old_werkzeug:
             assert r.status_code == 200

@@ -77,8 +77,9 @@ def test_authentication_service(fake):
         pytest.fail("Unexpected exception raised")
 
     try:
-        auth.change_password(user, pwd, pwd, 'wrongconfirmation')
-        pytest.fail('wrong passwrd confirmation!?')
+        # wrong confirmation
+        auth.change_password(user, pwd, pwd, fake.password(strong=True))
+        pytest.fail('wrong password confirmation!?')
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == "Your password doesn't match the confirmation"
@@ -95,7 +96,11 @@ def test_authentication_service(fake):
         pytest.fail("Unexpected exception raised")
 
     try:
-        auth.change_password(user, "currentpassword", pwd, pwd)
+        # the first password parameter is only checked for new password strenght
+        # i.e. is verified password != newpassword
+        # password validity will be checked once completed checks on new password
+        # => a random current password is ok here
+        auth.change_password(user, fake.password(), pwd, pwd)
         pytest.fail('Password strength not verified')
     except RestApiException as e:
         assert e.status_code == 409
@@ -120,8 +125,8 @@ def test_authentication_service(fake):
 
     auth = detector.get_service_instance('authentication')
 
-    pwd1 = fake.password(8, low=True, up=True, digits=True, symbols=True)
-    pwd2 = fake.password(8, low=True, up=True, digits=True, symbols=True)
+    pwd1 = fake.password(strong=True)
+    pwd2 = fake.password(strong=True)
 
     hash_1 = auth.get_password_hash(pwd1)
     assert len(hash_1) > 0
@@ -174,9 +179,9 @@ def test_authentication_service(fake):
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
     # Just to verify that the function works
-    verify_token_is_not_valid("doesnotexists")
-    verify_token_is_not_valid("doesnotexists", auth.PWD_RESET)
-    verify_token_is_not_valid("doesnotexists", auth.ACTIVATE_ACCOUNT)
+    verify_token_is_not_valid(fake.pystr())
+    verify_token_is_not_valid(fake.pystr(), auth.PWD_RESET)
+    verify_token_is_not_valid(fake.pystr(), auth.ACTIVATE_ACCOUNT)
 
     t1, payload1 = auth.create_temporary_token(
         user, auth.PWD_RESET)
@@ -188,7 +193,7 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(t1, auth.FULL_TOKEN)
     verify_token_is_valid(t1, auth.PWD_RESET)
     verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
-    verify_token_is_not_valid("another@nomail.org", t1)
+    verify_token_is_not_valid(fake.ascii_email(), t1)
 
     # Create another type of temporary token => t1 is still valid
     t2, payload2 = auth.create_temporary_token(
@@ -201,7 +206,7 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(t2, auth.FULL_TOKEN)
     verify_token_is_not_valid(t2, auth.PWD_RESET)
     verify_token_is_valid(t2, auth.ACTIVATE_ACCOUNT)
-    verify_token_is_not_valid("another@nomail.org", t2)
+    verify_token_is_not_valid(fake.ascii_email(), t2)
 
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
