@@ -72,7 +72,7 @@ class TestApp(BaseTests):
             # error='Sorry, this account is not active'
         )
         # Also password reset is not allowed
-        data = {'reset_email': fake.ascii_email()}
+        data = {'reset_email': registration_data['email']}
         r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, this account is not active'
