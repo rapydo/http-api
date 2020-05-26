@@ -25,7 +25,7 @@ else:
             assert r.status_code == 400
 
         @staticmethod
-        def test_connector():
+        def test_connector(fake):
 
             neo4j = detector.get_service_instance("neo4j")
             for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
@@ -33,8 +33,7 @@ else:
                 assert u.email is not None
                 break
 
-            # just to avoid hardcoded tokens warnings...
-            v = neo4j.createUniqueIndex('a', 'b')
+            v = fake.random_letters(24)
             # Create a fake token and verify that is linked to nobody
             t = neo4j.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
             assert neo4j.getSingleLinkedNode(t.emitted_for) is None

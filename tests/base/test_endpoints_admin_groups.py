@@ -7,7 +7,7 @@ from restapi.services.detect import detector
 if detector.check_availability('neo4j'):
     class TestApp(BaseTests):
 
-        def test_admin_groups(self, client):
+        def test_admin_groups(self, client, fake):
 
             headers, _ = self.do_login(client, None, None)
             endpoint = "admin/groups"
@@ -49,7 +49,7 @@ if detector.check_availability('neo4j'):
             assert fullname is not None
 
             newdata = {
-                'fullname': 'newfullname',
+                'fullname': fake.company(),
                 # we should change the coordinator...
                 # But set again the same coordinator is enough for now
                 'coordinator': data.get('coordinator')
@@ -84,7 +84,7 @@ if detector.check_availability('neo4j'):
             assert r.status_code == 404
 
             data = self.buildData(schema)
-            data['coordinator'] = 'wrong@nomail.org'
+            data['coordinator'] = fake.ascii_email()
             r = client.post(url, data=data, headers=headers)
             assert r.status_code == 400
             # Now error is: 'coordinator': ['Must be one of: ...
@@ -100,7 +100,7 @@ if detector.check_availability('neo4j'):
 
             data = {
                 'fullname': 'Default group',
-                'shortname': self.randomString(),
+                'shortname': fake.company(),
                 'coordinator': user_uuid,
             }
             r = client.post(url, data=data, headers=headers)
