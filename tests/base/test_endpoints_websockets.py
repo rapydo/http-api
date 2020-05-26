@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import json
 from restapi.tests import BaseTests, API_URI
+from restapi.services.detect import detector
 # from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -8,7 +8,10 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
 
     def test_websockets(self, client, fake):
-        pass
+
+        if not detector.check_availability('pushpin'):
+            log.warning("Skipping websockets test: pushpin service not available")
+            return False
 
         channel = fake.pystr()
         endpoint = API_URI + '/socket/' + channel
