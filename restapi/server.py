@@ -42,7 +42,7 @@ def create_app(
 
     if PRODUCTION and testing_mode:
         log.exit("Unable to execute tests in production")
-    if testing_mode and not config.TESTING:
+    if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
         log.exit(
             "Deprecated use of testing_mode, please export env variable APP_MODE=test")

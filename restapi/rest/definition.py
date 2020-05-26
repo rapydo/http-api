@@ -212,9 +212,9 @@ class EndpointResource(Resource):
 
         return (current_page, limit)
 
+    # Deprecated since 0.7.4
     def get_current_user(self):  # pragma: no cover
 
-        # Deprecated since 0.7.4
         log.warning(
             "self.get_current_user() is deprecated, replace with self.auth.get_user()")
         """

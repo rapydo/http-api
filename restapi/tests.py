@@ -286,7 +286,7 @@ class BaseTests:
         CeleryExt.celery_app = celery.celery_app
         return CeleryExt
 
-    def randomString(self, length=16, prefix=""):
+    def randomString(self, length=16, prefix=""):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated, use fake.password instead")
         return prefix + fake.password(
