@@ -59,7 +59,7 @@ def random_string(length, low=True, up=False, digits=False, symbols=False):
     return randstr
 
 
-def test_authentication_service():
+def test_authentication_service(fake):
 
     if not detector.check_availability('authentication'):
         log.warning("Skipping authentication test: service not available")
@@ -69,7 +69,7 @@ def test_authentication_service():
 
     min_pwd_len = int(os.getenv("AUTH_MIN_PASSWORD_LENGTH", 9999))
 
-    pwd = random_string(min_pwd_len - 1)
+    pwd = fake.password(min_pwd_len - 1)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=pwd)
     assert not ret_val
     assert ret_text == 'The new password cannot match the previous password'
