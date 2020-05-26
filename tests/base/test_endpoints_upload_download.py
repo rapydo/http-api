@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 import io
 from restapi.tests import BaseTests, API_URI
+from restapi.utilities.logs import log
 
 
 class TestUploadAndDownload(BaseTests):
 
+    fname = None
+    fcontent = None
+
     def test_upload(self, client, fake):
 
-        self.fname = fake.file_name()
-        self.fcontent = fake.paragraph()
+        if self.fname is None:
+            self.fname = fake.file_name()
+            log.info(f"Generating random file name: {self.fname}")
+
+        if self.fcontent is None:
+            self.fcontent = fake.paragraph()
 
         r = client.put(
             API_URI + '/tests/upload',
@@ -47,7 +55,14 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get('charset') is not None
         assert meta.get('type') is not None
 
-    def test_download(self, client):
+    def test_download(self, client, fake):
+
+        if self.fname is None:
+            self.fname = fake.file_name()
+            log.info(f"Generating random file name: {self.fname}")
+
+        if self.fcontent is None:
+            self.fcontent = fake.paragraph()
 
         endpoint = API_URI + '/tests/download/'
 
@@ -88,6 +103,13 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
 
     def test_chunked(self, client, fake):
+
+        if self.fname is None:
+            self.fname = fake.file_name()
+            log.info(f"Generating random file name: {self.fname}")
+
+        if self.fcontent is None:
+            self.fcontent = fake.paragraph()
 
         r = client.post(API_URI + '/tests/upload', data={'force': True})
         assert r.status_code == 201
