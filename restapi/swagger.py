@@ -149,6 +149,8 @@ class Swagger:
 
                 # handle parameters in URI for Flask
                 if param['in'] == 'query':
+                    # Deprecated since 0.7.4
+                    log.warning("Deprecated swagger query parameters")
                     query_params.append(param)
 
             if len(query_params) > 0:
@@ -168,7 +170,7 @@ class Swagger:
             # Handle global tags
             if endpoint.tags:
                 specs.setdefault('tags', list())
-                specs['tags'].extend(endpoint.tags)
+                specs['tags'] = list(set(specs['tags'] + endpoint.tags))
                 # A global set with all used occurrences
                 self._used_swagger_tags.update(endpoint.tags)
 
