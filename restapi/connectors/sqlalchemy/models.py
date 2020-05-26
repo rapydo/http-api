@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 db = OriginalAlchemy()
 
 if os.getenv("ALCHEMY_DBTYPE") == 'mysql+pymysql':
+    # Required by MySQL to accept unicode strings (like chinese)
     DEFAULT_COLLATION = 'utf8_unicode_ci'
 else:
     DEFAULT_COLLATION = None
@@ -32,7 +33,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True)
     email = db.Column(db.String(100), unique=True)
-    # Required by MySQL to accept unicode names (like chinese)
     name = db.Column(db.String(255, collation=DEFAULT_COLLATION))
     surname = db.Column(db.String(255))
     authmethod = db.Column(db.String(20))

@@ -110,7 +110,7 @@ class TestApp(BaseTests):
             min_pwd_len
         )
 
-        new_pwd = fake.password(min_pwd_len)
+        new_pwd = fake.password(min_pwd_len, strong=True)
         data['new_password'] = new_pwd
         data['password_confirm'] = new_pwd
         r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)

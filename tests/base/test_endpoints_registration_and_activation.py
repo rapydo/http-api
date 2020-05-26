@@ -9,7 +9,7 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
 
-    def test_registration(self, client):
+    def test_registration(self, client, fake):
 
         if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
             log.warning("User registration is disabled, skipping tests")
@@ -27,27 +27,27 @@ class TestApp(BaseTests):
         r = client.post(AUTH_URI + '/profile', data={'x': 'y'})
         assert r.status_code == 400
         registration_data = {}
-        registration_data['password'] = 'short'
+        registration_data['password'] = fake.password(5)
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
         registration_data['email'] = BaseAuthentication.default_user
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
-        registration_data['name'] = 'Mr'
+        registration_data['name'] = fake.first_name()
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
 
-        registration_data['surname'] = 'Brown'
+        registration_data['surname'] = fake.last_name()
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 400
 
-        registration_data['password'] = self.randomString()
+        registration_data['password'] = fake.password(strong=True)
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 409
         m = "This user already exists: {}".format(BaseAuthentication.default_user)
         assert self.get_content(r) == m
 
-        registration_data['email'] = 'mock@nomail.org'
+        registration_data['email'] = fake.ascii_email()
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
@@ -72,7 +72,7 @@ class TestApp(BaseTests):
             # error='Sorry, this account is not active'
         )
         # Also password reset is not allowed
-        data = {'reset_email': 'mock@nomail.org'}
+        data = {'reset_email': fake.ascii_email()}
         r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 403
         assert self.get_content(r) == 'Sorry, this account is not active'
@@ -80,9 +80,11 @@ class TestApp(BaseTests):
         # Activation, missing or wrong information
         r = client.post(AUTH_URI + '/profile/activate')
         assert r.status_code == 400
-        r = client.post(AUTH_URI + '/profile/activate', data={'x': 'y'})
+        r = client.post(AUTH_URI + '/profile/activate', data=fake.pydict(2))
         assert r.status_code == 400
-        r = client.post(AUTH_URI + '/profile/activate', data={'username': 'y'})
+        # It isn't an email
+        invalid = fake.pystr(10)
+        r = client.post(AUTH_URI + '/profile/activate', data={'username': invalid})
         assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
@@ -98,7 +100,7 @@ class TestApp(BaseTests):
         # request activation, wrong username
         r = client.post(
             AUTH_URI + '/profile/activate',
-            data={'username': 'sample@nomail.org'}
+            data={'username': fake.ascii_email()}
         )
         # return is 200, but no token will be generated and no mail will be sent
         # but it respond with the activation msg and hides the non existence of the user
@@ -217,7 +219,7 @@ class TestApp(BaseTests):
         # 2 - user activation using unconventional channel, e.g. by admins
         # 3 - user tries to activate and fails because already active
 
-        registration_data['email'] = 'newmock@nomail.org'
+        registration_data['email'] = fake.ascii_email()
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
