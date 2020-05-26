@@ -214,7 +214,7 @@ class Customizer:
                                 continue
                             # convert GET -> _GET
                             # Deprecated since 0.7.4
-                            else:
+                            else:  # pragma: no cover
                                 log.warning(
                                     "Obsolete dict {} in {}", m, class_name
                                 )
