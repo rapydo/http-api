@@ -48,9 +48,11 @@ setup(
 
         "PyYAML==5.3.1",
 
+        # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.8.1",
         "schemathesis==1.6.2",
+        "Faker==4.1.0",
 
         # DB and services drivers
         "neomodel==3.3.2",
