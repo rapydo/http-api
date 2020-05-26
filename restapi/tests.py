@@ -2,12 +2,15 @@
 import os
 import pytest
 import json
-import random
 import jwt
 import uuid
 import pytz
+import string
+import random
 from datetime import datetime, timedelta
 from glom import glom
+from faker import Faker
+from faker.providers import BaseProvider
 
 from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
 from restapi.services.authentication import BaseAuthentication
@@ -19,12 +22,15 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
-@pytest.mark.usefixtures("fake")
-class BaseTests:
+def get_faker():
+    fake = Faker()
 
-    @pytest.fixture(autouse=True)
-    def _faker(self, fake):
-        self.fake = fake
+    fake.add_provider(PasswordProvider)
+
+
+fake = get_faker()
+
+class BaseTests:
 
     def save(self, variable, value, read_only=False):
         """
@@ -114,12 +120,12 @@ class BaseTests:
                 action = content.get('actions')[0]
 
                 if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
-                    newpwd = self.fake.password(strong=True)
+                    newpwd = fake.password(strong=True)
                     self.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
-                            'password_confirm': self.fake.password(strong=True),
+                            'password_confirm': fake.password(strong=True),
                         },
                         status_code=409,
                     )
@@ -172,8 +178,9 @@ class BaseTests:
         return CeleryExt
 
     def randomString(self, length=16, prefix=""):
-        log.warning("Deprecated, use self.fake.password instead")
-        return prefix + self.fake.password(
+        # Deprecated since 0.7.4
+        log.warning("Deprecated, use fake.password instead")
+        return prefix + fake.password(
             length, low=False, up=True, digits=True, symbols=False
         )
 
@@ -190,22 +197,22 @@ class BaseTests:
 
             if 'enum' in d:
                 if len(d["enum"]) > 0:
-                    data[key] = self.fake.random_element(list(d["enum"].keys()))
+                    data[key] = fake.random_element(list(d["enum"].keys()))
                 else:
                     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
-                data[key] = self.fake.random_int()
+                data[key] = fake.random_int()
             elif field_type == "date":
-                data[key] = self.fake.date(pattern='%Y-%m-%d')
+                data[key] = fake.date(pattern='%Y-%m-%d')
             elif field_type == "email":
-                data[key] = self.fake.ascii_email()
+                data[key] = fake.ascii_email()
             elif field_type == "boolean":
-                data[key] = self.fake.random_elements((True, False))
+                data[key] = fake.random_elements((True, False))
             elif field_type == "password":
-                data[key] = self.fake.password(strong=True)
+                data[key] = fake.password(strong=True)
             elif field_type == "string":
                 # a totally random string is something like a strong password
-                data[key] = self.fake.password(strong=True)
+                data[key] = fake.password(strong=True)
             else:
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
@@ -295,7 +302,7 @@ class BaseTests:
                           wrong_secret=False, wrong_algorithm=False):
 
         if wrong_secret:
-            secret = self.fake.password()
+            secret = fake.password()
         else:
             f = os.getenv('JWT_APP_SECRETS') + "/secret.key"
             secret = open(f, 'rb').read()
@@ -331,3 +338,76 @@ class BaseTests:
         ).decode('ascii')
 
         return token
+
+
+# Create a random password to be used to build data for tests
+class PasswordProvider(BaseProvider):
+    def password(self, length=8,
+                 strong=False,  # this enable all low, up, digits and symbols
+                 low=True, up=False, digits=False, symbols=False):
+
+        if strong:
+            if length < 16:
+                length = 16
+            low = True
+            up = True
+            digits = True
+            symbols = True
+
+        charset = ""
+        if low:
+            charset += string.ascii_lowercase
+        if up:
+            charset += string.ascii_uppercase
+        if digits:
+            charset += string.digits
+        if symbols:
+            charset += string.punctuation
+
+        rand = random.SystemRandom()
+
+        randstr = ''.join(rand.choices(charset, k=length))
+        if low and not any(s in randstr for s in string.ascii_lowercase):
+            log.warning(
+                "String {} not strong enough, missing lower case characters".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if up and not any(s in randstr for s in string.ascii_uppercase):
+            log.warning(
+                "String {} not strong enough, missing upper case characters".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if digits and not any(s in randstr for s in string.digits):
+            log.warning(
+                "String {} not strong enough, missing digits".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if symbols and not any(s in randstr for s in string.punctuation):
+            log.warning(
+                "String {} not strong enough, missing symbols".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+
+        return randstr
+
+
