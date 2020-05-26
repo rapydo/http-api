@@ -39,7 +39,6 @@ class User(IdentifiedNode):
 class Group(IdentifiedNode):
     fullname = StringProperty(required=True, unique_index=False)
     shortname = StringProperty(required=True, unique_index=True)
-    # prefix = StringProperty(required=True, unique_index=True)
 
     members = RelationshipFrom('User', 'BELONGS_TO', cardinality=ZeroOrMore)
     coordinator = RelationshipFrom('User', 'PI_FOR', cardinality=ZeroOrOne)
