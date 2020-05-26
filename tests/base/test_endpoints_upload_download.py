@@ -6,17 +6,13 @@ from restapi.utilities.logs import log
 
 class TestUploadAndDownload(BaseTests):
 
-    fname = None
-    fcontent = None
-
     def test_upload(self, client, fake):
 
-        if self.fname is None:
-            self.fname = fake.file_name()
-            log.info(f"Generating random file name: {self.fname}")
+        self.fname = fake.file_name()
+        self.fcontent = fake.paragraph()
 
-        if self.fcontent is None:
-            self.fcontent = fake.paragraph()
+        self.save("fname", self.fname)
+        self.save("fcontent", self.fcontent)
 
         r = client.put(
             API_URI + '/tests/upload',
@@ -57,12 +53,8 @@ class TestUploadAndDownload(BaseTests):
 
     def test_download(self, client, fake):
 
-        if self.fname is None:
-            self.fname = fake.file_name()
-            log.info(f"Generating random file name: {self.fname}")
-
-        if self.fcontent is None:
-            self.fcontent = fake.paragraph()
+        self.fname = self.get("fname")
+        self.fcontent = self.get("fcontent")
 
         endpoint = API_URI + '/tests/download/'
 
@@ -104,12 +96,8 @@ class TestUploadAndDownload(BaseTests):
 
     def test_chunked(self, client, fake):
 
-        if self.fname is None:
-            self.fname = fake.file_name()
-            log.info(f"Generating random file name: {self.fname}")
-
-        if self.fcontent is None:
-            self.fcontent = fake.paragraph()
+        self.fname = self.get("fname")
+        self.fcontent = self.get("fcontent")
 
         r = client.post(API_URI + '/tests/upload', data={'force': True})
         assert r.status_code == 201
