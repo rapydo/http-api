@@ -11,7 +11,7 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
 
-    def test_password_reset(self, client):
+    def test_password_reset(self, client, fake):
 
         if not detector.get_bool_from_os("ALLOW_PASSWORD_RESET"):
             log.warning("Password reset is disabled, skipping tests")
@@ -26,7 +26,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # Request password reset, missing information
-        r = client.post(AUTH_URI + '/reset', data={'x': 'y'})
+        r = client.post(AUTH_URI + '/reset', data=fake.pydict(2))
         assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
@@ -38,10 +38,11 @@ class TestApp(BaseTests):
         num_tokens = len(tokens_snapshot)
 
         # Request password reset, wrong email
-        data = {'reset_email': 'sample@nomail.org'}
+        wrong_email = fake.ascii_email()
+        data = {'reset_email': wrong_email}
         r = client.post(AUTH_URI + '/reset', data=data)
         assert r.status_code == 403
-        msg = 'Sorry, sample@nomail.org is not recognized as a valid username'
+        msg = f'Sorry, {wrong_email} is not recognized as a valid username'
         assert self.get_content(r) == msg
 
         r = client.get(API_URI + "/admin/tokens", headers=headers)
@@ -93,8 +94,8 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         data = {}
-        data['new_password'] = "Aa1!" + self.randomString(length=2)
-        data['password_confirm'] = "Bb1!" + self.randomString(length=2)
+        data['new_password'] = fake.password(7)
+        data['password_confirm'] = fake.password(7)
         r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
         assert r.status_code == 400
         assert self.get_content(r) == 'New password does not match with confirmation'
@@ -109,7 +110,7 @@ class TestApp(BaseTests):
             min_pwd_len
         )
 
-        new_pwd = "Cc!4" + self.randomString(length=min_pwd_len)
+        new_pwd = fake.password(min_pwd_len)
         data['new_password'] = new_pwd
         data['password_confirm'] = new_pwd
         r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
