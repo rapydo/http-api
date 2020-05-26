@@ -36,8 +36,6 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, endpoint, headers)
         data = self.buildData(schema)
-        log.critical(data)
-        assert 0
 
         r = client.post(url, data=data, headers=headers)
         assert r.status_code == 200
