@@ -19,6 +19,7 @@ from sqlalchemy.engine.base import Connection
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
+from sqlalchemy.engine.url import URL
 from sqlalchemy import text
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
@@ -101,15 +102,19 @@ class SqlAlchemy(Connector):
         if len(kwargs) > 0:
             print("TODO: use args for connection?", kwargs)
 
-        uri = '{}://{}:{}@{}:{}/{}'.format(
-            self.variables.get('dbtype', 'postgresql'),
-            self.variables.get('user'),
-            self.variables.get('password'),
-            self.variables.get('host'),
-            self.variables.get('port'),
-            self.variables.get('db'),
-        )
+        db_url = {
+            'database': self.variables.get('db'),
+            'drivername': self.variables.get('dbtype', 'postgresql'),
+            'username': self.variables.get('user'),
+            'password': self.variables.get('password'),
+            'host': self.variables.get('host'),
+            'port': self.variables.get('port'),
+        }
 
+        if self.variables.get('dbtype', 'postgresql') == 'mysql+pymysql':
+            db_url['query'] = {'charset': 'utf8mb4'}
+
+        uri = URL(**db_url)
         # TODO: in case we need different connection binds
         # (multiple connections with sql) then:
         # SQLALCHEMY_BINDS = {
@@ -156,7 +161,7 @@ class SqlAlchemy(Connector):
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
 
-        db.engine_bis = create_engine(uri)
+        db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)
         db.session.flush = catch_db_exceptions(db.session.flush)
