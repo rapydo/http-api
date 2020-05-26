@@ -94,7 +94,48 @@ class PasswordProvider(BaseProvider):
 
 
 def get_faker():
-    fake = Faker()
+
+    locales = {
+        'ar_EG': 'Arabic',
+        'bg_BG': 'Bulgarian',
+        'bs_BA': 'Bosnian',
+        'cs_CZ': 'Czech',
+        'de_DE': 'German',
+        'dk_DK': 'Danish',
+        'el_GR': 'Greek',
+        'en_US': 'English',
+        'es_ES': 'Spanish',
+        'et_EE': 'Estonian',
+        'fa_IR': 'Persian',
+        'fi_FI': 'Finnish',
+        'fr_FR': 'French',
+        'hi_IN': 'Hindi',
+        'hr_HR': 'Croatian',
+        'hu_HU': 'Hungarian',
+        'hy_AM': 'Armenian',
+        'it_IT': 'Italian',
+        'ja_JP': 'Japanese',
+        'ka_GE': 'Georgian',
+        'ko_KR': 'Korean',
+        'lt_LT': 'Lithuanian',
+        'lv_LV': 'Latvian',
+        'ne_NP': 'Nepali',
+        'nl_NL': 'Dutch',
+        'no_NO': 'Norwegian',
+        'pl_PL': 'Polish',
+        'pt_PT': 'Portuguese',
+        'ro_RO': 'Romanian',
+        'ru_RU': 'Russian',
+        'sl_SI': 'Slovene',
+        'sv_SE': 'Swedish',
+        'tr_TR': 'Turkish',
+        'uk_UA': 'Ukrainian',
+        'zh_CN': 'Chinese',
+    }
+
+    loc = random.SystemRandom().choice(list(locales.keys()))
+    log.warning(f"Today I'm {locales.get(loc)}")
+    fake = Faker(loc)
 
     fake.add_provider(PasswordProvider)
 
@@ -287,8 +328,7 @@ class BaseTests:
             elif field_type == "password":
                 data[key] = fake.password(strong=True)
             elif field_type == "string":
-                # a totally random string is something like a strong password
-                data[key] = fake.password(strong=True)
+                data[key] = fake.pystr(min_chars=16, max_chars=32)
             else:
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
