@@ -98,8 +98,13 @@ def get_faker():
 
     fake.add_provider(PasswordProvider)
 
+    return fake
 
+
+# How to inject the fixture in the class constructor or definition
+# and make available to all methods?
 fake = get_faker()
+
 
 class BaseTests:
 
@@ -272,13 +277,13 @@ class BaseTests:
                 else:
                     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
-                data[key] = fake.random_int()
+                data[key] = fake.pyint()
             elif field_type == "date":
                 data[key] = fake.date(pattern='%Y-%m-%d')
             elif field_type == "email":
                 data[key] = fake.ascii_email()
             elif field_type == "boolean":
-                data[key] = fake.random_elements((True, False))
+                data[key] = fake.pybool()
             elif field_type == "password":
                 data[key] = fake.password(strong=True)
             elif field_type == "string":
