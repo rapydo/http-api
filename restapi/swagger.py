@@ -79,12 +79,12 @@ class Swagger:
 
             # Deprecated since 0.7.4
             custom_specs = specs.pop('custom', None)
-            if custom_specs is not None:
+            if custom_specs is not None:  # pragma: no cover
                 log.warning("Deprecated use of custom in specs")
 
             # Deprecated since 0.7.4
             cparam = specs.pop('custom_parameters', None)
-            if cparam is not None:
+            if cparam is not None:  # pragma: no cover
                 log.warning("Deprecated use of custom in specs")
 
             ###########################
@@ -148,12 +148,13 @@ class Swagger:
                                 param["enum"].append(k)
 
                 # handle parameters in URI for Flask
-                if param['in'] == 'query':
+                if param['in'] == 'query':  # pragma: no cover
                     # Deprecated since 0.7.4
                     log.warning("Deprecated swagger query parameters")
                     query_params.append(param)
 
-            if len(query_params) > 0:
+            # Deprecated since 0.7.4
+            if len(query_params) > 0:  # pragma: no cover
                 self.query_parameters(
                     endpoint.cls, method=method, uri=uri, params=query_params
                 )
@@ -186,7 +187,8 @@ class Swagger:
 
         return endpoint
 
-    def query_parameters(self, cls, method, uri, params):
+    # Deprecated since 0.7.4
+    def query_parameters(self, cls, method, uri, params):  # pragma: no cover
         """
         apply decorator to endpoint for query parameters
         # self._params[classname][URI][method][name]
@@ -268,6 +270,7 @@ class Swagger:
 
         ###################
         # Save query parameters globally
+        # Deprecated since 0.7.4
         self._customizer._query_params = self._qparams
         self._customizer._parameter_schemas = self._parameter_schemas
         output['paths'] = self._paths

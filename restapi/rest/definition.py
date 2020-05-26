@@ -92,7 +92,8 @@ class EndpointResource(Resource):
             mem.customizer._query_params.get(classname, {}).get(uri, {}).get(method, {})
         )
 
-        if len(current_params) > 0:
+        # Deprecated since 0.7.4
+        if len(current_params) > 0:  # pragma: no cover
 
             act = 'store'  # store is normal, append is a list
             loc = ['headers', 'values']  # multiple locations
@@ -211,7 +212,7 @@ class EndpointResource(Resource):
 
         return (current_page, limit)
 
-    def get_current_user(self):
+    def get_current_user(self):  # pragma: no cover
 
         # Deprecated since 0.7.4
         log.warning(
@@ -238,7 +239,7 @@ class EndpointResource(Resource):
             code = 200
 
         # Deprecated since 0.7.4
-        if errors is not None:
+        if errors is not None:  # pragma: no cover
             log.warning(
                 "Deprecated use of errors in response, use raise RestApiException or "
                 "response(content, code>=400)"
