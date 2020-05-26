@@ -60,7 +60,7 @@ class TestApp(BaseTests):
             status_code=401,
         )
 
-    def test_02_GET_profile(self, client):
+    def test_02_GET_profile(self, client, fake):
         """ Check if you can use your token for protected endpoints """
 
         endpoint = AUTH_URI + '/profile'
@@ -126,7 +126,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-        headers = {'Authorization': 'Bearer \'inject'}
+        headers = {'Authorization': 'Bearer \'{}'.format(fake.pystr())}
         r = client.get(AUTH_URI + '/status', headers=headers)
         assert r.status_code == 401
 
@@ -175,8 +175,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-
-    def test_03_change_profile(self, client):
+    def test_03_change_profile(self, client, fake):
 
         if not detector.get_bool_from_os("MAIN_LOGIN_ENABLE"):
             log.warning("Profile is disabled, skipping tests")
@@ -195,8 +194,8 @@ class TestApp(BaseTests):
         r = client.patch(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 204
 
-        newname = 'newname'
-        newuuid = 'newuuid'
+        newname = fake.name()
+        newuuid = fake.pystr()
 
         r = client.get(AUTH_URI + "/" + 'profile', headers=headers)
         assert r.status_code == 200
@@ -220,27 +219,28 @@ class TestApp(BaseTests):
         # change password, no data
         r = client.put(AUTH_URI + "/" + 'profile', data={}, headers=headers)
         assert r.status_code == 400
-        # Sending a new password or a password confirmation without a password
-        data = {'new_password': 'new_password'}
+        # Sending a new_password and/or password_confirm without a password
+        newpassword = fake.password()
+        data = {'new_password': newpassword}
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
-        data = {'password_confirm': 'new_password'}
+        data = {'password_confirm': newpassword}
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
-        data = {'new_password': 'new_password', 'password_confirm': 'new_password'}
+        data = {'new_password': newpassword, 'password_confirm': newpassword}
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
 
         data = {}
-        data['password'] = self.randomString(length=2)
+        data['password'] = fake.password(length=5)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
 
-        data['new_password'] = self.randomString(length=2)
+        data['new_password'] = fake.password(length=5)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
 
-        data['password_confirm'] = self.randomString(length=2)
+        data['password_confirm'] = fake.password(length=5)
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 400
 
@@ -260,7 +260,7 @@ class TestApp(BaseTests):
         assert r.status_code == 409
 
         # Change the password
-        data['new_password'] = "Aa1!{}".format(self.randomString())
+        data['new_password'] = fake.password(strong=True)
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + "/" + 'profile', data=data, headers=headers)
         assert r.status_code == 204
