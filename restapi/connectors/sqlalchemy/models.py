@@ -34,7 +34,7 @@ class User(db.Model):
     uuid = db.Column(db.String(36), unique=True)
     email = db.Column(db.String(100), unique=True)
     name = db.Column(db.String(255, collation=DEFAULT_COLLATION))
-    surname = db.Column(db.String(255))
+    surname = db.Column(db.String(255, collation=DEFAULT_COLLATION))
     authmethod = db.Column(db.String(20))
     password = db.Column(db.String(255))
     first_login = db.Column(db.DateTime(timezone=True))
