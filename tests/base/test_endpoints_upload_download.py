@@ -44,9 +44,8 @@ class TestUploadAndDownload(BaseTests):
         assert c.get('filename') == self.fname
         meta = c.get('meta')
         assert meta is not None
-        # It is binary because sent as BytesIO
-        assert meta.get('charset') == 'binary'
-        assert meta.get('type') == 'application/octet-stream'
+        assert meta.get('charset') is not None
+        assert meta.get('type') is not None
 
     def test_download(self, client):
 
