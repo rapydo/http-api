@@ -22,6 +22,77 @@ API_URI = '{}{}'.format(SERVER_URI, API_URL)
 AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
 
 
+# Create a random password to be used to build data for tests
+class PasswordProvider(BaseProvider):
+    def password(self, length=8,
+                 strong=False,  # this enables all low, up, digits and symbols
+                 low=True, up=False, digits=False, symbols=False):
+
+        if strong:
+            if length < 16:
+                length = 16
+            low = True
+            up = True
+            digits = True
+            symbols = True
+
+        charset = ""
+        if low:
+            charset += string.ascii_lowercase
+        if up:
+            charset += string.ascii_uppercase
+        if digits:
+            charset += string.digits
+        if symbols:
+            charset += string.punctuation
+
+        rand = random.SystemRandom()
+
+        randstr = ''.join(rand.choices(charset, k=length))
+        if low and not any(s in randstr for s in string.ascii_lowercase):
+            log.warning(
+                "String {} not strong enough, missing lower case characters".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if up and not any(s in randstr for s in string.ascii_uppercase):
+            log.warning(
+                "String {} not strong enough, missing upper case characters".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if digits and not any(s in randstr for s in string.digits):
+            log.warning(
+                "String {} not strong enough, missing digits".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+        if symbols and not any(s in randstr for s in string.punctuation):
+            log.warning(
+                "String {} not strong enough, missing symbols".format(
+                    randstr
+                )
+            )
+            return self.password(
+                length, strong=strong,
+                low=low, up=up, digits=digits, symbols=symbols
+            )
+
+        return randstr
+
+
 def get_faker():
     fake = Faker()
 
@@ -338,76 +409,3 @@ class BaseTests:
         ).decode('ascii')
 
         return token
-
-
-# Create a random password to be used to build data for tests
-class PasswordProvider(BaseProvider):
-    def password(self, length=8,
-                 strong=False,  # this enable all low, up, digits and symbols
-                 low=True, up=False, digits=False, symbols=False):
-
-        if strong:
-            if length < 16:
-                length = 16
-            low = True
-            up = True
-            digits = True
-            symbols = True
-
-        charset = ""
-        if low:
-            charset += string.ascii_lowercase
-        if up:
-            charset += string.ascii_uppercase
-        if digits:
-            charset += string.digits
-        if symbols:
-            charset += string.punctuation
-
-        rand = random.SystemRandom()
-
-        randstr = ''.join(rand.choices(charset, k=length))
-        if low and not any(s in randstr for s in string.ascii_lowercase):
-            log.warning(
-                "String {} not strong enough, missing lower case characters".format(
-                    randstr
-                )
-            )
-            return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
-            )
-        if up and not any(s in randstr for s in string.ascii_uppercase):
-            log.warning(
-                "String {} not strong enough, missing upper case characters".format(
-                    randstr
-                )
-            )
-            return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
-            )
-        if digits and not any(s in randstr for s in string.digits):
-            log.warning(
-                "String {} not strong enough, missing digits".format(
-                    randstr
-                )
-            )
-            return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
-            )
-        if symbols and not any(s in randstr for s in string.punctuation):
-            log.warning(
-                "String {} not strong enough, missing symbols".format(
-                    randstr
-                )
-            )
-            return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
-            )
-
-        return randstr
-
-
