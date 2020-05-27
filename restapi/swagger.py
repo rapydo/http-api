@@ -51,10 +51,6 @@ class Swagger:
         self._original_paths = {}
         # The complete set of query parameters for all classes
         self._qparams = {}
-        # Save schemas for parameters before to remove the custom sections
-        # It is used to provide schemas for unittests and automatic forms
-        # To be deprecated: only used by IMC, once converted remove this
-        self._parameter_schemas = {}
         self._used_swagger_tags = set()
 
     def read_my_swagger(self, method, endpoint, mapping):
@@ -126,11 +122,6 @@ class Swagger:
             # cycle parameters and add them to the endpoint class
             query_params = []
             for param in specs['parameters']:
-
-                if param["in"] != 'path':
-                    self._parameter_schemas.setdefault(uri, {})
-                    self._parameter_schemas[uri].setdefault(method, [])
-                    self._parameter_schemas[uri][method].append(param.copy())
 
                 # Remove custom attributes from parameters to prevent validation errors
                 param.pop('custom', None)
@@ -272,7 +263,6 @@ class Swagger:
         # Save query parameters globally
         # Deprecated since 0.7.4
         self._customizer._query_params = self._qparams
-        self._customizer._parameter_schemas = self._parameter_schemas
         output['paths'] = self._paths
 
         ###################
