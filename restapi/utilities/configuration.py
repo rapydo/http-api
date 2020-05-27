@@ -17,12 +17,13 @@ def read_configuration(
     """
 
     custom_configuration = load_yaml_file(
-        PROJECT_CONF_FILENAME, path=base_project_path, keep_order=True
+        PROJECT_CONF_FILENAME, path=base_project_path
     )
 
     # Verify custom project configuration
     project = custom_configuration.get('project')
-    if project is None:
+    # Can't be tested because it is included in default configuration
+    if project is None:  # pragma: no cover
         raise AttributeError("Missing project configuration")
 
     variables = ['title', 'description', 'version', 'rapydo']
@@ -41,7 +42,8 @@ def read_configuration(
         base_configuration = {}
     else:
         base_configuration = load_yaml_file(
-            file=PROJECTS_DEFAULTS_FILE, path=default_file_path, keep_order=True)
+            file=PROJECTS_DEFAULTS_FILE, path=default_file_path
+        )
 
     extended_project = project.get('extends')
 
@@ -68,7 +70,8 @@ def read_configuration(
 
     extend_file = "extended_{}".format(PROJECT_CONF_FILENAME)
     extended_configuration = load_yaml_file(
-        file=extend_file, path=extend_path, keep_order=True)
+        file=extend_file, path=extend_path
+    )
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
@@ -119,7 +122,7 @@ def construct_mapping(loader, node):
     return OrderedDict(loader.construct_pairs(node))
 
 
-def load_yaml_file(file, path, keep_order=False):
+def load_yaml_file(file, path):
 
     filepath = os.path.join(path, file)
 
@@ -130,17 +133,11 @@ def load_yaml_file(file, path, keep_order=False):
 
     with open(filepath) as fh:
         try:
-            if keep_order:
-
-                OrderedLoader.add_constructor(
-                    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-                    construct_mapping
-                )
-                loader = yaml.load_all(fh, OrderedLoader)
-            else:
-                loader = yaml.load_all(fh, yaml.loader.Loader)
-
-            docs = list(loader)
+            OrderedLoader.add_constructor(
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+                construct_mapping
+            )
+            docs = list(yaml.load_all(fh, OrderedLoader))
 
             if len(docs) == 0:
                 raise AttributeError("YAML file is empty: {}".format(filepath))
