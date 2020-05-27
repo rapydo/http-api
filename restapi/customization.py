@@ -96,7 +96,8 @@ class Customizer:
         )
 
         ERROR_401 = {
-            'description': 'Missing or invalid credentials or token'
+            # 'description': 'Missing or invalid credentials or token'
+            'description': 'This endpoint requires a valid authorization token'
         }
         ERROR_400 = {
             'description': 'The request cannot be satisfied due to malformed syntax'
