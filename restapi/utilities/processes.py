@@ -4,10 +4,28 @@ import os
 import time
 import errno
 import socket
+import signal
 import psutil
 import math
 from datetime import datetime
 from restapi.utilities.logs import log
+
+
+class Timeout(Exception):
+    pass
+
+
+def handler(signum, frame):
+    raise Timeout("Operation timeout: interrupted")
+
+
+def start_timeout(time):
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(time)
+
+
+def stop_timeout():
+    signal.alarm(0)
 
 
 def find_process(process_name, keywords=None, prefix=None):
