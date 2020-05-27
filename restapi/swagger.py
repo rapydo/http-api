@@ -141,7 +141,13 @@ class Swagger:
                 # handle parameters in URI for Flask
                 if param['in'] == 'query':  # pragma: no cover
                     # Deprecated since 0.7.4
-                    log.warning("Deprecated swagger query parameters")
+                    log.warning(
+                        "{}.py: deprecated query parameter '{}' in {} {}",
+                        endpoint.cls.__name__,
+                        param.get('name'),
+                        method.upper(),
+                        label
+                    )
                     query_params.append(param)
 
             # Deprecated since 0.7.4
