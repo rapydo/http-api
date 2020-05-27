@@ -9,8 +9,9 @@ from irods.rule import Rule
 from irods.ticket import Ticket
 from irods import models
 from irods import exception as iexceptions
-from restapi.exceptions import RestApiException
+from irods.manager.data_object_manager import DataObjectManager
 
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
@@ -235,15 +236,13 @@ class IrodsPythonClient:  # pragma: no cover
 
         return False
 
-    def icopy(self, sourcepath, destpath, ignore_existing=False, warning=None):
+    def icopy(self, sourcepath, destpath,
+              ignore_existing=False,
+              warning='Irods object already exists'):
 
         # Replace 'copy'
 
-        from irods.manager.data_object_manager import DataObjectManager
-
         dm = DataObjectManager(self.prc)
-        if warning is None:
-            warning = 'Irods object already exists'
 
         try:
             dm.copy(sourcepath, destpath)

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 # from datetime import datetime
-
+import pytest
+import time
 import pytz
 from datetime import datetime
 from restapi.utilities.processes import find_process
+from restapi.utilities.processes import start_timeout, stop_timeout
 # from restapi.utilities.processes import wait_socket
 from restapi.tests import BaseTests
 from restapi.utilities.meta import Meta
@@ -20,6 +22,22 @@ class TestApp(BaseTests):
         s = Meta.get_submodules_from_package(None)
         assert isinstance(s, list)
         assert len(s) == 0
+
+        start_timeout(1)
+        try:
+            # This operation will be interrupted because slower than timeout
+            time.sleep(2)
+            pytest.fail("Operation not interrupted")
+        except BaseException as e:
+            assert str(e) == 'Operation timeout: interrupted'
+
+        start_timeout(1)
+        try:
+            stop_timeout()
+            # This operation will not be interrupted
+            time.sleep(2)
+        except BaseException:
+            pytest.fail("Operation interrupted")
 
         s = handle_log_output(None)
         assert isinstance(s, dict)
