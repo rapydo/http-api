@@ -21,7 +21,7 @@ env:
 # html email templates and more in the future
 - TEMPLATE=extraoptions
 # Temporary disabled, some issues with DB models...
-# - TEMPLATE=extended
+- TEMPLATE=extended
 
 script:
   # Randomize auth service to test some services
