@@ -55,7 +55,7 @@ class RabbitWrapper:
             log.debug(
                 'RabbitMQ connection wrapper created')
 
-        except pika.exceptions.AMQPConnectionError:
+        except pika.exceptions.AMQPConnectionError:  # pragma: no cover
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
@@ -114,7 +114,7 @@ class RabbitWrapper:
             #     ch.basic_publish("", "foobar", "Hello, world!")
             #     print(ch.basic_get("foobar"))
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''
@@ -191,7 +191,7 @@ class RabbitWrapper:
                 log.verbose('Message sent to RabbitMQ')
                 return True
 
-            except pika.exceptions.ConnectionClosed as e:
+            except pika.exceptions.ConnectionClosed as e:  # pragma: no cover
                 # TODO: This happens often. Check if heartbeat solves problem.
                 log.error(
                     'Failed to write message (try {}/{}), connection is dead ({})',
@@ -199,35 +199,33 @@ class RabbitWrapper:
                 )
                 self.__connection = None
 
-            except pika.exceptions.AMQPConnectionError as e:
+            except pika.exceptions.AMQPConnectionError as e:  # pragma: no cover
                 log.error(
                     'Failed to write message (try {}/{}), connection failed ({})',
                     i, MAX_RETRY, e
                 )
                 self.__connection = None
 
-            except pika.exceptions.AMQPChannelError as e:
+            except pika.exceptions.AMQPChannelError as e:  # pragma: no cover
                 log.error(
                     'Failed to write message (try {}/{}), channel is dead ({})',
                     i, MAX_RETRY, e
                 )
                 self.__channel = None
 
-            except AttributeError as e:
+            except AttributeError as e:  # pragma: no cover
                 log.error(
                     'Failed to write message (try {}/{}), {}',
                     i, MAX_RETRY, e
                 )
                 self.__connection = None
 
-            if i > MAX_RETRY:
-                log.warning(
-                    'Could not write to RabbitMQ ({}, {}): {}',
-                    exchange, queue, body
-                )
-            break
+        log.warning(  # pragma: no cover
+            'Could not write to RabbitMQ ({}, {}): {}',
+            exchange, queue, body
+        )
 
-        return False
+        return False  # pragma: no cover
 
     def __get_channel(self):
         '''

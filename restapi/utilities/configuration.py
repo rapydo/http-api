@@ -28,8 +28,8 @@ def read_configuration(
     variables = ['title', 'description', 'version', 'rapydo']
 
     for key in variables:
-        if project.get(key) is None:
-
+        # Can't be tested because it is included in default configuration
+        if project.get(key) is None:  # pragma: no cover
             log.exit(
                 "Project not configured, missing key '{}' in file {}/{}",
                 key,
