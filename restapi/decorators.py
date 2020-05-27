@@ -3,7 +3,11 @@
 from functools import wraps
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
+from flask_apispec import use_kwargs
+from marshmallow import fields, validate, post_load
 from sentry_sdk import capture_exception
+
+from restapi.models import Schema
 from restapi.confs import SENTRY_URL
 from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 # imported here as utility for endpoints
@@ -125,5 +129,46 @@ def catch_graph_exceptions(func):
         except RequiredProperty as e:
 
             raise RestApiException(str(e), status_code=400)
+
+    return wrapper
+
+
+class Pagination(Schema):
+    get_total = fields.Boolean(
+        required=False,
+        description='Request the total number of elements'
+    )
+    page = fields.Int(
+        required=False,
+        description='Current page number',
+        validate=validate.Range(min=1)
+    )
+    elements = fields.Int(
+        required=False,
+        description='Number of elements to retrieve',
+        validate=validate.Range(min=1, max=100)
+    )
+
+    @post_load
+    def verify_parameters(self, data, **kwargs):
+        if 'get_total' in data:
+            data['page'] = None
+            data['elements'] = None
+        else:
+            data.setdefault('get_total', False)
+            data.setdefault('page', 1)
+            data.setdefault('elements', 20)
+
+        return data
+
+
+def get_pagination(func):
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(Pagination)
+    def wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
 
     return wrapper
