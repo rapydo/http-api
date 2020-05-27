@@ -6,11 +6,15 @@ import re
 import pytz
 from functools import wraps
 from datetime import datetime, timedelta
+
 from neomodel import db, config
 from neomodel import StructuredNode
 from neomodel.match import NodeSet
 from neomodel.exceptions import UniqueProperty, DeflateError, DoesNotExist
+from neomodel import remove_all_labels, install_all_labels, clear_neo4j_database
+
 from neo4j.exceptions import ServiceUnavailable
+
 from neobolt.exceptions import CypherSyntaxError
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
@@ -231,7 +235,6 @@ class NeoModel(Connector):
 
             if auto_index:
                 try:
-                    from neomodel import remove_all_labels, install_all_labels
                     remove_all_labels()
                     install_all_labels()
                 except BaseException as e:
@@ -243,7 +246,6 @@ class NeoModel(Connector):
 
         with self.app.app_context():
             log.critical("Destroy current Neo4j data")
-            from neomodel import clear_neo4j_database
 
             clear_neo4j_database(graph.db)
 
