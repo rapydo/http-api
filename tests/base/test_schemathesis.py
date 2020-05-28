@@ -36,7 +36,7 @@ else:
     app = create_app(testing_mode=True)
     auth_header = get_auth_token()
 
-    schema = schemathesis.from_wsgi('/api/swagger', app)
+    schema = schemathesis.from_wsgi('/api/swagger', app, headers=auth_header)
 
     log.info("Starting tests...")
 
