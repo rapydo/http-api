@@ -38,6 +38,7 @@ class Customizer:
     def __init__(self):
 
         self._endpoints = []
+        self._private_endpoints = {}
         self._definitions = {}
         self._configurations = {}
         self._query_params = {}
@@ -244,55 +245,60 @@ class Customizer:
                             else:
                                 conf[u]['responses'].setdefault('404', ERROR_404)
 
-                        # inject _METHOD dictionaries into __apispec__ attribute
-                        # __apispec__ is normally populated by using @docs decorator
-                        if isinstance(epclss, MethodResourceMeta):
+                            # inject _METHOD dictionaries into __apispec__ attribute
+                            # __apispec__ is normally populated by using @docs decorator
+                            if isinstance(epclss, MethodResourceMeta):
 
-                            # retrieve attributes already set with @docs decorator
-                            fn.__apispec__ = fn.__dict__.get('__apispec__', {})
-                            docs = {}
-                            for doc in fn.__apispec__['docs']:
-                                docs.update(doc.options[0])
+                                # retrieve attributes already set with @docs decorator
+                                fn.__apispec__ = fn.__dict__.get('__apispec__', {})
+                                docs = {}
+                                for doc in fn.__apispec__['docs']:
+                                    docs.update(doc.options[0])
 
-                            missing = {}
-                            if 'summary' not in docs:
-                                summary = conf[u].get('summary')
-                                if summary is not None:
-                                    missing['summary'] = summary
-                            if 'description' not in docs:
-                                description = conf[u].get('description')
-                                if description is not None:
-                                    missing['description'] = description
+                                private = conf[u].pop('private', False)
+                                uri = "/{}{}".format(endpoint.base_uri, u)
+                                self._private_endpoints.setdefault(uri, {})
+                                self._private_endpoints[uri].setdefault(m, private)
 
-                            if 'responses' not in docs:
-                                responses = conf[u].get('responses')
-                                if responses is not None:
-                                    missing['responses'] = responses
+                                missing = {}
+                                if 'summary' not in docs:
+                                    summary = conf[u].get('summary')
+                                    if summary is not None:
+                                        missing['summary'] = summary
+                                if 'description' not in docs:
+                                    description = conf[u].get('description')
+                                    if description is not None:
+                                        missing['description'] = description
 
-                            if 'responses' in docs:
-                                responses = conf[u].get('responses')
-                                if responses is not None:
-                                    for code, resp in responses.items():
-                                        if code not in docs['responses']:
-                                            missing.setdefault('responses', {})
-                                            missing['responses'][code] = resp
+                                if 'responses' not in docs:
+                                    responses = conf[u].get('responses')
+                                    if responses is not None:
+                                        missing['responses'] = responses
 
-                            # mimic the behaviour of @docs decorator
-                            # https://github.com/jmcarp/flask-apispec/...
-                            #                         .../flask_apispec/annotations.py
-                            annotation = Annotation(
-                                options=[missing],
-                                # Inherit Swagger documentation from parent classes
-                                # None is the default value
-                                inherit=None
-                            )
-                            fn.__apispec__['docs'].insert(0, annotation)
+                                if 'responses' in docs:
+                                    responses = conf[u].get('responses')
+                                    if responses is not None:
+                                        for code, resp in responses.items():
+                                            if code not in docs['responses']:
+                                                missing.setdefault('responses', {})
+                                                missing['responses'][code] = resp
 
-                        elif not isinstance(epclss, MethodViewType):  # pragma: no cover
-                            log.warning("Unknown class type: {}", type(epclss))
+                                # mimic the behaviour of @docs decorator
+                                # https://github.com/jmcarp/flask-apispec/...
+                                #                         .../flask_apispec/annotations.py
+                                annotation = Annotation(
+                                    options=[missing],
+                                    # Inherit Swagger documentation from parent classes
+                                    # None is the default value
+                                    inherit=None
+                                )
+                                fn.__apispec__['docs'].insert(0, annotation)
 
-                        mapping_lists.extend(kk)
-                        endpoint.methods[method_fn] = copy.deepcopy(conf)
+                            elif not isinstance(epclss, MethodViewType):  # pragma: no cover
+                                log.warning("Unknown class type: {}", type(epclss))
+
+                            mapping_lists.extend(kk)
+                            endpoint.methods[method_fn] = copy.deepcopy(conf)
 
                     self._endpoints.append(endpoint)
 

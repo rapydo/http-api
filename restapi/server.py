@@ -156,12 +156,13 @@ def create_app(
                     MarshmallowPlugin()
                 ],
             ),
-            'APISPEC_SWAGGER_URL': '/api/swagger',
+            # 'APISPEC_SWAGGER_URL': '/api/swagger',
+            'APISPEC_SWAGGER_URL': None,
             # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
             # Disable Swagger-UI
             'APISPEC_SWAGGER_UI_URL': None,
         })
-        docs = FlaskApiSpec(microservice)
+        mem.docs = FlaskApiSpec(microservice)
 
         # Clean app routes
         ignore_verbs = {"HEAD", "OPTIONS"}
@@ -194,7 +195,7 @@ def create_app(
             for endpoint in mem.customizer._endpoints:
                 urls = list(endpoint.uris.values())
                 try:
-                    docs.register(endpoint.cls)
+                    mem.docs.register(endpoint.cls)
                 except TypeError as e:
                     # log.warning("{} on {}", type(e), endpoint.cls)
                     # Enable this warning to start conversion to FlaskFastApi

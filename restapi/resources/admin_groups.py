@@ -80,6 +80,7 @@ if detector.check_availability('neo4j'):
         labels = ["admin"]
         _GET = {
             "/admin/groups": {
+                "private": True,
                 "summary": "List of groups",
                 "responses": {
                     "200": {"description": "List of groups successfully retrieved"},
@@ -88,6 +89,7 @@ if detector.check_availability('neo4j'):
         }
         _POST = {
             "/admin/groups": {
+                "private": True,
                 "summary": "Create a new group",
                 "responses": {
                     "200": {"description": "The uuid of the new group is returned"},
@@ -96,6 +98,7 @@ if detector.check_availability('neo4j'):
         }
         _PUT = {
             "/admin/groups/<group_id>": {
+                "private": True,
                 "summary": "Modify a group",
                 "responses": {
                     "200": {"description": "Group successfully modified"},
@@ -104,6 +107,7 @@ if detector.check_availability('neo4j'):
         }
         _DELETE = {
             "/admin/groups/<group_id>": {
+                "private": True,
                 "summary": "Delete a group",
                 "responses": {
                     "200": {"description": "Group successfully deleted"},
