@@ -5,7 +5,6 @@ import schemathesis
 from hypothesis import settings, HealthCheck
 import werkzeug
 import json
-from glom import glom
 
 from restapi.server import create_app
 from restapi.services.authentication import BaseAuthentication
@@ -15,8 +14,7 @@ from restapi.utilities.logs import log
 RUN_SCHEMATHESIS = os.getenv("RUN_SCHEMATHESIS", "1") == "1"
 
 
-def get_auth_token():
-    client = werkzeug.Client(app, werkzeug.wrappers.Response)
+def get_auth_token(client):
     BaseAuthentication.load_default_user()
     BaseAuthentication.load_roles()
     USER = BaseAuthentication.default_user
@@ -34,9 +32,15 @@ if not RUN_SCHEMATHESIS:
     log.warning("Skipping schemathesis")
 else:
     app = create_app(testing_mode=True)
-    auth_header = get_auth_token()
+    client = werkzeug.Client(app, werkzeug.wrappers.Response)
+    auth_header = get_auth_token(client)
 
-    schema = schemathesis.from_wsgi('/api/swagger', app, headers=auth_header)
+    # it does not handle custom headers => the endpoint will provide partial schema
+    # due to missing authentication => skipping all private endpoints and schemas
+    # schema = schemathesis.from_wsgi('/api/swagger', app)
+    r = client.get('/api/swagger', headers=auth_header)
+    schema = json.loads(r.get_data().decode())
+    schema = schemathesis.from_dict(schema)
 
     log.info("Starting tests...")
 
