@@ -5,6 +5,8 @@ from gripcontrol import WebSocketEvent
 from gripcontrol import decode_websocket_events, encode_websocket_events
 from gripcontrol import websocket_control_message, create_grip_channel_header
 from flask_apispec import MethodResource
+from flask_apispec import use_kwargs
+from marshmallow import fields
 
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import RestApiException
@@ -31,13 +33,14 @@ class PushpinWebSocket(MethodResource, EndpointResource):
     }
 
     @decorators.catch_errors()
+    @use_kwargs({"sync": fields.Boolean(required=False)})
     @decorators.auth.required(allow_access_token_parameter=True)
-    def put(self, channel):
+    def put(self, channel, sync=True):
 
         pushpin = self.get_service_instance('pushpin')
 
         message = 'Hello, your job is completed!'
-        published = pushpin.publish_on_socket(channel, message, sync=True)
+        published = pushpin.publish_on_socket(channel, message, sync=sync)
 
         return self.response("Message received: {}".format(published))
 
@@ -116,12 +119,13 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
     }
 
     @decorators.catch_errors()
-    def put(self, channel):
+    @use_kwargs({"sync": fields.Boolean(required=False)})
+    def put(self, channel, sync=True):
 
         pushpin = self.get_service_instance('pushpin')
 
         message = 'Hello, your job is completed!\n'
-        published = pushpin.publish_on_stream(channel, message, sync=True)
+        published = pushpin.publish_on_stream(channel, message, sync=sync)
 
         return "Message received: {}".format(published)
 
