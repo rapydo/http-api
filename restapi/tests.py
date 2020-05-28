@@ -193,7 +193,7 @@ class BaseTests:
 
         content = r.data.decode('utf-8')
         if html:
-            content
+            return content
 
         return json.loads(content)
 
