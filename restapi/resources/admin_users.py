@@ -252,7 +252,7 @@ class AdminUsers(MethodResource, EndpointResource):
             "private": True,
             "summary": "Create a new user",
             "responses": {
-                # "200": {"description": "The uuid of the new user is returned"},
+                "200": {"description": "The uuid of the new user is returned"},
                 "409": {"description": "This user already exists"},
             },
         }
