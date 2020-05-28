@@ -42,32 +42,6 @@ class TestApp(BaseTests):
         r = client.get(AUTH_URI + '/status', headers={'Authorization': 'Bearer ABC'})
         assert r.status_code == 401
 
-    def test_GET_specifications(self, client):
-        """ Test that the flask server expose swagger specs """
-
-        specs = self.get_specs(client)
-
-        assert "basePath" in specs
-        assert "consumes" in specs
-        assert "produces" in specs
-        assert "application/json" in specs["consumes"]
-        assert "application/json" in specs["produces"]
-        assert "host" in specs
-        assert "info" in specs
-        assert "schemes" in specs
-        assert "swagger" in specs
-        assert "tags" in specs
-        assert "security" in specs
-        assert "Bearer" in specs["security"][0]
-        assert "securityDefinitions" in specs
-        assert "Bearer" in specs["securityDefinitions"]
-        assert "paths" in specs
-        assert "/auth/login" in specs["paths"]
-        assert "get" not in specs["paths"]["/auth/login"]
-        assert "post" in specs["paths"]["/auth/login"]
-        assert "put" not in specs["paths"]["/auth/login"]
-        assert "delete" not in specs["paths"]["/auth/login"]
-
     def test_GET_verify(self, client):
 
         r = client.get(API_URI + '/status/x')
