@@ -61,11 +61,11 @@ def read_configuration(
             log.exit('Invalid repository name in extends-from, name is empty')
 
         extend_path = submodules_path
-    else:
+    else:  # pragma: no cover
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
         log.exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
-    if not os.path.exists(extend_path):
+    if not os.path.exists(extend_path):  # pragma: no cover
         log.exit("From project not found: {}", extend_path)
 
     extend_file = "extended_{}".format(PROJECT_CONF_FILENAME)
