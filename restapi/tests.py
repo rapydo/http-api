@@ -177,13 +177,18 @@ class BaseTests:
         return content
 
     @staticmethod
-    def getDynamicInputSchema(client, endpoint, headers):
+    def getDynamicInputSchema(client, endpoint, headers, html=False):
         """
             Retrieve a dynamic data schema associated with a endpoint
         """
 
         data = {"get_schema": 1}
-        r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
+
+        h = headers.copy()
+        if html:
+            h['Accept'] = 'text/html'
+
+        r = client.post(f"{API_URI}/{endpoint}", data=data, headers=h)
         assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
         return content
