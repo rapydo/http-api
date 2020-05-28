@@ -72,10 +72,10 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         user = self.get_user_if_logged(
             allow_access_token_parameter=True
         )
-        log.critical(user)
         if user:
             return jsonify(specs)
 
+        log.info("Unauthenticated request, filtering out private endpoints")
         # Remove sensible data
         filtered_specs = {}
         for key, data in specs.items():
