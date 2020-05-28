@@ -145,6 +145,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                             f"{u}.{method.upper()}",
                             default=False
                         )
+                        log.debug("{} is {} (orig={})", u, is_private, uri)
                         for p in definition.get('parameters', []):
                             if 'schema' not in p:
                                 continue
