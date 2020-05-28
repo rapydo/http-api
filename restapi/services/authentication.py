@@ -84,7 +84,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.load_default_user()
         self.load_roles()
         # Create variables to be fulfilled by the authentication decorator
-        self._jti = None
         self._user = None
 
         variables = Detector.load_variables(prefix="auth")
@@ -437,7 +436,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force cleaning
-        self._jti = None
         self._user = None
 
         if token is None:
@@ -478,7 +476,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         log.verbose("User authorized")
 
-        self._jti = payload['jti']
         self._user = user
         return self.unpacked_token(True, token=token, jti=payload['jti'], user=user)
 

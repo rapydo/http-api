@@ -123,7 +123,7 @@ if send_mail_is_active():
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
             try:
-                self.auth.verify_token(
+                unpacked_token = self.auth.verify_token(
                     token,
                     raiseErrors=True,
                     token_type=self.auth.PWD_RESET
@@ -151,7 +151,8 @@ if send_mail_is_active():
                 )
 
             # Recovering token object from jti
-            token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
+            jti = unpacked_token[2]
+            token_obj = self.auth.get_tokens(token_jti=jti)
             if len(token_obj) == 0:
                 raise RestApiException(
                     'Invalid reset token: this request is no longer valid',
