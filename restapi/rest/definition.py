@@ -220,6 +220,11 @@ class EndpointResource(Resource):
             return None
         return self.unpacked_token[1]
 
+    def get_user(self):
+        if not hasattr(self, 'unpacked_token'):
+            return None
+        return self.unpacked_token[3]
+
     # Deprecated since 0.7.4
     def get_current_user(self):  # pragma: no cover
 
