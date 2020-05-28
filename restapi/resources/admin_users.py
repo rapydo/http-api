@@ -233,12 +233,14 @@ class AdminUsers(MethodResource, EndpointResource):
 
     _GET = {
         "/admin/users": {
+            "private": True,
             "summary": "List of users",
             "responses": {
                 "200": {"description": "List of users successfully retrieved"}
             },
         },
         "/admin/users/<user_id>": {
+            "private": True,
             "summary": "Obtain information on a single user",
             "responses": {
                 "200": {"description": "User information successfully retrieved"}
@@ -247,6 +249,7 @@ class AdminUsers(MethodResource, EndpointResource):
     }
     _POST = {
         "/admin/users": {
+            "private": True,
             "summary": "Create a new user",
             "responses": {
                 "200": {"description": "The uuid of the new user is returned"},
@@ -256,12 +259,14 @@ class AdminUsers(MethodResource, EndpointResource):
     }
     _PUT = {
         "/admin/users/<user_id>": {
+            "private": True,
             "summary": "Modify a user",
             "responses": {"200": {"description": "User successfully modified"}},
         }
     }
     _DELETE = {
         "/admin/users/<user_id>": {
+            "private": True,
             "summary": "Delete a user",
             "responses": {"200": {"description": "User successfully deleted"}},
         }

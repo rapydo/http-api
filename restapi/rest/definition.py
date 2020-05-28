@@ -314,21 +314,19 @@ class EndpointResource(Resource):
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
 
-    def get_user_if_logged(self):
+    def get_user_if_logged(self, allow_access_token_parameter=False):
         """
         Helper to be used inside an endpoint that doesn't explicitly
         ask for authentication, but might want to do some extra behaviour
         when a valid token is presented
         """
 
-        user = self.auth.get_user()
-        if user is not None:
-            return user
-
         if request.method == 'OPTIONS':
             return None
 
-        auth_type, token = HTTPTokenAuth.get_authorization_token()
+        auth_type, token = HTTPTokenAuth.get_authorization_token(
+            allow_access_token_parameter=allow_access_token_parameter
+        )
 
         if auth_type is None:
             return None
