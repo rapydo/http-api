@@ -80,7 +80,7 @@ class ProfileActivation(MethodResource, EndpointResource):
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
         try:
-            self.auth.verify_token(
+            unpacked_token = self.auth.verify_token(
                 token,
                 raiseErrors=True,
                 token_type=self.auth.ACTIVATE_ACCOUNT
@@ -106,7 +106,8 @@ class ProfileActivation(MethodResource, EndpointResource):
             )
 
         # Recovering token object from jti
-        token_obj = self.auth.get_tokens(token_jti=self.auth._jti)
+        jti = unpacked_token[2]
+        token_obj = self.auth.get_tokens(token_jti=jti)
         # Cannot be tested, this is an extra test to prevent any unauthorized access...
         # but invalid tokens are already refused above, with auth.verify_token
         if len(token_obj) == 0:  # pragma: no cover
