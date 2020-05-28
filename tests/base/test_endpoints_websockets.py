@@ -62,9 +62,29 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == 'Message received: True'
 
+        r = client.put(endpoint, data={'sync': False}, headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == 'Message received: True'
+
         # send message on a different channel
         channel = fake.pystr()
-        endpoint = API_URI + '/socket/' + channel
-        r = client.put(endpoint, headers=headers)
+        r = client.put(f"{API_URI}/socket/{channel}", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == 'Message received: True'
+
+        r = client.post(f"{API_URI}/stream/{channel}", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == 'Stream opened, prepare yourself!'
+        assert 'Grip-Hold' in r.headers
+        assert r.headers['Grip-Hold'] == 'stream'
+        assert 'Grip-Channel' in r.headers
+
+        r = client.put(f"{API_URI}/stream/{channel}", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == 'Message received: True'
+
+        r = client.put(
+            f"{API_URI}/stream/{channel}", data={'sync': False}, headers=headers
+        )
         assert r.status_code == 200
         assert self.get_content(r) == 'Message received: True'
