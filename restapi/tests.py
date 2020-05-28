@@ -210,7 +210,8 @@ class BaseTests:
 
         return response
 
-    def do_login(self, client, USER, PWD,
+    @staticmethod
+    def do_login(client, USER, PWD,
                  status_code=200, error=None, data=None):
         """
             Make login and return both token and authorization header
@@ -239,7 +240,7 @@ class BaseTests:
 
                 if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
                     newpwd = fake.password(strong=True)
-                    self.do_login(
+                    BaseTests.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
@@ -248,7 +249,7 @@ class BaseTests:
                         status_code=409,
                     )
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
-                    self.do_login(
+                    BaseTests.do_login(
                         client, USER, PWD,
                         data={
                             'new_password': newpwd,
@@ -257,7 +258,7 @@ class BaseTests:
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
-                    return self.do_login(
+                    return BaseTests.do_login(
                         client, USER, newpwd,
                         data={
                             'new_password': PWD,
