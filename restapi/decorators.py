@@ -143,7 +143,7 @@ class Pagination(Schema):
         description='Current page number',
         validate=validate.Range(min=1)
     )
-    elements = fields.Int(
+    size = fields.Int(
         required=False,
         description='Number of elements to retrieve',
         validate=validate.Range(min=1, max=100)
@@ -153,11 +153,11 @@ class Pagination(Schema):
     def verify_parameters(self, data, **kwargs):
         if 'get_total' in data:
             data['page'] = None
-            data['elements'] = None
+            data['size'] = None
         else:
             data.setdefault('get_total', False)
             data.setdefault('page', 1)
-            data.setdefault('elements', 20)
+            data.setdefault('size', 20)
 
         return data
 
