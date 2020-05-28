@@ -136,6 +136,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
 
             # Find endpoint mapping flagged as private
             if key == 'paths':
+                log.debug(mem.customizer._private_endpoints)
                 for uri, endpoint in data.items():
                     for method, definition in endpoint.items():
 
