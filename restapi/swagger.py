@@ -52,6 +52,7 @@ class Swagger:
         # The complete set of query parameters for all classes
         self._qparams = {}
         self._used_swagger_tags = set()
+        self._private_endpoints = {}
 
     def read_my_swagger(self, method, endpoint, mapping):
 
@@ -82,6 +83,10 @@ class Swagger:
             cparam = specs.pop('custom_parameters', None)
             if cparam is not None:  # pragma: no cover
                 log.warning("Deprecated use of custom in specs")
+
+            private = specs.pop('private', False)
+            self._private_endpoints.setdefault(uri, {})
+            self._private_endpoints[uri].setdefault(method, private)
 
             ###########################
             # Read normal parameters
@@ -265,6 +270,7 @@ class Swagger:
                     method, endpoint, mapping
                 )
 
+        self._customizer._private_endpoints = self._private_endpoints
         ###################
         # Save query parameters globally
         # Deprecated since 0.7.4
