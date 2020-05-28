@@ -50,7 +50,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
     labels = ["specifications"]
 
     _GET = {
-        "/swagger2": {
+        "/swagger": {
             "summary": "Endpoints specifications based on OpenAPI format",
             "responses": {
                 "200": {
