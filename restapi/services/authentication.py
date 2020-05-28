@@ -84,7 +84,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.load_default_user()
         self.load_roles()
         # Create variables to be fulfilled by the authentication decorator
-        self._token = None
         self._jti = None
         self._user = None
 
@@ -291,12 +290,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return self._user
 
-    def get_token(self):
-        """
-            Current token obtained by the authentication decorator
-        """
-        return self._token
-
     @abc.abstractmethod
     def get_user_object(self, username=None, payload=None):  # pragma: no cover
         """
@@ -444,7 +437,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force cleaning
-        self._token = None
         self._jti = None
         self._user = None
 
@@ -486,7 +478,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         log.verbose("User authorized")
 
-        self._token = token
         self._jti = payload['jti']
         self._user = user
         return self.unpacked_token(True, token=token, jti=payload['jti'], user=user)

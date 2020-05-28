@@ -95,9 +95,9 @@ class HTTPTokenAuth:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != 'OPTIONS':
 
-                    unpacked_token = caller.auth.verify_token(token)
+                    caller.unpacked_token = caller.auth.verify_token(token)
                     # Check authentication
-                    if not unpacked_token[0]:
+                    if not caller.unpacked_token[0]:
                         # Clear TCP receive buffer of any pending data
                         log.verbose(request.data)
                         # Mimic the response from a normal endpoint
