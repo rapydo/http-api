@@ -161,14 +161,15 @@ if send_mail_is_active():
 
             token_obj = token_obj.pop(0)
             emitted = token_obj["emitted"]
+            user = unpacked_token[3]
 
             last_change = None
             # If user logged in after the token emission invalidate the token
-            if self.auth._user.last_login is not None:
-                last_change = self.auth._user.last_login
+            if user.last_login is not None:
+                last_change = user.last_login
             # If user changed the pwd after the token emission invalidate the token
-            elif self.auth._user.last_password_change is not None:
-                last_change = self.auth._user.last_password_change
+            elif user.last_password_change is not None:
+                last_change = user.last_password_change
 
             if last_change is not None:
 
@@ -201,11 +202,11 @@ if send_mail_is_active():
                 )
 
             self.auth.change_password(
-                self.auth._user, None, new_password, password_confirm
+                user, None, new_password, password_confirm
             )
             # I really don't know why this save is required... since it is already
             # in change_password ... But if I remove it the new pwd is not saved...
-            self.auth.save_user(self.auth._user)
+            self.auth.save_user(user)
 
             # Bye bye token (reset tokens are valid only once)
             self.auth.invalidate_token(token)

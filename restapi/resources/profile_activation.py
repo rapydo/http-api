@@ -116,8 +116,9 @@ class ProfileActivation(MethodResource, EndpointResource):
                 status_code=400,
             )
 
+        user = unpacked_token[3]
         # If user logged is already active, invalidate the token
-        if self.auth._user.is_active:
+        if user.is_active:
             self.auth.invalidate_token(token)
             raise RestApiException(
                 'Invalid activation token: this request is no longer valid',
@@ -125,8 +126,8 @@ class ProfileActivation(MethodResource, EndpointResource):
             )
 
         # The activation token is valid, do something
-        self.auth._user.is_active = True
-        self.auth.save_user(self.auth._user)
+        user.is_active = True
+        self.auth.save_user(user)
 
         # Bye bye token (activation tokens are valid only once)
         self.auth.invalidate_token(token)
