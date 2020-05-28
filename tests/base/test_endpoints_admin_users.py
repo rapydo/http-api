@@ -35,7 +35,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         html_schema = self.getDynamicInputSchema(client, endpoint, headers, html=True)
-        assert "<html>" in html_schema
+        assert "<!DOCTYPE html>" in html_schema
+        assert "<html" in html_schema
 
         schema = self.getDynamicInputSchema(client, endpoint, headers)
         data = self.buildData(schema)

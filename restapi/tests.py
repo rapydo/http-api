@@ -190,8 +190,12 @@ class BaseTests:
 
         r = client.post(f"{API_URI}/{endpoint}", data=data, headers=h)
         assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
-        return content
+
+        content = r.data.decode('utf-8')
+        if html:
+            content
+
+        return json.loads(content)
 
     @staticmethod
     def get_content(http_out):
