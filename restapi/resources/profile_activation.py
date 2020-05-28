@@ -80,10 +80,10 @@ class ProfileActivation(MethodResource, EndpointResource):
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
         try:
-            # Unpack and verify token. If ok, self.auth will be added with
-            # auth._user auth._token and auth._jti
             self.auth.verify_token(
-                token, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
+                token,
+                raiseErrors=True,
+                token_type=self.auth.ACTIVATE_ACCOUNT
             )
 
         # If token is expired

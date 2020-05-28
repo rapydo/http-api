@@ -92,7 +92,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                             default=False
                         )
                         if is_private:
-                            log.critical("Skipping {} {}", method, uri)
+                            log.debug("Skipping {} {}", method, uri)
                             continue
 
                         filtered_specs.setdefault(key, {})
