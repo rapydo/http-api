@@ -38,7 +38,6 @@ class Customizer:
     def __init__(self):
 
         self._endpoints = []
-        self._private_endpoints = {}
         self._definitions = {}
         self._configurations = {}
         self._query_params = {}
@@ -254,11 +253,6 @@ class Customizer:
                                 docs = {}
                                 for doc in fn.__apispec__['docs']:
                                     docs.update(doc.options[0])
-
-                                private = conf[u].pop('private', False)
-                                uri = "/{}{}".format(endpoint.base_uri, u)
-                                self._private_endpoints.setdefault(uri, {})
-                                self._private_endpoints[uri].setdefault(m, private)
 
                                 missing = {}
                                 if 'summary' not in docs:
