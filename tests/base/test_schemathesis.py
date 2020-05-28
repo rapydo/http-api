@@ -40,7 +40,7 @@ else:
     # schema = schemathesis.from_wsgi('/api/swagger', app)
     r = client.get('/api/swagger', headers=auth_header)
     schema = json.loads(r.get_data().decode())
-    schema = schemathesis.from_dict(schema)
+    schema = schemathesis.from_dict(schema, app=app)
 
     log.info("Starting tests...")
 
