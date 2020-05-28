@@ -34,18 +34,11 @@ class TestApp(BaseTests):
         r = client.get(url, headers=headers)
         assert r.status_code == 200
 
-        schema = self.getDynamicInputSchema(client, endpoint, headers)
-
-        assert 'email' in schema
-        assert 'password' in schema
-        assert 'name' in schema
-        assert 'surname' in schema
-        assert 'email_notification' in schema
-        assert 'is_active' in schema
-
         html_schema = self.getDynamicInputSchema(client, endpoint, headers, html=True)
-        assert "<html>" in html_schema
+        assert "<!DOCTYPE html>" in html_schema
+        assert "<html" in html_schema
 
+        schema = self.getDynamicInputSchema(client, endpoint, headers)
         data = self.buildData(schema)
         data['email_notification'] = True
         data['is_active'] = True
