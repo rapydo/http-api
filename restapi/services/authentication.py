@@ -437,6 +437,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return payload
 
+    @staticmethod
+    def unpacked_token(valid, token=None, jti=None, user=None):
+        return (valid, token, jti, user)
+
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
         # Force cleaning
@@ -447,14 +451,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if token is None:
             if raiseErrors:
                 raise InvalidToken("Missing token")
-            return False
+            return self.unpacked_token(False)
 
         # Decode the current token
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
             if raiseErrors:
                 raise InvalidToken("Invalid payload")
-            return False
+            return self.unpacked_token(False)
 
         payload_type = payload.get("t", self.FULL_TOKEN)
 
@@ -465,27 +469,27 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.error("Invalid token type {}, required: {}", payload_type, token_type)
             if raiseErrors:
                 raise InvalidToken("Invalid token type")
-            return False
+            return self.unpacked_token(False)
 
         # Get the user from payload
         user = self.get_user_object(payload=payload)
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
-            return False
+            return self.unpacked_token(False)
 
         # implemented from the specific db services
         if not self.verify_token_validity(jti=payload['jti'], user=user):
             if raiseErrors:
                 raise InvalidToken("Token is not valid")
-            return False
+            return self.unpacked_token(False)
 
         log.verbose("User authorized")
 
         self._token = token
         self._jti = payload['jti']
         self._user = user
-        return True
+        return self.unpacked_token(True, token=token, jti=payload['jti'], user=user)
 
     @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):

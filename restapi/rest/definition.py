@@ -331,7 +331,8 @@ class EndpointResource(Resource):
         if auth_type is None:
             return None
 
-        if not self.auth.verify_token(token):
+        unpacked_token = self.auth.verify_token(token)
+        if not unpacked_token[0]:
             return None
 
         # we have a valid token in header
