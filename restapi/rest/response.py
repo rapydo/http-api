@@ -135,24 +135,18 @@ class ResponseMaker:
         a tuple (content, status, headers)
         """
 
+        # Possible outputs:
+        # '*/*'
+        # 'application/json'
+        # 'text/html'
+        # 'application/xml'
+        # 'text/csv'
         accepted_formats = ResponseMaker.get_accepted_formats()
 
         if 'text/html' in accepted_formats:
             return ResponseMaker.respond_to_browser(content, code, headers)
 
-        if '*/*' in accepted_formats or 'application/json' in accepted_formats:
-            content = jsonify(content)
-
-        elif 'application/xml' in accepted_formats:
-            # TODO: we should convert content in XML
-            pass
-
-        elif 'text/csv' in accepted_formats:
-            # TODO: we should convert content in CSV
-            pass
-
-        else:
-            log.warning("Unknown accepted format: {}", accepted_formats)
+        content = jsonify(content)
 
         # return a standard flask response tuple(content, code, headers)
         return (content, code, headers)
