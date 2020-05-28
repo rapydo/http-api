@@ -246,7 +246,8 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
 
-    assert not auth.verify_token(None, raiseErrors=False)
+    unpacked_token = auth.verify_token(None, raiseErrors=False)
+    assert not unpacked_token[0]
     try:
         auth.verify_token(None, raiseErrors=True)
         pytest.fail("No exception raised!")
