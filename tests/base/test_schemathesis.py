@@ -2,7 +2,6 @@
 # import requests
 import os
 import schemathesis
-import urllib.parse
 from hypothesis import settings, HealthCheck
 import werkzeug
 import json
@@ -23,6 +22,7 @@ def get_auth_token(client):
     data = {'username': USER, 'password': PWD}
 
     r = client.post('/auth/login', data=data)
+    assert r.status_code == 200
     token = json.loads(r.data.decode('utf-8'))
     assert token is not None
 
@@ -39,7 +39,7 @@ else:
     # it does not handle custom headers => the endpoint will provide partial schema
     # due to missing authentication => skipping all private endpoints and schemas
     # schema = schemathesis.from_wsgi('/api/swagger', app)
-    r = client.get(f'/api/swagger?access_token={urllib.parse.quote(token)}')
+    r = client.get(f'/api/swagger?access_token={token}')
     schema = json.loads(r.get_data().decode())
     schema = schemathesis.from_dict(schema, app=app)
 
