@@ -169,12 +169,18 @@ def test_authentication_service(fake):
     assert ip_data == 'United States'
 
     def verify_token_is_valid(token, ttype=None):
-        verified = auth.verify_token(token, token_type=ttype)
-        assert verified
+        unpacked_token = auth.verify_token(token, token_type=ttype)
+        assert unpacked_token[0]
+        assert unpacked_token[1] is not None
+        assert unpacked_token[2] is not None
+        assert unpacked_token[3] is not None
 
     def verify_token_is_not_valid(token, ttype=None):
-        verified = auth.verify_token(token, token_type=ttype)
-        assert not verified
+        unpacked_token = auth.verify_token(token, token_type=ttype)
+        assert not unpacked_token[0]
+        assert unpacked_token[1] is None
+        assert unpacked_token[2] is None
+        assert unpacked_token[3] is None
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
@@ -240,7 +246,8 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(t3, auth.PWD_RESET)
     verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
 
-    assert not auth.verify_token(None, raiseErrors=False)
+    unpacked_token = auth.verify_token(None, raiseErrors=False)
+    assert not unpacked_token[0]
     try:
         auth.verify_token(None, raiseErrors=True)
         pytest.fail("No exception raised!")
