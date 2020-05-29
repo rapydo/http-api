@@ -7,7 +7,8 @@ from sentry_sdk import capture_exception
 
 from restapi.models import Schema
 from restapi.confs import SENTRY_URL
-from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
+from restapi.exceptions import RestApiException, BadRequest, Conflict
+from restapi.exceptions import DatabaseDuplicatedEntry
 # imported here as utility for endpoints
 from restapi.rest.bearer import HTTPTokenAuth as auth
 from restapi.utilities.logs import log
@@ -108,11 +109,11 @@ def catch_graph_exceptions(func):
 
         except DatabaseDuplicatedEntry as e:
 
-            raise RestApiException(str(e), status_code=409)
+            raise Conflict(str(e))
 
         except RequiredProperty as e:
 
-            raise RestApiException(str(e), status_code=400)
+            raise BadRequest(e)
 
     return wrapper
 

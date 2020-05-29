@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.http import parse_content_range_header
 from restapi.confs import UPLOAD_PATH, PRODUCTION
 from restapi.services.detect import detector
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
 
 
@@ -95,17 +95,11 @@ class Uploader:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception:
-            raise RestApiException(
-                "Permission denied: failed to write the file",
-                status_code=503,
-            )
+            raise ServiceUnavailable("Permission denied: failed to write the file")
 
         # Check exists
         if not os.path.exists(abs_file):
-            raise RestApiException(
-                "Unable to retrieve the uploaded file",
-                status_code=503,
-            )
+            raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         # Extra info
         ftype = None

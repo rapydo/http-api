@@ -200,7 +200,7 @@ class IrodsPythonClient:  # pragma: no cover
             if not ignore_existing:
                 raise IrodsException(
                     "Irods collection already exists",
-                    status_code=400,
+                    status_code=409,
                 )
             else:
                 log.debug("Irods collection already exists: {}", path)
