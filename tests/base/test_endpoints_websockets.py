@@ -87,4 +87,5 @@ class TestApp(BaseTests):
             f"{API_URI}/stream/{channel}", data={'sync': False}, headers=headers
         )
         assert r.status_code == 200
-        assert self.get_content(r) == 'Message received: True'
+        content = r.data.decode('utf-8')
+        assert content == 'Message received: True'
