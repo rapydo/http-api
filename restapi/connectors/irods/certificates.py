@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Using x509 certificates
 """
@@ -37,7 +35,7 @@ class Certificates:  # pragma: no cover
     def get_dn_from_cert(cls, certdir, certfilename, ext='pem'):
 
         dn = ''
-        cpath = os.path.join(cls._dir, certdir, "{}.{}".format(certfilename, ext))
+        cpath = os.path.join(cls._dir, certdir, f"{certfilename}.{ext}")
         with open(cpath) as fh:
             content = fh.read()
             cert = crypto.load_certificate(crypto.FILETYPE_PEM, content)

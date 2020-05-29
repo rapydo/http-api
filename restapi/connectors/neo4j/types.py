@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import pytz
 from datetime import datetime
 from neomodel import StructuredNode
@@ -30,4 +28,4 @@ class TimestampedNode(IdentifiedNode):
 
     def save(self, *args, **kwargs):
         self.modified = datetime.now(pytz.utc)
-        return super(TimestampedNode, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)

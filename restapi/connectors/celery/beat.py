@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Celery pattern. Some interesting read here:
 

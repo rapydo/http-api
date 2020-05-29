@@ -55,7 +55,7 @@ class Swagger:
     def read_my_swagger(self, method, endpoint, mapping):
 
         if not isinstance(mapping, dict):  # pragma: no cover
-            raise TypeError("Wrong type: {}".format(type(mapping)))
+            raise TypeError(f"Wrong type: {type(mapping)}")
 
         if len(mapping) < 1:  # pragma: no cover
             raise ValueError(f"No definition found in: {mapping}")

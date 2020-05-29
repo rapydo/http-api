@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gripcontrol import GripPubControl
 from gripcontrol import WebSocketMessageFormat
 from pubcontrol import Item
@@ -36,7 +34,7 @@ class PushpinExt(Connector):
         host = variables.get('host')
         port = variables.get('port')
 
-        control_uri = 'http://{}:{}'.format(host, port)
+        control_uri = f'http://{host}:{port}'
         pubctrl = GripPubControl({
             'control_uri': control_uri
         })
@@ -48,7 +46,7 @@ class PushpinExt(Connector):
         if is_active:
             return client
 
-        raise ServiceUnavailable("Pushpin unavailable on {}".format(control_uri))
+        raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
 
 
 class PushpinClient:

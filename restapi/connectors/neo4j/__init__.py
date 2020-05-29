@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Neo4j GraphDB flask connector """
 
 import re
@@ -43,7 +41,7 @@ def catch_db_exceptions(func):
 
             t = "already exists with label"
             m = re.search(
-                r"Node\([0-9]+\) {} `(.+)` and property `(.+)` = '(.+)'".format(t),
+                fr"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'",
                 str(e)
             )
 
@@ -51,7 +49,7 @@ def catch_db_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = "A {} already exists with {} = {}".format(node, prop, val)
+                error = f"A {node} already exists with {prop} = {val}"
                 raise DatabaseDuplicatedEntry(error)
 
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
@@ -137,7 +135,7 @@ class NeomodelClient:
             results, _ = db.cypher_query(query)
         except CypherSyntaxError as e:
             log.warning(query)
-            log.error("Failed to execute Cypher Query\n{}".format(e))
+            log.error(f"Failed to execute Cypher Query\n{e}")
             raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
 
@@ -336,7 +334,7 @@ class Authentication(BaseAuthentication):
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
             except self.db.Role.DoesNotExist:
-                raise Exception("Graph role {} does not exist".format(role))
+                raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
 
     def init_users_and_roles(self):
