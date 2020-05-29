@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 import urllib.parse
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
@@ -44,7 +43,7 @@ class TestApp(BaseTests):
         registration_data['password'] = fake.password(strong=True)
         r = client.post(AUTH_URI + '/profile', data=registration_data)
         assert r.status_code == 409
-        m = "This user already exists: {}".format(BaseAuthentication.default_user)
+        m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
         registration_data['email'] = fake.ascii_email()
@@ -152,32 +151,32 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # profile activation
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 200
         assert self.get_content(r) == "Account activated"
 
         # Activation token is no longer valid
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         assert self.get_content(r) == 'Invalid activation token'
 
         # Token created for another user
         token = self.get_crafted_token("a")
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
 
         # Token created for another user
         token = self.get_crafted_token("a", wrong_algorithm=True)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
 
         # Token created for another user
         token = self.get_crafted_token("a", wrong_secret=True)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
@@ -188,28 +187,28 @@ class TestApp(BaseTests):
         uuid = self.get_content(r).get('uuid')
 
         token = self.get_crafted_token("x", user_id=uuid)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
 
         # token created for the correct user, but from outside the system!!
         token = self.get_crafted_token("a", user_id=uuid)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
 
         # Immature token
         token = self.get_crafted_token("a", user_id=uuid, immature=True)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token'
 
         # Expired token
         token = self.get_crafted_token("a", user_id=uuid, expired=True)
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid activation token: this request is expired'
@@ -256,7 +255,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 204
 
-        r = client.put(AUTH_URI + '/profile/activate/{}'.format(token))
+        r = client.put(AUTH_URI + f'/profile/activate/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid activation token: this request is no longer valid"

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from click.testing import CliRunner
 from restapi import __commands__ as cli
 from restapi.services.detect import detector

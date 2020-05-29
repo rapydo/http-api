@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from datetime import timedelta
 from restapi.connectors.celery import CeleryExt

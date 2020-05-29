@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import time
 import base64
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
@@ -78,43 +77,43 @@ class TestApp(BaseTests):
 
         # Token created for a fake user
         token = self.get_crafted_token("f")
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # Token created for another user
         token = self.get_crafted_token("x")
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # Token created for another user
         token = self.get_crafted_token("f", wrong_algorithm=True)
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # Token created for another user
         token = self.get_crafted_token("f", wrong_secret=True)
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # token created for the correct user, but from outside the system!!
         token = self.get_crafted_token("f", user_id=uuid)
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # Immature token
         token = self.get_crafted_token("f", user_id=uuid, immature=True)
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
         # Expired token
         token = self.get_crafted_token("f", user_id=uuid, expired=True)
-        headers = {'Authorization': 'Bearer {}'.format(token)}
+        headers = {'Authorization': f'Bearer {token}'}
         r = client.get(endpoint, headers=headers)
         assert r.status_code == 401
 
@@ -126,7 +125,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-        headers = {'Authorization': 'Bearer \'{}'.format(fake.pystr())}
+        headers = {'Authorization': f'Bearer \'{fake.pystr()}'}
         r = client.get(AUTH_URI + '/status', headers=headers)
         assert r.status_code == 401
 

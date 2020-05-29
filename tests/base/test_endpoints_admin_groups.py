@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.detect import detector
