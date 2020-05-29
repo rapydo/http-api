@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# import requests
+import pytest
 import os
 import schemathesis
 from hypothesis import settings, HealthCheck
@@ -7,6 +7,7 @@ import werkzeug
 import json
 
 from restapi.server import create_app
+from restapi.tests import get_faker
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
 
@@ -14,19 +15,38 @@ from restapi.utilities.logs import log
 RUN_SCHEMATHESIS = os.getenv("RUN_SCHEMATHESIS", "1") == "1"
 
 
-def get_auth_token(client):
-    BaseAuthentication.load_default_user()
-    BaseAuthentication.load_roles()
-    USER = BaseAuthentication.default_user
-    PWD = BaseAuthentication.default_password
-    data = {'username': USER, 'password': PWD}
+def get_auth_token(client, data):
 
     r = client.post('/auth/login', data=data)
-    assert r.status_code == 200
-    token = json.loads(r.data.decode('utf-8'))
-    assert token is not None
+    content = json.loads(r.data.decode('utf-8'))
 
-    return token, {'Authorization': f'Bearer {token}'}
+    if r.status_code == 403:
+        if isinstance(content, dict) and content.get('actions'):
+            action = content.get('actions')[0]
+
+            if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
+                currentpwd = data['password']
+                fake = get_faker()
+                newpwd = fake.password(strong=True)
+                data['new_password'] = newpwd
+                data['password_confirm'] = newpwd
+                # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
+                get_auth_token(client, data)
+                # Change again to restore the default password
+                # and keep all other tests fully working
+                data['password'] = newpwd
+                data['new_password'] = currentpwd
+                data['password_confirm'] = currentpwd
+                return get_auth_token(client, data)
+            else:
+                pytest.fail(
+                    "Unknown post log action requested: {}".format(action)
+                )
+
+    assert r.status_code == 200
+    assert content is not None
+
+    return content, {'Authorization': f'Bearer {content}'}
 
 
 if not RUN_SCHEMATHESIS:
@@ -34,7 +54,12 @@ if not RUN_SCHEMATHESIS:
 else:
     app = create_app(testing_mode=True)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
-    token, auth_header = get_auth_token(client)
+    BaseAuthentication.load_default_user()
+    BaseAuthentication.load_roles()
+    USER = BaseAuthentication.default_user
+    PWD = BaseAuthentication.default_password
+    data = {'username': USER, 'password': PWD}
+    token, auth_header = get_auth_token(client, data)
 
     # it does not handle custom headers => the endpoint will provide partial schema
     # due to missing authentication => skipping all private endpoints and schemas
