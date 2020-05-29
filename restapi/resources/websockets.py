@@ -42,7 +42,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         message = 'Hello, your job is completed!'
         published = pushpin.publish_on_socket(channel, message, sync=sync)
 
-        return self.response("Message received: {}".format(published))
+        return self.response(f"Message received: {published}")
 
     @decorators.catch_errors()
     @decorators.auth.required(allow_access_token_parameter=True)
@@ -127,7 +127,7 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
         message = 'Hello, your job is completed!\n'
         published = pushpin.publish_on_stream(channel, message, sync=sync)
 
-        return "Message received: {}".format(published)
+        return self.response(f"Message received: {published}")
 
     @decorators.catch_errors()
     @decorators.auth.required(allow_access_token_parameter=True)
