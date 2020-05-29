@@ -7,7 +7,7 @@ from restapi.models import Schema
 
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
+from restapi.exceptions import Unauthorized, NotFound
 from restapi.connectors.neo4j import graph_transactions
 from restapi.services.detect import detector
 
@@ -141,10 +141,7 @@ if detector.check_availability('neo4j'):
             # Only valid uuid will be provided here.
             # This is an extra-security check
             if not coordinator:  # pragma: no cover
-                raise RestApiException(
-                    'User not found',
-                    status_code=401
-                )
+                raise Unauthorized('User not found')
 
             # GRAPH #
             group = self.graph.Group(**kwargs).save()
@@ -163,7 +160,7 @@ if detector.check_availability('neo4j'):
 
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
             if group is None:
-                raise RestApiException("Group not found")
+                raise NotFound("Group not found")
 
             coordinator_uuid = kwargs.pop('coordinator', None)
 
@@ -202,7 +199,7 @@ if detector.check_availability('neo4j'):
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
 
             if group is None:
-                raise RestApiException("Group not found")
+                raise NotFound("Group not found")
 
             group.delete()
 
