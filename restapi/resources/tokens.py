@@ -4,7 +4,7 @@ from marshmallow import fields
 from restapi.models import Schema
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest, Unauthorized
 
 # from restapi.utilities.logs import log
 
@@ -67,12 +67,6 @@ class Tokens(MethodResource, EndpointResource):
             # Added just to make very sure, but it can never happen because
             # invalidate_token can only fail if the token is invalid
             # since this is an authenticated endpoint the token is already verified
-            raise RestApiException(  # pragma: no cover
-                f"Failed token invalidation: '{token}'",
-                status_code=400
-            )
+            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
 
-        raise RestApiException(
-            "Token not emitted for your account or does not exist",
-            status_code=401
-        )
+        raise Unauthorized("Token not emitted for your account or does not exist")

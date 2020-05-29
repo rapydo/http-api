@@ -20,7 +20,7 @@ from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.engine.url import URL
 from sqlalchemy import text
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
+from restapi.exceptions import DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.utilities.meta import Meta
 from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
@@ -270,10 +270,7 @@ class Authentication(BaseAuthentication):
                 raise e
             else:
                 log.error(str(e))
-                raise RestApiException(
-                    "Backend database is unavailable",
-                    status_code=503,
-                )
+                raise ServiceUnavailable("Backend database is unavailable")
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             # if retry <= 0:
             #     log.error(str(e))

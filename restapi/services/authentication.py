@@ -17,7 +17,8 @@ from flask import request
 
 from restapi.confs import TESTING
 from restapi.services.detect import Detector
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest, Unauthorized, Forbidden, Conflict
+from restapi.exceptions import ServiceUnavailable
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, SECRET_KEY_FILE
 from restapi.confs import get_project_configuration
 
@@ -154,9 +155,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.REGISTER_FAILED_LOGIN and username is not None:
             self.register_failed_login(username)
 
-        raise RestApiException(
+        raise Unauthorized(
             'Invalid username or password',
-            status_code=401,
             is_warning=True
         )
 
@@ -169,26 +169,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
-            raise RestApiException(
-                "Invalid input received",
-                status_code=400,
-            )
+            raise BadRequest("Invalid input received")
         except BaseException as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
             # log.critical("Please reinitialize backend tables")
 
-            raise RestApiException(
-                "Unable to connect to auth backend",
-                status_code=500,
-            )
+            raise ServiceUnavailable("Unable to connect to auth backend")
 
         if user is None:
-            # this will raise a RestApiException
+            # this can raise exceptions in case of errors
             self.failed_login(username)
 
         # Check if Oauth2 is enabled
         if user.authmethod != 'credentials':  # pragma: no cover
-            raise RestApiException("Invalid authentication method", status_code=400)
+            raise BadRequest("Invalid authentication method")
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
@@ -196,7 +190,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             token = self.create_token(payload)
 
             if token is None:
-                # this will raise a RestApiException
+                # this can raise exceptions in case of errors
                 self.failed_login(username)
 
             return token, full_payload
@@ -273,7 +267,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_password_hash(password):
         if not password:
-            raise RestApiException("Invalid password", status_code=401)
+            raise Unauthorized("Invalid password")
         return pwd_context.hash(password)
 
     # ########################
@@ -695,13 +689,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_totp(self, user, totp_code):
 
         if totp_code is None:
-            raise RestApiException('Invalid verification code', status_code=401)
+            raise Unauthorized('Invalid verification code')
         secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code):
             if self.REGISTER_FAILED_LOGIN:
                 self.register_failed_login(user.email)
-            raise RestApiException('Invalid verification code', status_code=401)
+            raise Unauthorized('Invalid verification code')
 
         return True
 
@@ -744,14 +738,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def change_password(self, user, password, new_password, password_confirm):
 
         if new_password is None:
-            raise RestApiException("Wrong new password", status_code=400)
+            raise BadRequest("Wrong new password")
 
         if password_confirm is None:
-            raise RestApiException("Wrong password confirm", status_code=400)
+            raise BadRequest("Wrong password confirm")
 
         if new_password != password_confirm:
-            msg = "Your password doesn't match the confirmation"
-            raise RestApiException(msg, status_code=409)
+            raise Conflict("Your password doesn't match the confirmation")
 
         if self.VERIFY_PASSWORD_STRENGTH:
 
@@ -761,7 +754,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             )
 
             if not check:
-                raise RestApiException(msg, status_code=409)
+                raise Conflict(msg)
 
         now = datetime.now(pytz.utc)
         user.password = BaseAuthentication.get_password_hash(new_password)
@@ -795,7 +788,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             Sorry, this account is temporarily blocked due to
             more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
             Try again later"""
-        raise RestApiException(msg, status_code=401)
+        raise Unauthorized(msg)
 
     def verify_blocked_user(self, user):
 
@@ -809,7 +802,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
                 if valid_until < now:
                     msg = "Sorry, this account is blocked for inactivity"
-                    raise RestApiException(msg, status_code=401)
+                    raise Unauthorized(msg)
 
     @staticmethod
     def verify_active_user(user):
@@ -817,7 +810,4 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not user.is_active:
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
-            raise RestApiException(
-                "Sorry, this account is not active",
-                status_code=403,
-            )
+            raise Forbidden("Sorry, this account is not active")
