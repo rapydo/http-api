@@ -61,7 +61,7 @@ def test_authentication_service(fake):
         pytest.fail('None password!')
     except RestApiException as e:
         assert e.status_code == 400
-        assert str(e) == "Wrong new password"
+        assert str(e) == "Missing new password"
     except BaseException:
         pytest.fail("Unexpected exception raised")
 
@@ -70,7 +70,7 @@ def test_authentication_service(fake):
         pytest.fail('None password!')
     except RestApiException as e:
         assert e.status_code == 400
-        assert str(e) == "Wrong password confirm"
+        assert str(e) == "Missing password confirmation"
     except BaseException:
         pytest.fail("Unexpected exception raised")
 

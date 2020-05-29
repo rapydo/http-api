@@ -172,7 +172,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise BadRequest("Invalid input received")
         except BaseException as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
-            # log.critical("Please reinitialize backend tables")
 
             raise ServiceUnavailable("Unable to connect to auth backend")
 
@@ -738,10 +737,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def change_password(self, user, password, new_password, password_confirm):
 
         if new_password is None:
-            raise BadRequest("Wrong new password")
+            raise BadRequest("Missing new password")
 
         if password_confirm is None:
-            raise BadRequest("Wrong password confirm")
+            raise BadRequest("Missing password confirmation")
 
         if new_password != password_confirm:
             raise Conflict("Your password doesn't match the confirmation")
