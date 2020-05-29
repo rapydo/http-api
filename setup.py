@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 from setuptools import setup, find_packages
 from restapi import \
     __package__ as main_package, \
     __version__ as current_version
 
 
-app = '{}.__commands__'.format(main_package)
+app = f'{main_package}.__commands__'
 
 setup(
     name='rapydo_http',

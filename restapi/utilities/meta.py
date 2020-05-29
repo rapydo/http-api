@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Meta thinking: python objects & introspection
 
@@ -37,19 +35,16 @@ class Meta:
         Find classes inside a python module file.
         """
 
-        classes = {}
         try:
-            classes = dict(
-                [
-                    (name, cls)
-                    for name, cls in module.__dict__.items()
-                    if isinstance(cls, type)
-                ]
-            )
+            return {
+                name: cls
+                for name, cls in module.__dict__.items()
+                if isinstance(cls, type)
+            }
         except AttributeError:
             log.warning("Could not find any class in module {}", module)
 
-        return classes
+        return {}
 
     @staticmethod
     def get_new_classes_from_module(module):
@@ -151,7 +146,7 @@ class Meta:
 
     @staticmethod
     def obj_from_models(obj_name, module_name, package):
-        module_name = "{}.models.{}".format(package, module_name)
+        module_name = f"{package}.models.{module_name}"
         module = Meta.get_module_from_string(module_name, exit_on_fail=True)
 
         return getattr(module, obj_name, None)
@@ -160,9 +155,9 @@ class Meta:
     def import_models(name, package, exit_on_fail=True):
 
         if package == BACKEND_PACKAGE:
-            module_name = "{}.connectors.{}.models".format(package, name)
+            module_name = f"{package}.connectors.{name}.models"
         else:
-            module_name = "{}.models.{}".format(package, name)
+            module_name = f"{package}.models.{name}"
 
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
@@ -179,7 +174,7 @@ class Meta:
     @staticmethod
     def get_authentication_module(auth_service):
 
-        module_name = "connectors.{}".format(auth_service)
+        module_name = f"connectors.{auth_service}"
         log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
@@ -210,7 +205,7 @@ class Meta:
     @staticmethod
     def get_customizer_class(module_relpath, class_name, args=None):
 
-        abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
+        abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
         MyClass = Meta.get_class_from_string(
             class_name,
             Meta.get_module_from_string(abspath),
