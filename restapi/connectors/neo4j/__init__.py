@@ -203,20 +203,17 @@ class NeoModel(Connector):
 
         variables = kwargs or self.variables
 
-        self.uri = "bolt://{}:{}@{}:{}".format(
-            # User:Password
-            variables.get('user', 'neo4j'),
-            variables.get('password'),
-            # Host:Port
-            variables.get('host'),
-            variables.get('port'),
-        )
-        config.DATABASE_URL = self.uri
+        USER = variables.get('user', 'neo4j')
+        PWD = variables.get('password')
+        HOST = variables.get('host')
+        PORT = variables.get('port')
+        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
+        config.DATABASE_URL = URI
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
         config.FORCE_TIMEZONE = True  # default False
-        db.url = self.uri
-        db.set_connection(self.uri)
+        db.url = URI
+        db.set_connection(URI)
 
         client = NeomodelClient(db)
         return client

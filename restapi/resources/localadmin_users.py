@@ -33,7 +33,7 @@
 #         if r.name not in allowed_roles:
 #             continue
 
-#         roles["roles_{}".format(r.name)] = r.description
+#         roles[f"roles_{r.name}"] = r.description
 
 #     return roles
 
@@ -75,7 +75,7 @@
 #         #             if g == default_group:
 #         #                 continue
 
-#         #             group_name = "{} - {}".format(g.shortname, g.fullname)
+#         #             group_name = f"{g.shortname} - {g.fullname}"
 #         #             new_schema[idx]["enum"].append({g.uuid: group_name})
 #         #             if defg is None:
 #         #                 defg = g.uuid
@@ -84,7 +84,7 @@
 #         #         if (len(new_schema[idx]["enum"])) == 1:
 #         #             new_schema[idx]["default"] = defg
 #         # for g in neo4j.Group.nodes.all():
-#         #     group_name = "{} - {}".format(g.shortname, g.fullname)
+#         #     group_name = f"{g.shortname} - {g.fullname}"
 #         #     groups.append({g.uuid: group_name})
 
 #         return groups

@@ -148,11 +148,10 @@ class TestApp(BaseTests):
         r = client.get(AUTH_URI + '/status', headers=headers)
         assert r.status_code == 401
 
+        USER = BaseAuthentication.default_user
+        PWD = BaseAuthentication.default_password
         # Testing Basic Authentication (not allowed)
-        credentials = '{}:{}'.format(
-            BaseAuthentication.default_user,
-            BaseAuthentication.default_password
-        )
+        credentials = f'{USER}:{PWD}'
         encoded_credentials = base64.b64encode(str.encode(credentials)).decode('utf-8')
 
         headers = {'Authorization': 'Basic ' + encoded_credentials}

@@ -70,8 +70,8 @@ class Uploader:
             raise RestApiException("File extension not allowed")
 
         # Check file name
-        filename = secure_filename(myfile.filename)
-        abs_file = Uploader.absolute_upload_file(filename, subfolder)
+        fname = secure_filename(myfile.filename)
+        abs_file = Uploader.absolute_upload_file(fname, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
         # ## IMPORTANT NOTE TO SELF:
@@ -87,9 +87,7 @@ class Uploader:
                 os.remove(abs_file)
                 log.debug("Forced removal")
             else:
-                e = "File '{}' already exists, use force parameter to overwrite".format(
-                    filename
-                )
+                e = f"File '{fname}' already exists, use force parameter to overwrite"
                 raise RestApiException(e, status_code=400)
 
         # Save the file
@@ -131,7 +129,7 @@ class Uploader:
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
         return self.response(
-            {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
+            {'filename': fname, 'meta': {'type': ftype, 'charset': fcharset}},
             code=200,
         )
 
@@ -248,7 +246,7 @@ class Uploader:
             "partial",
             headers={
                 "Access-Control-Expose-Headers": "Range",
-                "Range": "0-{}".format(stop - 1)
+                f"Range": "0-{stop - 1}"
             },
             code=206
         )

@@ -29,13 +29,4 @@ def get_service(service, **kwargs):
 
 celery_app.get_service = get_service
 
-################################################
-# Import tasks modules to make sure all tasks are available
-
-# main_package = "commons.tasks."
-# # Base tasks
-# submodules = Meta.import_submodules_from_package(main_package + "base")
-# # Custom tasks
-# submodules = Meta.import_submodules_from_package("{}.tasks".format(CUSTOM_PACKAGE))
-
 log.debug("Celery worker is ready {}", celery_app)

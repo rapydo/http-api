@@ -725,9 +725,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
-            return False, "Password is too short, use at least {} characters".format(
-                self.MIN_PASSWORD_LENGTH
-            )
+            MIN = self.MIN_PASSWORD_LENGTH
+            return False, f"Password is too short, use at least {MIN} characters"
 
         if not re.search("[a-z]", pwd):
             return False, "Password is too weak, missing lower case letters"
@@ -792,12 +791,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # We register and set a max, but user does not reached it yet
             return False
         # Dear user, you have exceeded the limit
-        msg = (
-            """
+        msg = f"""
             Sorry, this account is temporarily blocked due to
-            more than {} failed login attempts. Try again later""".format(
-                self.MAX_LOGIN_ATTEMPTS)
-        )
+            more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
+            Try again later"""
         raise RestApiException(msg, status_code=401)
 
     def verify_blocked_user(self, user):

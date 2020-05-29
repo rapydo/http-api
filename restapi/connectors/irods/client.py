@@ -936,9 +936,9 @@ class IrodsPythonClient:  # pragma: no cover
         # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
         # test_name = 'paolo2'
         # inputs = {  # extra quotes for string literals
-        #     '*object': '"{}"'.format(object_path),
-        #     '*name': '"{}"'.format(test_name),
-        #     '*value': '"{}"'.format(test_name),
+        #     '*object': f'"{object_path}"',
+        #     '*name': f'"{test_name}"',
+        #     '*value': f'"{test_name}"',
         # }
         # body = \"\"\"
         #     # add metadata
