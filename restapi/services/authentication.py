@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 SECURITY ENDPOINTS CHECK
 Add auth checks called /checklogged and /testadmin
@@ -229,7 +227,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, 'rb').read()
             return self.JWT_SECRET
-        except IOError:  # pragma: no cover
+        except OSError:  # pragma: no cover
             log.exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
@@ -601,7 +599,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def custom_user_properties(userdata):
-        module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
+        module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
         module = Meta.get_module_from_string(module_path)
 
         CustomizerClass = Meta.get_class_from_string(
@@ -623,7 +621,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        module_path = "{}.initialization.initialization".format(CUSTOM_PACKAGE)
+        module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
         module = Meta.get_module_from_string(module_path)
 
         CustomizerClass = Meta.get_class_from_string(

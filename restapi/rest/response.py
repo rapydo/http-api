@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask import Response, request, render_template, jsonify
 from marshmallow import fields, validate
 from marshmallow.utils import _Missing
@@ -61,7 +59,7 @@ def log_response(response):
             data = ''
 
         if data:
-            data = " {}".format(data)
+            data = f" {data}"
     except Exception as e:
         log.debug(e)
         data = ''

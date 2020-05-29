@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import jwt
 
@@ -31,8 +30,8 @@ def send_activation_link(auth, user):
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: {}", rt)
-    url = "{}://{}/public/register/{}".format(protocol, domain, rt)
-    body = "Follow this link to activate your account: {}".format(url)
+    url = f"{protocol}://{domain}/public/register/{rt}"
+    body = f"Follow this link to activate your account: {url}"
 
     # customized template
     template_file = "activate_account.html"
@@ -41,7 +40,7 @@ def send_activation_link(auth, user):
         html_body = body
         body = None
 
-    default_subject = "{} account activation".format(title)
+    default_subject = f"{title} account activation"
     subject = os.getenv('EMAIL_ACTIVATION_SUBJECT', default_subject)
 
     sent = send_mail(html_body, subject, user.email, plain_body=body)

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from restapi.rest.definition import EndpointResource
 from flask_apispec import MethodResource
 from restapi.services.detect import detector
@@ -28,9 +26,9 @@ class Verify(MethodResource, EndpointResource):
 
         if not detector.check_availability(service):
             raise RestApiException(
-                "Unknown service: {}".format(service),
+                f"Unknown service: {service}",
                 status_code=404,
             )
 
         self.get_service_instance(service, global_instance=False)
-        return self.response("Service is reachable: {}".format(service))
+        return self.response(f"Service is reachable: {service}")

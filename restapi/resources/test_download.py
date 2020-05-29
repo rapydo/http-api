@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
 from marshmallow import fields

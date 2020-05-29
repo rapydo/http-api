@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from flask_apispec import use_kwargs
@@ -27,7 +25,7 @@ if detector.check_availability('neo4j'):
             users = {}
             for u in neo4j.User.nodes.all():
 
-                label = "{} {} ({})".format(u.name, u.surname, u.email)
+                label = f"{u.name} {u.surname} ({u.email})"
                 users[u.uuid] = label
 
             return users

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Detect which services are running, by testing environment variables
 set with containers/docker-compose/do.py
@@ -61,7 +59,7 @@ class Detector:
         return os.getenv(key, default)
 
     @staticmethod
-    @lru_cache()
+    @lru_cache
     def get_bool_envvar(bool_var):
 
         if isinstance(bool_var, bool):
@@ -98,15 +96,15 @@ class Detector:
         service = self.services.get(name)
 
         if service is None:
-            raise AttributeError("Service {} not found".format(name))
+            raise AttributeError(f"Service {name} not found")
 
         if not service.get('available', False):
-            raise AttributeError("Service {} is not available".format(name))
+            raise AttributeError(f"Service {name} is not available")
 
         connector = service.get('connector')
 
         if connector is None:
-            raise AttributeError("Connector {} is not available".format(name))
+            raise AttributeError(f"Connector {name} is not available")
 
         return connector
 
@@ -249,7 +247,7 @@ class Detector:
     @staticmethod
     def load_connector(connector, classname):
 
-        module_name = "{}.connectors.{}".format(BACKEND_PACKAGE, connector)
+        module_name = f"{BACKEND_PACKAGE}.connectors.{connector}"
         module = Meta.get_module_from_string(
             modulestring=module_name,
             exit_on_fail=True

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from marshmallow import fields
@@ -81,7 +79,7 @@ class AdminTokens(MethodResource, EndpointResource):
 
         if not self.auth.invalidate_token(token=token["token"]):
             raise RestApiException(
-                "Failed token invalidation: '{}'".format(token),
+                f"Failed token invalidation: '{token}'",
                 status_code=400
             )
         return self.empty_response()

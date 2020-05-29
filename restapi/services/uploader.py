@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Upload data to APIs.
 
@@ -156,16 +154,16 @@ class Uploader:
                 log.debug("Forced removal")
             else:
                 return self.response(
-                    "File '{}' already exists".format(filename),
+                    f"File '{filename}' already exists",
                     code=400,
                 )
 
         domain = detector.get_global_var('DOMAIN')
         if PRODUCTION:
-            host = "https://{}".format(domain)
+            host = f"https://{domain}"
         else:
-            host = "http://{}:8080".format(domain)
-        url = "{}{}/{}".format(host, request.path, filename)
+            host = f"http://{domain}:8080"
+        url = f"{host}{request.path}/{filename}"
 
         log.info("Upload initialized on url: {}", url)
 

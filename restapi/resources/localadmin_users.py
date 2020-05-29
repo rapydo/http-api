@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # TO BE ENABLED WHEN REQUIRED
 
 # from collections import OrderedDict

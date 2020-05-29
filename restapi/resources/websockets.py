@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask import Response, request
 from gripcontrol import WebSocketEvent
 from gripcontrol import decode_websocket_events, encode_websocket_events
