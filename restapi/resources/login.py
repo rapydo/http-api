@@ -8,6 +8,7 @@ from marshmallow import fields, validate
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
+from restapi.exceptions import Forbidden
 
 
 auth = EndpointResource.load_authentication()
@@ -94,12 +95,9 @@ class Login(MethodResource, EndpointResource):
                 token, payload = self.auth.make_login(username, password)
 
         # ##################################################
-        # Something is missing in the authentication, asking action to user
-        ret = self.verify_information(
-            user, totp_authentication, totp_code
-        )
-        if ret is not None:
-            return ret
+        # Check if something is missing in the authentication and ask additional actions
+        # raises exceptions in case of errors
+        self.verify_information(user, totp_authentication, totp_code)
 
         # Everything is ok, let's save authentication information
 
@@ -164,6 +162,4 @@ class Login(MethodResource, EndpointResource):
                 message['errors'].append("Your password is expired, please change it")
 
         if message['errors']:
-            return self.response(message, code=403)
-
-        return None
+            raise Forbidden(message)
