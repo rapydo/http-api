@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, API_URI
 from restapi.services.detect import detector
 # from restapi.services.detect import detector
@@ -75,7 +74,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/stream/{channel}", headers=headers)
         assert r.status_code == 200
         content = r.data.decode('utf-8')
-        assert content == 'Stream opened, prepare yourself!'
+        assert content == 'Stream opened, prepare yourself!\n'
         assert 'Grip-Hold' in r.headers
         assert r.headers['Grip-Hold'] == 'stream'
         assert 'Grip-Channel' in r.headers
