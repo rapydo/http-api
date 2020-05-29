@@ -33,7 +33,7 @@ class TestApp(BaseTests):
             token_id = c["id"]
 
         # SINGLE TOKEN IS NOT ALLOWED
-        endpoint_single = "{}/{}".format(endpoint, token_id)
+        endpoint_single = f"{endpoint}/{token_id}"
         r = client.get(endpoint_single, headers=last_tokens_header)
         assert r.status_code == 405
 
@@ -49,7 +49,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 404
 
-        endpoint_single = "{}/{}".format(endpoint, token_id)
+        endpoint_single = f"{endpoint}/{token_id}"
 
         # TEST DELETE OF A SINGLE TOKEN
         r = client.delete(endpoint_single, headers=last_tokens_header)

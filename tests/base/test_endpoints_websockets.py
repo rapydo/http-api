@@ -74,7 +74,8 @@ class TestApp(BaseTests):
 
         r = client.post(f"{API_URI}/stream/{channel}", headers=headers)
         assert r.status_code == 200
-        assert self.get_content(r) == 'Stream opened, prepare yourself!'
+        content = r.data.decode('utf-8')
+        assert content == 'Stream opened, prepare yourself!'
         assert 'Grip-Hold' in r.headers
         assert r.headers['Grip-Hold'] == 'stream'
         assert 'Grip-Channel' in r.headers
@@ -87,5 +88,4 @@ class TestApp(BaseTests):
             f"{API_URI}/stream/{channel}", data={'sync': False}, headers=headers
         )
         assert r.status_code == 200
-        content = r.data.decode('utf-8')
-        assert content == 'Message received: True'
+        assert self.get_content(r) == 'Message received: True'
