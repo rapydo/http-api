@@ -51,8 +51,8 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert f'Subject: {project_tile}: new credentials' in mail.get("headers")
-        assert 'Username: {}'.format(data.get('email').lower()) in mail.get('body')
-        assert 'Password: {}'.format(data.get('password')) in mail.get('body')
+        assert f"Username: {data.get('email').lower()}" in mail.get('body')
+        assert f"Password: {data.get('password')}" in mail.get('body')
 
         r = client.get(url + "/" + uuid, headers=headers)
         assert r.status_code == 200
@@ -78,8 +78,8 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert f'Subject: {project_tile}: new credentials' in mail.get("headers")
-        assert 'Username: {}'.format(data2.get('email').lower()) in mail.get('body')
-        assert 'Password: {}'.format(data2.get('password')) in mail.get('body')
+        assert f"Username: {data2.get('email').lower()}" in mail.get('body')
+        assert f"Password: {data2.get('password')}" in mail.get('body')
 
         # send and invalid user_id
         r = client.put(url + "/invalid", data={'name': fake.name()}, headers=headers)
@@ -121,7 +121,7 @@ class TestApp(BaseTests):
         assert mail.get('body') is not None
         assert mail.get('headers') is not None
         assert f'Subject: {project_tile}: password changed' in mail.get("headers")
-        assert 'Username: {}'.format(data2.get('email').lower()) in mail.get('body')
+        assert f"Username: {data2.get('email').lower()}" in mail.get('body')
         assert f'Password: {newpwd}' in mail.get('body')
 
         # login with a newly created user

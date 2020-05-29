@@ -24,9 +24,8 @@ def test_authentication_service(fake):
     old_pwd = fake.password(min_pwd_len)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=old_pwd)
     assert not ret_val
-    assert ret_text == 'Password is too short, use at least {} characters'.format(
-        min_pwd_len
-    )
+    error = f'Password is too short, use at least {min_pwd_len} characters'
+    assert ret_text == error
 
     pwd = fake.password(min_pwd_len, low=False, up=True)
     ret_val, ret_text = auth.verify_password_strength(pwd)
@@ -103,9 +102,7 @@ def test_authentication_service(fake):
         pytest.fail('Password strength not verified')
     except RestApiException as e:
         assert e.status_code == 409
-        assert str(e) == 'Password is too short, use at least {} characters'.format(
-            min_pwd_len
-        )
+        assert str(e) == f'Password is too short, use at least {min_pwd_len} characters'
     except BaseException:
         pytest.fail("Unexpected exception raised")
 

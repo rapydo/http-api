@@ -25,9 +25,7 @@ def catch_db_exceptions(func):
 
         except DuplicateKeyError as e:
 
-            regexp = r".+ duplicate key error collection: {}\.".format(
-                MongoExt.DATABASE
-            )
+            regexp = fr".+ duplicate key error collection: {MongoExt.DATABASE}\."
             regexp += r"(.+) index: .+ dup key: { (.+): \"(.+)\" }"
             m = re.search(regexp, str(e))
             if m:
@@ -89,11 +87,10 @@ class MongoExt(Connector):
         variables = self.variables
         variables.update(kwargs)
 
+        HOST = variables.get('host')
+        PORT = variables.get('port')
         MongoExt.DATABASE = variables.get('database', 'rapydo')
-        uri = "mongodb://{}:{}/{}".format(
-            variables.get('host'),
-            variables.get('port'), MongoExt.DATABASE
-        )
+        uri = f"mongodb://{HOST}:{PORT}/{MongoExt.DATABASE}"
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
         link = mongodb._get_connection(alias=MongoExt.DATABASE)

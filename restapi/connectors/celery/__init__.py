@@ -92,29 +92,18 @@ class CeleryExt(Connector):
             BROKER_VHOST = f"/{BROKER_VHOST}"
 
         if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKER_CREDENTIALS = f'{BROKER_USER}:{BROKER_PASSWORD}@'
+            BROKERCRED = f'{BROKER_USER}:{BROKER_PASSWORD}@'
         else:
-            BROKER_CREDENTIALS = ""
+            BROKERCRED = ""
 
         if broker == 'RABBIT':
-            BROKER_URL = 'amqp://{}{}:{}{}'.format(
-                BROKER_CREDENTIALS,
-                BROKER_HOST,
-                BROKER_PORT,
-                BROKER_VHOST,
-            )
-            log.info(
-                "Configured RabbitMQ as Celery broker {}", obfuscate_url(BROKER_URL))
+            BROKER_URL = f'amqp://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}{BROKER_VHOST}'
+            log.info("Configured RabbitMQ as broker {}", obfuscate_url(BROKER_URL))
         elif broker == 'REDIS':
-            BROKER_URL = 'redis://{}{}:{}/0'.format(
-                BROKER_CREDENTIALS,
-                BROKER_HOST,
-                BROKER_PORT,
-            )
-            log.info(
-                "Configured Redis as Celery broker {}", obfuscate_url(BROKER_URL))
+            BROKER_URL = f'redis://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}/0'
+            log.info("Configured Redis as broker {}", obfuscate_url(BROKER_URL))
         else:  # pragma: no cover
-            log.error("Unable to start Celery unknown broker service: {}", broker)
+            log.error("Unable to start Celery: unknown broker service: {}", broker)
             celery_app = None
             return celery_app
 
@@ -147,34 +136,19 @@ class CeleryExt(Connector):
             BACKEND_PASSWORD = None
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
-            BACKEND_CREDENTIALS = f'{BACKEND_USER}:{BACKEND_PASSWORD}@'
+            BACKENDCRED = f'{BACKEND_USER}:{BACKEND_PASSWORD}@'
         else:
-            BACKEND_CREDENTIALS = ""
+            BACKENDCRED = ""
 
         if backend == 'RABBIT':
-            BACKEND_URL = 'rpc://{}{}:{}/0'.format(
-                BACKEND_CREDENTIALS,
-                BACKEND_HOST,
-                BACKEND_PORT,
-            )
-            log.info(
-                "Configured RabbitMQ as Celery backend {}", obfuscate_url(BACKEND_URL))
+            BACKEND_URL = f'rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0'
+            log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'REDIS':
-            BACKEND_URL = 'redis://{}{}:{}/0'.format(
-                BACKEND_CREDENTIALS,
-                BACKEND_HOST,
-                BACKEND_PORT,
-            )
-            log.info(
-                "Configured Redis as Celery backend {}", obfuscate_url(BACKEND_URL))
+            BACKEND_URL = f'redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0'
+            log.info("Configured Redis as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == 'MONGODB':
-            BACKEND_URL = 'mongodb://{}{}:{}'.format(
-                BACKEND_CREDENTIALS,
-                BACKEND_HOST,
-                BACKEND_PORT,
-            )
-            log.info(
-                "Configured MongoDB as Celery backend {}", obfuscate_url(BACKEND_URL))
+            BACKEND_URL = f'mongodb://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}'
+            log.info("Configured MongoDB as backend {}", obfuscate_url(BACKEND_URL))
         else:  # pragma: no cover
             log.exit("Unable to start Celery unknown backend service: {}", backend)
             # celery_app = None
@@ -231,15 +205,10 @@ class CeleryExt(Connector):
                 log.info("Celery-beat connected to MongoDB: {}", m)
             elif backend == 'REDIS':
 
-                BEAT_BACKEND_URL = 'redis://{}{}:{}/1'.format(
-                    BACKEND_CREDENTIALS,
-                    BACKEND_HOST,
-                    BACKEND_PORT,
-                )
-
-                celery_app.conf['REDBEAT_REDIS_URL'] = BEAT_BACKEND_URL
+                BEATBACKENDURL = f'redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/1'
+                celery_app.conf['REDBEAT_REDIS_URL'] = BEATBACKENDURL
                 celery_app.conf['REDBEAT_KEY_PREFIX'] = CeleryExt.REDBEAT_KEY_PREFIX
-                log.info("Celery-beat connected to Redis: {}", BEAT_BACKEND_URL)
+                log.info("Celery-beat connected to Redis: {}", BEATBACKENDURL)
             else:
                 log.warning(
                     "Cannot configure celery beat scheduler with backend: {}",
@@ -317,10 +286,9 @@ class CeleryExt(Connector):
                 every = timedelta(seconds=every)
 
             if not isinstance(every, timedelta):
+                t = type(every).__name__
                 raise AttributeError(
-                    "Invalid input parameter every = {} (type {})".format(
-                        every, type(every).__name__
-                    )
+                    f"Invalid input parameter every = {every} (type {t})"
                 )
             interval = schedule(run_every=every)  # seconds
             entry = RedBeatSchedulerEntry(
@@ -423,15 +391,15 @@ def send_errors_by_email(func):
             if send_mail_is_active():
                 log.info("Sending error report by email", task_id, task_name)
 
-                body = """
-Celery task {} failed
+                body = f"""
+Celery task {task_id} failed
 
-Name: {}
+Name: {task_name}
 
-Arguments: {}
+Arguments: {self.request.args}
 
-Error: {}
-""".format(task_id, task_name, str(self.request.args), traceback.format_exc())
+Error: {traceback.format_exc()}
+"""
 
                 project = get_project_configuration(
                     "project.title",

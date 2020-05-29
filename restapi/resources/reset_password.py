@@ -72,9 +72,7 @@ if send_mail_is_active():
 
             if user is None:
                 raise RestApiException(
-                    'Sorry, {} is not recognized as a valid username'.format(
-                        reset_email
-                    ),
+                    f'Sorry, {reset_email} is not recognized as a valid username',
                     # FORBIDDEN
                     status_code=403,
                 )

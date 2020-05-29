@@ -105,9 +105,8 @@ class TestApp(BaseTests):
         r = client.put(AUTH_URI + f'/reset/{token}', data=data)
         assert r.status_code == 409
         ret_text = self.get_content(r)
-        assert ret_text == 'Password is too short, use at least {} characters'.format(
-            min_pwd_len
-        )
+        error = f'Password is too short, use at least {min_pwd_len} characters'
+        assert ret_text == error
 
         new_pwd = fake.password(min_pwd_len, strong=True)
         data['new_password'] = new_pwd

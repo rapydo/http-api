@@ -30,9 +30,7 @@ class TestUploadAndDownload(BaseTests):
             }
         )
         assert r.status_code == 400
-        err = "File '{}' already exists, use force parameter to overwrite".format(
-            self.fname
-        )
+        err = f"File '{self.fname}' already exists, use force parameter to overwrite"
         assert self.get_content(r) == err
 
         r = client.put(
