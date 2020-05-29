@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 The most basic (and standard) Rest Resource
 we could provide back then
@@ -39,7 +37,7 @@ class EndpointResource(Resource):
     """
 
     def __init__(self):
-        super(EndpointResource, self).__init__()
+        super().__init__()
 
         self.auth = self.load_authentication()
         try:

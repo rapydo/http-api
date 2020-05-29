@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import jwt
 
@@ -19,13 +17,13 @@ from restapi.utilities.logs import log
 
 def send_password_reset_link(uri, title, reset_email):
     # Internal templating
-    body = "Follow this link to reset your password: {}".format(uri)
+    body = f"Follow this link to reset your password: {uri}"
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")
         html_body = body
         body = None
-    subject = "{} Password Reset".format(title)
+    subject = f"{title} Password Reset"
 
     # Internal email sending
     c = send_mail(html_body, subject, reset_email, plain_body=body)
@@ -103,7 +101,7 @@ if send_mail_is_active():
 
             var = "RESET_PASSWORD_URI"
             uri = detector.get_global_var(key=var, default='/public/reset')
-            complete_uri = "{}://{}{}/{}".format(protocol, domain, uri, rt)
+            complete_uri = f"{protocol}://{domain}{uri}/{rt}"
 
             send_password_reset_link(complete_uri, title, reset_email)
 

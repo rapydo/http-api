@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Integrating swagger in automatic ways.
 Original source was:
@@ -60,7 +58,7 @@ class Swagger:
             raise TypeError("Wrong type: {}".format(type(mapping)))
 
         if len(mapping) < 1:  # pragma: no cover
-            raise ValueError("No definition found in: {}".format(mapping))
+            raise ValueError(f"No definition found in: {mapping}")
 
         # Specs should contain only labels written in spec before
 
@@ -68,7 +66,7 @@ class Swagger:
 
         for label, specs in mapping.items():
 
-            uri = '/{}{}'.format(endpoint.base_uri, label)
+            uri = f'/{endpoint.base_uri}{label}'
             # This will be used by server.py.add
             endpoint.uris.setdefault(uri, uri)
             specs.setdefault('parameters', [])
@@ -122,7 +120,7 @@ class Swagger:
                 # replace in a new uri
                 # <param> -> {param}
                 newuri = newuri.replace(
-                    '<{}>'.format(parameter), '{{{}}}'.format(paramname))
+                    f'<{parameter}>', f'{{{paramname}}}')
 
             # cycle parameters and add them to the endpoint class
             query_params = []

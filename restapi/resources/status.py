@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from restapi.rest.definition import EndpointResource
 from restapi import decorators

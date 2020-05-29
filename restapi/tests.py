@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import pytest
 import json
@@ -17,9 +16,9 @@ from restapi.services.authentication import BaseAuthentication
 
 from restapi.utilities.logs import log
 
-SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
-API_URI = '{}{}'.format(SERVER_URI, API_URL)
-AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
+SERVER_URI = f'http://{DEFAULT_HOST}:{DEFAULT_PORT}'
+API_URI = f'{SERVER_URI}{API_URL}'
+AUTH_URI = f'{SERVER_URI}{AUTH_URL}'
 
 
 # Create a random password to be used to build data for tests
@@ -150,7 +149,7 @@ class BaseTests:
             data = getattr(self.__class__, variable)
             if "read_only" in data and data["read_only"]:
                 pytest.fail(
-                    "Cannot overwrite a read_only variable [{}]".format(variable))
+                    f"Cannot overwrite a read_only variable [{variable}]")
 
         data = {'value': value, 'read_only': read_only}
         setattr(self.__class__, variable, data)
@@ -164,7 +163,7 @@ class BaseTests:
             if "value" in data:
                 return data["value"]
 
-        raise AttributeError("Class variable {} not found".format(variable))
+        raise AttributeError(f"Class variable {variable} not found")
 
     @staticmethod
     def get_specs(client):
@@ -205,7 +204,7 @@ class BaseTests:
         except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(
-                "Malformed response: {}".format(http_out)
+                f"Malformed response: {http_out}"
             )
 
         return response
@@ -267,7 +266,7 @@ class BaseTests:
                     )
                 else:
                     pytest.fail(
-                        "Unknown post log action requested: {}".format(action)
+                        f"Unknown post log action requested: {action}"
                     )
 
         if r.status_code != 200:
@@ -283,7 +282,7 @@ class BaseTests:
         # when 200 OK content is the token
         assert content is not None
 
-        return {'Authorization': 'Bearer {}'.format(content)}, content
+        return {'Authorization': f'Bearer {content}'}, content
 
     @staticmethod
     def get_celery(app):
@@ -359,7 +358,7 @@ class BaseTests:
         post_data=None,
     ):
 
-        endpoint = "{}/{}".format(API_URI, endpoint)
+        endpoint = f"{API_URI}/{endpoint}"
 
         if headers is not None:
 
@@ -405,7 +404,7 @@ class BaseTests:
         if not os.path.exists(fpath):
             return None
 
-        with open(fpath, 'r') as file:
+        with open(fpath) as file:
             data = json.load(file)
         if 'msg' in data:
             tokens = data['msg'].split("\n\n")

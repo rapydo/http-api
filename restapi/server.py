@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 The Main server factory.
 We create all the internal flask components here.

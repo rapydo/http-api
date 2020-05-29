@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from marshmallow import fields
@@ -70,7 +68,7 @@ class Tokens(MethodResource, EndpointResource):
             # invalidate_token can only fail if the token is invalid
             # since this is an authenticated endpoint the token is already verified
             raise RestApiException(  # pragma: no cover
-                "Failed token invalidation: '{}'".format(token),
+                f"Failed token invalidation: '{token}'",
                 status_code=400
             )
 

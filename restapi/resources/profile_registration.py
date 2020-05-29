@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
@@ -21,8 +19,8 @@ def notify_registration(user):
         title = get_project_configuration(
             "project.title", default='Unkown title'
         )
-        subject = "{} New credentials requested".format(title)
-        body = "New credentials request from {}".format(user.email)
+        subject = f"{title} New credentials requested"
+        body = f"New credentials request from {user.email}"
 
         send_mail(body, subject)
 
@@ -68,7 +66,7 @@ if send_mail_is_active():
             user = self.auth.get_user_object(username=email)
             if user is not None:
                 raise RestApiException(
-                    "This user already exists: {}".format(email),
+                    f"This user already exists: {email}",
                     status_code=409,
                 )
 
@@ -86,8 +84,8 @@ if send_mail_is_active():
                     title = get_project_configuration(
                         "project.title", default='Unkown title'
                     )
-                    subject = "{} New credentials requested".format(title)
-                    body = "New credentials request from {}".format(user.email)
+                    subject = f"{title} New credentials requested"
+                    body = f"New credentials request from {user.email}"
 
                     send_mail(body, subject)
 
@@ -96,7 +94,7 @@ if send_mail_is_active():
             except BaseException as e:
                 user.delete()
                 raise RestApiException(
-                    "Errors during account registration: {}".format(e)
+                    f"Errors during account registration: {e}"
                 )
 
                 return self.response(

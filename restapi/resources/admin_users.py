@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 from flask_apispec import MethodResource
 from flask_apispec import marshal_with
@@ -27,10 +25,10 @@ def send_notification(user, unhashed_password, is_update=False):
     )
 
     if is_update:
-        subject = "{}: password changed".format(title)
+        subject = f"{title}: password changed"
         template = "update_credentials.html"
     else:
-        subject = "{}: new credentials".format(title)
+        subject = f"{title}: new credentials"
         template = "new_credentials.html"
 
     replaces = {"username": user.email, "password": unhashed_password}
@@ -59,7 +57,7 @@ def get_roles(auth):
         if r.description == ROLE_DISABLED:
             continue
 
-        roles["roles_{}".format(r.name)] = r.description
+        roles[f"roles_{r.name}"] = r.description
 
     return roles
 
@@ -102,7 +100,7 @@ def get_groups():
 
         groups = {}
         for g in neo4j.Group.nodes.all():
-            group_name = "{} - {}".format(g.shortname, g.fullname)
+            group_name = f"{g.shortname} - {g.fullname}"
             groups[g.uuid] = group_name
 
         return groups

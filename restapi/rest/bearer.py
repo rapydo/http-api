@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 The tokens used are RFC6750 Bearer tokens.
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
 from marshmallow import fields
 from flask_apispec import marshal_with
