@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 # from restapi.utilities.logs import log
 

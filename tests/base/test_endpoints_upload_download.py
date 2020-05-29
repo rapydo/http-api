@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import io
 from restapi.tests import BaseTests, API_URI
 
@@ -220,7 +219,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.post(API_URI + '/tests/upload')
         assert r.status_code == 400
-        err = "File '{}' already exists".format(uploaded_filename)
+        err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
         r = client.post(API_URI + '/tests/upload', data={'force': True})

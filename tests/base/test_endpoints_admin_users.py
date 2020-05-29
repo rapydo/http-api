@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
@@ -123,7 +122,7 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         assert f'Subject: {project_tile}: password changed' in mail.get("headers")
         assert 'Username: {}'.format(data2.get('email').lower()) in mail.get('body')
-        assert 'Password: {}'.format(newpwd) in mail.get('body')
+        assert f'Password: {newpwd}' in mail.get('body')
 
         # login with a newly created user
         headers2, _ = self.do_login(

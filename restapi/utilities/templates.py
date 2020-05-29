@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import jinja2
 from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 from restapi.services.detect import detector
 from restapi.utilities.logs import log

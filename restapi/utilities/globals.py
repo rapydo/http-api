@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 If you need things globally, come here and take.
 

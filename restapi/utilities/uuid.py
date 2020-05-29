@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Handling IDs in a more secure way
 """

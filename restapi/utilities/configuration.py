@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 from collections import OrderedDict
 import yaml
@@ -68,7 +66,7 @@ def read_configuration(
     if not os.path.exists(extend_path):  # pragma: no cover
         log.exit("From project not found: {}", extend_path)
 
-    extend_file = "extended_{}".format(PROJECT_CONF_FILENAME)
+    extend_file = f"extended_{PROJECT_CONF_FILENAME}"
     extended_configuration = load_yaml_file(
         file=extend_file, path=extend_path
     )
@@ -129,7 +127,7 @@ def load_yaml_file(file, path):
     log.verbose("Reading file {}", filepath)
 
     if not os.path.exists(filepath):
-        raise AttributeError("YAML file does not exist: {}".format(filepath))
+        raise AttributeError(f"YAML file does not exist: {filepath}")
 
     with open(filepath) as fh:
         try:
@@ -140,7 +138,7 @@ def load_yaml_file(file, path):
             docs = list(yaml.load_all(fh, OrderedLoader))
 
             if len(docs) == 0:
-                raise AttributeError("YAML file is empty: {}".format(filepath))
+                raise AttributeError(f"YAML file is empty: {filepath}")
 
             return docs[0]
 
@@ -149,4 +147,4 @@ def load_yaml_file(file, path):
             # import codecs
             # error, _ = codecs.getdecoder("unicode_escape")(str(error))
 
-            raise AttributeError("Failed to read file {}: {}".format(filepath, e))
+            raise AttributeError(f"Failed to read file {filepath}: {e}")

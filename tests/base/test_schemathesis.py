@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 import os
 import schemathesis
@@ -40,7 +39,7 @@ def get_auth_token(client, data):
                 return get_auth_token(client, data)
             else:
                 pytest.fail(
-                    "Unknown post log action requested: {}".format(action)
+                    f"Unknown post log action requested: {action}"
                 )
 
     assert r.status_code == 200

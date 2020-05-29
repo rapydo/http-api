@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import time
 import errno
@@ -34,7 +32,7 @@ def find_process(process_name, keywords=None, prefix=None):
         keywords = []
 
     if prefix:
-        keywords.append("{}{}".format(prefix, process_name))
+        keywords.append(f"{prefix}{process_name}")
 
     current_pid = os.getpid()
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import urllib.parse
@@ -86,24 +85,24 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # Check if token is valid
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 204
 
         # Token is still valid because no password still sent
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 204
 
         data = {}
         data['new_password'] = fake.password(7)
         data['password_confirm'] = fake.password(7)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        r = client.put(AUTH_URI + f'/reset/{token}', data=data)
         assert r.status_code == 400
         assert self.get_content(r) == 'New password does not match with confirmation'
 
         min_pwd_len = int(os.getenv("AUTH_MIN_PASSWORD_LENGTH", 9999))
 
         data['password_confirm'] = data['new_password']
-        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        r = client.put(AUTH_URI + f'/reset/{token}', data=data)
         assert r.status_code == 409
         ret_text = self.get_content(r)
         assert ret_text == 'Password is too short, use at least {} characters'.format(
@@ -113,14 +112,14 @@ class TestApp(BaseTests):
         new_pwd = fake.password(min_pwd_len, strong=True)
         data['new_password'] = new_pwd
         data['password_confirm'] = new_pwd
-        r = client.put(AUTH_URI + '/reset/{}'.format(token), data=data)
+        r = client.put(AUTH_URI + f'/reset/{token}', data=data)
         assert r.status_code == 200
 
         self.do_login(client, None, None, status_code=401)
         headers, _ = self.do_login(client, None, new_pwd)
 
         # Token is no longer valid
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
@@ -137,21 +136,21 @@ class TestApp(BaseTests):
 
         # Token created for another user
         token = self.get_crafted_token("r")
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
         # Token created for another user
         token = self.get_crafted_token("r", wrong_algorithm=True)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
         # Token created for another user
         token = self.get_crafted_token("r", wrong_secret=True)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
@@ -162,28 +161,28 @@ class TestApp(BaseTests):
         uuid = self.get_content(r).get('uuid')
 
         token = self.get_crafted_token("x", user_id=uuid)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
         # token created for the correct user, but from outside the system!!
         token = self.get_crafted_token("r", user_id=uuid)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
         # Immature token
         token = self.get_crafted_token("r", user_id=uuid, immature=True)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token'
 
         # Expired token
         token = self.get_crafted_token("r", user_id=uuid, expired=True)
-        r = client.put(AUTH_URI + '/reset/{}'.format(token))
+        r = client.put(AUTH_URI + f'/reset/{token}')
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == 'Invalid reset token: this request is expired'

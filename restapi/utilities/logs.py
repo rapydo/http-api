@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 import json
@@ -24,9 +22,9 @@ elif HOSTNAME != CONTAINER_ID:
     LOGS_FILE = HOSTNAME
 # Celery (variables name due to scaling)
 else:
-    LOGS_FILE = "celery_{}".format(HOSTNAME)
+    LOGS_FILE = f"celery_{HOSTNAME}"
 
-LOGS_PATH = os.path.join(LOGS_FOLDER, "{}.log".format(LOGS_FILE))
+LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
