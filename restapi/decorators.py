@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from functools import wraps
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused

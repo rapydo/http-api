@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import time
 import click
@@ -23,7 +21,7 @@ def main(args):  # pragma: no cover
 
     current_app = os.getenv('FLASK_APP')
     if current_app is None or current_app.strip() == '':
-        os.environ['FLASK_APP'] = '{}.__main__'.format(current_package)
+        os.environ['FLASK_APP'] = f'{current_package}.__main__'
 
     fg_cli = FlaskGroup()
     options = {'prog_name': 'restapi', 'args': args}

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import inspect
 from neomodel import properties
 from neomodel import StructuredNode
@@ -15,7 +14,7 @@ ISO8601UTC = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 class Schema(MarshmallowSchema):
     def __init__(self, strip_required=False, *args, **kwargs):
-        super(Schema, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if strip_required:
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
@@ -39,7 +38,7 @@ class Schema(MarshmallowSchema):
 
 class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
-        super(Neo4jSchema, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         if not fields:
             fields = ()
@@ -118,7 +117,7 @@ class Neo4jChoice(fields.Field):
 
     # choice_model is the same used in neo4j model as choices=
     def __init__(self, choices_model, **kwargs):
-        super(Neo4jChoice, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         if isinstance(choices_model, dict):
             self.choices_dict = choices_model
         else:

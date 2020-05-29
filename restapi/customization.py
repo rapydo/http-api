@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Customization based on configuration 'blueprint' files
 """
@@ -120,7 +118,7 @@ class Customizer:
             resources_dir = 'resources' if iscore else 'apis'
 
             apis_dir = os.path.join(base_dir, resources_dir)
-            apiclass_module = '{}.{}'.format(base_module, resources_dir)
+            apiclass_module = f'{base_module}.{resources_dir}'
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
@@ -130,7 +128,7 @@ class Customizer:
 
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
-                module_name = "{}.{}".format(apiclass_module, module_file)
+                module_name = f"{apiclass_module}.{module_file}"
                 # Convert module name into a module
                 log.debug("Importing {}", module_name)
                 try:
@@ -204,7 +202,7 @@ class Customizer:
 
                     mapping_lists = []
                     for m in epclss.methods:
-                        method_name = "_{}".format(m)
+                        method_name = f"_{m}"
                         if not hasattr(epclss, method_name):
 
                             method_name = m
@@ -310,7 +308,7 @@ class Customizer:
                 classes.setdefault(method, {})
 
                 for uri in uris.keys():
-                    uri = "/{}{}".format(endpoint.base_uri, uri)
+                    uri = f"/{endpoint.base_uri}{uri}"
                     if uri in mappings[method]:
                         log.warning(
                             "Endpoint redefinition: {} {} used from both {} and {}",
