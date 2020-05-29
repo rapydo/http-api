@@ -24,14 +24,16 @@ def from_restapi_exception(self, e):
     return self.response(e.args[0], code=e.status_code)
 
 
-def catch_errors(exception=None, catch_generic=True, **kwargs):
+def catch_errors(exception=None, **kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
     """
 
     if exception is None:
-        exception = RestApiException
+        exceptions = (RestApiException,)
+    else:
+        exceptions = (RestApiException, exception, )
 
     def decorator(func):
         @wraps(func)
@@ -41,7 +43,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             try:
                 out = func(self, *args, **kwargs)
             # Catch the exception requested by the user
-            except exception as e:
+            except exceptions as e:
 
                 if isinstance(e, RestApiException):
                     return from_restapi_exception(self, e)
@@ -49,17 +51,7 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                 log.exception(e)
                 log.error(e)
 
-                if hasattr(e, "status_code"):
-                    error_code = getattr(e, "status_code")
-                else:
-                    error_code = 400
-
-                return self.response(str(e), code=error_code)
-
-            # Catch the basic API exception
-            except RestApiException as e:
-
-                return from_restapi_exception(self, e)
+                return self.response(str(e), code=400)
 
             except werkzeug.exceptions.BadRequest:
                 # do not stop werkzeug BadRequest
@@ -77,13 +69,10 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
 
             # errors with RabbitMQ credentials raised when sending Celery tasks
             except AccessRefused as e:  # pragma: no cover
-                if catch_generic:
-                    log.critical(e)
-                    return self.response(
-                        "Unexpected Server Error", code=500
-                    )
-                else:
-                    raise e
+                log.critical(e)
+                return self.response(
+                    "Unexpected Server Error", code=500
+                )
             except Exception as e:
 
                 if SENTRY_URL is not None:  # pragma: no cover
@@ -95,14 +84,11 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
                     message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)
-                if catch_generic:
-                    if excname in ['AttributeError', 'ValueError', 'KeyError']:
-                        error = 'Server failure; please contact admin.'
-                    else:
-                        error = {excname: message}
-                    return self.response(error, code=400)
+                if excname in ['AttributeError', 'ValueError', 'KeyError']:
+                    error = 'Server failure; please contact admin.'
                 else:
-                    raise e
+                    error = {excname: message}
+                return self.response(error, code=400)
 
             return out
 
