@@ -5,7 +5,7 @@ import jwt
 import uuid
 import pytz
 import string
-import random
+import secrets
 from datetime import datetime, timedelta
 from glom import glom
 from faker import Faker
@@ -45,7 +45,7 @@ class PasswordProvider(BaseProvider):
         if symbols:
             charset += string.punctuation
 
-        rand = random.SystemRandom()
+        rand = secrets.SystemRandom()
 
         randstr = ''.join(rand.choices(charset, k=length))
         if low and not any(s in randstr for s in string.ascii_lowercase):
@@ -124,7 +124,7 @@ def get_faker():
         'zh_CN': 'Chinese',
     }
 
-    loc = random.SystemRandom().choice(list(locales.keys()))
+    loc = secrets.choice(list(locales.keys()))
     log.warning(f"Today I'm {locales.get(loc)}")
     fake = Faker(loc)
 
