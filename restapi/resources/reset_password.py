@@ -6,7 +6,7 @@ from flask_apispec import use_kwargs
 from marshmallow import fields
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, BadRequest, Forbidden
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import PRODUCTION, get_project_configuration
@@ -71,19 +71,14 @@ if send_mail_is_active():
             user = self.auth.get_user_object(username=reset_email)
 
             if user is None:
-                raise RestApiException(
+                raise Forbidden(
                     f'Sorry, {reset_email} is not recognized as a valid username',
-                    # FORBIDDEN
-                    status_code=403,
                 )
 
             if user.is_active is not None and not user.is_active:
                 # Beware, frontend leverages on this exact message,
                 # do not modified it without fix also on frontend side
-                raise RestApiException(
-                    "Sorry, this account is not active",
-                    status_code=403,
-                )
+                raise Forbidden("Sorry, this account is not active")
 
             title = get_project_configuration(
                 "project.title", default='Unkown title'
@@ -127,33 +122,22 @@ if send_mail_is_active():
 
             # If token is expired
             except jwt.exceptions.ExpiredSignatureError:
-                raise RestApiException(
-                    'Invalid reset token: this request is expired',
-                    status_code=400,
-                )
+                raise BadRequest('Invalid reset token: this request is expired')
 
             # if token is not yet active
             except jwt.exceptions.ImmatureSignatureError as e:
                 log.error(e)
-                raise RestApiException(
-                    'Invalid reset token', status_code=400
-                )
-
+                raise BadRequest('Invalid reset token')
             # if token does not exist (or other generic errors)
             except BaseException as e:
                 log.error(e)
-                raise RestApiException(
-                    'Invalid reset token', status_code=400
-                )
+                raise BadRequest('Invalid reset token')
 
             # Recovering token object from jti
             jti = unpacked_token[2]
             token_obj = self.auth.get_tokens(token_jti=jti)
             if len(token_obj) == 0:
-                raise RestApiException(
-                    'Invalid reset token: this request is no longer valid',
-                    status_code=400,
-                )
+                raise BadRequest('Invalid reset token: this request is no longer valid')
 
             token_obj = token_obj.pop(0)
             emitted = token_obj["emitted"]
@@ -171,9 +155,8 @@ if send_mail_is_active():
 
                 if last_change > emitted:
                     self.auth.invalidate_token(token)
-                    raise RestApiException(
+                    raise BadRequest(
                         'Invalid reset token: this request is no longer valid',
-                        status_code=400,
                     )
 
             # The reset token is valid, do something
@@ -187,15 +170,10 @@ if send_mail_is_active():
 
             # Something is missing
             if new_password is None or password_confirm is None:
-                raise RestApiException(
-                    'Invalid password', status_code=400
-                )
+                raise BadRequest('Invalid password')
 
             if new_password != password_confirm:
-                raise RestApiException(
-                    'New password does not match with confirmation',
-                    status_code=400,
-                )
+                raise BadRequest('New password does not match with confirmation')
 
             self.auth.change_password(
                 user, None, new_password, password_confirm

@@ -103,7 +103,7 @@ def get_faker():
         'hi_IN': 'Hindi',
         'hr_HR': 'Croatian',
         'hu_HU': 'Hungarian',
-        'hy_AM': 'Armenian',
+        # 'hy_AM': 'Armenian',
         'it_IT': 'Italian',
         'ja_JP': 'Japanese',
         'ka_GE': 'Georgian',

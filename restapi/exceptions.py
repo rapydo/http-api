@@ -21,9 +21,29 @@ class RestApiException(Exception):
         self.is_warning = is_warning
 
 
+class BadRequest(RestApiException):
+    def __init__(self, exception, is_warning=False):
+        super().__init__(exception, status_code=400, is_warning=is_warning)
+
+
+class Unauthorized(RestApiException):
+    def __init__(self, exception, is_warning=False):
+        super().__init__(exception, status_code=401, is_warning=is_warning)
+
+
 class Forbidden(RestApiException):
     def __init__(self, exception, is_warning=False):
         super().__init__(exception, status_code=403, is_warning=is_warning)
+
+
+class NotFound(RestApiException):
+    def __init__(self, exception, is_warning=False):
+        super().__init__(exception, status_code=404, is_warning=is_warning)
+
+
+class Conflict(RestApiException):
+    def __init__(self, exception, is_warning=False):
+        super().__init__(exception, status_code=409, is_warning=is_warning)
 
 
 class DatabaseDuplicatedEntry(Exception):
