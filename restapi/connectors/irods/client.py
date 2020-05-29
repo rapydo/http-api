@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 from functools import lru_cache
 from flask import request, stream_with_context, Response
@@ -84,7 +82,7 @@ class IrodsPythonClient:  # pragma: no cover
         try:
             return self.prc.data_objects.get(path)
         except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
-            raise IrodsException("{} not found or no permissions".format(path))
+            raise IrodsException(f"{path} not found or no permissions")
 
     @staticmethod
     def getPath(path, prefix=None):
@@ -172,7 +170,7 @@ class IrodsPythonClient:  # pragma: no cover
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Not found (or no permission): {}".format(path))
+            raise IrodsException(f"Not found (or no permission): {path}")
 
         # replicas = []
         # for line in lines:
@@ -208,7 +206,7 @@ class IrodsPythonClient:  # pragma: no cover
                 log.debug("Irods collection already exists: {}", path)
 
         except (iexceptions.CAT_NO_ACCESS_PERMISSION, iexceptions.SYS_NO_API_PRIV):
-            raise IrodsException("You have no permissions on path {}".format(path))
+            raise IrodsException(f"You have no permissions on path {path}")
 
         return None
 
@@ -225,7 +223,7 @@ class IrodsPythonClient:  # pragma: no cover
 
         except iexceptions.SYS_INTERNAL_NULL_INPUT_ERR:
             raise IrodsException(
-                "Unable to create object, invalid path: {}".format(path))
+                f"Unable to create object, invalid path: {path}")
 
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
@@ -295,11 +293,11 @@ class IrodsPythonClient:  # pragma: no cover
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException(
-                "DataObject not found (or no permission): {}".format(sourcepath)
+                f"DataObject not found (or no permission): {sourcepath}"
             )
         except iexceptions.CollectionDoesNotExist:
             raise IrodsException(
-                "Collection not found (or no permission): {}".format(sourcepath)
+                f"Collection not found (or no permission): {sourcepath}"
             )
 
     def move(self, src_path, dest_path):
@@ -570,7 +568,7 @@ class IrodsPythonClient:  # pragma: no cover
 
         if coll_or_obj is None:
             raise IrodsException(
-                "Cannot get permission: path not found: {}".format(coll_or_obj)
+                f"Cannot get permission: path not found: {coll_or_obj}"
             )
 
         data = {}
@@ -740,10 +738,10 @@ class IrodsPythonClient:  # pragma: no cover
     def check_user_exists(self, username, checkGroup=None):
         userdata = self.get_user_info(username)
         if userdata is None:
-            return False, "User {} does not exist".format(username)
+            return False, f"User {username} does not exist"
         if checkGroup is not None:
             if checkGroup not in userdata['groups']:
-                return False, "User {} is not in group {}".format(username, checkGroup)
+                return False, f"User {username} is not in group {checkGroup}"
         return True, "OK"
 
     def query_user_exists(self, user):
@@ -899,7 +897,7 @@ class IrodsPythonClient:  # pragma: no cover
         try:
             raw_out = myrule.execute()
         except BaseException as e:
-            msg = 'Irule failed: {}'.format(e.__class__.__name__)
+            msg = f'Irule failed: {e.__class__.__name__}'
             log.error(msg)
             log.warning(e)
             raise e

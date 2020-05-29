@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 import pytz
 from functools import wraps
@@ -36,7 +34,7 @@ def catch_db_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = "A {} already exists with {}: {}".format(node, prop, val)
+                error = f"A {node} already exists with {prop}: {val}"
 
                 raise DatabaseDuplicatedEntry(error)
 
@@ -280,7 +278,7 @@ class Authentication(BaseAuthentication):
                 log.warning("Injected default user")
 
         except BaseException as e:
-            raise AttributeError("Models for auth are wrong:\n{}".format(e))
+            raise AttributeError(f"Models for auth are wrong:\n{e}")
 
     def save_user(self, user):
         if user is not None:

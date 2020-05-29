@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Wrapper for the existing Flask-SQLalchemy
 
 NOTE: Flask Sqlalchemy needs to have models defined on existing instance;
@@ -56,7 +54,7 @@ def catch_db_exceptions(func):
             if m:
                 prop = m.group(1)
                 val = m.group(2)
-                error = "{} already exists with value: {}".format(prop.title(), val)
+                error = f"{prop.title()} already exists with value: {val}"
                 raise DatabaseDuplicatedEntry(error)
 
             log.error("Unrecognized error message: {}", e)

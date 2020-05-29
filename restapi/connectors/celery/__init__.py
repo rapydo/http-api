@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from celery import Celery
 from functools import wraps
 import traceback
@@ -23,7 +21,7 @@ class CeleryExt(Connector):
     @classmethod
     def init_class(cls):
 
-        task_package = "{}.tasks".format(CUSTOM_PACKAGE)
+        task_package = f"{CUSTOM_PACKAGE}.tasks"
 
         submodules = Meta.import_submodules_from_package(
             task_package, exit_on_fail=True
@@ -91,10 +89,10 @@ class CeleryExt(Connector):
             BROKER_PASSWORD = None
 
         if BROKER_VHOST != "":
-            BROKER_VHOST = "/{}".format(BROKER_VHOST)
+            BROKER_VHOST = f"/{BROKER_VHOST}"
 
         if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKER_CREDENTIALS = '{}:{}@'.format(BROKER_USER, BROKER_PASSWORD)
+            BROKER_CREDENTIALS = f'{BROKER_USER}:{BROKER_PASSWORD}@'
         else:
             BROKER_CREDENTIALS = ""
 
@@ -149,7 +147,7 @@ class CeleryExt(Connector):
             BACKEND_PASSWORD = None
 
         if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
-            BACKEND_CREDENTIALS = '{}:{}@'.format(BACKEND_USER, BACKEND_PASSWORD)
+            BACKEND_CREDENTIALS = f'{BACKEND_USER}:{BACKEND_PASSWORD}@'
         else:
             BACKEND_CREDENTIALS = ""
 
@@ -265,13 +263,13 @@ class CeleryExt(Connector):
         if cls.CELERYBEAT_SCHEDULER == 'REDIS':
             from redbeat.schedulers import RedBeatSchedulerEntry
             try:
-                task_key = "{}{}".format(cls.REDBEAT_KEY_PREFIX, name)
+                task_key = f"{cls.REDBEAT_KEY_PREFIX}{name}"
                 return RedBeatSchedulerEntry.from_key(
                     task_key, app=CeleryExt.celery_app)
             except KeyError:
                 return None
         raise AttributeError(
-            "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+            f"Unsupported celery-beat scheduler: {cls.CELERYBEAT_SCHEDULER}"
         )
 
     @classmethod
@@ -309,7 +307,7 @@ class CeleryExt(Connector):
                 # do conversion... run_every should be a datetime.timedelta
                 log.error("Unsupported period {} for redis beat", period)
                 raise AttributeError(
-                    "Unsupported period {} for redis beat".format(period)
+                    f"Unsupported period {period} for redis beat"
                 )
 
             # convert string to timedelta
@@ -336,7 +334,7 @@ class CeleryExt(Connector):
 
         else:
             raise AttributeError(
-                "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+                f"Unsupported celery-beat scheduler: {cls.CELERYBEAT_SCHEDULER}"
             )
 
     @classmethod
@@ -396,7 +394,7 @@ class CeleryExt(Connector):
 
         else:
             raise AttributeError(
-                "Unsupported celery-beat scheduler: {}".format(cls.CELERYBEAT_SCHEDULER)
+                f"Unsupported celery-beat scheduler: {cls.CELERYBEAT_SCHEDULER}"
             )
 
 
@@ -439,7 +437,7 @@ Error: {}
                     "project.title",
                     default='Unkown title',
                 )
-                subject = "{}: task {} failed".format(project, task_name)
+                subject = f"{project}: task {task_name} failed"
                 send_mail(body, subject)
 
     return wrapper

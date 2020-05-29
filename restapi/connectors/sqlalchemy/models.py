@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Models for the relational database """
 import os
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy

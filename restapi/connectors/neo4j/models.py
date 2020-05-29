@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Models for graph database """
 
 from neomodel import (

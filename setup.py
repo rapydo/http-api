@@ -27,10 +27,10 @@ setup(
         ],
     },
     python_requires='>=3.6.0',
-    entry_points='''
+    entry_points=f'''
         [console_scripts]
-        {}={}:cli
-    '''.format(main_package, app),
+        {main_package}={app}:cli
+    ''',
     install_requires=[
         # Flask and plugins
         "Flask==1.1.2",

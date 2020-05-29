@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 iRODS file-system flask connector
 """
@@ -196,7 +194,7 @@ class IrodsPythonExt(Connector):
 
         else:
             raise NotImplementedError(
-                "Invalid iRODS authentication scheme: {}".format(self.authscheme)
+                f"Invalid iRODS authentication scheme: {self.authscheme}"
             )
 
         # # set timeout on existing socket/connection
