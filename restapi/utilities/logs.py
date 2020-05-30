@@ -6,6 +6,7 @@ import re
 from loguru import logger as log
 
 from restapi.confs import PRODUCTION
+from restapi.env import Env
 
 
 log_level = os.getenv('DEBUG_LEVEL', 'DEBUG')
@@ -107,7 +108,7 @@ if LOGS_PATH is not None:
 
 # Logs utilities
 
-MAX_CHAR_LEN = os.getenv('MAX_LOGS_LENGTH', 200)
+MAX_CHAR_LEN = Env.get_int('MAX_LOGS_LENGTH', 200)
 OBSCURE_VALUE = '****'
 OBSCURED_FIELDS = [
     'password',
