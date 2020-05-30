@@ -1,17 +1,17 @@
 import pytest
-import os
 import schemathesis
 from hypothesis import settings, HealthCheck
 import werkzeug
 import json
 
+from restapi.env import Env
 from restapi.server import create_app
 from restapi.tests import get_faker
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
 
 
-RUN_SCHEMATHESIS = os.getenv("RUN_SCHEMATHESIS", "1") == "1"
+RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
 
 
 def get_auth_token(client, data):

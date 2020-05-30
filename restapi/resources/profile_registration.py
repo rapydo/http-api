@@ -4,6 +4,7 @@ from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.models import Schema
 from restapi import decorators
+from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
@@ -14,7 +15,7 @@ from restapi.resources.profile_activation import send_activation_link
 
 
 def notify_registration(user):
-    if detector.get_bool_from_os("REGISTRATION_NOTIFICATIONS"):
+    if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
         # Sending an email to the administrator
         title = get_project_configuration(
             "project.title", default='Unkown title'
@@ -79,7 +80,7 @@ if send_mail_is_active():
             try:
                 self.auth.custom_post_handle_user_input(user, kwargs)
 
-                if detector.get_bool_from_os("REGISTRATION_NOTIFICATIONS"):
+                if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
                         "project.title", default='Unkown title'

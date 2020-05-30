@@ -1,9 +1,8 @@
-import os
 import re
 import urllib.parse
 
 from restapi.tests import BaseTests, API_URI, AUTH_URI, BaseAuthentication
-from restapi.services.detect import detector
+from restapi.env import Env
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
@@ -12,7 +11,7 @@ class TestApp(BaseTests):
 
     def test_password_reset(self, client, fake):
 
-        if not detector.get_bool_from_os("ALLOW_PASSWORD_RESET"):
+        if not Env.get_bool("ALLOW_PASSWORD_RESET"):
             log.warning("Password reset is disabled, skipping tests")
             return True
 
@@ -99,7 +98,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'New password does not match with confirmation'
 
-        min_pwd_len = int(os.getenv("AUTH_MIN_PASSWORD_LENGTH", 9999))
+        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", default=9999)
 
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + f'/reset/{token}', data=data)

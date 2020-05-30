@@ -6,6 +6,7 @@ from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.utilities.uuid import getUUID
@@ -118,7 +119,7 @@ class MongoExt(Connector):
 
         client = MongoClient(
             self.variables.get('host'),
-            int(self.variables.get('port'))
+            Env.to_int(self.variables.get('port'))
         )
 
         system_dbs = ['admin', 'local', 'config']

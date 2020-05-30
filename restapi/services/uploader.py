@@ -17,7 +17,7 @@ from flask import request  # , send_from_directory
 from werkzeug.utils import secure_filename
 from werkzeug.http import parse_content_range_header
 from restapi.confs import UPLOAD_PATH, PRODUCTION
-from restapi.services.detect import detector
+from restapi.env import Env
 from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
 
@@ -150,7 +150,7 @@ class Uploader:
                     code=400,
                 )
 
-        domain = detector.get_global_var('DOMAIN')
+        domain = Env.get('DOMAIN')
         if PRODUCTION:
             host = f"https://{domain}"
         else:

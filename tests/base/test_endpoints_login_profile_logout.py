@@ -1,7 +1,7 @@
 import time
 import base64
 from restapi.tests import BaseTests, AUTH_URI, BaseAuthentication
-from restapi.services.detect import detector
+from restapi.env import Env
 from restapi.utilities.logs import log
 
 
@@ -175,7 +175,7 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client, fake):
 
-        if not detector.get_bool_from_os("MAIN_LOGIN_ENABLE"):
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):
             log.warning("Profile is disabled, skipping tests")
             return True
 

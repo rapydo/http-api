@@ -13,6 +13,7 @@ from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import CUSTOM_PACKAGE
 from restapi.services.detect import detector
 from restapi.swagger import Swagger
+from restapi.env import Env
 
 from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import read_configuration
@@ -165,7 +166,7 @@ class Customizer:
                         else:  # pragma: no cover
                             log.exit('Wrong depends_on parameter: {}', var)
 
-                        check = detector.get_bool_from_os(dependency)
+                        check = Env.get_bool(dependency)
                         if negate:
                             check = not check
 

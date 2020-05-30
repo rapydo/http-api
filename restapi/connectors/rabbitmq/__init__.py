@@ -1,6 +1,8 @@
 import pika
 import json
 import ssl
+
+from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.connectors import Connector
 
@@ -65,11 +67,7 @@ class RabbitWrapper:
             )
 
     def __connect(self):
-        # Do not import before loading the ext!
-        from restapi.services.detect import Detector
-        ssl_enabled = Detector.get_bool_envvar(
-            self.__variables.get('ssl_enabled', False)
-        )
+        ssl_enabled = Env.to_boolr(self.__variables.get('ssl_enabled'))
 
         log.info('Connecting to the Rabbit (SSL = {})', ssl_enabled)
 

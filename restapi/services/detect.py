@@ -24,7 +24,7 @@ CONNECTORS_FOLDER = 'connectors'
 class Detector:
     def __init__(self):
 
-        self.authentication_service = Detector.get_global_var("AUTH_SERVICE")
+        self.authentication_service = Env.get("AUTH_SERVICE")
 
         if self.authentication_service is None:
             log.info("No service defined for authentication")
@@ -38,7 +38,7 @@ class Detector:
 
         self.services = {
             AUTH_NAME: {
-                'available': Detector.get_bool_from_os('AUTH_ENABLE')
+                'available': Env.get_bool('AUTH_ENABLE')
             }
         }
 
@@ -75,7 +75,7 @@ class Detector:
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 
-        return Env.get_Boolean(name, default=False)
+        return Env.get_bool(name, default=False)
 
     def get_connector(self, name):
 
@@ -125,12 +125,12 @@ class Detector:
 
             variables = Detector.load_variables(prefix=prefix)
 
-            if not Detector.get_bool_envvar(variables.get("enable_connector", True)):
+            if not Env.to_bool(variables.get("enable_connector", True)):
                 log.info("{} connector is disabled", connector)
                 continue
 
             # Was this service enabled from the developer?
-            enabled = Detector.get_bool_envvar(variables.get("enable", False))
+            enabled = Env.to_bool(variables.get("enable"))
             external = variables.get("external", False)
 
             self.services.setdefault(connector, {})
