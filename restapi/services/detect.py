@@ -67,7 +67,7 @@ class Detector:
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
 
-        return Env.to_bool(bool_var, default=False)
+        return Env.to_bool(bool_var)
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
@@ -75,7 +75,7 @@ class Detector:
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 
-        return Env.get_bool(name, default=False)
+        return Env.get_bool(name)
 
     def get_connector(self, name):
 

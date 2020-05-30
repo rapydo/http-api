@@ -98,7 +98,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == 'New password does not match with confirmation'
 
-        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", default=9999)
+        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
         data['password_confirm'] = data['new_password']
         r = client.put(AUTH_URI + f'/reset/{token}', data=data)

@@ -94,7 +94,7 @@ if send_mail_is_active():
             rt = reset_token.replace(".", "+")
 
             var = "RESET_PASSWORD_URI"
-            uri = Env.get(key=var, default='/public/reset')
+            uri = Env.get(var, '/public/reset')
             complete_uri = f"{protocol}://{domain}{uri}/{rt}"
 
             send_password_reset_link(complete_uri, title, reset_email)
