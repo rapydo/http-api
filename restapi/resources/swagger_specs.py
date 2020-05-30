@@ -138,8 +138,6 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                     for method, definition in endpoint.items():
 
                         u = uri.replace("{", "<").replace("}", ">")
-                        if u != '/api/tests/pagination':
-                            continue
                         is_private = glom(
                             mem.customizer._private_endpoints,
                             f"{u}.{method}",
