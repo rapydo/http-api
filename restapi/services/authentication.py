@@ -306,13 +306,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_remote_ip():  # pragma: no cover
         try:
-            if request.headers.getlist("X-Forwarded-For"):
-                ip = request.headers.getlist("X-Forwarded-For")[-1]
-            elif PRODUCTION:
+            if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
+                return forwarded_ips[-1]
+
+            if PRODUCTION:
                 log.warning("Server in production X-Forwarded-For header is missing")
 
-            ip = request.remote_addr
-            return ip
+            return request.remote_addr
         except RuntimeError as e:
             # When executed from tests it raises
             # RuntimeError: Working outside of request context.
