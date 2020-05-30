@@ -6,24 +6,25 @@ class TestApp(BaseTests):
 
     def test_tokens(self, client):
 
-        # CREATING 3 TOKENS
-        NUM_TOKENS = 3
         last_token = None
         last_tokens_header = None
         token_id = None
 
-        for _ in range(NUM_TOKENS):
+        for _ in range(5):
             header, token = self.do_login(client, None, None)
             last_tokens_header = header
             last_token = token
 
         endpoint = AUTH_URI + '/tokens'
 
-        # TEST GET ALL TOKENS (expected at least NUM_TOKENS)
+        # TEST GET ALL TOKENS
         r = client.get(endpoint, headers=last_tokens_header)
         content = self.get_content(r)
         assert r.status_code == 200
-        assert len(content) >= NUM_TOKENS
+        # By creating 5 tokens we expected at least 3 tokens
+        # If password expires at third tokens the first and second will be
+        # invalidated => exactly 3 tokens will be created at the end
+        assert len(content) >= 3
 
         # save a token to be used for further tests
         for c in content:
