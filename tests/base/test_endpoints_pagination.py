@@ -50,11 +50,8 @@ class TestApp(BaseTests):
         content = self.get_content(r)
         assert len(content) == 0
 
-        r = client.get(f"{API_URI}/tests/pagination", data={"size": 200})
-        assert r.status_code == 200
-        content = self.get_content(r)
-        # Size is capped to 100
-        assert len(content) == 100
+        r = client.get(f"{API_URI}/tests/pagination", data={"size": 101})
+        assert r.status_code == 400
 
         r = client.get(f"{API_URI}/tests/pagination", data={"page": -5})
         assert r.status_code == 400
