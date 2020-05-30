@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import click
 from flask.cli import FlaskGroup
@@ -206,11 +207,6 @@ def tests(wait, core, file, folder):
             time.sleep(5)
         mywait()
 
-    # launch unittests and also compute coverage
-    log.warning(
-        "Running all tests and computing coverage.\n" + "This may take some minutes."
-    )
-
     num_opt = 0
     if core:
         num_opt += 1
@@ -241,13 +237,11 @@ def tests(wait, core, file, folder):
 
     try:
 
+        log.info("Running tests... this may take some time")
+        log.debug("Executing: {}", parameters)
         from plumbum import local
         command = local["bash"]
-        log.verbose("Executing tests {}", parameters)
-        output = command(parameters)
+        command(parameters, stdout=sys.stdout, stderr=sys.stderr)
 
     except Exception as e:
-        log.error(str(e))
-        raise e
-
-    log.info("Completed:\n{}", output)
+        log.error(e)

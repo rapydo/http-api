@@ -82,6 +82,7 @@ if detector.check_availability('neo4j'):
                 "summary": "List of groups",
                 "responses": {
                     "200": {"description": "List of groups successfully retrieved"},
+                    "409": {"description": "Request is invalid due to conflicts"},
                 },
             }
         }
@@ -91,6 +92,7 @@ if detector.check_availability('neo4j'):
                 "summary": "Create a new group",
                 "responses": {
                     "200": {"description": "The uuid of the new group is returned"},
+                    "409": {"description": "Request is invalid due to conflicts"},
                 },
             }
         }

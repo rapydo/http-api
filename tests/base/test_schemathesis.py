@@ -64,6 +64,7 @@ else:
     # due to missing authentication => skipping all private endpoints and schemas
     # schema = schemathesis.from_wsgi('/api/swagger', app)
     r = client.get(f'/api/swagger?access_token={token}')
+    assert r.status_code == 200
     schema = json.loads(r.get_data().decode())
     schema = schemathesis.from_dict(schema, app=app)
 

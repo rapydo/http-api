@@ -148,12 +148,23 @@ class Pagination(Schema):
 
 
 def get_pagination(func):
+
     @wraps(func)
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
-    @use_kwargs(Pagination)
+    @use_kwargs(Pagination, locations=['query'])
+    def get_wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
+
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(Pagination, locations=['json'])
     def wrapper(self, *args, **kwargs):
 
         return func(self, *args, **kwargs)
 
+    if func.__name__ == 'get':
+        return get_wrapper
     return wrapper
