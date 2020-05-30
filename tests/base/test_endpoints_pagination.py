@@ -35,8 +35,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 10
-        assert content[0] == 21
-        assert content[19] == 30
+        assert content[0] == 11
+        assert content[19] == 20
 
         r = client.get(f"{API_URI}/tests/pagination", data={"page": 20})
         assert r.status_code == 200
