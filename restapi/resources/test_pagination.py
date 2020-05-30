@@ -19,10 +19,27 @@ if TESTING:
                 "responses": {"200": {"description": "Tests executed"}},
             },
         }
+        _POST = {
+            "/tests/pagination": {
+                "summary": "Execute tests on a paginated endpoint",
+                "description": "Only enabled in testing mode",
+                "responses": {"200": {"description": "Tests executed"}},
+            },
+        }
 
         @decorators.catch_errors()
         @decorators.get_pagination
         def get(self, get_total=None, page=None, size=None):
+
+            if get_total:
+                return len(TestPagination.values)
+
+            offset = (page - 1) * size
+            return TestPagination.values[offset: offset + size]
+
+        @decorators.catch_errors()
+        @decorators.get_pagination
+        def post(self, get_total=None, page=None, size=None):
 
             if get_total:
                 return len(TestPagination.values)
