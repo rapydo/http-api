@@ -188,7 +188,7 @@ class IrodsPythonExt(Connector):
                 zone=default_zone,
             )
 
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"Invalid iRODS authentication scheme: {self.authscheme}"
             )
