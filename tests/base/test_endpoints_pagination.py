@@ -13,14 +13,14 @@ class TestApp(BaseTests):
         assert content[0] == 1
         assert content[19] == 20
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"get_total": True})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
         assert content == 150
 
         # Check precedence: get_total wins
         data = {"get_total": True, "page": 1, "size": 20}
-        r = client.get(f"{API_URI}/tests/pagination", params=data)
+        r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
         assert content == 150
@@ -29,42 +29,45 @@ class TestApp(BaseTests):
         content = self.get_content(r)
         assert content == 150
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": 2})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"page": 2})
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 20
         assert content[0] == 21
         assert content[19] == 40
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": 2, "size": 10})
+        data = {"page": 2, "size": 10}
+        r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 10
         assert content[0] == 11
         assert content[9] == 20
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": 2, "size": 100})
+        data = {"page": 2, "size": 100}
+        r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 50
         assert content[0] == 101
         assert content[49] == 150
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": 20})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"page": 20})
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 0
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"size": 101})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"size": 101})
         assert r.status_code == 400
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": -5})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"page": -5})
         assert r.status_code == 400
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"size": -5})
+        r = client.get(f"{API_URI}/tests/pagination", query_string={"size": -5})
         assert r.status_code == 400
 
-        r = client.get(f"{API_URI}/tests/pagination", params={"page": -5, "size": -5})
+        data = {"page": -5, "size": -5}
+        r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 400
 
         r = client.post(f"{API_URI}/tests/pagination")
@@ -139,7 +142,7 @@ class TestApp(BaseTests):
         assert isinstance(content, list)
 
         # Request get_total as query parameter but is ignored => sent a list of elements
-        r = client.post(f"{API_URI}/tests/pagination", params={"get_total": True})
+        r = client.post(f"{API_URI}/tests/pagination", query_string={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
         assert isinstance(content, list)

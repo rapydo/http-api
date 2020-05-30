@@ -242,6 +242,8 @@ def tests(wait, core, file, folder):
         from plumbum import local
         command = local["bash"]
         command(parameters, stdout=sys.stdout, stderr=sys.stderr)
+        sys.exit(0)
 
     except Exception as e:
         log.error(e)
+        sys.exit(1)
