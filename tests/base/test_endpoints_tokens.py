@@ -37,10 +37,10 @@ class TestApp(BaseTests):
         r = client.get(endpoint_single, headers=last_tokens_header)
         assert r.status_code == 405
 
-        # TEST GET ALL TOKENS (expected at least NUM_TOKENS)
+        # TEST GET ALL TOKENS
         r = client.get(API_URI + "/admin/tokens", headers=last_tokens_header)
         assert r.status_code == 200
-        assert len(self.get_content(r)) >= NUM_TOKENS
+        assert len(self.get_content(r)) >= 3
 
         # DELETE INVALID TOKEN
         r = client.delete(
