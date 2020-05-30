@@ -307,7 +307,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def get_remote_ip():  # pragma: no cover
         try:
             if request.headers.getlist("X-Forwarded-For"):
-                ip = request.headers.getlist("X-Forwarded-For")[0]
+                ip = request.headers.getlist("X-Forwarded-For")[-1]
             elif PRODUCTION:
                 log.warning("Server in production X-Forwarded-For header is missing")
 
