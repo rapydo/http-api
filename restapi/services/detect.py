@@ -12,6 +12,7 @@ from functools import lru_cache
 from restapi.confs import EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.utilities.meta import Meta
 from restapi.confs import ABS_RESTAPI_PATH
 from restapi.utilities.logs import log
@@ -56,40 +57,25 @@ class Detector:
 
     @staticmethod
     def get_global_var(key, default=None):
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_global_var, use os.getenv or Env.get")
         return os.getenv(key, default)
 
     @staticmethod
     @lru_cache
     def get_bool_envvar(bool_var):
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
 
-        if isinstance(bool_var, bool):
-            return bool_var
-
-        # if not directly a bool, try an interpretation
-        # INTEGERS
-        try:
-            tmp = int(bool_var)
-            return bool(tmp)
-        except ValueError:
-            pass
-
-        # STRINGS
-        if isinstance(bool_var, str):
-            # false / False / FALSE
-            if bool_var.lower() == 'false':
-                return False
-            # any non empty string has to be considered True
-            if len(bool_var) > 0:
-                return True
-
-        return False
+        return Env.to_bool(bool_var, default=False)
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
     def get_bool_from_os(name):
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 
-        bool_var = os.getenv(name, False)
-        return Detector.get_bool_envvar(bool_var)
+        return Env.get_Boolean(name, default=False)
 
     def get_connector(self, name):
 
