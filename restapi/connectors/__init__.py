@@ -24,27 +24,27 @@ class Connector(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_connection_exception(self):
+    def get_connection_exception(self):  # pragma: no cover
         return None
 
     @abc.abstractmethod
-    def preconnect(self, **kwargs):
+    def preconnect(self, **kwargs):  # pragma: no cover
         return True
 
     @abc.abstractmethod
-    def connect(self, **kwargs):
+    def connect(self, **kwargs):  # pragma: no cover
         return
 
     @abc.abstractmethod
-    def postconnect(self, obj, **kwargs):
+    def postconnect(self, obj, **kwargs):  # pragma: no cover
         return True
 
     @abc.abstractmethod
-    def initialize(self):
+    def initialize(self):  # pragma: no cover
         pass
 
     @abc.abstractmethod
-    def destroy(self):
+    def destroy(self):  # pragma: no cover
         pass
 
     def close_connection(self, ctx):
