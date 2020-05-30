@@ -63,21 +63,14 @@ class IrodsPythonExt(Connector):
             if self.password is None:
                 if self.authscheme == NORMAL_AUTH_SCHEME:
                     self.password = self.variables.get('password')
-                elif self.authscheme == PAM_AUTH_SCHEME:
+                # No tests provided for PAM and GSI
+                elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
                     self.password = self.variables.get('password')
 
-            log.verbose(
-                "Check connection parameters:"
-                + "\nexternal[{}], auth[{}], user[{}], admin[{}]",
-                external,
-                self.authscheme,
-                user,
-                admin,
-            )
-
             # Check if the user requested for GSI explicitely
-            if self.authscheme == GSI_AUTH_SCHEME:
-                # if self.variables.get('external'):
+
+            # No tests provided for PAM and GSI
+            if self.authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
                 gss = True
 
         if user is None:
@@ -92,7 +85,8 @@ class IrodsPythonExt(Connector):
             return True
         ######################
         # Identity with GSI
-        elif gss:
+        # No tests provided for PAM and GSI
+        elif gss:  # pragma: no cover
 
             if self.authscheme != GSI_AUTH_SCHEME:
                 log.debug("Forcing {} authscheme", GSI_AUTH_SCHEME)
@@ -114,7 +108,8 @@ class IrodsPythonExt(Connector):
             if not valid_cert:
                 return False
 
-        elif self.authscheme == PAM_AUTH_SCHEME:
+        # No tests provided for PAM and GSI
+        elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
             pass
 
         elif self.password is not None:
@@ -152,7 +147,8 @@ class IrodsPythonExt(Connector):
                 zone=default_zone,
             )
 
-        elif self.authscheme == GSI_AUTH_SCHEME:
+        # No tests provided for PAM and GSI
+        elif self.authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
@@ -180,7 +176,8 @@ class IrodsPythonExt(Connector):
             if kwargs.get('only_check_proxy', False):
                 check_connection = False
 
-        elif self.authscheme == PAM_AUTH_SCHEME:
+        # No tests provided for PAM and GSI
+        elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
 
             obj = iRODSSession(
                 user=self.user,
