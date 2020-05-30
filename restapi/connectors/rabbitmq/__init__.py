@@ -67,7 +67,7 @@ class RabbitWrapper:
             )
 
     def __connect(self):
-        ssl_enabled = Env.to_boolr(self.__variables.get('ssl_enabled'))
+        ssl_enabled = Env.to_bool(self.__variables.get('ssl_enabled'))
 
         log.info('Connecting to the Rabbit (SSL = {})', ssl_enabled)
 
