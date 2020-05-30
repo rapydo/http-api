@@ -1,6 +1,6 @@
 from restapi.tests import BaseTests, API_URI, AUTH_URI
 from restapi.services.authentication import BaseAuthentication
-from restapi.services.detect import detector
+from restapi.env import Env
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
@@ -9,7 +9,7 @@ class TestApp(BaseTests):
 
     def test_admin_users(self, client, fake):
 
-        if detector.get_bool_from_os("ADMINER_DISABLED"):
+        if Env.get_bool("ADMINER_DISABLED"):
             log.warning("Skipping admin/users tests")
             return
 

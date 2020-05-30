@@ -4,17 +4,18 @@ from functools import lru_cache
 class Env:
 
     @staticmethod
+    @lru_cache
     def get(var, default=None):
         return os.getenv(var, default)
 
     @staticmethod
-    @lru_cache(maxsize=None)
+    @lru_cache
     def get_bool(var, default=False):
         value = Env.get(var, default)
         return Env.to_bool(value, default)
 
     @staticmethod
-    @lru_cache(maxsize=None)
+    @lru_cache
     def get_int(var, default=0):
         value = Env.get(var, default)
         return Env.to_int(value, default)
@@ -22,6 +23,9 @@ class Env:
     @staticmethod
     @lru_cache
     def to_bool(var, default=False):
+
+        if var is None:
+            return default
 
         if isinstance(var, bool):
             return var
@@ -48,6 +52,9 @@ class Env:
     @staticmethod
     @lru_cache
     def to_int(var, default=0):
+
+        if var is None:
+            return default
 
         if isinstance(var, int):
             return var

@@ -6,6 +6,7 @@ from flask_apispec import use_kwargs
 from marshmallow import fields
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
+from restapi.env import Env
 from restapi.exceptions import RestApiException, BadRequest, Forbidden
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
@@ -93,7 +94,7 @@ if send_mail_is_active():
             rt = reset_token.replace(".", "+")
 
             var = "RESET_PASSWORD_URI"
-            uri = detector.get_global_var(key=var, default='/public/reset')
+            uri = Env.get(key=var, default='/public/reset')
             complete_uri = f"{protocol}://{domain}{uri}/{rt}"
 
             send_password_reset_link(complete_uri, title, reset_email)

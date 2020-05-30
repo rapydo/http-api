@@ -17,6 +17,7 @@ from flask import request
 
 from restapi.confs import TESTING
 from restapi.services.detect import Detector
+from restapi.env import Env
 from restapi.exceptions import BadRequest, Unauthorized, Forbidden, Conflict
 from restapi.exceptions import ServiceUnavailable
 from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, SECRET_KEY_FILE
@@ -30,7 +31,7 @@ from restapi.utilities.logs import log
 ALL_ROLES = 'all'
 ANY_ROLE = 'any'
 
-if Detector.get_global_var("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
+if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", default='') == 'TOTP':
     try:
         import pyotp
         # to be replaced, last release is Jun 2016
@@ -71,7 +72,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     JWT_ALGO = 'HS512'
 
     # 1 month in seconds
-    DEFAULT_TOKEN_TTL = float(Detector.get_global_var('AUTH_JWT_TOKEN_TTL', 2_592_000))
+    DEFAULT_TOKEN_TTL = Env.get_int('AUTH_JWT_TOKEN_TTL', default=2_592_000)
     GRACE_PERIOD = 7200  # 2 hours in seconds
 
     FULL_TOKEN = "f"
@@ -91,29 +92,29 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         self.TOTP = 'TOTP'
 
-        self.MIN_PASSWORD_LENGTH = int(
+        self.MIN_PASSWORD_LENGTH = Env.to_int(
             variables.get("min_password_length", 8)
         )
-        self.FORCE_FIRST_PASSWORD_CHANGE = (
-            variables.get("force_first_password_change", False) == 'True'
+        self.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
+            variables.get("force_first_password_change")
         )
-        self.VERIFY_PASSWORD_STRENGTH = (
-            variables.get("verify_password_strength", False) == 'True'
+        self.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
+            variables.get("verify_password_strength")
         )
-        self.MAX_PASSWORD_VALIDITY = int(
+        self.MAX_PASSWORD_VALIDITY = Env.to_int(
             variables.get("max_password_validity", 0)
         )
-        self.DISABLE_UNUSED_CREDENTIALS_AFTER = int(
+        self.DISABLE_UNUSED_CREDENTIALS_AFTER = Env.to_int(
             variables.get("disable_unused_credentials_after", 0)
         )
-        self.REGISTER_FAILED_LOGIN = (
-            variables.get("register_failed_login", False) == 'True'
+        self.REGISTER_FAILED_LOGIN = variables.get(
+            "register_failed_login"
         )
-        self.MAX_LOGIN_ATTEMPTS = int(
-            variables.get("max_login_attempts", 0)
+        self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get(
+            "max_login_attempts", 0)
         )
         self.SECOND_FACTOR_AUTHENTICATION = variables.get(
-            "second_factor_authentication", None
+            "second_factor_authentication"
         )
 
         if self.SECOND_FACTOR_AUTHENTICATION == "None":
@@ -130,8 +131,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @classmethod
     def load_default_user(cls):
 
-        cls.default_user = Detector.get_global_var('AUTH_DEFAULT_USERNAME')
-        cls.default_password = Detector.get_global_var('AUTH_DEFAULT_PASSWORD')
+        cls.default_user = Env.get('AUTH_DEFAULT_USERNAME')
+        cls.default_password = Env.get('AUTH_DEFAULT_PASSWORD')
         if cls.default_user is None or cls.default_password is None:  # pragma: no cover
             log.exit("Default credentials are unavailable!")
 

@@ -12,7 +12,7 @@ there is no client id nor is client authentication required.
 
 from functools import wraps
 from flask import request
-from restapi.services.detect import Detector
+from restapi.env import Env
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
@@ -22,9 +22,7 @@ HTTPAUTH_AUTH_FIELD = 'Authorization'
 HTTPAUTH_ERR_HEADER = {
     'WWW-Authenticate': f'{HTTPAUTH_SCHEME} realm="Authentication Required"'
 }
-ALLOW_ACCESS_TOKEN_PARAMETER = (
-    Detector.get_global_var('ALLOW_ACCESS_TOKEN_PARAMETER', default='False') == 'True'
-)
+ALLOW_ACCESS_TOKEN_PARAMETER = Env.get_bool('ALLOW_ACCESS_TOKEN_PARAMETER')
 
 
 class HTTPTokenAuth:

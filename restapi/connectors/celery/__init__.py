@@ -7,6 +7,7 @@ from restapi.services.mail import send_mail_is_active, send_mail
 from restapi.connectors import Connector
 from restapi.confs import CUSTOM_PACKAGE
 from restapi.confs import get_project_configuration
+from restapi.env import Env
 
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log, obfuscate_url
@@ -65,17 +66,16 @@ class CeleryExt(Connector):
         if broker == 'RABBIT':
             service_vars = Detector.load_variables(prefix='rabbitmq')
             BROKER_HOST = service_vars.get("host")
-            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_PORT = Env.to_int(service_vars.get("port"))
             BROKER_USER = service_vars.get("user", "")
             BROKER_PASSWORD = service_vars.get("password", "")
             BROKER_VHOST = service_vars.get("vhost", "")
-            BROKER_USE_SSL = Detector.get_bool_envvar(
-                service_vars.get("ssl_enabled", False)
-            )
+            BROKER_USE_SSL = Env.to_bool(service_vars.get("ssl_enabled"))
+
         elif broker == 'REDIS':
             service_vars = Detector.load_variables(prefix='redis')
             BROKER_HOST = service_vars.get("host")
-            BROKER_PORT = int(service_vars.get("port"))
+            BROKER_PORT = Env.to_int(service_vars.get("port"))
             BROKER_USER = None
             BROKER_PASSWORD = None
             BROKER_VHOST = ""
@@ -112,19 +112,19 @@ class CeleryExt(Connector):
         if backend == 'RABBIT':
             service_vars = Detector.load_variables(prefix='rabbitmq')
             BACKEND_HOST = service_vars.get("host")
-            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
         elif backend == 'REDIS':
             service_vars = Detector.load_variables(prefix='redis')
             BACKEND_HOST = service_vars.get("host")
-            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = ""
             BACKEND_PASSWORD = None
         elif backend == 'MONGODB':
             service_vars = Detector.load_variables(prefix='mongo')
             BACKEND_HOST = service_vars.get("host")
-            BACKEND_PORT = int(service_vars.get("port"))
+            BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
         else:  # pragma: no cover
@@ -189,7 +189,7 @@ class CeleryExt(Connector):
 
         # celery_app.conf.broker_pool_limit = None
 
-        if Detector.get_bool_from_os('CELERYBEAT_ENABLED'):
+        if Env.get_bool('CELERYBEAT_ENABLED'):
 
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 

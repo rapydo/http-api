@@ -1,7 +1,7 @@
 import re
 import urllib.parse
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
-from restapi.services.detect import detector
+from restapi.env import Env
 from restapi.confs import get_project_configuration
 from restapi.utilities.logs import log
 
@@ -10,7 +10,7 @@ class TestApp(BaseTests):
 
     def test_registration(self, client, fake):
 
-        if not detector.get_bool_from_os("ALLOW_REGISTRATION"):
+        if not Env.get_bool("ALLOW_REGISTRATION"):
             log.warning("User registration is disabled, skipping tests")
             return True
 
