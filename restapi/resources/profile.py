@@ -81,12 +81,14 @@ class Profile(MethodResource, EndpointResource):
     _PUT = {
         "/profile": {
             "summary": "Update user password",
+            "responses": {"200": {"description": "Profile schema retrieved"}},
             "responses": {"204": {"description": "Password updated"}},
         }
     }
     _PATCH = {
         "/profile": {
             "summary": "Update profile information",
+            "responses": {"200": {"description": "Profile schema retrieved"}},
             "responses": {"204": {"description": "Profile updated"}},
         }
     }
