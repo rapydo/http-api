@@ -11,32 +11,32 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 20
-        assert content[0] == "1"
-        assert content[19] == "20"
+        assert content[0] == 1
+        assert content[19] == 20
 
         data = {"get_total": True, "page": 1, "size": 20}
         r = client.get(f"{API_URI}/tests/pagination", data=data)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert content == "150"
+        assert content == 150
 
         assert r.status_code == 200
         content = self.get_content(r)
-        assert content == "150"
+        assert content == 150
 
         r = client.get(f"{API_URI}/tests/pagination", data={"page": 2})
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 20
-        assert content[0] == "21"
-        assert content[19] == "40"
+        assert content[0] == 21
+        assert content[19] == 40
 
         r = client.get(f"{API_URI}/tests/pagination", data={"page": 2, "size": 10})
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 10
-        assert content[0] == "21"
-        assert content[19] == "30"
+        assert content[0] == 21
+        assert content[19] == 30
 
         r = client.get(f"{API_URI}/tests/pagination", data={"page": 20})
         assert r.status_code == 200
