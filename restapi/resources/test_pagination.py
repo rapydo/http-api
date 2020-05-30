@@ -10,7 +10,8 @@ if TESTING:
 
     class TestPagination(MethodResource, EndpointResource):
 
-        values = list(range(1, 150))
+        # 150 integers from 1 to 150
+        values = list(range(1, 151))
         _GET = {
             "/tests/pagination": {
                 "summary": "Execute tests on a paginated endpoint",
