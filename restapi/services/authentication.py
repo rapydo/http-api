@@ -31,7 +31,7 @@ from restapi.utilities.logs import log
 ALL_ROLES = 'all'
 ANY_ROLE = 'any'
 
-if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", default='') == 'TOTP':
+if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
     try:
         import pyotp
         # to be replaced, last release is Jun 2016
@@ -72,7 +72,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     JWT_ALGO = 'HS512'
 
     # 1 month in seconds
-    DEFAULT_TOKEN_TTL = Env.get_int('AUTH_JWT_TOKEN_TTL', default=2_592_000)
+    DEFAULT_TOKEN_TTL = Env.get_int('AUTH_JWT_TOKEN_TTL', 2_592_000)
     GRACE_PERIOD = 7200  # 2 hours in seconds
 
     FULL_TOKEN = "f"

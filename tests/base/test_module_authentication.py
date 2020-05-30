@@ -13,7 +13,7 @@ def test_authentication_service(fake):
 
     auth = detector.get_service_instance('authentication')
 
-    min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", default=9999)
+    min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
     pwd = fake.password(min_pwd_len - 1)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=pwd)
