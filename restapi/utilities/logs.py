@@ -107,8 +107,7 @@ if LOGS_PATH is not None:
 
 # Logs utilities
 
-
-MAX_CHAR_LEN = 200
+MAX_CHAR_LEN = os.getenv('MAX_LOGS_LENGTH', 200)
 OBSCURE_VALUE = '****'
 OBSCURED_FIELDS = [
     'password',
