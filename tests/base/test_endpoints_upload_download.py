@@ -8,7 +8,7 @@ class TestUploadAndDownload(BaseTests):
 
         # Avoid chinese filename for now... let's simplify the tests
         # self.fname = fake.file_name()
-        self.fname = fake.pystr() + '.' + fake.file_extension()
+        self.fname = f"{fake.pystr()}.{fake.file_extension()}"
         self.fcontent = fake.paragraph()
 
         self.save("fname", self.fname)

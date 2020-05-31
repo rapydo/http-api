@@ -42,7 +42,7 @@ class Certificates:  # pragma: no cover
             sub = cert.get_subject()
 
             for tup in sub.get_components():
-                dn += '/' + tup[0].decode() + '=' + tup[1].decode()
+                dn += f'/{tup[0].decode()}={tup[1].decode()}'
 
             log.verbose("Host DN computed is {}", dn)
             return dn
