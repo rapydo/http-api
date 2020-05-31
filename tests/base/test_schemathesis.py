@@ -1,3 +1,4 @@
+import os
 import pytest
 import schemathesis
 from hypothesis import settings, HealthCheck
@@ -51,6 +52,7 @@ def get_auth_token(client, data):
 if not RUN_SCHEMATHESIS:
     log.warning("Skipping schemathesis")
 else:
+    os.environ["DEBUG_LEVEL"] = "WARNING"
     app = create_app(testing_mode=True)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
     BaseAuthentication.load_default_user()
