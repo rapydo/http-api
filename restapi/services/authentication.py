@@ -713,9 +713,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         qr_url.svg(qr_stream, scale=5)
         return qr_stream.getvalue()
 
-    def verify_password_strength(self, pwd, old_pwd=None):
+    def verify_password_strength(self, pwd, old_pwd):
 
-        if old_pwd is not None and pwd == old_pwd:
+        if pwd == old_pwd:
+            return False, "The new password cannot match the previous password"
+
+        # in case old_pwd is a hash
+        pwd_hash = BaseAuthentication.get_password_hash(pwd)
+        if pwd_hash == old_pwd:
             return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
@@ -749,8 +754,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.VERIFY_PASSWORD_STRENGTH:
 
             check, msg = self.verify_password_strength(
-                new_password,
-                old_pwd=password if password else user.password
+                new_password, password
             )
 
             if not check:

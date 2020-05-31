@@ -16,39 +16,39 @@ def test_authentication_service(fake):
     min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
     pwd = fake.password(min_pwd_len - 1)
-    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, pwd)
     assert not ret_val
     assert ret_text == 'The new password cannot match the previous password'
 
     pwd = fake.password(min_pwd_len - 1)
     old_pwd = fake.password(min_pwd_len)
-    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd=old_pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
     error = f'Password is too short, use at least {min_pwd_len} characters'
     assert ret_text == error
 
     pwd = fake.password(min_pwd_len, low=False, up=True)
-    ret_val, ret_text = auth.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing lower case letters'
 
     pwd = fake.password(min_pwd_len, low=True)
-    ret_val, ret_text = auth.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing upper case letters'
 
     pwd = fake.password(min_pwd_len, low=True, up=True)
-    ret_val, ret_text = auth.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing numbers'
 
     pwd = fake.password(min_pwd_len, low=True, up=True, digits=True)
-    ret_val, ret_text = auth.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
     assert ret_text == 'Password is too weak, missing special characters'
 
     pwd = fake.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
-    ret_val, ret_text = auth.verify_password_strength(pwd)
+    ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert ret_val
     assert ret_text is None
 
