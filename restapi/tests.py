@@ -170,7 +170,7 @@ class BaseTests:
         """
             Retrieve Swagger definition by calling API/specs endpoint
         """
-        r = client.get(API_URI + '/specs')
+        r = client.get(f'{API_URI}/specs')
         assert r.status_code == 200
         content = json.loads(r.data.decode('utf-8'))
         return content
@@ -230,7 +230,7 @@ class BaseTests:
         data['username'] = USER
         data['password'] = PWD
 
-        r = client.post(AUTH_URI + '/login', data=data)
+        r = client.post(f'{AUTH_URI}/login', data=data)
         content = json.loads(r.data.decode('utf-8'))
 
         if r.status_code == 403:
@@ -358,42 +358,40 @@ class BaseTests:
         post_data=None,
     ):
 
-        endpoint = f"{API_URI}/{endpoint}"
-
         if headers is not None:
 
             if self.method_exists(get_status):
-                r = client.get(endpoint)
+                r = client.get(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
             if self.method_exists(post_status):
-                r = client.post(endpoint, data=post_data)
+                r = client.post(f"{API_URI}/{endpoint}", data=post_data)
                 assert r.status_code == 401
 
             if self.method_exists(put_status):
-                r = client.put(endpoint)
+                r = client.put(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
             if self.method_exists(del_status):
-                r = client.delete(endpoint)
+                r = client.delete(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
         get_r = post_r = put_r = delete_r = None
 
         if get_status is not None:
-            get_r = client.get(endpoint, headers=headers)
+            get_r = client.get(f"{API_URI}/{endpoint}", headers=headers)
             assert get_r.status_code == get_status
 
         if post_status is not None:
-            post_r = client.post(endpoint, headers=headers, data=post_data)
+            post_r = client.post(f"{API_URI}/{endpoint}", headers=headers, data=post_data)
             assert post_r.status_code == post_status
 
         if put_status is not None:
-            put_r = client.put(endpoint, headers=headers)
+            put_r = client.put(f"{API_URI}/{endpoint}", headers=headers)
             assert put_r.status_code == put_status
 
         if del_status is not None:
-            delete_r = client.delete(endpoint, headers=headers)
+            delete_r = client.delete(f"{API_URI}/{endpoint}", headers=headers)
             assert delete_r.status_code == del_status
 
         return get_r, post_r, put_r, delete_r

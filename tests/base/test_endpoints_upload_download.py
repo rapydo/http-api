@@ -15,7 +15,7 @@ class TestUploadAndDownload(BaseTests):
         self.save("fcontent", self.fcontent)
 
         r = client.put(
-            API_URI + '/tests/upload',
+            f'{API_URI}/tests/upload',
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 "force": True
@@ -24,7 +24,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 200
 
         r = client.put(
-            API_URI + '/tests/upload',
+            f'{API_URI}/tests/upload',
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
             }
@@ -34,7 +34,7 @@ class TestUploadAndDownload(BaseTests):
         assert self.get_content(r) == err
 
         r = client.put(
-            API_URI + '/tests/upload',
+            f'{API_URI}/tests/upload',
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 "force": True
@@ -54,23 +54,21 @@ class TestUploadAndDownload(BaseTests):
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
 
-        endpoint = API_URI + '/tests/download/'
-
-        r = client.get(endpoint + 'doesnotexist')
+        r = client.get(f'{API_URI}/tests/download/doesnotexist')
         assert r.status_code == 400
 
         # no filename provided
-        r = client.get(API_URI + '/tests/download')
+        r = client.get(f'{API_URI}/tests/download')
         assert r.status_code == 400
 
-        r = client.get(endpoint + self.fname)
+        r = client.get(f'{API_URI}/tests/download/{self.fname}')
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == self.fcontent
 
         new_content = 'new content'
         r = client.put(
-            API_URI + '/tests/upload',
+            f'{API_URI}/tests/upload',
             data={
                 "file": (io.BytesIO(str.encode(new_content)), self.fname),
                 "force": True
@@ -78,18 +76,18 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        r = client.get(endpoint + self.fname)
+        r = client.get(f'{API_URI}/tests/download/{self.fname}')
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content != self.fcontent
         assert content == new_content
 
-        r = client.get(endpoint + self.fname, data={'stream': True})
+        r = client.get(f'{API_URI}/tests/download/{self.fname}', data={'stream': True})
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == new_content
 
-        r = client.get(endpoint + 'doesnotexist', data={'stream': True})
+        r = client.get(f'{API_URI}/tests/download/doesnotexist', data={'stream': True})
         assert r.status_code == 400
 
     def test_chunked(self, client, fake):
@@ -97,13 +95,13 @@ class TestUploadAndDownload(BaseTests):
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
 
-        r = client.post(API_URI + '/tests/upload', data={'force': True})
+        r = client.post(f'{API_URI}/tests/upload', data={'force': True})
         assert r.status_code == 201
         assert self.get_content(r) == ''
 
         with io.StringIO(fake.text()) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f'{API_URI}/tests/upload/chunked',
                 data=f
             )
         assert r.status_code == 400
@@ -111,7 +109,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(fake.text()) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f'{API_URI}/tests/upload/chunked',
                 data=f,
                 headers={
                     "Content-Range": '!'
@@ -124,7 +122,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f'{API_URI}/tests/upload/chunked',
                 data=f,
                 headers={
                     "Content-Range": f'bytes 0-5/{STR_LEN}'
@@ -135,7 +133,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f'{API_URI}/tests/upload/chunked',
                 data=f,
                 headers={
                     "Content-Range": f'bytes 5-{STR_LEN}/{STR_LEN}'
@@ -150,26 +148,26 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get('charset') == 'us-ascii'
         assert meta.get('type') == 'text/plain'
 
-        r = client.get(API_URI + '/tests/download/' + uploaded_filename)
+        r = client.get(f'{API_URI}/tests/download/{uploaded_filename}')
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == up_data
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename
+            f'{API_URI}/tests/download/{uploaded_filename}'
         )
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == up_data
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': ''}
         )
         assert r.status_code == 416
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': f'0-{STR_LEN - 1}'}
         )
         assert r.status_code == 416
@@ -180,7 +178,7 @@ class TestUploadAndDownload(BaseTests):
 
         old_werkzeug = werkzeug_version == "0.16.1"
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': 'bytes=0-9999999999999999'}
         )
         if old_werkzeug:
@@ -189,7 +187,7 @@ class TestUploadAndDownload(BaseTests):
             assert r.status_code == 206
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': 'bytes=0-4'}
         )
         assert r.status_code == 206
@@ -197,7 +195,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[0:5]
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': f'bytes=5-{STR_LEN - 1}'}
         )
         assert r.status_code == 206
@@ -205,7 +203,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[5:]
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
+            f'{API_URI}/tests/download/{uploaded_filename}',
             headers={'Range': f'bytes=0-{STR_LEN - 1}'}
         )
         if old_werkzeug:
@@ -215,11 +213,11 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode('utf-8')
         assert content == up_data
 
-        r = client.post(API_URI + '/tests/upload')
+        r = client.post(f'{API_URI}/tests/upload')
         assert r.status_code == 400
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
-        r = client.post(API_URI + '/tests/upload', data={'force': True})
+        r = client.post(f'{API_URI}/tests/upload', data={'force': True})
         assert r.status_code == 201
         assert self.get_content(r) == ''

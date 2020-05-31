@@ -13,41 +13,40 @@ class TestApp(BaseTests):
             return False
 
         channel = fake.pystr()
-        endpoint = API_URI + '/socket/' + channel
-        r = client.post(endpoint)
+        r = client.post(f'{API_URI}/socket/{channel}')
         assert r.status_code == 401
 
-        r = client.put(endpoint)
+        r = client.put(f'{API_URI}/socket/{channel}')
         assert r.status_code == 401
 
         headers, _ = self.do_login(client, None, None)
         headers['Content-Type'] = 'application/websocket-events'
 
-        r = client.post(endpoint, headers=headers)
+        r = client.post(f'{API_URI}/socket/{channel}', headers=headers)
         assert r.status_code == 400
         error = 'Cannot decode websocket request: invalid in_event'
         assert self.get_content(r) == error
 
         data = b'\r\n'
-        r = client.post(endpoint, data=data, headers=headers)
+        r = client.post(f'{API_URI}/socket/{channel}', data=data, headers=headers)
         assert r.status_code == 400
         error = 'Cannot understand websocket request'
         assert self.get_content(r) == error
 
         data = b'OPEN'
-        r = client.post(endpoint, data=data, headers=headers)
+        r = client.post(f'{API_URI}/socket/{channel}', data=data, headers=headers)
         assert r.status_code == 400
         error = 'Cannot decode websocket request: invalid format'
         assert self.get_content(r) == error
 
         data = b'XYZ\r\n'
-        r = client.post(endpoint, data=data, headers=headers)
+        r = client.post(f'{API_URI}/socket/{channel}', data=data, headers=headers)
         assert r.status_code == 400
         error = 'Cannot understand websocket request'
         assert self.get_content(r) == error
 
         data = b'OPEN\r\n'
-        r = client.post(endpoint, data=data, headers=headers)
+        r = client.post(f'{API_URI}/socket/{channel}', data=data, headers=headers)
         assert r.status_code == 200
         content = r.data.decode('utf-8').split("\n")
         assert len(content) >= 3
@@ -57,11 +56,15 @@ class TestApp(BaseTests):
         assert 'Sec-WebSocket-Extensions' in r.headers
         assert r.headers.get('Sec-WebSocket-Extensions') == 'grip'
 
-        r = client.put(endpoint, headers=headers)
+        r = client.put(f'{API_URI}/socket/{channel}', headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == 'Message received: True'
 
-        r = client.put(endpoint, data={'sync': False}, headers=headers)
+        r = client.put(
+            f'{API_URI}/socket/{channel}',
+            data={'sync': False},
+            headers=headers
+        )
         assert r.status_code == 200
         assert self.get_content(r) == 'Message received: True'
 
