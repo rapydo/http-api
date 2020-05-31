@@ -72,7 +72,7 @@ class Meta:
 
         module = None
         if prefix_package:
-            modulestring = BACKEND_PACKAGE + '.' + modulestring.lstrip('.')
+            modulestring = f"{BACKEND_PACKAGE}.{modulestring.lstrip('.')}"
 
         try:
             # Meta language for dinamically import
@@ -101,7 +101,7 @@ class Meta:
         package = Meta.get_module_from_string(package_name)
 
         for module_name in Meta.get_submodules_from_package(package):
-            module_path = package_name + '.' + module_name
+            module_path = f"{package_name}.{module_name}"
             log.debug("Loading module '{}'", module_path)
 
             submod = Meta.get_module_from_string(
@@ -122,7 +122,8 @@ class Meta:
             myclass = getattr(module, classname)
         except AttributeError as e:
             if not skip_error:
-                log.critical("Failed to load class from module: " + str(e))
+                log.critical(
+                    "Failed to load class from module: {}", e)
             else:
                 pass
 

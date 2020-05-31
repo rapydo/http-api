@@ -685,11 +685,10 @@ class IrodsPythonClient:  # pragma: no cover
 
     def get_current_zone(self, prepend_slash=False, suffix=None):
         zone = self.prc.zone
-        has_suffix = suffix is not None
-        if prepend_slash or has_suffix:
-            zone = '/' + zone
-        if has_suffix:
-            return zone + '/' + suffix
+        if prepend_slash or suffix:
+            zone = f'/{zone}'
+        if suffix:
+            return f'{zone}/{suffix}'
         else:
             return zone
 

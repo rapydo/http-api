@@ -67,7 +67,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # TEST INVALID DELETE OF A SINGLE TOKEN
-        r = client.delete(f'{AUTH_URI}/tokens' + "/0", headers=last_tokens_header)
+        r = client.delete(f'{AUTH_URI}/tokens/0', headers=last_tokens_header)
         assert r.status_code == 401
 
         # TEST TOKEN IS STILL VALID

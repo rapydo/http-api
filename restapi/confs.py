@@ -25,7 +25,7 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = '8080'
 USER_HOME = os.environ['HOME']
 UPLOAD_PATH = os.getenv('UPLOAD_PATH')
-SECRET_KEY_FILE = os.getenv('JWT_APP_SECRETS') + "/secret.key"
+SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
 
 #################
 
@@ -42,7 +42,7 @@ EXTENDED_PACKAGE = os.getenv('EXTENDED_PACKAGE', None)
 BASE_DB_DIR = '/dbs'
 SQLLITE_DBFILE = 'backend.db'
 dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + dbfile
+SQLALCHEMY_DATABASE_URI = f'sqlite:///{dbfile}'
 
 SENTRY_URL = os.getenv('SENTRY_URL')
 if SENTRY_URL is not None and SENTRY_URL.strip() == '':

@@ -152,7 +152,7 @@ class TestApp(BaseTests):
         credentials = f'{USER}:{PWD}'
         encoded_credentials = base64.b64encode(str.encode(credentials)).decode('utf-8')
 
-        headers = {'Authorization': 'Basic ' + encoded_credentials}
+        headers = {'Authorization': f'Basic {encoded_credentials}'}
 
         r = client.post(
             f'{AUTH_URI}/login',

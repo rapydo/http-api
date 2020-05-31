@@ -75,13 +75,12 @@ class PushpinWebSocket(MethodResource, EndpointResource):
 
         out_events = []
         if event_type == 'OPEN':
+            ctrl_msg = websocket_control_message('subscribe', {'channel': channel})
             out_events.append(WebSocketEvent('OPEN'))
             out_events.append(
                 WebSocketEvent(
                     'TEXT',
-                    'c:' + websocket_control_message(
-                        'subscribe', {'channel': channel}
-                    ),
+                    f'c:{ctrl_msg}',
                 )
             )
             headers = {
