@@ -235,7 +235,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             string = string.encode('utf-8')
         return string
 
-    # Old hashing, deprecated since 0.7.2
+    # Old hashing. Deprecated since 0.7.2
     @staticmethod
     def hash_password(password, salt="Unknown"):
         """ Original source:
@@ -250,7 +250,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
         return base64.b64encode(h.digest()).decode('ascii')
 
-    # Old hashing, deprecated since 0.7.2
+    # Old hashing. Deprecated since 0.7.2
     @staticmethod
     def check_old_password(hashed_password, password):
         return hashed_password == BaseAuthentication.hash_password(password)
@@ -719,8 +719,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return False, "The new password cannot match the previous password"
 
         # in case old_pwd is a hash
-        pwd_hash = BaseAuthentication.get_password_hash(pwd)
-        if pwd_hash == old_pwd:
+        if self.verify_password(pwd, old_pwd):
             return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
@@ -760,9 +759,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if not check:
                 raise Conflict(msg)
 
-        now = datetime.now(pytz.utc)
         user.password = BaseAuthentication.get_password_hash(new_password)
-        user.last_password_change = now
+        user.last_password_change = datetime.now(pytz.utc)
         self.save_user(user)
 
         tokens = self.get_tokens(user=user)
@@ -770,8 +768,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             try:
                 self.invalidate_token(token=token["token"])
             except BaseException as e:
-                log.error(e)
-                log.critical("Failed to invalidate token {}")
+                log.critical("Failed to invalidate token {}", e)
 
         return True
 
