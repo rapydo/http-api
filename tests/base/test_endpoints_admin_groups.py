@@ -9,11 +9,9 @@ if detector.check_availability('neo4j'):
         def test_admin_groups(self, client, fake):
 
             headers, _ = self.do_login(client, None, None)
-            endpoint = "admin/groups"
-            url = API_URI + "/" + endpoint
             self._test_endpoint(
                 client,
-                endpoint,
+                "admin/groups",
                 headers,
                 200,
                 400,
@@ -21,16 +19,16 @@ if detector.check_availability('neo4j'):
                 405,
             )
 
-            r = client.get(url, headers=headers)
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
 
-            schema = self.getDynamicInputSchema(client, endpoint, headers)
+            schema = self.getDynamicInputSchema(client, "admin/groups", headers)
             data = self.buildData(schema)
-            r = client.post(url, data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
 
-            r = client.get(url, headers=headers)
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
             groups = self.get_content(r)
             assert groups
@@ -53,10 +51,14 @@ if detector.check_availability('neo4j'):
                 # But set again the same coordinator is enough for now
                 'coordinator': data.get('coordinator')
             }
-            r = client.put(url + "/" + uuid, data=newdata, headers=headers)
+            r = client.put(
+                f"{API_URI}/admin/groups/{uuid}",
+                data=newdata,
+                headers=headers
+            )
             assert r.status_code == 204
 
-            r = client.get(url, headers=headers)
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
             groups = self.get_content(r)
             for g in groups:
@@ -66,25 +68,25 @@ if detector.check_availability('neo4j'):
                     assert g.get('fullname') != data.get('fullname')
                     assert g.get('fullname') != fullname
 
-            r = client.put(url + "/xyz", data=data, headers=headers)
+            r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
             assert r.status_code == 404
 
-            r = client.delete(url + "/" + uuid, headers=headers)
+            r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
             assert r.status_code == 204
 
-            r = client.get(url, headers=headers)
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
             groups = self.get_content(r)
             for g in groups:
                 if g.get('uuid') == uuid:
                     pytest.fail("Group not deleted!")
 
-            r = client.delete(url + "/xyz", headers=headers)
+            r = client.delete(f"{API_URI}/admin/groups/xyz", headers=headers)
             assert r.status_code == 404
 
             data = self.buildData(schema)
             data['coordinator'] = fake.ascii_email()
-            r = client.post(url, data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
             assert r.status_code == 400
             # Now error is: 'coordinator': ['Must be one of: ...
             # assert self.get_content(r) == 'User not found'
@@ -93,7 +95,7 @@ if detector.check_availability('neo4j'):
             # Profile and AdminUsers will react to this change
             # Very important: admin_groups must be tested before admin_users and profile
 
-            r = client.get(AUTH_URI + '/profile', headers=headers)
+            r = client.get(f'{AUTH_URI}/profile', headers=headers)
             assert r.status_code == 200
             user_uuid = self.get_content(r).get('uuid')
 
@@ -102,15 +104,18 @@ if detector.check_availability('neo4j'):
                 'shortname': fake.company(),
                 'coordinator': user_uuid,
             }
-            r = client.post(url, data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
 
-            url = API_URI + "/admin/users/" + user_uuid
             data = {
                 'group': uuid,
                 # very important, otherwise the default user will lose its admin role
                 'roles_admin_root': True
             }
-            r = client.put(url, data=data, headers=headers)
+            r = client.put(
+                f"{API_URI}/admin/users/{user_uuid}",
+                data=data,
+                headers=headers
+            )
             assert r.status_code == 204
