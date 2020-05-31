@@ -107,6 +107,14 @@ class TestApp(BaseTests):
         error = f'Password is too short, use at least {min_pwd_len} characters'
         assert ret_text == error
 
+        # Request with old password
+        data['new_password'] = BaseAuthentication.default_password
+        data['password_confirm'] = BaseAuthentication.default_password
+        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
+        assert r.status_code == 409
+        error = "The new password cannot match the previous password"
+        assert self.get_content(r) == error
+
         new_pwd = fake.password(min_pwd_len, strong=True)
         data['new_password'] = new_pwd
         data['password_confirm'] = new_pwd

@@ -177,7 +177,7 @@ if send_mail_is_active():
                 raise BadRequest('New password does not match with confirmation')
 
             self.auth.change_password(
-                user, None, new_password, password_confirm
+                user, user.password, new_password, password_confirm
             )
             # I really don't know why this save is required... since it is already
             # in change_password ... But if I remove it the new pwd is not saved...

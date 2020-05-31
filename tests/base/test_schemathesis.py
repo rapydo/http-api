@@ -52,6 +52,9 @@ def get_auth_token(client, data):
 if not RUN_SCHEMATHESIS:
     log.warning("Skipping schemathesis")
 else:
+    # No need to restore the LOG LEVEL after this test because
+    # schemathesis test is the last one!
+    # (just because in alphabetic order there no other tests)
     os.environ["DEBUG_LEVEL"] = "WARNING"
     app = create_app(testing_mode=True)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
