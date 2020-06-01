@@ -117,6 +117,11 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         specs['host'] = host
         specs['schemes'] = [scheme]
 
+        # Remove get_schema parameters from Definitions
+
+        for schema, definition in specs.get('definitions', {}).items():
+            definition.get('properties', {}).pop('get_schema', None)
+
         user = self.get_user_if_logged(
             allow_access_token_parameter=True
         )
