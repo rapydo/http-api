@@ -4,7 +4,8 @@ We create all the internal flask components here.
 """
 import os
 import logging
-from flask import Flask
+import time
+from flask import Flask, g
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
@@ -25,6 +26,16 @@ from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+
+
+def register_starting_time():
+    g.start = time.time()
+
+
+def calculate_execution_time(exception=None):
+    diff = time.time() - g.start
+    if diff > 1:
+        log.warning("Slow endpoint detected: {} msecs", diff)
 
 
 def create_app(
@@ -223,6 +234,8 @@ def create_app(
 
     # Logging responses
     microservice.after_request(log_response)
+    microservice.before_request(register_starting_time)
+    microservice.teardown_request(calculate_execution_time)
 
     if send_mail_is_active():
         if not test_smtp_client():
