@@ -57,27 +57,6 @@ def print_message_on_stderr(record):
     return record.get("exception") is None
 
 
-fmt = ""
-fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
-fmt += "[<level>{level}</level> "
-fmt += "<fg #666>{name}:{line}</fg #666>] "
-fmt += "<fg #FFF>{message}</fg #FFF>"
-
-log.add(
-    sys.stderr,
-    level=log_level,
-    colorize=True,
-    format=fmt,
-    # If True the exception trace is extended upward, beyond the catching point
-    # to show the full stacktrace which generated the error.
-    backtrace=False,
-    # Display variables values in exception trace to eases the debugging.
-    # Disabled in production to avoid leaking sensitive data.
-    # Note: enabled in development mode on the File Logger
-    diagnose=False,
-    filter=print_message_on_stderr
-)
-
 if LOGS_PATH is not None:
     try:
         log.add(
@@ -105,6 +84,40 @@ if LOGS_PATH is not None:
     except PermissionError as p:
         log.error(p)
         LOGS_PATH = None
+
+
+fmt = ""
+fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
+fmt += "[<level>{level}</level> "
+fmt += "<fg #666>{name}:{line}</fg #666>] "
+fmt += "<fg #FFF>{message}</fg #FFF>"
+
+# Set the default logger with the given log level and save the log_id as static variable
+# Further call to this function will remove the previous logger (based on saved log_id)
+def set_logger(level):
+
+    if hasattr(set_logger, "log_id"):
+        log.remove(set_logger.log_id)
+
+    log_id = log.add(
+        sys.stderr,
+        level=level,
+        colorize=True,
+        format=fmt,
+        # If True the exception trace is extended upward, beyond the catching point
+        # to show the full stacktrace which generated the error.
+        backtrace=False,
+        # Display variables values in exception trace to eases the debugging.
+        # Disabled in production to avoid leaking sensitive data.
+        # Note: enabled in development mode on the File Logger
+        diagnose=False,
+        filter=print_message_on_stderr
+    )
+
+    set_logger.log_id = log_id
+
+
+set_logger(log_level)
 
 # Logs utilities
 
