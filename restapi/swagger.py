@@ -282,6 +282,10 @@ class Swagger:
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({'name': tag, 'description': desc})
+
+        # Also used in NEW swagger specs
+        self._customizer._configurations['cleaned_tags'] = tags
+
         output['tags'] = tags
 
         self._customizer._original_paths = self._original_paths
