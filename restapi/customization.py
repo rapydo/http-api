@@ -262,6 +262,9 @@ class Customizer:
                                     description = conf[u].get('description')
                                     if description is not None:
                                         missing['description'] = description
+                                if 'tags' not in docs:
+                                    if epclss.labels is not None:
+                                        missing['tags'] = epclss.labels
 
                                 if 'responses' not in docs:
                                     responses = conf[u].get('responses')
