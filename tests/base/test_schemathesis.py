@@ -1,4 +1,3 @@
-import os
 import pytest
 import schemathesis
 from hypothesis import settings, HealthCheck
@@ -9,7 +8,7 @@ from restapi.env import Env
 from restapi.server import create_app
 from restapi.tests import get_faker
 from restapi.services.authentication import BaseAuthentication
-from restapi.utilities.logs import log
+from restapi.utilities.logs import log, set_logger
 
 
 RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
@@ -52,10 +51,10 @@ def get_auth_token(client, data):
 if not RUN_SCHEMATHESIS:
     log.warning("Skipping schemathesis")
 else:
-    # No need to restore the LOG LEVEL after this test because
+    # No need to restore the logger after this test because
     # schemathesis test is the last one!
     # (just because in alphabetic order there no other tests)
-    os.environ["DEBUG_LEVEL"] = "WARNING"
+    set_logger("WARNING")
     app = create_app(testing_mode=True)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
     BaseAuthentication.load_default_user()
