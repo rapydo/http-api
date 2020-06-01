@@ -5,7 +5,7 @@
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
 # from marshmallow import fields, validate
-# from restapi.models import Schema
+# from restapi.models import InputSchema, OutputSchema
 
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
@@ -143,7 +143,7 @@
 #             label="Notify password by email"
 #         )
 
-#     return Schema.from_dict(attributes)
+#     return InputSchema.from_dict(attributes)
 
 
 # class LocalAdminUsers(MethodResource, EndpointResource):

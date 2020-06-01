@@ -3,17 +3,16 @@ from flask_apispec import use_kwargs
 from flask_apispec import marshal_with
 from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.models import Schema
+from restapi.models import InputSchema, OutputSchema
 from restapi import decorators
 from restapi.services.detect import detector
-from restapi.exceptions import RestApiException
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 auth = EndpointResource.load_authentication()
 
 
-class NewPassword(Schema):
+class NewPassword(InputSchema):
     password = fields.Str(
         required=True,
         password=True,
@@ -32,19 +31,19 @@ class NewPassword(Schema):
     totp_code = fields.Str(required=False)
 
 
-class UserProfile(Schema):
+class UserProfile(InputSchema):
     name = fields.Str()
     surname = fields.Str()
     privacy_accepted = fields.Boolean()
 
 
-class Group(Schema):
+class Group(OutputSchema):
     uuid = fields.Str()
     shortname = fields.Str()
     fullname = fields.Str()
 
 
-class ProfileData(Schema):
+class ProfileData(OutputSchema):
     uuid = fields.Str(required=True)
     email = fields.Email(required=True)
     name = fields.Str(required=True)

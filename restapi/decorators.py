@@ -5,7 +5,7 @@ from flask_apispec import use_kwargs
 from marshmallow import fields, validate, post_load
 from sentry_sdk import capture_exception
 
-from restapi.models import Schema
+from restapi.models import InputSchema
 from restapi.confs import SENTRY_URL
 from restapi.exceptions import RestApiException, BadRequest, Conflict
 from restapi.exceptions import DatabaseDuplicatedEntry
@@ -118,7 +118,7 @@ def catch_graph_exceptions(func):
     return wrapper
 
 
-class Pagination(Schema):
+class Pagination(InputSchema):
     get_total = fields.Boolean(
         required=False,
         description='Request the total number of elements'

@@ -2,11 +2,10 @@ from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.models import Schema
+from restapi.models import InputSchema
 from restapi import decorators
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.confs import get_project_configuration
 from restapi.resources.profile_activation import send_activation_link
@@ -31,7 +30,7 @@ if send_mail_is_active():
 
     auth = EndpointResource.load_authentication()
 
-    class User(Schema):
+    class User(InputSchema):
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)

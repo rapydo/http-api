@@ -1,7 +1,7 @@
 import pytz
 from datetime import datetime, timedelta
 from flask_apispec import MethodResource
-from restapi.models import Schema
+from restapi.models import InputSchema
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 
@@ -14,7 +14,7 @@ from restapi.exceptions import Forbidden
 auth = EndpointResource.load_authentication()
 
 
-class Credentials(Schema):
+class Credentials(InputSchema):
     username = fields.Email(required=True)
     password = fields.Str(
         required=True,

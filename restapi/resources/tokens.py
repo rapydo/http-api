@@ -1,7 +1,7 @@
 from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from marshmallow import fields
-from restapi.models import Schema
+from restapi.models import OutputSchema
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 from restapi.exceptions import BadRequest, Unauthorized
@@ -9,7 +9,7 @@ from restapi.exceptions import BadRequest, Unauthorized
 # from restapi.utilities.logs import log
 
 
-class TokenSchema(Schema):
+class TokenSchema(OutputSchema):
     id = fields.Str()
     IP = fields.Str()
     location = fields.Str()
