@@ -50,7 +50,7 @@ class TestApp(BaseTests):
         assert "produces" not in content
         # assert "application/json" in content["consumes"]
         # assert "application/json" in content["produces"]
-        assert "tags" not in content
+        assert "tags" in content
         assert "security" not in content
         # assert "Bearer" in content["security"][0]
         assert "securityDefinitions" not in content
@@ -74,7 +74,7 @@ class TestApp(BaseTests):
         assert "produces" not in content
         # assert "application/json" in content["consumes"]
         # assert "application/json" in content["produces"]
-        assert "tags" not in content
+        assert "tags" in content
         assert "security" not in content
         # assert "Bearer" in content["security"][0]
         assert "securityDefinitions" not in content
