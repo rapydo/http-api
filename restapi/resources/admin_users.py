@@ -3,7 +3,7 @@ from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
-from restapi.models import Schema
+from restapi.models import InputSchema, OutputSchema
 
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
@@ -111,13 +111,13 @@ def get_groups():
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
 
-class Role(Schema):
+class Role(OutputSchema):
 
     name = fields.Str()
     description = fields.Str()
 
 
-class Group(Schema):
+class Group(OutputSchema):
     uuid = fields.Str()
     fullname = fields.Str()
     shortname = fields.Str()
@@ -148,7 +148,7 @@ def get_output_schema():
         except BaseException as e:
             log.error("Could not retrieve custom profile fields:\n{}", e)
 
-    schema = Schema.from_dict(attributes)
+    schema = OutputSchema.from_dict(attributes)
     return schema(many=True)
 
 
@@ -213,7 +213,7 @@ def getInputSchema(is_put_method):
         required=False
     )
 
-    return Schema.from_dict(attributes)
+    return InputSchema.from_dict(attributes)
 
 
 class AdminUsers(MethodResource, EndpointResource):

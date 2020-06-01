@@ -2,8 +2,7 @@ from flask_apispec import MethodResource
 from flask_apispec import marshal_with
 from flask_apispec import use_kwargs
 from marshmallow import fields, validate
-from marshmallow import Schema as MarshmallowSchema
-from restapi.models import Schema
+from restapi.models import InputSchema, OutputSchema
 
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
@@ -38,13 +37,13 @@ if detector.check_availability('neo4j'):
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
-    class Coordinator(MarshmallowSchema):
+    class Coordinator(OutputSchema):
         uuid = fields.Str()
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
 
-    class Group(MarshmallowSchema):
+    class Group(OutputSchema):
         uuid = fields.Str()
         fullname = fields.Str()
         shortname = fields.Str()
@@ -52,7 +51,7 @@ if detector.check_availability('neo4j'):
         coordinator = fields.Nested(Coordinator)
         # prefix = fields.Str()
 
-    class InputGroup(Schema):
+    class InputGroup(InputSchema):
         shortname = fields.Str(required=True, description='Short name')
         fullname = fields.Str(required=True, description='Full name')
         # prefix = fields.Str(required=True)

@@ -3,7 +3,7 @@ from marshmallow import fields
 from flask_apispec import marshal_with
 
 from restapi.rest.definition import EndpointResource
-from restapi.models import Schema, Neo4jSchema, Neo4jChoice
+from restapi.models import OutputSchema, Neo4jSchema, Neo4jChoice
 
 from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
@@ -19,7 +19,7 @@ if TESTING and detector.check_availability('neo4j'):
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
 
-    class Output(Schema):
+    class Output(OutputSchema):
         val = fields.Integer()
         user = Neo4jSchema(
             User,

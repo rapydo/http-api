@@ -12,7 +12,11 @@ GET_SCHEMA_KEY = 'get_schema'
 ISO8601UTC = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
-class Schema(MarshmallowSchema):
+class OutputSchema(MarshmallowSchema):
+    pass
+
+
+class InputSchema(MarshmallowSchema):
     def __init__(self, strip_required=False, *args, **kwargs):
         super().__init__(**kwargs)
         if strip_required:
@@ -36,7 +40,7 @@ class Schema(MarshmallowSchema):
         return data
 
 
-class Neo4jSchema(Schema):
+class Neo4jSchema(OutputSchema):
     def __init__(self, model, fields, *args, **kwargs):
         super().__init__(**kwargs)
 
