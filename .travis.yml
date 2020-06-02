@@ -79,7 +79,7 @@ script:
   - rapydo -p prj init
   - echo $TRAVIS_PULL_REQUEST
   - echo $TRAVIS_EVENT_TYPE
-  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  - if [[ $TRAVIS_PULL_REQUEST == "true" ]] || [[ $TRAVIS_EVENT_TYPE == "cron" ]]; then rapydo pull; fi
   - rapydo start
   - sleep 2
   - rapydo logs
