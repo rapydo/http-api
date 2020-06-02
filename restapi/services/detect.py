@@ -13,6 +13,7 @@ from restapi.confs import EXTENDED_PROJECT_DISABLED
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.meta import Meta
 from restapi.confs import ABS_RESTAPI_PATH
 from restapi.utilities.logs import log
@@ -82,15 +83,15 @@ class Detector:
         service = self.services.get(name)
 
         if service is None:
-            raise AttributeError(f"Service {name} not found")
+            raise ServiceUnavailable(f"Service {name} not found")
 
         if not service.get('available', False):
-            raise AttributeError(f"Service {name} is not available")
+            raise ServiceUnavailable(f"Service {name} is not available")
 
         connector = service.get('connector')
 
         if connector is None:
-            raise AttributeError(f"Connector {name} is not available")
+            raise ServiceUnavailable(f"Connector {name} is not available")
 
         return connector
 

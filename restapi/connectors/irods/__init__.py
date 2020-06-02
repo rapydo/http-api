@@ -242,10 +242,12 @@ class IrodsPythonExt(Connector):
         client = IrodsPythonClient(prc=obj, variables=self.variables)
         return client
 
-    def initialize(self):
+    # initialize is only invoked for backend databases
+    def initialize(self):  # pragma: no cover
         pass
 
-    def destroy(self):
+    # destroy is only invoked for backend databases
+    def destroy(self):  # pragma: no cover
         pass
 
     @staticmethod
