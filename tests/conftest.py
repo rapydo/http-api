@@ -3,7 +3,7 @@ import pytest
 
 from restapi.server import create_app
 from restapi.tests import get_faker
-from restap.utilities.logs import log
+from restapi.utilities.logs import log
 
 
 @pytest.fixture
