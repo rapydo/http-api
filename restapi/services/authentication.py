@@ -595,13 +595,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def custom_user_properties(userdata):
         module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        module = Meta.get_module_from_string(module_path)
-
-        CustomizerClass = Meta.get_class_from_string(
-            'Customizer',
-            module,
-            skip_error=True
-        )
+        CustomizerClass = Meta.get_class_from_string('Customizer', module_path)
         if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
@@ -617,13 +611,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def custom_post_handle_user_input(self, user_node, input_data):
         module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        module = Meta.get_module_from_string(module_path)
-
-        CustomizerClass = Meta.get_class_from_string(
-            'Customizer',
-            module,
-            skip_error=True
-        )
+        CustomizerClass = Meta.get_class_from_string('Customizer', module_path)
         if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:

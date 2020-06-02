@@ -77,7 +77,7 @@ class Meta:
         try:
             # Meta language for dinamically import
             module = import_module(modulestring)
-        except ModuleNotFoundError as e:  # pylint:disable=catching-non-exception
+        except ModuleNotFoundError as e:
             if exit_on_fail:
                 raise e
             elif exit_if_not_found:
@@ -113,21 +113,14 @@ class Meta:
         return submodules
 
     @staticmethod
-    def get_class_from_string(classname, module, skip_error=False):
+    def get_class_from_string(classname, modulename):
         """ Get a specific class from a module using a string variable """
 
-        myclass = None
         try:
-            # Meta language for dinamically import
-            myclass = getattr(module, classname)
-        except AttributeError as e:
-            if not skip_error:
-                log.critical(
-                    "Failed to load class from module: {}", e)
-            else:
-                pass
-
-        return myclass
+            module = Meta.get_module_from_string(modulename)
+            return getattr(module, classname)
+        except AttributeError:
+            return None
 
     @staticmethod
     def get_self_reference_from_args(*args):
