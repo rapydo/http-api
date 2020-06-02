@@ -8,13 +8,9 @@ fi
 
 export COVERAGE_FILE="/tmp/.coverage"
 
-if [ -z "$1" -o "$1" = "default" ]; then
-    CURRENT_PACKAGE="$VANILLA_PACKAGE"
-    COV="--cov=$CURRENT_PACKAGE.apis --cov=$CURRENT_PACKAGE.tasks --cov=$CURRENT_PACKAGE.models"
-else
-    CURRENT_PACKAGE=$1
-    COV="--cov=$CURRENT_PACKAGE"
-fi
+
+CURRENT_PACKAGE="restapi"
+COV="--cov=$CURRENT_PACKAGE"
 
 echo "Launching unittests with coverage"
 echo "Package: $CURRENT_PACKAGE"
