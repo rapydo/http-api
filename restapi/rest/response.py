@@ -182,9 +182,9 @@ class ResponseMaker:
 
                 f["type"] = ResponseMaker.get_schema_type(field_def)
 
-                if field_def.default is None or isinstance(field_def.default, _Missing):
-                    pass
-                else:
+                if not isinstance(field_def.missing, _Missing):
+                    f["default"] = field_def.missing
+                elif not isinstance(field_def.default, _Missing):
                     f["default"] = field_def.default
 
                 if field_def.validate is not None:
