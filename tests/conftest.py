@@ -19,3 +19,5 @@ def fake():
 def pytest_sessionfinish(session, exitstatus):
     if os.getenv("TEST_DESTROY_MODE", '0') == '1':
         create_app(destroy_mode=True)
+
+        assert False
