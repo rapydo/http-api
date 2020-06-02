@@ -61,8 +61,9 @@ if TESTING:
             return response
 
         @decorators.catch_errors()
+        @decorators.init_chunk_upload
         @use_kwargs({'force': fields.Bool()})
-        def post(self, force=False):
+        def post(self, force=False, **kwargs):
 
             filename = 'fixed.filename'
             return self.init_chunk_upload(

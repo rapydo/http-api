@@ -168,3 +168,23 @@ def get_pagination(func):
     if func.__name__ == 'get':
         return get_wrapper
     return wrapper
+
+
+class ChunkUpload(InputSchema):
+    name = fields.Str(required=True)
+    mimeType = fields.Str(required=True)
+    size = fields.Int(required=True, validate=validate.Range(min=1))
+    lastModified = fields.Int(required=True, validate=validate.Range(min=1))
+
+
+def init_chunk_upload(func):
+
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(ChunkUpload)
+    def wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
+
+    return wrapper
