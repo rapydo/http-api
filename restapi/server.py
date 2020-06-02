@@ -28,16 +28,6 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 
-def register_starting_time():
-    g.start = time.time()
-
-
-def calculate_execution_time(exception=None):
-    diff = time.time() - g.start
-    if diff > 1:
-        log.warning("Slow endpoint detected: {} msecs", diff)
-
-
 def create_app(
     name=__name__,
     init_mode=False,
@@ -234,8 +224,6 @@ def create_app(
 
     # Logging responses
     microservice.after_request(log_response)
-    microservice.before_request(register_starting_time)
-    microservice.teardown_request(calculate_execution_time)
 
     if send_mail_is_active():
         if not test_smtp_client():
