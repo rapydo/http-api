@@ -3,6 +3,7 @@ import pytest
 
 from restapi.server import create_app
 from restapi.tests import get_faker
+from restap.utilities.logs import log
 
 
 @pytest.fixture
@@ -17,6 +18,7 @@ def fake():
 
 
 def pytest_sessionfinish(session, exitstatus):
+    log.critical(os.getenv("TEST_DESTROY_MODE", '0'))
     if os.getenv("TEST_DESTROY_MODE", '0') == '1':
         create_app(destroy_mode=True)
 

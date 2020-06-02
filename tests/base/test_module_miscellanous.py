@@ -12,6 +12,7 @@ from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import date_from_string
 from restapi.services.mail import send as _send_mail
+from restapi.utilities.configuration import mix
 
 
 class TestApp(BaseTests):
@@ -208,3 +209,23 @@ class TestApp(BaseTests):
             "body", "subject", "to_addr", "from_addr", "myhost",
             html=True, plain_body=None
         )
+
+        data = {'a': 1}
+        assert mix(None, data) == data
+
+        data1 = {'a': {'b': 1}, 'c': 1}
+        data2 = {'a': {'b': 2}}
+        expected = {'a': {'b': 2}, 'c': 1}
+
+        assert mix(data1, data2) == expected
+
+        data1 = {'a': {'b': 1}, 'c': 1}
+        data2 = {'a': None}
+        # Cannot replace with an empty list
+        assert mix(data1, data2) == data1
+
+        data1 = {'a': [1, 2]}
+        data2 = {'a': [3, 4]}
+        expected = {'a': [1, 2, 3, 4]}
+
+        assert mix(data1, data2) == expected
