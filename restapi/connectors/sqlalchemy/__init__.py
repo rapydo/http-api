@@ -138,15 +138,10 @@ class SqlAlchemy(Connector):
         if db is None:
             log.exit("Could not get 'db' within {} models", self.name)
 
-        try:
-
-            # The Alembic package, which handles the migration work, does not recognize
-            # type changes in columns by default. If you want that fine level of
-            # detection you need to enable the compare_type option
-            Migrate(self.app, db, compare_type=True)
-        except BaseException as e:
-            log.warning("Flask Migrate not enabled")
-            log.error(str(e))
+        # The Alembic package, which handles the migration work, does not recognize
+        # type changes in columns by default. If you want that fine level of
+        # detection you need to enable the compare_type option
+        Migrate(self.app, db, compare_type=True)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...

@@ -42,10 +42,12 @@ class CeleryExt(Connector):
     def postconnect(self, obj, **kwargs):
         return True
 
-    def initialize(self):
+    # initialize is only invoked for backend databases
+    def initialize(self):  # pragma: no cover
         pass
 
-    def destroy(self):
+    # destroy is only invoked for backend databases
+    def destroy(self):  # pragma: no cover
         pass
 
     def connect(self, **kwargs):
