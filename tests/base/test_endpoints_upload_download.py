@@ -229,7 +229,7 @@ class TestUploadAndDownload(BaseTests):
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
-        data['force'] = False
+        data['force'] = True
         r = client.post(f'{API_URI}/tests/upload', data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ''
