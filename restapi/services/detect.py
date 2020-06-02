@@ -332,10 +332,7 @@ class Detector:
                 'initialization',
                 'initialization',
             ))
-            module = Meta.get_module_from_string(module_path)
-            Initializer = Meta.get_class_from_string(
-                'Initializer', module, skip_error=True
-            )
+            Initializer = Meta.get_class_from_string('Initializer', module_path)
             if Initializer is None:
                 log.debug("No custom init available")
             else:
