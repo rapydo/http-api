@@ -96,6 +96,16 @@ class TestUploadAndDownload(BaseTests):
         self.fcontent = self.get("fcontent")
 
         r = client.post(f'{API_URI}/tests/upload', data={'force': True})
+        assert r.status_code == 400
+
+        data = {
+            'force': True,
+            'name': 'fixed.filename',
+            'size': '999',
+            'mimeType': 'application/zip',
+            'lastModified': 1590302749209
+        }
+        r = client.post(f'{API_URI}/tests/upload', data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ''
 
@@ -213,11 +223,13 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode('utf-8')
         assert content == up_data
 
-        r = client.post(f'{API_URI}/tests/upload')
+        data['force'] = False
+        r = client.post(f'{API_URI}/tests/upload', data=data)
         assert r.status_code == 400
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
-        r = client.post(f'{API_URI}/tests/upload', data={'force': True})
+        data['force'] = False
+        r = client.post(f'{API_URI}/tests/upload', data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ''
