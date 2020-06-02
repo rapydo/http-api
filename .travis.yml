@@ -32,8 +32,6 @@ script:
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
   - export TESTING=1
-  # Warning, this will destroy the database! Only use on volatile deployments
-  - export TEST_DESTROY_MODE=1
   - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
 

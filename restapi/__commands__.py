@@ -198,7 +198,9 @@ def forced_clean():  # pragma: no cover
 )
 @click.option('--file', default=None, help='Test a single file of tests')
 @click.option('--folder', default=None, help='Test a single folder of tests')
-def tests(wait, core, file, folder):
+@click.option(
+    '--destroy/--no-destroy', default=False, help='Destroy database after tests')
+def tests(wait, core, file, folder, destroy):
     """Compute tests and coverage"""
 
     if wait:
@@ -235,6 +237,8 @@ def tests(wait, core, file, folder):
         parameters.append("default")
         parameters.append(folder)
 
+    if destroy:
+        os.environ['TEST_DESTROY_MODE'] = "1"
     try:
 
         log.info("Running tests... this may take some time")
