@@ -200,11 +200,7 @@ class Meta:
     def get_customizer_class(module_relpath, class_name, args=None):
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
-        MyClass = Meta.get_class_from_string(
-            class_name,
-            Meta.get_module_from_string(abspath),
-            skip_error=True,
-        )
+        MyClass = Meta.get_class_from_string(class_name, abspath)
 
         instance = None
         if args is None:
