@@ -83,7 +83,7 @@ script:
   - rapydo start
   - sleep 2
   - rapydo logs
-  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
   # Send coverage
   - rapydo dump
