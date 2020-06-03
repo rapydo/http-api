@@ -195,11 +195,13 @@ class Uploader:
             start = 0
         else:
             start = int(content_range.start)
+        start = int(content_range.start)
 
         if content_range.stop is None:
             stop = total_length
         else:
             stop = int(content_range.stop)
+        stop = int(content_range.stop)
 
         return total_length, start, stop
 
