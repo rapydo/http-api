@@ -21,7 +21,7 @@ def test_destroy():
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
 
-    if not detector.check_availability('sqlalchemy'):
+    if detector.check_availability('sqlalchemy'):
         sql = detector.get_service_instance('sqlalchemy')
         # Close previous connections, otherwise the new create_app will hang
         sql.session.remove()
