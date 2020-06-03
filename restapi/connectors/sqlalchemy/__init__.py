@@ -175,9 +175,10 @@ class SqlAlchemy(Connector):
             sql = text('SELECT 1')
             db.engine.execute(sql)
 
+            db.session.remove()
+            db.session.close_all()
             # massive destruction
             log.critical("Destroy current SQL data")
-            db.session.remove()
             db.drop_all()
 
 

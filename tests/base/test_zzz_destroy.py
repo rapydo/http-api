@@ -25,6 +25,7 @@ def test_destroy():
         sql = detector.get_service_instance('sqlalchemy')
         # Close previous connections, otherwise the new create_app will hang
         sql.session.remove()
+        sql.session.close_all()
 
     create_app(destroy_mode=True)
 
