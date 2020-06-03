@@ -260,21 +260,21 @@ class TestApp(BaseTests):
         assert e is None
 
         t, s, e = Uploader.parse_content_range("test/1000")
-        assert t is 1000
-        assert s is 0
-        assert e is 1000
+        assert t == 1000
+        assert s == 0
+        assert e == 1000
 
         t, s, e = Uploader.parse_content_range("bytes test/1000")
-        assert t is 1000
-        assert s is 0
-        assert e is 1000
+        assert t == 1000
+        assert s == 0
+        assert e == 1000
 
         t, s, e = Uploader.parse_content_range("bytes */1000")
-        assert t is 1000
-        assert s is 0
-        assert e is 1000
+        assert t == 1000
+        assert s == 0
+        assert e == 1000
 
         t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
-        assert t is 1000
-        assert s is 2
-        assert e is 499
+        assert t == 1000
+        assert s == 2
+        assert e == 499
