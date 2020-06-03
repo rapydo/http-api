@@ -97,9 +97,6 @@ class SqlAlchemy(Connector):
 
     def connect(self, **kwargs):
 
-        if len(kwargs) > 0:
-            print("TODO: use args for connection?", kwargs)
-
         db_url = {
             'database': self.variables.get('db'),
             'drivername': self.variables.get('dbtype', 'postgresql'),
@@ -158,7 +155,7 @@ class SqlAlchemy(Connector):
 
     def initialize(self):
 
-        db = self.get_instance()
+        db = self.get_instance(global_instance=True)
         db.init_app(self.app)
 
         with self.app.app_context():
@@ -170,7 +167,7 @@ class SqlAlchemy(Connector):
 
     def destroy(self):
 
-        db = self.get_instance()
+        db = self.get_instance(global_instance=True)
         db.init_app(self.app)
 
         with self.app.app_context():
@@ -180,6 +177,7 @@ class SqlAlchemy(Connector):
 
             # massive destruction
             log.critical("Destroy current SQL data")
+            db.session.remove()
             db.drop_all()
 
 
