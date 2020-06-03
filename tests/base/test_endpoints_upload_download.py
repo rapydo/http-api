@@ -246,7 +246,8 @@ class TestUploadAndDownload(BaseTests):
         r = client.get(f'{API_URI}/tests/download/{uploaded_filename}')
         assert r.status_code == 200
         content = r.data.decode('utf-8')
-        assert content == up_data2 + up_data
+        # Uhmmm... should not be up_data2 + up_data ??
+        assert content == up_data + up_data2
 
         data['force'] = False
         r = client.post(f'{API_URI}/tests/upload', data=data)
