@@ -226,7 +226,7 @@ class TestUploadAndDownload(BaseTests):
         # Send a new string as content file. Will be appended as prefix
         up_data2 = fake.pystr(min_chars=24, max_chars=48)
         STR_LEN = len(up_data2)
-        with io.StringIO(up_data) as f:
+        with io.StringIO(up_data2) as f:
             r = client.put(
                 f'{API_URI}/tests/upload/chunked',
                 data=f,
