@@ -176,25 +176,29 @@ class Uploader:
             if range_header is None:
                 return False, self.response("Invalid request", code=400)
 
-            # content_length = request.headers.get("Content-Length")
             content_range = parse_content_range_header(range_header)
 
             if content_range is None:
                 log.error("Unable to parse Content-Range: {}", range_header)
-                completed = True
-                start = 0
                 total_length = int(range_header.split("/")[1])
-                stop = int(total_length)
+                start = 0
+                stop = total_length
             else:
-                # log.warning(content_range)
-                start = int(content_range.start)
-                stop = int(content_range.stop)
-                total_length = int(content_range.length)
-                # log.critical(content_range.start)
-                # log.critical(content_range.stop)
-                # log.critical(content_range.length)
                 # log.critical(content_range.units)
-                completed = (stop >= total_length)
+                total_length = int(content_range.length)
+                # es: 'bytes */35738983'
+                if content_range.start is None:
+                    start = 0
+                else:
+                    start = int(content_range.start)
+
+                if content_range.stop is None:
+                    stop = total_length
+                else:
+                    stop = int(content_range.stop)
+
+            completed = (stop >= total_length)
+
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
