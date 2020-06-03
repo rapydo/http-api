@@ -21,11 +21,11 @@ class TestApp(BaseTests):
         assert not find_process("this-should-not-exist")
 
         s = Meta.get_celery_tasks(None)
-        assert isinstance(s, list)
+        assert isinstance(s, dict)
         assert len(s) == 0
 
         s = Meta.get_celery_tasks("this-should-not-exist")
-        assert isinstance(s, list)
+        assert isinstance(s, dict)
         assert len(s) == 0
 
         start_timeout(1)
