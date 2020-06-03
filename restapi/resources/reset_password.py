@@ -127,11 +127,11 @@ if send_mail_is_active():
 
             # if token is not yet active
             except jwt.exceptions.ImmatureSignatureError as e:
-                log.error(e)
+                log.info(e)
                 raise BadRequest('Invalid reset token')
             # if token does not exist (or other generic errors)
             except BaseException as e:
-                log.error(e)
+                log.info(e)
                 raise BadRequest('Invalid reset token')
 
             # Recovering token object from jti
