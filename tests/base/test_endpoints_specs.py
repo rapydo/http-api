@@ -10,7 +10,6 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
         content = self.get_content(r)
-        assert 'definitions' not in content
         assert "basePath" in content
         assert "consumes" in content
         assert "produces" in content
