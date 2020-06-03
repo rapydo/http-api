@@ -9,7 +9,7 @@ from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.services.mail import send_mail
-from restapi.confs import PRODUCTION, get_project_configuration
+from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.utilities.templates import get_html_template
 
 from restapi.utilities.logs import log
@@ -25,12 +25,11 @@ def send_activation_link(auth, user):
         user, auth.ACTIVATE_ACCOUNT
     )
 
-    domain = os.getenv("DOMAIN")
-    protocol = 'https' if PRODUCTION else 'http'
+    server_url = get_frontend_url()
 
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: {}", rt)
-    url = f"{protocol}://{domain}/public/register/{rt}"
+    url = f"{server_url}/public/register/{rt}"
     body = f"Follow this link to activate your account: {url}"
 
     # customized template

@@ -1,7 +1,7 @@
 from flask_apispec import MethodResource
-from flask import request, jsonify
+from flask import jsonify
 from glom import glom
-from restapi.confs import PRODUCTION, get_api_url
+from restapi.confs import get_backend_url
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.globals import mem
 
@@ -31,7 +31,7 @@ class SwaggerSpecifications(EndpointResource):
         # NOTE: swagger dictionary is read only once, at server init time
         specs = mem.customizer._definitions
 
-        api_url = get_api_url(request, PRODUCTION)
+        api_url = get_backend_url()
         scheme, host = api_url.rstrip('/').split('://')
         specs['host'] = host
         specs['schemes'] = [scheme]
@@ -112,7 +112,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
 
         specs = mem.docs.spec.to_dict()
 
-        api_url = get_api_url(request, PRODUCTION)
+        api_url = get_backend_url()
         scheme, host = api_url.rstrip('/').split('://')
         specs['host'] = host
         specs['schemes'] = [scheme]

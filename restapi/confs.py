@@ -56,21 +56,19 @@ def get_project_configuration(key, default=None):
     return glom(mem.configuration, key, default=default)
 
 
-def get_api_url(request_object, production=False):
-    """ Get api URL and PORT
+@lru_cache
+def get_backend_url():
+    domain = os.getenv("DOMAIN")
+    port = os.getenv("FLASK_PORT")
+    if PRODUCTION:
+        return f"https://{domain}"
 
-    Usefull to handle https and similar
-    unfiltering what is changed from nginx and container network configuration
+    return f"http://{domain}:{port}"
 
-    Warning: it works only if called inside a Flask endpoint
-    """
 
-    api_url = request_object.url_root
+@lru_cache
+def get_frontend_url():
+    domain = os.getenv("DOMAIN")
+    protocol = 'https' if PRODUCTION else 'http'
 
-    if production:
-        parsed = urlparse(api_url)
-        if parsed.port is not None and parsed.port == 443:
-            removed_port = re.sub(r':[\d]+$', '', parsed.netloc)
-            api_url = parsed._replace(scheme="https", netloc=removed_port).geturl()
-
-    return api_url
+    return f"{protocol}://{domain}"

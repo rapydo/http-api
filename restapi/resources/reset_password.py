@@ -1,4 +1,3 @@
-import os
 import jwt
 
 from flask_apispec import MethodResource
@@ -8,9 +7,8 @@ from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.env import Env
 from restapi.exceptions import RestApiException, BadRequest, Forbidden
-from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.confs import PRODUCTION, get_project_configuration
+from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.utilities.templates import get_html_template
 
 from restapi.utilities.logs import log
@@ -88,14 +86,12 @@ if send_mail_is_active():
             reset_token, payload = self.auth.create_temporary_token(
                 user, self.auth.PWD_RESET)
 
-            domain = os.getenv("DOMAIN")
-            protocol = 'https' if PRODUCTION else 'http'
+            server_url = get_frontend_url()
 
             rt = reset_token.replace(".", "+")
 
-            var = "RESET_PASSWORD_URI"
-            uri = Env.get(var, '/public/reset')
-            complete_uri = f"{protocol}://{domain}{uri}/{rt}"
+            uri = Env.get("RESET_PASSWORD_URI", '/public/reset')
+            complete_uri = f"{server_url}{uri}/{rt}"
 
             send_password_reset_link(complete_uri, title, reset_email)
 
