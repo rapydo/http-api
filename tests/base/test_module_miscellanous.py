@@ -274,7 +274,12 @@ class TestApp(BaseTests):
         assert s == 0
         assert e == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
+        t, s, e = Uploader.parse_content_range("bytes 2-499/1000")
         assert t == 1000
         assert s == 2
         assert e == 499
+
+        t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
+        assert t == 1000
+        assert s == 0
+        assert e == 1000
