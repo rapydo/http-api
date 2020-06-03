@@ -223,17 +223,6 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode('utf-8')
         assert content == up_data
 
-        data['force'] = False
-        r = client.post(f'{API_URI}/tests/upload', data=data)
-        assert r.status_code == 400
-        err = f"File '{uploaded_filename}' already exists"
-        assert self.get_content(r) == err
-
-        data['force'] = True
-        r = client.post(f'{API_URI}/tests/upload', data=data)
-        assert r.status_code == 201
-        assert self.get_content(r) == ''
-
         # Send a new string as content file. Will be appended as prefix
         up_data2 = fake.pystr(min_chars=24, max_chars=48)
         STR_LEN = len(up_data2)
@@ -258,3 +247,14 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 200
         content = r.data.decode('utf-8')
         assert content == up_data2 + up_data
+
+        data['force'] = False
+        r = client.post(f'{API_URI}/tests/upload', data=data)
+        assert r.status_code == 400
+        err = f"File '{uploaded_filename}' already exists"
+        assert self.get_content(r) == err
+
+        data['force'] = True
+        r = client.post(f'{API_URI}/tests/upload', data=data)
+        assert r.status_code == 201
+        assert self.get_content(r) == ''
