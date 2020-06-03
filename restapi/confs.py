@@ -59,10 +59,10 @@ def get_project_configuration(key, default=None):
 @lru_cache
 def get_backend_url():
     domain = os.getenv("DOMAIN")
-    port = os.getenv("FLASK_PORT")
     if PRODUCTION:
         return f"https://{domain}"
 
+    port = os.getenv("FLASK_PORT")
     return f"http://{domain}:{port}"
 
 
