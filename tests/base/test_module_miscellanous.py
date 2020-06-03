@@ -12,6 +12,7 @@ from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import date_from_string
 from restapi.services.mail import send as _send_mail
+from restapi.services.uploader import Uploader
 from restapi.utilities.configuration import mix
 
 
@@ -234,3 +235,46 @@ class TestApp(BaseTests):
         expected = {'a': [1, 2, 3, 4]}
 
         assert mix(data1, data2) == expected
+
+        # t = total_length
+        # s = start
+        # e = end
+        t, s, e = Uploader.parse_content_range(None)
+        assert t is None
+        assert s is None
+        assert e is None
+
+        t, s, e = Uploader.parse_content_range("")
+        assert t is None
+        assert s is None
+        assert e is None
+
+        t, s, e = Uploader.parse_content_range("test")
+        assert t is None
+        assert s is None
+        assert e is None
+
+        t, s, e = Uploader.parse_content_range("test/test")
+        assert t is None
+        assert s is None
+        assert e is None
+
+        t, s, e = Uploader.parse_content_range("test/1000")
+        assert t is 1000
+        assert s is 0
+        assert e is 1000
+
+        t, s, e = Uploader.parse_content_range("bytes test/1000")
+        assert t is 1000
+        assert s is 0
+        assert e is 1000
+
+        t, s, e = Uploader.parse_content_range("bytes */1000")
+        assert t is 1000
+        assert s is 0
+        assert e is 1000
+
+        t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
+        assert t is 1000
+        assert s is 2
+        assert e is 499

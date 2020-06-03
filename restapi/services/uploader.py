@@ -170,11 +170,24 @@ class Uploader:
 
     @staticmethod
     def parse_content_range(range_header):
+
+        if range_header is None:
+            return None, None, None
+
         content_range = parse_content_range_header(range_header)
 
         if content_range is None:
             log.error("Unable to parse Content-Range: {}", range_header)
             tokens = range_header.split("/")
+
+            if len(tokens) != 2:
+                log.error("Invalid Content-Range: {}", range_header)
+                return None, None, None
+
+            if not tokens[1].isnumeric():
+                log.error("Invalid Content-Range: {}", range_header)
+                return None, None, None
+
             total_length = int(tokens[1])
             start = 0
             stop = total_length
@@ -201,10 +214,11 @@ class Uploader:
 
         try:
             range_header = request.headers.get("Content-Range")
-            if range_header is None:
-                return False, self.response("Invalid request", code=400)
 
             total_length, start, stop = self.parse_content_range(range_header)
+
+            if total_length is None:
+                return False, self.response("Invalid request", code=400)
 
             completed = (stop >= total_length)
 
