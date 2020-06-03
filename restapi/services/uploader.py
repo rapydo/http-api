@@ -168,6 +168,34 @@ class Uploader:
             code=201
         )
 
+    @staticmethod
+    def parse_content_range(range_header):
+        content_range = parse_content_range_header(range_header)
+
+        if content_range is None:
+            log.error("Unable to parse Content-Range: {}", range_header)
+            tokens = range_header.split("/")
+            total_length = int(tokens[1])
+            start = 0
+            stop = total_length
+
+            return total_length, start, stop
+
+        # log.critical(content_range.units)
+        total_length = int(content_range.length)
+        # es: 'bytes */35738983'
+        if content_range.start is None:
+            start = 0
+        else:
+            start = int(content_range.start)
+
+        if content_range.stop is None:
+            stop = total_length
+        else:
+            stop = int(content_range.stop)
+
+        return total_length, start, stop
+
     def chunk_upload(self, upload_dir, filename, chunk_size=None):
         filename = secure_filename(filename)
 
@@ -176,26 +204,7 @@ class Uploader:
             if range_header is None:
                 return False, self.response("Invalid request", code=400)
 
-            content_range = parse_content_range_header(range_header)
-
-            if content_range is None:
-                log.error("Unable to parse Content-Range: {}", range_header)
-                total_length = int(range_header.split("/")[1])
-                start = 0
-                stop = total_length
-            else:
-                # log.critical(content_range.units)
-                total_length = int(content_range.length)
-                # es: 'bytes */35738983'
-                if content_range.start is None:
-                    start = 0
-                else:
-                    start = int(content_range.start)
-
-                if content_range.stop is None:
-                    stop = total_length
-                else:
-                    stop = int(content_range.stop)
+            total_length, start, stop = self.parse_content_range(range_header)
 
             completed = (stop >= total_length)
 
