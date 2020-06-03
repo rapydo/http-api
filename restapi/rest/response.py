@@ -5,6 +5,7 @@ from urllib import parse as urllib_parse
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
+from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.models import GET_SCHEMA_KEY
@@ -81,7 +82,14 @@ def log_response(response):
 
     url = urllib_parse.urlunparse(url)
     resp = str(response).replace("<Response ", "").replace(">", "")
-    log.info("{} {}{} -> {}", request.method, url, data, resp)
+    log.info(
+        "{} {} {}{} -> {}",
+        BaseAuthentication.get_remote_ip(),
+        request.method,
+        url,
+        data,
+        resp
+    )
 
     return response
 
