@@ -19,7 +19,12 @@ class TestApp(BaseTests):
     def test_libs(self):
 
         assert not find_process("this-should-not-exist")
-        s = Meta.get_submodules_from_package(None)
+
+        s = Meta.get_celery_tasks(None)
+        assert isinstance(s, list)
+        assert len(s) == 0
+
+        s = Meta.get_celery_tasks("this-should-not-exist")
         assert isinstance(s, list)
         assert len(s) == 0
 

@@ -20,16 +20,6 @@ class Meta:
         log.warning("Deprecated initialization of Meta package")
 
     @staticmethod
-    def get_submodules_from_package(package):
-        submodules = []
-        if package is None:
-            return submodules
-        for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
-            if not ispkg:
-                submodules.append(modname)
-        return submodules
-
-    @staticmethod
     def get_classes_from_module(module):
         """
         Find classes inside a python module file.
@@ -91,26 +81,6 @@ class Meta:
                 log.error("Module {} not found.\nError: {}", modulestring, e)
 
         return module
-
-    @staticmethod
-    def import_submodules_from_package(
-        package_name, exit_if_not_found=False, exit_on_fail=False
-    ):
-
-        submodules = []
-        package = Meta.get_module_from_string(package_name)
-
-        for module_name in Meta.get_submodules_from_package(package):
-            module_path = f"{package_name}.{module_name}"
-            log.debug("Loading module '{}'", module_path)
-
-            submod = Meta.get_module_from_string(
-                module_path,
-                exit_if_not_found=exit_if_not_found,
-                exit_on_fail=exit_on_fail,
-            )
-            submodules.append(submod)
-        return submodules
 
     @staticmethod
     def get_class_from_string(classname, modulename):
@@ -177,7 +147,7 @@ class Meta:
         return module
 
     @staticmethod
-    def get_celery_tasks_from_module(submodule):
+    def get_celery_tasks(package_name):
         """
             Extract all celery tasks from a module.
             Celery tasks are functions decorated by @celery_app.task(...)
@@ -185,15 +155,37 @@ class Meta:
             celery.local.PromiseProxy
         """
         tasks = {}
-        functions = inspect.getmembers(submodule)
-        for func in functions:
+        # package = tasks folder
+        package = Meta.get_module_from_string(package_name)
+        if package is None:
+            return tasks
 
-            obj_type = type(func[1])
-
-            if obj_type.__module__ != "celery.local":
+        # get all modules in package (i.e. py files)
+        for _, module_name, ispkg in pkgutil.iter_modules(package.__path__):
+            # skip modules (i.e. subfolders)
+            if ispkg:
                 continue
 
-            tasks[func[0]] = func[1]
+            module_path = f"{package_name}.{module_name}"
+            log.debug("Loading module '{}'", module_path)
+
+            # convert file name in submodule, i.e.
+            # tasks.filename
+            submodule = Meta.get_module_from_string(
+                module_path,
+                exit_on_fail=True,
+            )
+
+            # get all functions in py file
+            functions = inspect.getmembers(submodule)
+            for func in functions:
+
+                obj_type = type(func[1])
+
+                if obj_type.__module__ != "celery.local":
+                    continue
+
+                tasks[func[0]] = func[1]
         return tasks
 
     @staticmethod

@@ -24,14 +24,10 @@ class CeleryExt(Connector):
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
-        submodules = Meta.import_submodules_from_package(
-            task_package, exit_on_fail=True
-        )
-        for submodule in submodules:
-            tasks = Meta.get_celery_tasks_from_module(submodule)
+        tasks = Meta.get_celery_tasks(task_package)
 
-            for func_name, funct in tasks.items():
-                setattr(CeleryExt, func_name, funct)
+        for func_name, funct in tasks.items():
+            setattr(CeleryExt, func_name, funct)
 
     def get_connection_exception(self):
         return None
