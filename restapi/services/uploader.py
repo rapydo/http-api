@@ -201,32 +201,108 @@ class Uploader:
             start = 0
         else:
             start = int(content_range.start)
+        start = int(content_range.start)
 
         if content_range.stop is None:
             stop = total_length
         else:
             stop = int(content_range.stop)
+        stop = int(content_range.stop)
 
         return total_length, start, stop
+
+    # def chunk_upload(self, upload_dir, filename, chunk_size=None):
+    #     filename = secure_filename(filename)
+
+    #     try:
+    #         range_header = request.headers.get("Content-Range")
+
+    #         total_length, start, stop = self.parse_content_range(range_header)
+
+    #         if total_length is None:
+    #             return False, self.response("Invalid request", code=400)
+
+    #         completed = (stop >= total_length)
+
+    #     except BaseException as e:
+    #         log.error("Unable to parse Content-Range: {}", range_header)
+    #         log.error(str(e))
+    #         completed = False
+    #         return completed, self.response("Invalid request", code=400)
+
+    #     # Default chunk size, put this somewhere
+    #     if chunk_size is None:
+    #         chunk_size = 1048576
+
+    #     file_path = os.path.join(upload_dir, filename)
+    #     with open(file_path, "ab") as f:
+    #         while True:
+    #             chunk = request.stream.read(chunk_size)
+    #             if not chunk:
+    #                 break
+    #             f.seek(start)
+    #             f.write(chunk)
+
+    #     if completed:
+
+    #         # Extra info
+    #         ftype = None
+    #         fcharset = None
+    #         try:
+    #             # Check the type
+    #             from plumbum.cmd import file
+
+    #             out = file["-ib", file_path]()
+    #             tmp = out.split(';')
+    #             ftype = tmp[0].strip()
+    #             fcharset = tmp[1].split('=')[1].strip()
+    #         except Exception:
+    #             log.warning("Unknown type for '{}'", file_path)
+
+    #         return completed, self.response(
+    #             {
+    #                 'filename': filename,
+    #                 'meta': {'type': ftype, 'charset': fcharset}
+    #             }, code=200)
+
+    #     return completed, self.response(
+    #         "partial",
+    #         headers={
+    #             "Access-Control-Expose-Headers": "Range",
+    #             f"Range": "0-{stop - 1}"
+    #         },
+    #         code=206
+    #     )
 
     def chunk_upload(self, upload_dir, filename, chunk_size=None):
         filename = secure_filename(filename)
 
         try:
             range_header = request.headers.get("Content-Range")
+            # content_length = request.headers.get("Content-Length")
+            content_range = parse_content_range_header(range_header)
 
-            total_length, start, stop = self.parse_content_range(range_header)
-
-            if total_length is None:
-                return False, self.response("Invalid request", code=400)
-
-            completed = (stop >= total_length)
-
+            if content_range is None:
+                log.error("Unable to parse Content-Range: {}", range_header)
+                completed = True
+                start = 0
+                total_length = int(range_header.split("/")[1])
+                stop = int(total_length)
+            else:
+                # log.warning(content_range)
+                start = int(content_range.start)
+                stop = int(content_range.stop)
+                total_length = int(content_range.length)
+                # log.critical(content_range.start)
+                # log.critical(content_range.stop)
+                # log.critical(content_range.length)
+                # log.critical(content_range.units)
+                completed = (stop >= total_length)
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
             completed = False
-            return completed, self.response("Invalid request", code=400)
+            return completed, self.response(errors="Invalid request", code=400)
 
         # Default chunk size, put this somewhere
         if chunk_size is None:
@@ -267,7 +343,7 @@ class Uploader:
             "partial",
             headers={
                 "Access-Control-Expose-Headers": "Range",
-                f"Range": "0-{stop - 1}"
+                "Range": "0-{}".format(stop - 1)
             },
             code=206
         )
