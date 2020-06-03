@@ -138,9 +138,4 @@ class Neo4jChoice(fields.Field):
         }
 
     def _deserialize(self, value, attr, data, **kwargs):
-        log.warning("Neo4jChoice deserialization is not implemented")
-        # log.info(value)
-        # log.info(attr)
-        # log.info(data)
-        # log.info(kwargs)
         return value
