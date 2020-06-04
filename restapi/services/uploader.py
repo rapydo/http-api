@@ -12,12 +12,10 @@ http://stackoverflow.com/a/9533843/2114395
 
 import os
 
-# import shutil
-from flask import request  # , send_from_directory
+from flask import request
 from werkzeug.utils import secure_filename
 from werkzeug.http import parse_content_range_header
-from restapi.confs import UPLOAD_PATH, PRODUCTION
-from restapi.env import Env
+from restapi.confs import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
 
@@ -150,11 +148,7 @@ class Uploader:
                     code=400,
                 )
 
-        domain = Env.get('DOMAIN')
-        if PRODUCTION:
-            host = f"https://{domain}"
-        else:
-            host = f"http://{domain}:8080"
+        host = get_backend_url()
         url = f"{host}{request.path}/{filename}"
 
         log.info("Upload initialized on url: {}", url)
@@ -279,6 +273,7 @@ class Uploader:
 
         try:
             range_header = request.headers.get("Content-Range")
+            log.warning("Temporary store Content-Range header: {}", range_header)
             # content_length = request.headers.get("Content-Length")
             content_range = parse_content_range_header(range_header)
 
