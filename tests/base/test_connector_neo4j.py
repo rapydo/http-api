@@ -1,6 +1,5 @@
 import pytz
 from datetime import datetime
-from glom import glom
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.tests import API_URI

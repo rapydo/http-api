@@ -4,8 +4,7 @@ We create all the internal flask components here.
 """
 import os
 import logging
-import time
-from flask import Flask, g
+from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
 from apispec import APISpec
