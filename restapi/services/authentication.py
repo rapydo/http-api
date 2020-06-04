@@ -311,7 +311,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
                 return forwarded_ips[-1]
 
-            if PRODUCTION:
+            if PRODUCTION and not TESTING:
                 log.warning("Server in production X-Forwarded-For header is missing")
 
             return request.remote_addr

@@ -2,7 +2,7 @@ import re
 import urllib.parse
 from restapi.tests import BaseTests, AUTH_URI, API_URI, BaseAuthentication
 from restapi.env import Env
-from restapi.confs import get_project_configuration
+from restapi.confs import PRODUCTION, get_project_configuration
 from restapi.utilities.logs import log
 
 
@@ -17,6 +17,7 @@ class TestApp(BaseTests):
         project_tile = get_project_configuration(
             'project.title', default='YourProject'
         )
+        proto = 'https' if PRODUCTION else 'http'
 
         # registration, empty input
         r = client.post(f'{AUTH_URI}/profile')
@@ -57,7 +58,7 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert f'Subject: {project_tile} account activation' in mail.get("headers")
-        assert "http://localhost/public/register/" in body
+        assert f"{proto}://localhost/public/register/" in body
         plain = "Follow this link to activate your account: "
         html = ">click here</a> to activate your account"
         assert html in body or plain in body
@@ -134,7 +135,7 @@ class TestApp(BaseTests):
         assert mail.get('headers') is not None
         # Subject: is a key in the MIMEText
         assert f'Subject: {project_tile} account activation' in mail.get("headers")
-        assert "http://localhost/public/register/" in body
+        assert f"{proto}://localhost/public/register/" in body
         plain = "Follow this link to activate your account: "
         html = ">click here</a> to activate your account"
         assert html in body or plain in body
@@ -227,7 +228,7 @@ class TestApp(BaseTests):
         body = mail.get('body')
         assert body is not None
         assert mail.get('headers') is not None
-        assert "http://localhost/public/register/" in body
+        assert f"{proto}://localhost/public/register/" in body
         html = ">click here</a> to activate your account"
 
         if html in body:
