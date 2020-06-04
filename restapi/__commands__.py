@@ -5,6 +5,7 @@ import click
 from flask.cli import FlaskGroup
 from restapi import __package__ as current_package
 from restapi.utilities.processes import wait_socket, find_process
+from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
 
 BIND_INTERFACE = "0.0.0.0"
@@ -237,7 +238,7 @@ def tests(wait, core, file, folder, destroy):
         parameters.append("default")
         parameters.append(folder)
 
-    if destroy:
+    if destroy and not PRODUCTION:
         os.environ['TEST_DESTROY_MODE'] = "1"
     try:
 

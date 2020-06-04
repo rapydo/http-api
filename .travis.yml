@@ -109,7 +109,7 @@ script:
   - rapydo -s proxy,backend logs --tail 20
 
   # Tests in production mode
-  - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
+  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
   # Send coverage
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
