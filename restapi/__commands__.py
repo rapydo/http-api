@@ -238,6 +238,8 @@ def tests(wait, core, file, folder, destroy):
         parameters.append("default")
         parameters.append(folder)
 
+    # In prod mode tests are execute with the server running.
+    # Destroy test fails with alchemy due to db locks
     if destroy and not PRODUCTION:
         os.environ['TEST_DESTROY_MODE'] = "1"
     try:

@@ -2,6 +2,7 @@ import abc
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
@@ -119,18 +120,19 @@ class Connector(metaclass=abc.ABCMeta):
         obj = None
 
         # BEFORE
-        ok = self.preconnect(**kwargs)
-
-        if not ok:
+        if not self.preconnect(**kwargs):
             log.critical("Unable to make preconnection for {}", self.name)
             return obj
 
-        # Try until it's connected
-        if len(kwargs) > 0:
+        exceptions = self.get_connection_exception()
+        if exceptions is None:
+            exceptions = (BaseException,)
+
+        try:
             obj = self.connect(**kwargs)
-        else:
-            obj = self.retry()
-            log.verbose("Connected! {}", self.name)
+        except exceptions as e:
+            log.error("{} raised {}: {}", self.name, e.__class__.__name__, e)
+            raise ServiceUnavailable("Internal server error")
 
         # AFTER
         self.postconnect(obj, **kwargs)
@@ -148,35 +150,6 @@ class Connector(metaclass=abc.ABCMeta):
             log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
             obj.models = self.models
-
-        return obj
-
-    def retry(self, retry_interval=3, max_retries=-1):
-        retry_count = 0
-
-        # Get the exception which will signal a missing connection
-        exceptions = self.get_connection_exception()
-        if exceptions is None:
-            exceptions = (BaseException,)
-
-        while max_retries != 0 or retry_count < max_retries:
-
-            retry_count += 1
-            if retry_count > 1:
-                log.verbose("testing again in {} secs", retry_interval)
-
-            try:
-                obj = self.connect()
-            except exceptions as e:
-                log.error("Catched: {}({})", e.__class__.__name__, e)
-                log.exit("Service '{}' not available", self.name)
-            else:
-                break
-
-            # Increment sleeps time if doing a lot of retries
-            if retry_count % 3 == 0:
-                log.debug("Incrementing interval")
-                retry_interval += retry_interval
 
         return obj
 
