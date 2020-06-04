@@ -3,10 +3,12 @@ from functools import lru_cache
 
 from glom import glom
 
+from restapi.env import Env
 from restapi.utilities.globals import mem
 
 APP_MODE = os.getenv('APP_MODE', 'debug')
-TESTING = APP_MODE == 'test'
+FORCE_PRODUCTION_TESTS = Env.get_bool("FORCE_PRODUCTION_TESTS")
+TESTING = APP_MODE == 'test' or FORCE_PRODUCTION_TESTS
 PRODUCTION = APP_MODE == 'production'
 STACKTRACE = False
 REMOVE_DATA_AT_INIT_TIME = False

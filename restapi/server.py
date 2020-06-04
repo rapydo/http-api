@@ -38,7 +38,7 @@ def create_app(
 ):
     """ Create the server istance for Flask application """
 
-    if PRODUCTION and testing_mode:
+    if PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS:
         log.exit("Unable to execute tests in production")
     if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
