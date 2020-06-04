@@ -1,6 +1,4 @@
 import os
-import re
-from urllib.parse import urlparse
 from functools import lru_cache
 
 from glom import glom
