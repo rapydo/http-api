@@ -108,8 +108,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.DISABLE_UNUSED_CREDENTIALS_AFTER = Env.to_int(
             variables.get("disable_unused_credentials_after", 0)
         )
-        self.REGISTER_FAILED_LOGIN = variables.get(
-            "register_failed_login"
+        self.REGISTER_FAILED_LOGIN = Env.to_bool(
+            variables.get("register_failed_login")
         )
         self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get(
             "max_login_attempts", 0)
