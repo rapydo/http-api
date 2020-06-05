@@ -12,6 +12,8 @@ from attr import s as ClassOfAttributes, ib as attribute
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import CUSTOM_PACKAGE
 from restapi.swagger import Swagger
+# if this unused import is removed tests will fail... :|
+from restapi.services.detect import detector
 from restapi.env import Env
 
 from restapi.utilities.meta import Meta
