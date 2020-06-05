@@ -190,17 +190,12 @@ class Detector:
 
         return True
 
+    # Deprecated since 0.7.4
     @staticmethod
-    def load_group(label):
+    def load_group(label):  # pragma: no cover
 
-        variables = {}
-        for var, value in os.environ.items():
-            var = var.lower()
-            if var.startswith(label):
-                key = var[len(label):].strip('_')
-                value = value.strip('"').strip("'")
-                variables[key] = value
-        return variables
+        log.warning("Deprecated use of detector.load_group, use Env.load_group instead")
+        return Env.load_group(label)
 
     @staticmethod
     def load_variables(prefix):
@@ -225,24 +220,12 @@ class Detector:
             # save
             variables[key] = value
 
-            if key == 'host' and not value.endswith('.dockerized.io'):
+            suffix = '.dockerized.io'
+            if key == 'host' and not value.endswith(suffix):  # pragma: no cover
                 variables['external'] = True
                 log.verbose("Service {} detected as external: {}", prefix, value)
 
         return variables
-
-    @staticmethod
-    def load_connector(connector, classname):
-
-        module_name = f"{BACKEND_PACKAGE}.connectors.{connector}"
-        module = Meta.get_module_from_string(
-            modulestring=module_name,
-            exit_on_fail=True
-        )
-        if module is None:
-            log.exit("Failed to load {}", module_name)
-
-        return getattr(module, classname)
 
     def init_services(self, app, project_init=False, project_clean=False):
 

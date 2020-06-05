@@ -30,6 +30,11 @@ def test_rabbit(app):
     assert rabbit is not None
     assert rabbit.write_to_queue("test", "celery")
 
+    # Close connection...
     rabbit.close_connection()
 
+    # Connection is closed, of course
     assert not rabbit.write_to_queue("test", "celery")
+
+    # ... close connection again ... nothing should happens
+    rabbit.close_connection()

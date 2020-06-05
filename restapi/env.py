@@ -65,3 +65,15 @@ class Env:
             pass
 
         return default
+
+    @staticmethod
+    def load_group(label):
+
+        variables = {}
+        for var, value in os.environ.items():
+            var = var.lower()
+            if var.startswith(label):
+                key = var[len(label):].strip('_')
+                value = value.strip('"').strip("'")
+                variables[key] = value
+        return variables

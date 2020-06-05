@@ -11,7 +11,6 @@ from attr import s as ClassOfAttributes, ib as attribute
 
 from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
 from restapi.confs import CUSTOM_PACKAGE
-from restapi.services.detect import detector
 from restapi.swagger import Swagger
 from restapi.env import Env
 
@@ -19,7 +18,7 @@ from restapi.utilities.meta import Meta
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
 
-CONF_FOLDERS = detector.load_group(label='project_confs')
+CONF_FOLDERS = Env.load_group(label='project_confs')
 
 
 @ClassOfAttributes

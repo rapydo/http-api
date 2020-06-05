@@ -5,19 +5,13 @@ Using x509 certificates
 import os
 import pwd
 import re
-from datetime import datetime, timedelta
-
 import pytz
+from datetime import datetime, timedelta
+import dateutil.parser
+from OpenSSL import crypto
+from plumbum import local
 
 from restapi.utilities.logs import log
-
-try:
-    from OpenSSL import crypto
-    from plumbum import local
-    import dateutil.parser
-except ImportError as e:
-    log.exit("\nThis module requires an extra package:\n{}", e)
-
 
 # Excluded from coverage because it is only used by a very specific service
 # To tests for this will be included in the core

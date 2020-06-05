@@ -290,6 +290,8 @@ class EndpointResource(Resource):
 
             return (content, code, headers)
 
+        # to be deprecated
+
         # Convert the response in a Flask response, i.e. make_response(tuple)
         r = ResponseMaker.generate_response(
             content=content,
@@ -301,8 +303,8 @@ class EndpointResource(Resource):
         response = make_response(r)
 
         # Avoid duplicated Content-type
-        content_type = None
-        for idx, val in enumerate(response.headers):
+        content_type = None  # pragma: no cover
+        for idx, val in enumerate(response.headers):  # pragma: no cover
             if val[0] != 'Content-Type':
                 continue
             if content_type is None:
