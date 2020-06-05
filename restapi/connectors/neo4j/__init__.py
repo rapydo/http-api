@@ -58,7 +58,7 @@ def catch_db_exceptions(func):
             log.warning(e)
             return None
 
-        except ServiceUnavailable as e:  # pragma: no cover
+        except ServiceUnavailable as e:
             # refresh_connection()
             raise e
 
@@ -101,14 +101,14 @@ class NeomodelClient:
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
 
-    def refresh_connection(self):
-        if self.db.url is None:
-            log.critical("Unable to refresh neo4j connection")
-            return False
+    # def refresh_connection(self):
+    #     if self.db.url is None:
+    #         log.critical("Unable to refresh neo4j connection")
+    #         return False
 
-        log.info("Refreshing neo4j connection...")
-        self.db.set_connection(self.db.url)
-        return True
+    #     log.info("Refreshing neo4j connection...")
+    #     self.db.set_connection(self.db.url)
+    #     return True
 
     @staticmethod
     def update_properties(instance, schema, properties):
@@ -219,11 +219,7 @@ class NeoModel(Connector):
         client = NeomodelClient(db)
         return client
 
-        # return db
-
     def initialize(self):
-
-        # graph = self.get_instance()
 
         with self.app.app_context():
 
