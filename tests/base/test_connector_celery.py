@@ -5,13 +5,20 @@ from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
-def test_celery():
+def test_celery(app):
 
     if not detector.check_availability('celery'):
         log.warning("Skipping celery test: service not available")
         return False
 
-    detector.get_service_instance("celery")
+    detector.init_services(
+        app=app,
+        project_init=False,
+        project_clean=False,
+    )
+
+    celery = detector.get_service_instance("celery")
+    assert celery is not None
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 

@@ -5,11 +5,17 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
-def test_mongo():
+def test_mongo(app):
 
     if not detector.check_availability('mongo'):
         log.warning("Skipping mongo test: service not available")
         return False
+
+    detector.init_services(
+        app=app,
+        project_init=False,
+        project_clean=False,
+    )
 
     try:
         detector.get_service_instance(
@@ -21,4 +27,5 @@ def test_mongo():
     except ServiceUnavailable:
         pass
 
-    detector.get_service_instance("mongo")
+    mongo = detector.get_service_instance("mongo")
+    assert mongo is not None

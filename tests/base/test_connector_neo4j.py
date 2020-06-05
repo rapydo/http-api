@@ -22,7 +22,13 @@ else:
             assert r.status_code == 400
 
         @staticmethod
-        def test_connector(fake):
+        def test_connector(app, fake):
+
+            detector.init_services(
+                app=app,
+                project_init=False,
+                project_clean=False,
+            )
 
             try:
                 detector.get_service_instance(
@@ -35,6 +41,8 @@ else:
                 pass
 
             neo4j = detector.get_service_instance("neo4j")
+            assert neo4j is not None
+
             for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = neo4j.User.inflate(row[0])
                 assert u.email is not None

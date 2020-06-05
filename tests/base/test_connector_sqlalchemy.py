@@ -4,11 +4,17 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
-def test_sqlalchemy():
+def test_sqlalchemy(app):
 
     if not detector.check_availability('sqlalchemy'):
         log.warning("Skipping sqlalchemy test: service not available")
         return False
+
+    detector.init_services(
+        app=app,
+        project_init=False,
+        project_clean=False,
+    )
 
     try:
         detector.get_service_instance(
@@ -22,4 +28,5 @@ def test_sqlalchemy():
     except ServiceUnavailable:
         pass
 
-    detector.get_service_instance("sqlalchemy")
+    sql = detector.get_service_instance("sqlalchemy")
+    assert sql is not None

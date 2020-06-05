@@ -5,11 +5,17 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
-def test_irods():
+def test_irods(app):
 
     if not detector.check_availability('irods'):
         log.warning("Skipping irods test: service not available")
         return False
+
+    detector.init_services(
+        app=app,
+        project_init=False,
+        project_clean=False,
+    )
 
     try:
         detector.get_service_instance(
@@ -22,6 +28,7 @@ def test_irods():
         pass
 
     irods = detector.get_service_instance("irods")
+    assert irods is not None
 
     home = irods.get_user_home()
 
