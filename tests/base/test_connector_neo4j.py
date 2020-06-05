@@ -1,10 +1,11 @@
 import pytz
+import pytest
 from datetime import datetime
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.tests import API_URI
 from neobolt.exceptions import CypherSyntaxError
-# from restapi.tests import AUTH_URI, BaseAuthentication
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 if not detector.check_availability('neo4j'):
@@ -22,6 +23,16 @@ else:
 
         @staticmethod
         def test_connector(fake):
+
+            try:
+                detector.get_service_instance(
+                    "neo4j",
+                    host="invalidhostname",
+                    port=123
+                )
+                pytest.fail("No exception raised on unavailable service")
+            except ServiceUnavailable:
+                pass
 
             neo4j = detector.get_service_instance("neo4j")
             for row in neo4j.cypher("MATCH (u: User) RETURN u limit 1"):

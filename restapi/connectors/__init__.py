@@ -86,23 +86,24 @@ class Connector(metaclass=abc.ABCMeta):
     def init_app(self, app):
         app.teardown_appcontext(self.teardown)
 
-    def pre_object(self, ref: object, key: str) -> str:
+    @staticmethod
+    def get_key(ref: object, key: str) -> str:
         """ Make sure reference and key are strings """
 
         ref = ref.__class__.__name__
 
         return f"{ref}{key}"
 
-    def set_object(self, obj, ref, key='[]'):
+    def set_object(self, obj, ref, key='[]') -> None:
         """ set object into internal array """
 
-        h = self.pre_object(ref, key)
+        h = self.get_key(ref, key)
         self.objs[h] = obj
 
     def get_object(self, ref, key='[]'):
         """ recover object if any """
 
-        h = self.pre_object(ref, key)
+        h = self.get_key(ref, key)
         return self.objs.get(h, None)
 
     def initialize_connection(self, **kwargs):
@@ -112,7 +113,9 @@ class Connector(metaclass=abc.ABCMeta):
         # BEFORE
         if not self.preconnect(**kwargs):  # pragma: no cover
             log.error("Unable to make preconnection for {}", self.name)
-            raise ServiceUnavailable("Internal server error")
+            raise ServiceUnavailable(
+                {"Service Unavailable": "Internal server error"}
+            )
 
         exceptions = self.get_connection_exception()
         if exceptions is None:
@@ -122,12 +125,16 @@ class Connector(metaclass=abc.ABCMeta):
             obj = self.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", self.name, e.__class__.__name__, e)
-            raise ServiceUnavailable("Internal server error")
+            raise ServiceUnavailable(
+                {"Service Unavailable": "Internal server error"}
+            )
 
         # AFTER
         if not self.postconnect(obj, **kwargs):  # pragma: no cover
             log.error("Unable to make postconnect for {}", self.name)
-            raise ServiceUnavailable("Internal server error")
+            raise ServiceUnavailable(
+                {"Service Unavailable": "Internal server error"}
+            )
 
         obj.connection_time = datetime.now()
         return obj

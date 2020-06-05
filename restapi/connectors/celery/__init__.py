@@ -51,7 +51,7 @@ class CeleryExt(Connector):
         # set here to avoid warnings like 'Possible hardcoded password'
         EMPTY = ""
 
-        broker = self.variables.get("broker")
+        broker = kwargs or self.variables.get("broker")
 
         if broker is None:  # pragma: no cover
             log.exit("Unable to start Celery, missing broker service")
