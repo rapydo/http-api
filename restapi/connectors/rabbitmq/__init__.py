@@ -22,7 +22,7 @@ class RabbitExt(Connector):
     '''
 
     def get_connection_exception(self):
-        return (ProbableAuthenticationError, )
+        return (pika.exceptions.AMQPConnectionError, )
 
     def preconnect(self, **kwargs):
         return True
