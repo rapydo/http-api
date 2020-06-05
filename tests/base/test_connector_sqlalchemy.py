@@ -1,3 +1,4 @@
+import os
 import pytest
 from restapi.services.detect import detector
 from restapi.exceptions import ServiceUnavailable
@@ -16,17 +17,18 @@ def test_sqlalchemy(app):
         project_clean=False,
     )
 
-    try:
-        detector.get_service_instance(
-            "sqlalchemy",
-            test_connection=True,
-            host="invalidhostname",
-            port=123
-        )
+    if os.getenv("ALCHEMY_DBTYPE") != 'mysql+pymysql':
+        try:
+            detector.get_service_instance(
+                "sqlalchemy",
+                test_connection=True,
+                host="invalidhostname",
+                port=123
+            )
 
-        pytest.fail("No exception raised on unavailable service")
-    except ServiceUnavailable:
-        pass
+            pytest.fail("No exception raised on unavailable service")
+        except ServiceUnavailable:
+            pass
 
     try:
         detector.get_service_instance(
