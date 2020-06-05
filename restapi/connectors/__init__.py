@@ -86,43 +86,33 @@ class Connector(metaclass=abc.ABCMeta):
     def init_app(self, app):
         app.teardown_appcontext(self.teardown)
 
-    def pre_object(self, ref, key):
+    def pre_object(self, ref: object, key: str) -> str:
         """ Make sure reference and key are strings """
 
-        if ref is None:
-            ref = self.__class__.__name__
-        elif isinstance(ref, object):
-            ref = ref.__class__.__name__
-        elif not isinstance(ref, str):
-            ref = str(ref)
+        ref = ref.__class__.__name__
 
-        if not isinstance(key, str):
-            key = str(key)
+        return f"{ref}{key}"
 
-        return ref + key
-
-    def set_object(self, obj, key='[]', ref=None):
+    def set_object(self, obj, ref, key='[]'):
         """ set object into internal array """
 
         h = self.pre_object(ref, key)
         self.objs[h] = obj
-        return obj
 
-    def get_object(self, key='[]', ref=None):
+    def get_object(self, ref, key='[]'):
         """ recover object if any """
 
         h = self.pre_object(ref, key)
-        obj = self.objs.get(h, None)
-        return obj
+        return self.objs.get(h, None)
 
     def initialize_connection(self, **kwargs):
 
         obj = None
 
         # BEFORE
-        if not self.preconnect(**kwargs):
-            log.critical("Unable to make preconnection for {}", self.name)
-            return obj
+        if not self.preconnect(**kwargs):  # pragma: no cover
+            log.error("Unable to make preconnection for {}", self.name)
+            raise ServiceUnavailable("Internal server error")
 
         exceptions = self.get_connection_exception()
         if exceptions is None:
@@ -135,23 +125,20 @@ class Connector(metaclass=abc.ABCMeta):
             raise ServiceUnavailable("Internal server error")
 
         # AFTER
-        self.postconnect(obj, **kwargs)
+        if not self.postconnect(obj, **kwargs):  # pragma: no cover
+            log.error("Unable to make postconnect for {}", self.name)
+            raise ServiceUnavailable("Internal server error")
 
         obj.connection_time = datetime.now()
         return obj
 
     def set_models_to_service(self, obj):
 
-        if len(self.models) < 1 and self.__class__.__name__ == 'NeoModel':
-            raise Exception()
-
         for name, model in self.models.items():
             # Save attribute inside class with the same name
             log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
-            obj.models = self.models
-
-        return obj
+        obj.models = self.models
 
     def teardown(self, exception):
         ctx = stack.top
@@ -164,51 +151,41 @@ class Connector(metaclass=abc.ABCMeta):
         global_instance = kwargs.pop('global_instance', False)
         isauth = kwargs.pop('authenticator', False)
         cache_expiration = kwargs.pop('cache_expiration', None)
-        # pinit = kwargs('project_initialization', False)
-
-        # Variables
-        obj = None
-        ctx = stack.top
-        ref = self
-        unique_hash = str(sorted(kwargs.items()))
 
         # When not using the context, this is the first connection
-        if ctx is None:
+        if stack.top is None:
             # First connection, before any request
+            # can raise ServiceUnavailable exception
             obj = self.initialize_connection()
-            if obj is None:
-                return None
-            self.set_object(obj=obj, ref=ref)
+            self.set_object(obj=obj, ref=self)
 
             log.verbose("First connection for {}", self.name)
 
-        else:
+            self.set_models_to_service(obj)
 
-            if not isauth:
-                if not global_instance:
-                    ref = ctx
+            return obj
 
-                obj = self.get_object(ref=ref, key=unique_hash)
+        obj = None
+        ref = self if isauth or global_instance else stack.top
+        unique_hash = str(sorted(kwargs.items()))
 
-            if obj is not None and cache_expiration is not None:
-                now = datetime.now()
-                exp = timedelta(seconds=cache_expiration)
+        if not isauth:
+            obj = self.get_object(ref=ref, key=unique_hash)
 
-                if now < obj.connection_time + exp:
-                    log.verbose("Cache is still valid for {}", self)
-                else:
-                    log.info("Cache expired for {}", self)
-                    obj = None
+        if obj and cache_expiration:
+            now = datetime.now()
+            exp = timedelta(seconds=cache_expiration)
 
-            if obj is None:
-                obj = self.initialize_connection(**kwargs)
-                if obj is None:
-                    return None
-                self.set_object(obj=obj, ref=ref, key=unique_hash)
-            else:
-                pass
+            if now >= obj.connection_time + exp:
+                log.info("Cache expired for {}", self)
+                obj = None
 
-        obj = self.set_models_to_service(obj)
+        if not obj:
+            # can raise ServiceUnavailable exception
+            obj = self.initialize_connection(**kwargs)
+            self.set_object(obj=obj, ref=ref, key=unique_hash)
+
+        self.set_models_to_service(obj)
 
         return obj
 
@@ -234,5 +211,5 @@ def get_debug_instance(MyClass):
     #######
     instance = MyClass()
     obj = instance.initialize_connection()
-    obj = instance.set_models_to_service(obj)
+    instance.set_models_to_service(obj)
     return obj
