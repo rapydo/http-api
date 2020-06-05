@@ -97,7 +97,8 @@ class SqlAlchemy(Connector):
 
     def connect(self, test_connection=False, **kwargs):
 
-        variables = kwargs or self.variables
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
         db_url = {
             'database': variables.get('db'),

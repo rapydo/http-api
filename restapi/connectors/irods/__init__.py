@@ -35,7 +35,7 @@ class IrodsPythonExt(Connector):
 
         session = kwargs.get('user_session')
 
-        external = self.variables.get('external')
+        # external = self.variables.get('external')
 
         # Retrieve authentication schema
         self.authscheme = kwargs.get('authscheme')
@@ -127,10 +127,13 @@ class IrodsPythonExt(Connector):
 
     def connect(self, **kwargs):
 
+        variables = self.variables.copy()
+        variables.update(kwargs)
+
         check_connection = True
-        timeout = kwargs.get('timeout', 15.0)
-        session = kwargs.get('user_session')
-        default_zone = self.variables.get('zone')
+        timeout = variables.get('timeout', 15.0)
+        session = variables.get('user_session')
+        default_zone = variables.get('zone')
 
         if session is not None:
             # recover the serialized session
@@ -142,8 +145,8 @@ class IrodsPythonExt(Connector):
                 user=self.user,
                 password=self.password,
                 authentication_scheme='native',
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
+                host=variables.get('host'),
+                port=variables.get('port'),
                 zone=default_zone,
             )
 
@@ -152,7 +155,7 @@ class IrodsPythonExt(Connector):
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
-            host_dn = self.variables.get('dn', None)
+            host_dn = variables.get('dn', None)
             if isinstance(host_dn, str) and host_dn.strip() == '':
                 host_dn = None
             if host_dn is None:
@@ -165,15 +168,15 @@ class IrodsPythonExt(Connector):
             obj = iRODSSession(
                 user=self.user,
                 authentication_scheme=self.authscheme,
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
+                host=variables.get('host'),
+                port=variables.get('port'),
                 server_dn=host_dn,
                 zone=default_zone,
             )
 
             # Do not check for user if its a proxy certificate:
             # we want to verify if they expired later
-            if kwargs.get('only_check_proxy', False):
+            if variables.get('only_check_proxy', False):
                 check_connection = False
 
         # No tests provided for PAM and GSI
@@ -183,8 +186,8 @@ class IrodsPythonExt(Connector):
                 user=self.user,
                 password=self.password,
                 authentication_scheme=self.authscheme,
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
+                host=variables.get('host'),
+                port=variables.get('port'),
                 zone=default_zone,
             )
 
@@ -220,7 +223,7 @@ class IrodsPythonExt(Connector):
 
         # Do a simple command to test this session
         if check_connection:
-            catch_exceptions = kwargs.get('catch_exceptions', False)
+            catch_exceptions = variables.get('catch_exceptions', False)
             try:
                 u = obj.users.get(self.user, user_zone=default_zone)
 
@@ -239,7 +242,7 @@ class IrodsPythonExt(Connector):
 
             log.verbose("Tested session retrieving '{}'", u.name)
 
-        client = IrodsPythonClient(prc=obj, variables=self.variables)
+        client = IrodsPythonClient(prc=obj, variables=variables)
         return client
 
     # initialize is only invoked for backend databases

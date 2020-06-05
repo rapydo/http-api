@@ -22,7 +22,7 @@ class RabbitExt(Connector):
     '''
 
     def get_connection_exception(self):
-        return None
+        return (ProbableAuthenticationError, )
 
     def preconnect(self, **kwargs):
         return True
@@ -40,7 +40,9 @@ class RabbitExt(Connector):
 
     def connect(self, **kwargs):
 
-        conn_wrapper = RabbitWrapper(self.variables)
+        variables = self.variables.copy()
+        variables.update(kwargs)
+        conn_wrapper = RabbitWrapper(variables)
         return conn_wrapper
 
 
@@ -112,7 +114,7 @@ class RabbitWrapper:
             #     ch.basic_publish("", "foobar", "Hello, world!")
             #     print(ch.basic_get("foobar"))
 
-        except BaseException as e:  # pragma: no cover
+        except BaseException as e:
             ''' Includes AuthenticationError, ProbableAuthenticationError,
             ProbableAccessDeniedError, ConnectionClosed...
             '''

@@ -31,7 +31,8 @@ class PushpinExt(Connector):
 
     def connect(self, **kwargs):
 
-        variables = kwargs or self.variables
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
         host = variables.get('host')
         port = variables.get('port')

@@ -40,6 +40,15 @@ else:
             except ServiceUnavailable:
                 pass
 
+            try:
+                detector.get_service_instance(
+                    "neo4j",
+                    user="invaliduser",
+                )
+                pytest.fail("No exception raised on unavailable service")
+            except ServiceUnavailable:
+                pass
+
             neo4j = detector.get_service_instance("neo4j")
             assert neo4j is not None
 

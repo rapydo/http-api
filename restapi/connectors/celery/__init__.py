@@ -51,7 +51,9 @@ class CeleryExt(Connector):
         # set here to avoid warnings like 'Possible hardcoded password'
         EMPTY = ""
 
-        broker = kwargs or self.variables.get("broker")
+        variables = self.variables.copy()
+        variables.update(kwargs)
+        broker = variables.get("broker")
 
         if broker is None:  # pragma: no cover
             log.exit("Unable to start Celery, missing broker service")
@@ -105,7 +107,7 @@ class CeleryExt(Connector):
             celery_app = None
             return celery_app
 
-        backend = self.variables.get("backend", broker)
+        backend = variables.get("backend", broker)
 
         if backend == 'RABBIT':
             service_vars = Detector.load_variables(prefix='rabbitmq')

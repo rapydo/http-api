@@ -201,7 +201,8 @@ class NeoModel(Connector):
 
     def connect(self, **kwargs):
 
-        variables = kwargs or self.variables
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
         USER = variables.get('user', 'neo4j')
         PWD = variables.get('password')

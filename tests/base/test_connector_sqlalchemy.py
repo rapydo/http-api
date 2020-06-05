@@ -28,5 +28,19 @@ def test_sqlalchemy(app):
     except ServiceUnavailable:
         pass
 
-    sql = detector.get_service_instance("sqlalchemy")
+    try:
+        detector.get_service_instance(
+            "sqlalchemy",
+            test_connection=True,
+            user="invaliduser",
+        )
+
+        pytest.fail("No exception raised on unavailable service")
+    except ServiceUnavailable:
+        pass
+
+    sql = detector.get_service_instance(
+        "sqlalchemy",
+        test_connection=True,
+    )
     assert sql is not None

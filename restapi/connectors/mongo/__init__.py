@@ -4,7 +4,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
@@ -75,7 +75,7 @@ def update_properties(instance, schema, properties):
 class MongoExt(Connector):
 
     def get_connection_exception(self):
-        return None
+        return (ServerSelectionTimeoutError, )
 
     def preconnect(self, **kwargs):
         return True
@@ -83,9 +83,10 @@ class MongoExt(Connector):
     def postconnect(self, obj, **kwargs):
         return True
 
-    def connect(self, **kwargs):
+    def connect(self, test_connection=False, **kwargs):
 
-        variables = kwargs or self.variables
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
         HOST = variables.get('host')
         PORT = variables.get('port')
@@ -102,6 +103,10 @@ class MongoExt(Connector):
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
 
         obj.update_properties = update_properties
+
+        if test_connection:
+            pass
+
         return obj
 
     def initialize(self):
