@@ -43,7 +43,10 @@ else:
     @schema.parametrize()
     @settings(
         deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
+        suppress_health_check=[
+            HealthCheck.too_slow,
+            HealthCheck.filter_too_much,
+        ]
     )
     def test_no_auth(case):
 
@@ -61,7 +64,10 @@ else:
     @schema.parametrize()
     @settings(
         deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
+        suppress_health_check=[
+            HealthCheck.too_slow,
+            HealthCheck.filter_too_much,
+        ]
     )
     def test_with_admin_auth(case):
 
@@ -90,7 +96,10 @@ else:
     @schema.parametrize(endpoint="/auth/logout")
     @settings(
         deadline=None,
-        suppress_health_check=[HealthCheck.too_slow]
+        suppress_health_check=[
+            HealthCheck.too_slow,
+            HealthCheck.filter_too_much,
+        ]
     )
     def test_logout(case):
 
