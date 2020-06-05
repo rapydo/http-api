@@ -17,16 +17,6 @@ def test_irods(app):
         project_clean=False,
     )
 
-    try:
-        detector.get_service_instance(
-            "irods",
-            host="invalidhostname",
-            port=123
-        )
-        pytest.fail("No exception raised on unavailable service")
-    except ServiceUnavailable:
-        pass
-
     irods = detector.get_service_instance("irods")
     assert irods is not None
 
