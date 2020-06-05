@@ -6,22 +6,15 @@ from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.connectors import Connector
 
-# TODO To be tested: Reconnection mechanism (e.g. wrong password),
-#      does it try to reconnect several times, then give up?
-# TODO To be added: Heartbeat mechanism
-# TODO To be added: Close connection - sigint, sigkill
-
 
 class RabbitExt(Connector):
-    '''
-    This class provides a (wrapper for a) RabbitMQ connection
-    in order to write log messages into a queue.
-
-    This is used in SeaDataCloud, where the log
-    queues are then consumed by Logstash / ElasticSearch.
-    '''
 
     def get_connection_exception(self):
+        # Includes:
+        #   AuthenticationError,
+        #   ProbableAuthenticationError,
+        #   ProbableAccessDeniedError,
+        #   ConnectionClosed...
         return (pika.exceptions.AMQPConnectionError, )
 
     def preconnect(self, **kwargs):
@@ -42,86 +35,49 @@ class RabbitExt(Connector):
 
         variables = self.variables.copy()
         variables.update(kwargs)
-        conn_wrapper = RabbitWrapper(variables)
-        return conn_wrapper
 
-
-class RabbitWrapper:
-    def __init__(self, variables):
-        self.__variables = variables
-        self.__connection = None
-        self.__channel = None
-        self._connection_retries = 0
-        # TODO: Declare queue and exchange, just in case?
-
-        try:
-            self.__connect()
-            log.debug(
-                'RabbitMQ connection wrapper created')
-
-        except pika.exceptions.AMQPConnectionError:  # pragma: no cover
-            ''' Includes AuthenticationError, ProbableAuthenticationError,
-            ProbableAccessDeniedError, ConnectionClosed...
-            '''
-            log.warning(
-                'Could not connect to RabbitMQ now, connection will be retried later'
-            )
-            log.debug(
-                'RabbitMQ connection wrapper created but without connection).'
-            )
-
-    def __connect(self):
-        ssl_enabled = Env.to_bool(self.__variables.get('ssl_enabled'))
+        ssl_enabled = Env.to_bool(variables.get('ssl_enabled'))
 
         log.info('Connecting to the Rabbit (SSL = {})', ssl_enabled)
 
         credentials = pika.PlainCredentials(
-            self.__variables.get('user'), self.__variables.get('password')
+            variables.get('user'),
+            variables.get('password'),
         )
 
-        try:
-            if ssl_enabled:
-                # log.warning("SSL not implemented for Rabbit")
-                # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
-                context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-                # context.verify_mode = ssl.CERT_REQUIRED
-                context.verify_mode = ssl.CERT_NONE
-                context.load_default_certs()
-                # Enable client certification verification
-                # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
-                # context.load_verify_locations(cafile=client_certs)
-                ssl_options = pika.SSLOptions(
-                    context=context,
-                    server_hostname=self.__variables.get('host')
-                )
-            else:
-                ssl_options = None
-
-            self.__connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=self.__variables.get('host'),
-                    port=int(self.__variables.get('port')),
-                    virtual_host=self.__variables.get('vhost'),
-                    credentials=credentials,
-                    ssl_options=ssl_options,
-                )
+        if ssl_enabled:
+            # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
+            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            # context.verify_mode = ssl.CERT_REQUIRED
+            context.verify_mode = ssl.CERT_NONE
+            context.load_default_certs()
+            # Enable client certification verification
+            # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
+            # context.load_verify_locations(cafile=client_certs)
+            ssl_options = pika.SSLOptions(
+                context=context,
+                server_hostname=variables.get('host')
             )
-            self._connection_retries = 0
+        else:
+            ssl_options = None
 
-            # with pika.BlockingConnection(conn_params) as conn:
-            #     ch = conn.channel()
-            #     ch.queue_declare("foobar")
-            #     ch.basic_publish("", "foobar", "Hello, world!")
-            #     print(ch.basic_get("foobar"))
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=variables.get('host'),
+                port=int(variables.get('port')),
+                virtual_host=variables.get('vhost'),
+                credentials=credentials,
+                ssl_options=ssl_options,
+            )
+        )
 
-        except BaseException as e:
-            ''' Includes AuthenticationError, ProbableAuthenticationError,
-            ProbableAccessDeniedError, ConnectionClosed...
-            '''
-            log.warning('Connecting to the Rabbit failed ({})', e)
-            self.__connection = None
-            self._connection_retries += 1
-            raise e
+        return RabbitWrapper(connection)
+
+
+class RabbitWrapper:
+    def __init__(self, connection):
+        self.__connection = connection
+        self.__channel = None
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         '''
@@ -146,14 +102,6 @@ class RabbitWrapper:
         )
         body = json.dumps(jmsg)
 
-        # If no RabbitMQ connection, write into normal log:
-        MAX_RETRY = 3
-        if self._connection_retries > MAX_RETRY:
-            log.info(
-                'RABBIT LOG MESSAGE ({}, {}): {}', exchange, queue, body
-            )
-            return False
-
         # Settings for the message:
         permanent_delivery = 2  # make message persistent
         if headers is None:
@@ -161,71 +109,46 @@ class RabbitWrapper:
 
         props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
 
-        # Try sending n times:
-        for i in range(1, MAX_RETRY + 1):
-            log.verbose(
-                'Sending message to RabbitMQ (try {}/{})',
-                i, MAX_RETRY,
+        log.verbose('Sending message to RabbitMQ')
+
+        try:
+
+            channel = self.__get_channel()
+            failed_message = channel.basic_publish(
+                exchange=exchange,
+                routing_key=queue,
+                body=body,
+                properties=props,
+                mandatory=True,
             )
 
-            try:
+            if failed_message:
+                log.error("RabbitMQ write failed {}", failed_message)
+                return False
 
-                if self.__connection is None and self._connection_retries <= MAX_RETRY:
-                    self.__connect()
-                elif not self.__connection.is_open:
-                    self.__connect()
+            log.verbose('Message sent to RabbitMQ')
+            return True
 
-                channel = self.__get_channel()
-                failed_message = channel.basic_publish(
-                    exchange=exchange,
-                    routing_key=queue,
-                    body=body,
-                    properties=props,
-                    mandatory=True,
-                )
+        except pika.exceptions.ConnectionClosed as e:
+            # TODO: This happens often. Check if heartbeat solves problem.
+            log.error('Failed to write message, connection is dead ({})', e)
 
-                if failed_message:
-                    log.error("RabbitMQ write failed {}", failed_message)
-                    return False
+        except pika.exceptions.AMQPConnectionError as e:
+            log.error('Failed to write message, connection failed ({})', e)
 
-                log.verbose('Message sent to RabbitMQ')
-                return True
+        except pika.exceptions.AMQPChannelError as e:
+            log.error('Failed to write message, channel is dead ({})', e)
+            self.__channel = None
 
-            except pika.exceptions.ConnectionClosed as e:  # pragma: no cover
-                # TODO: This happens often. Check if heartbeat solves problem.
-                log.error(
-                    'Failed to write message (try {}/{}), connection is dead ({})',
-                    i, MAX_RETRY, e
-                )
-                self.__connection = None
+        except AttributeError as e:  # pragma: no cover
+            log.error('Failed to write message:, {}', e)
 
-            except pika.exceptions.AMQPConnectionError as e:  # pragma: no cover
-                log.error(
-                    'Failed to write message (try {}/{}), connection failed ({})',
-                    i, MAX_RETRY, e
-                )
-                self.__connection = None
-
-            except pika.exceptions.AMQPChannelError as e:  # pragma: no cover
-                log.error(
-                    'Failed to write message (try {}/{}), channel is dead ({})',
-                    i, MAX_RETRY, e
-                )
-                self.__channel = None
-
-            except AttributeError as e:  # pragma: no cover
-                log.error(
-                    'Failed to write message (try {}/{}), {}',
-                    i, MAX_RETRY, e
-                )
-                self.__connection = None
-
-        log.warning(  # pragma: no cover
+        log.warning(
             'Could not write to RabbitMQ ({}, {}): {}',
             exchange, queue, body
         )
 
-        return False  # pragma: no cover
+        return False
 
     def __get_channel(self):
         '''

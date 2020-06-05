@@ -16,15 +16,15 @@ def test_rabbit(app):
         project_clean=False,
     )
 
-    # try:
-    #     detector.get_service_instance(
-    #         "rabbitmq",
-    #         host="invalidhostname",
-    #         port=123
-    #     )
-    #     pytest.fail("No exception raised on unavailable service")
-    # except ServiceUnavailable:
-    #     pass
+    try:
+        detector.get_service_instance(
+            "rabbitmq",
+            host="invalidhostname",
+            port=123
+        )
+        pytest.fail("No exception raised on unavailable service")
+    except ServiceUnavailable:
+        pass
 
     rabbit = detector.get_service_instance("rabbitmq")
     assert rabbit is not None
