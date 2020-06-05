@@ -175,7 +175,7 @@ class RabbitWrapper:
 
     def close_connection(self):
         # TODO: This must be called!
-        if self.__connection.is_closed or self.__connection.is_closing:
-            log.debug('Connection already closed or closing.')
+        if self.__connection.is_closed:
+            log.debug('Connection already closed')
         else:
             self.__connection.close()

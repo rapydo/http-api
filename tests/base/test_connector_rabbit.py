@@ -29,3 +29,7 @@ def test_rabbit(app):
     rabbit = detector.get_service_instance("rabbitmq")
     assert rabbit is not None
     assert rabbit.write_to_queue("test", "celery")
+
+    rabbit.close_connection()
+
+    assert not rabbit.write_to_queue("test", "celery")
