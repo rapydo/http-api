@@ -1,6 +1,7 @@
 import pika
 import json
 import ssl
+import socket
 
 from restapi.env import Env
 from restapi.utilities.logs import log
@@ -15,7 +16,11 @@ class RabbitExt(Connector):
         #   ProbableAuthenticationError,
         #   ProbableAccessDeniedError,
         #   ConnectionClosed...
-        return (pika.exceptions.AMQPConnectionError, )
+        return (
+            pika.exceptions.AMQPConnectionError,
+            # Includes failures in name resolution
+            socket.gaierror,
+        )
 
     def preconnect(self, **kwargs):
         return True
