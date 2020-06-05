@@ -95,18 +95,20 @@ class SqlAlchemy(Connector):
     def postconnect(self, obj, **kwargs):
         return True
 
-    def connect(self, **kwargs):
+    def connect(self, test_connection=False, **kwargs):
+
+        variables = kwargs or self.variables
 
         db_url = {
-            'database': self.variables.get('db'),
-            'drivername': self.variables.get('dbtype', 'postgresql'),
-            'username': self.variables.get('user'),
-            'password': self.variables.get('password'),
-            'host': self.variables.get('host'),
-            'port': self.variables.get('port'),
+            'database': variables.get('db'),
+            'drivername': variables.get('dbtype', 'postgresql'),
+            'username': variables.get('user'),
+            'password': variables.get('password'),
+            'host': variables.get('host'),
+            'port': variables.get('port'),
         }
 
-        if self.variables.get('dbtype', 'postgresql') == 'mysql+pymysql':
+        if variables.get('dbtype', 'postgresql') == 'mysql+pymysql':
             db_url['query'] = {'charset': 'utf8mb4'}
 
         uri = URL(**db_url)
@@ -151,6 +153,9 @@ class SqlAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
+        if test_connection:
+            sql = text('SELECT 1')
+            db.engine.execute(sql)
         return db
 
     def initialize(self):

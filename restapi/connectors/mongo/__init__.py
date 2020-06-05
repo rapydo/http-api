@@ -85,8 +85,7 @@ class MongoExt(Connector):
 
     def connect(self, **kwargs):
 
-        variables = self.variables
-        variables.update(kwargs)
+        variables = kwargs or self.variables
 
         HOST = variables.get('host')
         PORT = variables.get('port')

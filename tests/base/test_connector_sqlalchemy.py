@@ -13,9 +13,11 @@ def test_sqlalchemy():
     try:
         detector.get_service_instance(
             "sqlalchemy",
+            test_connection=True,
             host="invalidhostname",
             port=123
         )
+
         pytest.fail("No exception raised on unavailable service")
     except ServiceUnavailable:
         pass
