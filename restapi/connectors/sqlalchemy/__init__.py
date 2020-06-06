@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from flask_migrate import Migrate
 from sqlalchemy import create_engine
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, InternalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.engine.url import URL
@@ -35,9 +35,9 @@ def catch_db_exceptions(func):
 
         try:
             return func(*args, **kwargs)
-        except DatabaseDuplicatedEntry as e:
+        except DatabaseDuplicatedEntry:
             # already catched and parser, raise up
-            raise(e)
+            raise
         except IntegrityError as e:
 
             message = str(e).split('\n')
@@ -60,9 +60,13 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)
             raise DatabaseDuplicatedEntry("Duplicated entry")
 
+        except InternalError as e:
+            log.critical(e)
+            raise
+
         except BaseException as e:
             log.critical("Raised unknown exception: {}", type(e))
-            raise e
+            raise
 
     return wrapper
 
