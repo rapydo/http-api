@@ -1,6 +1,5 @@
 import os
 import pytest
-from irods import exception as iexceptions
 from restapi.services.detect import detector
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
@@ -18,6 +17,7 @@ def test_irods(app, faker):
         project_clean=False,
     )
 
+    from irods import exception as iexceptions
     irods = detector.get_service_instance("irods", authscheme='PAM')
     assert irods is not None
 
