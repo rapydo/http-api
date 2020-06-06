@@ -7,13 +7,14 @@ import logging
 
 # from irods.session import iRODSSession
 from irods import exception as iexceptions
+from gssapi.raw import GSSError
 
 # from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
-from restapi.connectors.irods.client import IrodsException, IrodsPythonClient
+from restapi.connectors.irods.client import IrodsPythonClient
 from restapi.connectors.irods.certificates import Certificates
 from restapi.exceptions import ServiceUnavailable
 
@@ -34,7 +35,8 @@ class IrodsPythonExt(Connector):
         return (
             NotImplementedError,
             ServiceUnavailable,
-            AttributeError
+            AttributeError,
+            GSSError,
         )
 
     def connect(self, **kwargs):
