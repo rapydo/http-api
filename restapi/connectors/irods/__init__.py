@@ -31,8 +31,11 @@ PAM_AUTH_SCHEME = 'PAM'
 class IrodsPythonExt(Connector):
 
     def get_connection_exception(self):
-        # this will fallback to BaseException
-        return None
+        return (
+            NotImplementedError,
+            ServiceUnavailable,
+            AttributeError
+        )
 
     def connect(self, **kwargs):
 
@@ -138,7 +141,6 @@ class IrodsPythonExt(Connector):
 
         # Do a simple command to test this session
         if not Env.to_bool(variables.get('only_check_proxy')):
-            catch_exceptions = variables.get('catch_exceptions', False)
             try:
                 u = obj.users.get(
                     user,
@@ -146,17 +148,11 @@ class IrodsPythonExt(Connector):
                 )
 
             except iexceptions.CAT_INVALID_AUTHENTICATION as e:
-                if catch_exceptions:
-                    raise IrodsException("CAT_INVALID_AUTHENTICATION")
-                else:
-                    raise e
+                raise e
 
             # except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
             except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
-                if catch_exceptions:
-                    raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
-                else:
-                    raise e
+                raise e
 
             log.verbose("Tested session retrieving '{}'", u.name)
 
