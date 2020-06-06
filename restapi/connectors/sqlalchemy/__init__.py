@@ -38,6 +38,9 @@ def catch_db_exceptions(func):
         except DatabaseDuplicatedEntry:
             # already catched and parser, raise up
             raise
+        except BadRequest:
+            # already catched and parser, raise up
+            raise
         except IntegrityError as e:
 
             message = str(e).split('\n')
