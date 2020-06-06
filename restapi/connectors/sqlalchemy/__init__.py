@@ -20,7 +20,7 @@ from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.engine.url import URL
 from sqlalchemy import text
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry, ServiceUnavailable
+from restapi.exceptions import DatabaseDuplicatedEntry, BadRequest, ServiceUnavailable
 from restapi.utilities.meta import Meta
 from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
 from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
@@ -73,7 +73,7 @@ def catch_db_exceptions(func):
                 value = m.group(1)
                 column = m.group(2)
                 error = f"Invalid {column}: {value}"
-                raise InternalError(error)
+                raise BadRequest(error)
 
             log.error("Unrecognized error message: {}", message)
             raise
