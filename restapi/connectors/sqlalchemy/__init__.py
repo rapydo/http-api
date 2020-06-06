@@ -79,7 +79,7 @@ def catch_db_exceptions(func):
             raise
 
         except BaseException as e:
-            log.critical("Raised unknown exception: {}", type(e))
+            log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
     return wrapper
