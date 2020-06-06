@@ -1,5 +1,6 @@
 import os
 import pytest
+from irods import exception as iexceptions
 from restapi.services.detect import detector
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
@@ -26,7 +27,7 @@ def test_irods(app, faker):
         )
 
         pytest.fail("This should fail because password is wrong")
-    except ServiceUnavailable:
+    except irods.exception.PAM_AUTH_PASSWORD_FAILED:
         pass
 
     try:
@@ -50,7 +51,7 @@ def test_irods(app, faker):
         )
 
         pytest.fail("This should fail because password is wrong")
-    except ServiceUnavailable:
+    except irods.exception.CAT_INVALID_AUTHENTICATION:
         pass
 
     irods = detector.get_service_instance("irods")
