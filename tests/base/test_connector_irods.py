@@ -27,7 +27,7 @@ def test_irods(app, faker):
         )
 
         pytest.fail("This should fail because password is wrong")
-    except irods.exception.PAM_AUTH_PASSWORD_FAILED:
+    except iexceptions.PAM_AUTH_PASSWORD_FAILED:
         pass
 
     try:
@@ -51,7 +51,7 @@ def test_irods(app, faker):
         )
 
         pytest.fail("This should fail because password is wrong")
-    except irods.exception.CAT_INVALID_AUTHENTICATION:
+    except iexceptions.CAT_INVALID_AUTHENTICATION:
         pass
 
     irods = detector.get_service_instance("irods")
