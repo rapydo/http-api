@@ -37,6 +37,7 @@ class IrodsPythonExt(Connector):
             ServiceUnavailable,
             AttributeError,
             GSSError,
+            FileNotFoundError,
         )
 
     def connect(self, **kwargs):
