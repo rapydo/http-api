@@ -203,8 +203,8 @@ class Meta:
         else:
             try:
                 instance = MyClass(**args)
-            except BaseException as e:
-                log.error("Errors during customizer: {}", e)
+            except BaseException as e:  # pragma: no cover
+                log.error("Errors during customizer loading: {}", e)
             else:
-                log.verbose("Customizer called: {}", class_name)
+                log.verbose("Customizer loaded: {}", class_name)
         return instance

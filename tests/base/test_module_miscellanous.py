@@ -3,9 +3,8 @@ import pytest
 import time
 import pytz
 from datetime import datetime
-from restapi.utilities.processes import find_process
+from restapi.utilities.processes import find_process, wait_socket, Timeout
 from restapi.utilities.processes import start_timeout, stop_timeout
-# from restapi.utilities.processes import wait_socket
 from restapi.tests import BaseTests
 from restapi.utilities.meta import Meta
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
@@ -13,6 +12,7 @@ from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.time import date_from_string
 from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
+from restapi.utilities.templates import get_html_template
 from restapi.utilities.configuration import mix
 
 
@@ -20,14 +20,101 @@ class TestApp(BaseTests):
     def test_libs(self):
 
         assert not find_process("this-should-not-exist")
+        # This is the current running process... and is skipped by find_process
+        assert not find_process("/usr/bin/python3")
+        # This is another running process
+        assert find_process("sleep")
+
+        start_timeout(5)
+        try:
+            wait_socket('invalid', 123, service_name='test')
+            pytest.fail("wait_socket should be blocking!")
+        except Timeout:
+            pass
 
         s = Meta.get_celery_tasks(None)
+        assert isinstance(s, dict)
+        assert len(s) == 0
+
+        # This is a valid package containing other packages... but no task will be found
+        s = Meta.get_celery_tasks("restapi")
         assert isinstance(s, dict)
         assert len(s) == 0
 
         s = Meta.get_celery_tasks("this-should-not-exist")
         assert isinstance(s, dict)
         assert len(s) == 0
+
+        s = Meta.get_classes_from_module("this-should-not-exist")
+        assert isinstance(s, dict)
+        assert len(s) == 0
+
+        s = Meta.get_module_from_string("this-should-not-exist")
+        assert s is None
+
+        try:
+            Meta.get_module_from_string(
+                "this-should-not-exist",
+                exit_on_fail=True,
+            )
+            pytest.fail("ModuleNotFoundError not raised")
+        except ModuleNotFoundError:
+            pass
+
+        try:
+            Meta.get_module_from_string(
+                "this-should-not-exist",
+                exit_if_not_found=True,
+            )
+            pytest.fail("SystemExit not raised")
+        except SystemExit:
+            pass
+
+        # Check flag precedence
+        try:
+            Meta.get_module_from_string(
+                "this-should-not-exist",
+                exit_if_not_found=True,
+                exit_on_fail=True,
+            )
+            pytest.fail("ModuleNotFoundError not raised")
+        except ModuleNotFoundError:
+            pass
+
+        # This method is not very robust... but... let's test the current implementation
+        # It basicaly return the first args if it is an instance of some classes
+        s = Meta.get_self_reference_from_args()
+        assert s is None
+        s = Meta.get_self_reference_from_args("test")
+        assert s == 'test'
+
+        s = Meta.import_models(
+            "this-should", "not-exist",
+            exit_on_fail=False
+        )
+        assert isinstance(s, dict)
+        assert len(s) == 0
+
+        try:
+            Meta.import_models(
+                "this-should", "not-exist",
+                exit_on_fail=True
+            )
+            pytest.fail("SystemExit not raised")
+        except SystemExit:
+            pass
+
+        # Check exit_on_fail default value
+        try:
+            Meta.import_models(
+                "this-should", "not-exist"
+            )
+            pytest.fail("SystemExit not raised")
+        except SystemExit:
+            pass
+
+        s = get_html_template("this-should-not-exist", {})
+        assert s is None
 
         start_timeout(1)
         try:
