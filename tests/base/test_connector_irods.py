@@ -5,7 +5,7 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
-def test_irods(app):
+def test_irods(app, faker):
 
     if not detector.check_availability('irods'):
         log.warning("Skipping irods test: service not available")
@@ -16,6 +16,42 @@ def test_irods(app):
         project_init=False,
         project_clean=False,
     )
+
+    irods = detector.get_service_instance("irods", authscheme='PAM')
+    assert irods is not None
+
+    try:
+        irods = detector.get_service_instance(
+            "irods", authscheme='PAM', password=faker.pystr()
+        )
+
+        pytest.fail("This should fail because password is wrong")
+    except ServiceUnavailable:
+        pass
+
+    try:
+        irods = detector.get_service_instance("irods", authscheme='GSI')
+        pytest.fail("GSI should fail because no certificate is set by default")
+    except ServiceUnavailable:
+        pass
+
+    irods = detector.get_service_instance("irods", authscheme='XYZ')
+    # since a password is provided by default authscheme is fallback to credentials
+    assert irods is not None
+    try:
+        detector.get_service_instance("irods", authscheme='XYZ', password=None)
+        pytest.fail("This should fail because authscheme is invalid")
+    except ServiceUnavailable:
+        pass
+
+    try:
+        irods = detector.get_service_instance(
+            "irods", password=faker.pystr()
+        )
+
+        pytest.fail("This should fail because password is wrong")
+    except ServiceUnavailable:
+        pass
 
     irods = detector.get_service_instance("irods")
     assert irods is not None

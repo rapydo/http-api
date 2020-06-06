@@ -61,8 +61,7 @@ class IrodsPythonExt(Connector):
             # recover the serialized session
             obj = self.deserialize(session.session)
 
-        # No tests provided for PAM and GSI
-        elif authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
+        elif authscheme == GSI_AUTH_SCHEME:
 
             cert_pref = variables.get('certificates_prefix', "")
             cert_name = variables.get("proxy_cert_name")
@@ -97,8 +96,7 @@ class IrodsPythonExt(Connector):
                 zone=variables.get('zone'),
             )
 
-        # No tests provided for PAM and GSI
-        elif authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
+        elif authscheme == PAM_AUTH_SCHEME:
 
             obj = iRODSSession(
                 user=user,

@@ -13,9 +13,9 @@ from plumbum import local
 
 from restapi.utilities.logs import log
 
-# Excluded from coverage because it is only used by a very specific service
-# To tests for this will be included in the core
-class Certificates:  # pragma: no cover
+# Mostly excluded from coverage because it is only used by a very specific service
+# No further tests will be included in the core
+class Certificates:
 
     _dir = os.getenv('CERTDIR')
     _proxyfile = 'userproxy.crt'
