@@ -20,10 +20,8 @@ class TestApp(BaseTests):
     def test_libs(self):
 
         assert not find_process("this-should-not-exist")
-        # This is the current running process... and is skipped by find_process
-        assert not find_process("/usr/bin/python3")
-        # This is another running process
-        assert find_process("sleep")
+        assert find_process("restapi")
+        assert find_process("dumb-init")
 
         start_timeout(5)
         try:
