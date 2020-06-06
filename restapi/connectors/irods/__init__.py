@@ -11,6 +11,7 @@ from irods import exception as iexceptions
 # from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
 from restapi.connectors.irods.client import IrodsException, IrodsPythonClient
 from restapi.connectors.irods.certificates import Certificates
@@ -135,10 +136,10 @@ class IrodsPythonExt(Connector):
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
-        obj.connection_timeout = variables.get('zone')
+        obj.connection_timeout = Env.to_int(variables.get('timeout'), 15.0)
 
         # Do a simple command to test this session
-        if not variables.get('only_check_proxy', False):
+        if not Env.to_bool(variables.get('only_check_proxy')):
             catch_exceptions = variables.get('catch_exceptions', False)
             try:
                 u = obj.users.get(
