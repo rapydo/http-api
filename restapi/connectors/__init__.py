@@ -29,16 +29,8 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def preconnect(self, **kwargs):  # pragma: no cover
-        return True
-
-    @abc.abstractmethod
     def connect(self, **kwargs):  # pragma: no cover
         return
-
-    @abc.abstractmethod
-    def postconnect(self, obj, **kwargs):  # pragma: no cover
-        return True
 
     @abc.abstractmethod
     def initialize(self):  # pragma: no cover
@@ -110,13 +102,6 @@ class Connector(metaclass=abc.ABCMeta):
 
         obj = None
 
-        # BEFORE
-        if not self.preconnect(**kwargs):  # pragma: no cover
-            log.error("Unable to make preconnection for {}", self.name)
-            raise ServiceUnavailable(
-                {"Service Unavailable": "Internal server error"}
-            )
-
         exceptions = self.get_connection_exception()
         if exceptions is None:
             exceptions = (BaseException,)
@@ -125,13 +110,6 @@ class Connector(metaclass=abc.ABCMeta):
             obj = self.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", self.name, e.__class__.__name__, e)
-            raise ServiceUnavailable(
-                {"Service Unavailable": "Internal server error"}
-            )
-
-        # AFTER
-        if not self.postconnect(obj, **kwargs):  # pragma: no cover
-            log.error("Unable to make postconnect for {}", self.name)
             raise ServiceUnavailable(
                 {"Service Unavailable": "Internal server error"}
             )

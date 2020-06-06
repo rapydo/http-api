@@ -77,12 +77,6 @@ class MongoExt(Connector):
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError, )
 
-    def preconnect(self, **kwargs):
-        return True
-
-    def postconnect(self, obj, **kwargs):
-        return True
-
     def connect(self, test_connection=False, **kwargs):
 
         variables = self.variables.copy()

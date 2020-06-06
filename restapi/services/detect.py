@@ -1,11 +1,3 @@
-"""
-Detect which services are running, by testing environment variables
-set with containers/docker-compose/do.py
-
-Note: docker links and automatic variables removed as unsafe with compose V3
-
-"""
-
 import os
 from functools import lru_cache
 
@@ -57,14 +49,14 @@ class Detector:
         )
 
     @staticmethod
-    def get_global_var(key, default=None):
+    def get_global_var(key, default=None):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_global_var, use os.getenv or Env.get")
         return os.getenv(key, default)
 
     @staticmethod
     @lru_cache
-    def get_bool_envvar(bool_var):
+    def get_bool_envvar(bool_var):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
 
@@ -72,7 +64,7 @@ class Detector:
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):
+    def get_bool_from_os(name):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 

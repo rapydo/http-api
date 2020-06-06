@@ -1,7 +1,8 @@
-# from datetime import datetime
+import os
 import pytest
 import time
 import pytz
+import psutil
 from datetime import datetime
 from restapi.utilities.processes import find_process, wait_socket, Timeout
 from restapi.utilities.processes import start_timeout, stop_timeout
@@ -22,8 +23,12 @@ class TestApp(BaseTests):
         assert not find_process("this-should-not-exist")
         assert find_process("restapi")
         assert find_process("dumb-init")
+        # current process is not retrieved by find_process
+        current_pid = os.getpid()
+        process = psutil.Process(current_pid)
+        assert not find_process(process.name())
 
-        start_timeout(5)
+        start_timeout(15)
         try:
             wait_socket('invalid', 123, service_name='test')
             pytest.fail("wait_socket should be blocking!")

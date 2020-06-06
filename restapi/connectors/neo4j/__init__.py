@@ -193,12 +193,6 @@ class NeoModel(Connector):
             neobolt_AuthError
         )
 
-    def preconnect(self, **kwargs):
-        return True
-
-    def postconnect(self, obj, **kwargs):
-        return True
-
     def connect(self, **kwargs):
 
         variables = self.variables.copy()

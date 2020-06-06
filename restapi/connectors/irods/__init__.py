@@ -14,6 +14,7 @@ from restapi.connectors import Connector
 from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
 from restapi.connectors.irods.client import IrodsException, IrodsPythonClient
 from restapi.connectors.irods.certificates import Certificates
+from restapi.exceptions import ServiceUnavailable
 
 # Silence too much logging from irods
 irodslogger = logging.getLogger('irods')
@@ -29,171 +30,99 @@ PAM_AUTH_SCHEME = 'PAM'
 class IrodsPythonExt(Connector):
 
     def get_connection_exception(self):
+        # this will fallback to BaseException
         return None
-
-    def preconnect(self, **kwargs):
-
-        session = kwargs.get('user_session')
-
-        # external = self.variables.get('external')
-
-        # Retrieve authentication schema
-        self.authscheme = kwargs.get('authscheme')
-        # Authentication scheme fallback to default from project_configuration
-        if self.authscheme is None or self.authscheme.strip() == '':
-            self.authscheme = self.variables.get('authscheme')
-        # Authentication scheme fallback to default (credentials)
-        if self.authscheme is None or self.authscheme.strip() == '':
-            self.authscheme = NORMAL_AUTH_SCHEME
-
-        if session is not None:
-            user = session.email
-        else:
-            user = kwargs.get('user')
-            self.password = kwargs.get('password')
-
-            gss = kwargs.get('gss', False)
-            myproxy_host = self.variables.get("myproxy_host")
-
-            admin = kwargs.get('be_admin', False)
-            if user is None:
-                user_key = 'default_admin_user' if admin else 'user'
-                user = self.variables.get(user_key)
-
-            if self.password is None:
-                if self.authscheme == NORMAL_AUTH_SCHEME:
-                    self.password = self.variables.get('password')
-                # No tests provided for PAM and GSI
-                elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
-                    self.password = self.variables.get('password')
-
-            # Check if the user requested for GSI explicitely
-
-            # No tests provided for PAM and GSI
-            if self.authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
-                gss = True
-
-        if user is None:
-            raise AttributeError("No user is defined")
-        else:
-            self.user = user
-            log.debug("Irods user: {}", self.user)
-
-        ######################
-        # Irods/b2safe direct credentials
-        if session is not None:
-            return True
-        ######################
-        # Identity with GSI
-        # No tests provided for PAM and GSI
-        elif gss:  # pragma: no cover
-
-            if self.authscheme != GSI_AUTH_SCHEME:
-                log.debug("Forcing {} authscheme", GSI_AUTH_SCHEME)
-                self.authscheme = GSI_AUTH_SCHEME
-
-            pref = self.variables.get('certificates_prefix', "")
-            name = kwargs.get("proxy_cert_name")
-            proxy_cert_name = f"{pref}{name}"
-
-            valid_cert = Certificates.globus_proxy(
-                proxy_file=kwargs.get('proxy_file'),
-                user_proxy=self.user,
-                cert_dir=self.variables.get("x509_cert_dir"),
-                myproxy_host=myproxy_host,
-                cert_name=proxy_cert_name,
-                cert_pwd=kwargs.get("proxy_pass"),
-            )
-
-            if not valid_cert:
-                return False
-
-        # No tests provided for PAM and GSI
-        elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
-            pass
-
-        elif self.password is not None:
-            self.authscheme = NORMAL_AUTH_SCHEME
-
-        else:
-            raise NotImplementedError(
-                "Unable to create session: invalid iRODS-auth scheme"
-            )
-
-        return True
-
-    def postconnect(self, obj, **kwargs):
-        return True
 
     def connect(self, **kwargs):
 
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        check_connection = True
-        timeout = variables.get('timeout', 15.0)
         session = variables.get('user_session')
-        default_zone = variables.get('zone')
 
-        if session is not None:
+        authscheme = variables.get('authscheme', NORMAL_AUTH_SCHEME)
+
+        if session:
+            user = session.email
+        else:
+
+            admin = variables.get('be_admin', False)
+            user_key = 'default_admin_user' if admin else 'user'
+            user = variables.get(user_key)
+            password = variables.get('password')
+
+        if user is None:
+            raise AttributeError("No user is defined")
+        log.debug("Irods user: {}", user)
+
+        ######################
+        if session:
             # recover the serialized session
             obj = self.deserialize(session.session)
 
-        elif self.authscheme == NORMAL_AUTH_SCHEME:
+        # No tests provided for PAM and GSI
+        elif authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
 
-            obj = iRODSSession(
-                user=self.user,
-                password=self.password,
-                authentication_scheme='native',
-                host=variables.get('host'),
-                port=variables.get('port'),
-                zone=default_zone,
+            cert_pref = variables.get('certificates_prefix', "")
+            cert_name = variables.get("proxy_cert_name")
+
+            valid_cert = Certificates.globus_proxy(
+                proxy_file=variables.get('proxy_file'),
+                user_proxy=user,
+                cert_dir=variables.get("x509_cert_dir"),
+                myproxy_host=variables.get("myproxy_host"),
+                cert_name=f"{cert_pref}{cert_name}",
+                cert_pwd=variables.get("proxy_pass"),
             )
 
-        # No tests provided for PAM and GSI
-        elif self.authscheme == GSI_AUTH_SCHEME:  # pragma: no cover
+            if not valid_cert:
+                raise ServiceUnavailable("Invalid proxy settings")
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
-            host_dn = variables.get('dn', None)
-            if isinstance(host_dn, str) and host_dn.strip() == '':
-                host_dn = None
-            if host_dn is None:
+            if host_dn := variables.get('dn', None):
+                log.verbose("Existing DN:\n\"{}\"", host_dn)
+            else:
                 host_dn = Certificates.get_dn_from_cert(
                     certdir='host', certfilename='hostcert'
                 )
-            else:
-                log.verbose("Existing DN:\n\"{}\"", host_dn)
 
             obj = iRODSSession(
-                user=self.user,
-                authentication_scheme=self.authscheme,
+                user=user,
+                authentication_scheme=authscheme,
                 host=variables.get('host'),
                 port=variables.get('port'),
                 server_dn=host_dn,
-                zone=default_zone,
+                zone=variables.get('zone'),
             )
-
-            # Do not check for user if its a proxy certificate:
-            # we want to verify if they expired later
-            if variables.get('only_check_proxy', False):
-                check_connection = False
 
         # No tests provided for PAM and GSI
-        elif self.authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
+        elif authscheme == PAM_AUTH_SCHEME:  # pragma: no cover
 
             obj = iRODSSession(
-                user=self.user,
-                password=self.password,
-                authentication_scheme=self.authscheme,
+                user=user,
+                password=password,
+                authentication_scheme=authscheme,
                 host=variables.get('host'),
                 port=variables.get('port'),
-                zone=default_zone,
+                zone=variables.get('zone'),
             )
 
-        else:  # pragma: no cover
+        elif password is not None:
+            authscheme = NORMAL_AUTH_SCHEME
+
+            obj = iRODSSession(
+                user=user,
+                password=password,
+                authentication_scheme='native',
+                host=variables.get('host'),
+                port=variables.get('port'),
+                zone=variables.get('zone'),
+            )
+
+        else:
             raise NotImplementedError(
-                f"Invalid iRODS authentication scheme: {self.authscheme}"
+                f"Invalid iRODS authentication scheme: {authscheme}"
             )
 
         # # set timeout on existing socket/connection
@@ -206,26 +135,16 @@ class IrodsPythonExt(Connector):
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
-        obj.connection_timeout = timeout
-
-        #########################
-        # TODO: this connection test, like in restapi wait
-        # should be used for debugging, with the output in case of failure
-        # restapi verify SERVICE
-        #########################
-
-        # Back-compatibility fix, remove-me after the prc PR
-        try:
-            PAM_EXCEPTION = iexceptions.PAM_AUTH_PASSWORD_FAILED
-        except AttributeError:
-            # An exception that should never occur since already tested
-            PAM_EXCEPTION = iexceptions.CAT_INVALID_AUTHENTICATION
+        obj.connection_timeout = variables.get('zone')
 
         # Do a simple command to test this session
-        if check_connection:
+        if not variables.get('only_check_proxy', False):
             catch_exceptions = variables.get('catch_exceptions', False)
             try:
-                u = obj.users.get(self.user, user_zone=default_zone)
+                u = obj.users.get(
+                    user,
+                    user_zone=variables.get('zone')
+                )
 
             except iexceptions.CAT_INVALID_AUTHENTICATION as e:
                 if catch_exceptions:
@@ -234,7 +153,7 @@ class IrodsPythonExt(Connector):
                     raise e
 
             # except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
-            except PAM_EXCEPTION as e:
+            except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
                 if catch_exceptions:
                     raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
                 else:

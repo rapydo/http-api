@@ -15,12 +15,6 @@ class PushpinExt(Connector):
     def get_connection_exception(self):
         return ServiceUnavailable
 
-    def preconnect(self, **kwargs):
-        return True
-
-    def postconnect(self, obj, **kwargs):
-        return True
-
     # initialize is only invoked for backend databases
     def initialize(self):  # pragma: no cover
         pass
