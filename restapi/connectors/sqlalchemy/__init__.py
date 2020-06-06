@@ -61,7 +61,21 @@ def catch_db_exceptions(func):
             raise DatabaseDuplicatedEntry("Duplicated entry")
 
         except InternalError as e:
-            log.critical(e)
+
+            message = str(e)
+
+            m = re.search(
+                r"Incorrect string value: '(.*)' for column `.*`.`.*`.`(.*)` at row .*",
+                message
+            )
+
+            if m:
+                value = m.group(1)
+                column = m.group(2)
+                error = f"Invalid {column}: {value}"
+                raise InternalError(error)
+
+            log.error("Unrecognized error message: {}", message)
             raise
 
         except BaseException as e:
