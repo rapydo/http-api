@@ -2,7 +2,7 @@ from flask_apispec import MethodResource, marshal_with
 from marshmallow import fields
 
 from restapi import decorators
-from restapi.exceptions import BadRequest, Unauthorized
+from restapi.exceptions import BadRequest, Forbidden
 from restapi.models import OutputSchema
 from restapi.rest.definition import EndpointResource
 
@@ -69,4 +69,4 @@ class Tokens(MethodResource, EndpointResource):
             # since this is an authenticated endpoint the token is already verified
             raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
 
-        raise Unauthorized("Token not emitted for your account or does not exist")
+        raise Forbidden("Token not emitted for your account or does not exist")

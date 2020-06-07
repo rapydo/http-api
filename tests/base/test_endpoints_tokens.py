@@ -61,11 +61,11 @@ class TestApp(BaseTests):
 
         # TEST AN ALREADY DELETED TOKEN
         r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
-        assert r.status_code == 401
+        assert r.status_code == 403
 
         # TEST INVALID DELETE OF A SINGLE TOKEN
         r = client.delete(f"{AUTH_URI}/tokens/0", headers=last_tokens_header)
-        assert r.status_code == 401
+        assert r.status_code == 403
 
         # TEST TOKEN IS STILL VALID
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
@@ -82,8 +82,8 @@ class TestApp(BaseTests):
         token_id = None
         for c in content:
             if c["token"] == token:
-                continue
-            token_id = c["id"]
+                token_id = c["id"]
+                break
 
         assert token_id is not None
 
