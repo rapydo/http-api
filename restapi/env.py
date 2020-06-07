@@ -35,7 +35,7 @@ class Env:
         try:
             tmp = int(var)
             return bool(tmp)
-        except ValueError:
+        except (TypeError, ValueError):
             pass
 
         # STRINGS

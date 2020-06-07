@@ -6,6 +6,7 @@ import psutil
 import pytest
 import pytz
 
+from restapi.env import Env
 from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
@@ -25,7 +26,37 @@ from restapi.utilities.time import date_from_string
 
 
 class TestApp(BaseTests):
-    def test_libs(self):
+    def test_libs(self, faker):
+
+        assert not Env.to_bool(None)
+        assert Env.to_bool(None, True)
+        assert not Env.to_bool(False)
+        assert Env.to_bool(True)
+        assert not Env.to_bool(0)
+        assert Env.to_bool(1)
+        assert Env.to_bool(1 + faker.pyint())
+        assert Env.to_bool(-faker.pyint() - 1)
+        assert not Env.to_bool("")
+        assert not Env.to_bool("false")
+        assert not Env.to_bool("False")
+        assert not Env.to_bool("FALSE")
+        assert Env.to_bool("true")
+        assert Env.to_bool("True")
+        assert Env.to_bool("TRUE")
+        assert Env.to_bool(faker.pystr())
+        assert not Env.to_bool(object)
+        assert Env.to_bool(object, True)
+
+        random_default = faker.pyint()
+        assert Env.to_int(None) == 0
+        assert Env.to_int(None, random_default) == random_default
+        assert Env.to_int(random_default) == random_default
+        assert Env.to_int("42") == 42
+        assert Env.to_int("-42") == -42
+        assert Env.to_int(str(random_default)) == random_default
+        assert Env.to_int(faker.pystr()) == 0
+        assert Env.to_int(faker.pystr(), random_default) == random_default
+        assert Env.to_bool(object) == 0
 
         assert not find_process("this-should-not-exist")
         assert find_process("restapi")
@@ -34,6 +65,28 @@ class TestApp(BaseTests):
         current_pid = os.getpid()
         process = psutil.Process(current_pid)
         assert not find_process(process.name())
+
+        prefix = faker.pystr().lower()
+        var1 = faker.pystr()
+        var2 = faker.pystr().lower()
+        var3 = faker.pystr().upper()
+        val1 = faker.pystr()
+        val2 = faker.pystr()
+        val3 = faker.pystr()
+
+        os.environ[f"{prefix}_{var1}"] = val1
+        os.environ[f"{prefix}_{var2}"] = val2
+        os.environ[f"{prefix}_{var3}"] = val3
+        variables = Env.load_group(prefix)
+        assert variables is not None
+        assert isinstance(variables, dict)
+        assert len(variables) == 3
+        assert var2 in variables
+        assert var3 not in variables
+        assert var3.lower() in variables
+        assert variables.get(var1.lower()) == val1
+        assert variables.get(var2.lower()) == val2
+        assert variables.get(var3.lower()) == val3
 
         start_timeout(15)
         try:

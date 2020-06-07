@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import dateutil.parser
 import pytest
 import pytz
 from neobolt.exceptions import CypherSyntaxError
@@ -14,13 +15,24 @@ if not detector.check_availability("neo4j"):
 else:
 
     class TestNeo4j(BaseTests):
-        @staticmethod
-        def test_endpoint(client):
+        def test_endpoint(self, client):
             r = client.get(f"{API_URI}/tests/neo4j/1")
             assert r.status_code == 200
 
             r = client.get(f"{API_URI}/tests/neo4j/2")
             assert r.status_code == 400
+
+            r = client.get(f"{API_URI}/tests/neo4j/3")
+            assert r.status_code == 200
+            data = self.get_content(r)
+            data["created"] = dateutil.parser.parse(data["created"])
+            data["modified1"] = dateutil.parser.parse(data["modified1"])
+            data["modified2"] = dateutil.parser.parse(data["modified2"])
+            assert data["created"] < data["modified1"]
+            assert (data["modified1"] - data["created"]).microseconds < 100
+            assert (data["modified2"] - data["created"]).microseconds > 100
+            assert data["modified1"] < data["modified2"]
+            assert (data["modified2"] - data["modified1"]).microseconds > 100
 
         @staticmethod
         def test_connector(app, fake):

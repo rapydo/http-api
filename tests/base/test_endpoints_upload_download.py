@@ -80,12 +80,16 @@ class TestUploadAndDownload(BaseTests):
         assert content != self.fcontent
         assert content == new_content
 
-        r = client.get(f"{API_URI}/tests/download/{self.fname}", data={"stream": True})
+        r = client.get(
+            f"{API_URI}/tests/download/{self.fname}", query_string={"stream": True}
+        )
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == new_content
 
-        r = client.get(f"{API_URI}/tests/download/doesnotexist", data={"stream": True})
+        r = client.get(
+            f"{API_URI}/tests/download/doesnotexist", query_string={"stream": True}
+        )
         assert r.status_code == 400
 
     def test_chunked(self, client, fake):

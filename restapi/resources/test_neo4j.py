@@ -19,6 +19,9 @@ if TESTING and detector.check_availability("neo4j"):
 
     class Output(OutputSchema):
         val = fields.Integer()
+        created = fields.DateTime()
+        modified1 = fields.DateTime()
+        modified2 = fields.DateTime()
         user = Neo4jSchema(
             User,
             fields=(
@@ -65,6 +68,17 @@ if TESTING and detector.check_availability("neo4j"):
                 elif test == "2":
                     log.info("Second Test")
                     self.neo4j.cypher("MATCH (n) RETURN n with a syntax error")
+                # This test will verify that a timestamped node when saved
+                # Automatically update the modified attribute
+                elif test == "3":
+                    data = {}
+                    n = self.neo4j.JustATest(p_str="")
+                    n.save()
+                    data["created"] = n.created
+                    data["modified1"] = n.modified
+                    n.save()
+                    data["modified2"] = n.modified
+                    return data
                 else:
                     log.info("No Test")
             except Exception as e:
