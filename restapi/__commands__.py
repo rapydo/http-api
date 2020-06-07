@@ -4,6 +4,7 @@ import time
 
 import click
 from flask.cli import FlaskGroup
+from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.confs import PRODUCTION
@@ -84,10 +85,8 @@ def verify(services):
         log.info("Provide list of services by using --services option")
 
     for service in services:
-        if service not in detector.services:
-            log.exit("Service {} not detected", service)
 
-        myclass = detector.services[service].get("class")
+        myclass = glom(detector.services, f"{service}.class")
         if myclass is None:
             log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
@@ -200,11 +199,11 @@ def forced_clean():  # pragma: no cover
 @click.option(
     "--destroy/--no-destroy", default=False, help="Destroy database after tests"
 )
-def tests(wait, core, file, folder, destroy):
+def tests(wait, core, file, folder, destroy):  # pragma: no cover
     """Compute tests and coverage"""
 
     if wait:
-        while initializing():
+        while initializing():  # pragma: no cover
             log.debug("Waiting services initialization")
             time.sleep(5)
         mywait()

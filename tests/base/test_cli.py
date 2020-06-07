@@ -1,3 +1,4 @@
+import pytest
 from click.testing import CliRunner
 
 from restapi import __commands__ as cli
@@ -53,3 +54,25 @@ def test_cli():
 
     response = runner.invoke(cli.tests, ["--core", "--file", "x"])
     assert response.exit_code == 1
+
+    variables = {
+        "myhost": "myvalue",
+        "myport": "111",
+    }
+    try:
+        cli.get_service_address(variables, "host", "port", "myservice")
+        pytest.fail("No exception raised")
+    except SystemExit as e:
+        assert str(e) == "Cannot find any variable matching host for myservice"
+
+    try:
+        cli.get_service_address(variables, "myhost", "port", "myservice")
+        pytest.fail("No exception raised")
+    except SystemExit as e:
+        assert str(e) == "Cannot find any variable matching port for myservice"
+
+    h, p = cli.get_service_address(variables, "myhost", "myport", "myservice")
+
+    assert h == "myvalue"
+    assert isinstance(p, int)
+    assert p == 111
