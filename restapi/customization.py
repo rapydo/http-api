@@ -3,6 +3,7 @@ Customization based on configuration 'blueprint' files
 """
 
 import copy
+import glob
 import os
 
 from attr import ib as attribute
@@ -66,6 +67,30 @@ class Customizer:
 
         return self._configurations
 
+    @staticmethod
+    def skip_endpoint(depends_on):
+        for var in depends_on:
+            pieces = var.strip().split(" ")
+            pieces_num = len(pieces)
+            if pieces_num == 1:
+                dependency = pieces.pop()
+                negate = False
+            elif pieces_num == 2:
+                negate, dependency = pieces
+                negate = negate.lower() == "not"
+            else:  # pragma: no cover
+                log.exit("Wrong depends_on parameter: {}", var)
+
+            check = Env.get_bool(dependency)
+            if negate:
+                check = not check
+
+            # Skip if not meeting the requirements of the dependency
+            if not check:
+                return True, dependency
+
+        return False, None
+
     def find_endpoints(self):
 
         ##################
@@ -116,10 +141,7 @@ class Customizer:
             apiclass_module = f"{base_module}.{resources_dir}"
 
             # Looking for all file in apis folder
-            for epfiles in os.listdir(apis_dir):
-
-                if not epfiles.endswith(".py"):
-                    continue
+            for epfiles in glob.glob("*.py"):
 
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
@@ -145,27 +167,7 @@ class Customizer:
                         "Importing {} from {}.{}", class_name, apis_dir, module_file
                     )
 
-                    skip = False
-                    for var in epclss.depends_on:
-                        pieces = var.strip().split(" ")
-                        pieces_num = len(pieces)
-                        if pieces_num == 1:
-                            dependency = pieces.pop()
-                            negate = False
-                        elif pieces_num == 2:
-                            negate, dependency = pieces
-                            negate = negate.lower() == "not"
-                        else:  # pragma: no cover
-                            log.exit("Wrong depends_on parameter: {}", var)
-
-                        check = Env.get_bool(dependency)
-                        if negate:
-                            check = not check
-
-                        # Skip if not meeting the requirements of the dependency
-                        if not check:
-                            skip = True
-                            break
+                    skip, dependency = self.skip_endpoint(epclss.depends_on)
 
                     if skip:
                         log.debug(

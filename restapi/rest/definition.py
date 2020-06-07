@@ -118,7 +118,7 @@ class EndpointResource(Resource):
                 log.verbose("Accept param '{}' type {}", param, mytype)
 
     # to be deprecated (and after: init_parameters)
-    def get_input(self):
+    def get_input(self):  # pragma: no cover
         """
         Recover parameters from current requests.
 
