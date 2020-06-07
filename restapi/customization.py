@@ -91,6 +91,51 @@ class Customizer:
 
         return False, None
 
+    @staticmethod
+    def inject_apispec_docs(fn, conf, labels):
+        # retrieve attributes already set with @docs decorator
+        fn.__apispec__ = fn.__dict__.get("__apispec__", {})
+        docs = {}
+        for doc in fn.__apispec__["docs"]:
+            docs.update(doc.options[0])
+
+        missing = {}
+        if "summary" not in docs:
+            summary = conf.get("summary")
+            if summary is not None:
+                missing["summary"] = summary
+        if "description" not in docs:
+            description = conf.get("description")
+            if description is not None:
+                missing["description"] = description
+        if "tags" not in docs:
+            if labels:
+                missing["tags"] = labels
+
+        if "responses" not in docs:
+            responses = conf.get("responses")
+            if responses is not None:
+                missing["responses"] = responses
+
+        if "responses" in docs:
+            responses = conf.get("responses")
+            if responses is not None:
+                for code, resp in responses.items():
+                    if code not in docs["responses"]:
+                        missing.setdefault("responses", {})
+                        missing["responses"][code] = resp
+
+        # mimic the behaviour of @docs decorator
+        # https://github.com/jmcarp/flask-apispec/...
+        #                         .../flask_apispec/annotations.py
+        annotation = Annotation(
+            options=[missing],
+            # Inherit Swagger documentation from parent classes
+            # None is the default value
+            inherit=None,
+        )
+        fn.__apispec__["docs"].insert(0, annotation)
+
     def find_endpoints(self):
 
         ##################
@@ -141,24 +186,20 @@ class Customizer:
             apiclass_module = f"{base_module}.{resources_dir}"
 
             # Looking for all file in apis folder
-            for epfiles in glob.glob("*.py"):
+            for epfiles in glob.glob(f"{apis_dir}/*.py"):
 
                 # get module name (es: apis.filename)
                 module_file = os.path.splitext(epfiles)[0]
                 module_name = f"{apiclass_module}.{module_file}"
                 # Convert module name into a module
                 log.debug("Importing {}", module_name)
-                try:
-                    module = Meta.get_module_from_string(
-                        module_name, exit_on_fail=True, exit_if_not_found=True
-                    )
-                except BaseException as e:  # pragma: no cover
-                    log.exit("Cannot import {}\nError: {}", module_name, e)
+                module = Meta.get_module_from_string(
+                    module_name, exit_if_not_found=True,
+                )
 
                 # Extract classes from the module
                 classes = Meta.get_new_classes_from_module(module)
-                for class_name in classes:
-                    epclss = classes.get(class_name)
+                for class_name, epclss in classes.items():
                     # Filtering out classes without expected data
                     if not hasattr(epclss, "methods") or epclss.methods is None:
                         continue
@@ -178,9 +219,9 @@ class Customizer:
                         )
                         continue
 
-                    # base URI
-                    base = epclss.baseuri
-                    if base not in BASE_URLS:
+                    if epclss.baseuri in BASE_URLS:
+                        base = epclss.baseuri
+                    else:
                         log.warning("Invalid base {}", base)
                         base = API_URL
                     base = base.strip("/")
@@ -238,54 +279,11 @@ class Customizer:
                             # inject _METHOD dictionaries into __apispec__ attribute
                             # __apispec__ is normally populated by using @docs decorator
                             if isinstance(epclss, MethodResourceMeta):
-
-                                # retrieve attributes already set with @docs decorator
-                                fn.__apispec__ = fn.__dict__.get("__apispec__", {})
-                                docs = {}
-                                for doc in fn.__apispec__["docs"]:
-                                    docs.update(doc.options[0])
-
-                                missing = {}
-                                if "summary" not in docs:
-                                    summary = conf[u].get("summary")
-                                    if summary is not None:
-                                        missing["summary"] = summary
-                                if "description" not in docs:
-                                    description = conf[u].get("description")
-                                    if description is not None:
-                                        missing["description"] = description
-                                if "tags" not in docs:
-                                    if epclss.labels is not None:
-                                        missing["tags"] = epclss.labels
-
-                                if "responses" not in docs:
-                                    responses = conf[u].get("responses")
-                                    if responses is not None:
-                                        missing["responses"] = responses
-
-                                if "responses" in docs:
-                                    responses = conf[u].get("responses")
-                                    if responses is not None:
-                                        for code, resp in responses.items():
-                                            if code not in docs["responses"]:
-                                                missing.setdefault("responses", {})
-                                                missing["responses"][code] = resp
-
-                                # mimic the behaviour of @docs decorator
-                                # https://github.com/jmcarp/flask-apispec/...
-                                #                         .../flask_apispec/annotations.py
-                                annotation = Annotation(
-                                    options=[missing],
-                                    # Inherit Swagger documentation from parent classes
-                                    # None is the default value
-                                    inherit=None,
+                                self.inject_apispec_docs(fn, conf[u], epclss.labels)
+                            elif not isinstance(epclss, MethodViewType):
+                                log.warning(  # pragma: no cover
+                                    "Unknown class type: {}", type(epclss)
                                 )
-                                fn.__apispec__["docs"].insert(0, annotation)
-
-                            elif not isinstance(
-                                epclss, MethodViewType
-                            ):  # pragma: no cover
-                                log.warning("Unknown class type: {}", type(epclss))
 
                             mapping_lists.extend(kk)
                             endpoint.methods[method_fn] = copy.deepcopy(conf)

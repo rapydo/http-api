@@ -69,7 +69,7 @@ class Meta:
             if exit_on_fail:
                 raise e
             elif exit_if_not_found:
-                log.exit("Failed to load module:\n{}", e)
+                log.exit("Failed to load {} module:\nError: {}", modulestring, e)
             # else:
             #     log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
