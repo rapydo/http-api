@@ -1,20 +1,27 @@
 import os
-import pytest
 import time
-import pytz
-import psutil
 from datetime import datetime
-from restapi.utilities.processes import find_process, wait_socket, Timeout
-from restapi.utilities.processes import start_timeout, stop_timeout
-from restapi.tests import BaseTests
-from restapi.utilities.meta import Meta
-from restapi.utilities.logs import handle_log_output, obfuscate_dict
-from restapi.utilities.htmlcodes import hcodes
-from restapi.utilities.time import date_from_string
+
+import psutil
+import pytest
+import pytz
+
 from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
-from restapi.utilities.templates import get_html_template
+from restapi.tests import BaseTests
 from restapi.utilities.configuration import mix
+from restapi.utilities.htmlcodes import hcodes
+from restapi.utilities.logs import handle_log_output, obfuscate_dict
+from restapi.utilities.meta import Meta
+from restapi.utilities.processes import (
+    Timeout,
+    find_process,
+    start_timeout,
+    stop_timeout,
+    wait_socket,
+)
+from restapi.utilities.templates import get_html_template
+from restapi.utilities.time import date_from_string
 
 
 class TestApp(BaseTests):
@@ -30,7 +37,7 @@ class TestApp(BaseTests):
 
         start_timeout(15)
         try:
-            wait_socket('invalid', 123, service_name='test')
+            wait_socket("invalid", 123, service_name="test")
             pytest.fail("wait_socket should be blocking!")
         except Timeout:
             pass
@@ -57,8 +64,7 @@ class TestApp(BaseTests):
 
         try:
             Meta.get_module_from_string(
-                "this-should-not-exist",
-                exit_on_fail=True,
+                "this-should-not-exist", exit_on_fail=True,
             )
             pytest.fail("ModuleNotFoundError not raised")
         except ModuleNotFoundError:
@@ -66,8 +72,7 @@ class TestApp(BaseTests):
 
         try:
             Meta.get_module_from_string(
-                "this-should-not-exist",
-                exit_if_not_found=True,
+                "this-should-not-exist", exit_if_not_found=True,
             )
             pytest.fail("SystemExit not raised")
         except SystemExit:
@@ -76,9 +81,7 @@ class TestApp(BaseTests):
         # Check flag precedence
         try:
             Meta.get_module_from_string(
-                "this-should-not-exist",
-                exit_if_not_found=True,
-                exit_on_fail=True,
+                "this-should-not-exist", exit_if_not_found=True, exit_on_fail=True,
             )
             pytest.fail("ModuleNotFoundError not raised")
         except ModuleNotFoundError:
@@ -89,29 +92,21 @@ class TestApp(BaseTests):
         s = Meta.get_self_reference_from_args()
         assert s is None
         s = Meta.get_self_reference_from_args("test")
-        assert s == 'test'
+        assert s == "test"
 
-        s = Meta.import_models(
-            "this-should", "not-exist",
-            exit_on_fail=False
-        )
+        s = Meta.import_models("this-should", "not-exist", exit_on_fail=False)
         assert isinstance(s, dict)
         assert len(s) == 0
 
         try:
-            Meta.import_models(
-                "this-should", "not-exist",
-                exit_on_fail=True
-            )
+            Meta.import_models("this-should", "not-exist", exit_on_fail=True)
             pytest.fail("SystemExit not raised")
         except SystemExit:
             pass
 
         # Check exit_on_fail default value
         try:
-            Meta.import_models(
-                "this-should", "not-exist"
-            )
+            Meta.import_models("this-should", "not-exist")
             pytest.fail("SystemExit not raised")
         except SystemExit:
             pass
@@ -125,7 +120,7 @@ class TestApp(BaseTests):
             time.sleep(2)
             pytest.fail("Operation not interrupted")
         except BaseException as e:
-            assert str(e) == 'Operation timeout: interrupted'
+            assert str(e) == "Operation timeout: interrupted"
 
         start_timeout(1)
         try:
@@ -146,7 +141,7 @@ class TestApp(BaseTests):
         # obfuscate_dict only accepts dict
         assert obfuscate_dict(None) is None
         assert obfuscate_dict(10) == 10
-        assert obfuscate_dict(['x']) == ['x']
+        assert obfuscate_dict(["x"]) == ["x"]
         assert len(obfuscate_dict({})) == 0
         assert obfuscate_dict({"x": "y"}) == {"x": "y"}
         assert obfuscate_dict({"password": "y"}) == {"password": "****"}
@@ -213,7 +208,7 @@ class TestApp(BaseTests):
         assert d.tzinfo != pytz.utc
         assert today.strftime(fmt) == d.strftime(fmt)
 
-        today = datetime.now(pytz.timezone('Europe/Rome'))
+        today = datetime.now(pytz.timezone("Europe/Rome"))
         d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%s%z"))
         assert isinstance(d, datetime)
         assert d.tzinfo is not None
@@ -225,104 +220,115 @@ class TestApp(BaseTests):
         assert not _send_mail("body", "subject", None, "from_addr", "myhost")
 
         assert not _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x")
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x"
+        )
 
         # standard port
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost")
+        assert _send_mail("body", "subject", "to_addr", "from_addr", "myhost")
         # local server (no port)
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None)
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None
+        )
         # TLS port
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465)
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465
+        )
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465")
-
-        mail = self.read_mock_email()
-        body = mail.get('body')
-        headers = mail.get('headers')
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_addr"
-        assert mail.get('cc') == ['to_addr']
-        assert mail.get('bcc') is None
-
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost",
-            cc="test1", bcc="test2"
+            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465"
         )
 
         mail = self.read_mock_email()
-        body = mail.get('body')
-        headers = mail.get('headers')
+        body = mail.get("body")
+        headers = mail.get("headers")
         assert body is not None
         assert headers is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_addr"
+        assert "Subject: subject" in headers
+        assert mail.get("from") == "from_addr"
+        assert mail.get("cc") == ["to_addr"]
+        assert mail.get("bcc") is None
+
+        assert _send_mail(
+            "body", "subject", "to_addr", "from_addr", "myhost", cc="test1", bcc="test2"
+        )
+
+        mail = self.read_mock_email()
+        body = mail.get("body")
+        headers = mail.get("headers")
+        assert body is not None
+        assert headers is not None
+        # Subject: is a key in the MIMEText
+        assert "Subject: subject" in headers
+        assert mail.get("from") == "from_addr"
         # format is [to, [cc...], [bcc...]]
-        assert mail.get('cc') == ['to_addr', ['test1'], ['test2']]
+        assert mail.get("cc") == ["to_addr", ["test1"], ["test2"]]
 
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost",
-            cc=["test1", "test2"], bcc=["test3", "test4"]
+            "body",
+            "subject",
+            "to_addr",
+            "from_addr",
+            "myhost",
+            cc=["test1", "test2"],
+            bcc=["test3", "test4"],
         )
 
         mail = self.read_mock_email()
-        body = mail.get('body')
-        headers = mail.get('headers')
+        body = mail.get("body")
+        headers = mail.get("headers")
         assert body is not None
         assert headers is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: subject' in headers
-        assert mail.get('from') == "from_addr"
+        assert "Subject: subject" in headers
+        assert mail.get("from") == "from_addr"
         # format is [to, [cc...], [bcc...]]
-        assert mail.get('cc') == ['to_addr', ['test1', "test2"], ['test3', "test4"]]
+        assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
 
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost",
-            cc=10, bcc=20
+            "body", "subject", "to_addr", "from_addr", "myhost", cc=10, bcc=20
         )
 
         mail = self.read_mock_email()
-        body = mail.get('body')
-        headers = mail.get('headers')
+        body = mail.get("body")
+        headers = mail.get("headers")
         assert body is not None
         assert headers is not None
         # Subject: is a key in the MIMEText
-        assert 'Subject: subject' in headers
+        assert "Subject: subject" in headers
         # cc and bcc with wrong type (int in this case!) are ignored
-        assert mail.get('from') == "from_addr"
+        assert mail.get("from") == "from_addr"
         # format is [to, [cc...], [bcc...]]
-        assert mail.get('cc') == ['to_addr']
+        assert mail.get("cc") == ["to_addr"]
 
         # HTML emails require a plain body, if not provided it default with the html
         # body -> no errors
         assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost",
-            html=True, plain_body=None
+            "body",
+            "subject",
+            "to_addr",
+            "from_addr",
+            "myhost",
+            html=True,
+            plain_body=None,
         )
 
-        data = {'a': 1}
+        data = {"a": 1}
         assert mix(None, data) == data
 
-        data1 = {'a': {'b': 1}, 'c': 1}
-        data2 = {'a': {'b': 2}}
-        expected = {'a': {'b': 2}, 'c': 1}
+        data1 = {"a": {"b": 1}, "c": 1}
+        data2 = {"a": {"b": 2}}
+        expected = {"a": {"b": 2}, "c": 1}
 
         assert mix(data1, data2) == expected
 
-        data1 = {'a': {'b': 1}, 'c': 1}
-        data2 = {'a': None}
+        data1 = {"a": {"b": 1}, "c": 1}
+        data2 = {"a": None}
         # Cannot replace with an empty list
         assert mix(data1, data2) == data1
 
-        data1 = {'a': [1, 2]}
-        data2 = {'a': [3, 4]}
-        expected = {'a': [1, 2, 3, 4]}
+        data1 = {"a": [1, 2]}
+        data2 = {"a": [3, 4]}
+        expected = {"a": [1, 2, 3, 4]}
 
         assert mix(data1, data2) == expected
 
