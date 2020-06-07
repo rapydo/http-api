@@ -92,22 +92,6 @@ class TestApp(BaseTests):
         r = client.put(f'{AUTH_URI}/reset/{token}')
         assert r.status_code == 204
 
-        data = {}
-        data['new_password'] = fake.password(7)
-        data['password_confirm'] = fake.password(7)
-        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
-        assert r.status_code == 400
-        assert self.get_content(r) == 'New password does not match with confirmation'
-
-        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
-
-        data['password_confirm'] = data['new_password']
-        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
-        assert r.status_code == 409
-        ret_text = self.get_content(r)
-        error = f'Password is too short, use at least {min_pwd_len} characters'
-        assert ret_text == error
-
         # Request with old password
         data['new_password'] = BaseAuthentication.default_password
         data['password_confirm'] = BaseAuthentication.default_password
@@ -115,6 +99,24 @@ class TestApp(BaseTests):
         assert r.status_code == 409
         error = "The new password cannot match the previous password"
         assert self.get_content(r) == error
+
+        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
+
+        data = {}
+        # Passoword too short
+        data['new_password'] = fake.password(min_pwd_len - 1)
+        data['password_confirm'] = fake.password(min_pwd_len - 1)
+        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
+        assert r.status_code == 400
+        data['password_confirm'] = data['new_password']
+        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
+        assert r.status_code == 400
+
+        data['new_password'] = fake.password(min_pwd_len, strong=True)
+        data['password_confirm'] = fake.password(min_pwd_len, strong=True)
+        r = client.put(f'{AUTH_URI}/reset/{token}', data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == 'New password does not match with confirmation'
 
         new_pwd = fake.password(min_pwd_len, strong=True)
         data['new_password'] = new_pwd
