@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/asottile/seed-isort-config
-    rev: v1.9.3
+    rev: v2.2.0
     hooks:
     - id: seed-isort-config
 -   repo: https://github.com/pre-commit/mirrors-isort
@@ -16,7 +16,7 @@ repos:
     rev: 19.10b0
     hooks:
     - id: black
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.2
     hooks:
     - id: flake8
