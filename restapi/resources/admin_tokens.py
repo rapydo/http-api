@@ -1,12 +1,11 @@
-from flask_apispec import MethodResource
-from flask_apispec import marshal_with
+from flask_apispec import MethodResource, marshal_with
 from marshmallow import fields
-from restapi.models import OutputSchema
-from restapi import decorators
-from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
-from restapi.resources.tokens import TokenSchema
 
+from restapi import decorators
+from restapi.exceptions import RestApiException
+from restapi.models import OutputSchema
+from restapi.resources.tokens import TokenSchema
+from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 
@@ -43,25 +42,22 @@ class AdminTokens(MethodResource, EndpointResource):
 
     @marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     def get(self):
 
         tokens = self.auth.get_tokens(get_all=True)
 
         response = []
         for t in tokens:
-            if t.get('user') is None:
-                log.error(
-                    "Found a token without any user assigned: {}",
-                    t['id']
-                )
+            if t.get("user") is None:
+                log.error("Found a token without any user assigned: {}", t["id"])
                 continue
             response.append(t)
 
         return self.response(response)
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     def delete(self, token_id):
 
         try:
@@ -71,15 +67,11 @@ class AdminTokens(MethodResource, EndpointResource):
             tokens = None
 
         if not tokens:
-            raise RestApiException(
-                'This token does not exist',
-                status_code=404
-            )
+            raise RestApiException("This token does not exist", status_code=404)
         token = tokens[0]
 
         if not self.auth.invalidate_token(token=token["token"]):
             raise RestApiException(
-                f"Failed token invalidation: '{token}'",
-                status_code=400
+                f"Failed token invalidation: '{token}'", status_code=400
             )
         return self.empty_response()

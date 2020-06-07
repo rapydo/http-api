@@ -1,13 +1,13 @@
 import os
 from functools import lru_cache
-from flask import request, stream_with_context, Response
 
+from flask import Response, request, stream_with_context
+from irods import exception as iexceptions
+from irods import models
 from irods.access import iRODSAccess
+from irods.manager.data_object_manager import DataObjectManager
 from irods.rule import Rule
 from irods.ticket import Ticket
-from irods import models
-from irods import exception as iexceptions
-from irods.manager.data_object_manager import DataObjectManager
 
 from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
@@ -21,12 +21,12 @@ class IrodsException(RestApiException):
 # No further tests will be included in the core
 class IrodsPythonClient:  # pragma: no cover
 
-    anonymous_user = 'anonymous'
+    anonymous_user = "anonymous"
 
     def __init__(self, prc, variables, default_chunk_size=1_048_576):
         self.prc = prc
         self.variables = variables
-        self.chunk_size = self.variables.get('chunksize', default_chunk_size)
+        self.chunk_size = self.variables.get("chunksize", default_chunk_size)
 
     def __enter__(self):
         return self
@@ -45,8 +45,8 @@ class IrodsPythonClient:  # pragma: no cover
     def get_absolute_path(*args, root=None):
         if len(args) < 1:
             return root
-        if root is None and not args[0].startswith('/'):
-            root = '/'
+        if root is None and not args[0].startswith("/"):
+            root = "/"
         return os.path.join(root, *args)
 
     # ##################################
@@ -86,8 +86,8 @@ class IrodsPythonClient:  # pragma: no cover
 
     @staticmethod
     def getPath(path, prefix=None):
-        if prefix is not None and prefix != '':
-            path = path[len(prefix):]
+        if prefix is not None and prefix != "":
+            path = path[len(prefix) :]
             if path[0] == "/":
                 path = path[1:]
 
@@ -199,8 +199,7 @@ class IrodsPythonClient:  # pragma: no cover
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods collection already exists",
-                    status_code=409,
+                    "Irods collection already exists", status_code=409,
                 )
             else:
                 log.debug("Irods collection already exists: {}", path)
@@ -222,21 +221,22 @@ class IrodsPythonClient:  # pragma: no cover
             raise IrodsException("CAT_NO_ACCESS_PERMISSION")
 
         except iexceptions.SYS_INTERNAL_NULL_INPUT_ERR:
-            raise IrodsException(
-                f"Unable to create object, invalid path: {path}")
+            raise IrodsException(f"Unable to create object, invalid path: {path}")
 
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
-                raise IrodsException(
-                    "Irods object already exists", status_code=400
-                )
+                raise IrodsException("Irods object already exists", status_code=400)
             log.debug("Irods object already exists: {}", path)
 
         return False
 
-    def icopy(self, sourcepath, destpath,
-              ignore_existing=False,
-              warning='Irods object already exists'):
+    def icopy(
+        self,
+        sourcepath,
+        destpath,
+        ignore_existing=False,
+        warning="Irods object already exists",
+    ):
 
         # Replace 'copy'
 
@@ -246,9 +246,7 @@ class IrodsPythonClient:  # pragma: no cover
             dm.copy(sourcepath, destpath)
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
-                raise IrodsException(
-                    "Irods object already exists", status_code=400
-                )
+                raise IrodsException("Irods object already exists", status_code=400)
             log.warning("{}: {}", warning, destpath)
         else:
             log.debug("Copied: {} -> {}", sourcepath, destpath)
@@ -286,8 +284,8 @@ class IrodsPythonClient:  # pragma: no cover
             source = self.prc.data_objects.get(sourcepath)
             self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
-            with source.open('r+') as f:
-                with target.open('w') as t:
+            with source.open("r+") as f:
+                with target.open("w") as t:
                     for line in f:
                         # if t.writable():
                         t.write(line)
@@ -352,7 +350,7 @@ class IrodsPythonClient:  # pragma: no cover
     def write_file_content(self, path, content, position=0):
         try:
             obj = self.prc.data_objects.get(path)
-            with obj.open('w+') as handle:
+            with obj.open("w+") as handle:
 
                 if position > 0 and handle.seekable():
                     handle.seek(position)
@@ -370,7 +368,7 @@ class IrodsPythonClient:  # pragma: no cover
     def readable(self, path):
         try:
             obj = self.prc.data_objects.get(path)
-            with obj.open('r+') as handle:
+            with obj.open("r+") as handle:
                 return handle.readable()
         except iexceptions.CollectionDoesNotExist:
             return False
@@ -381,7 +379,7 @@ class IrodsPythonClient:  # pragma: no cover
         try:
             data = []
             obj = self.prc.data_objects.get(path)
-            with obj.open('r+') as handle:
+            with obj.open("r+") as handle:
 
                 if handle.readable():
 
@@ -399,7 +397,7 @@ class IrodsPythonClient:  # pragma: no cover
             obj = self.prc.data_objects.get(absolute_path)
 
             # TODO: could use io package?
-            with obj.open('r') as handle:
+            with obj.open("r") as handle:
                 with open(destination, "wb") as target:
                     for line in handle:
                         target.write(line)
@@ -450,7 +448,7 @@ class IrodsPythonClient:  # pragma: no cover
             obj = self.prc.data_objects.get(absolute_path)
 
             # NOTE: what about binary option?
-            handle = obj.open('r')
+            handle = obj.open("r")
             if headers is None:
                 headers = {}
             return Response(
@@ -490,7 +488,7 @@ class IrodsPythonClient:  # pragma: no cover
             obj = self.prc.data_objects.get(destination)
 
             try:
-                with obj.open('w') as target:
+                with obj.open("w") as target:
                     self.write_in_chunks(target, self.chunk_size)
 
             except BaseException as ex:
@@ -529,7 +527,7 @@ class IrodsPythonClient:  # pragma: no cover
                 obj = self.prc.data_objects.get(destination)
 
                 try:
-                    with obj.open('w') as target:
+                    with obj.open("w") as target:
                         # for line in handle:
                         #     target.write(line)
                         while True:
@@ -589,7 +587,7 @@ class IrodsPythonClient:  # pragma: no cover
         if zone is None:
             zone = self.get_current_zone()
 
-        key = 'inherit'
+        key = "inherit"
         ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
         try:
             self.prc.permissions.set(ACL)  # , recursive=False)
@@ -603,7 +601,7 @@ class IrodsPythonClient:  # pragma: no cover
         else:
             return True
 
-    def create_collection_inheritable(self, ipath, user, permissions='own'):
+    def create_collection_inheritable(self, ipath, user, permissions="own"):
 
         # Create the directory
         self.create_empty(ipath, directory=True, ignore_existing=True)
@@ -621,7 +619,7 @@ class IrodsPythonClient:  # pragma: no cover
 
         # If not specified, remove permission
         if permission is None:
-            permission = 'null'
+            permission = "null"
 
         try:
 
@@ -652,7 +650,7 @@ class IrodsPythonClient:  # pragma: no cover
                 permission = "noinherit"
 
             ACL = iRODSAccess(
-                access_name=permission, path=path, user_name='', user_zone=''
+                access_name=permission, path=path, user_name="", user_zone=""
             )
             self.prc.permissions.set(ACL, recursive=recursive)
             log.debug("Set inheritance {} to {}", inheritance, path)
@@ -668,10 +666,10 @@ class IrodsPythonClient:  # pragma: no cover
 
         zone = self.get_current_zone(prepend_slash=True)
 
-        home = self.variables.get('home', 'home')
+        home = self.variables.get("home", "home")
         if home.startswith(zone):
-            home = home[len(zone):]
-        home = home.lstrip('/')
+            home = home[len(zone) :]
+        home = home.lstrip("/")
 
         if not append_user:
             user = ""
@@ -686,9 +684,9 @@ class IrodsPythonClient:  # pragma: no cover
     def get_current_zone(self, prepend_slash=False, suffix=None):
         zone = self.prc.zone
         if prepend_slash or suffix:
-            zone = f'/{zone}'
+            zone = f"/{zone}"
         if suffix:
-            return f'{zone}/{suffix}'
+            return f"{zone}/{suffix}"
         else:
             return zone
 
@@ -720,7 +718,7 @@ class IrodsPythonClient:  # pragma: no cover
                 for _, grp in obj.items():
                     groups.append(grp)
 
-            data['groups'] = groups
+            data["groups"] = groups
             return data
         except iexceptions.UserDoesNotExist:
             return None
@@ -729,9 +727,9 @@ class IrodsPythonClient:  # pragma: no cover
         info = self.get_user_info(username)
         if info is None:
             return False
-        if 'groups' not in info:
+        if "groups" not in info:
             return False
-        return groupname in info['groups']
+        return groupname in info["groups"]
 
     # TODO: merge the two following 'user_exists'
     def check_user_exists(self, username, checkGroup=None):
@@ -739,12 +737,14 @@ class IrodsPythonClient:  # pragma: no cover
         if userdata is None:
             return False, f"User {username} does not exist"
         if checkGroup is not None:
-            if checkGroup not in userdata['groups']:
+            if checkGroup not in userdata["groups"]:
                 return False, f"User {username} is not in group {checkGroup}"
         return True, "OK"
 
     def query_user_exists(self, user):
-        results = self.prc.query(models.User.name).filter(models.User.name == user).first()
+        results = (
+            self.prc.query(models.User.name).filter(models.User.name == user).first()
+        )
 
         if results is None:
             return False
@@ -817,9 +817,9 @@ class IrodsPythonClient:  # pragma: no cover
             log.error("Asking for NULL user...")
             return False
 
-        user_type = 'rodsuser'
+        user_type = "rodsuser"
         if admin:
-            user_type = 'rodsadmin'
+            user_type = "rodsadmin"
 
         try:
             user_data = self.prc.users.create(user, user_type)
@@ -832,7 +832,7 @@ class IrodsPythonClient:  # pragma: no cover
 
     def modify_user_password(self, user, password):
         log.debug("Changing {} password", user)
-        return self.prc.users.modify(user, 'password', password)
+        return self.prc.users.modify(user, "password", password)
 
     def remove_user(self, user_name):
         user = self.prc.users.get(user_name)
@@ -844,11 +844,10 @@ class IrodsPythonClient:  # pragma: no cover
         try:
             data = (
                 self.prc.query(
-                    models.User.id,
-                    models.User.name,
-                    models.User.type,
-                    models.User.zone
-                ).filter(models.User.name == user).one()
+                    models.User.id, models.User.name, models.User.type, models.User.zone
+                )
+                .filter(models.User.name == user)
+                .one()
             )
         except iexceptions.NoResultFound:
             return None
@@ -864,16 +863,16 @@ class IrodsPythonClient:  # pragma: no cover
             dn = None
 
         return {
-            'name': data[models.User.name],
-            'type': data[models.User.type],
-            'zone': data[models.User.zone],
-            'dn': dn,
+            "name": data[models.User.name],
+            "type": data[models.User.type],
+            "zone": data[models.User.zone],
+            "dn": dn,
         }
 
     def modify_user_dn(self, user, dn, zone):
 
         # addAuth / rmAuth
-        self.prc.users.modify(user, 'addAuth', dn)
+        self.prc.users.modify(user, "addAuth", dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
     def rule(self, name, body, inputs, output=False):
@@ -882,21 +881,21 @@ class IrodsPythonClient:  # pragma: no cover
 
         # A bit completed to use {}.format syntax...
         rule_body = textwrap.dedent(
-            '''\
+            """\
             %s {{
                 %s
-        }}'''
+        }}"""
             % (name, body)
         )
 
         outname = None
         if output:
-            outname = 'ruleExecOut'
+            outname = "ruleExecOut"
         myrule = Rule(self.prc, body=rule_body, params=inputs, output=outname)
         try:
             raw_out = myrule.execute()
         except BaseException as e:
-            msg = f'Irule failed: {e.__class__.__name__}'
+            msg = f"Irule failed: {e.__class__.__name__}"
             log.error(msg)
             log.warning(e)
             raise e
@@ -910,21 +909,21 @@ class IrodsPythonClient:  # pragma: no cover
 
                 import re
 
-                file_coding = 'utf-8'
+                file_coding = "utf-8"
 
                 buf = out_array.stdoutBuf.buf
                 if buf is not None:
                     # it's binary data (BinBytesBuf) so must be decoded
                     buf = buf.decode(file_coding)
-                    buf = re.sub(r'\s+', '', buf)
-                    buf = re.sub(r'\\x00', '', buf)
-                    buf = buf.rstrip('\x00')
+                    buf = re.sub(r"\s+", "", buf)
+                    buf = re.sub(r"\\x00", "", buf)
+                    buf = buf.rstrip("\x00")
                     log.debug("Out buff: {}", buf)
 
                 err_buf = out_array.stderrBuf.buf
                 if err_buf is not None:
                     err_buf = err_buf.decode(file_coding)
-                    err_buf = re.sub(r'\s+', '', err_buf)
+                    err_buf = re.sub(r"\s+", "", err_buf)
                     log.debug("Err buff: {}", err_buf)
 
                 return buf
@@ -949,7 +948,7 @@ class IrodsPythonClient:  # pragma: no cover
     def ticket(self, path):
         ticket = Ticket(self.prc)
         # print("TEST", self.prc, path)
-        ticket.issue('read', path)
+        ticket.issue("read", path)
         return ticket
 
     def ticket_supply(self, code):
@@ -961,7 +960,7 @@ class IrodsPythonClient:  # pragma: no cover
         # self.ticket_supply(code)
 
         try:
-            with self.prc.data_objects.open(path, 'r') as obj:
+            with self.prc.data_objects.open(path, "r") as obj:
                 log.verbose(obj.__class__.__name__)
         except iexceptions.SYS_FILE_DESC_OUT_OF_RANGE:
             return False
@@ -969,7 +968,7 @@ class IrodsPythonClient:  # pragma: no cover
             return True
 
     def stream_ticket(self, path, headers=None):
-        obj = self.prc.data_objects.open(path, 'r')
+        obj = self.prc.data_objects.open(path, "r")
         return Response(
             stream_with_context(self.read_in_chunks(obj, self.chunk_size)),
             headers=headers,

@@ -1,8 +1,9 @@
-from restapi.rest.definition import EndpointResource
 from flask_apispec import MethodResource
-from restapi.services.detect import detector
-from restapi.exceptions import RestApiException
+
 from restapi import decorators
+from restapi.exceptions import RestApiException
+from restapi.rest.definition import EndpointResource
+from restapi.services.detect import detector
 
 
 class Verify(MethodResource, EndpointResource):
@@ -21,13 +22,12 @@ class Verify(MethodResource, EndpointResource):
     }
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     def get(self, service):
 
         if not detector.check_availability(service):
             raise RestApiException(
-                f"Unknown service: {service}",
-                status_code=404,
+                f"Unknown service: {service}", status_code=404,
             )
 
         self.get_service_instance(service, global_instance=False)

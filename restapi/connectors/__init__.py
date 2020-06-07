@@ -2,6 +2,7 @@ import abc
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
+
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
@@ -86,13 +87,13 @@ class Connector(metaclass=abc.ABCMeta):
 
         return f"{ref}{key}"
 
-    def set_object(self, obj, ref, key='[]') -> None:
+    def set_object(self, obj, ref, key="[]") -> None:
         """ set object into internal array """
 
         h = self.get_key(ref, key)
         self.objs[h] = obj
 
-    def get_object(self, ref, key='[]'):
+    def get_object(self, ref, key="[]"):
         """ recover object if any """
 
         h = self.get_key(ref, key)
@@ -110,9 +111,7 @@ class Connector(metaclass=abc.ABCMeta):
             obj = self.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", self.name, e.__class__.__name__, e)
-            raise ServiceUnavailable(
-                {"Service Unavailable": "Internal server error"}
-            )
+            raise ServiceUnavailable({"Service Unavailable": "Internal server error"})
 
         obj.connection_time = datetime.now()
         return obj
@@ -133,9 +132,9 @@ class Connector(metaclass=abc.ABCMeta):
     def get_instance(self, **kwargs):
 
         # Parameters
-        global_instance = kwargs.pop('global_instance', False)
-        isauth = kwargs.pop('authenticator', False)
-        cache_expiration = kwargs.pop('cache_expiration', None)
+        global_instance = kwargs.pop("global_instance", False)
+        isauth = kwargs.pop("authenticator", False)
+        cache_expiration = kwargs.pop("cache_expiration", None)
 
         # When not using the context, this is the first connection
         if stack.top is None:

@@ -1,51 +1,54 @@
 import time
+
 import pytest
+
 from restapi.env import Env
-from restapi.services.detect import detector
 from restapi.exceptions import RestApiException
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
+
 
 def test_authentication_service(fake):
 
-    if not detector.check_availability('authentication'):
+    if not detector.check_availability("authentication"):
         log.warning("Skipping authentication test: service not available")
         return False
 
-    auth = detector.get_service_instance('authentication')
+    auth = detector.get_service_instance("authentication")
 
     min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
     pwd = fake.password(min_pwd_len - 1)
     ret_val, ret_text = auth.verify_password_strength(pwd, pwd)
     assert not ret_val
-    assert ret_text == 'The new password cannot match the previous password'
+    assert ret_text == "The new password cannot match the previous password"
 
     pwd = fake.password(min_pwd_len - 1)
     old_pwd = fake.password(min_pwd_len)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
-    error = f'Password is too short, use at least {min_pwd_len} characters'
+    error = f"Password is too short, use at least {min_pwd_len} characters"
     assert ret_text == error
 
     pwd = fake.password(min_pwd_len, low=False, up=True)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
-    assert ret_text == 'Password is too weak, missing lower case letters'
+    assert ret_text == "Password is too weak, missing lower case letters"
 
     pwd = fake.password(min_pwd_len, low=True)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
-    assert ret_text == 'Password is too weak, missing upper case letters'
+    assert ret_text == "Password is too weak, missing upper case letters"
 
     pwd = fake.password(min_pwd_len, low=True, up=True)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
-    assert ret_text == 'Password is too weak, missing numbers'
+    assert ret_text == "Password is too weak, missing numbers"
 
     pwd = fake.password(min_pwd_len, low=True, up=True, digits=True)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
     assert not ret_val
-    assert ret_text == 'Password is too weak, missing special characters'
+    assert ret_text == "Password is too weak, missing special characters"
 
     pwd = fake.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
     ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
@@ -58,7 +61,7 @@ def test_authentication_service(fake):
 
     try:
         auth.change_password(user, pwd, None, None)
-        pytest.fail('None password!')
+        pytest.fail("None password!")
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Missing new password"
@@ -67,7 +70,7 @@ def test_authentication_service(fake):
 
     try:
         auth.change_password(user, pwd, pwd, None)
-        pytest.fail('None password!')
+        pytest.fail("None password!")
     except RestApiException as e:
         assert e.status_code == 400
         assert str(e) == "Missing password confirmation"
@@ -77,7 +80,7 @@ def test_authentication_service(fake):
     try:
         # wrong confirmation
         auth.change_password(user, pwd, pwd, fake.password(strong=True))
-        pytest.fail('wrong password confirmation!?')
+        pytest.fail("wrong password confirmation!?")
     except RestApiException as e:
         assert e.status_code == 409
         assert str(e) == "Your password doesn't match the confirmation"
@@ -86,10 +89,10 @@ def test_authentication_service(fake):
 
     try:
         auth.change_password(user, pwd, pwd, pwd)
-        pytest.fail('Password strength not verified')
+        pytest.fail("Password strength not verified")
     except RestApiException as e:
         assert e.status_code == 409
-        assert str(e) == 'The new password cannot match the previous password'
+        assert str(e) == "The new password cannot match the previous password"
     except BaseException:
         pytest.fail("Unexpected exception raised")
 
@@ -99,10 +102,10 @@ def test_authentication_service(fake):
         # password validity will be checked once completed checks on new password
         # => a random current password is ok here
         auth.change_password(user, fake.password(), pwd, pwd)
-        pytest.fail('Password strength not verified')
+        pytest.fail("Password strength not verified")
     except RestApiException as e:
         assert e.status_code == 409
-        assert str(e) == f'Password is too short, use at least {min_pwd_len} characters'
+        assert str(e) == f"Password is too short, use at least {min_pwd_len} characters"
     except BaseException:
         pytest.fail("Unexpected exception raised")
 
@@ -111,7 +114,7 @@ def test_authentication_service(fake):
         pytest.fail("NULL totp accepted!")
     except RestApiException as e:
         assert e.status_code == 401
-        assert str(e) == 'Invalid verification code'
+        assert str(e) == "Invalid verification code"
     except BaseException:
         pytest.fail("Unexpected exception raised")
 
@@ -119,7 +122,7 @@ def test_authentication_service(fake):
     from restapi.services.authentication import BaseAuthentication
     from restapi.services.authentication import InvalidToken
 
-    auth = detector.get_service_instance('authentication')
+    auth = detector.get_service_instance("authentication")
 
     pwd1 = fake.password(strong=True)
     pwd2 = fake.password(strong=True)
@@ -130,7 +133,7 @@ def test_authentication_service(fake):
 
     try:
         auth.get_password_hash("")
-        pytest.fail('Hashed a empty password!')
+        pytest.fail("Hashed a empty password!")
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == "Invalid password"
@@ -139,7 +142,7 @@ def test_authentication_service(fake):
 
     try:
         auth.get_password_hash(None)
-        pytest.fail('Hashed a None password!')
+        pytest.fail("Hashed a None password!")
     except RestApiException as e:
         assert e.status_code == 401
         assert str(e) == "Invalid password"
@@ -149,7 +152,7 @@ def test_authentication_service(fake):
     assert auth.verify_password(pwd1, hash_1)
     try:
         auth.verify_password(None, hash_1)
-        pytest.fail('Hashed a None password!')
+        pytest.fail("Hashed a None password!")
     except TypeError:
         pass
     except BaseException:
@@ -159,10 +162,10 @@ def test_authentication_service(fake):
 
     assert not auth.verify_password(None, None)
 
-    ip_data = auth.localize_ip('8.8.8.8')
+    ip_data = auth.localize_ip("8.8.8.8")
     assert ip_data is not None
     # I don't know if this tests will be stable...
-    assert ip_data == 'United States'
+    assert ip_data == "United States"
 
     def verify_token_is_valid(token, ttype=None):
         unpacked_token = auth.verify_token(token, token_type=ttype)
@@ -185,8 +188,7 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(fake.pystr(), auth.PWD_RESET)
     verify_token_is_not_valid(fake.pystr(), auth.ACTIVATE_ACCOUNT)
 
-    t1, payload1 = auth.create_temporary_token(
-        user, auth.PWD_RESET)
+    t1, payload1 = auth.create_temporary_token(user, auth.PWD_RESET)
     assert isinstance(t1, str)
     # not valid if not saved
     verify_token_is_not_valid(t1, auth.PWD_RESET)
@@ -198,8 +200,7 @@ def test_authentication_service(fake):
     verify_token_is_not_valid(fake.ascii_email(), t1)
 
     # Create another type of temporary token => t1 is still valid
-    t2, payload2 = auth.create_temporary_token(
-        user, auth.ACTIVATE_ACCOUNT)
+    t2, payload2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
     assert isinstance(t2, str)
     # not valid if not saved
     verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
@@ -213,7 +214,8 @@ def test_authentication_service(fake):
     EXPIRATION = 3
     # Create another token PWD_RESET, this will invalidate t1
     t3, payload3 = auth.create_temporary_token(
-        user, auth.PWD_RESET, duration=EXPIRATION)
+        user, auth.PWD_RESET, duration=EXPIRATION
+    )
     assert isinstance(t3, str)
     # not valid if not saved
     verify_token_is_not_valid(t3, auth.PWD_RESET)
@@ -226,7 +228,8 @@ def test_authentication_service(fake):
 
     # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
     t4, payload4 = auth.create_temporary_token(
-        user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION)
+        user, auth.ACTIVATE_ACCOUNT, duration=EXPIRATION
+    )
     assert isinstance(t4, str)
     # not valid if not saved
     verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
@@ -248,6 +251,6 @@ def test_authentication_service(fake):
         auth.verify_token(None, raiseErrors=True)
         pytest.fail("No exception raised!")
     except InvalidToken as e:
-        assert str(e) == 'Missing token'
+        assert str(e) == "Missing token"
     except BaseException:
         pytest.fail("Unexpected exception raised")

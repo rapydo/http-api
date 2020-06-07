@@ -1,9 +1,9 @@
 from flask_apispec import MethodResource
 
-from restapi.rest.definition import EndpointResource
-
 from restapi import decorators
 from restapi.confs import TESTING
+from restapi.rest.definition import EndpointResource
+
 # from restapi.utilities.logs import log
 
 if TESTING:
@@ -35,7 +35,7 @@ if TESTING:
                 return len(TestPagination.values)
 
             offset = (page - 1) * size
-            return TestPagination.values[offset: offset + size]
+            return TestPagination.values[offset : offset + size]
 
         @decorators.catch_errors()
         @decorators.get_pagination
@@ -45,4 +45,4 @@ if TESTING:
                 return len(TestPagination.values)
 
             offset = (page - 1) * size
-            return TestPagination.values[offset: offset + size]
+            return TestPagination.values[offset : offset + size]

@@ -1,31 +1,37 @@
-import os
-import pytest
 import json
-import jwt
-import uuid
-import pytz
-import string
+import os
 import secrets
+import string
+import uuid
 from datetime import datetime, timedelta
-from glom import glom
+
+import jwt
+import pytest
+import pytz
 from faker import Faker
 from faker.providers import BaseProvider
+from glom import glom
 
-from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
+from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
 from restapi.services.authentication import BaseAuthentication
-
 from restapi.utilities.logs import log
 
-SERVER_URI = f'http://{DEFAULT_HOST}:{DEFAULT_PORT}'
-API_URI = f'{SERVER_URI}{API_URL}'
-AUTH_URI = f'{SERVER_URI}{AUTH_URL}'
+SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
+API_URI = f"{SERVER_URI}{API_URL}"
+AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 
 
 # Create a random password to be used to build data for tests
 class PasswordProvider(BaseProvider):
-    def password(self, length=8,
-                 strong=False,  # this enables all low, up, digits and symbols
-                 low=True, up=False, digits=False, symbols=False):
+    def password(
+        self,
+        length=8,
+        strong=False,  # this enables all low, up, digits and symbols
+        low=True,
+        up=False,
+        digits=False,
+        symbols=False,
+    ):
 
         if strong:
             if length < 16:
@@ -47,38 +53,34 @@ class PasswordProvider(BaseProvider):
 
         rand = secrets.SystemRandom()
 
-        randstr = ''.join(rand.choices(charset, k=length))
+        randstr = "".join(rand.choices(charset, k=length))
         if low and not any(s in randstr for s in string.ascii_lowercase):
             log.warning(
                 f"{randstr} is not strong enough: missing lower case. Sampling again..."
             )
             return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
         if up and not any(s in randstr for s in string.ascii_uppercase):
             log.warning(
                 f"{randstr} is not strong enough: missing upper case. Sampling again..."
             )
             return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
         if digits and not any(s in randstr for s in string.digits):
             log.warning(
                 f"{randstr} is not strong enough: missing digits. Sampling again..."
             )
             return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
         if symbols and not any(s in randstr for s in string.punctuation):
             log.warning(
                 f"{randstr} is not strong enough: missing symbols. Sampling again..."
             )
             return self.password(
-                length, strong=strong,
-                low=low, up=up, digits=digits, symbols=symbols
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
 
         return randstr
@@ -87,41 +89,41 @@ class PasswordProvider(BaseProvider):
 def get_faker():
 
     locales = {
-        'ar_EG': 'Arabic',
-        'bg_BG': 'Bulgarian',
-        'bs_BA': 'Bosnian',
-        'cs_CZ': 'Czech',
-        'de_DE': 'German',
-        'dk_DK': 'Danish',
-        'el_GR': 'Greek',
-        'en_US': 'English',
-        'es_ES': 'Spanish',
-        'et_EE': 'Estonian',
-        'fa_IR': 'Persian',
-        'fi_FI': 'Finnish',
-        'fr_FR': 'French',
-        'hi_IN': 'Hindi',
-        'hr_HR': 'Croatian',
-        'hu_HU': 'Hungarian',
+        "ar_EG": "Arabic",
+        "bg_BG": "Bulgarian",
+        "bs_BA": "Bosnian",
+        "cs_CZ": "Czech",
+        "de_DE": "German",
+        "dk_DK": "Danish",
+        "el_GR": "Greek",
+        "en_US": "English",
+        "es_ES": "Spanish",
+        "et_EE": "Estonian",
+        "fa_IR": "Persian",
+        "fi_FI": "Finnish",
+        "fr_FR": "French",
+        "hi_IN": "Hindi",
+        "hr_HR": "Croatian",
+        "hu_HU": "Hungarian",
         # 'hy_AM': 'Armenian',
-        'it_IT': 'Italian',
-        'ja_JP': 'Japanese',
-        'ka_GE': 'Georgian',
-        'ko_KR': 'Korean',
-        'lt_LT': 'Lithuanian',
-        'lv_LV': 'Latvian',
-        'ne_NP': 'Nepali',
-        'nl_NL': 'Dutch',
-        'no_NO': 'Norwegian',
-        'pl_PL': 'Polish',
-        'pt_PT': 'Portuguese',
-        'ro_RO': 'Romanian',
-        'ru_RU': 'Russian',
-        'sl_SI': 'Slovene',
-        'sv_SE': 'Swedish',
-        'tr_TR': 'Turkish',
-        'uk_UA': 'Ukrainian',
-        'zh_CN': 'Chinese',
+        "it_IT": "Italian",
+        "ja_JP": "Japanese",
+        "ka_GE": "Georgian",
+        "ko_KR": "Korean",
+        "lt_LT": "Lithuanian",
+        "lv_LV": "Latvian",
+        "ne_NP": "Nepali",
+        "nl_NL": "Dutch",
+        "no_NO": "Norwegian",
+        "pl_PL": "Polish",
+        "pt_PT": "Portuguese",
+        "ro_RO": "Romanian",
+        "ru_RU": "Russian",
+        "sl_SI": "Slovene",
+        "sv_SE": "Swedish",
+        "tr_TR": "Turkish",
+        "uk_UA": "Ukrainian",
+        "zh_CN": "Chinese",
     }
 
     loc = secrets.choice(list(locales.keys()))
@@ -139,7 +141,6 @@ fake = get_faker()
 
 
 class BaseTests:
-
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests
@@ -148,10 +149,9 @@ class BaseTests:
         if hasattr(self.__class__, variable):
             data = getattr(self.__class__, variable)
             if "read_only" in data and data["read_only"]:
-                pytest.fail(
-                    f"Cannot overwrite a read_only variable [{variable}]")
+                pytest.fail(f"Cannot overwrite a read_only variable [{variable}]")
 
-        data = {'value': value, 'read_only': read_only}
+        data = {"value": value, "read_only": read_only}
         setattr(self.__class__, variable, data)
 
     def get(self, variable):
@@ -170,9 +170,9 @@ class BaseTests:
         """
             Retrieve Swagger definition by calling API/specs endpoint
         """
-        r = client.get(f'{API_URI}/specs')
+        r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
+        content = json.loads(r.data.decode("utf-8"))
         return content
 
     @staticmethod
@@ -185,12 +185,12 @@ class BaseTests:
 
         h = headers.copy()
         if html:
-            h['Accept'] = 'text/html'
+            h["Accept"] = "text/html"
 
         r = client.post(f"{API_URI}/{endpoint}", data=data, headers=h)
         assert r.status_code == 200
 
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         if html:
             return content
 
@@ -203,15 +203,12 @@ class BaseTests:
             response = json.loads(http_out.get_data().decode())
         except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
-            raise ValueError(
-                f"Malformed response: {http_out}"
-            )
+            raise ValueError(f"Malformed response: {http_out}")
 
         return response
 
     @staticmethod
-    def do_login(client, USER, PWD,
-                 status_code=200, error=None, data=None):
+    def do_login(client, USER, PWD, status_code=200, error=None, data=None):
         """
             Make login and return both token and authorization header
         """
@@ -227,51 +224,49 @@ class BaseTests:
         if data is None:
             data = {}
 
-        data['username'] = USER
-        data['password'] = PWD
+        data["username"] = USER
+        data["password"] = PWD
 
-        r = client.post(f'{AUTH_URI}/login', data=data)
-        content = json.loads(r.data.decode('utf-8'))
+        r = client.post(f"{AUTH_URI}/login", data=data)
+        content = json.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
-            if isinstance(content, dict) and content.get('actions'):
-                action = content.get('actions')[0]
+            if isinstance(content, dict) and content.get("actions"):
+                action = content.get("actions")[0]
 
-                if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
+                if action == "FIRST LOGIN" or action == "PASSWORD EXPIRED":
                     newpwd = fake.password(strong=True)
                     BaseTests.do_login(
-                        client, USER, PWD,
+                        client,
+                        USER,
+                        PWD,
                         data={
-                            'new_password': newpwd,
-                            'password_confirm': fake.password(strong=True),
+                            "new_password": newpwd,
+                            "password_confirm": fake.password(strong=True),
                         },
                         status_code=409,
                     )
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                     BaseTests.do_login(
-                        client, USER, PWD,
-                        data={
-                            'new_password': newpwd,
-                            'password_confirm': newpwd,
-                        }
+                        client,
+                        USER,
+                        PWD,
+                        data={"new_password": newpwd, "password_confirm": newpwd},
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
                     return BaseTests.do_login(
-                        client, USER, newpwd,
-                        data={
-                            'new_password': PWD,
-                            'password_confirm': PWD,
-                        }
+                        client,
+                        USER,
+                        newpwd,
+                        data={"new_password": PWD, "password_confirm": PWD},
                     )
                 else:
-                    pytest.fail(
-                        f"Unknown post log action requested: {action}"
-                    )
+                    pytest.fail(f"Unknown post log action requested: {action}")
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
-            c = json.loads(r.data.decode('utf-8'))
+            c = json.loads(r.data.decode("utf-8"))
             log.error(c)
 
         assert r.status_code == status_code
@@ -282,7 +277,7 @@ class BaseTests:
         # when 200 OK content is the token
         assert content is not None
 
-        return {'Authorization': f'Bearer {content}'}, content
+        return {"Authorization": f"Bearer {content}"}, content
 
     @staticmethod
     def get_celery(app):
@@ -313,7 +308,7 @@ class BaseTests:
             key = d.get("key")
             field_type = d.get("type")
 
-            if 'enum' in d:
+            if "enum" in d:
                 if len(d["enum"]) > 0:
                     data[key] = fake.random_element(list(d["enum"].keys()))
                 else:
@@ -321,7 +316,7 @@ class BaseTests:
             elif field_type == "number" or field_type == "int":
                 data[key] = fake.pyint()
             elif field_type == "date":
-                data[key] = fake.date(pattern='%Y-%m-%d')
+                data[key] = fake.date(pattern="%Y-%m-%d")
             elif field_type == "email":
                 data[key] = fake.ascii_email()
             elif field_type == "boolean":
@@ -383,7 +378,9 @@ class BaseTests:
             assert get_r.status_code == get_status
 
         if post_status is not None:
-            post_r = client.post(f"{API_URI}/{endpoint}", headers=headers, data=post_data)
+            post_r = client.post(
+                f"{API_URI}/{endpoint}", headers=headers, data=post_data
+            )
             assert post_r.status_code == post_status
 
         if put_status is not None:
@@ -404,23 +401,29 @@ class BaseTests:
 
         with open(fpath) as file:
             data = json.load(file)
-        if 'msg' in data:
-            tokens = data['msg'].split("\n\n")
-            data['headers'] = tokens[0]
-            data['body'] = ''.join(tokens[1:])
+        if "msg" in data:
+            tokens = data["msg"].split("\n\n")
+            data["headers"] = tokens[0]
+            data["body"] = "".join(tokens[1:])
 
         os.unlink(fpath)
         return data
 
-    def get_crafted_token(self, token_type, user_id=None,
-                          expired=False, immature=False,
-                          wrong_secret=False, wrong_algorithm=False):
+    def get_crafted_token(
+        self,
+        token_type,
+        user_id=None,
+        expired=False,
+        immature=False,
+        wrong_secret=False,
+        wrong_algorithm=False,
+    ):
 
         if wrong_secret:
             secret = fake.password()
         else:
-            f = os.getenv('JWT_APP_SECRETS') + "/secret.key"
-            secret = open(f, 'rb').read()
+            f = os.getenv("JWT_APP_SECRETS") + "/secret.key"
+            secret = open(f, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"
@@ -430,26 +433,19 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload = {
-            'user_id': user_id,
-            'jti': str(uuid.uuid4())
-        }
+        payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
-        payload['iat'] = now
+        payload["iat"] = now
         if immature:
-            payload['nbf'] = now + timedelta(seconds=999)
+            payload["nbf"] = now + timedelta(seconds=999)
         else:
-            payload['nbf'] = now - timedelta(seconds=999)
+            payload["nbf"] = now - timedelta(seconds=999)
         if expired:
-            payload['exp'] = now - timedelta(seconds=999)
+            payload["exp"] = now - timedelta(seconds=999)
         else:
-            payload['exp'] = now + timedelta(seconds=999)
+            payload["exp"] = now + timedelta(seconds=999)
 
-        token = jwt.encode(
-            payload,
-            secret,
-            algorithm=algorithm
-        ).decode('ascii')
+        token = jwt.encode(payload, secret, algorithm=algorithm).decode("ascii")
 
         return token

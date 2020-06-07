@@ -1,8 +1,8 @@
 import os
 from functools import lru_cache
 
-class Env:
 
+class Env:
     @staticmethod
     @lru_cache
     def get(var, default=None):
@@ -41,7 +41,7 @@ class Env:
         # STRINGS
         if isinstance(var, str):
             # false / False / FALSE
-            if var.lower() == 'false':
+            if var.lower() == "false":
                 return False
             # any non empty string has to be considered True
             if len(var) > 0:
@@ -73,7 +73,7 @@ class Env:
         for var, value in os.environ.items():
             var = var.lower()
             if var.startswith(label):
-                key = var[len(label):].strip('_')
+                key = var[len(label) :].strip("_")
                 value = value.strip('"').strip("'")
                 variables[key] = value
         return variables

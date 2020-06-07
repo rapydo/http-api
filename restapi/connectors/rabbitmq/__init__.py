@@ -1,15 +1,15 @@
-import pika
 import json
-import ssl
 import socket
+import ssl
 
+import pika
+
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities.logs import log
-from restapi.connectors import Connector
 
 
 class RabbitExt(Connector):
-
     def get_connection_exception(self):
         # Includes:
         #   AuthenticationError,
@@ -35,13 +35,12 @@ class RabbitExt(Connector):
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        ssl_enabled = Env.to_bool(variables.get('ssl_enabled'))
+        ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
-        log.info('Connecting to the Rabbit (SSL = {})', ssl_enabled)
+        log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
         credentials = pika.PlainCredentials(
-            variables.get('user'),
-            variables.get('password'),
+            variables.get("user"), variables.get("password"),
         )
 
         if ssl_enabled:
@@ -54,17 +53,16 @@ class RabbitExt(Connector):
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
             ssl_options = pika.SSLOptions(
-                context=context,
-                server_hostname=variables.get('host')
+                context=context, server_hostname=variables.get("host")
             )
         else:
             ssl_options = None
 
         connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                host=variables.get('host'),
-                port=int(variables.get('port')),
-                virtual_host=variables.get('vhost'),
+                host=variables.get("host"),
+                port=int(variables.get("port")),
+                virtual_host=variables.get("vhost"),
                 credentials=credentials,
                 ssl_options=ssl_options,
             )
@@ -79,7 +77,7 @@ class RabbitWrapper:
         self.__channel = None
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
-        '''
+        """
         Send a log message to the RabbitMQ queue, unless
         the dont-connect parameter is set. In that case,
         the messages get logged into the normal log files.
@@ -91,13 +89,10 @@ class RabbitWrapper:
         :param exchange: RabbitMQ exchange where the jmsg should be sent.
                          Empty for default exchange.
         :param queue: RabbitMQ routing key.
-        '''
+        """
 
         log.verbose(
-            'Asked to log ({}, {}): {}',
-            exchange,
-            queue,
-            jmsg,
+            "Asked to log ({}, {}): {}", exchange, queue, jmsg,
         )
         body = json.dumps(jmsg)
 
@@ -108,7 +103,7 @@ class RabbitWrapper:
 
         props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
 
-        log.verbose('Sending message to RabbitMQ')
+        log.verbose("Sending message to RabbitMQ")
 
         try:
 
@@ -125,44 +120,41 @@ class RabbitWrapper:
                 log.error("RabbitMQ write failed {}", failed_message)
                 return False
 
-            log.verbose('Message sent to RabbitMQ')
+            log.verbose("Message sent to RabbitMQ")
             return True
 
         except pika.exceptions.ConnectionClosed as e:
             # TODO: This happens often. Check if heartbeat solves problem.
-            log.error('Failed to write message, connection is dead ({})', e)
+            log.error("Failed to write message, connection is dead ({})", e)
 
         except pika.exceptions.AMQPConnectionError as e:
-            log.error('Failed to write message, connection failed ({})', e)
+            log.error("Failed to write message, connection failed ({})", e)
 
         except pika.exceptions.AMQPChannelError as e:
-            log.error('Failed to write message, channel is dead ({})', e)
+            log.error("Failed to write message, channel is dead ({})", e)
             self.__channel = None
 
         except AttributeError as e:  # pragma: no cover
-            log.error('Failed to write message:, {}', e)
+            log.error("Failed to write message:, {}", e)
 
-        log.warning(
-            'Could not write to RabbitMQ ({}, {}): {}',
-            exchange, queue, body
-        )
+        log.warning("Could not write to RabbitMQ ({}, {}): {}", exchange, queue, body)
 
         return False
 
     def __get_channel(self):
-        '''
+        """
         Return existing channel (if healthy) or create and
         return new one.
 
         :return: An healthy channel.
         :raises: AttributeError if the connection is None.
-        '''
+        """
         if self.__channel is None:
-            log.verbose('Creating new channel.')
+            log.verbose("Creating new channel.")
             self.__channel = self.__connection.channel()
 
         elif self.__channel.is_closed:
-            log.verbose('Recreating channel.')
+            log.verbose("Recreating channel.")
             self.__channel = self.__connection.channel()
 
         return self.__channel
@@ -170,6 +162,6 @@ class RabbitWrapper:
     def close_connection(self):
         # TODO: This must be called!
         if self.__connection.is_closed:
-            log.debug('Connection already closed')
+            log.debug("Connection already closed")
         else:
             self.__connection.close()

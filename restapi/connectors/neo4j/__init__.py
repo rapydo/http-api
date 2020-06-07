@@ -1,26 +1,29 @@
 """ Neo4j GraphDB flask connector """
 
 import re
-import pytz
-from functools import wraps
 from datetime import datetime, timedelta
+from functools import wraps
 
-from neomodel import db, config
-from neomodel import StructuredNode
-from neomodel.match import NodeSet
-from neomodel.exceptions import UniqueProperty, DeflateError, DoesNotExist
-from neomodel import remove_all_labels, install_all_labels, clear_neo4j_database
-
+import pytz
 from neo4j.exceptions import ServiceUnavailable
-
-from neobolt.exceptions import CypherSyntaxError
 from neobolt.addressing import AddressError as neobolt_AddressError
-from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neobolt.exceptions import AuthError as neobolt_AuthError
+from neobolt.exceptions import CypherSyntaxError
+from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
+from neomodel import (
+    StructuredNode,
+    clear_neo4j_database,
+    config,
+    db,
+    install_all_labels,
+    remove_all_labels,
+)
+from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
+from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
+from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
 
 
@@ -32,7 +35,7 @@ def catch_db_exceptions(func):
             return func(*args, **kwargs)
         except DatabaseDuplicatedEntry as e:
             # already catched and parser, raise up
-            raise(e)
+            raise (e)
         except DoesNotExist as e:
             raise (e)
         except CypherSyntaxError as e:
@@ -41,8 +44,7 @@ def catch_db_exceptions(func):
 
             t = "already exists with label"
             m = re.search(
-                fr"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'",
-                str(e)
+                fr"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'", str(e)
             )
 
             if m:
@@ -118,9 +120,9 @@ class NeomodelClient:
                 key = field
             else:
                 # to be deprecated
-                if 'custom' in field:
-                    if 'islink' in field['custom']:
-                        if field['custom']['islink']:
+                if "custom" in field:
+                    if "islink" in field["custom"]:
+                        if field["custom"]["islink"]:
                             continue
                 key = field["name"]
 
@@ -155,9 +157,9 @@ class NeomodelClient:
 
     @staticmethod
     def sanitize_input(term):
-        '''
+        """
         Strip and clean up term from special characters.
-        '''
+        """
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
     @staticmethod
@@ -170,38 +172,33 @@ class NeomodelClient:
                 continue
 
             # Do not apply fuzzy search to special characters
-            if t == '+' or t == '!':
+            if t == "+" or t == "!":
                 continue
 
             # Do not apply fuzzy search to special operators
-            if t == 'AND' or t == 'OR' or t == 'NOT':
+            if t == "AND" or t == "OR" or t == "NOT":
                 continue
 
             tokens[index] += "~1"
 
-        return ' '.join(tokens)
+        return " ".join(tokens)
 
 
 class NeoModel(Connector):
-
     def get_connection_exception(self):
 
         # from neomodel 3.3.2
-        return (
-            neobolt_ServiceUnavailable,
-            neobolt_AddressError,
-            neobolt_AuthError
-        )
+        return (neobolt_ServiceUnavailable, neobolt_AddressError, neobolt_AuthError)
 
     def connect(self, **kwargs):
 
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        USER = variables.get('user', 'neo4j')
-        PWD = variables.get('password')
-        HOST = variables.get('host')
-        PORT = variables.get('port')
+        USER = variables.get("user", "neo4j")
+        PWD = variables.get("password")
+        HOST = variables.get("host")
+        PORT = variables.get("port")
         URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
         config.DATABASE_URL = URI
         # Ensure all DateTimes are provided with a timezone
@@ -217,7 +214,7 @@ class NeoModel(Connector):
 
         with self.app.app_context():
 
-            auto_index = self.variables.get("autoindexing", 'True') == 'True'
+            auto_index = self.variables.get("autoindexing", "True") == "True"
 
             if auto_index:
                 try:
@@ -246,11 +243,12 @@ class Authentication(BaseAuthentication):
         try:
             if username is not None:
                 user = self.db.User.nodes.get(email=username)
-            elif payload is not None and 'user_id' in payload:
-                user = self.db.User.nodes.get(uuid=payload['user_id'])
+            elif payload is not None and "user_id" in payload:
+                user = self.db.User.nodes.get(uuid=payload["user_id"])
         except self.db.User.DoesNotExist:
             log.warning(
-                "Could not find user for username={}, payload={}", username, payload)
+                "Could not find user for username={}, payload={}", username, payload
+            )
         return user
 
     def get_users(self, user_id=None):
@@ -339,21 +337,18 @@ class Authentication(BaseAuthentication):
             if role_name not in current_roles:
                 log.info("Creating role: {}", role_name)
                 role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(
-                    name=role_name,
-                    description=role_description
-                )
+                role = self.db.Role(name=role_name, description=role_description)
                 role.save()
 
         # Default user (if no users yet available)
         if not len(self.db.User.nodes) > 0:
             self.create_user(
                 {
-                    'email': self.default_user,
+                    "email": self.default_user,
                     # 'authmethod': 'credentials',
-                    'name': 'Default',
-                    'surname': 'User',
-                    'password': self.default_password,
+                    "name": "Default",
+                    "surname": "User",
+                    "password": self.default_password,
                 },
                 roles=self.roles,
             )
@@ -374,10 +369,10 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
+        exp = payload.get("exp", now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_node = self.db.Token()
-        token_node.jti = payload['jti']
+        token_node.jti = payload["jti"]
         token_node.token = token
         token_node.token_type = token_type
         token_node.creation = now
@@ -407,7 +402,7 @@ class Authentication(BaseAuthentication):
             self.invalidate_token(token=token_node.token)
             log.info(
                 "This token is no longer valid: expired since {}",
-                token_node.expiration.strftime("%d/%m/%Y")
+                token_node.expiration.strftime("%d/%m/%Y"),
             )
             return False
 
@@ -417,7 +412,8 @@ class Authentication(BaseAuthentication):
             if token_node.IP != ip:
                 log.error(
                     "This token is emitted for IP {}, invalid use from {}",
-                    token_node.IP, ip
+                    token_node.IP,
+                    ip,
                 )
                 return False
 
@@ -461,7 +457,7 @@ class Authentication(BaseAuthentication):
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user'] = self.db.getSingleLinkedNode(token.emitted_for)
+                t["user"] = self.db.getSingleLinkedNode(token.emitted_for)
 
             tokens_list.append(t)
 

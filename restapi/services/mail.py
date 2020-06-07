@@ -1,21 +1,20 @@
+import datetime
 import os
 import socket
-import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from smtplib import SMTPAuthenticationError, SMTPException
+
 import pytz
 
 from restapi.confs import TESTING
+from restapi.utilities.logs import log
 
 if TESTING:
     from restapi.services.mailmock import SMTP, SMTP_SSL
 else:
     from smtplib import SMTP, SMTP_SSL  # pragma: no cover
 
-from smtplib import SMTPException, SMTPAuthenticationError
-
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-from restapi.utilities.logs import log
 
 # TODO: configure HOST with gmail, search example online
 # Sending e-mails in python, more info: https://pymotw.com/3/smtplib
@@ -90,7 +89,7 @@ def send(
     subject,
     to_address,
     from_address,
-    smtp_host='localhost',
+    smtp_host="localhost",
     smtp_port=587,
     cc=None,
     bcc=None,
@@ -117,7 +116,7 @@ def send(
         log.error(
             "Unable to send email: client initialization failed ({}:{})",
             smtp_host,
-            smtp_port
+            smtp_port,
         )
         return False
 
@@ -129,19 +128,19 @@ def send(
 
             date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
             if html:
-                msg = MIMEMultipart('alternative')
+                msg = MIMEMultipart("alternative")
             else:
                 msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['From'] = from_address
-            msg['To'] = to_address
+            msg["Subject"] = subject
+            msg["From"] = from_address
+            msg["To"] = to_address
             if cc is None:
                 pass
             elif isinstance(cc, str):
-                msg['Cc'] = cc
+                msg["Cc"] = cc
                 dest_addresses.append(cc.split(","))
             elif isinstance(cc, list):
-                msg['Cc'] = ",".join(cc)
+                msg["Cc"] = ",".join(cc)
                 dest_addresses.append(cc)
             else:
                 log.warning("Invalid CC value: {}", cc)
@@ -150,23 +149,23 @@ def send(
             if bcc is None:
                 pass
             elif isinstance(bcc, str):
-                msg['Bcc'] = bcc
+                msg["Bcc"] = bcc
                 dest_addresses.append(bcc.split(","))
             elif isinstance(bcc, list):
-                msg['Bcc'] = ",".join(bcc)
+                msg["Bcc"] = ",".join(bcc)
                 dest_addresses.append(bcc)
             else:
                 log.warning("Invalid BCC value: {}", bcc)
                 bcc = None
 
-            msg['Date'] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
+            msg["Date"] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
 
             if html:
                 if plain_body is None:
                     log.warning("Plain body is none")
                     plain_body = body
-                part1 = MIMEText(plain_body, 'plain')
-                part2 = MIMEText(body, 'html')
+                part1 = MIMEText(plain_body, "plain")
+                part2 = MIMEText(body, "html")
                 msg.attach(part1)
                 msg.attach(part2)
 
@@ -177,7 +176,9 @@ def send(
 
                 log.info(
                     "Successfully sent email to {} [cc={}], [bcc={}]",
-                    to_address, cc, bcc
+                    to_address,
+                    cc,
+                    bcc,
                 )
                 smtp.quit()
                 return True

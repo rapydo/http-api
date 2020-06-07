@@ -4,24 +4,24 @@ we could provide back then
 """
 
 from flask import Response, make_response
-from flask_restful import request, Resource, reqparse
 from flask_apispec import MethodResource
+from flask_restful import Resource, reqparse, request
 from jsonschema.exceptions import ValidationError
 
 from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
-from restapi.rest.response import ResponseMaker
-from restapi.swagger import input_validation
 from restapi.rest.bearer import HTTPTokenAuth
+from restapi.rest.response import ResponseMaker
+from restapi.services.detect import AUTH_NAME, detector
+from restapi.swagger import input_validation
 from restapi.utilities.globals import mem
-from restapi.services.detect import detector, AUTH_NAME
 from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
 # Paging costants
-CURRENTPAGE_KEY = 'currentpage'
+CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
-PERPAGE_KEY = 'perpage'
+PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
 
 
@@ -62,9 +62,7 @@ class EndpointResource(Resource):
     @staticmethod
     def get_service_instance(service_name, global_instance=True, **kwargs):
         return detector.get_service_instance(
-            service_name,
-            global_instance=global_instance,
-            **kwargs
+            service_name, global_instance=global_instance, **kwargs
         )
 
     # to be deprecated (in conjuction with get_input)
@@ -89,30 +87,30 @@ class EndpointResource(Resource):
         # Deprecated since 0.7.4
         if len(current_params) > 0:  # pragma: no cover
 
-            act = 'store'  # store is normal, append is a list
-            loc = ['headers', 'values']  # multiple locations
+            act = "store"  # store is normal, append is a list
+            loc = ["headers", "values"]  # multiple locations
             trim = True
 
             for param, data in current_params.items():
 
                 # FIXME: Add a method to convert types swagger <-> flask
-                tmptype = data.get('type', 'string')
-                if tmptype == 'boolean':
+                tmptype = data.get("type", "string")
+                if tmptype == "boolean":
                     mytype = bool
-                if tmptype == 'number':
+                if tmptype == "number":
                     mytype = int
                 else:
                     mytype = str
 
                 # TO CHECK: I am creating an option to handle arrays
-                if tmptype == 'select':
-                    act = 'append'
+                if tmptype == "select":
+                    act = "append"
 
                 self._parser.add_argument(
                     param,
                     type=mytype,
-                    default=data.get('default', None),
-                    required=data.get('required', False),
+                    default=data.get("default", None),
+                    required=data.get("required", False),
                     trim=trim,
                     action=act,
                     location=loc,
@@ -137,7 +135,7 @@ class EndpointResource(Resource):
 
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
-        if len(self._json_args) < 1 and request.mimetype != 'application/octet-stream':
+        if len(self._json_args) < 1 and request.mimetype != "application/octet-stream":
             try:
                 self._json_args = request.get_json(force=True)
             except Exception as e:
@@ -156,7 +154,7 @@ class EndpointResource(Resource):
                 # how to fix the `request.form` emptiness
 
                 if key in self._args and self._args[key] is not None:
-                    key += '_json'
+                    key += "_json"
                 self._args[key] = value
 
         if len(self._args) > 0:
@@ -167,7 +165,8 @@ class EndpointResource(Resource):
     def get_paging(self, force_read_parameters=False):  # pragma: no cover
 
         log.warning(
-            "Deprecated use of get_paging, use @decorators.get_pagination instead")
+            "Deprecated use of get_paging, use @decorators.get_pagination instead"
+        )
 
         if force_read_parameters:
             self.get_input()
@@ -197,12 +196,12 @@ class EndpointResource(Resource):
         return (current_page, limit)
 
     def get_token(self):
-        if not hasattr(self, 'unpacked_token'):
+        if not hasattr(self, "unpacked_token"):
             return None
         return self.unpacked_token[1]
 
     def get_user(self):
-        if not hasattr(self, 'unpacked_token'):
+        if not hasattr(self, "unpacked_token"):
             return None
         return self.unpacked_token[3]
 
@@ -210,7 +209,8 @@ class EndpointResource(Resource):
     def get_current_user(self):  # pragma: no cover
 
         log.warning(
-            "self.get_current_user() is deprecated, replace with self.get_user()")
+            "self.get_current_user() is deprecated, replace with self.get_user()"
+        )
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
@@ -223,8 +223,9 @@ class EndpointResource(Resource):
 
         return self.auth.get_user()
 
-    def response(self, content=None, errors=None,
-                 code=None, headers=None, head_method=False):
+    def response(
+        self, content=None, errors=None, code=None, headers=None, head_method=False
+    ):
 
         if headers is None:
             headers = {}
@@ -262,13 +263,10 @@ class EndpointResource(Resource):
             # ALLOW_HTML_RESPONSE = True
             if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
                 accepted_formats = ResponseMaker.get_accepted_formats()
-                if 'text/html' in accepted_formats:
+                if "text/html" in accepted_formats:
                     content, headers = ResponseMaker.get_html(content, code, headers)
                     return Response(
-                        content,
-                        mimetype='text/html',
-                        status=code,
-                        headers=headers
+                        content, mimetype="text/html", status=code, headers=headers
                     )
 
             return (content, code, headers)
@@ -277,10 +275,7 @@ class EndpointResource(Resource):
 
         # Convert the response in a Flask response, i.e. make_response(tuple)
         r = ResponseMaker.generate_response(
-            content=content,
-            code=code,
-            headers=headers,
-            head_method=head_method
+            content=content, code=code, headers=headers, head_method=head_method
         )
 
         response = make_response(r)
@@ -288,7 +283,7 @@ class EndpointResource(Resource):
         # Avoid duplicated Content-type
         content_type = None  # pragma: no cover
         for idx, val in enumerate(response.headers):  # pragma: no cover
-            if val[0] != 'Content-Type':
+            if val[0] != "Content-Type":
                 continue
             if content_type is None:
                 content_type = idx
@@ -314,7 +309,7 @@ class EndpointResource(Resource):
         when a valid token is presented
         """
 
-        if request.method == 'OPTIONS':
+        if request.method == "OPTIONS":
             return None
 
         auth_type, token = HTTPTokenAuth.get_authorization_token(

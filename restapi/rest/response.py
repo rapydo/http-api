@@ -1,14 +1,14 @@
-from flask import Response, request, render_template, jsonify
+from urllib import parse as urllib_parse
+
+from flask import Response, jsonify, render_template, request
 from marshmallow import fields, validate
 from marshmallow.utils import _Missing
-from urllib import parse as urllib_parse
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
-from restapi.services.authentication import BaseAuthentication
-from restapi.utilities.logs import log
-from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.models import GET_SCHEMA_KEY
+from restapi.services.authentication import BaseAuthentication
+from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
 def handle_marshmallow_errors(error):
@@ -20,9 +20,7 @@ def handle_marshmallow_errors(error):
         get_schema = params.get(GET_SCHEMA_KEY, False)
         if get_schema or str(get_schema) == "1":
 
-            return ResponseMaker.respond_with_schema(
-                error.data.get('schema')
-            )
+            return ResponseMaker.respond_with_schema(error.data.get("schema"))
     except BaseException as e:  # pragma: no cover
         log.error(e)
 
@@ -42,28 +40,26 @@ def log_response(response):
 
     response.headers["_RV"] = str(version)
 
-    PROJECT_VERSION = get_project_configuration(
-        "project.version", default=None
-    )
+    PROJECT_VERSION = get_project_configuration("project.version", default=None)
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
     # If it is an upload, DO NOT consume request.data or request.json,
     # otherwise the content gets lost
     try:
-        if request.mimetype in ['application/octet-stream', 'multipart/form-data']:
-            data = 'STREAM_UPLOAD'
+        if request.mimetype in ["application/octet-stream", "multipart/form-data"]:
+            data = "STREAM_UPLOAD"
         elif request.data:
             data = handle_log_output(request.data)
         elif request.form:
             data = obfuscate_dict(request.form)
         else:
-            data = ''
+            data = ""
 
         if data:
             data = f" {data}"
     except Exception as e:  # pragma: no cover
         log.debug(e)
-        data = ''
+        data = ""
 
     # Obfuscating query parameters
     url = urllib_parse.urlparse(request.url)
@@ -73,9 +69,9 @@ def log_response(response):
         )
         url = url._replace(query=params)
         # remove http(s)://
-        url = url._replace(scheme='')
+        url = url._replace(scheme="")
         # remove hostname:port
-        url = url._replace(netloc='')
+        url = url._replace(netloc="")
     except TypeError:  # pragma: no cover
         log.error("Unable to url encode the following parameters:")
         print(url.query)
@@ -88,21 +84,20 @@ def log_response(response):
         request.method,
         url,
         data,
-        resp
+        resp,
     )
 
     return response
 
 
 class ResponseMaker:
-
     @staticmethod
     def get_accepted_formats():
 
         for val in request.headers:
             if val[0] == "Accept":
-                return [x.strip() for x in val[1].split(',')]
-        return ['*/*']
+                return [x.strip() for x in val[1].split(",")]
+        return ["*/*"]
 
     @staticmethod
     def get_html(content, code, headers):
@@ -110,10 +105,10 @@ class ResponseMaker:
         if isinstance(content, list):
             content = content.pop()
 
-        headers['Content-Type'] = "text/html; charset=UTF-8"
+        headers["Content-Type"] = "text/html; charset=UTF-8"
 
-        html_data = {'body_content': content, 'is_error': code >= 400}
-        html_page = render_template('index.html', **html_data)
+        html_data = {"body_content": content, "is_error": code >= 400}
+        html_page = render_template("index.html", **html_data)
 
         return html_page, headers
 
@@ -124,14 +119,9 @@ class ResponseMaker:
         is_error = code >= 400
         if isinstance(content, list):
             content = content.pop()
-        html_data = {'body_content': content, 'is_error': is_error}
-        html_page = render_template('index.html', **html_data)
-        return Response(
-            html_page,
-            mimetype='text/html',
-            status=code,
-            headers=headers
-        )
+        html_data = {"body_content": content, "is_error": is_error}
+        html_page = render_template("index.html", **html_data)
+        return Response(html_page, mimetype="text/html", status=code, headers=headers)
 
     @staticmethod
     def generate_response(content, code, headers, head_method):
@@ -149,7 +139,7 @@ class ResponseMaker:
         # 'text/csv'
         accepted_formats = ResponseMaker.get_accepted_formats()
 
-        if 'text/html' in accepted_formats:
+        if "text/html" in accepted_formats:
             return ResponseMaker.respond_to_browser(content, code, headers)
 
         content = jsonify(content)
@@ -231,15 +221,12 @@ class ResponseMaker:
                         log.warning(
                             "Unsupported validation schema: {}.{}",
                             type(field_def.validate).__module__,
-                            type(field_def.validate).__name__
+                            type(field_def.validate).__name__,
                         )
 
                 fields.append(f)
             return ResponseMaker.generate_response(
-                content=fields,
-                code=200,
-                headers={},
-                head_method=False
+                content=fields, code=200, headers={}, head_method=False
             )
         except BaseException as e:  # pragma: no cover
             log.error(e)
@@ -247,7 +234,7 @@ class ResponseMaker:
                 content={"Server internal error": "Failed to retrieve input schema"},
                 code=500,
                 headers={},
-                head_method=False
+                head_method=False,
             )
 
     @staticmethod
@@ -258,32 +245,32 @@ class ResponseMaker:
         # types from https://github.com/danohu/py2ng
         # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
         if isinstance(schema, fields.Bool):
-            return 'boolean'
+            return "boolean"
         if isinstance(schema, fields.Boolean):
-            return 'boolean'
+            return "boolean"
         # if isinstance(schema, fields.Constant):
         #     return 'any'
         if isinstance(schema, fields.Date):
-            return 'date'
+            return "date"
         # Include both AwareDateTime and NaiveDateTime that extend DateTime
         if isinstance(schema, fields.DateTime):
-            return 'date'
+            return "date"
         if isinstance(schema, fields.Decimal):
-            return 'number'
+            return "number"
         # if isinstance(schema, fields.Dict):
         #     return 'object'
         if isinstance(schema, fields.Email):
-            return 'email'
+            return "email"
         # if isinstance(schema, fields.Field):
         #     return 'any'
         if isinstance(schema, fields.Float):
-            return 'number'
+            return "number"
         # if isinstance(schema, fields.Function):
         #     return 'any'
         if isinstance(schema, fields.Int):
-            return 'int'
+            return "int"
         if isinstance(schema, fields.Integer):
-            return 'int'
+            return "int"
         # if isinstance(schema, fields.List):
         #     return 'any[]'
         # if isinstance(schema, fields.Mapping):
@@ -293,21 +280,21 @@ class ResponseMaker:
         # if isinstance(schema, fields.Nested):
         #     return 'any'
         if isinstance(schema, fields.Number):
-            return 'number'
+            return "number"
         # if isinstance(schema, fields.Raw):
         #     return 'any'
         if isinstance(schema, fields.Str):
-            return 'string'
+            return "string"
         if isinstance(schema, fields.String):
-            return 'string'
+            return "string"
         # if isinstance(schema, fields.TimeDelta):
         #     return 'any'
         if isinstance(schema, fields.URL):
-            return 'string'
+            return "string"
         if isinstance(schema, fields.Url):
-            return 'string'
+            return "string"
         if isinstance(schema, fields.UUID):
-            return 'string'
+            return "string"
 
         log.error("Unknown schema type: {}", type(schema))
 

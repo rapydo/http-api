@@ -1,22 +1,22 @@
-import os
-import sys
 import json
-import urllib
+import os
 import re
+import sys
+import urllib
+
 from loguru import logger as log
 
 from restapi.confs import PRODUCTION
 from restapi.env import Env
 
-
-log_level = os.getenv('DEBUG_LEVEL', 'DEBUG')
+log_level = os.getenv("DEBUG_LEVEL", "DEBUG")
 LOGS_FOLDER = "/logs"
 HOSTNAME = os.getenv("HOSTNAME", "backend")
 CONTAINER_ID = os.getenv("CONTAINER_ID", "")
 IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
 
 # BACKEND-SERVER
-if IS_CELERY_CONTAINER == '0':
+if IS_CELERY_CONTAINER == "0":
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:
@@ -36,7 +36,7 @@ def verbose(*args, **kwargs):
 
 
 def critical_exit(message="", *args, **kwargs):
-    error_code = kwargs.pop('error_code', 1)
+    error_code = kwargs.pop("error_code", 1)
     if not isinstance(error_code, int):
         raise ValueError("Error code must be an integer")
     if error_code < 1:
@@ -92,6 +92,7 @@ fmt += "[<level>{level}</level> "
 fmt += "<fg #666>{name}:{line}</fg #666>] "
 fmt += "<fg #FFF>{message}</fg #FFF>"
 
+
 # Set the default logger with the given log level and save the log_id as static variable
 # Further call to this function will remove the previous logger (based on saved log_id)
 def set_logger(level):
@@ -111,7 +112,7 @@ def set_logger(level):
         # Disabled in production to avoid leaking sensitive data.
         # Note: enabled in development mode on the File Logger
         diagnose=False,
-        filter=print_message_on_stderr
+        filter=print_message_on_stderr,
     )
 
     set_logger.log_id = log_id
@@ -121,17 +122,17 @@ set_logger(log_level)
 
 # Logs utilities
 
-MAX_CHAR_LEN = Env.get_int('MAX_LOGS_LENGTH', 200)
-OBSCURE_VALUE = '****'
+MAX_CHAR_LEN = Env.get_int("MAX_LOGS_LENGTH", 200)
+OBSCURE_VALUE = "****"
 OBSCURED_FIELDS = [
-    'password',
-    'pwd',
-    'token',
-    'access_token',
-    'file',
-    'filename',
-    'new_password',
-    'password_confirm',
+    "password",
+    "pwd",
+    "token",
+    "access_token",
+    "file",
+    "filename",
+    "new_password",
+    "password_confirm",
 ]
 
 
@@ -161,7 +162,7 @@ def handle_log_output(original_parameters_string):
     else:
         mystr = str(original_parameters_string)
 
-    if mystr.strip() == '':
+    if mystr.strip() == "":
         return {}
 
     urlencoded = False
@@ -179,7 +180,7 @@ def handle_log_output(original_parameters_string):
 
 
 def obfuscate_url(url):
-    return re.sub(r'\/\/.*:.*@', '//***:***@', url)
+    return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
 def obfuscate_dict(parameters, urlencoded=False):

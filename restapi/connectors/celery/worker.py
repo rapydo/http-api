@@ -9,9 +9,7 @@ So we made some improvement along the code.
 
 """
 from restapi.server import create_app
-# from restapi.confs import CUSTOM_PACKAGE
 from restapi.services.detect import detector
-# from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 ################################################

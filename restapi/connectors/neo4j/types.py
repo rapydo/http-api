@@ -1,8 +1,8 @@
-import pytz
 from datetime import datetime
-from neomodel import StructuredNode
-from neomodel import UniqueIdProperty
-from neomodel import DateTimeProperty
+
+import pytz
+from neomodel import DateTimeProperty, StructuredNode, UniqueIdProperty
+
 
 class IdentifiedNode(StructuredNode):
 

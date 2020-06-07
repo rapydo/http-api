@@ -1,29 +1,30 @@
 import os
+
 import pytest
-from restapi.services.detect import detector
+
 from restapi.exceptions import ServiceUnavailable
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
 def test_irods(app, faker):
 
-    if not detector.check_availability('irods'):
+    if not detector.check_availability("irods"):
         log.warning("Skipping irods test: service not available")
         return False
 
     detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
+        app=app, project_init=False, project_clean=False,
     )
 
     from irods import exception as iexceptions
-    irods = detector.get_service_instance("irods", authscheme='PAM')
+
+    irods = detector.get_service_instance("irods", authscheme="PAM")
     assert irods is not None
 
     try:
         irods = detector.get_service_instance(
-            "irods", authscheme='PAM', password=faker.pystr()
+            "irods", authscheme="PAM", password=faker.pystr()
         )
 
         pytest.fail("This should fail because password is wrong")
@@ -31,24 +32,22 @@ def test_irods(app, faker):
         pass
 
     try:
-        irods = detector.get_service_instance("irods", authscheme='GSI')
+        irods = detector.get_service_instance("irods", authscheme="GSI")
         pytest.fail("GSI should fail because no certificate is set by default")
     except ServiceUnavailable:
         pass
 
-    irods = detector.get_service_instance("irods", authscheme='XYZ')
+    irods = detector.get_service_instance("irods", authscheme="XYZ")
     # since a password is provided by default authscheme is fallback to credentials
     assert irods is not None
     try:
-        detector.get_service_instance("irods", authscheme='XYZ', password=None)
+        detector.get_service_instance("irods", authscheme="XYZ", password=None)
         pytest.fail("This should fail because authscheme is invalid")
     except ServiceUnavailable:
         pass
 
     try:
-        irods = detector.get_service_instance(
-            "irods", password=faker.pystr()
-        )
+        irods = detector.get_service_instance("irods", password=faker.pystr())
 
         pytest.fail("This should fail because password is wrong")
     except iexceptions.CAT_INVALID_AUTHENTICATION:

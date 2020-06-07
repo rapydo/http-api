@@ -1,6 +1,7 @@
 from flask_apispec import MethodResource
-from restapi.rest.definition import EndpointResource
+
 from restapi import decorators
+from restapi.rest.definition import EndpointResource
 
 
 class Logout(MethodResource, EndpointResource):

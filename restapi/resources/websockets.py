@@ -1,15 +1,17 @@
 from flask import Response, request
-from gripcontrol import WebSocketEvent
-from gripcontrol import decode_websocket_events, encode_websocket_events
-from gripcontrol import websocket_control_message, create_grip_channel_header
-from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
+from flask_apispec import MethodResource, use_kwargs
+from gripcontrol import (
+    WebSocketEvent,
+    create_grip_channel_header,
+    decode_websocket_events,
+    encode_websocket_events,
+    websocket_control_message,
+)
 from marshmallow import fields
 
-from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
 from restapi import decorators
-
+from restapi.exceptions import RestApiException
+from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 
@@ -35,9 +37,9 @@ class PushpinWebSocket(MethodResource, EndpointResource):
     @decorators.auth.required(allow_access_token_parameter=True)
     def put(self, channel, sync=True):
 
-        pushpin = self.get_service_instance('pushpin')
+        pushpin = self.get_service_instance("pushpin")
 
-        message = 'Hello, your job is completed!'
+        message = "Hello, your job is completed!"
         published = pushpin.publish_on_socket(channel, message, sync=sync)
 
         return self.response(f"Message received: {published}")
@@ -52,12 +54,14 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         except ValueError as e:
             log.error(e)
             raise RestApiException(
-                "Cannot decode websocket request: invalid format", status_code=400)
+                "Cannot decode websocket request: invalid format", status_code=400
+            )
 
         if in_events is None or len(in_events) <= 0:
             log.error("Websocket request: {}", request.data)
             raise RestApiException(
-                "Cannot decode websocket request: invalid in_event", status_code=400)
+                "Cannot decode websocket request: invalid in_event", status_code=400
+            )
         in_events = in_events[0]
 
         event_type = None
@@ -67,28 +71,22 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         except BaseException as e:
             log.error(e)
             raise RestApiException(
-                "Cannot decode websocket request: invalid type", status_code=400)
+                "Cannot decode websocket request: invalid type", status_code=400
+            )
 
         if event_type is None:
             log.error("Event type is None")
             raise RestApiException("Cannot decode websocket request")
 
         out_events = []
-        if event_type == 'OPEN':
-            ctrl_msg = websocket_control_message('subscribe', {'channel': channel})
-            out_events.append(WebSocketEvent('OPEN'))
-            out_events.append(
-                WebSocketEvent(
-                    'TEXT',
-                    f'c:{ctrl_msg}',
-                )
-            )
-            headers = {
-                'Sec-WebSocket-Extensions': 'grip'
-            }
+        if event_type == "OPEN":
+            ctrl_msg = websocket_control_message("subscribe", {"channel": channel})
+            out_events.append(WebSocketEvent("OPEN"))
+            out_events.append(WebSocketEvent("TEXT", f"c:{ctrl_msg}",))
+            headers = {"Sec-WebSocket-Extensions": "grip"}
             resp = Response(
                 encode_websocket_events(out_events),
-                mimetype='application/websocket-events',
+                mimetype="application/websocket-events",
                 headers=headers,
             )
             return resp
@@ -104,7 +102,7 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
     _POST = {
         "/stream/<channel>": {
             "description": "Open a HTTP Stream for Long polling",
-            "produces": ['application/json', 'text/plain'],
+            "produces": ["application/json", "text/plain"],
             "responses": {"200": {"description": "HTTP Stream connection accepted"}},
         }
     }
@@ -119,9 +117,9 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
     @use_kwargs({"sync": fields.Boolean(required=False)})
     def put(self, channel, sync=True):
 
-        pushpin = self.get_service_instance('pushpin')
+        pushpin = self.get_service_instance("pushpin")
 
-        message = 'Hello, your job is completed!\n'
+        message = "Hello, your job is completed!\n"
         published = pushpin.publish_on_stream(channel, message, sync=sync)
 
         return self.response(f"Message received: {published}")
@@ -131,12 +129,12 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
     def post(self, channel):
 
         headers = {}
-        headers['Grip-Hold'] = 'stream'
-        headers['Grip-Channel'] = create_grip_channel_header(channel)
+        headers["Grip-Hold"] = "stream"
+        headers["Grip-Channel"] = create_grip_channel_header(channel)
 
         resp = Response(
-            'Stream opened, prepare yourself!\n',
-            mimetype='text/plain',
+            "Stream opened, prepare yourself!\n",
+            mimetype="text/plain",
             headers=headers,
         )
         # resp['Sec-WebSocket-Extensions'] = 'grip'

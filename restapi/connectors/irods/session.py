@@ -1,5 +1,6 @@
 import base64
 import pickle
+
 from irods.pool import Pool
 from irods.session import iRODSSession
 
@@ -15,8 +16,8 @@ class iRODSPickleSession(iRODSSession):  # pragma: no cover
         attrs = {}
         for attr in self.__dict__:
             obj = getattr(self, attr)
-            if attr == 'pool':
-                attrs['account'] = obj.account
+            if attr == "pool":
+                attrs["account"] = obj.account
                 # attrs['timeout'] = obj.timeout
             else:
                 attrs[attr] = obj
@@ -29,7 +30,7 @@ class iRODSPickleSession(iRODSSession):  # pragma: no cover
             # print(name, value)
             setattr(self, name, value)
 
-        self.pool = Pool(state.get('account'))  # , state.get('timeout'))
+        self.pool = Pool(state.get("account"))  # , state.get('timeout'))
 
     def serialize(self):
         """Returns a byte serialized string from the current session"""

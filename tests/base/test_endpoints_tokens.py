@@ -1,9 +1,9 @@
-from restapi.tests import BaseTests, API_URI, AUTH_URI
+from restapi.tests import API_URI, AUTH_URI, BaseTests
+
 # from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-
     def test_tokens(self, client):
 
         last_token = None
@@ -16,7 +16,7 @@ class TestApp(BaseTests):
             last_token = token
 
         # TEST GET ALL TOKENS
-        r = client.get(f'{AUTH_URI}/tokens', headers=last_tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         content = self.get_content(r)
         assert r.status_code == 200
 
@@ -31,7 +31,7 @@ class TestApp(BaseTests):
                 last_token = token
 
             # TEST GET ALL TOKENS
-            r = client.get(f'{AUTH_URI}/tokens', headers=last_tokens_header)
+            r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
             content = self.get_content(r)
             assert r.status_code == 200
             assert len(content) >= 3
@@ -52,10 +52,7 @@ class TestApp(BaseTests):
         assert len(self.get_content(r)) >= 3
 
         # DELETE INVALID TOKEN
-        r = client.delete(
-            f"{API_URI}/admin/tokens/xyz",
-            headers=last_tokens_header
-        )
+        r = client.delete(f"{API_URI}/admin/tokens/xyz", headers=last_tokens_header)
         assert r.status_code == 404
 
         # TEST DELETE OF A SINGLE TOKEN
@@ -67,9 +64,9 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # TEST INVALID DELETE OF A SINGLE TOKEN
-        r = client.delete(f'{AUTH_URI}/tokens/0', headers=last_tokens_header)
+        r = client.delete(f"{AUTH_URI}/tokens/0", headers=last_tokens_header)
         assert r.status_code == 401
 
         # TEST TOKEN IS STILL VALID
-        r = client.get(f'{AUTH_URI}/tokens', headers=last_tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200

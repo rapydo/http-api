@@ -5,9 +5,10 @@ usefull documentation:
 http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.html
 """
 
-import pkgutil
 import inspect
+import pkgutil
 from importlib import import_module
+
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
@@ -50,10 +51,7 @@ class Meta:
 
     @staticmethod
     def get_module_from_string(
-        modulestring,
-        prefix_package=False,
-        exit_if_not_found=False,
-        exit_on_fail=False
+        modulestring, prefix_package=False, exit_if_not_found=False, exit_on_fail=False
     ):
         """
         Getting a module import
@@ -103,7 +101,7 @@ class Meta:
 
         if len(args) > 0:
             candidate_as_self = args[0]
-            cls_attribute = getattr(candidate_as_self, '__class__', None)
+            cls_attribute = getattr(candidate_as_self, "__class__", None)
             if cls_attribute is not None and inspect.isclass(cls_attribute):
                 return args[0]
         return None
@@ -171,10 +169,7 @@ class Meta:
 
             # convert file name in submodule, i.e.
             # tasks.filename
-            submodule = Meta.get_module_from_string(
-                module_path,
-                exit_on_fail=True,
-            )
+            submodule = Meta.get_module_from_string(module_path, exit_on_fail=True,)
 
             # get all functions in py file
             functions = inspect.getmembers(submodule)

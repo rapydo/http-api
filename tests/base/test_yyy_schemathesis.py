@@ -1,51 +1,49 @@
+import json
+
 import pytest
 import schemathesis
-from hypothesis import settings, HealthCheck
 import werkzeug
-import json
+from hypothesis import HealthCheck, settings
 
 from restapi.env import Env
 from restapi.server import create_app
-from restapi.tests import get_faker
 from restapi.services.authentication import BaseAuthentication
+from restapi.tests import get_faker
 from restapi.utilities.logs import log, set_logger
-
 
 RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
 
 
 def get_auth_token(client, data):
 
-    r = client.post('/auth/login', data=data)
-    content = json.loads(r.data.decode('utf-8'))
+    r = client.post("/auth/login", data=data)
+    content = json.loads(r.data.decode("utf-8"))
 
     if r.status_code == 403:
-        if isinstance(content, dict) and content.get('actions'):
-            action = content.get('actions')[0]
+        if isinstance(content, dict) and content.get("actions"):
+            action = content.get("actions")[0]
 
-            if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
-                currentpwd = data['password']
+            if action == "FIRST LOGIN" or action == "PASSWORD EXPIRED":
+                currentpwd = data["password"]
                 fake = get_faker()
                 newpwd = fake.password(strong=True)
-                data['new_password'] = newpwd
-                data['password_confirm'] = newpwd
+                data["new_password"] = newpwd
+                data["password_confirm"] = newpwd
                 # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                 get_auth_token(client, data)
                 # Change again to restore the default password
                 # and keep all other tests fully working
-                data['password'] = newpwd
-                data['new_password'] = currentpwd
-                data['password_confirm'] = currentpwd
+                data["password"] = newpwd
+                data["new_password"] = currentpwd
+                data["password_confirm"] = currentpwd
                 return get_auth_token(client, data)
             else:
-                pytest.fail(
-                    f"Unknown post log action requested: {action}"
-                )
+                pytest.fail(f"Unknown post log action requested: {action}")
 
     assert r.status_code == 200
     assert content is not None
 
-    return content, {'Authorization': f'Bearer {content}'}
+    return content, {"Authorization": f"Bearer {content}"}
 
 
 if not RUN_SCHEMATHESIS:
@@ -61,13 +59,13 @@ else:
     BaseAuthentication.load_roles()
     USER = BaseAuthentication.default_user
     PWD = BaseAuthentication.default_password
-    data = {'username': USER, 'password': PWD}
+    data = {"username": USER, "password": PWD}
     token, auth_header = get_auth_token(client, data)
 
     # it does not handle custom headers => the endpoint will provide partial schema
     # due to missing authentication => skipping all private endpoints and schemas
     # schema = schemathesis.from_wsgi('/api/swagger', app)
-    r = client.get(f'/api/swagger?access_token={token}')
+    r = client.get(f"/api/swagger?access_token={token}")
     assert r.status_code == 200
     schema = json.loads(r.get_data().decode())
     schema = schemathesis.from_dict(schema, app=app)
@@ -77,10 +75,7 @@ else:
     @schema.parametrize()
     @settings(
         deadline=None,
-        suppress_health_check=[
-            HealthCheck.too_slow,
-            HealthCheck.filter_too_much,
-        ]
+        suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
     )
     def test_no_auth(case):
 
@@ -98,14 +93,11 @@ else:
     @schema.parametrize()
     @settings(
         deadline=None,
-        suppress_health_check=[
-            HealthCheck.too_slow,
-            HealthCheck.filter_too_much,
-        ]
+        suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
     )
     def test_with_admin_auth(case):
 
-        if case.path == '/auth/logout':
+        if case.path == "/auth/logout":
             log.warning("Skipping logout")
             return None
 
@@ -130,10 +122,7 @@ else:
     @schema.parametrize(endpoint="/auth/logout")
     @settings(
         deadline=None,
-        suppress_health_check=[
-            HealthCheck.too_slow,
-            HealthCheck.filter_too_much,
-        ]
+        suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
     )
     def test_logout(case):
 

@@ -5,25 +5,31 @@ https://raw.githubusercontent.com/gangverk/flask-swagger/master/flask_swagger.py
 
 """
 
-import re
-import os
 import json
+import os
+import re
+
 from bravado_core.spec import Spec
 from bravado_core.validate import validate_object
 
-from restapi.confs import PRODUCTION, MODELS_DIR
-from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
-from restapi.confs import get_project_configuration
-from restapi.utilities.globals import mem
+from restapi.confs import (
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+    MODELS_DIR,
+    PRODUCTION,
+    get_project_configuration,
+)
 from restapi.utilities.configuration import load_yaml_file, mix
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-JSON_APPLICATION = 'application/json'
+JSON_APPLICATION = "application/json"
 
 
 def input_validation(json_parameters, definitionName):
 
-    definition = mem.customizer._definitions['definitions'][definitionName]
+    definition = mem.customizer._definitions["definitions"][definitionName]
     spec = mem.customizer._validated_spec
 
     # Can raise jsonschema.exceptions.ValidationError
@@ -62,27 +68,27 @@ class Swagger:
 
         # Specs should contain only labels written in spec before
 
-        pattern = re.compile(r'\<([^\>]+)\>')
+        pattern = re.compile(r"\<([^\>]+)\>")
 
         for label, specs in mapping.items():
 
-            uri = f'/{endpoint.base_uri}{label}'
+            uri = f"/{endpoint.base_uri}{label}"
             # This will be used by server.py.add
             endpoint.uris.setdefault(uri, uri)
-            specs.setdefault('parameters', [])
+            specs.setdefault("parameters", [])
             newuri = uri[:]  # create a copy
 
             # Deprecated since 0.7.4
-            custom_specs = specs.pop('custom', None)
+            custom_specs = specs.pop("custom", None)
             if custom_specs is not None:  # pragma: no cover
                 log.warning("Deprecated use of custom in specs")
 
             # Deprecated since 0.7.4
-            cparam = specs.pop('custom_parameters', None)
+            cparam = specs.pop("custom_parameters", None)
             if cparam is not None:  # pragma: no cover
                 log.warning("Deprecated use of custom in specs")
 
-            private = specs.pop('private', False)
+            private = specs.pop("private", False)
             self._private_endpoints.setdefault(uri, {})
             self._private_endpoints[uri].setdefault(method, private)
 
@@ -91,9 +97,9 @@ class Swagger:
             for parameter in pattern.findall(uri):
 
                 # create parameters
-                x = parameter.split(':')
+                x = parameter.split(":")
                 xlen = len(x)
-                paramtype = 'string'
+                paramtype = "string"
 
                 if xlen == 1:
                     paramname = x[0]
@@ -103,31 +109,30 @@ class Swagger:
 
                 # FIXME: complete for all types
                 # http://swagger.io/specification/#data-types-12
-                if paramtype == 'int':
-                    paramtype = 'number'
-                if paramtype == 'path':
-                    paramtype = 'string'
+                if paramtype == "int":
+                    paramtype = "number"
+                if paramtype == "path":
+                    paramtype = "string"
 
                 path_parameter = {
-                    'name': paramname,
-                    'type': paramtype,
-                    'in': 'path',
-                    'required': True,
+                    "name": paramname,
+                    "type": paramtype,
+                    "in": "path",
+                    "required": True,
                 }
 
-                specs['parameters'].append(path_parameter)
+                specs["parameters"].append(path_parameter)
 
                 # replace in a new uri
                 # <param> -> {param}
-                newuri = newuri.replace(
-                    f'<{parameter}>', f'{{{paramname}}}')
+                newuri = newuri.replace(f"<{parameter}>", f"{{{paramname}}}")
 
             # cycle parameters and add them to the endpoint class
             query_params = []
-            for param in specs['parameters']:
+            for param in specs["parameters"]:
 
                 # Remove custom attributes from parameters to prevent validation errors
-                param.pop('custom', None)
+                param.pop("custom", None)
 
                 enum = param.pop("enum", None)
                 if enum is not None:
@@ -142,14 +147,14 @@ class Swagger:
                                 param["enum"].append(k)
 
                 # handle parameters in URI for Flask
-                if param['in'] == 'query':  # pragma: no cover
+                if param["in"] == "query":  # pragma: no cover
                     # Deprecated since 0.7.4
                     log.warning(
                         "{}.py: deprecated query parameter '{}' in {} {}",
                         endpoint.cls.__name__,
-                        param.get('name'),
+                        param.get("name"),
                         method.upper(),
-                        label
+                        label,
                     )
                     query_params.append(param)
 
@@ -160,8 +165,8 @@ class Swagger:
                 )
 
             # Swagger does not like empty arrays
-            if len(specs['parameters']) < 1:
-                specs.pop('parameters')
+            if len(specs["parameters"]) < 1:
+                specs.pop("parameters")
 
             ##################
             # Save definition for checking
@@ -170,8 +175,8 @@ class Swagger:
 
             # Handle global tags
             if endpoint.tags:
-                specs.setdefault('tags', list())
-                specs['tags'] = list(set(specs['tags'] + endpoint.tags))
+                specs.setdefault("tags", list())
+                specs["tags"] = list(set(specs["tags"] + endpoint.tags))
                 # A global set with all used occurrences
                 self._used_swagger_tags.update(endpoint.tags)
 
@@ -200,10 +205,7 @@ class Swagger:
         self._qparams[clsname][uri].setdefault(method, {})
 
         for param in params:
-            self._qparams[clsname][uri][method].setdefault(
-                param['name'],
-                param
-            )
+            self._qparams[clsname][uri][method].setdefault(param["name"], param)
 
     def swaggerish(self):
         """
@@ -213,9 +215,9 @@ class Swagger:
         """
 
         # Better chosen dinamically from endpoint.py
-        schemes = ['http']
+        schemes = ["http"]
         if PRODUCTION:
-            schemes = ['https']
+            schemes = ["https"]
 
         # A template base
         output = {
@@ -232,30 +234,30 @@ class Swagger:
             "security": [{"Bearer": []}],
         }
 
-        version = get_project_configuration('project.version')
-        title = get_project_configuration('project.title')
+        version = get_project_configuration("project.version")
+        title = get_project_configuration("project.title")
 
         if version is not None:
-            output['info']['version'] = version
+            output["info"]["version"] = version
         if title is not None:
-            output['info']['title'] = title
+            output["info"]["title"] = title
 
         ###################
         models = self.get_models()
-        self._fdp = models.pop('FormDataParameters', {})
+        self._fdp = models.pop("FormDataParameters", {})
 
         for k in ["definitions", "parameters", "responses"]:
             if k in models:
                 output[k] = models.get(k, {})
 
-        output['consumes'] = [
+        output["consumes"] = [
             JSON_APPLICATION,
             # required for parameters with "in: formData"
             "application/x-www-form-urlencoded",
             # required for parameters of "type: file"
-            "multipart/form-data"
+            "multipart/form-data",
         ]
-        output['produces'] = [JSON_APPLICATION]
+        output["produces"] = [JSON_APPLICATION]
 
         ###################
         # Read endpoints swagger files
@@ -264,29 +266,27 @@ class Swagger:
             for method, mapping in endpoint.methods.items():
                 # add the custom part to the endpoint
 
-                self._endpoints[key] = self.read_my_swagger(
-                    method, endpoint, mapping
-                )
+                self._endpoints[key] = self.read_my_swagger(method, endpoint, mapping)
 
         self._customizer._private_endpoints = self._private_endpoints
         ###################
         # Save query parameters globally
         # Deprecated since 0.7.4
         self._customizer._query_params = self._qparams
-        output['paths'] = self._paths
+        output["paths"] = self._paths
 
         ###################
         tags = []
-        for tag, desc in self._customizer._configurations['tags'].items():
+        for tag, desc in self._customizer._configurations["tags"].items():
             if tag not in self._used_swagger_tags:
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
-            tags.append({'name': tag, 'description': desc})
+            tags.append({"name": tag, "description": desc})
 
         # Also used in NEW swagger specs
-        self._customizer._configurations['cleaned_tags'] = tags
+        self._customizer._configurations["cleaned_tags"] = tags
 
-        output['tags'] = tags
+        output["tags"] = tags
 
         self._customizer._original_paths = self._original_paths
         return output
@@ -298,7 +298,7 @@ class Swagger:
         # CUSTOM definitions
         path = os.path.join(os.curdir, CUSTOM_PACKAGE, MODELS_DIR)
         try:
-            models = load_yaml_file('swagger.yaml', path=path)
+            models = load_yaml_file("swagger.yaml", path=path)
         except AttributeError as e:
             log.verbose(e)
             models = {}
@@ -308,7 +308,7 @@ class Swagger:
 
         path = os.path.join(os.curdir, EXTENDED_PACKAGE, MODELS_DIR)
         try:
-            base_models = load_yaml_file('swagger.yaml', path=path)
+            base_models = load_yaml_file("swagger.yaml", path=path)
             return mix(base_models, models)
         except AttributeError as e:
             log.verbose(e)
@@ -321,14 +321,14 @@ class Swagger:
         verify the current definition on the open standard
         """
 
-        if len(swag_dict['paths']) < 1:
+        if len(swag_dict["paths"]) < 1:
             raise AttributeError("Swagger 'paths' definition is empty")
 
         bravado_config = {
-            'validate_swagger_spec': True,
-            'validate_requests': False,
-            'validate_responses': False,
-            'use_models': False,
+            "validate_swagger_spec": True,
+            "validate_requests": False,
+            "validate_responses": False,
+            "use_models": False,
         }
 
         try:
@@ -338,7 +338,7 @@ class Swagger:
             )
             log.debug("Swagger configuration is validated")
         except Exception as e:
-            error = str(e).split('\n')[0]
+            error = str(e).split("\n")[0]
             log.error("Failed to validate:\n{}\n", error)
             return False
 

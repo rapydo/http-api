@@ -1,6 +1,8 @@
 import os
+
 import jinja2
-from restapi.confs import MODELS_DIR, CUSTOM_PACKAGE
+
+from restapi.confs import CUSTOM_PACKAGE, MODELS_DIR
 from restapi.utilities.logs import log
 
 

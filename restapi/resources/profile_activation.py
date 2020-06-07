@@ -1,29 +1,23 @@
 import os
-import jwt
 
-from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
+import jwt
+from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields
 
-from restapi.rest.definition import EndpointResource
 from restapi import decorators
-from restapi.exceptions import RestApiException
-from restapi.services.mail import send_mail
 from restapi.confs import get_frontend_url, get_project_configuration
-from restapi.utilities.templates import get_html_template
-
+from restapi.exceptions import RestApiException
+from restapi.rest.definition import EndpointResource
+from restapi.services.mail import send_mail
 from restapi.utilities.logs import log
+from restapi.utilities.templates import get_html_template
 
 
 def send_activation_link(auth, user):
 
-    title = get_project_configuration(
-        "project.title", default='Unkown title'
-    )
+    title = get_project_configuration("project.title", default="Unkown title")
 
-    activation_token, payload = auth.create_temporary_token(
-        user, auth.ACTIVATE_ACCOUNT
-    )
+    activation_token, payload = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
 
     server_url = get_frontend_url()
 
@@ -40,14 +34,13 @@ def send_activation_link(auth, user):
         body = None
 
     default_subject = f"{title} account activation"
-    subject = os.getenv('EMAIL_ACTIVATION_SUBJECT', default_subject)
+    subject = os.getenv("EMAIL_ACTIVATION_SUBJECT", default_subject)
 
     sent = send_mail(html_body, subject, user.email, plain_body=body)
     if not sent:  # pragma: no cover
         raise BaseException("Error sending email, please retry")
 
-    auth.save_token(
-        user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
+    auth.save_token(user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
 class ProfileActivation(MethodResource, EndpointResource):
@@ -66,9 +59,7 @@ class ProfileActivation(MethodResource, EndpointResource):
     _PUT = {
         "/profile/activate/<token>": {
             "summary": "Activate your account by providing the activation token",
-            "responses": {
-                "200": {"description": "Account successfully activated"}
-            },
+            "responses": {"200": {"description": "Account successfully activated"}},
         }
     }
 
@@ -79,29 +70,22 @@ class ProfileActivation(MethodResource, EndpointResource):
         token = token.replace("+", ".")
         try:
             unpacked_token = self.auth.verify_token(
-                token,
-                raiseErrors=True,
-                token_type=self.auth.ACTIVATE_ACCOUNT
+                token, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
             )
 
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError:
             raise RestApiException(
-                'Invalid activation token: this request is expired',
-                status_code=400,
+                "Invalid activation token: this request is expired", status_code=400,
             )
 
         # if token is not yet active
         except jwt.exceptions.ImmatureSignatureError:
-            raise RestApiException(
-                'Invalid activation token', status_code=400
-            )
+            raise RestApiException("Invalid activation token", status_code=400)
 
         # if token does not exist (or other generic errors)
         except BaseException:
-            raise RestApiException(
-                'Invalid activation token', status_code=400
-            )
+            raise RestApiException("Invalid activation token", status_code=400)
 
         # Recovering token object from jti
         jti = unpacked_token[2]
@@ -110,7 +94,7 @@ class ProfileActivation(MethodResource, EndpointResource):
         # but invalid tokens are already refused above, with auth.verify_token
         if len(token_obj) == 0:  # pragma: no cover
             raise RestApiException(
-                'Invalid activation token: this request is no longer valid',
+                "Invalid activation token: this request is no longer valid",
                 status_code=400,
             )
 
@@ -119,7 +103,7 @@ class ProfileActivation(MethodResource, EndpointResource):
         if user.is_active:
             self.auth.invalidate_token(token)
             raise RestApiException(
-                'Invalid activation token: this request is no longer valid',
+                "Invalid activation token: this request is no longer valid",
                 status_code=400,
             )
 
@@ -133,7 +117,7 @@ class ProfileActivation(MethodResource, EndpointResource):
         return self.response("Account activated")
 
     @decorators.catch_errors()
-    @use_kwargs({'username': fields.Email(required=True)})
+    @use_kwargs({"username": fields.Email(required=True)})
     def post(self, username):
 
         user = self.auth.get_user_object(username=username)

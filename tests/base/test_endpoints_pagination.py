@@ -1,9 +1,9 @@
-from restapi.tests import BaseTests, API_URI
+from restapi.tests import API_URI, BaseTests
+
 # from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-
     def test_GET_specs(self, client):
 
         r = client.get(f"{API_URI}/tests/pagination")

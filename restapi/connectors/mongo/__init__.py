@@ -1,16 +1,18 @@
 import re
-import pytz
-from functools import wraps
 from datetime import datetime, timedelta
+from functools import wraps
+
+import pytz
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
+
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
-from restapi.utilities.uuid import getUUID
+from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
+from restapi.utilities.uuid import getUUID
 
 
 def catch_db_exceptions(func):
@@ -22,7 +24,7 @@ def catch_db_exceptions(func):
 
         except DatabaseDuplicatedEntry as e:
             # already catched and parser, raise up
-            raise(e)
+            raise (e)
 
         except DuplicateKeyError as e:
 
@@ -62,9 +64,9 @@ def update_properties(instance, schema, properties):
             key = field
         else:
             # to be deprecated
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
+            if "custom" in field:
+                if "islink" in field["custom"]:
+                    if field["custom"]["islink"]:
                         continue
             key = field["name"]
 
@@ -73,18 +75,17 @@ def update_properties(instance, schema, properties):
 
 
 class MongoExt(Connector):
-
     def get_connection_exception(self):
-        return (ServerSelectionTimeoutError, )
+        return (ServerSelectionTimeoutError,)
 
     def connect(self, test_connection=False, **kwargs):
 
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        HOST = variables.get('host')
-        PORT = variables.get('port')
-        MongoExt.DATABASE = variables.get('database', 'rapydo')
+        HOST = variables.get("host")
+        PORT = variables.get("port")
+        MongoExt.DATABASE = variables.get("database", "rapydo")
         uri = f"mongodb://{HOST}:{PORT}/{MongoExt.DATABASE}"
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
@@ -116,11 +117,10 @@ class MongoExt(Connector):
         from pymongo import MongoClient
 
         client = MongoClient(
-            self.variables.get('host'),
-            Env.to_int(self.variables.get('port'))
+            self.variables.get("host"), Env.to_int(self.variables.get("port"))
         )
 
-        system_dbs = ['admin', 'local', 'config']
+        system_dbs = ["admin", "local", "config"]
         for db in client.database_names():
             if db not in system_dbs:
                 client.drop_database(db)
@@ -133,8 +133,8 @@ class Authentication(BaseAuthentication):
     def create_user(self, userdata, roles):
 
         userdata.setdefault("authmethod", "credentials")
-        userdata.setdefault('uuid', getUUID())
-        userdata.setdefault('id', userdata['uuid'])
+        userdata.setdefault("uuid", getUUID())
+        userdata.setdefault("id", userdata["uuid"])
 
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
@@ -156,7 +156,7 @@ class Authentication(BaseAuthentication):
 
         roles_obj = []
         for role_name in roles:
-            role_obj = self.db.Role.objects.get({'name': role_name})
+            role_obj = self.db.Role.objects.get({"name": role_name})
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
@@ -167,20 +167,20 @@ class Authentication(BaseAuthentication):
         if username is not None:
             # NOTE: email is the key, so to query use _id
             try:
-                user = self.db.User.objects.raw({'email': username}).first()
+                user = self.db.User.objects.raw({"email": username}).first()
             except self.db.User.DoesNotExist:
                 # don't do things, user will remain 'None'
                 pass
 
         if payload is not None:
-            if payload.get('user_id'):  # skip: '', None
+            if payload.get("user_id"):  # skip: '', None
                 try:
-                    user = self.db.User.objects.get({'uuid': payload['user_id']})
+                    user = self.db.User.objects.get({"uuid": payload["user_id"]})
                 except self.db.User.DoesNotExist:
                     pass
-            elif payload.get('jti'):  # skip: '', None
+            elif payload.get("jti"):  # skip: '', None
                 try:
-                    user = self.db.Token.objects.get({'jti': payload['jti']}).user_id
+                    user = self.db.Token.objects.get({"jti": payload["jti"]}).user_id
                 except self.db.Token.DoesNotExist:
                     pass
 
@@ -194,7 +194,7 @@ class Authentication(BaseAuthentication):
 
         # Retrieve one
         try:
-            user = self.db.User.objects.get({'uuid': user_id})
+            user = self.db.User.objects.get({"uuid": user_id})
         except self.db.User.DoesNotExist:
             return None
 
@@ -207,7 +207,7 @@ class Authentication(BaseAuthentication):
         roles = []
         for role_name in self.roles:
             try:
-                role = self.db.Role.objects.get({'name': role_name})
+                role = self.db.Role.objects.get({"name": role_name})
                 roles.append(role)
             except self.db.Role.DoesNotExist:
                 log.warning("Role not found: {}", role_name)
@@ -239,15 +239,12 @@ class Authentication(BaseAuthentication):
 
         for role_name in self.roles:
             try:
-                role = self.db.Role.objects.get({'name': role_name})
+                role = self.db.Role.objects.get({"name": role_name})
                 roles.append(role.name)
                 log.info("Role already exists: {}", role.name)
             except self.db.Role.DoesNotExist:
                 role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(
-                    name=role_name,
-                    description=role_description
-                )
+                role = self.db.Role(name=role_name, description=role_description)
                 role.save()
                 roles.append(role.name)
                 log.warning("Injected default role: {}", role.name)
@@ -262,11 +259,11 @@ class Authentication(BaseAuthentication):
 
                 self.create_user(
                     {
-                        'email': self.default_user,
-                        'name': 'Default',
-                        'surname': 'User',
-                        'password': self.default_password,
-                        'last_password_change': datetime.now(pytz.utc),
+                        "email": self.default_user,
+                        "name": "Default",
+                        "surname": "User",
+                        "password": self.default_password,
+                        "last_password_change": datetime.now(pytz.utc),
                     },
                     roles=roles,
                 )
@@ -289,13 +286,13 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now()
-        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
+        exp = payload.get("exp", now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         if user is None:
             log.error("Trying to save an empty token")
         else:
             self.db.Token(
-                jti=payload['jti'],
+                jti=payload["jti"],
                 token=token,
                 token_type=token_type,
                 creation=now,
@@ -312,7 +309,7 @@ class Authentication(BaseAuthentication):
     def verify_token_validity(self, jti, user):
 
         try:
-            token_entry = self.db.Token.objects.raw({'jti': jti}).first()
+            token_entry = self.db.Token.objects.raw({"jti": jti}).first()
         except self.db.Token.DoesNotExist:
             return False
 
@@ -324,7 +321,7 @@ class Authentication(BaseAuthentication):
             self.invalidate_token(token=token_entry.token)
             log.info(
                 "This token is no longer valid: expired since {}",
-                token_entry.expiration.strftime("%d/%m/%Y")
+                token_entry.expiration.strftime("%d/%m/%Y"),
             )
             return False
 
@@ -334,7 +331,8 @@ class Authentication(BaseAuthentication):
             if token_entry.IP != ip:
                 log.error(
                     "This token is emitted for IP {}, invalid use from {}",
-                    token_entry.IP, ip
+                    token_entry.IP,
+                    ip,
                 )
                 return False
 
@@ -353,12 +351,12 @@ class Authentication(BaseAuthentication):
             tokens = self.db.Token.objects.all()
         elif user is not None:
             try:
-                tokens = self.db.Token.objects.raw({'user_id': user.id}).all()
+                tokens = self.db.Token.objects.raw({"user_id": user.id}).all()
             except self.db.Token.DoesNotExist:
                 pass
         elif token_jti is not None:
             try:
-                tokens.append(self.db.Token.objects.raw({'jti': token_jti}).first())
+                tokens.append(self.db.Token.objects.raw({"jti": token_jti}).first())
             except self.db.Token.DoesNotExist:
                 pass
 
@@ -380,14 +378,14 @@ class Authentication(BaseAuthentication):
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user'] = token.user_id
+                t["user"] = token.user_id
             tokens_list.append(t)
 
         return tokens_list
 
     def invalidate_token(self, token):
         try:
-            token_entry = self.db.Token.objects.raw({'token': token}).first()
+            token_entry = self.db.Token.objects.raw({"token": token}).first()
             token_entry.delete()
         except self.db.Token.DoesNotExist:
             log.warning("Could not invalidate non-existing token")

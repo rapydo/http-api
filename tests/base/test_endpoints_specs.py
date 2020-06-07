@@ -1,9 +1,9 @@
-from restapi.tests import BaseTests, API_URI
+from restapi.tests import API_URI, BaseTests
+
 # from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-
     def test_GET_specs(self, client):
 
         # Old specs produced by swagger inputs - to be deprecated
@@ -35,13 +35,13 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/swagger")
         assert r.status_code == 200
         content = self.get_content(r)
-        assert 'host' in content
-        assert 'info' in content
-        assert 'swagger' in content
-        assert 'schemes' in content
-        assert 'paths' in content
-        assert 'definitions' in content
-        assert '/api/admin/users' not in content['paths']
+        assert "host" in content
+        assert "info" in content
+        assert "swagger" in content
+        assert "schemes" in content
+        assert "paths" in content
+        assert "definitions" in content
+        assert "/api/admin/users" not in content["paths"]
 
         # Not available in new spec... to be introduced?
         assert "basePath" not in content
@@ -59,13 +59,13 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/swagger", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert 'host' in content
-        assert 'info' in content
-        assert 'swagger' in content
-        assert 'schemes' in content
-        assert 'paths' in content
-        assert 'definitions' in content
-        assert '/auth/logout' in content['paths']
+        assert "host" in content
+        assert "info" in content
+        assert "swagger" in content
+        assert "schemes" in content
+        assert "paths" in content
+        assert "definitions" in content
+        assert "/auth/logout" in content["paths"]
 
         # Not available in new spec... to be introduced?
         assert "basePath" not in content

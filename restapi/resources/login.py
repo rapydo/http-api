@@ -1,15 +1,14 @@
-import pytz
 from datetime import datetime, timedelta
-from flask_apispec import MethodResource
-from restapi.models import InputSchema
-from flask_apispec import use_kwargs
+
+import pytz
+from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields, validate
 
-from restapi.confs import TESTING
-from restapi.rest.definition import EndpointResource
 from restapi import decorators
+from restapi.confs import TESTING
 from restapi.exceptions import Forbidden
-
+from restapi.models import InputSchema
+from restapi.rest.definition import EndpointResource
 
 auth = EndpointResource.load_authentication()
 
@@ -25,12 +24,12 @@ class Credentials(InputSchema):
     new_password = fields.Str(
         required=False,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     password_confirm = fields.Str(
         required=False,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     totp_code = fields.Str(required=False)
 
@@ -55,8 +54,14 @@ class Login(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @use_kwargs(Credentials)
-    def post(self, username, password,
-             new_password=None, password_confirm=None, totp_code=None):
+    def post(
+        self,
+        username,
+        password,
+        new_password=None,
+        password_confirm=None,
+        totp_code=None,
+    ):
 
         username = username.lower()
 
@@ -110,14 +115,11 @@ class Login(MethodResource, EndpointResource):
 
     def verify_information(self, user, totp_auth, totp_code):
 
-        message = {
-            'actions': [],
-            'errors': []
-        }
+        message = {"actions": [], "errors": []}
 
         if totp_auth and totp_code is None:
-            message['actions'].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
-            message['errors'].append("You do not provided a valid second factor")
+            message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
+            message["errors"].append("You do not provided a valid second factor")
 
         epoch = datetime.fromtimestamp(0, pytz.utc)
         last_pwd_change = user.last_password_change
@@ -126,8 +128,8 @@ class Login(MethodResource, EndpointResource):
 
         if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
 
-            message['actions'].append('FIRST LOGIN')
-            message['errors'].append("Please change your temporary password")
+            message["actions"].append("FIRST LOGIN")
+            message["errors"].append("Please change your temporary password")
 
             if totp_auth:
 
@@ -158,8 +160,8 @@ class Login(MethodResource, EndpointResource):
 
             if expired:
 
-                message['actions'].append('PASSWORD EXPIRED')
-                message['errors'].append("Your password is expired, please change it")
+                message["actions"].append("PASSWORD EXPIRED")
+                message["errors"].append("Your password is expired, please change it")
 
-        if message['errors']:
+        if message["errors"]:
             raise Forbidden(message)

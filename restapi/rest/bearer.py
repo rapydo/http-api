@@ -11,18 +11,20 @@ there is no client id nor is client authentication required.
 """
 
 from functools import wraps
+
 from flask import request
+
 from restapi.env import Env
-from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 HTTPAUTH_SCHEME = "Bearer"
-HTTPAUTH_AUTH_FIELD = 'Authorization'
+HTTPAUTH_AUTH_FIELD = "Authorization"
 # Base header for errors
 HTTPAUTH_ERR_HEADER = {
-    'WWW-Authenticate': f'{HTTPAUTH_SCHEME} realm="Authentication Required"'
+    "WWW-Authenticate": f'{HTTPAUTH_SCHEME} realm="Authentication Required"'
 }
-ALLOW_ACCESS_TOKEN_PARAMETER = Env.get_bool('ALLOW_ACCESS_TOKEN_PARAMETER')
+ALLOW_ACCESS_TOKEN_PARAMETER = Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER")
 
 
 class HTTPTokenAuth:
@@ -68,7 +70,7 @@ class HTTPTokenAuth:
         def decorator(func):
             # it is used in Customization to verify if an endpoint is requiring
             # authentication and inject 401 errors
-            func.__dict__['auth.required'] = True
+            func.__dict__["auth.required"] = True
 
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -82,14 +84,16 @@ class HTTPTokenAuth:
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
-                    msg = "Missing credentials in headers" \
-                          f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
+                    msg = (
+                        "Missing credentials in headers"
+                        f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
+                    )
                     log.debug("Unauthorized request: missing credentials")
                     return caller.response(msg, code=401, headers=HTTPAUTH_ERR_HEADER)
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
-                if request.method != 'OPTIONS':
+                if request.method != "OPTIONS":
 
                     caller.unpacked_token = caller.auth.verify_token(token)
                     # Check authentication
@@ -110,8 +114,7 @@ class HTTPTokenAuth:
                 if not caller.auth.verify_roles(roles, required_roles=required_roles):
                     log.info("Unauthorized request: missing privileges")
                     return caller.response(
-                        "You are not authorized: missing privileges",
-                        code=401,
+                        "You are not authorized: missing privileges", code=401,
                     )
 
                 return func(*args, **kwargs)

@@ -13,8 +13,9 @@ http://stackoverflow.com/a/9533843/2114395
 import os
 
 from flask import request
-from werkzeug.utils import secure_filename
 from werkzeug.http import parse_content_range_header
+from werkzeug.utils import secure_filename
+
 from restapi.confs import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
@@ -30,13 +31,13 @@ class Uploader:
     @staticmethod
     def split_dir_and_extension(filepath):
         filebase, fileext = os.path.splitext(filepath)
-        return filebase, fileext.strip('.')
+        return filebase, fileext.strip(".")
 
     def allowed_file(self, filename):
         if len(self.allowed_exts) < 1:
             return True
         return (
-            '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_exts
+            "." in filename and filename.rsplit(".", 1)[1].lower() in self.allowed_exts
         )
 
     @staticmethod
@@ -54,14 +55,13 @@ class Uploader:
     # this method is used by b2stage and mistral
     def upload(self, subfolder=None, force=False):
 
-        if 'file' not in request.files:
+        if "file" not in request.files:
 
             raise RestApiException(
-                "No files specified",
-                status_code=400,
+                "No files specified", status_code=400,
             )
 
-        myfile = request.files['file']
+        myfile = request.files["file"]
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
@@ -107,9 +107,9 @@ class Uploader:
             from plumbum.cmd import file
 
             out = file["-ib", abs_file]()
-            tmp = out.split(';')
+            tmp = out.split(";")
             ftype = tmp[0].strip()
-            fcharset = tmp[1].split('=')[1].strip()
+            fcharset = tmp[1].split("=")[1].strip()
         except Exception:
             log.warning("Unknown type for '{}'", abs_file)
 
@@ -121,8 +121,7 @@ class Uploader:
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
         return self.response(
-            {'filename': fname, 'meta': {'type': ftype, 'charset': fcharset}},
-            code=200,
+            {"filename": fname, "meta": {"type": ftype, "charset": fcharset}}, code=200,
         )
 
     # Compatible with
@@ -143,10 +142,7 @@ class Uploader:
                 os.remove(file_path)
                 log.debug("Forced removal")
             else:
-                return self.response(
-                    f"File '{filename}' already exists",
-                    code=400,
-                )
+                return self.response(f"File '{filename}' already exists", code=400,)
 
         host = get_backend_url()
         url = f"{host}{request.path}/{filename}"
@@ -155,11 +151,8 @@ class Uploader:
 
         return self.response(
             "",
-            headers={
-                "Access-Control-Expose-Headers": "Location",
-                "Location": url
-            },
-            code=201
+            headers={"Access-Control-Expose-Headers": "Location", "Location": url},
+            code=201,
         )
 
     @staticmethod
@@ -290,7 +283,7 @@ class Uploader:
                 # log.critical(content_range.stop)
                 # log.critical(content_range.length)
                 # log.critical(content_range.units)
-                completed = (stop >= total_length)
+                completed = stop >= total_length
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
@@ -320,23 +313,31 @@ class Uploader:
                 from plumbum.cmd import file
 
                 out = file["-ib", file_path]()
-                tmp = out.split(';')
+                tmp = out.split(";")
                 ftype = tmp[0].strip()
-                fcharset = tmp[1].split('=')[1].strip()
+                fcharset = tmp[1].split("=")[1].strip()
             except Exception:
                 log.warning("Unknown type for '{}'", file_path)
 
-            return completed, self.response(
-                {
-                    'filename': filename,
-                    'meta': {'type': ftype, 'charset': fcharset}
-                }, code=200)
+            return (
+                completed,
+                self.response(
+                    {
+                        "filename": filename,
+                        "meta": {"type": ftype, "charset": fcharset},
+                    },
+                    code=200,
+                ),
+            )
 
-        return completed, self.response(
-            "partial",
-            headers={
-                "Access-Control-Expose-Headers": "Range",
-                "Range": "0-{}".format(stop - 1)
-            },
-            code=206
+        return (
+            completed,
+            self.response(
+                "partial",
+                headers={
+                    "Access-Control-Expose-Headers": "Range",
+                    "Range": "0-{}".format(stop - 1),
+                },
+                code=206,
+            ),
         )

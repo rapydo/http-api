@@ -3,10 +3,11 @@ Download data from APIs.
 """
 
 from mimetypes import MimeTypes
-from flask import send_from_directory, stream_with_context, Response
 
-from restapi.services.uploader import Uploader
+from flask import Response, send_from_directory, stream_with_context
+
 from restapi.exceptions import RestApiException
+from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
 
@@ -18,15 +19,10 @@ class Downloader:
     def download(filename=None, subfolder=None, mime=None):
 
         if filename is None:
-            raise RestApiException(
-                "No filename specified to download",
-                status_code=400
-            )
+            raise RestApiException("No filename specified to download", status_code=400)
 
         path = Uploader.absolute_upload_file(
-            filename,
-            subfolder=subfolder,
-            onlydir=True
+            filename, subfolder=subfolder, onlydir=True
         )
         log.info("Provide '{}' from '{}'", filename, path)
 
@@ -56,6 +52,5 @@ class Downloader:
 
         f = open(path, "rb")
         return Response(
-            stream_with_context(Downloader.read_in_chunks(f)),
-            mimetype=mime
+            stream_with_context(Downloader.read_in_chunks(f)), mimetype=mime
         )

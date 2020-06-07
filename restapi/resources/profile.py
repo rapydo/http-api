@@ -1,13 +1,12 @@
-from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
-from flask_apispec import marshal_with
+from flask_apispec import MethodResource, marshal_with, use_kwargs
 from marshmallow import fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi.models import InputSchema, OutputSchema
+
 from restapi import decorators
+from restapi.models import InputSchema, OutputSchema
+from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
-from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 auth = EndpointResource.load_authentication()
 
@@ -16,17 +15,17 @@ class NewPassword(InputSchema):
     password = fields.Str(
         required=True,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     new_password = fields.Str(
         required=True,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     password_confirm = fields.Str(
         required=True,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     totp_code = fields.Str(required=False)
 
@@ -67,7 +66,7 @@ class Profile(MethodResource, EndpointResource):
     labels = ["profile"]
 
     auth_service = detector.authentication_service
-    neo4j_enabled = auth_service == 'neo4j'
+    neo4j_enabled = auth_service == "neo4j"
 
     _GET = {
         "/profile": {
@@ -80,14 +79,12 @@ class Profile(MethodResource, EndpointResource):
     _PUT = {
         "/profile": {
             "summary": "Update user password",
-            "responses": {"200": {"description": "Profile schema retrieved"}},
             "responses": {"204": {"description": "Password updated"}},
         }
     }
     _PATCH = {
         "/profile": {
             "summary": "Update profile information",
-            "responses": {"200": {"description": "Profile schema retrieved"}},
             "responses": {"204": {"description": "Profile updated"}},
         }
     }
@@ -99,25 +96,23 @@ class Profile(MethodResource, EndpointResource):
 
         current_user = self.auth.get_user()
         data = {
-            'uuid': current_user.uuid,
-            'email': current_user.email,
-            'name': current_user.name,
-            'surname': current_user.surname,
-            'isAdmin': self.auth.verify_admin(),
-            'isLocalAdmin': self.auth.verify_local_admin(),
-            'privacy_accepted': current_user.privacy_accepted,
+            "uuid": current_user.uuid,
+            "email": current_user.email,
+            "name": current_user.name,
+            "surname": current_user.surname,
+            "isAdmin": self.auth.verify_admin(),
+            "isLocalAdmin": self.auth.verify_local_admin(),
+            "privacy_accepted": current_user.privacy_accepted,
             # Convert list of Roles into a dict with name: description
-            'roles': {
-                role.name: role.description for role in current_user.roles
-            }
+            "roles": {role.name: role.description for role in current_user.roles},
         }
         if self.neo4j_enabled:
             data["group"] = current_user.belongs_to.single()
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            data['SECOND_FACTOR'] = self.auth.SECOND_FACTOR_AUTHENTICATION
+            data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        CustomProfile = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+        CustomProfile = Meta.get_customizer_class("apis.profile", "CustomProfile")
         if CustomProfile is not None:
             data = CustomProfile.manipulate(ref=self, user=current_user, data=data)
 

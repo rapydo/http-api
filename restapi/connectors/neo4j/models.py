@@ -1,17 +1,16 @@
 """ Models for graph database """
 
 from neomodel import (
-    StructuredNode,
-    StringProperty,
+    BooleanProperty,
     DateTimeProperty,
     EmailProperty,
-    BooleanProperty,
-    RelationshipTo,
-    RelationshipFrom,
-
     OneOrMore,
+    RelationshipFrom,
+    RelationshipTo,
+    StringProperty,
+    StructuredNode,
     ZeroOrMore,
-    ZeroOrOne
+    ZeroOrOne,
 )
 
 from restapi.connectors.neo4j.types import IdentifiedNode
@@ -28,18 +27,18 @@ class User(IdentifiedNode):
     last_password_change = DateTimeProperty()
     is_active = BooleanProperty(default=True)
     privacy_accepted = BooleanProperty(default=True)
-    tokens = RelationshipTo('Token', 'HAS_TOKEN', cardinality=ZeroOrMore)
-    roles = RelationshipTo('Role', 'HAS_ROLE', cardinality=ZeroOrMore)
-    belongs_to = RelationshipTo('Group', 'BELONGS_TO')
-    coordinator = RelationshipTo('Group', 'PI_FOR', cardinality=ZeroOrMore)
+    tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
+    roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
+    belongs_to = RelationshipTo("Group", "BELONGS_TO")
+    coordinator = RelationshipTo("Group", "PI_FOR", cardinality=ZeroOrMore)
 
 
 class Group(IdentifiedNode):
     fullname = StringProperty(required=True, unique_index=False)
     shortname = StringProperty(required=True, unique_index=True)
 
-    members = RelationshipFrom('User', 'BELONGS_TO', cardinality=ZeroOrMore)
-    coordinator = RelationshipFrom('User', 'PI_FOR', cardinality=ZeroOrOne)
+    members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
+    coordinator = RelationshipFrom("User", "PI_FOR", cardinality=ZeroOrOne)
 
 
 class Token(StructuredNode):
@@ -53,10 +52,10 @@ class Token(StructuredNode):
     # no longer used
     hostname = StringProperty()
     location = StringProperty()
-    emitted_for = RelationshipFrom('User', 'HAS_TOKEN', cardinality=ZeroOrOne)
+    emitted_for = RelationshipFrom("User", "HAS_TOKEN", cardinality=ZeroOrOne)
 
 
 class Role(StructuredNode):
     name = StringProperty(required=True, unique_index=True)
-    description = StringProperty(default='No description')
-    privileged = RelationshipFrom(User, 'HAS_ROLE', cardinality=OneOrMore)
+    description = StringProperty(default="No description")
+    privileged = RelationshipFrom(User, "HAS_ROLE", cardinality=OneOrMore)

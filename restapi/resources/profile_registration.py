@@ -1,14 +1,14 @@
-from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
+from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi.models import InputSchema
+
 from restapi import decorators
+from restapi.confs import get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.confs import get_project_configuration
+from restapi.models import InputSchema
 from restapi.resources.profile_activation import send_activation_link
+from restapi.rest.definition import EndpointResource
+from restapi.services.mail import send_mail, send_mail_is_active
 
 # from restapi.utilities.logs import log
 
@@ -16,9 +16,7 @@ from restapi.resources.profile_activation import send_activation_link
 def notify_registration(user):
     if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
         # Sending an email to the administrator
-        title = get_project_configuration(
-            "project.title", default='Unkown title'
-        )
+        title = get_project_configuration("project.title", default="Unkown title")
         subject = f"{title} New credentials requested"
         body = f"New credentials request from {user.email}"
 
@@ -37,7 +35,7 @@ if send_mail_is_active():
         password = fields.Str(
             required=True,
             password=True,
-            validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+            validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
 
     class ProfileRegistration(MethodResource, EndpointResource):
@@ -62,19 +60,15 @@ if send_mail_is_active():
         def post(self, **kwargs):
             """ Register new user """
 
-            email = kwargs.get('email')
+            email = kwargs.get("email")
             user = self.auth.get_user_object(username=email)
             if user is not None:
                 raise RestApiException(
-                    f"This user already exists: {email}",
-                    status_code=409,
+                    f"This user already exists: {email}", status_code=409,
                 )
 
-            kwargs['is_active'] = False
-            user = self.auth.create_user(
-                kwargs,
-                [self.auth.default_role]
-            )
+            kwargs["is_active"] = False
+            user = self.auth.create_user(kwargs, [self.auth.default_role])
 
             try:
                 self.auth.custom_post_handle_user_input(user, kwargs)
@@ -82,7 +76,7 @@ if send_mail_is_active():
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
-                        "project.title", default='Unkown title'
+                        "project.title", default="Unkown title"
                     )
                     subject = f"{title} New credentials requested"
                     body = f"New credentials request from {user.email}"
@@ -93,9 +87,7 @@ if send_mail_is_active():
 
             except BaseException as e:
                 user.delete()
-                raise RestApiException(
-                    f"Errors during account registration: {e}"
-                )
+                raise RestApiException(f"Errors during account registration: {e}")
 
                 return self.response(
                     "We are sending an email to your email address where "

@@ -5,52 +5,59 @@ Add auth checks called /checklogged and /testadmin
 
 import abc
 import base64
-import hmac
 import hashlib
+import hmac
+import re
+from datetime import datetime, timedelta
+
 import jwt
 import pytz
-import re
-
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
 from flask import request
+from passlib.context import CryptContext
 
-from restapi.confs import TESTING
-from restapi.services.detect import Detector
+from restapi.confs import (
+    CUSTOM_PACKAGE,
+    PRODUCTION,
+    SECRET_KEY_FILE,
+    TESTING,
+    get_project_configuration,
+)
 from restapi.env import Env
-from restapi.exceptions import BadRequest, Unauthorized, Forbidden, Conflict
-from restapi.exceptions import ServiceUnavailable
-from restapi.confs import PRODUCTION, CUSTOM_PACKAGE, SECRET_KEY_FILE
-from restapi.confs import get_project_configuration
-
-from restapi.utilities.meta import Meta
-from restapi.utilities.uuid import getUUID
+from restapi.exceptions import (
+    BadRequest,
+    Conflict,
+    Forbidden,
+    ServiceUnavailable,
+    Unauthorized,
+)
+from restapi.services.detect import Detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+from restapi.utilities.uuid import getUUID
 
-ALL_ROLES = 'all'
-ANY_ROLE = 'any'
+ALL_ROLES = "all"
+ANY_ROLE = "any"
 
-if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", '') == 'TOTP':
+if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", "") == "TOTP":
     try:
         import pyotp
+
         # to be replaced, last release is Jun 2016
         import pyqrcode
 
         # import base64
         from io import BytesIO
     except ModuleNotFoundError:
-        log.exit(
-            "Missing libraries for TOTP 2FA authentication"
-        )
+        log.exit("Missing libraries for TOTP 2FA authentication")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 NULL_IP = "0.0.0.0"
-ROLE_DISABLED = 'disabled'
-ADMIN_ROLE = 'admin_root'
-LOCAL_ADMIN_ROLE = 'local_admin'
-USER_ROLE = 'normal_user'
+ROLE_DISABLED = "disabled"
+ADMIN_ROLE = "admin_root"
+LOCAL_ADMIN_ROLE = "local_admin"
+USER_ROLE = "normal_user"
 
 
 class InvalidToken(BaseException):
@@ -69,10 +76,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     JWT_SECRET = None
     # JWT_ALGO = 'HS256'
     # Should be faster on 64bit machines
-    JWT_ALGO = 'HS512'
+    JWT_ALGO = "HS512"
 
     # 1 month in seconds
-    DEFAULT_TOKEN_TTL = Env.get_int('AUTH_JWT_TOKEN_TTL', 2_592_000)
+    DEFAULT_TOKEN_TTL = Env.get_int("AUTH_JWT_TOKEN_TTL", 2_592_000)
     GRACE_PERIOD = timedelta(seconds=7200)  # 2 hours in seconds
     SAVE_LAST_ACCESS_EVERY = timedelta(seconds=60)
 
@@ -91,11 +98,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         self.import_secret(SECRET_KEY_FILE)
 
-        self.TOTP = 'TOTP'
+        self.TOTP = "TOTP"
 
-        self.MIN_PASSWORD_LENGTH = Env.to_int(
-            variables.get("min_password_length", 8)
-        )
+        self.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
         self.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
             variables.get("force_first_password_change")
         )
@@ -108,12 +113,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.DISABLE_UNUSED_CREDENTIALS_AFTER = Env.to_int(
             variables.get("disable_unused_credentials_after", 0)
         )
-        self.REGISTER_FAILED_LOGIN = Env.to_bool(
-            variables.get("register_failed_login")
-        )
-        self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get(
-            "max_login_attempts", 0)
-        )
+        self.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
+        self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
         self.SECOND_FACTOR_AUTHENTICATION = variables.get(
             "second_factor_authentication"
         )
@@ -125,15 +126,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @classmethod
     def myinit(cls):  # pragma: no cover
         log.warning(
-            "Deprecated use of BaseAuthentication.myinit use load_default_user instead")
+            "Deprecated use of BaseAuthentication.myinit use load_default_user instead"
+        )
         cls.load_default_user()
         cls.load_roles()
 
     @classmethod
     def load_default_user(cls):
 
-        cls.default_user = Env.get('AUTH_DEFAULT_USERNAME')
-        cls.default_password = Env.get('AUTH_DEFAULT_PASSWORD')
+        cls.default_user = Env.get("AUTH_DEFAULT_USERNAME")
+        cls.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
         if cls.default_user is None or cls.default_password is None:  # pragma: no cover
             log.exit("Default credentials are unavailable!")
 
@@ -143,7 +145,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not cls.roles_data:  # pragma: no cover
             log.exit("No roles configured")
 
-        cls.default_role = cls.roles_data.pop('default')
+        cls.default_role = cls.roles_data.pop("default")
         cls.roles = []
         for role, description in cls.roles_data.items():
             if description == ROLE_DISABLED:
@@ -157,10 +159,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.REGISTER_FAILED_LOGIN and username is not None:
             self.register_failed_login(username)
 
-        raise Unauthorized(
-            'Invalid username or password',
-            is_warning=True
-        )
+        raise Unauthorized("Invalid username or password", is_warning=True)
 
     def make_login(self, username, password):
         """ The method which will check if credentials are good to go """
@@ -182,7 +181,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.failed_login(username)
 
         # Check if Oauth2 is enabled
-        if user.authmethod != 'credentials':  # pragma: no cover
+        if user.authmethod != "credentials":  # pragma: no cover
             raise BadRequest("Invalid authentication method")
 
         # New hashing algorithm, based on bcrypt
@@ -200,7 +199,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # Probably when ALL users will be converted... uhm... never?? :-D
         if self.check_old_password(user.password, password):  # pragma: no cover
             log.warning(
-                "Old password encoding for user {}, automatic convertion", user.email)
+                "Old password encoding for user {}, automatic convertion", user.email
+            )
 
             now = datetime.now(pytz.utc)
             user.password = BaseAuthentication.get_password_hash(password)
@@ -220,7 +220,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
 
         try:
-            self.JWT_SECRET = open(abs_filename, 'rb').read()
+            self.JWT_SECRET = open(abs_filename, "rb").read()
             return self.JWT_SECRET
         except OSError:  # pragma: no cover
             log.exit("Jwt secret file {} not found", abs_filename)
@@ -233,7 +233,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def encode_string(string):
         """ Encodes a string to bytes, if it isn't already. """
         if isinstance(string, str):
-            string = string.encode('utf-8')
+            string = string.encode("utf-8")
         return string
 
     # Old hashing. Deprecated since 0.7.2
@@ -249,7 +249,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             BaseAuthentication.encode_string(password),
             hashlib.sha512,
         )
-        return base64.b64encode(h.digest()).decode('ascii')
+        return base64.b64encode(h.digest()).decode("ascii")
 
     # Old hashing. Deprecated since 0.7.2
     @staticmethod
@@ -335,16 +335,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if data is None:
                 return None
 
-            if 'country' in data:
+            if "country" in data:
                 try:
-                    c = data['country']['names']['en']
+                    c = data["country"]["names"]["en"]
                     return c
                 except BaseException:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
-            if 'continent' in data:  # pragma: no cover
+            if "continent" in data:  # pragma: no cover
                 try:
-                    c = data['continent']['names']['en']
+                    c = data["continent"]["names"]["en"]
                     return c
 
                 except BaseException:
@@ -363,7 +363,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """ Generate a byte token with JWT library to encrypt the payload """
         self._user = self.get_user_object(payload=payload)
         encode = jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
-            'ascii'
+            "ascii"
         )
 
         return encode
@@ -384,7 +384,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         expiration = timedelta(seconds=duration)
         payload, full_payload = self.fill_payload(
-            user, expiration=expiration, token_type=token_type)
+            user, expiration=expiration, token_type=token_type
+        )
         token = self.create_token(payload)
         return token, full_payload
 
@@ -462,7 +463,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return self.unpacked_token(False)
 
         # implemented from the specific db services
-        if not self.verify_token_validity(jti=payload['jti'], user=user):
+        if not self.verify_token_validity(jti=payload["jti"], user=user):
             if raiseErrors:
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
@@ -470,7 +471,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.verbose("User authorized")
 
         self._user = user
-        return self.unpacked_token(True, token=token, jti=payload['jti'], user=user)
+        return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
     @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
@@ -498,7 +499,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        payload = {'user_id': userobj.uuid, 'jti': getUUID()}
+        payload = {"user_id": userobj.uuid, "jti": getUUID()}
         full_payload = payload.copy()
 
         if not token_type:
@@ -514,15 +515,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if expiration is None:
             expiration = timedelta(seconds=self.DEFAULT_TOKEN_TTL)
         now = datetime.now(pytz.utc)
-        full_payload['iat'] = now
-        full_payload['nbf'] = now  # you can add a timedelta
-        full_payload['exp'] = now + expiration
+        full_payload["iat"] = now
+        full_payload["nbf"] = now  # you can add a timedelta
+        full_payload["exp"] = now + expiration
 
         if not short_token:
             now = datetime.now(pytz.utc)
-            payload['iat'] = full_payload['iat']
-            payload['nbf'] = full_payload['nbf']
-            payload['exp'] = full_payload['exp']
+            payload["iat"] = full_payload["iat"]
+            payload["nbf"] = full_payload["nbf"]
+            payload["exp"] = full_payload["exp"]
 
         # first used for encoding
         # second used to store information on backend DB
@@ -595,7 +596,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def custom_user_properties(userdata):
         module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        CustomizerClass = Meta.get_class_from_string('Customizer', module_path)
+        CustomizerClass = Meta.get_class_from_string("Customizer", module_path)
         if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
@@ -611,15 +612,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def custom_post_handle_user_input(self, user_node, input_data):
         module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        CustomizerClass = Meta.get_class_from_string('Customizer', module_path)
+        CustomizerClass = Meta.get_class_from_string("Customizer", module_path)
         if CustomizerClass is None:
             log.debug("No user properties customizer available")
         else:
             try:
                 CustomizerClass().custom_post_handle_user_input(
-                    self,
-                    user_node,
-                    input_data
+                    self, user_node, input_data
                 )
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
@@ -660,7 +659,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_secret(user):
 
-        return 'base32secret3232'
+        return "base32secret3232"
         # FIXME: use a real secret
         # hashes does not works... maybe too long??
         # import hashlib
@@ -678,13 +677,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_totp(self, user, totp_code):
 
         if totp_code is None:
-            raise Unauthorized('Invalid verification code')
+            raise Unauthorized("Invalid verification code")
         secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code):
             if self.REGISTER_FAILED_LOGIN:
                 self.register_failed_login(user.email)
-            raise Unauthorized('Invalid verification code')
+            raise Unauthorized("Invalid verification code")
 
         return True
 
@@ -694,7 +693,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
 
-        project_name = get_project_configuration('project.title', "No project name")
+        project_name = get_project_configuration("project.title", "No project name")
 
         otpauth_url = totp.provisioning_uri(project_name)
         qr_url = pyqrcode.create(otpauth_url)
@@ -741,9 +740,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if self.VERIFY_PASSWORD_STRENGTH:
 
-            check, msg = self.verify_password_strength(
-                new_password, password
-            )
+            check, msg = self.verify_password_strength(new_password, password)
 
             if not check:
                 raise Conflict(msg)

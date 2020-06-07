@@ -2,27 +2,30 @@
 The Main server factory.
 We create all the internal flask components here.
 """
-import os
 import logging
+import os
+
+import sentry_sdk
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
+from flask_apispec import FlaskApiSpec, MethodResource
 from flask_cors import CORS
 from flask_restful import Api
-from apispec import APISpec
-from flask_apispec import FlaskApiSpec, MethodResource
-from apispec.ext.marshmallow import MarshmallowPlugin
-# from apispec_webframeworks.flask import FlaskPlugin
-# from werkzeug.middleware.proxy_fix import ProxyFix
 from geolite2 import geolite2
-import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+
 from restapi import confs as config
-from restapi.confs import ABS_RESTAPI_PATH, PRODUCTION, SENTRY_URL
-from restapi.confs import get_project_configuration
+from restapi.confs import (
+    ABS_RESTAPI_PATH,
+    PRODUCTION,
+    SENTRY_URL,
+    get_project_configuration,
+)
 from restapi.customization import Customizer
 from restapi.rest.response import handle_marshmallow_errors, log_response
-from restapi.services.mail import send_mail_is_active, test_smtp_client
-
 from restapi.services.detect import detector
+from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -43,10 +46,11 @@ def create_app(
     if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
         log.exit(
-            "Deprecated use of testing_mode, please export env variable APP_MODE=test")
+            "Deprecated use of testing_mode, please export env variable APP_MODE=test"
+        )
 
     # Add template dir for output in HTML
-    kwargs['template_folder'] = os.path.join(ABS_RESTAPI_PATH, 'templates')
+    kwargs["template_folder"] = os.path.join(ABS_RESTAPI_PATH, "templates")
 
     # Flask app instance
     microservice = Flask(name, **kwargs)
@@ -65,21 +69,22 @@ def create_app(
         skip_endpoint_mapping = True
 
     # Fix proxy wsgi for production calls
+    # from werkzeug.middleware.proxy_fix import ProxyFix
     # microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
     # CORS
     if not PRODUCTION:
         cors = CORS(
             allow_headers=[
-                'Content-Type',
-                'Authorization',
-                'X-Requested-With',
-                'x-upload-content-length',
-                'x-upload-content-type',
-                'content-range'
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+                "x-upload-content-length",
+                "x-upload-content-type",
+                "content-range",
             ],
-            supports_credentials=['true'],
-            methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            supports_credentials=["true"],
+            methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         )
 
         cors.init_app(microservice)
@@ -97,9 +102,7 @@ def create_app(
 
     # Find services and try to connect to the ones available
     detector.init_services(
-        app=microservice,
-        project_init=init_mode,
-        project_clean=destroy_mode,
+        app=microservice, project_init=init_mode, project_clean=destroy_mode,
     )
 
     # Initialize reading of all files
@@ -134,32 +137,31 @@ def create_app(
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
-        microservice.config.update({
-            'APISPEC_SPEC': APISpec(
-                title=get_project_configuration(
-                    'project.title', default='Your application name'
+        microservice.config.update(
+            {
+                "APISPEC_SPEC": APISpec(
+                    title=get_project_configuration(
+                        "project.title", default="Your application name"
+                    ),
+                    version=get_project_configuration(
+                        "project.version", default="0.0.1"
+                    ),
+                    openapi_version="2.0",
+                    # OpenApi 3 not working with FlaskApiSpec
+                    # -> Duplicate parameter with name body and location body
+                    # https://github.com/jmcarp/flask-apispec/issues/170
+                    # Find other warning like this by searching:
+                    # **FASTAPI**
+                    # openapi_version="3.0.2",
+                    plugins=[MarshmallowPlugin()],
                 ),
-                version=get_project_configuration(
-                    'project.version', default='0.0.1'
-                ),
-                openapi_version="2.0",
-                # OpenApi 3 not working with FlaskApiSpec
-                # -> Duplicate parameter with name body and location body
-                # https://github.com/jmcarp/flask-apispec/issues/170
-                # Find other warning like this by searching:
-                # **FASTAPI**
-                # openapi_version="3.0.2",
-                plugins=[
-                    # FlaskPlugin(),
-                    MarshmallowPlugin()
-                ],
-            ),
-            # 'APISPEC_SWAGGER_URL': '/api/swagger',
-            'APISPEC_SWAGGER_URL': None,
-            # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
-            # Disable Swagger-UI
-            'APISPEC_SWAGGER_UI_URL': None,
-        })
+                # 'APISPEC_SWAGGER_URL': '/api/swagger',
+                "APISPEC_SWAGGER_URL": None,
+                # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
+                # Disable Swagger-UI
+                "APISPEC_SWAGGER_UI_URL": None,
+            }
+        )
         mem.docs = FlaskApiSpec(microservice)
 
         # Clean app routes
@@ -169,11 +171,11 @@ def create_app(
 
             rulename = str(rule)
             # Skip rules that are only exposing schemas
-            if '/schemas/' in rulename:
+            if "/schemas/" in rulename:
                 continue
 
             endpoint = microservice.view_functions[rule.endpoint]
-            if not hasattr(endpoint, 'view_class'):
+            if not hasattr(endpoint, "view_class"):
                 continue
             newmethods = ignore_verbs.copy()
 
@@ -202,24 +204,17 @@ def create_app(
                     # for m, v in endpoint.custom['params'].items():
                     #     log.critical("{} = {}", m, v)
                     if MethodResource in endpoint.cls.__bases__:
-                        log.error(
-                            "Cannot register {}: {}",
-                            endpoint.cls.__name__,
-                            e
-                        )
+                        log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
                     elif endpoint.iscore:
-                        if endpoint.cls.__name__ != 'SwaggerSpecifications':
-                            log.warning(
-                                "Core endpoint: {}",
-                                endpoint.cls.__name__
-                            )
+                        if endpoint.cls.__name__ != "SwaggerSpecifications":
+                            log.warning("Core endpoint: {}", endpoint.cls.__name__)
                     else:
                         log.verbose("{} on {}", type(e), endpoint.cls)
 
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
     # Logging responses
     microservice.after_request(log_response)

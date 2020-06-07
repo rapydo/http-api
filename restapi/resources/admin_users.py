@@ -1,28 +1,24 @@
 from collections import OrderedDict
-from flask_apispec import MethodResource
-from flask_apispec import marshal_with
-from flask_apispec import use_kwargs
+
+from flask_apispec import MethodResource, marshal_with, use_kwargs
 from marshmallow import fields, validate
-from restapi.models import InputSchema, OutputSchema
 
 from restapi import decorators
-from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 from restapi.confs import get_project_configuration
-from restapi.services.authentication import BaseAuthentication, ROLE_DISABLED
+from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
+from restapi.models import InputSchema, OutputSchema
+from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
 from restapi.services.detect import detector
-from restapi.utilities.meta import Meta
 from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.utilities.templates import get_html_template
-
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+from restapi.utilities.templates import get_html_template
 
 
 def send_notification(user, unhashed_password, is_update=False):
 
-    title = get_project_configuration(
-        "project.title", default='Unkown title'
-    )
+    title = get_project_configuration("project.title", default="Unkown title")
 
     if is_update:
         subject = f"{title}: password changed"
@@ -73,17 +69,13 @@ def parse_roles(properties):
 
 
 def parse_group(v, neo4j):
-    group_id = v.pop('group', None)
+    group_id = v.pop("group", None)
     if group_id is None:
-        raise RestApiException(
-            'Group not found', status_code=400
-        )
+        raise RestApiException("Group not found", status_code=400)
     group = neo4j.Group.nodes.get_or_none(uuid=group_id)
 
     if group is None:
-        raise RestApiException(
-            'Group not found', status_code=400
-        )
+        raise RestApiException("Group not found", status_code=400)
 
     return group
 
@@ -91,9 +83,9 @@ def parse_group(v, neo4j):
 def get_groups():
     auth_service = detector.authentication_service
 
-    if auth_service == 'neo4j':
+    if auth_service == "neo4j":
 
-        neo4j = detector.get_service_instance('neo4j')
+        neo4j = detector.get_service_instance("neo4j")
 
         groups = {}
         for g in neo4j.Group.nodes.all():
@@ -102,10 +94,10 @@ def get_groups():
 
         return groups
 
-    if auth_service == 'sqlalchemy':
+    if auth_service == "sqlalchemy":
         return None
 
-    if auth_service == 'mongo':
+    if auth_service == "mongo":
         return None
 
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
@@ -126,20 +118,20 @@ class Group(OutputSchema):
 def get_output_schema():
     attributes = OrderedDict()
 
-    attributes['uuid'] = fields.Str()
-    attributes['email'] = fields.Email()
-    attributes['name'] = fields.Str()
-    attributes['surname'] = fields.Str()
-    attributes['first_login'] = fields.DateTime(allow_none=True)
-    attributes['last_login'] = fields.DateTime(allow_none=True)
-    attributes['last_password_change'] = fields.DateTime(allow_none=True)
-    attributes['is_active'] = fields.Boolean()
-    attributes['privacy_accepted'] = fields.Boolean()
-    attributes['roles'] = fields.List(fields.Nested(Role))
+    attributes["uuid"] = fields.Str()
+    attributes["email"] = fields.Email()
+    attributes["name"] = fields.Str()
+    attributes["surname"] = fields.Str()
+    attributes["first_login"] = fields.DateTime(allow_none=True)
+    attributes["last_login"] = fields.DateTime(allow_none=True)
+    attributes["last_password_change"] = fields.DateTime(allow_none=True)
+    attributes["is_active"] = fields.Boolean()
+    attributes["privacy_accepted"] = fields.Boolean()
+    attributes["roles"] = fields.List(fields.Nested(Role))
 
-    attributes['belongs_to'] = fields.List(fields.Nested(Group), data_key='group')
+    attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
-    obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
             custom_fields = obj.get_custom_fields(False)
@@ -173,12 +165,14 @@ def getInputSchema(is_put_method):
     attributes["password"] = fields.Str(
         required=set_required,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     attributes["name"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1))
+        required=set_required, validate=validate.Length(min=1)
+    )
     attributes["surname"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1))
+        required=set_required, validate=validate.Length(min=1)
+    )
 
     for key, label in get_roles(auth).items():
         attributes[key] = fields.Bool(label=label)
@@ -187,13 +181,10 @@ def getInputSchema(is_put_method):
     if groups:
         attributes["group"] = fields.Str(
             required=set_required,
-            validate=validate.OneOf(
-                choices=groups.keys(),
-                labels=groups.values()
-            )
+            validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
+    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
     if obj is not None and hasattr(obj, "get_custom_fields"):
         try:
             custom_fields = obj.get_custom_fields(is_put_method)
@@ -203,14 +194,10 @@ def getInputSchema(is_put_method):
             log.error("Could not retrieve custom profile fields:\n{}", e)
 
     if send_mail_is_active():
-        attributes["email_notification"] = fields.Bool(
-            label="Notify password by email"
-        )
+        attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
-    attributes['is_active'] = fields.Bool(
-        label="Activate user",
-        default=True,
-        required=False
+    attributes["is_active"] = fields.Bool(
+        label="Activate user", default=True, required=False
     )
 
     return InputSchema.from_dict(attributes)
@@ -219,9 +206,9 @@ def getInputSchema(is_put_method):
 class AdminUsers(MethodResource, EndpointResource):
 
     auth_service = detector.authentication_service
-    neo4j_enabled = auth_service == 'neo4j'
-    sql_enabled = auth_service == 'sqlalchemy'
-    mongo_enabled = auth_service == 'mongo'
+    neo4j_enabled = auth_service == "neo4j"
+    sql_enabled = auth_service == "sqlalchemy"
+    mongo_enabled = auth_service == "mongo"
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
@@ -268,7 +255,7 @@ class AdminUsers(MethodResource, EndpointResource):
     }
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     @marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
 
@@ -281,18 +268,18 @@ class AdminUsers(MethodResource, EndpointResource):
         return self.response(users)
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     @use_kwargs(getPOSTSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
 
-        email_notification = kwargs.pop('email_notification', False)
+        email_notification = kwargs.pop("email_notification", False)
 
         unhashed_password = kwargs["password"]
 
         # If created by admins users must accept privacy at first login
-        kwargs['privacy_accepted'] = False
+        kwargs["privacy_accepted"] = False
 
         try:
             user = self.auth.create_user(kwargs, roles)
@@ -304,8 +291,8 @@ class AdminUsers(MethodResource, EndpointResource):
             raise RestApiException(str(e), status_code=409)
 
         # FIXME: groups management is only implemented for neo4j
-        if 'group' in kwargs and self.neo4j_enabled:
-            self.graph = self.get_service_instance('neo4j')
+        if "group" in kwargs and self.neo4j_enabled:
+            self.graph = self.get_service_instance("neo4j")
             group = parse_group(kwargs, self.graph)
 
             if group is not None:
@@ -317,7 +304,7 @@ class AdminUsers(MethodResource, EndpointResource):
         return self.response(user.uuid)
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     @use_kwargs(getPUTSchema)
     def put(self, user_id, **kwargs):
 
@@ -340,7 +327,7 @@ class AdminUsers(MethodResource, EndpointResource):
 
         roles = parse_roles(kwargs)
 
-        email_notification = kwargs.pop('email_notification', False)
+        email_notification = kwargs.pop("email_notification", False)
 
         self.auth.link_roles(user, roles)
         db = self.get_service_instance(detector.authentication_service)
@@ -352,7 +339,7 @@ class AdminUsers(MethodResource, EndpointResource):
         self.auth.save_user(user)
 
         # FIXME: groups management is only implemented for neo4j
-        if 'group' in kwargs and self.neo4j_enabled:
+        if "group" in kwargs and self.neo4j_enabled:
 
             group = parse_group(kwargs, self.graph)
 
@@ -372,7 +359,7 @@ class AdminUsers(MethodResource, EndpointResource):
         return self.empty_response()
 
     @decorators.catch_errors()
-    @decorators.auth.required(roles=['admin_root'])
+    @decorators.auth.required(roles=["admin_root"])
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

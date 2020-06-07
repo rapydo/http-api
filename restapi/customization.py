@@ -2,25 +2,30 @@
 Customization based on configuration 'blueprint' files
 """
 
-import os
 import copy
+import os
+
+from attr import ib as attribute
+from attr import s as ClassOfAttributes
 from flask.views import MethodViewType
-from flask_apispec.views import MethodResourceMeta
 from flask_apispec.utils import Annotation
-from attr import s as ClassOfAttributes, ib as attribute
+from flask_apispec.views import MethodResourceMeta
 
-from restapi.confs import API_URL, BASE_URLS, ABS_RESTAPI_PATH, CONF_PATH
-from restapi.confs import CUSTOM_PACKAGE
-from restapi.swagger import Swagger
-# if this unused import is removed tests will fail... :|
-from restapi.services.detect import detector
+from restapi.confs import (
+    ABS_RESTAPI_PATH,
+    API_URL,
+    BASE_URLS,
+    CONF_PATH,
+    CUSTOM_PACKAGE,
+)
 from restapi.env import Env
-
-from restapi.utilities.meta import Meta
+from restapi.services.detect import detector  # do not remove this unsed import
+from restapi.swagger import Swagger
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
-CONF_FOLDERS = Env.load_group(label='project_confs')
+CONF_FOLDERS = Env.load_group(label="project_confs")
 
 
 @ClassOfAttributes
@@ -30,11 +35,10 @@ class EndpointElements:
     uris = attribute(default={})
     methods = attribute(default={})
     tags = attribute(default=[])
-    base_uri = attribute(default='')
+    base_uri = attribute(default="")
 
 
 class Customizer:
-
     def __init__(self):
 
         self._endpoints = []
@@ -45,19 +49,18 @@ class Customizer:
     def load_configuration(self):
         # Reading configuration
         confs_path = os.path.join(os.curdir, CONF_PATH)
-        defaults_path = CONF_FOLDERS.get('defaults_path', confs_path)
-        base_path = CONF_FOLDERS.get('base_path', confs_path)
-        projects_path = CONF_FOLDERS.get('projects_path', confs_path)
-        submodules_path = CONF_FOLDERS.get('submodules_path', confs_path)
+        defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)
+        base_path = CONF_FOLDERS.get("base_path", confs_path)
+        projects_path = CONF_FOLDERS.get("projects_path", confs_path)
+        submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
 
         try:
-            self._configurations, self._extended_project, _ = \
-                read_configuration(
-                    default_file_path=defaults_path,
-                    base_project_path=base_path,
-                    projects_path=projects_path,
-                    submodules_path=submodules_path
-                )
+            self._configurations, self._extended_project, _ = read_configuration(
+                default_file_path=defaults_path,
+                base_project_path=base_path,
+                projects_path=projects_path,
+                submodules_path=submodules_path,
+            )
         except AttributeError as e:  # pragma: no cover
             log.exit(e)
 
@@ -70,57 +73,47 @@ class Customizer:
 
         endpoints_folders = []
         # base swagger dir (rapydo/http-ap)
-        endpoints_folders.append(
-            {
-                'path': ABS_RESTAPI_PATH,
-                'iscore': True
-            }
-        )
+        endpoints_folders.append({"path": ABS_RESTAPI_PATH, "iscore": True})
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
 
             endpoints_folders.append(
                 {
-                    'path': os.path.join(os.curdir, self._extended_project),
-                    'iscore': False
+                    "path": os.path.join(os.curdir, self._extended_project),
+                    "iscore": False,
                 }
             )
 
         # custom swagger dir
         endpoints_folders.append(
-            {
-                'path': os.path.join(os.curdir, CUSTOM_PACKAGE),
-                'iscore': False
-            }
+            {"path": os.path.join(os.curdir, CUSTOM_PACKAGE), "iscore": False}
         )
 
         ERROR_401 = {
             # 'description': 'Missing or invalid credentials or token'
-            'description': 'This endpoint requires a valid authorization token'
+            "description": "This endpoint requires a valid authorization token"
         }
         ERROR_400 = {
-            'description': 'The request cannot be satisfied due to malformed syntax'
+            "description": "The request cannot be satisfied due to malformed syntax"
         }
-        ERROR_404 = {
-            'description': 'The requested resource cannot be found'
-        }
+        ERROR_404 = {"description": "The requested resource cannot be found"}
         ERROR_404_AUTH = {
-            'description': 'The resource cannot be found or you are not authorized'
+            "description": "The resource cannot be found or you are not authorized"
         }
 
         for folder in endpoints_folders:
 
-            base_dir = folder.get('path')
+            base_dir = folder.get("path")
             # get last item of the path
             # normapath is required to strip final / is any
             base_module = os.path.basename(os.path.normpath(base_dir))
 
-            iscore = folder.get('iscore')
-            resources_dir = 'resources' if iscore else 'apis'
+            iscore = folder.get("iscore")
+            resources_dir = "resources" if iscore else "apis"
 
             apis_dir = os.path.join(base_dir, resources_dir)
-            apiclass_module = f'{base_module}.{resources_dir}'
+            apiclass_module = f"{base_module}.{resources_dir}"
 
             # Looking for all file in apis folder
             for epfiles in os.listdir(apis_dir):
@@ -135,9 +128,7 @@ class Customizer:
                 log.debug("Importing {}", module_name)
                 try:
                     module = Meta.get_module_from_string(
-                        module_name,
-                        exit_on_fail=True,
-                        exit_if_not_found=True
+                        module_name, exit_on_fail=True, exit_if_not_found=True
                     )
                 except BaseException as e:  # pragma: no cover
                     log.exit("Cannot import {}\nError: {}", module_name, e)
@@ -156,16 +147,16 @@ class Customizer:
 
                     skip = False
                     for var in epclss.depends_on:
-                        pieces = var.strip().split(' ')
+                        pieces = var.strip().split(" ")
                         pieces_num = len(pieces)
                         if pieces_num == 1:
                             dependency = pieces.pop()
                             negate = False
                         elif pieces_num == 2:
                             negate, dependency = pieces
-                            negate = negate.lower() == 'not'
+                            negate = negate.lower() == "not"
                         else:  # pragma: no cover
-                            log.exit('Wrong depends_on parameter: {}', var)
+                            log.exit("Wrong depends_on parameter: {}", var)
 
                         check = Env.get_bool(dependency)
                         if negate:
@@ -181,7 +172,7 @@ class Customizer:
                             "Skipping '{} {}' due to unmet dependency: {}",
                             module_name,
                             class_name,
-                            dependency
+                            dependency,
                         )
                         continue
 
@@ -190,7 +181,7 @@ class Customizer:
                     if base not in BASE_URLS:
                         log.warning("Invalid base {}", base)
                         base = API_URL
-                    base = base.strip('/')
+                    base = base.strip("/")
 
                     # Building endpoint
                     endpoint = EndpointElements(
@@ -216,9 +207,7 @@ class Customizer:
                             # convert GET -> _GET
                             # Deprecated since 0.7.4
                             else:  # pragma: no cover
-                                log.warning(
-                                    "Obsolete dict {} in {}", m, class_name
-                                )
+                                log.warning("Obsolete dict {} in {}", m, class_name)
 
                         # get, post, put, patch, delete
                         method_fn = m.lower()
@@ -233,52 +222,52 @@ class Customizer:
                         fn = getattr(epclss, method_fn)
 
                         # auth.required injected by the required decorator in bearer.py
-                        auth_required = fn.__dict__.get('auth.required', False)
+                        auth_required = fn.__dict__.get("auth.required", False)
                         for u in conf:
-                            conf[u].setdefault('responses', {})
+                            conf[u].setdefault("responses", {})
 
-                            conf[u]['responses'].setdefault('400', ERROR_400)
+                            conf[u]["responses"].setdefault("400", ERROR_400)
                             if auth_required:
-                                conf[u]['responses'].setdefault('401', ERROR_401)
-                                conf[u]['responses'].setdefault('404', ERROR_404_AUTH)
+                                conf[u]["responses"].setdefault("401", ERROR_401)
+                                conf[u]["responses"].setdefault("404", ERROR_404_AUTH)
                             else:
-                                conf[u]['responses'].setdefault('404', ERROR_404)
+                                conf[u]["responses"].setdefault("404", ERROR_404)
 
                             # inject _METHOD dictionaries into __apispec__ attribute
                             # __apispec__ is normally populated by using @docs decorator
                             if isinstance(epclss, MethodResourceMeta):
 
                                 # retrieve attributes already set with @docs decorator
-                                fn.__apispec__ = fn.__dict__.get('__apispec__', {})
+                                fn.__apispec__ = fn.__dict__.get("__apispec__", {})
                                 docs = {}
-                                for doc in fn.__apispec__['docs']:
+                                for doc in fn.__apispec__["docs"]:
                                     docs.update(doc.options[0])
 
                                 missing = {}
-                                if 'summary' not in docs:
-                                    summary = conf[u].get('summary')
+                                if "summary" not in docs:
+                                    summary = conf[u].get("summary")
                                     if summary is not None:
-                                        missing['summary'] = summary
-                                if 'description' not in docs:
-                                    description = conf[u].get('description')
+                                        missing["summary"] = summary
+                                if "description" not in docs:
+                                    description = conf[u].get("description")
                                     if description is not None:
-                                        missing['description'] = description
-                                if 'tags' not in docs:
+                                        missing["description"] = description
+                                if "tags" not in docs:
                                     if epclss.labels is not None:
-                                        missing['tags'] = epclss.labels
+                                        missing["tags"] = epclss.labels
 
-                                if 'responses' not in docs:
-                                    responses = conf[u].get('responses')
+                                if "responses" not in docs:
+                                    responses = conf[u].get("responses")
                                     if responses is not None:
-                                        missing['responses'] = responses
+                                        missing["responses"] = responses
 
-                                if 'responses' in docs:
-                                    responses = conf[u].get('responses')
+                                if "responses" in docs:
+                                    responses = conf[u].get("responses")
                                     if responses is not None:
                                         for code, resp in responses.items():
-                                            if code not in docs['responses']:
-                                                missing.setdefault('responses', {})
-                                                missing['responses'][code] = resp
+                                            if code not in docs["responses"]:
+                                                missing.setdefault("responses", {})
+                                                missing["responses"][code] = resp
 
                                 # mimic the behaviour of @docs decorator
                                 # https://github.com/jmcarp/flask-apispec/...
@@ -287,11 +276,13 @@ class Customizer:
                                     options=[missing],
                                     # Inherit Swagger documentation from parent classes
                                     # None is the default value
-                                    inherit=None
+                                    inherit=None,
                                 )
-                                fn.__apispec__['docs'].insert(0, annotation)
+                                fn.__apispec__["docs"].insert(0, annotation)
 
-                            elif not isinstance(epclss, MethodViewType):  # pragma: no cover
+                            elif not isinstance(
+                                epclss, MethodViewType
+                            ):  # pragma: no cover
                                 log.warning("Unknown class type: {}", type(epclss))
 
                             mapping_lists.extend(kk)
@@ -320,7 +311,7 @@ class Customizer:
                             method.upper(),
                             uri,
                             endpoint.cls.__name__,
-                            classes[method][uri].__name__
+                            classes[method][uri].__name__,
                         )
                     else:
                         mappings[method].add(uri)
@@ -358,8 +349,10 @@ class Customizer:
                     if not is_safe:
                         log.warning(
                             "Endpoint shadowing detected: {}({m} {}) and {}({m} {})",
-                            classes[method][u1].__name__, u1,
-                            classes[method][u2].__name__, u2,
+                            classes[method][u1].__name__,
+                            u1,
+                            classes[method][u2].__name__,
+                            u2,
                             m=method.upper(),
                         )
 

@@ -1,10 +1,10 @@
-from flask_apispec import MethodResource
 from flask import jsonify
+from flask_apispec import MethodResource
 from glom import glom
+
 from restapi.confs import get_backend_url
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.globals import mem
-
 from restapi.utilities.logs import log
 
 
@@ -19,9 +19,7 @@ class SwaggerSpecifications(EndpointResource):
         "/specs": {
             "summary": "Specifications output throught Swagger (open API) standards",
             "responses": {
-                "200": {
-                    "description": "Endpoints JSON based on OpenAPI Specifications"
-                }
+                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
             },
         }
     }
@@ -32,9 +30,9 @@ class SwaggerSpecifications(EndpointResource):
         specs = mem.customizer._definitions
 
         api_url = get_backend_url()
-        scheme, host = api_url.rstrip('/').split('://')
-        specs['host'] = host
-        specs['schemes'] = [scheme]
+        scheme, host = api_url.rstrip("/").split("://")
+        specs["host"] = host
+        specs["schemes"] = [scheme]
 
         # Jsonify, so we skip custom response building
         return jsonify(specs)
@@ -51,9 +49,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         "/swagger": {
             "summary": "Endpoints specifications based on OpenAPI format",
             "responses": {
-                "200": {
-                    "description": "Endpoints JSON based on OpenAPI Specifications"
-                }
+                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
             },
         }
     }
@@ -84,7 +80,9 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         if not parents:  # pragma: no cover
             log.warning(
                 "Invalid {} definition, unable to determine the visibility {} {}",
-                schema_name, from_private_endpoint, parents
+                schema_name,
+                from_private_endpoint,
+                parents,
             )
             # Let's consider it as private and filter it out
             return True
@@ -100,7 +98,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                 parent,
                 privatedefs,
                 parentdefs,
-                recursion + 1  # prevent infinite recursion
+                recursion + 1,  # prevent infinite recursion
             )
             # The definition is private if only included in private definitions
             # If used in at least one public definition, let's consider it as public
@@ -113,18 +111,16 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         specs = mem.docs.spec.to_dict()
 
         api_url = get_backend_url()
-        scheme, host = api_url.rstrip('/').split('://')
-        specs['host'] = host
-        specs['schemes'] = [scheme]
-        specs['tags'] = mem.customizer._configurations['cleaned_tags']
+        scheme, host = api_url.rstrip("/").split("://")
+        specs["host"] = host
+        specs["schemes"] = [scheme]
+        specs["tags"] = mem.customizer._configurations["cleaned_tags"]
 
         # Remove get_schema parameters from Definitions
-        for schema, definition in specs.get('definitions', {}).items():
-            definition.get('properties', {}).pop('get_schema', None)
+        for schema, definition in specs.get("definitions", {}).items():
+            definition.get("properties", {}).pop("get_schema", None)
 
-        user = self.get_user_if_logged(
-            allow_access_token_parameter=True
-        )
+        user = self.get_user_if_logged(allow_access_token_parameter=True)
         if user:
             return jsonify(specs)
 
@@ -138,7 +134,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         for key, data in specs.items():
 
             # Find endpoint mapping flagged as private
-            if key == 'paths':
+            if key == "paths":
                 for uri, endpoint in data.items():
                     for method, definition in endpoint.items():
 
@@ -146,14 +142,14 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                         is_private = glom(
                             mem.customizer._private_endpoints,
                             f"{u}.{method}",
-                            default=False
+                            default=False,
                         )
-                        for p in definition.get('parameters', []):
-                            if 'schema' not in p:
+                        for p in definition.get("parameters", []):
+                            if "schema" not in p:
                                 continue
-                            if '$ref' not in p['schema']:
+                            if "$ref" not in p["schema"]:
                                 continue
-                            ref = p['schema']['$ref']
+                            ref = p["schema"]["$ref"]
                             def_name = ref.replace("#/definitions/", "")
 
                             privatedefs.setdefault(def_name, True)
@@ -169,7 +165,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                         filtered_specs[key][uri].setdefault(method, definition)
 
                         # definitions
-            elif key == 'definitions':
+            elif key == "definitions":
 
                 # Saving definition inclusion, will be used later to determine
                 # if a definition is private or not
@@ -180,9 +176,9 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                 # Verification postponed
                 for schema, definition in data.items():
                     # parentdefs
-                    for d in definition.get('properties', {}).values():
-                        if '$ref' in d:
-                            ref = d['$ref']
+                    for d in definition.get("properties", {}).values():
+                        if "$ref" in d:
+                            ref = d["$ref"]
                             def_name = ref.replace("#/definitions/", "")
 
                             parentdefs.setdefault(def_name, [])
@@ -191,14 +187,14 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
             else:
                 filtered_specs.setdefault(key, data)
 
-        if 'definitions' in specs:
+        if "definitions" in specs:
 
-            filtered_specs.setdefault('definitions', {})
-            for schema, definition in specs['definitions'].items():
+            filtered_specs.setdefault("definitions", {})
+            for schema, definition in specs["definitions"].items():
 
                 if self.is_definition_private(schema, privatedefs, parentdefs):
                     log.debug("Skipping private definition {}", schema)
                     continue
-                filtered_specs['definitions'].setdefault(schema, definition)
+                filtered_specs["definitions"].setdefault(schema, definition)
 
         return jsonify(filtered_specs)

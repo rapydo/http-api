@@ -1,21 +1,22 @@
 """ Models for the relational database """
 import os
+
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 
 db = OriginalAlchemy()
 
-if os.getenv("ALCHEMY_DBTYPE") == 'mysql+pymysql':
+if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
     # Required by MySQL to accept unicode strings (like chinese)
-    DEFAULT_COLLATION = 'utf8_unicode_ci'
+    DEFAULT_COLLATION = "utf8_unicode_ci"
 else:
     DEFAULT_COLLATION = None
 
 ####################################
 # Define multi-multi relation
 roles_users = db.Table(
-    'roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id')),
+    "roles_users",
+    db.Column("user_id", db.Integer(), db.ForeignKey("user.id")),
+    db.Column("role_id", db.Integer(), db.ForeignKey("role.id")),
 )
 
 
@@ -41,7 +42,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     privacy_accepted = db.Column(db.Boolean, default=True)
     roles = db.relationship(
-        'Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic')
+        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
 
@@ -58,5 +59,5 @@ class Token(db.Model):
     # no longer used
     hostname = db.Column(db.String(256))
     location = db.Column(db.String(256))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    emitted_for = db.relationship('User', backref=db.backref('tokens', lazy='dynamic'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    emitted_for = db.relationship("User", backref=db.backref("tokens", lazy="dynamic"))

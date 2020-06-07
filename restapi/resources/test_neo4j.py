@@ -1,18 +1,16 @@
-from flask_apispec import MethodResource
+from flask_apispec import MethodResource, marshal_with
 from marshmallow import fields
-from flask_apispec import marshal_with
 
-from restapi.rest.definition import EndpointResource
-from restapi.models import OutputSchema, Neo4jSchema, Neo4jChoice
-
-from restapi.services.detect import detector
-from restapi.exceptions import RestApiException
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
+from restapi.exceptions import RestApiException
+from restapi.models import Neo4jChoice, Neo4jSchema, OutputSchema
+from restapi.rest.definition import EndpointResource
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-if TESTING and detector.check_availability('neo4j'):
+if TESTING and detector.check_availability("neo4j"):
 
     from restapi.connectors.neo4j.models import User, Group
 
@@ -24,13 +22,13 @@ if TESTING and detector.check_availability('neo4j'):
         user = Neo4jSchema(
             User,
             fields=(
-                'uuid',
-                'email',
-                'name',
-                'surname',
-                'is_active',
-                'last_password_change',
-            )
+                "uuid",
+                "email",
+                "name",
+                "surname",
+                "is_active",
+                "last_password_change",
+            ),
         )
         group1 = Neo4jSchema(Group, fields="*")
         group2 = Neo4jSchema(Group, fields=("*",))
@@ -59,7 +57,7 @@ if TESTING and detector.check_availability('neo4j'):
         @graph_transactions
         @marshal_with(Output, code=200)
         def get(self, test):
-            self.neo4j = self.get_service_instance('neo4j')
+            self.neo4j = self.get_service_instance("neo4j")
             try:
                 if test == "1":
                     log.info("First Test")

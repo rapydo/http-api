@@ -1,30 +1,30 @@
 import os
 from collections import OrderedDict
+
 import yaml
+
 from restapi.utilities.logs import log
 
-
-PROJECTS_DEFAULTS_FILE = 'projects_defaults.yaml'
-PROJECT_CONF_FILENAME = 'project_configuration.yaml'
+PROJECTS_DEFAULTS_FILE = "projects_defaults.yaml"
+PROJECT_CONF_FILENAME = "project_configuration.yaml"
 
 
 def read_configuration(
-        default_file_path, base_project_path, projects_path, submodules_path):
+    default_file_path, base_project_path, projects_path, submodules_path
+):
     """
     Read default configuration
     """
 
-    custom_configuration = load_yaml_file(
-        PROJECT_CONF_FILENAME, path=base_project_path
-    )
+    custom_configuration = load_yaml_file(PROJECT_CONF_FILENAME, path=base_project_path)
 
     # Verify custom project configuration
-    project = custom_configuration.get('project')
+    project = custom_configuration.get("project")
     # Can't be tested because it is included in default configuration
     if project is None:  # pragma: no cover
         raise AttributeError("Missing project configuration")
 
-    variables = ['title', 'description', 'version', 'rapydo']
+    variables = ["title", "description", "version", "rapydo"]
 
     for key in variables:
         # Can't be tested because it is included in default configuration
@@ -43,20 +43,20 @@ def read_configuration(
             file=PROJECTS_DEFAULTS_FILE, path=default_file_path
         )
 
-    extended_project = project.get('extends')
+    extended_project = project.get("extends")
 
     if extended_project is None:
         # Mix default and custom configuration
         return mix(base_configuration, custom_configuration), None, None
 
-    extends_from = project.get('extends-from', 'projects')
+    extends_from = project.get("extends-from", "projects")
 
     if extends_from == "projects":
         extend_path = projects_path
     elif extends_from.startswith("submodules/"):
         repository_name = (extends_from.split("/")[1]).strip()
-        if repository_name == '':
-            log.exit('Invalid repository name in extends-from, name is empty')
+        if repository_name == "":
+            log.exit("Invalid repository name in extends-from, name is empty")
 
         extend_path = submodules_path
     else:  # pragma: no cover
@@ -67,9 +67,7 @@ def read_configuration(
         log.exit("From project not found: {}", extend_path)
 
     extend_file = f"extended_{PROJECT_CONF_FILENAME}"
-    extended_configuration = load_yaml_file(
-        file=extend_file, path=extend_path
-    )
+    extended_configuration = load_yaml_file(file=extend_file, path=extend_path)
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
@@ -132,8 +130,7 @@ def load_yaml_file(file, path):
     with open(filepath) as fh:
         try:
             OrderedLoader.add_constructor(
-                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-                construct_mapping
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
             )
             docs = list(yaml.load_all(fh, OrderedLoader))
 

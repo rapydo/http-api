@@ -1,28 +1,23 @@
-
 import pytest
-from restapi.services.detect import detector
+
 from restapi.exceptions import ServiceUnavailable
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
 def test_mongo(app):
 
-    if not detector.check_availability('mongo'):
+    if not detector.check_availability("mongo"):
         log.warning("Skipping mongo test: service not available")
         return False
 
     detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
+        app=app, project_init=False, project_clean=False,
     )
 
     try:
         mongo = detector.get_service_instance(
-            "mongo",
-            test_connection=True,
-            host="invalidhostname",
-            port=123
+            "mongo", test_connection=True, host="invalidhostname", port=123
         )
         # test_connection does not work, let's explicitly test it
         try:
@@ -33,8 +28,5 @@ def test_mongo(app):
     except ServiceUnavailable:
         pass
 
-    mongo = detector.get_service_instance(
-        "mongo",
-        test_connection=True,
-    )
+    mongo = detector.get_service_instance("mongo", test_connection=True,)
     assert mongo is not None

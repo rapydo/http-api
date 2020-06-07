@@ -7,26 +7,31 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 """
 
 import re
+from datetime import datetime, timedelta
+from functools import wraps
+
 import pytz
 import sqlalchemy
-from functools import wraps
-from datetime import datetime, timedelta
 from flask_migrate import Migrate
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.exc import IntegrityError, OperationalError, InternalError
+from sqlalchemy.engine.url import URL
+from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
-from sqlalchemy.engine.url import URL
-from sqlalchemy import text
+
+from restapi.confs import (
+    BACKEND_PACKAGE,
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+)
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry, BadRequest, ServiceUnavailable
-from restapi.utilities.meta import Meta
-from restapi.services.authentication import BaseAuthentication, NULL_IP, ROLE_DISABLED
-from restapi.confs import EXTENDED_PROJECT_DISABLED, BACKEND_PACKAGE
-from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.utilities.uuid import getUUID
+from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
+from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+from restapi.utilities.uuid import getUUID
 
 
 def catch_db_exceptions(func):
@@ -43,16 +48,14 @@ def catch_db_exceptions(func):
             raise
         except IntegrityError as e:
 
-            message = str(e).split('\n')
-            if not re.search(r".*duplicate key value violates unique constraint .*",
-                             message[0]):
+            message = str(e).split("\n")
+            if not re.search(
+                r".*duplicate key value violates unique constraint .*", message[0]
+            ):
                 log.error("Unrecognized error message: {}", e)
                 raise DatabaseDuplicatedEntry("Duplicated entry")
 
-            m = re.search(
-                r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.",
-                message[1]
-            )
+            m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", message[1])
 
             if m:
                 prop = m.group(1)
@@ -69,7 +72,7 @@ def catch_db_exceptions(func):
 
             m = re.search(
                 r"Incorrect string value: '(.*)' for column `.*`.`.*`.`(.*)` at row .*",
-                message
+                message,
             )
 
             if m:
@@ -95,9 +98,9 @@ def update_properties(instance, schema, properties):
             key = field
         else:
             # to be deprecated
-            if 'custom' in field:
-                if 'islink' in field['custom']:
-                    if field['custom']['islink']:
+            if "custom" in field:
+                if "islink" in field["custom"]:
+                    if field["custom"]["islink"]:
                         continue
             key = field["name"]
 
@@ -106,7 +109,6 @@ def update_properties(instance, schema, properties):
 
 
 class SqlAlchemy(Connector):
-
     def get_connection_exception(self):
         return (OperationalError,)
 
@@ -116,16 +118,16 @@ class SqlAlchemy(Connector):
         variables.update(kwargs)
 
         db_url = {
-            'database': variables.get('db'),
-            'drivername': variables.get('dbtype', 'postgresql'),
-            'username': variables.get('user'),
-            'password': variables.get('password'),
-            'host': variables.get('host'),
-            'port': variables.get('port'),
+            "database": variables.get("db"),
+            "drivername": variables.get("dbtype", "postgresql"),
+            "username": variables.get("user"),
+            "password": variables.get("password"),
+            "host": variables.get("host"),
+            "port": variables.get("port"),
         }
 
-        if variables.get('dbtype', 'postgresql') == 'mysql+pymysql':
-            db_url['query'] = {'charset': 'utf8mb4'}
+        if variables.get("dbtype", "postgresql") == "mysql+pymysql":
+            db_url["query"] = {"charset": "utf8mb4"}
 
         uri = URL(**db_url)
         # TODO: in case we need different connection binds
@@ -134,21 +136,21 @@ class SqlAlchemy(Connector):
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = uri
+        self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
 
         # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
         # search the original sqlalchemy object into models
-        db = Meta.obj_from_models('db', self.name, CUSTOM_PACKAGE)
+        db = Meta.obj_from_models("db", self.name, CUSTOM_PACKAGE)
 
         # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
         if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            db = Meta.obj_from_models('db', self.name, EXTENDED_PACKAGE)
+            db = Meta.obj_from_models("db", self.name, EXTENDED_PACKAGE)
 
         if db is None:
             log.warning("No sqlalchemy db imported in custom package")
-            db = Meta.obj_from_models('db', self.name, BACKEND_PACKAGE)
+            db = Meta.obj_from_models("db", self.name, BACKEND_PACKAGE)
 
         if db is None:
             log.exit("Could not get 'db' within {} models", self.name)
@@ -170,7 +172,7 @@ class SqlAlchemy(Connector):
         Connection.execute = catch_db_exceptions(Connection.execute)
 
         if test_connection:
-            sql = text('SELECT 1')
+            sql = text("SELECT 1")
             db.engine.execute(sql)
         return db
 
@@ -181,7 +183,7 @@ class SqlAlchemy(Connector):
 
         with self.app.app_context():
 
-            sql = text('SELECT 1')
+            sql = text("SELECT 1")
             db.engine.execute(sql)
 
             db.create_all()
@@ -193,7 +195,7 @@ class SqlAlchemy(Connector):
 
         with self.app.app_context():
 
-            sql = text('SELECT 1')
+            sql = text("SELECT 1")
             db.engine.execute(sql)
 
             db.session.remove()
@@ -209,7 +211,7 @@ class Authentication(BaseAuthentication):
     def create_user(self, userdata, roles):
 
         userdata.setdefault("authmethod", "credentials")
-        userdata.setdefault('uuid', getUUID())
+        userdata.setdefault("uuid", getUUID())
 
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
@@ -239,15 +241,15 @@ class Authentication(BaseAuthentication):
         try:
             if username is not None:
                 user = self.db.User.query.filter_by(email=username).first()
-            if payload is not None and 'user_id' in payload:
-                user = self.db.User.query.filter_by(uuid=payload['user_id']).first()
+            if payload is not None and "user_id" in payload:
+                user = self.db.User.query.filter_by(uuid=payload["user_id"]).first()
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
 
             # Unable to except pymysql.err.OperationalError because:
             # ModuleNotFoundError: No module named 'pymysql.err.OperationalError';
             # 'pymysql.err' is not a package
             # Let's test exception name (OMG!)
-            if type(e).__name__ == 'pymysql.err.OperationalError':
+            if type(e).__name__ == "pymysql.err.OperationalError":
                 # If you catch an error that indicates the connection was closed during
                 # an operation, SQLAlchemy automatically reconnects on the next access.
 
@@ -339,10 +341,7 @@ class Authentication(BaseAuthentication):
             if missing_role:
                 for role_name in self.roles:
                     role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                    role = self.db.Role(
-                        name=role_name,
-                        description=role_description
-                    )
+                    role = self.db.Role(name=role_name, description=role_description)
                     self.db.session.add(role)
                 log.info("Injected default roles")
 
@@ -351,11 +350,11 @@ class Authentication(BaseAuthentication):
             if missing_user:
                 self.create_user(
                     {
-                        'email': self.default_user,
+                        "email": self.default_user,
                         # 'authmethod': 'credentials',
-                        'name': 'Default',
-                        'surname': 'User',
-                        'password': self.default_password,
+                        "name": "Default",
+                        "surname": "User",
+                        "password": self.default_password,
                     },
                     roles=self.roles,
                 )
@@ -382,10 +381,10 @@ class Authentication(BaseAuthentication):
             token_type = self.FULL_TOKEN
 
         now = datetime.now(pytz.utc)
-        exp = payload.get('exp', now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
+        exp = payload.get("exp", now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
         token_entry = self.db.Token(
-            jti=payload['jti'],
+            jti=payload["jti"],
             token=token,
             token_type=token_type,
             creation=now,
@@ -430,7 +429,7 @@ class Authentication(BaseAuthentication):
             self.invalidate_token(token=token_entry.token)
             log.info(
                 "This token is no longer valid: expired since {}",
-                token_entry.expiration.strftime("%d/%m/%Y")
+                token_entry.expiration.strftime("%d/%m/%Y"),
             )
             return False
 
@@ -440,7 +439,8 @@ class Authentication(BaseAuthentication):
             if token_entry.IP != ip:
                 log.error(
                     "This token is emitted for IP {}, invalid use from {}",
-                    token_entry.IP, ip
+                    token_entry.IP,
+                    ip,
                 )
                 return False
 
@@ -491,7 +491,7 @@ class Authentication(BaseAuthentication):
             t["IP"] = token.IP
             t["location"] = token.location
             if get_all:
-                t['user'] = token.emitted_for
+                t["user"] = token.emitted_for
             tokens_list.append(t)
 
         return tokens_list

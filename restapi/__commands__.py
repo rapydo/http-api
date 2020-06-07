@@ -1,12 +1,14 @@
 import os
 import sys
 import time
+
 import click
 from flask.cli import FlaskGroup
+
 from restapi import __package__ as current_package
-from restapi.utilities.processes import wait_socket, find_process
 from restapi.confs import PRODUCTION
 from restapi.utilities.logs import log
+from restapi.utilities.processes import find_process, wait_socket
 
 BIND_INTERFACE = "0.0.0.0"
 
@@ -15,18 +17,18 @@ BIND_INTERFACE = "0.0.0.0"
 # @click.option('--debug/--no-debug', default=False)
 # def cli(debug):
 def cli():  # pragma: no cover
-    click.echo('*** RESTful HTTP API ***')
+    click.echo("*** RESTful HTTP API ***")
 
 
 # Too dangerous to launch it during tests... skipping tests
 def main(args):  # pragma: no cover
 
-    current_app = os.getenv('FLASK_APP')
-    if current_app is None or current_app.strip() == '':
-        os.environ['FLASK_APP'] = f'{current_package}.__main__'
+    current_app = os.getenv("FLASK_APP")
+    if current_app is None or current_app.strip() == "":
+        os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
     fg_cli = FlaskGroup()
-    options = {'prog_name': 'restapi', 'args': args}
+    options = {"prog_name": "restapi", "args": args}
 
     # cannot catch for CTRL+c
     fg_cli.main(**options)
@@ -42,11 +44,7 @@ def flask_cli(options):
 
 def initializing():
 
-    return find_process(
-        current_package,
-        keywords=['init'],
-        prefix='/usr/local/bin/'
-    )
+    return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
 
 
 # Too dangerous to launch it during tests... skipping tests
@@ -57,15 +55,15 @@ def launch():  # pragma: no cover
     mywait()
 
     args = [
-        'run',
-        '--host',
+        "run",
+        "--host",
         BIND_INTERFACE,
-        '--port',
-        os.getenv('FLASK_PORT'),
-        '--reload',
-        '--no-debugger',
-        '--eager-loading',
-        '--with-threads',
+        "--port",
+        os.getenv("FLASK_PORT"),
+        "--reload",
+        "--no-debugger",
+        "--eager-loading",
+        "--with-threads",
     ]
 
     if initializing():
@@ -76,7 +74,7 @@ def launch():  # pragma: no cover
 
 
 @cli.command()
-@click.option('--services', '-s', multiple=True, default=[])
+@click.option("--services", "-s", multiple=True, default=[])
 def verify(services):
     """Verify connected service"""
     from restapi.services.detect import detector
@@ -89,25 +87,25 @@ def verify(services):
         if service not in detector.services:
             log.exit("Service {} not detected", service)
 
-        myclass = detector.services[service].get('class')
+        myclass = detector.services[service].get("class")
         if myclass is None:
             log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
-        host, port = get_service_address(myclass.variables, 'host', 'port', service)
+        host, port = get_service_address(myclass.variables, "host", "port", service)
         wait_socket(host, port, service)
 
     log.info("Completed successfully")
 
 
 @cli.command()
-@click.option('--wait/--no-wait', default=False, help='Wait for DBs to be up')
+@click.option("--wait/--no-wait", default=False, help="Wait for DBs to be up")
 def init(wait):
     """Initialize data for connected services"""
     if wait:
         mywait()
 
     log.info("Initialization requested")
-    flask_cli({'name': 'Initializing services', 'init_mode': True})
+    flask_cli({"name": "Initializing services", "init_mode": True})
 
 
 @cli.command()
@@ -140,73 +138,74 @@ def mywait():
 
     for name, service in detector.services.items():
 
-        myclass = service.get('class')
+        myclass = service.get("class")
         if myclass is None:
             continue
 
-        if name == 'celery':
+        if name == "celery":
 
-            broker = myclass.variables.get('broker')
+            broker = myclass.variables.get("broker")
 
-            if broker == 'RABBIT':
-                service_vars = detector.load_variables(prefix='rabbitmq')
-            elif broker == 'REDIS':
-                service_vars = detector.load_variables(prefix='redis')
+            if broker == "RABBIT":
+                service_vars = detector.load_variables(prefix="rabbitmq")
+            elif broker == "REDIS":
+                service_vars = detector.load_variables(prefix="redis")
             else:
                 log.exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
-            host, port = get_service_address(service_vars, 'host', 'port', broker)
+            host, port = get_service_address(service_vars, "host", "port", broker)
 
             wait_socket(host, port, broker)
 
-            backend = myclass.variables.get('backend')
-            if backend == 'RABBIT':
-                service_vars = detector.load_variables(prefix='rabbitmq')
-            elif backend == 'REDIS':
-                service_vars = detector.load_variables(prefix='redis')
-            elif backend == 'MONGODB':
-                service_vars = detector.load_variables(prefix='mongo')
+            backend = myclass.variables.get("backend")
+            if backend == "RABBIT":
+                service_vars = detector.load_variables(prefix="rabbitmq")
+            elif backend == "REDIS":
+                service_vars = detector.load_variables(prefix="redis")
+            elif backend == "MONGODB":
+                service_vars = detector.load_variables(prefix="mongo")
             else:
                 log.exit("Invalid celery backend: {}", backend)  # pragma: no cover
 
-            host, port = get_service_address(service_vars, 'host', 'port', backend)
+            host, port = get_service_address(service_vars, "host", "port", backend)
 
             wait_socket(host, port, backend)
         else:
-            host, port = get_service_address(myclass.variables, 'host', 'port', name)
+            host, port = get_service_address(myclass.variables, "host", "port", name)
 
             wait_socket(host, port, name)
 
 
 # Too dangerous to launch it during tests... skipping tests
 @cli.command()
-@click.confirmation_option(help='Are you sure you want to drop data?')
+@click.confirmation_option(help="Are you sure you want to drop data?")
 def clean():  # pragma: no cover
     """Destroy current services data"""
-    flask_cli({'name': 'Removing data', 'destroy_mode': True})
+    flask_cli({"name": "Removing data", "destroy_mode": True})
 
 
 @cli.command()
 def forced_clean():  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
-    flask_cli({'name': 'Removing data', 'destroy_mode': True})
+    flask_cli({"name": "Removing data", "destroy_mode": True})
 
 
 @cli.command()
-@click.option('--wait/--no-wait', default=False, help='Wait for startup to finish')
+@click.option("--wait/--no-wait", default=False, help="Wait for startup to finish")
 @click.option(
-    '--core/--no-core', default=False, help='Test for core instead of vanilla code'
+    "--core/--no-core", default=False, help="Test for core instead of vanilla code"
 )
-@click.option('--file', default=None, help='Test a single file of tests')
-@click.option('--folder', default=None, help='Test a single folder of tests')
+@click.option("--file", default=None, help="Test a single file of tests")
+@click.option("--folder", default=None, help="Test a single folder of tests")
 @click.option(
-    '--destroy/--no-destroy', default=False, help='Destroy database after tests')
+    "--destroy/--no-destroy", default=False, help="Destroy database after tests"
+)
 def tests(wait, core, file, folder, destroy):
     """Compute tests and coverage"""
 
     if wait:
         while initializing():
-            log.debug('Waiting services initialization')
+            log.debug("Waiting services initialization")
             time.sleep(5)
         mywait()
 
@@ -241,12 +240,13 @@ def tests(wait, core, file, folder, destroy):
     # In prod mode tests are execute with the server running.
     # Destroy test fails with alchemy due to db locks
     if destroy and not PRODUCTION:
-        os.environ['TEST_DESTROY_MODE'] = "1"
+        os.environ["TEST_DESTROY_MODE"] = "1"
     try:
 
         log.info("Running tests... this may take some time")
         log.debug("Executing: {}", parameters)
         from plumbum import local
+
         command = local["bash"]
         command(parameters, stdout=sys.stdout, stderr=sys.stderr)
         sys.exit(0)

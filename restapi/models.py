@@ -1,15 +1,14 @@
 import inspect
-from neomodel import properties
-from neomodel import StructuredNode
-from neomodel import StructuredRel
+
 from marshmallow import Schema as MarshmallowSchema
-from marshmallow import ValidationError, pre_load, fields
+from marshmallow import ValidationError, fields, pre_load
+from neomodel import StructuredNode, StructuredRel, properties
 
 from restapi.utilities.logs import log
 
-GET_SCHEMA_KEY = 'get_schema'
+GET_SCHEMA_KEY = "get_schema"
 # ISO 8601 format with Zulu time (default Javascript output)
-ISO8601UTC = '%Y-%m-%dT%H:%M:%S.%fZ'
+ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class OutputSchema(MarshmallowSchema):
@@ -22,10 +21,10 @@ class InputSchema(MarshmallowSchema):
         if strip_required:
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
+
     # A fake field user to force return of schemas
     get_schema = fields.Bool(
-        required=False,
-        description="Request schema specifications"
+        required=False, description="Request schema specifications"
     )
 
     # instruct marshmallow to serialize data to a collections.OrderedDict
@@ -36,7 +35,7 @@ class InputSchema(MarshmallowSchema):
     @pre_load
     def raise_get_schema(self, data, **kwargs):
         if GET_SCHEMA_KEY in data:
-            raise ValidationError('Schema requested')
+            raise ValidationError("Schema requested")
         return data
 
 
@@ -46,9 +45,9 @@ class Neo4jSchema(OutputSchema):
 
         if not fields:
             fields = ()
-        elif fields == '*':
+        elif fields == "*":
             fields = None
-        elif fields[0] == '*':
+        elif fields[0] == "*":
             fields = None
         elif isinstance(fields, tuple):
             pass
@@ -110,7 +109,7 @@ class Neo4jSchema(OutputSchema):
                 else:  # pragma: no cover
                     log.error(
                         "Unsupport neomodel property: {}, fallback to StringProperty",
-                        prop.__class__.__name__
+                        prop.__class__.__name__,
                     )
                     self.declared_fields[attribute] = fields.Str()
 
