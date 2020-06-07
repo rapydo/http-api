@@ -156,8 +156,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.exit("Default role {} not available!", cls.default_role)
 
     def failed_login(self, username):
-        if self.REGISTER_FAILED_LOGIN and username is not None:
-            self.register_failed_login(username)
+        # if self.REGISTER_FAILED_LOGIN and username is not None:
+        #     self.register_failed_login(username)
 
         raise Unauthorized("Invalid username or password", is_warning=True)
 
@@ -646,15 +646,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    @staticmethod
-    def register_failed_login(username):
-        log.critical("auth.register_failed_login: not implemented")
-        return True
+    # @staticmethod
+    # def register_failed_login(username):
+    #     log.critical("auth.register_failed_login: not implemented")
+    #     return True
 
-    @staticmethod
-    def get_failed_login(username):
-        log.critical("auth.get_failed_login: not implemented")
-        return 0
+    # @staticmethod
+    # def get_failed_login(username):
+    #     log.critical("auth.get_failed_login: not implemented")
+    #     return 0
 
     @staticmethod
     def get_secret(user):
@@ -758,24 +758,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    def verify_blocked_username(self, username):
+    # def verify_blocked_username(self, username):
 
-        if not self.REGISTER_FAILED_LOGIN:
-            # We do not register failed login
-            return False
-        if self.MAX_LOGIN_ATTEMPTS <= 0:
-            # We register failed login, but we do not set a max num of failures
-            return False
-        # FIXME: implement get_failed_login
-        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
-            # We register and set a max, but user does not reached it yet
-            return False
-        # Dear user, you have exceeded the limit
-        msg = f"""
-            Sorry, this account is temporarily blocked due to
-            more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
-            Try again later"""
-        raise Unauthorized(msg)
+    #     if not self.REGISTER_FAILED_LOGIN:
+    #         # We do not register failed login
+    #         return False
+    #     if self.MAX_LOGIN_ATTEMPTS <= 0:
+    #         # We register failed login, but we do not set a max num of failures
+    #         return False
+    #     # FIXME: implement get_failed_login
+    #     if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+    #         # We register and set a max, but user does not reached it yet
+    #         return False
+    #     # Dear user, you have exceeded the limit
+    #     msg = f"""
+    #         Sorry, this account is temporarily blocked due to
+    #         more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
+    #         Try again later"""
+    #     raise Unauthorized(msg)
 
     def verify_blocked_user(self, user):
 

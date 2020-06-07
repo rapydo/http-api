@@ -337,7 +337,7 @@ class Swagger:
                 swag_dict, config=bravado_config
             )
             log.debug("Swagger configuration is validated")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             error = str(e).split("\n")[0]
             log.error("Failed to validate:\n{}\n", error)
             return False

@@ -60,11 +60,7 @@ class AdminTokens(MethodResource, EndpointResource):
     @decorators.auth.required(roles=["admin_root"])
     def delete(self, token_id):
 
-        try:
-            tokens = self.auth.get_tokens(token_jti=token_id)
-        except BaseException as e:
-            log.error(e)
-            tokens = None
+        tokens = self.auth.get_tokens(token_jti=token_id)
 
         if not tokens:
             raise RestApiException("This token does not exist", status_code=404)

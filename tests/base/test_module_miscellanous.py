@@ -5,8 +5,10 @@ from datetime import datetime
 import psutil
 import pytest
 import pytz
+from marshmallow import fields
 
 from restapi.env import Env
+from restapi.rest.response import ResponseMaker
 from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
@@ -57,6 +59,36 @@ class TestApp(BaseTests):
         assert Env.to_int(faker.pystr()) == 0
         assert Env.to_int(faker.pystr(), random_default) == random_default
         assert Env.to_bool(object) == 0
+
+        assert ResponseMaker.get_schema_type(fields.Str(password=True)) == "password"
+        assert ResponseMaker.get_schema_type(fields.Bool()) == "boolean"
+        assert ResponseMaker.get_schema_type(fields.Boolean()) == "boolean"
+        assert ResponseMaker.get_schema_type(fields.Date()) == "date"
+        assert ResponseMaker.get_schema_type(fields.DateTime()) == "date"
+        assert ResponseMaker.get_schema_type(fields.AwareDateTime()) == "date"
+        assert ResponseMaker.get_schema_type(fields.NaiveDateTime()) == "date"
+        assert ResponseMaker.get_schema_type(fields.Decimal()) == "number"
+        assert ResponseMaker.get_schema_type(fields.Email()) == "email"
+        assert ResponseMaker.get_schema_type(fields.Float()) == "number"
+        assert ResponseMaker.get_schema_type(fields.Int()) == "int"
+        assert ResponseMaker.get_schema_type(fields.Integer()) == "int"
+        assert ResponseMaker.get_schema_type(fields.Number()) == "number"
+        assert ResponseMaker.get_schema_type(fields.Str()) == "string"
+        assert ResponseMaker.get_schema_type(fields.String()) == "string"
+        assert ResponseMaker.get_schema_type(fields.URL()) == "string"
+        assert ResponseMaker.get_schema_type(fields.Url()) == "string"
+        assert ResponseMaker.get_schema_type(fields.UUID()) == "string"
+        # Unsupported types, fallback to string
+        assert ResponseMaker.get_schema_type(fields.Constant("x")) == "string"
+        assert ResponseMaker.get_schema_type(fields.Dict()) == "string"
+        assert ResponseMaker.get_schema_type(fields.Field()) == "string"
+        assert ResponseMaker.get_schema_type(fields.Function()) == "string"
+        assert ResponseMaker.get_schema_type(fields.List(fields.Str())) == "string"
+        assert ResponseMaker.get_schema_type(fields.Mapping()) == "string"
+        assert ResponseMaker.get_schema_type(fields.Method()) == "string"
+        assert ResponseMaker.get_schema_type(fields.Nested(fields.Str())) == "string"
+        assert ResponseMaker.get_schema_type(fields.Raw()) == "string"
+        assert ResponseMaker.get_schema_type(fields.TimeDelta()) == "string"
 
         assert not find_process("this-should-not-exist")
         assert find_process("restapi")

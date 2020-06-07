@@ -70,3 +70,29 @@ class TestApp(BaseTests):
         # TEST TOKEN IS STILL VALID
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200
+
+        # TEST TOKEN DELETION VIA ADMIN ENDPOINT
+        header, token = self.do_login(client, None, None)
+
+        # TEST GET ALL TOKENS
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
+        content = self.get_content(r)
+        assert r.status_code == 200
+
+        token_id = None
+        for c in content:
+            if c["token"] == token:
+                continue
+            token_id = c["id"]
+
+        assert token_id is not None
+
+        r = client.delete(
+            f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
+        )
+        assert r.status_code == 204
+
+        r = client.delete(
+            f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
+        )
+        assert r.status_code == 404
