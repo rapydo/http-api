@@ -32,6 +32,9 @@ PAM_AUTH_SCHEME = 'PAM'
 class IrodsPythonExt(Connector):
 
     def get_connection_exception(self):
+        # Do not catch irods.exceptions.PAM_AUTH_PASSWORD_FAILED and
+        # irods.expcetions.CAT_INVALID_AUTHENTICATION because they are used
+        # by b2safeproxy to identify wrong credentials
         return (
             NotImplementedError,
             ServiceUnavailable,

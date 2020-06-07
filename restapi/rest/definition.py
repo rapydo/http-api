@@ -41,6 +41,7 @@ class EndpointResource(Resource):
 
         self.auth = self.load_authentication()
         try:
+            # to be deprecated
             self.init_parameters()
         except RuntimeError:
             # Once converted everything to FastApi remove this init_parameters
@@ -49,9 +50,6 @@ class EndpointResource(Resource):
             # log.warning(
             #     "self.init_parameters should be removed since handle by webargs")
             pass
-
-    def myname(self):
-        return self.__class__.__name__
 
     @staticmethod
     def load_authentication():
@@ -69,18 +67,16 @@ class EndpointResource(Resource):
             **kwargs
         )
 
+    # to be deprecated (in conjuction with get_input)
     def init_parameters(self):
         # Make sure you can parse arguments at every call
         self._args = {}
         self._json_args = {}
-        self._params = {}
 
         # Query parameters
         self._parser = reqparse.RequestParser()
 
-        # use self to get the classname
-        classname = self.myname()
-        # use request to recover uri and method
+        classname = self.__class__.__name__
         uri = str(request.url_rule)
         method = request.method.lower()
 
@@ -123,17 +119,8 @@ class EndpointResource(Resource):
                 )
                 log.verbose("Accept param '{}' type {}", param, mytype)
 
-        # TODO: should I check body parameters?
-
-    def parse(self):
-        """
-        Parameters may be necessary at any method: Parse them all.
-        """
-
-        self._args = self._parser.parse_args()
-        return self._args
-
-    def get_input(self, forcing=True, single_parameter=None, default=None):
+    # to be deprecated (and after: init_parameters)
+    def get_input(self):
         """
         Recover parameters from current requests.
 
@@ -145,15 +132,14 @@ class EndpointResource(Resource):
         while JSON parameters may be already saved from another previous call
         """
 
-        self.parse()
-        # TODO: study how to apply types in swagger not only for query params
-        # so we can use them for validation
+        # Parameters may be necessary at any method: Parse them all.
+        self._args = self._parser.parse_args()
 
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
         if len(self._json_args) < 1 and request.mimetype != 'application/octet-stream':
             try:
-                self._json_args = request.get_json(force=forcing)
+                self._json_args = request.get_json(force=True)
             except Exception as e:
                 log.verbose("Error retrieving input parameters, {}", e)
 
@@ -172,9 +158,6 @@ class EndpointResource(Resource):
                 if key in self._args and self._args[key] is not None:
                     key += '_json'
                 self._args[key] = value
-
-        if single_parameter is not None:
-            return self._args.get(single_parameter, default)
 
         if len(self._args) > 0:
             log.verbose("Parameters {}", obfuscate_dict(self._args))
@@ -351,6 +334,7 @@ class EndpointResource(Resource):
 
         return user
 
+    # to be deprecated
     # this is a simple wrapper of restapi.swagger.input_validation
     @staticmethod
     def validate_input(json_parameters, definitionName):

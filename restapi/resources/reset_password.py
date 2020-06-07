@@ -2,7 +2,7 @@ import jwt
 
 from flask_apispec import MethodResource
 from flask_apispec import use_kwargs
-from marshmallow import fields
+from marshmallow import fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi import decorators
 from restapi.env import Env
@@ -12,6 +12,8 @@ from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.utilities.templates import get_html_template
 
 from restapi.utilities.logs import log
+
+auth = EndpointResource.load_authentication()
 
 
 def send_password_reset_link(uri, title, reset_email):
@@ -106,7 +108,21 @@ if send_mail_is_active():
             return self.response(msg)
 
         @decorators.catch_errors()
-        def put(self, token):
+        @use_kwargs(
+            {
+                'new_password': fields.Str(
+                    required=False,
+                    password=True,
+                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+                ),
+                'password_confirm': fields.Str(
+                    required=False,
+                    password=True,
+                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+                ),
+            }
+        )
+        def put(self, token, new_password=None, password_confirm=None):
 
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
@@ -157,9 +173,6 @@ if send_mail_is_active():
                     )
 
             # The reset token is valid, do something
-            data = self.get_input()
-            new_password = data.get("new_password")
-            password_confirm = data.get("password_confirm")
 
             # No password to be changed, just a token verification
             if new_password is None and password_confirm is None:

@@ -191,7 +191,7 @@ class Swagger:
     def query_parameters(self, cls, method, uri, params):  # pragma: no cover
         """
         apply decorator to endpoint for query parameters
-        # self._params[classname][URI][method][name]
+        # self._qparams[classname][URI][method][name]
         """
 
         clsname = cls.__name__
