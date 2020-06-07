@@ -1,17 +1,15 @@
 import jwt
-
-from flask_apispec import MethodResource
-from flask_apispec import use_kwargs
+from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi import decorators
-from restapi.env import Env
-from restapi.exceptions import RestApiException, BadRequest, Forbidden
-from restapi.services.mail import send_mail, send_mail_is_active
-from restapi.confs import get_frontend_url, get_project_configuration
-from restapi.utilities.templates import get_html_template
 
+from restapi import decorators
+from restapi.confs import get_frontend_url, get_project_configuration
+from restapi.env import Env
+from restapi.exceptions import BadRequest, Forbidden, RestApiException
+from restapi.rest.definition import EndpointResource
+from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.logs import log
+from restapi.utilities.templates import get_html_template
 
 auth = EndpointResource.load_authentication()
 
@@ -35,6 +33,7 @@ def send_password_reset_link(uri, title, reset_email):
 
 # This endpoint require the server to send the reset token via email
 if send_mail_is_active():
+
     class RecoverPassword(MethodResource, EndpointResource):
 
         baseuri = "/auth"
@@ -64,7 +63,7 @@ if send_mail_is_active():
         }
 
         @decorators.catch_errors()
-        @use_kwargs({'reset_email': fields.Email(required=True)})
+        @use_kwargs({"reset_email": fields.Email(required=True)})
         def post(self, reset_email):
 
             reset_email = reset_email.lower()
@@ -73,7 +72,7 @@ if send_mail_is_active():
 
             if user is None:
                 raise Forbidden(
-                    f'Sorry, {reset_email} is not recognized as a valid username',
+                    f"Sorry, {reset_email} is not recognized as a valid username",
                 )
 
             if user.is_active is not None and not user.is_active:
@@ -81,18 +80,17 @@ if send_mail_is_active():
                 # do not modified it without fix also on frontend side
                 raise Forbidden("Sorry, this account is not active")
 
-            title = get_project_configuration(
-                "project.title", default='Unkown title'
-            )
+            title = get_project_configuration("project.title", default="Unkown title")
 
             reset_token, payload = self.auth.create_temporary_token(
-                user, self.auth.PWD_RESET)
+                user, self.auth.PWD_RESET
+            )
 
             server_url = get_frontend_url()
 
             rt = reset_token.replace(".", "+")
 
-            uri = Env.get("RESET_PASSWORD_URI", '/public/reset')
+            uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
             send_password_reset_link(complete_uri, title, reset_email)
@@ -100,7 +98,8 @@ if send_mail_is_active():
             ##################
             # Completing the reset task
             self.auth.save_token(
-                user, reset_token, payload, token_type=self.auth.PWD_RESET)
+                user, reset_token, payload, token_type=self.auth.PWD_RESET
+            )
 
             msg = "You will shortly receive an email with a link to a page where "
             msg += "you can create a new password, please check your spam/junk folder."
@@ -110,15 +109,15 @@ if send_mail_is_active():
         @decorators.catch_errors()
         @use_kwargs(
             {
-                'new_password': fields.Str(
+                "new_password": fields.Str(
                     required=False,
                     password=True,
-                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
                 ),
-                'password_confirm': fields.Str(
+                "password_confirm": fields.Str(
                     required=False,
                     password=True,
-                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
+                    validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
                 ),
             }
         )
@@ -128,29 +127,27 @@ if send_mail_is_active():
             token = token.replace("+", ".")
             try:
                 unpacked_token = self.auth.verify_token(
-                    token,
-                    raiseErrors=True,
-                    token_type=self.auth.PWD_RESET
+                    token, raiseErrors=True, token_type=self.auth.PWD_RESET
                 )
 
             # If token is expired
             except jwt.exceptions.ExpiredSignatureError:
-                raise BadRequest('Invalid reset token: this request is expired')
+                raise BadRequest("Invalid reset token: this request is expired")
 
             # if token is not yet active
             except jwt.exceptions.ImmatureSignatureError as e:
                 log.info(e)
-                raise BadRequest('Invalid reset token')
+                raise BadRequest("Invalid reset token")
             # if token does not exist (or other generic errors)
             except BaseException as e:
                 log.info(e)
-                raise BadRequest('Invalid reset token')
+                raise BadRequest("Invalid reset token")
 
             # Recovering token object from jti
             jti = unpacked_token[2]
             token_obj = self.auth.get_tokens(token_jti=jti)
             if len(token_obj) == 0:
-                raise BadRequest('Invalid reset token: this request is no longer valid')
+                raise BadRequest("Invalid reset token: this request is no longer valid")
 
             token_obj = token_obj.pop(0)
             emitted = token_obj["emitted"]
@@ -169,7 +166,7 @@ if send_mail_is_active():
                 if last_change > emitted:
                     self.auth.invalidate_token(token)
                     raise BadRequest(
-                        'Invalid reset token: this request is no longer valid',
+                        "Invalid reset token: this request is no longer valid",
                     )
 
             # The reset token is valid, do something
@@ -180,10 +177,10 @@ if send_mail_is_active():
 
             # Something is missing
             if new_password is None or password_confirm is None:
-                raise BadRequest('Invalid password')
+                raise BadRequest("Invalid password")
 
             if new_password != password_confirm:
-                raise BadRequest('New password does not match with confirmation')
+                raise BadRequest("New password does not match with confirmation")
 
             self.auth.change_password(
                 user, user.password, new_password, password_confirm
