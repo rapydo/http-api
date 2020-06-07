@@ -62,14 +62,14 @@ def test_cli():
     try:
         cli.get_service_address(variables, "host", "port", "myservice")
         pytest.fail("No exception raised")
-    except SystemExit as e:
-        assert str(e) == "Cannot find any variable matching host for myservice"
+    except SystemExit:
+        pass
 
     try:
         cli.get_service_address(variables, "myhost", "port", "myservice")
         pytest.fail("No exception raised")
-    except SystemExit as e:
-        assert str(e) == "Cannot find any variable matching port for myservice"
+    except SystemExit:
+        pass
 
     h, p = cli.get_service_address(variables, "myhost", "myport", "myservice")
 
