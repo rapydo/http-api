@@ -10,19 +10,6 @@ from restapi.resources.profile_activation import send_activation_link
 from restapi.rest.definition import EndpointResource
 from restapi.services.mail import send_mail, send_mail_is_active
 
-# from restapi.utilities.logs import log
-
-
-def notify_registration(user):
-    if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
-        # Sending an email to the administrator
-        title = get_project_configuration("project.title", default="Unkown title")
-        subject = f"{title} New credentials requested"
-        body = f"New credentials request from {user.email}"
-
-        send_mail(body, subject)
-
-
 # This endpoint require the server to send the activation oken via email
 if send_mail_is_active():
 

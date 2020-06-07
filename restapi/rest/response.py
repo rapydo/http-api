@@ -244,9 +244,7 @@ class ResponseMaker:
             return "password"
         # types from https://github.com/danohu/py2ng
         # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
-        if isinstance(schema, fields.Bool):
-            return "boolean"
-        if isinstance(schema, fields.Boolean):
+        if isinstance(schema, fields.Bool) or isinstance(schema, fields.Boolean):
             return "boolean"
         # if isinstance(schema, fields.Constant):
         #     return 'any'
@@ -267,9 +265,7 @@ class ResponseMaker:
             return "number"
         # if isinstance(schema, fields.Function):
         #     return 'any'
-        if isinstance(schema, fields.Int):
-            return "int"
-        if isinstance(schema, fields.Integer):
+        if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         # if isinstance(schema, fields.List):
         #     return 'any[]'
@@ -283,18 +279,10 @@ class ResponseMaker:
             return "number"
         # if isinstance(schema, fields.Raw):
         #     return 'any'
-        if isinstance(schema, fields.Str):
-            return "string"
-        if isinstance(schema, fields.String):
+        if isinstance(schema, fields.Str) or isinstance(schema, fields.String):
             return "string"
         # if isinstance(schema, fields.TimeDelta):
         #     return 'any'
-        if isinstance(schema, fields.URL):
-            return "string"
-        if isinstance(schema, fields.Url):
-            return "string"
-        if isinstance(schema, fields.UUID):
-            return "string"
 
         log.error("Unknown schema type: {}", type(schema))
 

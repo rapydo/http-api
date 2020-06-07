@@ -75,10 +75,10 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(fields.Number()) == "number"
         assert ResponseMaker.get_schema_type(fields.Str()) == "string"
         assert ResponseMaker.get_schema_type(fields.String()) == "string"
+        # Unsupported types, fallback to string
         assert ResponseMaker.get_schema_type(fields.URL()) == "string"
         assert ResponseMaker.get_schema_type(fields.Url()) == "string"
         assert ResponseMaker.get_schema_type(fields.UUID()) == "string"
-        # Unsupported types, fallback to string
         assert ResponseMaker.get_schema_type(fields.Constant("x")) == "string"
         assert ResponseMaker.get_schema_type(fields.Dict()) == "string"
         assert ResponseMaker.get_schema_type(fields.Field()) == "string"
