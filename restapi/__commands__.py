@@ -86,7 +86,7 @@ def verify(services):
 
     for service in services:
 
-        myclass = glom(detector.services, f"{service}.class")
+        myclass = glom(detector.services, f"{service}.class", default=None)
         if myclass is None:
             log.exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
