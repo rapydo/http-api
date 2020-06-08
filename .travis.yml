@@ -54,19 +54,14 @@ script:
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
       rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
-      rapydo add task example
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
       rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
-      rapydo add task example
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
       rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
-      rapydo add task example
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
       rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
-      rapydo add task example
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
       rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
-      rapydo add task example
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
@@ -90,6 +85,19 @@ script:
   # Tests in dev mode
   - rapydo -p prj init
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+
+  - if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
+      rapydo add task example
+    elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
+      rapydo add task example
+    elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
+      rapydo add task example
+    elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
+      rapydo add task example
+    elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
+      rapydo add task example
+    fi
+
   - rapydo start
   - sleep 2
   - rapydo logs
