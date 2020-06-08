@@ -87,15 +87,15 @@ script:
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
 
   - if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
-      rapydo add task example
+      rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
-      rapydo add task example
+      rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
-      rapydo add task example
+      rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
-      rapydo add task example
+      rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
-      rapydo add task example
+      rapydo add task example;
     fi
 
   - rapydo start
