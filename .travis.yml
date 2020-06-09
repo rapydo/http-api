@@ -72,7 +72,7 @@ script:
     else
       echo "Unknown template: ${TEMPLATE}";
       travis_terminate 1;
-    fi
+    fi || travis_terminate 1;
 
   - git remote add origin https://your_remote_git/your_project.git
 
@@ -86,7 +86,9 @@ script:
   - rapydo -p prj init
   - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
 
-  - if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
+  - > # this enable multiline commands
+
+    if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
       rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
       rapydo add task example;
@@ -96,7 +98,7 @@ script:
       rapydo add task example;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
       rapydo add task example;
-    fi
+    fi || travis_terminate 1;
 
   - rapydo start
   - sleep 2
