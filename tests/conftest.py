@@ -10,8 +10,8 @@ from restapi.utilities.logs import log
 @pytest.fixture
 def app(mocker):
 
-    mocker.patch("smtplib.SMTP", return_value=SMTP)
-    mocker.patch("smtplib.SMTP_SSL", return_value=SMTP)
+    mocker.patch("smtplib.SMTP", new=SMTP)
+    mocker.patch("smtplib.SMTP_SSL", new=SMTP)
     app = create_app(testing_mode=True)
     return app
 
