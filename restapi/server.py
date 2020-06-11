@@ -36,6 +36,7 @@ def create_app(
     destroy_mode=False,
     worker_mode=False,
     testing_mode=False,
+    test_smtp=None,
     skip_endpoint_mapping=False,
     **kwargs,
 ):
@@ -59,18 +60,22 @@ def create_app(
     if init_mode:
         # microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
-        test_smtp = False
+        if test_smtp is None:
+            test_smtp = False
     elif destroy_mode:
         # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-        test_smtp = False
+        if test_smtp is None:
+            test_smtp = False
     elif testing_mode:
         # microservice.config['TESTING'] = testing_mode
         init_mode = True
-        test_smtp = True
+        if test_smtp is None:
+            test_smtp = True
     elif worker_mode:
         skip_endpoint_mapping = True
-        test_smtp = True
+        if test_smtp is None:
+            test_smtp = True
 
     # Fix proxy wsgi for production calls
     # from werkzeug.middleware.proxy_fix import ProxyFix

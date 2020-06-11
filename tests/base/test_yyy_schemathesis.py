@@ -51,9 +51,10 @@ if not RUN_SCHEMATHESIS:
 else:
     # No need to restore the logger after this test because
     # schemathesis test is the last one!
-    # (just because in alphabetic order there no other tests)
+    # (just because in alphabetic order there are no other tests)
     set_logger("WARNING")
-    app = create_app(testing_mode=True)
+
+    app = create_app(testing_mode=True, test_smtp=False)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
     BaseAuthentication.load_default_user()
     BaseAuthentication.load_roles()

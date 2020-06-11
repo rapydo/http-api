@@ -222,7 +222,7 @@ class Customizer:
                     if epclss.baseuri in BASE_URLS:
                         base = epclss.baseuri
                     else:
-                        log.warning("Invalid base {}", base)
+                        log.warning("Invalid base {}", epclss.baseuri)
                         base = API_URL
                     base = base.strip("/")
 
