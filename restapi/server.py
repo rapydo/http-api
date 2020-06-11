@@ -36,7 +36,6 @@ def create_app(
     destroy_mode=False,
     worker_mode=False,
     testing_mode=False,
-    test_smtp=None,
     skip_endpoint_mapping=False,
     **kwargs,
 ):
@@ -60,22 +59,14 @@ def create_app(
     if init_mode:
         # microservice.config['INIT_MODE'] = init_mode
         skip_endpoint_mapping = True
-        if test_smtp is None:
-            test_smtp = False
     elif destroy_mode:
         # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-        if test_smtp is None:
-            test_smtp = False
     elif testing_mode:
         # microservice.config['TESTING'] = testing_mode
         init_mode = True
-        if test_smtp is None:
-            test_smtp = True
     elif worker_mode:
         skip_endpoint_mapping = True
-        if test_smtp is None:
-            test_smtp = True
 
     # Fix proxy wsgi for production calls
     # from werkzeug.middleware.proxy_fix import ProxyFix
@@ -228,7 +219,7 @@ def create_app(
     # Logging responses
     microservice.after_request(log_response)
 
-    if test_smtp and send_mail_is_active():
+    if send_mail_is_active():
         if not test_smtp_client():
             log.critical("Bad SMTP configuration, unable to create a client")
         else:

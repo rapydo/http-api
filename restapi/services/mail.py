@@ -3,11 +3,18 @@ import os
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from smtplib import SMTP, SMTP_SSL, SMTPAuthenticationError, SMTPException
+from smtplib import SMTPAuthenticationError, SMTPException
 
 import pytz
 
+from restapi.confs import TESTING
 from restapi.utilities.logs import log
+
+if TESTING:
+    from restapi.services.mailmock import SMTP, SMTP_SSL
+else:
+    from smtplib import SMTP, SMTP_SSL  # pragma: no cover
+
 
 # TODO: configure HOST with gmail, search example online
 # Sending e-mails in python, more info: https://pymotw.com/3/smtplib

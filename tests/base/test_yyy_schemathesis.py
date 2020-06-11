@@ -53,8 +53,7 @@ else:
     # schemathesis test is the last one!
     # (just because in alphabetic order there are no other tests)
     set_logger("WARNING")
-
-    app = create_app(testing_mode=True, test_smtp=False)
+    app = create_app(testing_mode=True)
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
     BaseAuthentication.load_default_user()
     BaseAuthentication.load_roles()
