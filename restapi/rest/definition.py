@@ -54,16 +54,14 @@ class EndpointResource(Resource):
     @staticmethod
     def load_authentication():
         # Authentication instance is always needed at each request
-        auth = detector.get_service_instance(AUTH_NAME, authenticator=True)
+        auth = detector.get_service_instance(AUTH_NAME)
         auth.db = detector.get_service_instance(detector.authentication_service)
 
         return auth
 
     @staticmethod
-    def get_service_instance(service_name, global_instance=True, **kwargs):
-        return detector.get_service_instance(
-            service_name, global_instance=global_instance, **kwargs
-        )
+    def get_service_instance(service_name, **kwargs):
+        return detector.get_service_instance(service_name, **kwargs)
 
     # to be deprecated (in conjuction with get_input)
     def init_parameters(self):

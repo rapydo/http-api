@@ -41,7 +41,7 @@ setup(
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.8.1",
-        "pytest-mock==3.1.1",
+        # "pytest-mock==3.1.1",  # not used...
         "schemathesis==1.6.2",
         "Faker==4.1.0",
         # DB and services drivers

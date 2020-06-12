@@ -30,5 +30,5 @@ class Verify(MethodResource, EndpointResource):
                 f"Unknown service: {service}", status_code=404,
             )
 
-        self.get_service_instance(service, global_instance=False)
+        self.get_service_instance(service)
         return self.response(f"Service is reachable: {service}")

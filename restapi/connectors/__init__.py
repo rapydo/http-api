@@ -1,4 +1,5 @@
 import abc
+import threading
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
@@ -41,13 +42,13 @@ class Connector(metaclass=abc.ABCMeta):
     def destroy(self):  # pragma: no cover
         pass
 
-    def close_connection(self, ctx):
+    def close_connection(self):
         """ override this method if you must close
         your connection after each request"""
 
-        # obj = self.get_object(ref=ctx)
+        # obj = self.get_object()
         # obj.close()
-        self.set_object(obj=None, ref=ctx)  # it could be overidden
+        self.set_object(obj=None)  # it could be overidden
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
@@ -80,23 +81,21 @@ class Connector(metaclass=abc.ABCMeta):
         app.teardown_appcontext(self.teardown)
 
     @staticmethod
-    def get_key(ref: object, key: str) -> str:
+    def get_key(key: str) -> str:
         """ Make sure reference and key are strings """
 
-        ref = ref.__class__.__name__
+        return f"{threading.get_native_id()}:{key}"
 
-        return f"{ref}{key}"
-
-    def set_object(self, obj, ref, key="[]") -> None:
+    def set_object(self, obj, key="[]") -> None:
         """ set object into internal array """
 
-        h = self.get_key(ref, key)
+        h = self.get_key(key)
         self.objs[h] = obj
 
-    def get_object(self, ref, key="[]"):
+    def get_object(self, key="[]"):
         """ recover object if any """
 
-        h = self.get_key(ref, key)
+        h = self.get_key(key)
         return self.objs.get(h, None)
 
     def initialize_connection(self, **kwargs):
@@ -125,36 +124,37 @@ class Connector(metaclass=abc.ABCMeta):
         obj.models = self.models
 
     def teardown(self, exception):
-        ctx = stack.top
-        if self.get_object(ref=ctx) is not None:
-            self.close_connection(ctx)
+        # if self.get_object() is not None:
+        #     self.close_connection()
+        pass
 
     def get_instance(self, **kwargs):
 
-        # Parameters
-        global_instance = kwargs.pop("global_instance", False)
-        isauth = kwargs.pop("authenticator", False)
-        cache_expiration = kwargs.pop("cache_expiration", None)
-
-        # When not using the context, this is the first connection
+        # When context is empty this is a connection at loading time
+        # Do not save it
         if stack.top is None:
-            # First connection, before any request
+            log.verbose("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
             obj = self.initialize_connection()
-            self.set_object(obj=obj, ref=self)
-
-            log.verbose("First connection for {}", self.name)
-
             self.set_models_to_service(obj)
-
             return obj
 
-        obj = None
-        ref = self if isauth or global_instance else stack.top
+        # Parameters
+        global_instance = kwargs.pop("global_instance", None)
+        # Deprecated since 0.7.4
+        if global_instance is not None:  # pragma: no cover
+            log.warning("Deprecated use of global_instance flag")
+
+        isauth = kwargs.pop("authenticator", None)
+        # Deprecated since 0.7.4
+        if isauth is not None:  # pragma: no cover
+            log.warning("Deprecated use of isauth flag")
+
+        cache_expiration = kwargs.pop("cache_expiration", None)
+
         unique_hash = str(sorted(kwargs.items()))
 
-        if not isauth:
-            obj = self.get_object(ref=ref, key=unique_hash)
+        obj = self.get_object(key=unique_hash)
 
         if obj and cache_expiration:
             now = datetime.now()
@@ -164,13 +164,13 @@ class Connector(metaclass=abc.ABCMeta):
                 log.info("Cache expired for {}", self)
                 obj = None
 
-        if not obj:
-            # can raise ServiceUnavailable exception
-            obj = self.initialize_connection(**kwargs)
-            self.set_object(obj=obj, ref=ref, key=unique_hash)
+        if obj:
+            return obj
 
+        # can raise ServiceUnavailable exception
+        obj = self.initialize_connection(**kwargs)
         self.set_models_to_service(obj)
-
+        self.set_object(obj=obj, key=unique_hash)
         return obj
 
 
