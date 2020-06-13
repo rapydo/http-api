@@ -161,8 +161,14 @@ class SqlAlchemy(Connector):
         self.db = db
         return db
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         return
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     def initialize(self):
 

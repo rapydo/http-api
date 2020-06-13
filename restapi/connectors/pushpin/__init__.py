@@ -38,8 +38,14 @@ class PushpinExt(Connector):
             raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
         return self
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         return
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     @staticmethod
     def callback(result, message):

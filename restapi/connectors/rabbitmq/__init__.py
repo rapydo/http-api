@@ -71,11 +71,17 @@ class RabbitExt(Connector):
         self.channel = None
         return self
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         if self.connection.is_closed:
             log.debug("Connection already closed")
         else:
             self.connection.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         """

@@ -82,11 +82,17 @@ class MongoExt(Connector):
 
         return self
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         return
 
     def initialize(self):
         pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     def destroy(self):
 

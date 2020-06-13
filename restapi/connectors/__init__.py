@@ -45,7 +45,7 @@ class Connector(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def disconnect(self, **kwargs):  # pragma: no cover
+    def disconnect(self):  # pragma: no cover
         return
 
     @abc.abstractmethod

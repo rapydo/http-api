@@ -205,10 +205,17 @@ class CeleryExt(Connector):
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
 
+        celery_app.disconnect = self.disconnect
         return celery_app
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         return
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     @classmethod
     def get_periodic_task(cls, name):

@@ -162,7 +162,7 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
 
         return self
 
-    def disconnect(self, **kwargs):
+    def disconnect(self):
         self.prc.cleanup()
 
     def __enter__(self):
