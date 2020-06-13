@@ -1,9 +1,7 @@
 """ Models for the relational database """
 import os
 
-from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
-
-db = OriginalAlchemy()
+from restapi.connectors.sqlalchemy import db
 
 if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
     # Required by MySQL to accept unicode strings (like chinese)

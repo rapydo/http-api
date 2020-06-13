@@ -13,6 +13,7 @@ from functools import wraps
 import pytz
 import sqlalchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
@@ -20,18 +21,14 @@ from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.confs import (
-    BACKEND_PACKAGE,
-    CUSTOM_PACKAGE,
-    EXTENDED_PACKAGE,
-    EXTENDED_PROJECT_DISABLED,
-)
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 from restapi.utilities.uuid import getUUID
+
+# all instances have to use the same alchemy object
+db = OriginalAlchemy()
 
 
 def catch_db_exceptions(func):
@@ -91,7 +88,7 @@ def catch_db_exceptions(func):
     return wrapper
 
 
-class SqlAlchemy(Connector):
+class SQLAlchemy(Connector):
     def get_connection_exception(self):
         return (OperationalError,)
 
@@ -123,20 +120,6 @@ class SqlAlchemy(Connector):
 
         # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
         self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-        # search the original sqlalchemy object into models
-        db = Meta.obj_from_models("db", self.name, CUSTOM_PACKAGE)
-
-        # no 'db' set in CUSTOM_PACKAGE, looking for EXTENDED PACKAGE, if any
-        if db is None and EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            db = Meta.obj_from_models("db", self.name, EXTENDED_PACKAGE)
-
-        if db is None:
-            log.warning("No sqlalchemy db imported in custom package")
-            db = Meta.obj_from_models("db", self.name, BACKEND_PACKAGE)
-
-        if db is None:
-            log.exit("Could not get 'db' within {} models", self.name)
 
         # The Alembic package, which handles the migration work, does not recognize
         # type changes in columns by default. If you want that fine level of

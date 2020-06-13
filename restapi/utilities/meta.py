@@ -107,13 +107,6 @@ class Meta:
         return None
 
     @staticmethod
-    def obj_from_models(obj_name, module_name, package):
-        module_name = f"{package}.models.{module_name}"
-        module = Meta.get_module_from_string(module_name, exit_on_fail=True)
-
-        return getattr(module, obj_name, None)
-
-    @staticmethod
     def import_models(name, package, exit_on_fail=True):
 
         if package == BACKEND_PACKAGE:
