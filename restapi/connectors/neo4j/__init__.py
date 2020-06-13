@@ -97,11 +97,59 @@ def graph_transactions(func):
     return wrapper
 
 
-class NeomodelClient:
-    def __init__(self, db):
-        self.db = db
+class NeoModel(Connector):
+    def get_connection_exception(self):
+
+        # from neomodel 3.3.2
+        return (neobolt_ServiceUnavailable, neobolt_AddressError, neobolt_AuthError)
+
+    def connect(self, **kwargs):
+
+        variables = self.variables.copy()
+        variables.update(kwargs)
+
+        USER = variables.get("user", "neo4j")
+        PWD = variables.get("password")
+        HOST = variables.get("host")
+        PORT = variables.get("port")
+        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
+        config.DATABASE_URL = URI
+        # Ensure all DateTimes are provided with a timezone
+        # before being serialised to UTC epoch
+        config.FORCE_TIMEZONE = True  # default False
+        db.url = URI
+        db.set_connection(URI)
+
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
+
+        self.db = db
+        return self
+
+    def disconnect(self, **kwargs):
+        return
+
+    def initialize(self):
+
+        with self.app.app_context():
+
+            auto_index = self.variables.get("autoindexing", "True") == "True"
+
+            if auto_index:
+                try:
+                    remove_all_labels()
+                    install_all_labels()
+                except BaseException as e:
+                    log.exit(str(e))
+
+    def destroy(self):
+
+        graph = self.get_instance()
+
+        with self.app.app_context():
+            log.critical("Destroy current Neo4j data")
+
+            clear_neo4j_database(graph.db)
 
     # def refresh_connection(self):
     #     if self.db.url is None:
@@ -182,58 +230,6 @@ class NeomodelClient:
             tokens[index] += "~1"
 
         return " ".join(tokens)
-
-
-class NeoModel(Connector):
-    def get_connection_exception(self):
-
-        # from neomodel 3.3.2
-        return (neobolt_ServiceUnavailable, neobolt_AddressError, neobolt_AuthError)
-
-    def connect(self, **kwargs):
-
-        variables = self.variables.copy()
-        variables.update(kwargs)
-
-        USER = variables.get("user", "neo4j")
-        PWD = variables.get("password")
-        HOST = variables.get("host")
-        PORT = variables.get("port")
-        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
-        config.DATABASE_URL = URI
-        # Ensure all DateTimes are provided with a timezone
-        # before being serialised to UTC epoch
-        config.FORCE_TIMEZONE = True  # default False
-        db.url = URI
-        db.set_connection(URI)
-
-        client = NeomodelClient(db)
-        return client
-
-    def disconnect(self, **kwargs):
-        return
-
-    def initialize(self):
-
-        with self.app.app_context():
-
-            auto_index = self.variables.get("autoindexing", "True") == "True"
-
-            if auto_index:
-                try:
-                    remove_all_labels()
-                    install_all_labels()
-                except BaseException as e:
-                    log.exit(str(e))
-
-    def destroy(self):
-
-        graph = self.get_instance()
-
-        with self.app.app_context():
-            log.critical("Destroy current Neo4j data")
-
-            clear_neo4j_database(graph.db)
 
 
 class Authentication(BaseAuthentication):
