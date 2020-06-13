@@ -27,8 +27,13 @@ def test_rabbit(app, faker):
     assert rabbit is not None
 
     queue = faker.pystr()
-    assert not rabbit.write_to_queue("test", queue)
+    if rabbit.queue_exists(queue):
+        rabbit.delete_queue(queue)
 
+    assert not rabbit.queue_exists(queue)
+    assert not rabbit.write_to_queue("test", queue)
+    rabbit.create_queue(queue)
+    assert rabbit.queue_exists(queue)
     rabbit.create_queue(queue)
 
     assert rabbit.write_to_queue("test", queue)

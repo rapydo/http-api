@@ -78,12 +78,29 @@ class RabbitExt(Connector):
             self.connection.close()
         self.disconnected = True
 
+    def queue_exists(self, queue):
+        channel = self.get_channel()
+        try:
+            out = channel.queue_declare(queue=queue, passive=True)
+            log.debug(out)
+            return True
+        except pika.exceptions.ChannelClosedByBroker as e:
+            log.error(e)
+            return False
+
     def create_queue(self, queue):
 
         channel = self.get_channel()
-        channel.queue_declare(
+        out = channel.queue_declare(
             queue=queue, durable=True, exclusive=False, auto_delete=False
         )
+        log.debug(out)
+
+    def delete_queue(self, queue):
+
+        channel = self.get_channel()
+        out = channel.queue_delete(queue, if_unused=False, if_empty=False,)
+        log.debug(out)
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         """
