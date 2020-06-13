@@ -83,6 +83,7 @@ class MongoExt(Connector):
         return self
 
     def disconnect(self):
+        self.disconnected = True
         return
 
     def initialize(self):

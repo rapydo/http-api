@@ -76,6 +76,7 @@ class RabbitExt(Connector):
             log.debug("Connection already closed")
         else:
             self.connection.close()
+        self.disconnected = True
 
     def __enter__(self):
         return self

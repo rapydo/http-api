@@ -39,6 +39,7 @@ class PushpinExt(Connector):
         return self
 
     def disconnect(self):
+        self.disconnected = True
         return
 
     def __enter__(self):

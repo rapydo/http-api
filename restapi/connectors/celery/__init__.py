@@ -195,7 +195,9 @@ class CeleryExt(Connector):
         if CeleryExt.celery_app is None:
             CeleryExt.celery_app = celery_app
 
+        self.celery_app = celery_app
         celery_app.disconnect = self.disconnect
+        celery_app.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
@@ -210,6 +212,7 @@ class CeleryExt(Connector):
         return celery_app
 
     def disconnect(self):
+        self.celery_app.disconnected = True
         return
 
     def __enter__(self):

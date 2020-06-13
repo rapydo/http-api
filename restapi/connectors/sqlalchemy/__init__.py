@@ -135,6 +135,7 @@ class SQLAlchemy(Connector):
         db.session.flush = catch_db_exceptions(db.session.flush)
         db.update_properties = self.update_properties
         db.disconnect = self.disconnect
+        db.disconnected = False
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
@@ -147,6 +148,7 @@ class SQLAlchemy(Connector):
         return db
 
     def disconnect(self):
+        self.db.disconnected = True
         return
 
     def __enter__(self):

@@ -164,7 +164,7 @@ class Connector(metaclass=abc.ABCMeta):
                 obj.disconnect()
                 obj = None
 
-        if obj:
+        if obj and not obj.disconnected:
             return obj
 
         # can raise ServiceUnavailable exception
