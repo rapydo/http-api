@@ -36,10 +36,12 @@ class PushpinExt(Connector):
 
         is_active = client.publish_on_stream("admin", "Connection test", sync=True)
 
-        if is_active:
-            return client
+        if not is_active:
+            raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
+        return client
 
-        raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
+    def disconnect(self, **kwargs):
+        return
 
 
 class PushpinClient:

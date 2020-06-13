@@ -210,6 +210,9 @@ class NeoModel(Connector):
         client = NeomodelClient(db)
         return client
 
+    def disconnect(self, **kwargs):
+        return
+
     def initialize(self):
 
         with self.app.app_context():

@@ -18,7 +18,18 @@ class Connector(metaclass=abc.ABCMeta):
         self.name = self.__class__.__name__.lower()
 
         self.app = app
-        self.init_app(app)
+
+        # to implement request-level instances:
+        # 1 . implement a flag or new get_intance to change the key identifier
+        #     i.e. instead of thread.get_native_id set something identifying the request
+        #          probably based on stack.top
+        # 2 . register this teardown for such intances
+        # 3 . properly implement close_connection for such objects
+        # app.teardown_appcontext(self.teardown)
+
+    # def teardown(self, exception):
+    #     if obj := self.get_object('identify the request level object') is not None:
+    #         obj.close_connection()
 
     # Optional: you can override this method to implement initialization at class level
     # For example it is used in Celery to inject tasks into the Connector class
@@ -35,20 +46,16 @@ class Connector(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
+    def disconnect(self, **kwargs):  # pragma: no cover
+        return
+
+    @abc.abstractmethod
     def initialize(self):  # pragma: no cover
         pass
 
     @abc.abstractmethod
     def destroy(self):  # pragma: no cover
         pass
-
-    def close_connection(self):
-        """ override this method if you must close
-        your connection after each request"""
-
-        # obj = self.get_object()
-        # obj.close()
-        self.set_object(obj=None)  # it could be overidden
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
@@ -77,26 +84,19 @@ class Connector(metaclass=abc.ABCMeta):
     def set_variables(cls, envvars):
         cls.variables = envvars
 
-    def init_app(self, app):
-        app.teardown_appcontext(self.teardown)
-
-    @staticmethod
-    def get_key(key: str) -> str:
-        """ Make sure reference and key are strings """
-
-        return f"{threading.get_native_id()}:{key}"
-
     def set_object(self, obj, key="[]") -> None:
         """ set object into internal array """
 
-        h = self.get_key(key)
-        self.objs[h] = obj
+        tid = threading.get_native_id()
+        self.objs.setdefault(tid, {})
+        self.objs[tid][key] = obj
 
     def get_object(self, key="[]"):
         """ recover object if any """
 
-        h = self.get_key(key)
-        return self.objs.get(h, None)
+        tid = threading.get_native_id()
+        self.objs.setdefault(tid, {})
+        return self.objs[tid].get(key, None)
 
     def initialize_connection(self, **kwargs):
 
@@ -122,11 +122,6 @@ class Connector(metaclass=abc.ABCMeta):
             log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
         obj.models = self.models
-
-    def teardown(self, exception):
-        # if self.get_object() is not None:
-        #     self.close_connection()
-        pass
 
     def get_instance(self, **kwargs):
 
@@ -162,6 +157,7 @@ class Connector(metaclass=abc.ABCMeta):
 
             if now >= obj.connection_time + exp:
                 log.info("Cache expired for {}", self)
+                obj.close_connection()
                 obj = None
 
         if obj:

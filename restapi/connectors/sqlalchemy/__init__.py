@@ -176,6 +176,9 @@ class SqlAlchemy(Connector):
             db.engine.execute(sql)
         return db
 
+    def disconnect(self, **kwargs):
+        return
+
     def initialize(self):
 
         db = self.get_instance()

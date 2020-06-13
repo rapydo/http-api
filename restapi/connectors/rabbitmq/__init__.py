@@ -70,6 +70,9 @@ class RabbitExt(Connector):
 
         return RabbitWrapper(connection)
 
+    def disconnect(self, **kwargs):
+        return
+
 
 class RabbitWrapper:
     def __init__(self, connection):

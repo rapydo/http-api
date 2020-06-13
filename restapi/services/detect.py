@@ -136,7 +136,7 @@ class Detector:
                 if not issubclass(connector_class, Connector):
                     continue
 
-                log.verbose("Found connector clas: {}", class_name)
+                log.verbose("Found connector class: {}", class_name)
                 break
             else:
                 log.error("No connector class found in {}/{}", path, connector)

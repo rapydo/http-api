@@ -104,6 +104,9 @@ class MongoExt(Connector):
 
         return obj
 
+    def disconnect(self, **kwargs):
+        return
+
     def initialize(self):
         pass
 

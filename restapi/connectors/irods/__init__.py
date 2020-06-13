@@ -158,6 +158,9 @@ class IrodsPythonExt(Connector):
         client = IrodsPythonClient(prc=obj, variables=variables)
         return client
 
+    def disconnect(self, **kwargs):
+        return
+
     # initialize is only invoked for backend databases
     def initialize(self):  # pragma: no cover
         pass

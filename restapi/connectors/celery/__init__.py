@@ -50,8 +50,6 @@ class CeleryExt(Connector):
 
         if broker is None:  # pragma: no cover
             log.exit("Unable to start Celery, missing broker service")
-            # celery_app = None
-            # return celery_app
 
         # Do not import before loading the ext!
         from restapi.services.detect import Detector
@@ -97,8 +95,7 @@ class CeleryExt(Connector):
             log.info("Configured Redis as broker {}", obfuscate_url(BROKER_URL))
         else:  # pragma: no cover
             log.error("Unable to start Celery: unknown broker service: {}", broker)
-            celery_app = None
-            return celery_app
+            return None
 
         backend = variables.get("backend", broker)
 
@@ -144,8 +141,6 @@ class CeleryExt(Connector):
             log.info("Configured MongoDB as backend {}", obfuscate_url(BACKEND_URL))
         else:  # pragma: no cover
             log.exit("Unable to start Celery unknown backend service: {}", backend)
-            # celery_app = None
-            # return celery_app
 
         celery_app = Celery("RestApiQueue", broker=BROKER_URL, backend=BACKEND_URL)
         celery_app.conf["broker_use_ssl"] = BROKER_USE_SSL
@@ -211,6 +206,9 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         return celery_app
+
+    def disconnect(self, **kwargs):
+        return
 
     @classmethod
     def get_periodic_task(cls, name):
