@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 
+from restapi.connectors.celery import CeleryExt
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -20,7 +21,7 @@ def test_celery(app):
     celery = detector.get_service_instance("celery")
     assert celery is not None
 
-    if celery.CELERYBEAT_SCHEDULER is None:
+    if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
         try:
             celery.get_periodic_task("does_not_exist")
@@ -104,7 +105,7 @@ def test_celery(app):
         assert celery.delete_periodic_task("task2_bis")
         assert not celery.delete_periodic_task("task2_bis")
 
-        if celery.CELERYBEAT_SCHEDULER == "REDIS":
+        if CeleryExt.CELERYBEAT_SCHEDULER == "REDIS":
             try:
                 celery.create_periodic_task(
                     name="task3",
