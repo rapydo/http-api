@@ -10,13 +10,12 @@ from restapi.utilities.logs import log
 
 class Connector(metaclass=abc.ABCMeta):
 
-    models = {}  # I get models on a cls level, instead of instances
+    models = {}
+    objs = {}
 
     def __init__(self, app):
 
-        self.objs = {}
         self.name = self.__class__.__name__.lower()
-
         self.app = app
 
         # to implement request-level instances:
@@ -100,16 +99,17 @@ class Connector(metaclass=abc.ABCMeta):
 
     def initialize_connection(self, **kwargs):
 
-        obj = None
+        # Create a new instance of itself
+        obj = self.__class__(self.app)
 
-        exceptions = self.get_connection_exception()
+        exceptions = obj.get_connection_exception()
         if exceptions is None:
             exceptions = (BaseException,)
 
         try:
-            obj = self.connect(**kwargs)
+            obj = obj.connect(**kwargs)
         except exceptions as e:
-            log.error("{} raised {}: {}", self.name, e.__class__.__name__, e)
+            log.error("{} raised {}: {}", obj.name, e.__class__.__name__, e)
             raise ServiceUnavailable({"Service Unavailable": "Internal server error"})
 
         obj.connection_time = datetime.now()
@@ -156,7 +156,7 @@ class Connector(metaclass=abc.ABCMeta):
             exp = timedelta(seconds=cache_expiration)
 
             if now >= obj.connection_time + exp:
-                log.warning("Cache expired for {}", self)
+                log.info("Cache expired for {}", self)
                 obj.disconnect()
                 obj = None
 
