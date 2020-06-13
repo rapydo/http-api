@@ -58,7 +58,7 @@ class RabbitExt(Connector):
         else:
             ssl_options = None
 
-        connection = pika.BlockingConnection(
+        self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get("host"),
                 port=int(variables.get("port")),
@@ -68,16 +68,14 @@ class RabbitExt(Connector):
             )
         )
 
-        return RabbitWrapper(connection)
+        self.channel = None
+        return self
 
     def disconnect(self, **kwargs):
-        return
-
-
-class RabbitWrapper:
-    def __init__(self, connection):
-        self.__connection = connection
-        self.__channel = None
+        if self.connection.is_closed:
+            log.debug("Connection already closed")
+        else:
+            self.connection.close()
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         """
@@ -110,7 +108,7 @@ class RabbitWrapper:
 
         try:
 
-            channel = self.__get_channel()
+            channel = self.get_channel()
             failed_message = channel.basic_publish(
                 exchange=exchange,
                 routing_key=queue,
@@ -135,7 +133,7 @@ class RabbitWrapper:
 
         except pika.exceptions.AMQPChannelError as e:
             log.error("Failed to write message, channel is dead ({})", e)
-            self.__channel = None
+            self.channel = None
 
         except AttributeError as e:  # pragma: no cover
             log.error("Failed to write message:, {}", e)
@@ -144,7 +142,7 @@ class RabbitWrapper:
 
         return False
 
-    def __get_channel(self):
+    def get_channel(self):
         """
         Return existing channel (if healthy) or create and
         return new one.
@@ -152,18 +150,12 @@ class RabbitWrapper:
         :return: An healthy channel.
         :raises: AttributeError if the connection is None.
         """
-        if self.__channel is None:
+        if self.channel is None:
             log.verbose("Creating new channel.")
-            self.__channel = self.__connection.channel()
+            self.channel = self.connection.channel()
 
-        elif self.__channel.is_closed:
+        elif self.channel.is_closed:
             log.verbose("Recreating channel.")
-            self.__channel = self.__connection.channel()
+            self.channel = self.connection.channel()
 
-        return self.__channel
-
-    def disconnect(self):
-        if self.__connection.is_closed:
-            log.debug("Connection already closed")
-        else:
-            self.__connection.close()
+        return self.channel
