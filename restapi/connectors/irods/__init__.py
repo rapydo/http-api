@@ -166,12 +166,6 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
         self.prc.cleanup()
         self.disconnected = True
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _type, value, tb):
-        self.disconnect()
-
     # initialize is only invoked for backend databases
     def initialize(self):  # pragma: no cover
         pass

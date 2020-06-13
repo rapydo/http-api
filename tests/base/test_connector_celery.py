@@ -158,3 +158,6 @@ def test_celery(app):
 
     # ... close connection again ... nothing should happens
     celery.disconnect()
+
+    with detector.get_service_instance("celery") as obj:
+        assert obj is not None

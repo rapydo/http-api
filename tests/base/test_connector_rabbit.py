@@ -46,3 +46,6 @@ def test_rabbit(app):
 
     # ... close connection again ... nothing should happens
     rabbit.disconnect()
+
+    with detector.get_service_instance("rabbitmq") as obj:
+        assert obj is not None

@@ -210,12 +210,6 @@ class CeleryExt(Connector):
         self.celery_app.disconnected = True
         return
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _type, value, tb):
-        self.disconnect()
-
     @classmethod
     def get_periodic_task(cls, name):
 

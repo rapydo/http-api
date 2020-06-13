@@ -153,3 +153,6 @@ def test_irods(app, faker):
 
     # ... close connection again ... nothing should happens
     irods.disconnect()
+
+    with detector.get_service_instance("irods") as obj:
+        assert obj is not None

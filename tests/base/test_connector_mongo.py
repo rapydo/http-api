@@ -52,3 +52,6 @@ def test_mongo(app):
 
     # ... close connection again ... nothing should happens
     mongo.disconnect()
+
+    with detector.get_service_instance("mongo") as obj:
+        assert obj is not None

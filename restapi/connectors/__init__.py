@@ -40,6 +40,12 @@ class Connector(metaclass=abc.ABCMeta):
     #     if obj := self.get_object('identify the request level object') is not None:
     #         obj.disconnect()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
+
     @abc.abstractmethod
     def get_connection_exception(self):  # pragma: no cover
         return None

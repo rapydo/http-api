@@ -45,3 +45,6 @@ def test_pushpin(app):
 
     # ... close connection again ... nothing should happens
     pushpin.disconnect()
+
+    with detector.get_service_instance("pushpin") as obj:
+        assert obj is not None

@@ -113,3 +113,6 @@ else:
 
             # ... close connection again ... nothing should happens
             neo4j.disconnect()
+
+            with detector.get_service_instance("neo4j") as obj:
+                assert obj is not None
