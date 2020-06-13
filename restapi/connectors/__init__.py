@@ -38,12 +38,6 @@ class Connector(metaclass=abc.ABCMeta):
     #     if obj := self.get_object('identify the request level object') is not None:
     #         obj.disconnect()
 
-    # Optional: you can override this method to implement initialization at class level
-    # For example it is used in Celery to inject tasks into the Connector class
-    @classmethod
-    def init_class(cls):
-        pass
-
     @abc.abstractmethod
     def get_connection_exception(self):  # pragma: no cover
         return None

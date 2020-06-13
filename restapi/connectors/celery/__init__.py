@@ -18,16 +18,6 @@ class CeleryExt(Connector):
     REDBEAT_KEY_PREFIX = "redbeat:"
     celery_app = None
 
-    @classmethod
-    def init_class(cls):
-
-        task_package = f"{CUSTOM_PACKAGE}.tasks"
-
-        tasks = Meta.get_celery_tasks(task_package)
-
-        for func_name, funct in tasks.items():
-            setattr(CeleryExt, func_name, funct)
-
     def get_connection_exception(self):
         return None
 
@@ -206,6 +196,17 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         celery_app.disconnect = self.disconnect
+
+        task_package = f"{CUSTOM_PACKAGE}.tasks"
+
+        tasks = Meta.get_celery_tasks(task_package)
+
+        for func_name, funct in tasks.items():
+            if hasattr(celery_app, func_name):
+                log.error("Celery already has a function named {}", func_name)
+                continue
+            setattr(celery_app, func_name, funct)
+
         return celery_app
 
     def disconnect(self):

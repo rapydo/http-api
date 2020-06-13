@@ -238,7 +238,6 @@ class Detector:
             self.services[connector_name]["connector"] = connector_instance
 
             instances[connector_name] = connector_instance.get_instance()
-            ConnectorClass.init_class()
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")

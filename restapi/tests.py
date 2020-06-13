@@ -279,17 +279,6 @@ class BaseTests:
 
         return {"Authorization": f"Bearer {content}"}, content
 
-    @staticmethod
-    def get_celery(app):
-
-        from restapi.connectors.celery import CeleryExt
-        from restapi.services.detect import detector
-
-        celery = glom(detector.services, "celery.connector")
-        celery.celery_app.app = app
-        CeleryExt.celery_app = celery.celery_app
-        return CeleryExt
-
     def randomString(self, length=16, prefix=""):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated, use fake.password instead")
