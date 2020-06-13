@@ -23,20 +23,6 @@ class IrodsPythonClient:  # pragma: no cover
 
     anonymous_user = "anonymous"
 
-    def __init__(self, prc, variables, default_chunk_size=1_048_576):
-        self.prc = prc
-        self.variables = variables
-        self.chunk_size = self.variables.get("chunksize", default_chunk_size)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _type, value, tb):
-        self.prc.cleanup()
-
-    def connect(self):
-        return self
-
     @staticmethod
     def get_collection_from_path(absolute_path):
         return os.path.dirname(absolute_path)

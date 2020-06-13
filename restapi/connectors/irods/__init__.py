@@ -22,11 +22,12 @@ irodslogger.setLevel(logging.INFO)
 NORMAL_AUTH_SCHEME = "credentials"
 GSI_AUTH_SCHEME = "GSI"
 PAM_AUTH_SCHEME = "PAM"
+DEFAULT_CHUNK_SIZE = 1_048_576
 
 
 # Excluded from coverage because it is only used by a very specific service
 # No further tests will be included in the core
-class IrodsPythonExt(Connector):
+class IrodsPythonExt(Connector, IrodsPythonClient):
     def get_connection_exception(self):
         # Do not catch irods.exceptions.PAM_AUTH_PASSWORD_FAILED and
         # irods.expcetions.CAT_INVALID_AUTHENTICATION because they are used
@@ -155,11 +156,20 @@ class IrodsPythonExt(Connector):
 
             log.verbose("Tested session retrieving '{}'", u.name)
 
-        client = IrodsPythonClient(prc=obj, variables=variables)
-        return client
+        self.prc = obj
+        self.variables = variables
+        self.chunk_size = self.variables.get("chunksize", DEFAULT_CHUNK_SIZE)
+
+        return self
 
     def disconnect(self, **kwargs):
-        return
+        self.prc.cleanup()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     # initialize is only invoked for backend databases
     def initialize(self):  # pragma: no cover
