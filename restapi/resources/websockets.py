@@ -7,7 +7,6 @@ from gripcontrol import (
     encode_websocket_events,
     websocket_control_message,
 )
-from marshmallow import fields
 
 from restapi import decorators
 from restapi.exceptions import RestApiException
@@ -26,16 +25,18 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         }
     }
     _PUT = {
-        "/socket/<channel>": {
+        "/socket/<channel>/<sync>": {
             "description": "Push to socket",
             "responses": {"200": {"description": "Message sent"}},
         }
     }
 
     @decorators.catch_errors()
-    @use_kwargs({"sync": fields.Boolean(required=False)})
     @decorators.auth.required(allow_access_token_parameter=True)
-    def put(self, channel, sync=True):
+    def put(self, channel, sync):
+
+        # Unable to use a kwargs due to conflicts with allow_access_token_parameter
+        sync = sync == "1"
 
         pushpin = self.get_service_instance("pushpin")
 
@@ -107,15 +108,17 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
         }
     }
     _PUT = {
-        "/stream/<channel>": {
+        "/stream/<channel>/<sync>": {
             "description": "Push to stream",
             "responses": {"200": {"description": "Message sent"}},
         }
     }
 
     @decorators.catch_errors()
-    @use_kwargs({"sync": fields.Boolean(required=True)})
-    def put(self, channel, sync=True):
+    def put(self, channel, sync):
+
+        # Unable to use a kwargs due to conflicts with allow_access_token_parameter
+        sync = sync == "1"
 
         pushpin = self.get_service_instance("pushpin")
 

@@ -7,7 +7,7 @@ from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 
-def test_rabbit(app):
+def test_rabbit(app, faker):
 
     if not detector.check_availability("rabbitmq"):
         log.warning("Skipping rabbit test: service not available")
@@ -25,11 +25,18 @@ def test_rabbit(app):
 
     rabbit = detector.get_service_instance("rabbitmq")
     assert rabbit is not None
-    assert rabbit.write_to_queue("test", "celery")
+
+    queue = faker.pystr()
+    assert not rabbit.write_to_queue("test", queue)
+
+    rabbit.create_queue(queue)
+
+    assert rabbit.write_to_queue("test", queue)
+
     rabbit.channel.close()
+
     # Channel is automatically open, if found closed
-    assert rabbit.write_to_queue("test", "celery")
-    # assert not rabbit.write_to_queue("test", "invalidqueue")
+    assert rabbit.write_to_queue("test", queue)
 
     rabbit = detector.get_service_instance("rabbitmq", cache_expiration=1)
     obj_id = id(rabbit)

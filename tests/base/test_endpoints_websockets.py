@@ -14,7 +14,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/socket/{channel}")
         assert r.status_code == 401
 
-        r = client.put(f"{API_URI}/socket/{channel}")
+        r = client.put(f"{API_URI}/socket/{channel}/1")
         assert r.status_code == 401
 
         headers, _ = self.do_login(client, None, None)
@@ -54,23 +54,17 @@ class TestApp(BaseTests):
         assert "Sec-WebSocket-Extensions" in r.headers
         assert r.headers.get("Sec-WebSocket-Extensions") == "grip"
 
-        r = client.put(
-            f"{API_URI}/socket/{channel}", data={"sync": True}, headers=headers
-        )
+        r = client.put(f"{API_URI}/socket/{channel}/1", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 
-        r = client.put(
-            f"{API_URI}/socket/{channel}", data={"sync": False}, headers=headers
-        )
+        r = client.put(f"{API_URI}/socket/{channel}/0", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=False)"
 
         # send message on a different channel
         channel = fake.pystr()
-        r = client.put(
-            f"{API_URI}/socket/{channel}", data={"sync": True}, headers=headers
-        )
+        r = client.put(f"{API_URI}/socket/{channel}/1", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 
@@ -82,14 +76,10 @@ class TestApp(BaseTests):
         assert r.headers["Grip-Hold"] == "stream"
         assert "Grip-Channel" in r.headers
 
-        r = client.put(
-            f"{API_URI}/stream/{channel}", data={"sync": True}, headers=headers
-        )
+        r = client.put(f"{API_URI}/stream/{channel}/1", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 
-        r = client.put(
-            f"{API_URI}/stream/{channel}", data={"sync": False}, headers=headers
-        )
+        r = client.put(f"{API_URI}/stream/{channel}/0", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=False)"

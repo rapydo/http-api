@@ -78,6 +78,13 @@ class RabbitExt(Connector):
             self.connection.close()
         self.disconnected = True
 
+    def create_queue(self, queue):
+
+        channel = self.get_channel()
+        channel.queue_declare(
+            queue=queue, durable=True, exclusive=False, auto_delete=False
+        )
+
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         """
         Send a log message to the RabbitMQ queue, unless
@@ -110,20 +117,17 @@ class RabbitExt(Connector):
         try:
 
             channel = self.get_channel()
-            failed_message = channel.basic_publish(
+            channel.basic_publish(
                 exchange=exchange,
                 routing_key=queue,
                 body=body,
                 properties=props,
                 mandatory=True,
             )
-
-            if failed_message:
-                log.error("RabbitMQ write failed {}", failed_message)
-                return False
-
             log.verbose("Message sent to RabbitMQ")
             return True
+        except pika.exceptions.UnroutableError as e:
+            log.error(e)
 
         except pika.exceptions.ConnectionClosed as e:
             # TODO: This happens often. Check if heartbeat solves problem.
@@ -139,8 +143,6 @@ class RabbitExt(Connector):
         except AttributeError as e:  # pragma: no cover
             log.error("Failed to write message:, {}", e)
 
-        log.warning("Could not write to RabbitMQ ({}, {}): {}", exchange, queue, body)
-
         return False
 
     def get_channel(self):
@@ -154,9 +156,11 @@ class RabbitExt(Connector):
         if self.channel is None:
             log.verbose("Creating new channel.")
             self.channel = self.connection.channel()
+            self.channel.confirm_delivery()
 
         elif self.channel.is_closed:
             log.verbose("Recreating channel.")
             self.channel = self.connection.channel()
+            self.channel.confirm_delivery()
 
         return self.channel
