@@ -174,28 +174,3 @@ class Connector(metaclass=abc.ABCMeta):
         self.set_models_to_service(obj)
         self.set_object(obj=obj, key=unique_hash)
         return obj
-
-
-def get_debug_instance(MyClass):
-    """
-    Obtain a debug instance from any flask ext we have in the app
-
-    e.g.
-    from restapi.connectors import get_debug_instance
-    from restapi.connectors.celery import CeleryExt
-    obj = get_debug_instance(CeleryExt)
-    """
-
-    #######
-    # NOTE: impors are needed here for logging to work correctly
-    from restapi.services.detect import detector
-
-    log.verbose("Detector imported: {}", detector)  # avoid PEP complaints
-    # FIXME: e.g. importing-programmatically
-    # docs.python.org/3/library/importlib.html
-
-    #######
-    instance = MyClass()
-    obj = instance.initialize_connection()
-    instance.set_models_to_service(obj)
-    return obj
