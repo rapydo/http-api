@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 import pytest
@@ -137,3 +138,23 @@ def test_celery(app):
                 name="task3", task="task.does.not.exists", every="60", period="minutes"
             )
             assert CeleryExt.delete_periodic_task("task3")
+
+    celery = detector.get_service_instance("celery", cache_expiration=1)
+    obj_id = id(celery)
+
+    celery = detector.get_service_instance("celery", cache_expiration=1)
+    assert id(celery) == obj_id
+
+    time.sleep(1)
+
+    celery = detector.get_service_instance("celery", cache_expiration=1)
+    assert id(celery) != obj_id
+
+    # Close connection...
+    celery.disconnect()
+
+    # Test connection... should fail!
+    # ??
+
+    # ... close connection again ... nothing should happens
+    celery.disconnect()

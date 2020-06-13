@@ -24,12 +24,12 @@ class Connector(metaclass=abc.ABCMeta):
         #     i.e. instead of thread.get_native_id set something identifying the request
         #          probably based on stack.top
         # 2 . register this teardown for such intances
-        # 3 . properly implement close_connection for such objects
+        # 3 . call disconnect for such objects
         # app.teardown_appcontext(self.teardown)
 
     # def teardown(self, exception):
     #     if obj := self.get_object('identify the request level object') is not None:
-    #         obj.close_connection()
+    #         obj.disconnect()
 
     # Optional: you can override this method to implement initialization at class level
     # For example it is used in Celery to inject tasks into the Connector class
@@ -157,7 +157,7 @@ class Connector(metaclass=abc.ABCMeta):
 
             if now >= obj.connection_time + exp:
                 log.info("Cache expired for {}", self)
-                obj.close_connection()
+                obj.disconnect()
                 obj = None
 
         if obj:

@@ -1,4 +1,5 @@
 import os
+import time
 
 import pytest
 
@@ -132,3 +133,23 @@ def test_irods(app, faker):
     # content = irods.list(path)
     # here we should also find collection2
     # assert content == {}
+
+    irods = detector.get_service_instance("irods", cache_expiration=1)
+    obj_id = id(irods)
+
+    irods = detector.get_service_instance("irods", cache_expiration=1)
+    assert id(irods) == obj_id
+
+    time.sleep(1)
+
+    irods = detector.get_service_instance("irods", cache_expiration=1)
+    assert id(irods) != obj_id
+
+    # Close connection...
+    irods.disconnect()
+
+    # Test connection... should fail!
+    # ??
+
+    # ... close connection again ... nothing should happens
+    irods.disconnect()

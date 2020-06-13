@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import dateutil.parser
@@ -92,3 +93,23 @@ else:
             assert neo4j.fuzzy_tokenize("x AND y") == "x~1 AND y~1"
             assert neo4j.fuzzy_tokenize("x + y") == "x~1 + y~1"
             assert neo4j.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
+
+            neo4j = detector.get_service_instance("neo4j", cache_expiration=1)
+            obj_id = id(neo4j)
+
+            neo4j = detector.get_service_instance("neo4j", cache_expiration=1)
+            assert id(neo4j) == obj_id
+
+            time.sleep(1)
+
+            neo4j = detector.get_service_instance("neo4j", cache_expiration=1)
+            assert id(neo4j) != obj_id
+
+            # Close connection...
+            neo4j.disconnect()
+
+            # Test connection... should fail!
+            # ??
+
+            # ... close connection again ... nothing should happens
+            neo4j.disconnect()

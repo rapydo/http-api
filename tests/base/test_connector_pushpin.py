@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from restapi.exceptions import ServiceUnavailable
@@ -23,3 +25,23 @@ def test_pushpin(app):
 
     pushpin = detector.get_service_instance("pushpin")
     assert pushpin is not None
+
+    pushpin = detector.get_service_instance("pushpin", cache_expiration=1)
+    obj_id = id(pushpin)
+
+    pushpin = detector.get_service_instance("pushpin", cache_expiration=1)
+    assert id(pushpin) == obj_id
+
+    time.sleep(1)
+
+    pushpin = detector.get_service_instance("pushpin", cache_expiration=1)
+    assert id(pushpin) != obj_id
+
+    # Close connection...
+    pushpin.disconnect()
+
+    # Test connection... should fail!
+    # ??
+
+    # ... close connection again ... nothing should happens
+    pushpin.disconnect()

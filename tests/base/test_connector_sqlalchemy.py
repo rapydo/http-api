@@ -1,4 +1,5 @@
 import os
+import time
 
 import pytest
 
@@ -38,3 +39,29 @@ def test_sqlalchemy(app):
 
     sql = detector.get_service_instance("sqlalchemy", test_connection=True,)
     assert sql is not None
+
+    sql = detector.get_service_instance(
+        "sqlalchemy", cache_expiration=1, test_connection=True
+    )
+    obj_id = id(sql)
+
+    sql = detector.get_service_instance(
+        "sqlalchemy", cache_expiration=1, test_connection=True
+    )
+    assert id(sql) == obj_id
+
+    time.sleep(1)
+
+    sql = detector.get_service_instance(
+        "sqlalchemy", cache_expiration=1, test_connection=True
+    )
+    assert id(sql) != obj_id
+
+    # Close connection...
+    sql.disconnect()
+
+    # test connection... and should fail
+    # ???
+
+    # ... close connection again ... nothing should happens
+    sql.disconnect()

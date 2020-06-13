@@ -162,8 +162,7 @@ class RabbitWrapper:
 
         return self.__channel
 
-    def close_connection(self):
-        # TODO: This must be called!
+    def disconnect(self):
         if self.__connection.is_closed:
             log.debug("Connection already closed")
         else:
