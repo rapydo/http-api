@@ -29,10 +29,10 @@ else:
             data["modified1"] = dateutil.parser.parse(data["modified1"])
             data["modified2"] = dateutil.parser.parse(data["modified2"])
             assert data["created"] < data["modified1"]
-            assert (data["modified1"] - data["created"]).microseconds < 100
-            assert (data["modified2"] - data["created"]).microseconds > 100
+            assert (data["modified1"] - data["created"]).microseconds < 120
+            assert (data["modified2"] - data["created"]).microseconds > 120
             assert data["modified1"] < data["modified2"]
-            assert (data["modified2"] - data["modified1"]).microseconds > 100
+            assert (data["modified2"] - data["modified1"]).microseconds > 120
 
         @staticmethod
         def test_connector(app, fake):

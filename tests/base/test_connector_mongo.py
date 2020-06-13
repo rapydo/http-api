@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from restapi.exceptions import ServiceUnavailable
@@ -30,3 +32,12 @@ def test_mongo(app):
 
     mongo = detector.get_service_instance("mongo", test_connection=True,)
     assert mongo is not None
+
+    mongo = detector.get_service_instance("mongo", cache_expiration=1)
+    obj_id = id(mongo)
+    mongo = detector.get_service_instance("mongo", cache_expiration=1)
+    assert id(mongo) == obj_id
+
+    time.sleep(1)
+    mongo = detector.get_service_instance("mongo", cache_expiration=1)
+    assert id(mongo) != obj_id
