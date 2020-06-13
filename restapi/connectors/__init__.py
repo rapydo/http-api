@@ -11,6 +11,14 @@ from restapi.utilities.logs import log
 class Connector(metaclass=abc.ABCMeta):
 
     models = {}
+    # will contain:
+    # objs = {
+    #     'thread-id': {
+    #         'ConnectorName': {
+    #             'params-unique-key': instance
+    #         }
+    #     }
+    # }
     objs = {}
 
     def __init__(self, app):
@@ -88,14 +96,16 @@ class Connector(metaclass=abc.ABCMeta):
 
         tid = threading.get_native_id()
         self.objs.setdefault(tid, {})
-        self.objs[tid][key] = obj
+        self.objs[tid].setdefault(self.name, {})
+        self.objs[tid][self.name][key] = obj
 
     def get_object(self, key="[]"):
         """ recover object if any """
 
         tid = threading.get_native_id()
         self.objs.setdefault(tid, {})
-        return self.objs[tid].get(key, None)
+        self.objs[tid].setdefault(self.name, {})
+        return self.objs[tid][self.name].get(key, None)
 
     def initialize_connection(self, **kwargs):
 
