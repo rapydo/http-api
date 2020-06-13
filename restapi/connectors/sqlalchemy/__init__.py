@@ -181,6 +181,7 @@ class SQLAlchemy(Connector):
             log.critical("Destroy current SQL data")
             db.drop_all()
 
+    @staticmethod
     def update_properties(instance, schema, properties):
 
         for field in schema:
