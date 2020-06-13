@@ -196,20 +196,15 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         self.celery_app = celery_app
-        celery_app.disconnect = self.disconnect
-        celery_app.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
         tasks = Meta.get_celery_tasks(task_package)
 
         for func_name, funct in tasks.items():
-            if hasattr(celery_app, func_name):
-                log.error("Celery already has a function named {}", func_name)
-                continue
-            setattr(celery_app, func_name, funct)
+            setattr(self, func_name, funct)
 
-        return celery_app
+        return self
 
     def disconnect(self):
         self.celery_app.disconnected = True
