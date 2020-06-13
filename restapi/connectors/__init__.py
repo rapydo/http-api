@@ -25,6 +25,8 @@ class Connector(metaclass=abc.ABCMeta):
 
         self.name = self.__class__.__name__.lower()
         self.app = app
+        # Will be modified by self.disconnect()
+        self.disconnected = False
 
         # to implement request-level instances:
         # 1 . implement a flag or new get_intance to change the key identifier
