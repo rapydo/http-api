@@ -114,7 +114,7 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
     }
 
     @decorators.catch_errors()
-    @use_kwargs({"sync": fields.Boolean(required=False)})
+    @use_kwargs({"sync": fields.Boolean(required=True)})
     def put(self, channel, sync=True):
 
         pushpin = self.get_service_instance("pushpin")

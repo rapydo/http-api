@@ -54,7 +54,9 @@ class TestApp(BaseTests):
         assert "Sec-WebSocket-Extensions" in r.headers
         assert r.headers.get("Sec-WebSocket-Extensions") == "grip"
 
-        r = client.put(f"{API_URI}/socket/{channel}", headers=headers)
+        r = client.put(
+            f"{API_URI}/socket/{channel}", data={"sync": True}, headers=headers
+        )
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 
@@ -66,7 +68,9 @@ class TestApp(BaseTests):
 
         # send message on a different channel
         channel = fake.pystr()
-        r = client.put(f"{API_URI}/socket/{channel}", headers=headers)
+        r = client.put(
+            f"{API_URI}/socket/{channel}", data={"sync": True}, headers=headers
+        )
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 
@@ -78,7 +82,9 @@ class TestApp(BaseTests):
         assert r.headers["Grip-Hold"] == "stream"
         assert "Grip-Channel" in r.headers
 
-        r = client.put(f"{API_URI}/stream/{channel}", headers=headers)
+        r = client.put(
+            f"{API_URI}/stream/{channel}", data={"sync": True}, headers=headers
+        )
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"
 

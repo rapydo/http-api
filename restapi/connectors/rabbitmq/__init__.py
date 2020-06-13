@@ -78,12 +78,6 @@ class RabbitExt(Connector):
             self.connection.close()
         self.disconnected = True
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _type, value, tb):
-        self.disconnect()
-
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
         """
         Send a log message to the RabbitMQ queue, unless
