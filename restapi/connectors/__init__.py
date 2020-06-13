@@ -1,5 +1,5 @@
 import abc
-import threading
+import os
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
@@ -94,7 +94,7 @@ class Connector(metaclass=abc.ABCMeta):
     def set_object(self, obj, key="[]") -> None:
         """ set object into internal array """
 
-        tid = threading.get_native_id()
+        tid = os.getpid()
         self.objs.setdefault(tid, {})
         self.objs[tid].setdefault(self.name, {})
         self.objs[tid][self.name][key] = obj
@@ -102,7 +102,7 @@ class Connector(metaclass=abc.ABCMeta):
     def get_object(self, key="[]"):
         """ recover object if any """
 
-        tid = threading.get_native_id()
+        tid = os.getpid()
         self.objs.setdefault(tid, {})
         self.objs[tid].setdefault(self.name, {})
         return self.objs[tid][self.name].get(key, None)

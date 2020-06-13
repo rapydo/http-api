@@ -457,7 +457,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # Get the user from payload
         user = self.get_user_object(payload=payload)
-        log.critical(user)
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")

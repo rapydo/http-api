@@ -138,6 +138,8 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
+        db.init_app(self.app)
+
         if test_connection:
             sql = text("SELECT 1")
             db.engine.execute(sql)
@@ -156,7 +158,6 @@ class SQLAlchemy(Connector):
     def initialize(self):
 
         db = self.get_instance()
-        db.init_app(self.app)
 
         with self.app.app_context():
 
@@ -168,7 +169,6 @@ class SQLAlchemy(Connector):
     def destroy(self):
 
         db = self.get_instance()
-        db.init_app(self.app)
 
         with self.app.app_context():
 
@@ -386,9 +386,10 @@ class Authentication(BaseAuthentication):
             expiration=exp,
             IP=ip or NULL_IP,
             location=ip_loc or "Unknown",
+            # the following two are equivalent
+            # user_id=user.id,
+            emitted_for=user,
         )
-
-        token_entry.emitted_for = user
 
         try:
             self.db.session.add(token_entry)
@@ -407,8 +408,7 @@ class Authentication(BaseAuthentication):
 
         if token_entry is None:
             return False
-
-        if token_entry.emitted_for is None or token_entry.emitted_for != user:
+        if token_entry.user_id is None or token_entry.user_id != user.id:
             return False
 
         # MySQL seems unable to save tz-aware datetimes...
@@ -494,8 +494,6 @@ class Authentication(BaseAuthentication):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry is not None:
-            # Token are now deleted and no longer kept with no emision info
-            # token_entry.emitted_for = None
             try:
                 self.db.session.delete(token_entry)
                 self.db.session.commit()
