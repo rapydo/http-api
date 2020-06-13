@@ -156,7 +156,7 @@ class Connector(metaclass=abc.ABCMeta):
             exp = timedelta(seconds=cache_expiration)
 
             if now >= obj.connection_time + exp:
-                log.info("Cache expired for {}", self)
+                log.warning("Cache expired for {}", self)
                 obj.disconnect()
                 obj = None
 

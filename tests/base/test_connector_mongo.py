@@ -39,7 +39,7 @@ def test_mongo(app):
     mongo = detector.get_service_instance("mongo", cache_expiration=1)
     assert id(mongo) == obj_id
 
-    time.sleep(1)
+    time.sleep(2)
 
     mongo = detector.get_service_instance("mongo", cache_expiration=1)
     assert id(mongo) != obj_id
