@@ -55,7 +55,9 @@ def test_sqlalchemy(app):
     sql = detector.get_service_instance(
         "sqlalchemy", cache_expiration=1, test_connection=True
     )
-    assert id(sql) != obj_id
+    # With alchemy the connection object remain the same...
+    assert id(sql) == obj_id
+    # assert id(sql) != obj_id
 
     # Close connection...
     sql.disconnect()
