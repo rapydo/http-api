@@ -56,19 +56,19 @@ class TestApp(BaseTests):
 
         r = client.put(f"{API_URI}/socket/{channel}", headers=headers)
         assert r.status_code == 200
-        assert self.get_content(r) == "Message received: True"
+        assert self.get_content(r) == "Message received: True (sync=True)"
 
         r = client.put(
             f"{API_URI}/socket/{channel}", data={"sync": False}, headers=headers
         )
         assert r.status_code == 200
-        assert self.get_content(r) == "Message received: True"
+        assert self.get_content(r) == "Message received: True (sync=False)"
 
         # send message on a different channel
         channel = fake.pystr()
         r = client.put(f"{API_URI}/socket/{channel}", headers=headers)
         assert r.status_code == 200
-        assert self.get_content(r) == "Message received: True"
+        assert self.get_content(r) == "Message received: True (sync=True)"
 
         r = client.post(f"{API_URI}/stream/{channel}", headers=headers)
         assert r.status_code == 200
@@ -80,10 +80,10 @@ class TestApp(BaseTests):
 
         r = client.put(f"{API_URI}/stream/{channel}", headers=headers)
         assert r.status_code == 200
-        assert self.get_content(r) == "Message received: True"
+        assert self.get_content(r) == "Message received: True (sync=True)"
 
         r = client.put(
             f"{API_URI}/stream/{channel}", data={"sync": False}, headers=headers
         )
         assert r.status_code == 200
-        assert self.get_content(r) == "Message received: True"
+        assert self.get_content(r) == "Message received: True (sync=False)"
