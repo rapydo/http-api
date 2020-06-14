@@ -44,6 +44,11 @@ else:
         @staticmethod
         def test_connector(app, fake):
 
+            # Run this before the init_services,
+            # get_debug_instance is able to load what is needed
+            obj = detector.get_debug_instance(CONNECTOR)
+            assert obj is not None
+
             detector.init_services(
                 app=app, project_init=False, project_clean=False,
             )
