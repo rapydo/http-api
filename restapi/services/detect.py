@@ -319,7 +319,7 @@ class Detector:
 
         if not self.services[connector].get("available", False):
             log.error("Connector {} is not available", connector)
-            return False
+            return None
 
         if "connector" not in self.services[connector]:
             c = self.services[connector].get("class")
