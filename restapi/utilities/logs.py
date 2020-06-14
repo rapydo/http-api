@@ -19,10 +19,10 @@ IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
 if IS_CELERY_CONTAINER == "0":
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
-elif HOSTNAME != CONTAINER_ID:
+elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
 # Celery (variables name due to scaling)
-else:
+else:  # pragma: no cover
     LOGS_FILE = f"celery_{HOSTNAME}"
 
 LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")

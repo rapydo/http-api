@@ -66,7 +66,7 @@ def test_irods(app, faker):
     home = obj.get_user_home()
 
     assert obj.get_user_home("xxyyzz") == "/tempZone/home/xxyyzz"
-    assert home == "/tempZone/home/obj"
+    assert home == "/tempZone/home/irods"
 
     path = obj.get_absolute_path("tempZone", "home", "irods")
     assert path == home
