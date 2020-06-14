@@ -78,9 +78,8 @@ def test_sqlalchemy(app):
     # with detector.get_service_instance(CONNECTOR) as obj:
     #     assert obj is not None
 
-    # sqlalchemy required a valid flask app, cannot be used as debug_instance
     obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is None
+    assert obj is not None
 
     obj = detector.get_debug_instance("invalid")
     assert obj is None
