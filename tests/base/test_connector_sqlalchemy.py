@@ -7,10 +7,16 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
+CONNECTOR = "sqlalchemy"
+
 
 def test_sqlalchemy(app):
 
-    if not detector.check_availability("sqlalchemy"):
+    if not detector.check_availability(CONNECTOR):
+
+        obj = detector.get_debug_instance(CONNECTOR)
+        assert obj is None
+
         log.warning("Skipping sqlalchemy test: service not available")
         return False
 
@@ -21,7 +27,7 @@ def test_sqlalchemy(app):
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
         try:
             detector.get_service_instance(
-                "sqlalchemy", test_connection=True, host="invalidhostname", port=123
+                CONNECTOR, test_connection=True, host="invalidhostname", port=123
             )
 
             pytest.fail("No exception raised on unavailable service")
@@ -30,44 +36,51 @@ def test_sqlalchemy(app):
 
     try:
         detector.get_service_instance(
-            "sqlalchemy", test_connection=True, user="invaliduser",
+            CONNECTOR, test_connection=True, user="invaliduser",
         )
 
         pytest.fail("No exception raised on unavailable service")
     except ServiceUnavailable:
         pass
 
-    sql = detector.get_service_instance("sqlalchemy", test_connection=True,)
-    assert sql is not None
+    obj = detector.get_service_instance(CONNECTOR, test_connection=True,)
+    assert obj is not None
 
-    sql = detector.get_service_instance(
-        "sqlalchemy", cache_expiration=1, test_connection=True
+    obj = detector.get_service_instance(
+        CONNECTOR, cache_expiration=1, test_connection=True
     )
-    obj_id = id(sql)
+    obj_id = id(obj)
 
-    sql = detector.get_service_instance(
-        "sqlalchemy", cache_expiration=1, test_connection=True
+    obj = detector.get_service_instance(
+        CONNECTOR, cache_expiration=1, test_connection=True
     )
-    assert id(sql) == obj_id
+    assert id(obj) == obj_id
 
     time.sleep(1)
 
-    sql = detector.get_service_instance(
-        "sqlalchemy", cache_expiration=1, test_connection=True
+    obj = detector.get_service_instance(
+        CONNECTOR, cache_expiration=1, test_connection=True
     )
     # With alchemy the connection object remain the same...
-    assert id(sql) == obj_id
-    # assert id(sql) != obj_id
+    assert id(obj) == obj_id
+    # assert id(obj) != obj_id
 
     # Close connection...
-    sql.disconnect()
+    obj.disconnect()
 
     # test connection... and should fail
     # ???
 
     # ... close connection again ... nothing should happens
-    sql.disconnect()
+    obj.disconnect()
 
     # sqlalchemy connector does not support with context
-    # with detector.get_service_instance("sqlalchemy") as obj:
+    # with detector.get_service_instance(CONNECTOR) as obj:
     #     assert obj is not None
+
+    # sqlalchemy required a valid flask app, cannot be used as debug_instance
+    obj = detector.get_debug_instance(CONNECTOR)
+    assert obj is None
+
+    obj = detector.get_debug_instance("invalid")
+    assert obj is None
