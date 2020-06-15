@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from flask_apispec import MethodResource, marshal_with, use_kwargs
 from marshmallow import fields, validate
 
@@ -42,20 +44,33 @@ class Group(OutputSchema):
     fullname = fields.Str()
 
 
-class ProfileData(OutputSchema):
-    uuid = fields.Str(required=True)
-    email = fields.Email(required=True)
-    name = fields.Str(required=True)
-    surname = fields.Str(required=True)
-    isAdmin = fields.Boolean(required=True)
-    isLocalAdmin = fields.Boolean(required=True)
-    privacy_accepted = fields.Boolean(required=True)
-    roles = fields.Dict(required=True)
+def getProfileData():
+    attributes = OrderedDict()
 
-    group = fields.Nested(Group, required=False)
+    attributes["uuid"] = fields.Str(required=True)
+    attributes["email"] = fields.Email(required=True)
+    attributes["name"] = fields.Str(required=True)
+    attributes["surname"] = fields.Str(required=True)
+    attributes["isAdmin"] = fields.Boolean(required=True)
+    attributes["isLocalAdmin"] = fields.Boolean(required=True)
+    attributes["privacy_accepted"] = fields.Boolean(required=True)
+    attributes["roles"] = fields.Dict(required=True)
 
-    SECOND_FACTOR = fields.Str(required=False)
-    # Add custom fields from CustomProfile
+    attributes["group"] = fields.Nested(Group, required=False)
+
+    attributes["SECOND_FACTOR"] = fields.Str(required=False)
+
+    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
+    if obj is not None and hasattr(obj, "get_custom_fields"):
+        try:
+            custom_fields = obj.get_custom_fields(False)
+            if custom_fields:
+                attributes.update(custom_fields)
+        except BaseException as e:
+            log.error("Could not retrieve custom profile fields:\n{}", e)
+
+    schema = OutputSchema.from_dict(attributes)
+    return schema()
 
 
 class Profile(MethodResource, EndpointResource):
@@ -91,7 +106,7 @@ class Profile(MethodResource, EndpointResource):
 
     @decorators.catch_errors()
     @decorators.auth.required()
-    @marshal_with(ProfileData, code=200)
+    @marshal_with(getProfileData(), code=200)
     def get(self):
 
         current_user = self.auth.get_user()
