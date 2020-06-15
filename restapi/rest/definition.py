@@ -40,6 +40,7 @@ class EndpointResource(Resource):
         super().__init__()
 
         self.auth = self.load_authentication()
+        self.get_service_instance = detector.get_service_instance
         try:
             # to be deprecated
             self.init_parameters()
@@ -59,9 +60,9 @@ class EndpointResource(Resource):
 
         return auth
 
-    @staticmethod
-    def get_service_instance(service_name, **kwargs):
-        return detector.get_service_instance(service_name, **kwargs)
+    # @staticmethod
+    # def get_service_instance(service_name, **kwargs):
+    #     return detector.get_service_instance(service_name, **kwargs)
 
     # to be deprecated (in conjuction with get_input)
     def init_parameters(self):
