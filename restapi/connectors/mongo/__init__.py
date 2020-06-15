@@ -112,18 +112,8 @@ class MongoExt(Connector):
     def update_properties(instance, schema, properties):
 
         for field in schema:
-            if isinstance(field, str):
-                key = field
-            else:
-                # to be deprecated
-                if "custom" in field:
-                    if "islink" in field["custom"]:
-                        if field["custom"]["islink"]:
-                            continue
-                key = field["name"]
-
-            if key in properties:
-                setattr(instance, key, properties[key])
+            if field in properties:
+                setattr(instance, field, properties[field])
 
 
 class Authentication(BaseAuthentication):

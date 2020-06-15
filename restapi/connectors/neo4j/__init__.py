@@ -165,18 +165,8 @@ class NeoModel(Connector):
     def update_properties(instance, schema, properties):
 
         for field in schema:
-            if isinstance(field, str):
-                key = field
-            else:
-                # to be deprecated
-                if "custom" in field:
-                    if "islink" in field["custom"]:
-                        if field["custom"]["islink"]:
-                            continue
-                key = field["name"]
-
-            if key in properties:
-                instance.__dict__[key] = properties[key]
+            if field in properties:
+                instance.__dict__[field] = properties[field]
 
     @catch_db_exceptions
     def cypher(self, query):
