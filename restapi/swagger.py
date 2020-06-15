@@ -27,7 +27,8 @@ from restapi.utilities.logs import log
 JSON_APPLICATION = "application/json"
 
 
-def input_validation(json_parameters, definitionName):
+# to be deprecated
+def input_validation(json_parameters, definitionName):  # pragma: no cover
 
     definition = mem.customizer._definitions["definitions"][definitionName]
     spec = mem.customizer._validated_spec
@@ -96,27 +97,9 @@ class Swagger:
             # Read normal parameters
             for parameter in pattern.findall(uri):
 
-                # create parameters
-                x = parameter.split(":")
-                xlen = len(x)
-                paramtype = "string"
-
-                if xlen == 1:
-                    paramname = x[0]
-                elif xlen == 2:
-                    paramtype = x[0]
-                    paramname = x[1]
-
-                # FIXME: complete for all types
-                # http://swagger.io/specification/#data-types-12
-                if paramtype == "int":
-                    paramtype = "number"
-                if paramtype == "path":
-                    paramtype = "string"
-
                 path_parameter = {
-                    "name": paramname,
-                    "type": paramtype,
+                    "name": parameter,
+                    "type": "string",
                     "in": "path",
                     "required": True,
                 }
@@ -125,7 +108,7 @@ class Swagger:
 
                 # replace in a new uri
                 # <param> -> {param}
-                newuri = newuri.replace(f"<{parameter}>", f"{{{paramname}}}")
+                newuri = newuri.replace(f"<{parameter}>", f"{{{parameter}}}")
 
             # cycle parameters and add them to the endpoint class
             query_params = []
@@ -135,7 +118,8 @@ class Swagger:
                 param.pop("custom", None)
 
                 enum = param.pop("enum", None)
-                if enum is not None:
+                # to be deprecated
+                if enum is not None:  # pragma: no cover
                     param["enum"] = []
                     for option in enum:
                         if isinstance(option, str):

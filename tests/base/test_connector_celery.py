@@ -1,9 +1,11 @@
+import os
 import time
 from datetime import timedelta
 
 import pytest
 
 from restapi.connectors.celery import CeleryExt
+from restapi.server import create_app
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -175,3 +177,10 @@ def test_celery(app):
 
     obj = detector.get_debug_instance("invalid")
     assert obj is None
+
+    app = create_app(worker_mode=True)
+    assert app is not None
+    from restapi.utilities.logs import LOGS_FILE
+
+    assert os.environ["HOSTNAME"] == "backend-server"
+    assert LOGS_FILE == "backend-server"

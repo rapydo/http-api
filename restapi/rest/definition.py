@@ -331,7 +331,7 @@ class EndpointResource(Resource):
     # to be deprecated
     # this is a simple wrapper of restapi.swagger.input_validation
     @staticmethod
-    def validate_input(json_parameters, definitionName):
+    def validate_input(json_parameters, definitionName):  # pragma: no cover
 
         try:
             return input_validation(json_parameters, definitionName)
