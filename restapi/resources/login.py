@@ -137,16 +137,12 @@ class Login(MethodResource, EndpointResource):
 
                 message["qr_code"] = qr_code
 
-        elif self.auth.MAX_PASSWORD_VALIDITY > 0:
+        elif self.auth.MAX_PASSWORD_VALIDITY:
 
             if last_pwd_change == epoch:
                 expired = True
             else:
-                td = timedelta(days=self.auth.MAX_PASSWORD_VALIDITY)
-                if TESTING:
-                    td = timedelta(seconds=self.auth.MAX_PASSWORD_VALIDITY)
-
-                valid_until = last_pwd_change + td
+                valid_until = last_pwd_change + self.auth.MAX_PASSWORD_VALIDITY
 
                 # MySQL seems unable to save tz-aware datetimes...
                 if last_pwd_change.tzinfo is None:

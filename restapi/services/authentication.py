@@ -109,12 +109,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
             variables.get("verify_password_strength")
         )
-        self.MAX_PASSWORD_VALIDITY = Env.to_int(
-            variables.get("max_password_validity", 0)
-        )
-        self.DISABLE_UNUSED_CREDENTIALS_AFTER = Env.to_int(
-            variables.get("disable_unused_credentials_after", 0)
-        )
+        if not (val := Env.to_int(variables.get("max_password_validity", 0))):
+            self.MAX_PASSWORD_VALIDITY = None
+        elif TESTING:
+            self.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
+        else:
+            self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
+
+        if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
+            self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
+        else:
+            self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
+
         self.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
         self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
         self.SECOND_FACTOR_AUTHENTICATION = variables.get(
@@ -775,17 +781,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_blocked_user(self, user):
 
-        if self.DISABLE_UNUSED_CREDENTIALS_AFTER > 0:
-            last_login = user.last_login
-            now = datetime.now(pytz.utc)
-            if last_login is not None:
+        if self.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
 
-                inactivity = timedelta(days=self.DISABLE_UNUSED_CREDENTIALS_AFTER)
-                valid_until = last_login + inactivity
+            if user.last_login.tzinfo is None:
+                now = datetime.now()
+            else:
+                now = datetime.now(pytz.utc)
 
-                if valid_until < now:
-                    msg = "Sorry, this account is blocked for inactivity"
-                    raise Unauthorized(msg)
+            if user.last_login + self.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+                raise Unauthorized("Sorry, this account is blocked for inactivity")
 
     @staticmethod
     def verify_active_user(user):
