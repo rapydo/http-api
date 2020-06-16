@@ -15,7 +15,9 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                "force": True,
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
             },
         )
         assert r.status_code == 400
@@ -27,7 +29,9 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                "force": True,
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
             },
         )
         assert r.status_code == 400
@@ -40,7 +44,9 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                "force": True,
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
             },
         )
         assert r.status_code == 200

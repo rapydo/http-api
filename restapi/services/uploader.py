@@ -30,13 +30,8 @@ class Uploader:
     def set_allowed_exts(self, exts):
         self.allowed_exts = exts
 
-    @staticmethod
-    def split_dir_and_extension(filepath):
-        filebase, fileext = os.path.splitext(filepath)
-        return filebase, fileext.strip(".")
-
     def allowed_file(self, filename):
-        if len(self.allowed_exts) < 1:
+        if not self.allowed_exts:
             return True
         return (
             "." in filename and filename.rsplit(".", 1)[1].lower() in self.allowed_exts
@@ -71,14 +66,7 @@ class Uploader:
         abs_file = Uploader.absolute_upload_file(fname, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
-        # ## IMPORTANT NOTE TO SELF:
-        # If you are going to receive chunks here there could be problems.
-        # In fact a chunk will truncate the connection
-        # and make a second request.
-        # You will end up with having already the file
-        # But corrupted...
         if os.path.exists(abs_file):
-
             if not force:
                 raise BadRequest(
                     f"File '{fname}' already exists, use force parameter to overwrite"

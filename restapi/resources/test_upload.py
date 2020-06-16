@@ -2,7 +2,6 @@
 from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields
 
-# from restapi.exceptions import RestApiException
 from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
 from restapi.rest.definition import EndpointResource
@@ -52,7 +51,9 @@ if TESTING:
                     log.info("Upload completed")
 
             else:
-                self.set_allowed_exts(["txt"])
+                # This is just to test the allowed exts without adding a new parameter..
+                if not force:
+                    self.set_allowed_exts(["txt"])
                 response = self.upload(force=force)
             return response
 
