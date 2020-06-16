@@ -131,10 +131,9 @@ def get_output_schema():
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
-    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
-    if obj is not None and hasattr(obj, "get_custom_fields"):
+    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
         try:
-            custom_fields = obj.get_custom_fields(False)
+            custom_fields = customizer.get_custom_fields(False)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
@@ -184,10 +183,9 @@ def getInputSchema(is_put_method):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
-    if obj is not None and hasattr(obj, "get_custom_fields"):
+    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
         try:
-            custom_fields = obj.get_custom_fields(is_put_method)
+            custom_fields = customizer.get_custom_fields(is_put_method)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:

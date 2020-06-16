@@ -289,19 +289,16 @@ class Detector:
         """
 
         try:
-            module_path = ".".join(
-                (CUSTOM_PACKAGE, "initialization", "initialization",)
+            initializer = Meta.get_customizer_instance(
+                "initialization.initialization",
+                "Initializer",
+                services=instances,
+                app=app,
             )
-            Initializer = Meta.get_class_from_string("Initializer", module_path)
-            if Initializer is None:
-                log.debug("No custom init available")
+            if initializer:
+                log.info("Vanilla project has been initialized")
             else:
-                try:
-                    Initializer(instances, app=app)
-                except BaseException as e:
-                    log.error("Errors during custom initialization: {}", e)
-                else:
-                    log.info("Vanilla project has been initialized")
+                log.error("Errors during custom initialization")
 
         except BaseException:
             log.debug("No custom init available")

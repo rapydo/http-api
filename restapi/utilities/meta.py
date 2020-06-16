@@ -81,16 +81,6 @@ class Meta:
         return module
 
     @staticmethod
-    def get_class_from_string(classname, modulename):
-        """ Get a specific class from a module using a string variable """
-
-        try:
-            module = Meta.get_module_from_string(modulename)
-            return getattr(module, classname)
-        except AttributeError:
-            return None
-
-    @staticmethod
     def get_self_reference_from_args(*args):
         """
         Useful in decorators:
@@ -177,22 +167,30 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_customizer_class(module_relpath, class_name, args=None):
+    def get_customizer_instance(module_relpath, class_name, kwargs=None):
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
-        MyClass = Meta.get_class_from_string(class_name, abspath)
 
-        instance = None
-        if args is None:
-            args = {}
+        module = Meta.get_module_from_string(abspath)
 
-        if MyClass is None:
-            log.verbose("No customizer available for {}", class_name)
+        if module is None:
+            log.debug("{} path does not exist", abspath)
+            return None
+
+        if not hasattr(module, class_name):
+            log.verbose("{} not found in {}", class_name, abspath)
+            return None
+
+        MyClass = getattr(module, class_name)
+
+        if kwargs is None:
+            kwargs = {}
+
+        try:
+            return MyClass(**kwargs)
+        except BaseException as e:  # pragma: no cover
+            log.error("Errors loading {}.{}: {}", abspath, class_name, e)
         else:
-            try:
-                instance = MyClass(**args)
-            except BaseException as e:  # pragma: no cover
-                log.error("Errors during customizer loading: {}", e)
-            else:
-                log.verbose("Customizer loaded: {}", class_name)
-        return instance
+            log.verbose("{} loaded", class_name)
+
+        return None

@@ -60,10 +60,9 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    obj = Meta.get_customizer_class("apis.profile", "CustomProfile")
-    if obj is not None and hasattr(obj, "get_custom_fields"):
+    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
         try:
-            custom_fields = obj.get_custom_fields(False)
+            custom_fields = customizer.get_custom_fields(False)
             if custom_fields:
                 attributes.update(custom_fields)
         except BaseException as e:
@@ -127,9 +126,8 @@ class Profile(MethodResource, EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        CustomProfile = Meta.get_customizer_class("apis.profile", "CustomProfile")
-        if CustomProfile is not None:
-            data = CustomProfile.manipulate(ref=self, user=current_user, data=data)
+        if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+            data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
 

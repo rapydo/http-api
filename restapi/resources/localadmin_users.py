@@ -129,10 +129,9 @@
 #             )
 #         )
 
-#     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
-#     if obj is not None and hasattr(obj, "get_custom_fields"):
+#     if customizer := Meta.get_customizer_instance('apis.profile', 'CustomProfile'):
 #         try:
-#             custom_fields = obj.get_custom_fields(strip_required)
+#             custom_fields = customizer.get_custom_fields(strip_required)
 #             if custom_fields:
 #                 attributes.update(custom_fields)
 #         except BaseException as e:

@@ -597,13 +597,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def custom_user_properties(userdata):
-        module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        CustomizerClass = Meta.get_class_from_string("Customizer", module_path)
-        if CustomizerClass is None:
-            log.debug("No user properties customizer available")
-        else:
+        if customizer := Meta.get_customizer_instance(
+            "initialization.initialization", "Customizer"
+        ):
             try:
-                userdata = CustomizerClass().custom_user_properties(userdata)
+                userdata = customizer.custom_user_properties(userdata)
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 
@@ -613,15 +611,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        module_path = f"{CUSTOM_PACKAGE}.initialization.initialization"
-        CustomizerClass = Meta.get_class_from_string("Customizer", module_path)
-        if CustomizerClass is None:
-            log.debug("No user properties customizer available")
-        else:
+        if customizer := Meta.get_customizer_instance(
+            "initialization.initialization", "Customizer"
+        ):
             try:
-                CustomizerClass().custom_post_handle_user_input(
-                    self, user_node, input_data
-                )
+                customizer.custom_post_handle_user_input(self, user_node, input_data)
             except BaseException as e:
                 log.error("Unable to customize user properties: {}", e)
 
