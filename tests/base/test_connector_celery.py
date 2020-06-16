@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 
 from restapi.connectors.celery import CeleryExt
+from restapi.exceptions import ServiceUnavailable
 from restapi.server import create_app
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -17,9 +18,11 @@ def test_celery(app):
     if not detector.check_availability(CONNECTOR):
         obj = detector.get_debug_instance(CONNECTOR)
         assert obj is None
-
-        obj = detector.get_service_instance(CONNECTOR)
-        assert obj is None
+        try:
+            obj = detector.get_service_instance(CONNECTOR)
+            pytest("No exception raised")
+        except ServiceUnavailable:
+            pass
 
         log.warning("Skipping celery test: service not available")
         return False

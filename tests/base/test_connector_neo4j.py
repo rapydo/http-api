@@ -18,8 +18,11 @@ if not detector.check_availability(CONNECTOR):
     obj = detector.get_debug_instance(CONNECTOR)
     assert obj is None
 
-    obj = detector.get_service_instance(CONNECTOR)
-    assert obj is None
+    try:
+        obj = detector.get_service_instance(CONNECTOR)
+        pytest("No exception raised")
+    except ServiceUnavailable:
+        pass
 
     log.warning("Skipping neo4j test: service not available")
 else:
