@@ -23,12 +23,7 @@ class Detector:
 
         self.authentication_service = Env.get("AUTH_SERVICE")
 
-        if self.authentication_service is None:
-            log.info("No service defined for authentication")
-        else:
-            log.info(
-                "Authentication is based on '{}' service", self.authentication_service
-            )
+        log.info("Authentication service: {}", self.authentication_service)
 
         self.authentication_instance = None
 

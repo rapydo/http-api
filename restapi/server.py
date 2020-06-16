@@ -41,7 +41,9 @@ def create_app(
 ):
     """ Create the server istance for Flask application """
 
-    if PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS:
+    if (
+        PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
+    ):  # pragma: no cover
         log.exit("Unable to execute tests in production")
     if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
@@ -118,12 +120,6 @@ def create_app(
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 
-        # Basic configuration (simple): from example class
-        if len(mem.customizer._endpoints) < 1:
-            log.error("No endpoints found!")
-
-            raise AttributeError("Follow the docs and define your endpoints")
-
         for endpoint in mem.customizer._endpoints:
             # urls = [uri for _, uri in resource.uris.items()]
             urls = list(endpoint.uris.values())
@@ -169,15 +165,12 @@ def create_app(
 
         for rule in microservice.url_map.iter_rules():
 
-            rulename = str(rule)
-            # Skip rules that are only exposing schemas
-            if "/schemas/" in rulename:
-                continue
-
             endpoint = microservice.view_functions[rule.endpoint]
             if not hasattr(endpoint, "view_class"):
                 continue
+
             newmethods = ignore_verbs.copy()
+            rulename = str(rule)
 
             for verb in rule.methods - ignore_verbs:
                 method = verb.lower()
@@ -225,7 +218,7 @@ def create_app(
         else:
             log.info("SMTP configuration verified")
 
-    if SENTRY_URL is not None:
+    if SENTRY_URL is not None:  # pragma: no cover
 
         if not PRODUCTION:
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")

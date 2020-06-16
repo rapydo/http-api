@@ -36,12 +36,9 @@ def read_configuration(
                 PROJECT_CONF_FILENAME,
             )
 
-    if default_file_path is None:
-        base_configuration = {}
-    else:
-        base_configuration = load_yaml_file(
-            file=PROJECTS_DEFAULTS_FILE, path=default_file_path
-        )
+    base_configuration = load_yaml_file(
+        file=PROJECTS_DEFAULTS_FILE, path=default_file_path
+    )
 
     extended_project = project.get("extends")
 
