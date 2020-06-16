@@ -300,8 +300,8 @@ class Detector:
             else:
                 log.error("Errors during custom initialization")
 
-        except BaseException:
-            log.debug("No custom init available")
+        except BaseException as e:
+            log.debug("No custom init available: {}", e)
 
     def get_debug_instance(self, connector):
 

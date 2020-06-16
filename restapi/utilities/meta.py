@@ -167,7 +167,7 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_customizer_instance(module_relpath, class_name, kwargs=None):
+    def get_customizer_instance(module_relpath, class_name, **kwargs):
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
@@ -183,14 +183,8 @@ class Meta:
 
         MyClass = getattr(module, class_name)
 
-        if kwargs is None:
-            kwargs = {}
-
         try:
             return MyClass(**kwargs)
         except BaseException as e:  # pragma: no cover
             log.error("Errors loading {}.{}: {}", abspath, class_name, e)
-        else:
-            log.verbose("{} loaded", class_name)
-
-        return None
+            return None

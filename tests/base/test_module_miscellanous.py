@@ -196,8 +196,19 @@ class TestApp(BaseTests):
         except SystemExit:
             pass
 
-        s = get_html_template("this-should-not-exist", {})
-        assert s is None
+        assert Meta.get_customizer_instance("invalid.path", "InvalidClass") is None
+        assert (
+            Meta.get_customizer_instance(
+                "initialization.initialization", "InvalidClass"
+            )
+            is None
+        )
+        assert (
+            Meta.get_customizer_instance("initialization.initialization", "Customizer")
+            is not None
+        )
+
+        assert get_html_template("this-should-not-exist", {}) is None
 
         start_timeout(1)
         try:

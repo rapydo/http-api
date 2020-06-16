@@ -127,6 +127,7 @@ class Profile(MethodResource, EndpointResource):
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+            log.critical(customizer)
             data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
