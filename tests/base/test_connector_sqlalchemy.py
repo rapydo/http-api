@@ -17,6 +17,9 @@ def test_sqlalchemy(app):
         obj = detector.get_debug_instance(CONNECTOR)
         assert obj is None
 
+        obj = detector.get_service_instance(CONNECTOR)
+        assert obj is None
+
         log.warning("Skipping sqlalchemy test: service not available")
         return False
 

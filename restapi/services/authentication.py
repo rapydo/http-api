@@ -16,7 +16,6 @@ from flask import request
 from passlib.context import CryptContext
 
 from restapi.confs import (
-    CUSTOM_PACKAGE,
     PRODUCTION,
     SECRET_KEY_FILE,
     TESTING,
@@ -34,6 +33,7 @@ from restapi.services.detect import Detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
+from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
 ALL_ROLES = "all"
@@ -783,10 +783,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if self.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
 
-            if user.last_login.tzinfo is None:
-                now = datetime.now()
-            else:
-                now = datetime.now(pytz.utc)
+            # offset-naive datetime to compare with MySQL
+            now = get_now(user.last_login.tzinfo)
 
             if user.last_login + self.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
                 raise Unauthorized("Sorry, this account is blocked for inactivity")

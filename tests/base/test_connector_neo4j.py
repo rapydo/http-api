@@ -18,7 +18,10 @@ if not detector.check_availability(CONNECTOR):
     obj = detector.get_debug_instance(CONNECTOR)
     assert obj is None
 
-    log.warning("Skipping neo4j test: service not avaliable")
+    obj = detector.get_service_instance(CONNECTOR)
+    assert obj is None
+
+    log.warning("Skipping neo4j test: service not available")
 else:
 
     class TestNeo4j(BaseTests):

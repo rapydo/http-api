@@ -4,6 +4,7 @@ import dateutil.parser
 import pytz
 
 
+# to be deprecated
 def date_from_string(date, fmt="%d/%m/%Y"):
 
     if not date:
@@ -19,3 +20,13 @@ def date_from_string(date, fmt="%d/%m/%Y"):
         return pytz.utc.localize(return_date)
 
     return return_date
+
+
+def get_now(tzinfo):
+
+    if tzinfo is None:
+        # Create a offset-naive datetime
+        return datetime.now()
+
+    # Create a offset-aware datetime
+    return datetime.now(pytz.utc)

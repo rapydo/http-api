@@ -18,6 +18,9 @@ def test_celery(app):
         obj = detector.get_debug_instance(CONNECTOR)
         assert obj is None
 
+        obj = detector.get_service_instance(CONNECTOR)
+        assert obj is None
+
         log.warning("Skipping celery test: service not available")
         return False
 

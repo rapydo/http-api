@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytz
 from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields, validate
 
 from restapi import decorators
-from restapi.confs import TESTING
 from restapi.exceptions import Forbidden
 from restapi.models import InputSchema
 from restapi.rest.definition import EndpointResource
+from restapi.utilities.time import get_now
 
 auth = EndpointResource.load_authentication()
 
@@ -139,20 +139,12 @@ class Login(MethodResource, EndpointResource):
 
         elif self.auth.MAX_PASSWORD_VALIDITY:
 
-            if last_pwd_change == epoch:
-                expired = True
-            else:
-                valid_until = last_pwd_change + self.auth.MAX_PASSWORD_VALIDITY
+            valid_until = last_pwd_change + self.auth.MAX_PASSWORD_VALIDITY
 
-                # MySQL seems unable to save tz-aware datetimes...
-                if last_pwd_change.tzinfo is None:
-                    # Create a offset-naive datetime
-                    now = datetime.now()
-                else:
-                    # Create a offset-aware datetime
-                    now = datetime.now(pytz.utc)
+            # offset-naive datetime to compare with MySQL
+            now = get_now(last_pwd_change.tzinfo)
 
-                expired = valid_until < now
+            expired = last_pwd_change == epoch or valid_until < now
 
             if expired:
 

@@ -16,6 +16,9 @@ def test_rabbit(app, faker):
         obj = detector.get_debug_instance(CONNECTOR)
         assert obj is None
 
+        obj = detector.get_service_instance(CONNECTOR)
+        assert obj is None
+
         log.warning("Skipping rabbit test: service not available")
         return False
 

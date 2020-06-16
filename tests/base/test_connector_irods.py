@@ -17,6 +17,9 @@ def test_irods(app, faker):
         obj = detector.get_debug_instance(CONNECTOR)
         assert obj is None
 
+        obj = detector.get_service_instance(CONNECTOR)
+        assert obj is None
+
         log.warning("Skipping irods test: service not available")
         return False
 

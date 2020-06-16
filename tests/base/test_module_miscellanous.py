@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 from datetime import datetime
 
@@ -8,11 +9,13 @@ import pytz
 from marshmallow import fields
 
 from restapi.env import Env
+from restapi.exceptions import ServiceUnavailable
 from restapi.rest.response import ResponseMaker
+from restapi.services.detect import detector
 from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
-from restapi.utilities.configuration import mix
+from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.meta import Meta
@@ -475,3 +478,38 @@ class TestApp(BaseTests):
         assert t == 1000
         assert s == 0
         assert e == 1000
+
+        # Invalid file / path
+        try:
+            load_yaml_file("invalid", "path")
+            pytest.fail("No exception raised")
+        except AttributeError:
+            pass
+
+        try:
+            load_yaml_file("invalid", "tests")
+            pytest.fail("No exception raised")
+        except AttributeError:
+            pass
+
+        # Valid path, but not in yaml format
+        try:
+            load_yaml_file("conftest.py", "tests")
+            pytest.fail("No exception raised")
+        except AttributeError:
+            pass
+
+        # File is empty
+        f = tempfile.NamedTemporaryFile()
+        try:
+            load_yaml_file(f.name, ".")
+            pytest.fail("No exception raised")
+        except AttributeError:
+            pass
+        f.close()
+
+        try:
+            detector.get_connector(faker.pystr())
+            pytest.fail("No exception raised")
+        except ServiceUnavailable:
+            pass

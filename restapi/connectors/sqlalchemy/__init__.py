@@ -25,6 +25,7 @@ from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
+from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
@@ -358,13 +359,8 @@ class Authentication(BaseAuthentication):
         if token_entry.user_id is None or token_entry.user_id != user.id:
             return False
 
-        # MySQL seems unable to save tz-aware datetimes...
-        if token_entry.expiration.tzinfo is None:
-            # Create a offset-naive datetime
-            now = datetime.now()
-        else:
-            # Create a offset-aware datetime
-            now = datetime.now(pytz.utc)
+        # offset-naive datetime to compare with MySQL
+        now = get_now(token_entry.expiration.tzinfo)
 
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
