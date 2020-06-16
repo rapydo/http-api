@@ -419,28 +419,22 @@ class Authentication(BaseAuthentication):
             except self.db.Token.DoesNotExist:
                 pass
 
-        if tokens is None:
-            return tokens_list
+        if tokens:
+            for token in tokens:
+                t = {}
 
-        for token in tokens:
-            t = {}
+                t["id"] = token.jti
+                t["token"] = token.token
+                t["token_type"] = token.token_type
+                t["emitted"] = token.creation
+                t["last_access"] = token.last_access
+                t["expiration"] = token.expiration
+                t["IP"] = token.IP
+                t["location"] = token.location
+                if get_all:
+                    t["user"] = self.db.getSingleLinkedNode(token.emitted_for)
 
-            t["id"] = token.jti
-            t["token"] = token.token
-            t["token_type"] = token.token_type
-            # t["emitted"] = token.creation.strftime('%s')
-            # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration:
-            #     t["expiration"] = token.expiration.strftime('%s')
-            t["emitted"] = token.creation
-            t["last_access"] = token.last_access
-            t["expiration"] = token.expiration
-            t["IP"] = token.IP
-            t["location"] = token.location
-            if get_all:
-                t["user"] = self.db.getSingleLinkedNode(token.emitted_for)
-
-            tokens_list.append(t)
+                tokens_list.append(t)
 
         return tokens_list
 

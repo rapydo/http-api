@@ -409,31 +409,22 @@ class Authentication(BaseAuthentication):
         elif token_jti:
             tokens = [self.db.Token.query.filter_by(jti=token_jti).first()]
 
-        if tokens is None:
-            return tokens_list
+        if tokens:
+            for token in tokens:
 
-        for token in tokens:
+                t = {}
 
-            if token is None:
-                continue
-
-            t = {}
-
-            t["id"] = token.jti
-            t["token"] = token.token
-            t["token_type"] = token.token_type
-            # t["emitted"] = token.creation.strftime('%s')
-            # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration:
-            #     t["expiration"] = token.expiration.strftime('%s')
-            t["emitted"] = token.creation
-            t["last_access"] = token.last_access
-            t["expiration"] = token.expiration
-            t["IP"] = token.IP
-            t["location"] = token.location
-            if get_all:
-                t["user"] = token.emitted_for
-            tokens_list.append(t)
+                t["id"] = token.jti
+                t["token"] = token.token
+                t["token_type"] = token.token_type
+                t["emitted"] = token.creation
+                t["last_access"] = token.last_access
+                t["expiration"] = token.expiration
+                t["IP"] = token.IP
+                t["location"] = token.location
+                if get_all:
+                    t["user"] = token.emitted_for
+                tokens_list.append(t)
 
         return tokens_list
 

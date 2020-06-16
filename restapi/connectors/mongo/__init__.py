@@ -39,15 +39,15 @@ def catch_db_exceptions(func):
 
                 raise DatabaseDuplicatedEntry(error)
 
-            log.error("Unrecognized error message: {}", e)
-            raise DatabaseDuplicatedEntry("Duplicated entry")
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
         # except ValidationError as e:
         #     # not handled
         #     raise e
-        except RecursionError as e:
+        except RecursionError as e:  # pragma: no cover
             # Got some circular references? Let's try to break them,
-            # then try to understand the cause...
+            # but the cause is still unknown...
             raise RestApiException(str(e), status_code=400)
 
         except BaseException as e:
@@ -172,14 +172,9 @@ class Authentication(BaseAuthentication):
 
         # Retrieve one
         try:
-            user = self.db.User.objects.get({"uuid": user_id})
+            return [self.db.User.objects.get({"uuid": user_id})]
         except self.db.User.DoesNotExist:
             return None
-
-        if user is None:
-            return None
-
-        return [user]
 
     def get_roles(self):
         roles = []
@@ -266,23 +261,20 @@ class Authentication(BaseAuthentication):
         now = datetime.now()
         exp = payload.get("exp", now + timedelta(seconds=self.DEFAULT_TOKEN_TTL))
 
-        if user is None:
-            log.error("Trying to save an empty token")
-        else:
-            self.db.Token(
-                jti=payload["jti"],
-                token=token,
-                token_type=token_type,
-                creation=now,
-                last_access=now,
-                expiration=exp,
-                IP=ip or NULL_IP,
-                location=ip_loc or "Unknown",
-                user_id=user,
-            ).save()
+        self.db.Token(
+            jti=payload["jti"],
+            token=token,
+            token_type=token_type,
+            creation=now,
+            last_access=now,
+            expiration=exp,
+            IP=ip or NULL_IP,
+            location=ip_loc or "Unknown",
+            user_id=user,
+        ).save()
 
-            # Save user updated in profile endpoint
-            user.save()
+        # Save user updated in profile endpoint
+        user.save()
 
     def verify_token_validity(self, jti, user):
 
@@ -338,26 +330,20 @@ class Authentication(BaseAuthentication):
             except self.db.Token.DoesNotExist:
                 pass
 
-        if tokens is None:
-            return tokens_list
-
-        for token in tokens:
-            t = {}
-            t["id"] = token.jti
-            t["token"] = token.token
-            t["token_type"] = token.token_type
-            # t["emitted"] = token.creation.strftime('%s')
-            # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration:
-            #     t["expiration"] = token.expiration.strftime('%s')
-            t["emitted"] = token.creation
-            t["last_access"] = token.last_access
-            t["expiration"] = token.expiration
-            t["IP"] = token.IP
-            t["location"] = token.location
-            if get_all:
-                t["user"] = token.user_id
-            tokens_list.append(t)
+        if tokens:
+            for token in tokens:
+                t = {}
+                t["id"] = token.jti
+                t["token"] = token.token
+                t["token_type"] = token.token_type
+                t["emitted"] = token.creation
+                t["last_access"] = token.last_access
+                t["expiration"] = token.expiration
+                t["IP"] = token.IP
+                t["location"] = token.location
+                if get_all:
+                    t["user"] = token.user_id
+                tokens_list.append(t)
 
         return tokens_list
 
