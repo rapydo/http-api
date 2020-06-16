@@ -61,12 +61,8 @@ def getProfileData():
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        try:
-            custom_fields = customizer.get_custom_fields(False)
-            if custom_fields:
-                attributes.update(custom_fields)
-        except BaseException as e:
-            log.error("Could not retrieve custom profile fields:\n{}", e)
+        if custom_fields := customizer.get_custom_fields(False):
+            attributes.update(custom_fields)
 
     schema = OutputSchema.from_dict(attributes)
     return schema()
@@ -127,7 +123,6 @@ class Profile(MethodResource, EndpointResource):
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-            log.critical(customizer)
             data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)

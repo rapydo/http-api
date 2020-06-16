@@ -6,13 +6,35 @@ from restapi.tests import API_URI, BaseTests
 class TestUploadAndDownload(BaseTests):
     def test_upload(self, client, fake):
 
-        # Avoid chinese filename for now... let's simplify the tests
-        # self.fname = fake.file_name()
-        self.fname = f"{fake.pystr()}.{fake.file_extension()}"
         self.fcontent = fake.paragraph()
-
-        self.save("fname", self.fname)
         self.save("fcontent", self.fcontent)
+
+        self.fname = f"{fake.pystr()}.notallowed"
+
+        r = client.put(
+            f"{API_URI}/tests/upload",
+            data={
+                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
+                "force": True,
+            },
+        )
+        assert r.status_code == 400
+        assert self.get_content(r) == "File extension not allowed"
+
+        self.fname = f"{fake.pystr()}.not"
+
+        r = client.put(
+            f"{API_URI}/tests/upload",
+            data={
+                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
+                "force": True,
+            },
+        )
+        assert r.status_code == 400
+        assert self.get_content(r) == "File extension not allowed"
+
+        self.fname = f"{fake.pystr()}.txt"
+        self.save("fname", self.fname)
 
         r = client.put(
             f"{API_URI}/tests/upload",

@@ -52,6 +52,7 @@ if TESTING:
                     log.info("Upload completed")
 
             else:
+                self.set_allowed_exts(["txt"])
                 response = self.upload(force=force)
             return response
 

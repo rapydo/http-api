@@ -130,12 +130,8 @@
 #         )
 
 #     if customizer := Meta.get_customizer_instance('apis.profile', 'CustomProfile'):
-#         try:
-#             custom_fields = customizer.get_custom_fields(strip_required)
-#             if custom_fields:
-#                 attributes.update(custom_fields)
-#         except BaseException as e:
-#             log.error("Could not retrieve custom profile fields:\n{}", e)
+#         if custom_fields := customizer.get_custom_fields(strip_required):
+#             attributes.update(custom_fields)
 
 #     if send_mail_is_active():
 #         attributes["email_notification"] = fields.Bool(

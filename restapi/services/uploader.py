@@ -17,7 +17,7 @@ from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
 from restapi.confs import UPLOAD_PATH, get_backend_url
-from restapi.exceptions import RestApiException, ServiceUnavailable
+from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.utilities.logs import log
 
 
@@ -26,7 +26,9 @@ from restapi.utilities.logs import log
 class Uploader:
 
     allowed_exts = []
-    # allowed_exts = ['png', 'jpg', 'jpeg', 'tiff']
+
+    def set_allowed_exts(self, exts):
+        self.allowed_exts = exts
 
     @staticmethod
     def split_dir_and_extension(filepath):
@@ -56,16 +58,13 @@ class Uploader:
     def upload(self, subfolder=None, force=False):
 
         if "file" not in request.files:
-
-            raise RestApiException(
-                "No files specified", status_code=400,
-            )
+            raise BadRequest("No files specified")
 
         myfile = request.files["file"]
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
-            raise RestApiException("File extension not allowed")
+            raise BadRequest("File extension not allowed")
 
         # Check file name
         fname = secure_filename(myfile.filename)
@@ -80,13 +79,12 @@ class Uploader:
         # But corrupted...
         if os.path.exists(abs_file):
 
-            log.warning("Already exists")
-            if force:
-                os.remove(abs_file)
-                log.debug("Forced removal")
-            else:
-                e = f"File '{fname}' already exists, use force parameter to overwrite"
-                raise RestApiException(e, status_code=400)
+            if not force:
+                raise BadRequest(
+                    f"File '{fname}' already exists, use force parameter to overwrite"
+                )
+            os.remove(abs_file)
+            log.debug("Already exists, forced removal")
 
         # Save the file
         try:

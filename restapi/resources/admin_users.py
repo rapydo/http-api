@@ -132,12 +132,8 @@ def get_output_schema():
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        try:
-            custom_fields = customizer.get_custom_fields(False)
-            if custom_fields:
-                attributes.update(custom_fields)
-        except BaseException as e:
-            log.error("Could not retrieve custom profile fields:\n{}", e)
+        if custom_fields := customizer.get_custom_fields(False):
+            attributes.update(custom_fields)
 
     schema = OutputSchema.from_dict(attributes)
     return schema(many=True)
@@ -184,12 +180,8 @@ def getInputSchema(is_put_method):
         )
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        try:
-            custom_fields = customizer.get_custom_fields(is_put_method)
-            if custom_fields:
-                attributes.update(custom_fields)
-        except BaseException as e:
-            log.error("Could not retrieve custom profile fields:\n{}", e)
+        if custom_fields := customizer.get_custom_fields(is_put_method):
+            attributes.update(custom_fields)
 
     if send_mail_is_active():
         attributes["email_notification"] = fields.Bool(label="Notify password by email")

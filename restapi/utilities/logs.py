@@ -36,14 +36,8 @@ def verbose(*args, **kwargs):
 
 
 def critical_exit(message="", *args, **kwargs):
-    error_code = kwargs.pop("error_code", 1)
-    if not isinstance(error_code, int):
-        raise ValueError("Error code must be an integer")
-    if error_code < 1:
-        raise ValueError("Cannot exit with value below 1")
-
     log.critical(message, *args, **kwargs)
-    sys.exit(error_code)
+    sys.exit(1)
 
 
 log.verbose = verbose
@@ -81,7 +75,7 @@ if LOGS_PATH is not None:
             # This is the case when picle fails to serialize before sending to the queue
             catch=True,
         )
-    except PermissionError as p:
+    except PermissionError as p:  # pragma: no cover
         log.error(p)
         LOGS_PATH = None
 

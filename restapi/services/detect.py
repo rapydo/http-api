@@ -1,6 +1,8 @@
 import os
 from functools import lru_cache
 
+from glom import glom
+
 from restapi.confs import (
     ABS_RESTAPI_PATH,
     BACKEND_PACKAGE,
@@ -227,7 +229,7 @@ class Detector:
 
             try:
                 connector_instance = ConnectorClass(app)
-            except TypeError as e:
+            except TypeError as e:  # pragma: no cover
                 log.exit("Your class {} is not compliant:\n{}", connector_name, e)
 
             self.services[connector_name]["connector"] = connector_instance
@@ -269,16 +271,7 @@ class Detector:
                 connector.destroy()
 
     def check_availability(self, name):
-
-        if "." in name:
-            # In this case we are receiving a module name
-            # e.g. restapi.services.mongodb
-            name = name.split(".")[::-1][0]
-
-        if name not in self.services:
-            return False
-
-        return self.services.get(name).get("available", False)
+        return glom(self.services, f"{name}.available", default=False)
 
     @classmethod
     def project_initialization(self, instances, app=None):
@@ -288,20 +281,13 @@ class Detector:
         project/YOURPROJECT/backend/initialization/initialization.py
         """
 
-        try:
-            initializer = Meta.get_customizer_instance(
-                "initialization.initialization",
-                "Initializer",
-                services=instances,
-                app=app,
-            )
-            if initializer:
-                log.info("Vanilla project has been initialized")
-            else:
-                log.error("Errors during custom initialization")
-
-        except BaseException as e:
-            log.debug("No custom init available: {}", e)
+        initializer = Meta.get_customizer_instance(
+            "initialization.initialization", "Initializer", services=instances, app=app,
+        )
+        if initializer:
+            log.info("Vanilla project has been initialized")
+        else:
+            log.error("Errors during custom initialization")
 
     def get_debug_instance(self, connector):
 
