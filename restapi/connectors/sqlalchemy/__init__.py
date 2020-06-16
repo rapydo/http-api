@@ -217,58 +217,19 @@ class Authentication(BaseAuthentication):
             user.roles.append(sqlrole)
 
     def get_user_object(self, username=None, payload=None):
-        user = None
+
         try:
-            if username is not None:
-                user = self.db.User.query.filter_by(email=username).first()
-            if payload is not None and "user_id" in payload:
-                user = self.db.User.query.filter_by(uuid=payload["user_id"]).first()
+            if username:
+                return self.db.User.query.filter_by(email=username).first()
+
+            if payload and "user_id" in payload:
+                return self.db.User.query.filter_by(uuid=payload["user_id"]).first()
+
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
-
-            # Unable to except pymysql.err.OperationalError because:
-            # ModuleNotFoundError: No module named 'pymysql.err.OperationalError';
-            # 'pymysql.err' is not a package
-            # Let's test exception name (OMG!)
-            if type(e).__name__ == "pymysql.err.OperationalError":
-                # If you catch an error that indicates the connection was closed during
-                # an operation, SQLAlchemy automatically reconnects on the next access.
-
-                # Pessimistic approach: Add pool_pre_ping=True when creating the engine
-                # The “pre ping” feature will normally emit SQL equivalent to “SELECT 1”
-                # each time a connection is checked out from the pool; if an error is
-                # raised that is detected as a “disconnect” situation, the connection
-                # will be immediately recycled, and all other pooled connections older
-                # than the current time are invalidated, so that the next time they are
-                # checked out, they will also be recycled before use.
-                # This add a little overhead to every connections
-                # https://docs.sqlalchemy.org/en/13/core/pooling.html#pool-disconnects-pessimistic
-
-                # Optimistic approach: try expect for connection errors.
-                # When the connection attempts to use a closed connection an exception
-                # is raised, then the connection calls the Pool.create() method,
-                # further connections will work again by using the refreshed connection.
-                # Only a single transaction will fail -> retry the operation is enough
-                # https://docs.sqlalchemy.org/en/13/core/pooling.html#disconnect-handling-optimistic
-
-                # if retry <= 0:
-                #     log.error(str(e))
-                #     log.warning("Errors retrieving user object, retrying...")
-                #     return self.get_user_object(
-                #         username=username, payload=payload, retry=1
-                #     )
-                raise e
-            else:
-                log.error(str(e))
-                raise ServiceUnavailable("Backend database is unavailable")
+            log.error(e)
+            raise ServiceUnavailable("Backend database is unavailable")
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
-            # if retry <= 0:
-            #     log.error(str(e))
-            #     log.warning("Errors retrieving user object, retrying...")
-            #     return self.get_user_object(
-            #         username=username, payload=payload, retry=1)
             raise e
-
-        return user
 
     def get_users(self, user_id=None):
 
@@ -348,7 +309,7 @@ class Authentication(BaseAuthentication):
             raise AttributeError("Inconsistences between DB schema and data models")
 
     def save_user(self, user):
-        if user is not None:
+        if user:
             self.db.session.add(user)
             self.db.session.commit()
 
@@ -443,9 +404,9 @@ class Authentication(BaseAuthentication):
 
         if get_all:
             tokens = self.db.Token.query.all()
-        elif user is not None:
+        elif user:
             tokens = user.tokens.all()
-        elif token_jti is not None:
+        elif token_jti:
             tokens = [self.db.Token.query.filter_by(jti=token_jti).first()]
 
         if tokens is None:
@@ -463,7 +424,7 @@ class Authentication(BaseAuthentication):
             t["token_type"] = token.token_type
             # t["emitted"] = token.creation.strftime('%s')
             # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration is not None:
+            # if token.expiration:
             #     t["expiration"] = token.expiration.strftime('%s')
             t["emitted"] = token.creation
             t["last_access"] = token.last_access
@@ -479,7 +440,7 @@ class Authentication(BaseAuthentication):
     def invalidate_token(self, token):
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
-        if token_entry is not None:
+        if token_entry:
             try:
                 self.db.session.delete(token_entry)
                 self.db.session.commit()

@@ -81,7 +81,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # 1 month in seconds
     DEFAULT_TOKEN_TTL = Env.get_int("AUTH_JWT_TOKEN_TTL", 2_592_000)
     GRACE_PERIOD = timedelta(seconds=7200)  # 2 hours in seconds
-    SAVE_LAST_ACCESS_EVERY = timedelta(seconds=60)
+    SAVE_LAST_ACCESS_EVERY = timedelta(
+        seconds=Env.get_int("AUTH_TOKEN_SAVE_FREQUENCY", 60)
+    )
 
     FULL_TOKEN = "f"
     PWD_RESET = "r"

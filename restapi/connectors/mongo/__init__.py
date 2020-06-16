@@ -151,29 +151,18 @@ class Authentication(BaseAuthentication):
 
     def get_user_object(self, username=None, payload=None):
 
-        user = None
+        try:
+            if username:
+                return self.db.User.objects.raw({"email": username}).first()
 
-        if username is not None:
-            # NOTE: email is the key, so to query use _id
-            try:
-                user = self.db.User.objects.raw({"email": username}).first()
-            except self.db.User.DoesNotExist:
-                # don't do things, user will remain 'None'
-                pass
+            if payload and "user_id" in payload:
+                return self.db.User.objects.get({"uuid": payload["user_id"]})
 
-        if payload is not None:
-            if payload.get("user_id"):  # skip: '', None
-                try:
-                    user = self.db.User.objects.get({"uuid": payload["user_id"]})
-                except self.db.User.DoesNotExist:
-                    pass
-            elif payload.get("jti"):  # skip: '', None
-                try:
-                    user = self.db.Token.objects.get({"jti": payload["jti"]}).user_id
-                except self.db.Token.DoesNotExist:
-                    pass
-
-        return user
+        except self.db.User.DoesNotExist:
+            log.warning(
+                "Could not find user for username={}, payload={}", username, payload
+            )
+            return None
 
     def get_users(self, user_id=None):
 
@@ -263,7 +252,7 @@ class Authentication(BaseAuthentication):
             raise AttributeError(f"Models for auth are wrong:\n{e}")
 
     def save_user(self, user):
-        if user is not None:
+        if user:
             user.save()
 
     def save_token(self, user, token, payload, token_type=None):
@@ -338,12 +327,12 @@ class Authentication(BaseAuthentication):
 
         if get_all:
             tokens = self.db.Token.objects.all()
-        elif user is not None:
+        elif user:
             try:
                 tokens = self.db.Token.objects.raw({"user_id": user.id}).all()
             except self.db.Token.DoesNotExist:
                 pass
-        elif token_jti is not None:
+        elif token_jti:
             try:
                 tokens.append(self.db.Token.objects.raw({"jti": token_jti}).first())
             except self.db.Token.DoesNotExist:
@@ -359,7 +348,7 @@ class Authentication(BaseAuthentication):
             t["token_type"] = token.token_type
             # t["emitted"] = token.creation.strftime('%s')
             # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration is not None:
+            # if token.expiration:
             #     t["expiration"] = token.expiration.strftime('%s')
             t["emitted"] = token.creation
             t["last_access"] = token.last_access

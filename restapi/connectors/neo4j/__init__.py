@@ -133,15 +133,8 @@ class NeoModel(Connector):
     def initialize(self):
 
         with self.app.app_context():
-
-            auto_index = self.variables.get("autoindexing", "True") == "True"
-
-            if auto_index:
-                try:
-                    remove_all_labels()
-                    install_all_labels()
-                except BaseException as e:
-                    log.exit(str(e))
+            remove_all_labels()
+            install_all_labels()
 
     def destroy(self):
 
@@ -226,20 +219,18 @@ class NeoModel(Connector):
 class Authentication(BaseAuthentication):
     def get_user_object(self, username=None, payload=None):
 
-        if username is None and payload is None:
-            return None
-
-        user = None
         try:
-            if username is not None:
-                user = self.db.User.nodes.get(email=username)
-            elif payload is not None and "user_id" in payload:
-                user = self.db.User.nodes.get(uuid=payload["user_id"])
+            if username:
+                return self.db.User.nodes.get(email=username)
+
+            if payload and "user_id" in payload:
+                return self.db.User.nodes.get(uuid=payload["user_id"])
+
         except self.db.User.DoesNotExist:
             log.warning(
                 "Could not find user for username={}, payload={}", username, payload
             )
-        return user
+            return None
 
     def get_users(self, user_id=None):
 
@@ -347,7 +338,7 @@ class Authentication(BaseAuthentication):
             log.debug("Users already created")
 
     def save_user(self, user):
-        if user is not None:
+        if user:
             user.save()
 
     def save_token(self, user, token, payload, token_type=None):
@@ -420,9 +411,9 @@ class Authentication(BaseAuthentication):
 
         if get_all:
             tokens = self.db.Token.nodes.all()
-        elif user is not None:
+        elif user:
             tokens = user.tokens.all()
-        elif token_jti is not None:
+        elif token_jti:
             try:
                 tokens = [self.db.Token.nodes.get(jti=token_jti)]
             except self.db.Token.DoesNotExist:
@@ -439,7 +430,7 @@ class Authentication(BaseAuthentication):
             t["token_type"] = token.token_type
             # t["emitted"] = token.creation.strftime('%s')
             # t["last_access"] = token.last_access.strftime('%s')
-            # if token.expiration is not None:
+            # if token.expiration:
             #     t["expiration"] = token.expiration.strftime('%s')
             t["emitted"] = token.creation
             t["last_access"] = token.last_access
