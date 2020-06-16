@@ -314,7 +314,7 @@ class Authentication(BaseAuthentication):
             self.db.session.commit()
 
     def save_token(self, user, token, payload, token_type=None):
-        # payload['jti']
+
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
 
