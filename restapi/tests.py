@@ -285,7 +285,6 @@ class BaseTests:
                         assert "?secret=" in content.get("qr_url")
                         secret = content.get("qr_url").split("?secret=")[1]
                         assert secret is not None
-                        # uhm?
                         assert len(secret) == 16
 
                         BaseTests.QRsecrets[USER.lower()] = secret
