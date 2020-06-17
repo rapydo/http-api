@@ -6,11 +6,11 @@ import uuid
 from datetime import datetime, timedelta
 
 import jwt
+import pyotp
 import pytest
 import pytz
 from faker import Faker
 from faker.providers import BaseProvider
-from glom import glom
 
 from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
 from restapi.services.authentication import BaseAuthentication
@@ -141,6 +141,11 @@ fake = get_faker()
 
 
 class BaseTests:
+
+    # will be used by do_login in case of TOTP
+    # This will save correspondances between user email and provided QR Code
+    QRsecrets = {}
+
     def save(self, variable, value, read_only=False):
         """
             Save a variable in the class, to be re-used in further tests
@@ -208,6 +213,15 @@ class BaseTests:
         return response
 
     @staticmethod
+    def generate_totp(secret):
+        if secret is None:
+            # someway to reset the TOTP secret?
+            pytest.fail(
+                "Unavailable TOTP secret, probably you missed the FIRST LOGIN action?"
+            )
+        return pyotp.TOTP(secret).now()
+
+    @staticmethod
     def do_login(client, USER, PWD, status_code=200, error=None, data=None):
         """
             Make login and return both token and authorization header
@@ -232,37 +246,69 @@ class BaseTests:
 
         if r.status_code == 403:
             if isinstance(content, dict) and content.get("actions"):
-                action = content.get("actions")[0]
+                actions = content.get("actions", [])
 
-                if action == "FIRST LOGIN" or action == "PASSWORD EXPIRED":
+                for action in actions:
+                    if action == "TOTP":
+                        continue
+                    if action == "FIRST LOGIN":
+                        continue
+                    if action == "PASSWORD EXPIRED":
+                        continue
+                    pytest.fail(f"Unknown post log action requested: {action}")
+
+                data = {}
+                # Will read and store qr_code + init totp_code required for next action
+                if "TOTP" in actions:
+                    if content.get("qr_code"):
+                        # validate that the QR code is a valid PNG image
+                        pass
+
+                    if content.get("qr_url"):
+                        assert content.get("qr_url").startswith("otpauth://totp/")
+                        assert "?secret=" in content.get("qr_url")
+                        secret = content.get("qr_url").split("?secret=")[1]
+                        assert secret is not None
+                        # uhm?
+                        assert len(secret) == 16
+
+                        BaseTests.QRsecrets[USER.lower()] = secret
+
+                    data["totp_code"] = BaseTests.generate_totp(
+                        BaseTests.QRsecrets.get(USER.lower())
+                    )
+
+                if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                     newpwd = fake.password(strong=True)
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = fake.password(strong=True)
                     BaseTests.do_login(
-                        client,
-                        USER,
-                        PWD,
-                        data={
-                            "new_password": newpwd,
-                            "password_confirm": fake.password(strong=True),
-                        },
-                        status_code=409,
+                        client, USER, PWD, data=data, status_code=409,
                     )
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = newpwd
                     BaseTests.do_login(
-                        client,
-                        USER,
-                        PWD,
-                        data={"new_password": newpwd, "password_confirm": newpwd},
+                        client, USER, PWD, data=data,
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
-                    return BaseTests.do_login(
-                        client,
-                        USER,
-                        newpwd,
-                        data={"new_password": PWD, "password_confirm": PWD},
+                    data["new_password"] = PWD
+                    data["password_confirm"] = PWD
+                    return BaseTests.do_login(client, USER, newpwd, data=data,)
+
+                # in this case FIRST LOGIN has not been executed
+                # => login by sending the TOTP code
+                if "TOTP" in actions:
+                    data["totp_code"] = fake.pyint()
+                    BaseTests.do_login(
+                        client, USER, PWD, data=data, status_code=401,
                     )
-                else:
-                    pytest.fail(f"Unknown post log action requested: {action}")
+
+                    data["totp_code"] = BaseTests.generate_totp(
+                        BaseTests.QRsecrets.get(USER.lower())
+                    )
+                    return BaseTests.do_login(client, USER, PWD, data=data,)
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON

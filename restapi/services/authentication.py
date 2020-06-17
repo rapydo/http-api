@@ -9,9 +9,12 @@ import hashlib
 import hmac
 import re
 from datetime import datetime, timedelta
+from io import BytesIO
 
 import jwt
+import pyotp  # TOTP generation
 import pytz
+import segno  # QR Code generation
 from flask import request
 from passlib.context import CryptContext
 
@@ -36,24 +39,11 @@ from restapi.utilities.meta import Meta
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
-ALL_ROLES = "all"
-ANY_ROLE = "any"
-
-if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION", "") == "TOTP":
-    try:
-        import pyotp
-
-        # to be replaced, last release is Jun 2016
-        import pyqrcode
-
-        # import base64
-        from io import BytesIO
-    except ModuleNotFoundError:
-        log.exit("Missing libraries for TOTP 2FA authentication")
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 NULL_IP = "0.0.0.0"
+ALL_ROLES = "all"
+ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
 ADMIN_ROLE = "admin_root"
 LOCAL_ADMIN_ROLE = "local_admin"
@@ -113,7 +103,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.MAX_PASSWORD_VALIDITY = None
         elif TESTING:
             self.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
-        else:
+        # Of course cannot be tested
+        else:  # pragma: no cover
             self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
@@ -128,6 +119,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
 
         if self.SECOND_FACTOR_AUTHENTICATION == "None":
+            self.SECOND_FACTOR_AUTHENTICATION = None
+        elif not self.FORCE_FIRST_PASSWORD_CHANGE:
+            log.error(
+                "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
+                self.SECOND_FACTOR_AUTHENTICATION,
+            )
             self.SECOND_FACTOR_AUTHENTICATION = None
 
     # Deprecated since 0.7.4
@@ -698,10 +695,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         project_name = get_project_configuration("project.title", "No project name")
 
         otpauth_url = totp.provisioning_uri(project_name)
-        qr_url = pyqrcode.create(otpauth_url)
+        qr_url = segno.make(otpauth_url)
         qr_stream = BytesIO()
-        qr_url.svg(qr_stream, scale=5)
-        return qr_stream.getvalue()
+        qr_url.save(qr_stream, kind="png", scale=5)
+        return otpauth_url, base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
     def verify_password_strength(self, pwd, old_pwd):
 

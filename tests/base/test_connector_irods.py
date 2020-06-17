@@ -4,6 +4,7 @@ import time
 import pytest
 
 from restapi.exceptions import ServiceUnavailable
+from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -166,7 +167,7 @@ def test_irods(app, faker):
     # This use case is only implemented in B2SAFE.
     # The core model does not include a session
     class User:
-        email = faker.ascii_email()
+        email = BaseAuthentication.default_user
         session = obj.prc.serialize()
 
     detector.get_service_instance(CONNECTOR, user_session=User())

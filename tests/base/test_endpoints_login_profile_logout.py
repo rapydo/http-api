@@ -235,6 +235,10 @@ class TestApp(BaseTests):
         # Trying to set new password == password... it is not permitted!
         data["password_confirm"] = data["password"]
         data["new_password"] = data["password"]
+
+        if secret := BaseTests.QRsecrets.get(BaseAuthentication.default_user.lower()):
+            data["totp_code"] = BaseTests.generate_totp(secret)
+
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 409
 

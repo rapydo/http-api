@@ -43,13 +43,17 @@ script:
   - > # this enable multiline commands
 
     if [[ "$TEMPLATE" == "postgres" ]]; then
-      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth postgres --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
-      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth mysql --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
-      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth neo4j --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
-      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth mongo --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
@@ -66,7 +70,7 @@ script:
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --current --extend prjbase --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30,AUTH_REGISTER_FAILED_LOGIN=True,AUTH_MAX_LOGIN_ATTEMPTS=5;
+      rapydo create prj --current --extend prjbase --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30,AUTH_REGISTER_FAILED_LOGIN=True,AUTH_MAX_LOGIN_ATTEMPTS=5,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     else
