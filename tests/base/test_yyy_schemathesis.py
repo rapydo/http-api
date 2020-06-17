@@ -15,8 +15,8 @@ RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
 
 def get_auth_token(client, data):
 
-    r = client.post("/auth/login", data=data)
     data["totp_code"] = BaseTests.generate_totp(data.get("username"))
+    r = client.post("/auth/login", data=data)
     content = json.loads(r.data.decode("utf-8"))
 
     if r.status_code == 403:
