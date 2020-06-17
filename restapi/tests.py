@@ -14,6 +14,7 @@ from faker.providers import BaseProvider
 
 from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
 from restapi.services.authentication import BaseAuthentication
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
@@ -216,12 +217,19 @@ class BaseTests:
     @staticmethod
     def generate_totp(user):
         secret = BaseTests.QRsecrets.get(user.lower())
-        if secret is None:
-            # someway to reset the TOTP secret?
-            pytest.fail(
-                "Unavailable TOTP secret, probably you missed the FIRST LOGIN action?"
-            )
-        return pyotp.TOTP(secret).now()
+        if secret:
+            return pyotp.TOTP(secret).now()
+
+        try:
+            auth = detector.get_service_instance("authentication")
+
+            user = auth.get_user_object(username=user)
+
+            secret = BaseAuthentication.get_secret(user)
+
+            return pyotp.TOTP(secret).now()
+        except BaseException as e:
+            log.error(e)
 
     @staticmethod
     def do_login(client, USER, PWD, status_code=200, error=None, data=None):

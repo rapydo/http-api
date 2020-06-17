@@ -1,6 +1,5 @@
 import json
 
-import pytest
 import schemathesis
 import werkzeug
 from hypothesis import HealthCheck, settings
@@ -19,21 +18,11 @@ def get_auth_token(client, data):
     r = client.post("/auth/login", data=data)
     content = json.loads(r.data.decode("utf-8"))
 
-    if BaseTests.TOTP:
-        data["totp_code"] = BaseTests.generate_totp(USER)
+    data["totp_code"] = BaseTests.generate_totp(USER)
 
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
             actions = content.get("actions")
-
-            for action in actions:
-                if action == "TOTP":
-                    continue
-                if action == "FIRST LOGIN":
-                    continue
-                if action == "PASSWORD EXPIRED":
-                    continue
-                pytest.fail(f"Unknown post log action requested: {action}")
 
             if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                 currentpwd = data["password"]
@@ -49,8 +38,6 @@ def get_auth_token(client, data):
                 data["new_password"] = currentpwd
                 data["password_confirm"] = currentpwd
                 return get_auth_token(client, data)
-            else:
-                pytest.fail(f"Unknown post log action requested: {action}")
 
     assert r.status_code == 200
     assert content is not None
