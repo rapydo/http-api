@@ -18,7 +18,7 @@ def get_auth_token(client, data):
     r = client.post("/auth/login", data=data)
     content = json.loads(r.data.decode("utf-8"))
 
-    data["totp_code"] = BaseTests.generate_totp(USER)
+    data["totp_code"] = BaseTests.generate_totp(data.get("username"))
 
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
