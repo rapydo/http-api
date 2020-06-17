@@ -680,8 +680,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         secret = BaseAuthentication.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code):
-            if self.REGISTER_FAILED_LOGIN:
-                self.register_failed_login(user.email)
+            # if self.REGISTER_FAILED_LOGIN:
+            #     self.register_failed_login(user.email)
             raise Unauthorized("Invalid verification code")
 
         return True
