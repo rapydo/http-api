@@ -257,6 +257,8 @@ class TestApp(BaseTests):
         data["password"] = data["new_password"]
         data["new_password"] = BaseAuthentication.default_password
         data["password_confirm"] = BaseAuthentication.default_password
+        if BaseTests.TOTP:
+            data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
 
