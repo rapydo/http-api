@@ -166,6 +166,9 @@ def test_irods(app, faker):
     # This simulates a User extended with serialized session.
     # This use case is only implemented in B2SAFE.
     # The core model does not include a session
+    BaseAuthentication.load_default_user()
+    BaseAuthentication.load_roles()
+
     class User:
         email = BaseAuthentication.default_user
         session = obj.prc.serialize()
