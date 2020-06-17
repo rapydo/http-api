@@ -236,8 +236,8 @@ class TestApp(BaseTests):
         data["password_confirm"] = data["password"]
         data["new_password"] = data["password"]
 
-        if secret := BaseTests.QRsecrets.get(BaseAuthentication.default_user.lower()):
-            data["totp_code"] = BaseTests.generate_totp(secret)
+        if BaseTests.TOTP:
+            data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 409

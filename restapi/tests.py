@@ -145,6 +145,7 @@ class BaseTests:
     # will be used by do_login in case of TOTP
     # This will save correspondances between user email and provided QR Code
     QRsecrets = {}
+    TOTP = False
 
     def save(self, variable, value, read_only=False):
         """
@@ -213,7 +214,8 @@ class BaseTests:
         return response
 
     @staticmethod
-    def generate_totp(secret):
+    def generate_totp(user):
+        secret = BaseTests.QRsecrets.get(user.lower())
         if secret is None:
             # someway to reset the TOTP secret?
             pytest.fail(
@@ -250,6 +252,7 @@ class BaseTests:
 
                 for action in actions:
                     if action == "TOTP":
+                        BaseTests.TOTP = True
                         continue
                     if action == "FIRST LOGIN":
                         continue
@@ -274,9 +277,7 @@ class BaseTests:
 
                         BaseTests.QRsecrets[USER.lower()] = secret
 
-                    data["totp_code"] = BaseTests.generate_totp(
-                        BaseTests.QRsecrets.get(USER.lower())
-                    )
+                    data["totp_code"] = BaseTests.generate_totp(USER)
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                     newpwd = fake.password(strong=True)
@@ -305,9 +306,7 @@ class BaseTests:
                         client, USER, PWD, data=data, status_code=401,
                     )
 
-                    data["totp_code"] = BaseTests.generate_totp(
-                        BaseTests.QRsecrets.get(USER.lower())
-                    )
+                    data["totp_code"] = BaseTests.generate_totp(USER)
                     return BaseTests.do_login(client, USER, PWD, data=data,)
 
         if r.status_code != 200:

@@ -8,7 +8,7 @@ from hypothesis import HealthCheck, settings
 from restapi.env import Env
 from restapi.server import create_app
 from restapi.services.authentication import BaseAuthentication
-from restapi.tests import get_faker
+from restapi.tests import BaseTests, get_faker
 from restapi.utilities.logs import log, set_logger
 
 RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
@@ -19,11 +19,23 @@ def get_auth_token(client, data):
     r = client.post("/auth/login", data=data)
     content = json.loads(r.data.decode("utf-8"))
 
+    if BaseTests.TOTP:
+        data["totp_code"] = BaseTests.generate_totp(USER)
+
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
-            action = content.get("actions")[0]
+            actions = content.get("actions")
 
-            if action == "FIRST LOGIN" or action == "PASSWORD EXPIRED":
+            for action in actions:
+                if action == "TOTP":
+                    continue
+                if action == "FIRST LOGIN":
+                    continue
+                if action == "PASSWORD EXPIRED":
+                    continue
+                pytest.fail(f"Unknown post log action requested: {action}")
+
+            if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                 currentpwd = data["password"]
                 fake = get_faker()
                 newpwd = fake.password(strong=True)
