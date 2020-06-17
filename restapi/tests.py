@@ -255,6 +255,11 @@ class BaseTests:
         content = json.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
+
+            # This 403 is expected, return an invalid value or you can enter a loop!
+            if status_code == 403:
+                return None, None
+
             if isinstance(content, dict) and content.get("actions"):
                 actions = content.get("actions", [])
 
@@ -285,18 +290,39 @@ class BaseTests:
 
                         BaseTests.QRsecrets[USER.lower()] = secret
 
-                    data["totp_code"] = BaseTests.generate_totp(USER)
-
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                     newpwd = fake.password(strong=True)
                     data["new_password"] = newpwd
                     data["password_confirm"] = fake.password(strong=True)
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
+
                     BaseTests.do_login(
                         client, USER, PWD, data=data, status_code=409,
                     )
+
+                    # Test failure of password change if TOTP is wrong or not provided
+                    if BaseTests.TOTP:
+                        data["new_password"] = newpwd
+                        data["password_confirm"] = newpwd
+                        data.pop("totp_code", None)
+
+                        BaseTests.do_login(
+                            client, USER, PWD, data=data, status_code=403,
+                        )
+
+                        data["new_password"] = newpwd
+                        data["password_confirm"] = newpwd
+                        data["totp_code"] = fake.pyint()
+                        BaseTests.do_login(
+                            client, USER, PWD, data=data, status_code=401,
+                        )
+
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                     data["new_password"] = newpwd
                     data["password_confirm"] = newpwd
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
                     BaseTests.do_login(
                         client, USER, PWD, data=data,
                     )
@@ -304,6 +330,8 @@ class BaseTests:
                     # and keep all other tests fully working
                     data["new_password"] = PWD
                     data["password_confirm"] = PWD
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
                     return BaseTests.do_login(client, USER, newpwd, data=data,)
 
                 # in this case FIRST LOGIN has not been executed

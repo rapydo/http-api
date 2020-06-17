@@ -8,7 +8,7 @@ from restapi import decorators
 from restapi.exceptions import Forbidden
 from restapi.models import InputSchema
 from restapi.rest.definition import EndpointResource
-from restapi.utilities.time import get_now
+from restapi.utilities.time import EPOCH, get_now
 
 auth = EndpointResource.load_authentication()
 
@@ -65,8 +65,6 @@ class Login(MethodResource, EndpointResource):
 
         username = username.lower()
 
-        now = datetime.now(pytz.utc)
-
         # ##################################################
         # Authentication control
         # self.auth.verify_blocked_username(username)
@@ -76,16 +74,17 @@ class Login(MethodResource, EndpointResource):
         self.auth.verify_blocked_user(user)
         self.auth.verify_active_user(user)
 
-        if self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP:
-            totp_authentication = True
+        message = {"actions": [], "errors": []}
+        totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
-            # if None will be verified later
-            if totp_code is not None:
-                self.auth.verify_totp(user, totp_code)
+        if totp_authentication:
 
-        else:
-            totp_authentication = False
-            totp_code = None
+            if totp_code is None:
+                message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
+                message["errors"].append("You do not provided a valid second factor")
+                raise Forbidden(message)
+
+            self.auth.verify_totp(user, totp_code)
 
         # ##################################################
         # If requested, change the password
@@ -102,36 +101,17 @@ class Login(MethodResource, EndpointResource):
         # ##################################################
         # Check if something is missing in the authentication and ask additional actions
         # raises exceptions in case of errors
-        self.verify_information(user, totp_authentication, totp_code)
 
-        # Everything is ok, let's save authentication information
-
-        if user.first_login is None:
-            user.first_login = now
-        user.last_login = now
-        self.auth.save_token(user, token, payload)
-
-        return self.response(token)
-
-    def verify_information(self, user, totp_auth, totp_code):
-
-        message = {"actions": [], "errors": []}
-
-        if totp_auth and totp_code is None:
-            message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
-            message["errors"].append("You do not provided a valid second factor")
-
-        epoch = datetime.fromtimestamp(0, pytz.utc)
         last_pwd_change = user.last_password_change
         if last_pwd_change is None or last_pwd_change == 0:
-            last_pwd_change = epoch
+            last_pwd_change = EPOCH
 
-        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == epoch:
+        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
 
             message["actions"].append("FIRST LOGIN")
             message["errors"].append("Please change your temporary password")
 
-            if totp_auth:
+            if totp_authentication:
 
                 qr_url, qr_code = self.auth.get_qrcode(user)
 
@@ -145,7 +125,7 @@ class Login(MethodResource, EndpointResource):
             # offset-naive datetime to compare with MySQL
             now = get_now(last_pwd_change.tzinfo)
 
-            expired = last_pwd_change == epoch or valid_until < now
+            expired = last_pwd_change == EPOCH or valid_until < now
 
             if expired:
 
@@ -154,3 +134,13 @@ class Login(MethodResource, EndpointResource):
 
         if message["errors"]:
             raise Forbidden(message)
+
+        # Everything is ok, let's save authentication information
+
+        now = datetime.now(pytz.utc)
+        if user.first_login is None:
+            user.first_login = now
+        user.last_login = now
+        self.auth.save_token(user, token, payload)
+
+        return self.response(token)

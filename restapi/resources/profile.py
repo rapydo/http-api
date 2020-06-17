@@ -139,8 +139,7 @@ class Profile(MethodResource, EndpointResource):
 
         if totp_authentication:
             self.auth.verify_totp(user, totp_code)
-        else:
-            self.auth.make_login(user.email, password)
+        self.auth.make_login(user.email, password)
 
         self.auth.change_password(user, password, new_password, password_confirm)
 

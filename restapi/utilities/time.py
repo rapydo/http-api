@@ -3,6 +3,8 @@ from datetime import datetime
 import dateutil.parser
 import pytz
 
+EPOCH = datetime.fromtimestamp(0, pytz.utc)
+
 
 # to be deprecated
 def date_from_string(date, fmt="%d/%m/%Y"):
