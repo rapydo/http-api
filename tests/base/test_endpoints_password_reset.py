@@ -131,6 +131,9 @@ class TestApp(BaseTests):
         assert c == "Invalid reset token"
 
         # Restore the default password
+        if BaseTests.TOTP:
+            data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
+
         data["password"] = new_pwd
         data["new_password"] = BaseAuthentication.default_password
         data["password_confirm"] = data["new_password"]
