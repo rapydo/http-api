@@ -148,27 +148,19 @@ class BaseTests:
     QRsecrets = {}
     TOTP = False
 
-    def save(self, variable, value, read_only=False):
+    def save(self, variable, value):
         """
             Save a variable in the class, to be re-used in further tests
-            In read_only mode the variable cannot be rewritten
         """
-        if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "read_only" in data and data["read_only"]:
-                pytest.fail(f"Cannot overwrite a read_only variable [{variable}]")
 
-        data = {"value": value, "read_only": read_only}
-        setattr(self.__class__, variable, data)
+        setattr(self.__class__, variable, value)
 
     def get(self, variable):
         """
             Retrieve a previously stored variable using the .save method
         """
         if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "value" in data:
-                return data["value"]
+            return getattr(self.__class__, variable)
 
         raise AttributeError(f"Class variable {variable} not found")
 

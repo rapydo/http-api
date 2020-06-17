@@ -7,6 +7,11 @@ services:
 - docker
 env:
 
+# this enabled extra services like irods, ftp and pushin
+# and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
+# html email templates, extended projects
+# It is executed as first because it is the slowest
+- TEMPLATE=extroptions
 - TEMPLATE=postgres
 - TEMPLATE=mysql
 - TEMPLATE=neo4j
@@ -16,10 +21,7 @@ env:
 - TEMPLATE=celery-rabbit-mongo
 - TEMPLATE=celery-redis-redis
 - TEMPLATE=celery-redis-mongo
-# this enabled extra services like irods, ftp and pushin
-# and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
-# html email templates, extended projects
-- TEMPLATE=extraoptions
+
 
 script:
   # Randomize auth service to test some services
