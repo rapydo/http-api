@@ -61,8 +61,9 @@ def catch_db_exceptions(func):
                 error = f"{prop.title()} already exists with value: {val}"
                 raise DatabaseDuplicatedEntry(error)
 
-            log.error("Unrecognized error message: {}", e)
-            raise DatabaseDuplicatedEntry("Duplicated entry")
+            # Can't be tested, should never happen except in case of new alchemy version
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
         except InternalError as e:
 

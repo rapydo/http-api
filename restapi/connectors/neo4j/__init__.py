@@ -54,6 +54,7 @@ def catch_db_exceptions(func):
                 error = f"A {node} already exists with {prop} = {val}"
                 raise DatabaseDuplicatedEntry(error)
 
+            # Can't be tested, should never happen except in case of new neo4j version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
         except DeflateError as e:

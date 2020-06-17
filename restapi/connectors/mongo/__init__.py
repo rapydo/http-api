@@ -39,6 +39,7 @@ def catch_db_exceptions(func):
 
                 raise DatabaseDuplicatedEntry(error)
 
+            # Can't be tested, should never happen except in case of new mongo version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 

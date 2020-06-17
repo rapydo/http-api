@@ -55,6 +55,9 @@ setup(
         "flower==0.9.4",
         "celery-redbeat==1.0.0",
         "celerybeat-mongo==0.2.0",
+        # TOTP
+        "pyotp==2.3.0",
+        "segno==1.0.0",
         # Swagger
         "bravado-core",
         "swagger-spec-validator",

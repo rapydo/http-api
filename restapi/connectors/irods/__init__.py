@@ -65,7 +65,7 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
         ######################
         if session:
             # recover the serialized session
-            obj = self.deserialize(session.session)
+            obj = iRODSSession.deserialize(session.session)
 
         elif authscheme == GSI_AUTH_SCHEME:
 
@@ -173,7 +173,3 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
     # destroy is only invoked for backend databases
     def destroy(self):  # pragma: no cover
         pass
-
-    @staticmethod
-    def deserialize(obj):
-        return iRODSSession.deserialize(obj)

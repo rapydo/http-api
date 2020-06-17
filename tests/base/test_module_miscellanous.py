@@ -431,6 +431,18 @@ class TestApp(BaseTests):
 
         assert mix(data1, data2) == expected
 
+        meta = Uploader.get_file_metadata("invalid_file")
+        assert isinstance(meta, dict)
+        assert len(meta) == 0
+
+        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")
+        assert isinstance(meta, dict)
+        assert len(meta) == 2
+        assert "type" in meta
+        assert "charset" in meta
+        assert meta["type"] == "text/plain"
+        assert meta["charset"] == "utf-8"
+
         # t = total_length
         # s = start
         # e = end

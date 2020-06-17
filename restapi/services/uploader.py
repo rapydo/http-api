@@ -13,6 +13,7 @@ http://stackoverflow.com/a/9533843/2114395
 import os
 
 from flask import request
+from plumbum.cmd import file
 from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
@@ -49,6 +50,18 @@ class Uploader:
             return os.path.dirname(abs_file)
         return abs_file
 
+    @staticmethod
+    def get_file_metadata(abs_file):
+        try:
+            # Check the type
+            # Example of output:
+            # text/plain; charset=us-ascii
+            out = file["-ib", abs_file]().split(";")
+            return {"type": out[0].strip(), "charset": out[1].split("=")[1].strip()}
+        except Exception:
+            log.warning("Unknown type for '{}'", abs_file)
+            return {}
+
     # this method is used by b2stage and mistral
     def upload(self, subfolder=None, force=False):
 
@@ -81,23 +94,10 @@ class Uploader:
         except Exception:
             raise ServiceUnavailable("Permission denied: failed to write the file")
 
-        # Check exists
-        if not os.path.exists(abs_file):
+        # Check exists - but it is basicaly a test that cannot fail...
+        # The has just been uploaded!
+        if not os.path.exists(abs_file):  # pragma: no cover
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
-
-        # Extra info
-        ftype = None
-        fcharset = None
-        try:
-            # Check the type
-            from plumbum.cmd import file
-
-            out = file["-ib", abs_file]()
-            tmp = out.split(";")
-            ftype = tmp[0].strip()
-            fcharset = tmp[1].split("=")[1].strip()
-        except Exception:
-            log.warning("Unknown type for '{}'", abs_file)
 
         ########################
         # ## Final response
@@ -107,7 +107,7 @@ class Uploader:
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
         return self.response(
-            {"filename": fname, "meta": {"type": ftype, "charset": fcharset}}, code=200,
+            {"filename": fname, "meta": self.get_file_metadata(abs_file)}, code=200,
         )
 
     # Compatible with
@@ -216,24 +216,10 @@ class Uploader:
 
     #     if completed:
 
-    #         # Extra info
-    #         ftype = None
-    #         fcharset = None
-    #         try:
-    #             # Check the type
-    #             from plumbum.cmd import file
-
-    #             out = file["-ib", file_path]()
-    #             tmp = out.split(';')
-    #             ftype = tmp[0].strip()
-    #             fcharset = tmp[1].split('=')[1].strip()
-    #         except Exception:
-    #             log.warning("Unknown type for '{}'", file_path)
-
     #         return completed, self.response(
     #             {
     #                 'filename': filename,
-    #                 'meta': {'type': ftype, 'charset': fcharset}
+    #                 'meta': self.get_file_metadata(file_path)
     #             }, code=200)
 
     #     return completed, self.response(
@@ -290,28 +276,10 @@ class Uploader:
                 f.write(chunk)
 
         if completed:
-
-            # Extra info
-            ftype = None
-            fcharset = None
-            try:
-                # Check the type
-                from plumbum.cmd import file
-
-                out = file["-ib", file_path]()
-                tmp = out.split(";")
-                ftype = tmp[0].strip()
-                fcharset = tmp[1].split("=")[1].strip()
-            except Exception:
-                log.warning("Unknown type for '{}'", file_path)
-
             return (
                 completed,
                 self.response(
-                    {
-                        "filename": filename,
-                        "meta": {"type": ftype, "charset": fcharset},
-                    },
+                    {"filename": filename, "meta": self.get_file_metadata(file_path)},
                     code=200,
                 ),
             )

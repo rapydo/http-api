@@ -162,6 +162,15 @@ def test_irods(app, faker):
     obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
     assert id(obj) != obj_id
 
+    # This simulates a User extended with serialized session.
+    # This use case is only implemented in B2SAFE.
+    # The core model does not include a session
+    class User:
+        email = faker.ascii_email()
+        session = obj.serialize()
+
+    detector.get_service_instance(CONNECTOR, user_session=User())
+
     # Close connection...
     obj.disconnect()
 
