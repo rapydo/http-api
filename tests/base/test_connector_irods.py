@@ -170,7 +170,7 @@ def test_irods(app, faker):
     BaseAuthentication.load_roles()
 
     class User:
-        email = BaseAuthentication.default_user
+        email = obj.variables.get("user", "irods")
         session = obj.prc.serialize()
 
     detector.get_service_instance(CONNECTOR, user_session=User())
