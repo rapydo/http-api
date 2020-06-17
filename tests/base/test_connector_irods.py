@@ -167,7 +167,7 @@ def test_irods(app, faker):
     # The core model does not include a session
     class User:
         email = faker.ascii_email()
-        session = obj.serialize()
+        session = obj.prc.serialize()
 
     detector.get_service_instance(CONNECTOR, user_session=User())
 
