@@ -78,13 +78,12 @@ class Login(MethodResource, EndpointResource):
 
         if totp_authentication:
 
-            message = self.check_password_validity(user, totp_authentication)
             if totp_code is None:
+                message = self.check_password_validity(user, totp_authentication)
                 message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
                 message["errors"].append("You do not provided a valid second factor")
-
-            if message["errors"]:
-                raise Forbidden(message)
+                if message["errors"]:
+                    raise Forbidden(message)
 
             self.auth.verify_totp(user, totp_code)
 
