@@ -260,7 +260,7 @@ class Authentication(BaseAuthentication):
         if userobj is None:
             return []
 
-        return list(userobj.roles)
+        return [role.name for role in userobj.roles]
 
     # TODO: (IMPORTANT) developer should be able to specify a custom init
     # which would replace this function below

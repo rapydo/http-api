@@ -259,7 +259,7 @@ class Authentication(BaseAuthentication):
         if userobj is None:
             return []
 
-        return list(userobj.roles.all())
+        return [role.name for role in userobj.roles.all()]
 
     # Also used by POST user
     def create_user(self, userdata, roles):

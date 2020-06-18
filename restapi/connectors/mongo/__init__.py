@@ -194,7 +194,7 @@ class Authentication(BaseAuthentication):
         if userobj is None:
             return []
 
-        return list(userobj.roles)
+        return [role.name for role in userobj.roles]
 
     def init_users_and_roles(self):
 
