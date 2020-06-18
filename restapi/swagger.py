@@ -74,6 +74,18 @@ class Swagger:
         self._used_swagger_tags = set()
         self._private_endpoints = {}
 
+    @staticmethod
+    def split_parameter(parameter):
+
+        # No type specified, default to string
+        if ":" not in parameter:
+            parameter = f"string:{parameter}"
+
+        parameter = parameter.split(":")
+
+        parameter[0] = FLASK_TO_SWAGGER_TYPES.get(parameter[0], "string")
+        return parameter[0], parameter[1]
+
     def read_my_swagger(self, method, endpoint, mapping):
 
         if not isinstance(mapping, dict):  # pragma: no cover
@@ -112,24 +124,14 @@ class Swagger:
             # Read normal parameters
             for parameter in pattern.findall(uri):
 
+                ptype, pname = self.split_parameter(parameter)
+
+                specs["parameters"].append(
+                    {"name": pname, "type": ptype, "in": "path", "required": True}
+                )
                 # replace in a new uri
                 # <param> -> {param}
-                newuri = newuri.replace(f"<{parameter}>", f"{{{parameter}}}")
-
-                # No type specified, default to string
-                if ":" not in parameter:
-                    parameter = f"string:{parameter}"
-
-                parameter = parameter.split(":")
-
-                path_parameter = {
-                    "name": parameter[1],
-                    "type": FLASK_TO_SWAGGER_TYPES.get(parameter[0], "string"),
-                    "in": "path",
-                    "required": True,
-                }
-
-                specs["parameters"].append(path_parameter)
+                newuri = newuri.replace(f"<{parameter}>", f"{{{pname}}}")
 
             # cycle parameters and add them to the endpoint class
             query_params = []
