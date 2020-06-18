@@ -148,19 +148,21 @@ class BaseTests:
     QRsecrets = {}
     TOTP = False
 
-    def save(self, variable, value):
+    @classmethod
+    def save(cls, variable, value):
         """
             Save a variable in the class, to be re-used in further tests
         """
 
-        setattr(self.__class__, variable, value)
+        setattr(cls, variable, value)
 
-    def get(self, variable):
+    @classmethod
+    def get(cls, variable):
         """
             Retrieve a previously stored variable using the .save method
         """
-        if hasattr(self.__class__, variable):
-            return getattr(self.__class__, variable)
+        if hasattr(cls, variable):
+            return getattr(cls, variable)
 
         raise AttributeError(f"Class variable {variable} not found")
 
@@ -250,6 +252,7 @@ class BaseTests:
 
             # This 403 is expected, return an invalid value or you can enter a loop!
             if status_code == 403:
+                log.critical(content)
                 return None, None
 
             if isinstance(content, dict) and content.get("actions"):

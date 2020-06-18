@@ -74,14 +74,16 @@ class Login(MethodResource, EndpointResource):
         self.auth.verify_blocked_user(user)
         self.auth.verify_active_user(user)
 
-        message = {"actions": [], "errors": []}
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
         if totp_authentication:
 
+            message = self.check_password_validity(user, totp_authentication)
             if totp_code is None:
                 message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
                 message["errors"].append("You do not provided a valid second factor")
+
+            if message["errors"]:
                 raise Forbidden(message)
 
             self.auth.verify_totp(user, totp_code)
@@ -98,10 +100,27 @@ class Login(MethodResource, EndpointResource):
                 password = new_password
                 token, payload = self.auth.make_login(username, password)
 
+        message = self.check_password_validity(user, totp_authentication)
+        if message["errors"]:
+            raise Forbidden(message)
+
+        # Everything is ok, let's save authentication information
+
+        now = datetime.now(pytz.utc)
+        if user.first_login is None:
+            user.first_login = now
+        user.last_login = now
+        self.auth.save_token(user, token, payload)
+
+        return self.response(token)
+
+    def check_password_validity(self, user, totp_authentication):
+
         # ##################################################
         # Check if something is missing in the authentication and ask additional actions
         # raises exceptions in case of errors
 
+        message = {"actions": [], "errors": []}
         last_pwd_change = user.last_password_change
         if last_pwd_change is None or last_pwd_change == 0:
             last_pwd_change = EPOCH
@@ -132,15 +151,4 @@ class Login(MethodResource, EndpointResource):
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
 
-        if message["errors"]:
-            raise Forbidden(message)
-
-        # Everything is ok, let's save authentication information
-
-        now = datetime.now(pytz.utc)
-        if user.first_login is None:
-            user.first_login = now
-        user.last_login = now
-        self.auth.save_token(user, token, payload)
-
-        return self.response(token)
+        return message

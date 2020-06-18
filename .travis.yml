@@ -11,7 +11,7 @@ env:
 # and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
 # html email templates, extended projects
 # It is executed as first because it is the slowest
-- TEMPLATE=extroptions
+- TEMPLATE=extraoptions
 - TEMPLATE=postgres
 - TEMPLATE=mysql
 - TEMPLATE=neo4j
