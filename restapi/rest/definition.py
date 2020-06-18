@@ -308,9 +308,6 @@ class EndpointResource(Resource):
         when a valid token is presented
         """
 
-        if request.method == "OPTIONS":
-            return None
-
         auth_type, token = HTTPTokenAuth.get_authorization_token(
             allow_access_token_parameter=allow_access_token_parameter
         )

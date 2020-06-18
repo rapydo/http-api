@@ -252,7 +252,6 @@ class BaseTests:
 
             # This 403 is expected, return an invalid value or you can enter a loop!
             if status_code == 403:
-                log.critical(content)
                 return None, None
 
             if isinstance(content, dict) and content.get("actions"):
