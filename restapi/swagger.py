@@ -26,6 +26,21 @@ from restapi.utilities.logs import log
 
 JSON_APPLICATION = "application/json"
 
+# Flask accepts the following types:
+# https://exploreflask.com/en/latest/views.html
+#   string  Accepts any text without a slash (the default).
+#   int Accepts integers.
+#   float   Like int but for floating point values.
+#   path    Like string but accepts slashes.
+# Swagger accepts the following types:
+# https://swagger.io/specification/#data-types-12
+FLASK_TO_SWAGGER_TYPES = {
+    "string": "string",
+    "path": "string",
+    "int": "integer",
+    "float": "number",
+}
+
 
 # to be deprecated
 def input_validation(json_parameters, definitionName):  # pragma: no cover
@@ -97,18 +112,24 @@ class Swagger:
             # Read normal parameters
             for parameter in pattern.findall(uri):
 
+                # replace in a new uri
+                # <param> -> {param}
+                newuri = newuri.replace(f"<{parameter}>", f"{{{parameter}}}")
+
+                # No type specified, default to string
+                if ":" not in parameter:
+                    parameter = f"string:{parameter}"
+
+                parameter = parameter.split(":")
+
                 path_parameter = {
-                    "name": parameter,
-                    "type": "string",
+                    "name": parameter[1],
+                    "type": FLASK_TO_SWAGGER_TYPES.get(parameter[0], "string"),
                     "in": "path",
                     "required": True,
                 }
 
                 specs["parameters"].append(path_parameter)
-
-                # replace in a new uri
-                # <param> -> {param}
-                newuri = newuri.replace(f"<{parameter}>", f"{{{parameter}}}")
 
             # cycle parameters and add them to the endpoint class
             query_params = []
