@@ -111,7 +111,9 @@ class HTTPTokenAuth:
                         )
 
                 # Check roles
-                if not caller.auth.verify_roles(roles, required_roles=required_roles):
+                if not caller.auth.verify_roles(
+                    caller.unpacked_token[3], roles, required_roles=required_roles
+                ):
                     log.info("Unauthorized request: missing privileges")
                     return caller.response(
                         "You are not authorized: missing privileges", code=401,

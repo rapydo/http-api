@@ -68,8 +68,7 @@ class Login(MethodResource, EndpointResource):
         # ##################################################
         # Authentication control
         # self.auth.verify_blocked_username(username)
-        token, payload = self.auth.make_login(username, password)
-        user = self.get_user()
+        token, payload, user = self.auth.make_login(username, password)
 
         self.auth.verify_blocked_user(user)
         self.auth.verify_active_user(user)
@@ -97,7 +96,7 @@ class Login(MethodResource, EndpointResource):
 
             if pwd_changed:
                 password = new_password
-                token, payload = self.auth.make_login(username, password)
+                token, payload, user = self.auth.make_login(username, password)
 
         message = self.check_password_validity(user, totp_authentication)
         if message["errors"]:

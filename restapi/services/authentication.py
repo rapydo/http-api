@@ -198,7 +198,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 # this can raise exceptions in case of errors
                 self.failed_login(username)
 
-            return token, full_payload
+            return token, full_payload, user
 
         # old hashing; deprecated since 0.7.2. Removed me in a near future!!
         # Probably when ALL users will be converted... uhm... never?? :-D
@@ -541,7 +541,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     # # Roles handling #
     # ##################
-    def verify_roles(self, roles, required_roles=None, warnings=True):
+    def verify_roles(self, user, roles, required_roles=None, warnings=True):
 
         if not roles:
             return True
@@ -549,7 +549,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if required_roles is None:
             required_roles = ALL_ROLES
 
-        current_roles = self.get_roles_from_user()
+        current_roles = self.get_roles_from_user(user)
 
         if required_roles == ALL_ROLES:
             for role in roles:
@@ -568,12 +568,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.critical("Unknown role authorization requirement: {}", required_roles)
         return False
 
-    def verify_admin(self):
+    # Deprecated since 0.7.4
+    def verify_admin(self):  # pragma: no cover
+        log.warning(
+            "Deprecated use of auth.verify_admin, use verify_admin from endpoint"
+        )
         """ Check if current user has administration role """
-        return self.verify_roles([ADMIN_ROLE], warnings=False)
+        return self.verify_roles(self._user, [ADMIN_ROLE], warnings=False)
 
-    def verify_local_admin(self):
-        return self.verify_roles([LOCAL_ADMIN_ROLE], warnings=False)
+    # Deprecated since 0.7.4
+    def verify_local_admin(self):  # pragma: no cover
+        log.warning(
+            "Deprecated use of auth.verify_local_admin, "
+            "use verify_local_admin from endpoint"
+        )
+        return self.verify_roles(self._user, [LOCAL_ADMIN_ROLE], warnings=False)
 
     @abc.abstractmethod
     def get_roles(self):  # pragma: no cover
@@ -583,7 +592,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_roles_from_user(self, userobj=None):  # pragma: no cover
+    def get_roles_from_user(self, userobj):  # pragma: no cover
         """
         Retrieve roles from a user object from the current auth service
         """

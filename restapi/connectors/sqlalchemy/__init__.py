@@ -254,23 +254,13 @@ class Authentication(BaseAuthentication):
 
         return roles
 
-    def get_roles_from_user(self, userobj=None):
-
-        roles = []
-        if userobj is None:
-            try:
-                userobj = self.get_user()
-            except Exception as e:
-                log.warning("Roles check: invalid current user.\n{}", e)
-                return roles
+    def get_roles_from_user(self, userobj):
 
         # No user for on authenticated endpoints -> return no role
         if userobj is None:
-            return roles
+            return []
 
-        for role in userobj.roles:
-            roles.append(role.name)
-        return roles
+        return list(userobj.roles)
 
     # TODO: (IMPORTANT) developer should be able to specify a custom init
     # which would replace this function below

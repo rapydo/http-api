@@ -204,6 +204,17 @@ class EndpointResource(Resource):
             return None
         return self.unpacked_token[3]
 
+    def verify_admin(self):
+        """ Check if current user has administration role """
+        return self.auth.verify_roles(
+            self.get_user(), [self.auth.ADMIN_ROLE], warnings=False
+        )
+
+    def verify_local_admin(self):
+        return self.auth.verify_roles(
+            self.get_user(), [self.auth.LOCAL_ADMIN_ROLE], warnings=False
+        )
+
     # Deprecated since 0.7.4
     def get_current_user(self):  # pragma: no cover
 
