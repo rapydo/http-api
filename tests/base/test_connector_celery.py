@@ -213,9 +213,7 @@ def test_celery(app, faker):
     task_name = faker.pystr()
     task_args = [faker.pystr()]
 
-    ret = this_function_raises_exceptions(FakeSelf(task_id, task_name, task_args))
-
-    assert ret is None
+    this_function_raises_exceptions(FakeSelf(task_id, task_name, task_args))
 
     mail = BaseTests.read_mock_email()
     assert mail.get("body") is not None

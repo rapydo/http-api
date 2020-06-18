@@ -104,7 +104,7 @@ class Profile(MethodResource, EndpointResource):
     @marshal_with(getProfileData(), code=200)
     def get(self):
 
-        current_user = self.auth.get_user()
+        current_user = self.get_user()
         data = {
             "uuid": current_user.uuid,
             "email": current_user.email,
@@ -133,7 +133,7 @@ class Profile(MethodResource, EndpointResource):
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
-        user = self.auth.get_user()
+        user = self.get_user()
 
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
@@ -153,7 +153,7 @@ class Profile(MethodResource, EndpointResource):
     def patch(self, **kwargs):
         """ Update profile for current user """
 
-        user = self.auth.get_user()
+        user = self.get_user()
 
         db = self.get_service_instance(detector.authentication_service)
         db.update_properties(user, kwargs, kwargs)

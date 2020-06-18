@@ -280,11 +280,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Retrieve information #
     # ########################
 
-    def get_user(self):
+    # Deprecated since 0.7.4
+    def get_user(self):  # pragma: no cover
         """
             Current user, obtained by the authentication decorator
             inside the same Request (which is the same object instance)
         """
+        log.warning(
+            "Deprecated use of auth.get_user, use get_user from endpoint instead"
+        )
         return self._user
 
     @abc.abstractmethod
@@ -581,9 +585,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_roles_from_user(self, userobj=None):  # pragma: no cover
         """
-        How to retrieve the role of a user from the current service,
-        based on a user object.
-        If not provided, uses the current user obj stored in self._user.
+        Retrieve roles from a user object from the current auth service
         """
         return
 

@@ -15,7 +15,7 @@ class TestApp(BaseTests):
         assert content["token"] is None
         assert content["user"] is None
 
-        headers, token = self.do_login(client, None, None)
+        headers, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/authentication", headers=headers)
         assert r.status_code == 200

@@ -220,7 +220,7 @@ class EndpointResource(Resource):
         authentication/__init__.py@verify_token method
         """
 
-        return self.auth.get_user()
+        return self.get_user()
 
     def response(
         self, content=None, errors=None, code=None, headers=None, head_method=False
@@ -319,11 +319,7 @@ class EndpointResource(Resource):
         if not unpacked_token[0]:
             return None
 
-        # we have a valid token in header
-        user = self.auth.get_user()
-        log.debug("Logged user: {}", user.email)
-
-        return user
+        return unpacked_token[3]
 
     # to be deprecated
     # this is a simple wrapper of restapi.swagger.input_validation

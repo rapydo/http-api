@@ -69,7 +69,7 @@ class Login(MethodResource, EndpointResource):
         # Authentication control
         # self.auth.verify_blocked_username(username)
         token, payload = self.auth.make_login(username, password)
-        user = self.auth.get_user()
+        user = self.get_user()
 
         self.auth.verify_blocked_user(user)
         self.auth.verify_active_user(user)

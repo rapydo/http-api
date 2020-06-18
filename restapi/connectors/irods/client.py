@@ -680,7 +680,7 @@ class IrodsPythonClient:  # pragma: no cover
     def get_user_info(self, username=None):
 
         if username is None:
-            username = self.auth.get_user()
+            return None
         try:
             user = self.prc.users.get(username)
             data = {}
