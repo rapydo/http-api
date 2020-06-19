@@ -76,7 +76,7 @@ if send_mail_is_active():
                 user.delete()
                 raise RestApiException(f"Errors during account registration: {e}")
 
-                return self.response(
-                    "We are sending an email to your email address where "
-                    "you will find the link to activate your account"
-                )
+            return self.response(
+                "We are sending an email to your email address where "
+                "you will find the link to activate your account"
+            )

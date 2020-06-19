@@ -49,6 +49,9 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
+        registration_message = "We are sending an email to your email address where "
+        registration_message += "you will find the link to activate your account"
+        assert self.get_content(r) == registration_message
 
         mail = self.read_mock_email()
         body = mail.get("body")

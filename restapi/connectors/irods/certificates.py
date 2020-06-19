@@ -11,6 +11,7 @@ import dateutil.parser
 import pytz
 from OpenSSL import crypto
 from plumbum import local
+from plumbum.commands.processes import ProcessExecutionError
 
 from restapi.utilities.logs import log
 
@@ -207,9 +208,6 @@ class Certificates:  # pragma: no cover
 
         # TODO: change the openssl bash command with the pyOpenSSL API
         # if so we may remove 'plumbum' from requirements of rapydo-http repo
-
-        from plumbum import local
-        from plumbum.commands.processes import ProcessExecutionError
 
         try:
 

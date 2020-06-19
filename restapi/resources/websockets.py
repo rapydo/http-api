@@ -1,5 +1,5 @@
 from flask import Response, request
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import MethodResource
 from gripcontrol import (
     WebSocketEvent,
     create_grip_channel_header,

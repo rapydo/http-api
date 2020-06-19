@@ -217,10 +217,6 @@ class EndpointResource(Resource):
 
     # Deprecated since 0.7.4
     def get_current_user(self):  # pragma: no cover
-
-        log.warning(
-            "self.get_current_user() is deprecated, replace with self.get_user()"
-        )
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
@@ -230,6 +226,10 @@ class EndpointResource(Resource):
         Note: this method works because of actions inside
         authentication/__init__.py@verify_token method
         """
+
+        log.warning(
+            "self.get_current_user() is deprecated, replace with self.get_user()"
+        )
 
         return self.get_user()
 

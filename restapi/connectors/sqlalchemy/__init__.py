@@ -94,7 +94,9 @@ class SQLAlchemy(Connector):
     def get_connection_exception(self):
         return (OperationalError,)
 
-    def connect(self, test_connection=False, **kwargs):
+    def connect(self, **kwargs):
+
+        test_connection = kwargs.get("test_connection", False)
 
         variables = self.variables.copy()
         variables.update(kwargs)
