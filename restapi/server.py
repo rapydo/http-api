@@ -4,6 +4,7 @@ We create all the internal flask components here.
 """
 import logging
 import os
+import warnings
 
 import sentry_sdk
 from apispec import APISpec
@@ -115,6 +116,12 @@ def create_app(
     # Restful plugin
     if not skip_endpoint_mapping:
 
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
+        # ignore warning messages from apispec
+        warnings.filterwarnings(
+            "ignore", message="Multiple schemas resolved to the name "
+        )
+
         mem.customizer.find_endpoints()
         mem.customizer.do_swagger()
         # Triggering automatic mapping of REST endpoints
@@ -206,8 +213,6 @@ def create_app(
 
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
-
-    logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
     # Logging responses
     microservice.after_request(log_response)
