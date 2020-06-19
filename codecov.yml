@@ -1,5 +1,5 @@
 ignore:
-  - "restapi/__main__.py"  # cannot be tested
-  - "restapi/__init__.py"  # cannot be tested
-  - "restapi/connectors/celery/worker.py"  # cannot be tested
-  - "restapi/connectors/celery/beat.py"  # cannot be tested
+  - "restapi/__main__.py" # cannot be tested
+  - "restapi/__init__.py" # cannot be tested
+  - "restapi/connectors/celery/worker.py" # cannot be tested
+  - "restapi/connectors/celery/beat.py" # cannot be tested
