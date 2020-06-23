@@ -144,7 +144,6 @@ class Neo4jChoice(fields.Field):
 class UniqueDelimitedList(webargs.fields.DelimitedList):
     def _deserialize(self, value, attr, data, **kwargs):
         values = super()._deserialize(value, attr, data, **kwargs)
-        log.critical(type(values))
 
         if len(values) != len(set(values)):
             raise ValidationError("Provided list contains duplicates")
