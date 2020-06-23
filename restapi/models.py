@@ -1,5 +1,6 @@
 import inspect
 
+import webargs
 from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, fields, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
@@ -138,3 +139,14 @@ class Neo4jChoice(fields.Field):
 
     def _deserialize(self, value, attr, data, **kwargs):
         return value
+
+
+class UniqueDelimitedList(webargs.fields.DelimitedList):
+    def _deserialize(self, value, attr, data, **kwargs):
+        values = super()._deserialize(value, attr, data, **kwargs)
+        log.critical(type(values))
+
+        if len(values) != len(set(values)):
+            raise ValidationError("Provided list contains duplicates")
+
+        return values
