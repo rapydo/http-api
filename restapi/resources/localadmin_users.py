@@ -227,7 +227,7 @@
 
 #         data = []
 
-#         is_admin = self.auth.verify_admin()
+#         is_admin = self.verify_admin()
 
 #         users = self.auth.get_users(user_id)
 #         if users is None:
@@ -317,7 +317,7 @@
 #         user = user[0]
 
 #         current_user = self.get_user()
-#         is_admin = self.auth.verify_admin()
+#         is_admin = self.verify_admin()
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
@@ -383,7 +383,7 @@
 #     @decorators.auth.required(roles=['local_admin'])
 #     def delete(self, user_id):
 
-#         is_admin = self.auth.verify_admin()
+#         is_admin = self.verify_admin()
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 

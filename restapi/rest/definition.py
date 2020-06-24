@@ -12,6 +12,7 @@ from restapi.confs import API_URL
 from restapi.exceptions import RestApiException
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
+from restapi.services.authentication import ADMIN_ROLE, LOCAL_ADMIN_ROLE
 from restapi.services.detect import AUTH_NAME, detector
 from restapi.swagger import input_validation
 from restapi.utilities.globals import mem
@@ -206,13 +207,11 @@ class EndpointResource(Resource):
 
     def verify_admin(self):
         """ Check if current user has administration role """
-        return self.auth.verify_roles(
-            self.get_user(), [self.auth.ADMIN_ROLE], warnings=False
-        )
+        return self.auth.verify_roles(self.get_user(), [ADMIN_ROLE], warnings=False)
 
     def verify_local_admin(self):
         return self.auth.verify_roles(
-            self.get_user(), [self.auth.LOCAL_ADMIN_ROLE], warnings=False
+            self.get_user(), [LOCAL_ADMIN_ROLE], warnings=False
         )
 
     # Deprecated since 0.7.4

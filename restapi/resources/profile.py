@@ -110,8 +110,8 @@ class Profile(MethodResource, EndpointResource):
             "email": current_user.email,
             "name": current_user.name,
             "surname": current_user.surname,
-            "isAdmin": self.auth.verify_admin(),
-            "isLocalAdmin": self.auth.verify_local_admin(),
+            "isAdmin": self.verify_admin(),
+            "isLocalAdmin": self.verify_local_admin(),
             "privacy_accepted": current_user.privacy_accepted,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
