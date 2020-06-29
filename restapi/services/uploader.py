@@ -236,7 +236,6 @@ class Uploader:
 
         try:
             range_header = request.headers.get("Content-Range")
-            log.warning("Temporary store Content-Range header: {}", range_header)
             # content_length = request.headers.get("Content-Length")
             content_range = parse_content_range_header(range_header)
 
