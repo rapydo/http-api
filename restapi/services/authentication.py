@@ -136,29 +136,37 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         cls.load_default_user()
         cls.load_roles()
 
-    @classmethod
-    def load_default_user(cls):
+    @staticmethod
+    def load_default_user():
 
-        cls.default_user = Env.get("AUTH_DEFAULT_USERNAME")
-        cls.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
-        if cls.default_user is None or cls.default_password is None:  # pragma: no cover
+        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
+        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
+        if (
+            BaseAuthentication.default_user is None
+            or BaseAuthentication.default_password is None
+        ):  # pragma: no cover
             log.exit("Default credentials are unavailable!")
 
-    @classmethod
-    def load_roles(cls):
-        cls.roles_data = get_project_configuration("variables.roles").copy()
-        if not cls.roles_data:  # pragma: no cover
+    @staticmethod
+    def load_roles():
+        BaseAuthentication.roles_data = get_project_configuration(
+            "variables.roles"
+        ).copy()
+        if not BaseAuthentication.roles_data:  # pragma: no cover
             log.exit("No roles configured")
 
-        cls.default_role = cls.roles_data.pop("default")
-        cls.roles = []
-        for role, description in cls.roles_data.items():
+        BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
+
+        BaseAuthentication.roles = []
+        for role, description in BaseAuthentication.roles_data.items():
             if description == ROLE_DISABLED:
                 continue
-            cls.roles.append(role)
+            BaseAuthentication.roles.append(role)
 
-        if cls.default_role is None or None in cls.roles:  # pragma: no cover
-            log.exit("Default role {} not available!", cls.default_role)
+        if (
+            BaseAuthentication.default_role is None or None in BaseAuthentication.roles
+        ):  # pragma: no cover
+            log.exit("Default role {} not available!", BaseAuthentication.default_role)
 
     def failed_login(self, username):
         # if self.REGISTER_FAILED_LOGIN and username is not None:
