@@ -32,8 +32,7 @@ def send_password_reset_link(uri, title, reset_email):
 
 
 # This endpoint require the server to send the reset token via email
-# if send_mail_is_active():
-if True:
+if send_mail_is_active():
 
     class RecoverPassword(MethodResource, EndpointResource):
 
