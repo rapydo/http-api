@@ -332,6 +332,7 @@ class EndpointResource(Resource):
         return unpacked_token[3]
 
     # to be deprecated
+    # Only used in mistral
     # this is a simple wrapper of restapi.swagger.input_validation
     @staticmethod
     def validate_input(json_parameters, definitionName):  # pragma: no cover

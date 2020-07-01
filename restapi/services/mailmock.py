@@ -12,11 +12,10 @@ class SMTP:
         log.info("Mail mock initialized with host = {}", host)
 
     def __enter__(self):
-        log.info("Mail mock entering the with context")
         return self
 
     def __exit__(self, _type, value, tb):
-        log.info("Mail mock exiting the with context")
+        pass
 
     @staticmethod
     def set_debuglevel(intval):

@@ -17,12 +17,12 @@ BIND_INTERFACE = "0.0.0.0"
 @click.group()
 # @click.option('--debug/--no-debug', default=False)
 # def cli(debug):
-def cli():  # pragma: no cover
+def cli():
     click.echo("*** RESTful HTTP API ***")
 
 
 # Too dangerous to launch it during tests... skipping tests
-def main(args):  # pragma: no cover
+def main(args):
 
     current_app = os.getenv("FLASK_APP")
     if current_app is None or current_app.strip() == "":
@@ -50,7 +50,7 @@ def initializing():
 
 # Too dangerous to launch it during tests... skipping tests
 @cli.command()
-def launch():  # pragma: no cover
+def launch():
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
@@ -203,7 +203,7 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
     """Compute tests and coverage"""
 
     if wait:
-        while initializing():  # pragma: no cover
+        while initializing():
             log.debug("Waiting services initialization")
             time.sleep(5)
         mywait()
