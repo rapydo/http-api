@@ -39,7 +39,7 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address, dest_addresses, msg):
-        fpath = "/code/mock.mail.lastsent.json"
+        fpath = "/logs/mock.mail.lastsent.json"
         data = {"from": from_address, "cc": dest_addresses, "msg": msg}
         log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)
         with open(fpath, "w+") as file:
