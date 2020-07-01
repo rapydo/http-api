@@ -55,8 +55,8 @@ def catch_db_exceptions(func):
                 raise DatabaseDuplicatedEntry(error)
 
             # Can't be tested, should never happen except in case of new neo4j version
-            log.error("Unrecognized error message: {}", e)  # pragma: yes cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: yes cover
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
         except DeflateError as e:
             log.warning(e)
             return None
@@ -65,7 +65,7 @@ def catch_db_exceptions(func):
             # refresh_connection()
             raise e
 
-        except Exception as e:  # pragma: yes cover
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 

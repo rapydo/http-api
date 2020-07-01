@@ -40,13 +40,13 @@ def catch_db_exceptions(func):
                 raise DatabaseDuplicatedEntry(error)
 
             # Can't be tested, should never happen except in case of new mongo version
-            log.error("Unrecognized error message: {}", e)  # pragma: yes cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: yes cover
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
         # except ValidationError as e:
         #     # not handled
         #     raise e
-        except RecursionError as e:  # pragma: yes cover
+        except RecursionError as e:  # pragma: no cover
             # Got some circular references? Let's try to break them,
             # but the cause is still unknown...
             raise RestApiException(str(e), status_code=400)

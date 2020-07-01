@@ -150,7 +150,7 @@ def mywait():
             elif broker == "REDIS":
                 service_vars = detector.load_variables(prefix="redis")
             else:
-                log.exit("Invalid celery broker: {}", broker)  # pragma: yes cover
+                log.exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
             host, port = get_service_address(service_vars, "host", "port", broker)
 
@@ -164,7 +164,7 @@ def mywait():
             elif backend == "MONGODB":
                 service_vars = detector.load_variables(prefix="mongo")
             else:
-                log.exit("Invalid celery backend: {}", backend)  # pragma: yes cover
+                log.exit("Invalid celery backend: {}", backend)  # pragma: no cover
 
             host, port = get_service_address(service_vars, "host", "port", backend)
 
@@ -178,13 +178,13 @@ def mywait():
 # Too dangerous to launch it during tests... skipping tests
 @cli.command()
 @click.confirmation_option(help="Are you sure you want to drop data?")
-def clean():  # pragma: yes cover
+def clean():  # pragma: no cover
     """Destroy current services data"""
     flask_cli({"name": "Removing data", "destroy_mode": True})
 
 
 @cli.command()
-def forced_clean():  # pragma: yes cover
+def forced_clean():  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
     flask_cli({"name": "Removing data", "destroy_mode": True})
 
@@ -199,7 +199,7 @@ def forced_clean():  # pragma: yes cover
 @click.option(
     "--destroy/--no-destroy", default=False, help="Destroy database after tests"
 )
-def tests(wait, core, file, folder, destroy):  # pragma: yes cover
+def tests(wait, core, file, folder, destroy):  # pragma: no cover
     """Compute tests and coverage"""
 
     if wait:

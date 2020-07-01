@@ -13,7 +13,7 @@ from restapi.utilities.logs import log
 if TESTING:
     from restapi.services.mailmock import SMTP, SMTP_SSL
 else:
-    from smtplib import SMTP, SMTP_SSL  # pragma: yes cover
+    from smtplib import SMTP, SMTP_SSL  # pragma: no cover
 
 
 # TODO: configure HOST with gmail, search example online
@@ -47,7 +47,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
             smtp.connect(smtp_host, smtp_port)
             smtp.ehlo()
         # Cannot be tested because smtplib is mocked!
-        except socket.gaierror as e:  # pragma: yes cover
+        except socket.gaierror as e:  # pragma: no cover
             log.error(str(e))
             return None
 
@@ -56,7 +56,7 @@ def get_smtp_client(smtp_host, smtp_port, username=None, password=None):
         try:
             smtp.login(username, password)
         # Cannot be tested because smtplib is mocked!
-        except SMTPAuthenticationError as e:  # pragma: yes cover
+        except SMTPAuthenticationError as e:  # pragma: no cover
             log.error(str(e))
             return None
     return smtp
@@ -77,7 +77,7 @@ def test_smtp_client():
 
     smtp = get_smtp_client(host, port, username, password)
     # Cannot be tested because smtplib is mocked
-    if smtp is None:  # pragma: yes cover
+    if smtp is None:  # pragma: no cover
         return False
 
     smtp.quit()
@@ -183,18 +183,18 @@ def send(
                 smtp.quit()
                 return True
             # Cannot be tested because smtplib is mocked!
-            except SMTPException:  # pragma: yes cover
+            except SMTPException:  # pragma: no cover
                 log.error("Unable to send email to {}", to_address)
                 smtp.quit()
                 return False
 
         # Cannot be tested because smtplib is mocked
-        except BaseException as e:  # pragma: yes cover
+        except BaseException as e:  # pragma: no cover
             log.error(str(e))
             return False
 
     # Cannot be tested because smtplib is mocked
-    return False  # pragma: yes cover
+    return False  # pragma: no cover
 
 
 def send_mail(
@@ -249,6 +249,6 @@ def send_mail(
             )
 
     # Cannot be tested because smtplib is mocked
-    except BaseException as e:  # pragma: yes cover
+    except BaseException as e:  # pragma: no cover
         log.error(str(e))
         return False

@@ -14,11 +14,11 @@ class PushpinExt(Connector):
         return ServiceUnavailable
 
     # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: yes cover
+    def initialize(self):  # pragma: no cover
         pass
 
     # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: yes cover
+    def destroy(self):  # pragma: no cover
         pass
 
     def connect(self, **kwargs):

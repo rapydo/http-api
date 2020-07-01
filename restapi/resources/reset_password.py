@@ -27,7 +27,7 @@ def send_password_reset_link(uri, title, reset_email):
     # Internal email sending
     c = send_mail(html_body, subject, reset_email, plain_body=body)
     # it cannot fail during tests, because the email sending is mocked
-    if not c:  # pragma: yes cover
+    if not c:  # pragma: no cover
         raise RestApiException("Error sending email, please retry")
 
 

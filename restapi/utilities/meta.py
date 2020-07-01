@@ -16,7 +16,7 @@ from restapi.utilities.logs import log
 class Meta:
     """Utilities with meta in mind"""
 
-    def __init__(self):  # pragma: yes cover
+    def __init__(self):  # pragma: no cover
         # Deprecated since 0.7.3
         log.warning("Deprecated initialization of Meta package")
 
@@ -185,6 +185,6 @@ class Meta:
 
         try:
             return MyClass(**kwargs)
-        except BaseException as e:  # pragma: yes cover
+        except BaseException as e:  # pragma: no cover
             log.error("Errors loading {}.{}: {}", abspath, class_name, e)
             return None

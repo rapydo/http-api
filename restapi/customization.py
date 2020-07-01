@@ -62,7 +62,7 @@ class Customizer:
                 projects_path=projects_path,
                 submodules_path=submodules_path,
             )
-        except AttributeError as e:  # pragma: yes cover
+        except AttributeError as e:  # pragma: no cover
             log.exit(e)
 
         return self._configurations
@@ -78,7 +78,7 @@ class Customizer:
             elif pieces_num == 2:
                 negate, dependency = pieces
                 negate = negate.lower() == "not"
-            else:  # pragma: yes cover
+            else:  # pragma: no cover
                 log.exit("Wrong depends_on parameter: {}", var)
 
             check = Env.get_bool(dependency)
@@ -249,7 +249,7 @@ class Customizer:
                                 continue
                             # convert GET -> _GET
                             # Deprecated since 0.7.4
-                            else:  # pragma: yes cover
+                            else:  # pragma: no cover
                                 log.warning("Obsolete dict {} in {}", m, class_name)
 
                         # get, post, put, patch, delete
@@ -281,7 +281,7 @@ class Customizer:
                             if isinstance(epclss, MethodResourceMeta):
                                 self.inject_apispec_docs(fn, conf[u], epclss.labels)
                             elif not isinstance(epclss, MethodViewType):
-                                log.warning(  # pragma: yes cover
+                                log.warning(  # pragma: no cover
                                     "Unknown class type: {}", type(epclss)
                                 )
 
@@ -366,7 +366,7 @@ class Customizer:
         self._endpoints = swag._endpoints[:]
 
         # SWAGGER validation
-        if not swag.validation(swag_dict):  # pragma: yes cover
+        if not swag.validation(swag_dict):  # pragma: no cover
             log.exit("Current swagger definition is invalid")
 
         self._definitions = swag_dict

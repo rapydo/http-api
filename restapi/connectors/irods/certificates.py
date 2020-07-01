@@ -18,7 +18,7 @@ from restapi.utilities.logs import log
 
 # Mostly excluded from coverage because it is only used by a very specific service
 # No further tests will be included in the core
-class Certificates:  # pragma: yes cover
+class Certificates:  # pragma: no cover
 
     _dir = os.getenv("CERTDIR")
     _proxyfile = "userproxy.crt"

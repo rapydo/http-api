@@ -104,7 +104,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         elif TESTING:
             self.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
         # Of course cannot be tested
-        else:  # pragma: yes cover
+        else:  # pragma: no cover
             self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
@@ -129,7 +129,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     # Deprecated since 0.7.4
     @classmethod
-    def myinit(cls):  # pragma: yes cover
+    def myinit(cls):  # pragma: no cover
         log.warning(
             "Deprecated use of BaseAuthentication.myinit use load_default_user instead"
         )
@@ -141,15 +141,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         cls.default_user = Env.get("AUTH_DEFAULT_USERNAME")
         cls.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
-        if (
-            cls.default_user is None or cls.default_password is None
-        ):  # pragma: yes cover
+        if cls.default_user is None or cls.default_password is None:  # pragma: no cover
             log.exit("Default credentials are unavailable!")
 
     @classmethod
     def load_roles(cls):
         cls.roles_data = get_project_configuration("variables.roles").copy()
-        if not cls.roles_data:  # pragma: yes cover
+        if not cls.roles_data:  # pragma: no cover
             log.exit("No roles configured")
 
         cls.default_role = cls.roles_data.pop("default")
@@ -159,7 +157,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 continue
             cls.roles.append(role)
 
-        if cls.default_role is None or None in cls.roles:  # pragma: yes cover
+        if cls.default_role is None or None in cls.roles:  # pragma: no cover
             log.exit("Default role {} not available!", cls.default_role)
 
     def failed_login(self, username):
@@ -173,12 +171,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         try:
             user = self.get_user_object(username=username)
-        except ValueError as e:  # pragma: yes cover
+        except ValueError as e:  # pragma: no cover
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
             raise BadRequest("Invalid input received")
-        except BaseException as e:  # pragma: yes cover
+        except BaseException as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
 
             raise ServiceUnavailable("Unable to connect to auth backend")
@@ -188,7 +186,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.failed_login(username)
 
         # Check if Oauth2 is enabled
-        if user.authmethod != "credentials":  # pragma: yes cover
+        if user.authmethod != "credentials":  # pragma: no cover
             raise BadRequest("Invalid authentication method")
 
         # New hashing algorithm, based on bcrypt
@@ -204,7 +202,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # old hashing; deprecated since 0.7.2. Removed me in a near future!!
         # Probably when ALL users will be converted... uhm... never?? :-D
-        if self.check_old_password(user.password, password):  # pragma: yes cover
+        if self.check_old_password(user.password, password):  # pragma: no cover
             log.warning(
                 "Old password encoding for user {}, automatic convertion", user.email
             )
@@ -229,7 +227,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             self.JWT_SECRET = open(abs_filename, "rb").read()
             return self.JWT_SECRET
-        except OSError:  # pragma: yes cover
+        except OSError:  # pragma: no cover
             log.exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
@@ -267,7 +265,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_password(plain_password, hashed_password):
         try:
             return pwd_context.verify(plain_password, hashed_password)
-        except ValueError as e:  # pragma: yes cover
+        except ValueError as e:  # pragma: no cover
             log.error(e)
 
             return False
@@ -283,7 +281,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
 
     # Deprecated since 0.7.4
-    def get_user(self):  # pragma: yes cover
+    def get_user(self):  # pragma: no cover
         """
             Current user, obtained by the authentication decorator
             inside the same Request (which is the same object instance)
@@ -294,7 +292,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self._user
 
     @abc.abstractmethod
-    def get_user_object(self, username=None, payload=None):  # pragma: yes cover
+    def get_user_object(self, username=None, payload=None):  # pragma: no cover
         """
         How to retrieve the user from the current service,
         based on the unique username given, or from the content of the token
@@ -302,7 +300,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_users(self, user_id=None):  # pragma: yes cover
+    def get_users(self, user_id=None):  # pragma: no cover
         """
         How to retrieve users list from the current service,
         Optionally filter by the unique uuid given
@@ -310,14 +308,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: yes cover
+    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
             Return the list of tokens
         """
         return
 
     @staticmethod
-    def get_remote_ip():  # pragma: yes cover
+    def get_remote_ip():  # pragma: no cover
         try:
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
                 return forwarded_ips[-1]
@@ -350,10 +348,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 try:
                     c = data["country"]["names"]["en"]
                     return c
-                except BaseException:  # pragma: yes cover
+                except BaseException:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
-            if "continent" in data:  # pragma: yes cover
+            if "continent" in data:  # pragma: no cover
                 try:
                     c = data["continent"]["names"]["en"]
                     return c
@@ -361,11 +359,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 except BaseException:
                     log.error("Missing continent.names.en in {}", data)
                     return None
-            return None  # pragma: yes cover
-        except BaseException as e:  # pragma: yes cover
+            return None  # pragma: no cover
+        except BaseException as e:  # pragma: no cover
             log.error("{}. Input was {}", e, ip)
 
-        return None  # pragma: yes cover
+        return None  # pragma: no cover
 
     # ###################
     # # Tokens handling #
@@ -401,7 +399,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return token, full_payload
 
     @abc.abstractmethod
-    def verify_token_validity(self, jti, user):  # pragma: yes cover
+    def verify_token_validity(self, jti, user):  # pragma: no cover
         """
             This method MUST be implemented by specific Authentication Methods
             to add more specific validation contraints
@@ -484,16 +482,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self._user = user
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
-    @abc.abstractmethod  # pragma: yes cover
+    @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
         log.debug("Token is not saved in base authentication")
 
     @abc.abstractmethod
-    def save_user(self, user):  # pragma: yes cover
+    def save_user(self, user):  # pragma: no cover
         log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
-    def invalidate_token(self, token):  # pragma: yes cover
+    def invalidate_token(self, token):  # pragma: no cover
         """
             With this method the specified token must be invalidated
             as expected after a user logout
@@ -571,7 +569,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return False
 
     # Deprecated since 0.7.4
-    def verify_admin(self):  # pragma: yes cover
+    def verify_admin(self):  # pragma: no cover
         log.warning(
             "Deprecated use of auth.verify_admin, use verify_admin from endpoint"
         )
@@ -579,7 +577,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(self._user, [ADMIN_ROLE], warnings=False)
 
     # Deprecated since 0.7.4
-    def verify_local_admin(self):  # pragma: yes cover
+    def verify_local_admin(self):  # pragma: no cover
         log.warning(
             "Deprecated use of auth.verify_local_admin, "
             "use verify_local_admin from endpoint"
@@ -587,14 +585,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return self.verify_roles(self._user, [LOCAL_ADMIN_ROLE], warnings=False)
 
     @abc.abstractmethod
-    def get_roles(self):  # pragma: yes cover
+    def get_roles(self):  # pragma: no cover
         """
         How to retrieve all the roles
         """
         return
 
     @abc.abstractmethod
-    def get_roles_from_user(self, userobj):  # pragma: yes cover
+    def get_roles_from_user(self, userobj):  # pragma: no cover
         """
         Retrieve roles from a user object from the current auth service
         """
@@ -605,7 +603,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
 
     @abc.abstractmethod
-    def init_users_and_roles(self):  # pragma: yes cover
+    def init_users_and_roles(self):  # pragma: no cover
         """
         Create roles and a user if no one exists.
         """
@@ -639,7 +637,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Create Users #
     # ################
     @abc.abstractmethod
-    def create_user(self, userdata, roles):  # pragma: yes cover
+    def create_user(self, userdata, roles):  # pragma: no cover
         """
         A method to create a new user following some standards.
         - The user should be at least associated to the default (basic) role
@@ -648,7 +646,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def link_roles(self, user, roles):  # pragma: yes cover
+    def link_roles(self, user, roles):  # pragma: no cover
         """
         A method to assign roles to a user
         """

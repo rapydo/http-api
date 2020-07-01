@@ -19,10 +19,10 @@ IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
 if IS_CELERY_CONTAINER == "0":
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
-elif HOSTNAME != CONTAINER_ID:  # pragma: yes cover
+elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
 # Celery (variables name due to scaling)
-else:  # pragma: yes cover
+else:  # pragma: no cover
     LOGS_FILE = f"celery_{HOSTNAME}"
 
 LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
@@ -75,7 +75,7 @@ if LOGS_PATH is not None:
             # This is the case when picle fails to serialize before sending to the queue
             catch=True,
         )
-    except PermissionError as p:  # pragma: yes cover
+    except PermissionError as p:  # pragma: no cover
         log.error(p)
         LOGS_PATH = None
 

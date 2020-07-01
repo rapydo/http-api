@@ -21,16 +21,16 @@ def handle_marshmallow_errors(error):
         if get_schema or str(get_schema) == "1":
 
             return ResponseMaker.respond_with_schema(error.data.get("schema"))
-    except BaseException as e:  # pragma: yes cover
+    except BaseException as e:  # pragma: no cover
         log.error(e)
 
     for k, msg in error.data.get("messages").items():
         msg_len = len(msg)
-        if msg_len == 0:  # pragma: yes cover
+        if msg_len == 0:  # pragma: no cover
             continue
         elif len(msg) == 1:
             log.info("{}: {}", k, msg[0])
-        else:  # pragma: yes cover
+        else:  # pragma: no cover
             log.info("{}: {}", k, msg)
 
     return (error.data.get("messages"), 400, {})
@@ -57,7 +57,7 @@ def log_response(response):
 
         if data:
             data = f" {data}"
-    except Exception as e:  # pragma: yes cover
+    except Exception as e:  # pragma: no cover
         log.debug(e)
         data = ""
 
@@ -72,7 +72,7 @@ def log_response(response):
         url = url._replace(scheme="")
         # remove hostname:port
         url = url._replace(netloc="")
-    except TypeError:  # pragma: yes cover
+    except TypeError:  # pragma: no cover
         log.error("Unable to url encode the following parameters:")
         print(url.query)
 
@@ -228,7 +228,7 @@ class ResponseMaker:
             return ResponseMaker.generate_response(
                 content=fields, code=200, headers={}, head_method=False
             )
-        except BaseException as e:  # pragma: yes cover
+        except BaseException as e:  # pragma: no cover
             log.error(e)
             return ResponseMaker.generate_response(
                 content={"Server internal error": "Failed to retrieve input schema"},

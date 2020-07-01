@@ -44,9 +44,9 @@ def create_app(
 
     if (
         PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
-    ):  # pragma: yes cover
+    ):  # pragma: no cover
         log.exit("Unable to execute tests in production")
-    if testing_mode and not config.TESTING:  # pragma: yes cover
+    if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
         log.exit(
             "Deprecated use of testing_mode, please export env variable APP_MODE=test"
@@ -223,7 +223,7 @@ def create_app(
         else:
             log.info("SMTP configuration verified")
 
-    if SENTRY_URL is not None:  # pragma: yes cover
+    if SENTRY_URL is not None:  # pragma: no cover
 
         if not PRODUCTION:
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")

@@ -85,7 +85,7 @@ class EndpointResource(Resource):
         )
 
         # Deprecated since 0.7.4
-        if len(current_params) > 0:  # pragma: yes cover
+        if len(current_params) > 0:  # pragma: no cover
 
             act = "store"  # store is normal, append is a list
             loc = ["headers", "values"]  # multiple locations
@@ -118,7 +118,7 @@ class EndpointResource(Resource):
                 log.verbose("Accept param '{}' type {}", param, mytype)
 
     # to be deprecated (and after: init_parameters)
-    def get_input(self):  # pragma: yes cover
+    def get_input(self):  # pragma: no cover
         """
         Recover parameters from current requests.
 
@@ -162,7 +162,7 @@ class EndpointResource(Resource):
         return self._args
 
     # Deprecated since 0.7.4
-    def get_paging(self, force_read_parameters=False):  # pragma: yes cover
+    def get_paging(self, force_read_parameters=False):  # pragma: no cover
 
         log.warning(
             "Deprecated use of get_paging, use @decorators.get_pagination instead"
@@ -215,7 +215,7 @@ class EndpointResource(Resource):
         )
 
     # Deprecated since 0.7.4
-    def get_current_user(self):  # pragma: yes cover
+    def get_current_user(self):  # pragma: no cover
         """
         Return the associated User OBJECT if:
         - the endpoint requires authentication
@@ -243,7 +243,7 @@ class EndpointResource(Resource):
             code = 200
 
         # Deprecated since 0.7.4
-        if errors is not None:  # pragma: yes cover
+        if errors is not None:  # pragma: no cover
             log.warning(
                 "Deprecated use of errors in response, use raise RestApiException or "
                 "response(content, code>=400)"
@@ -290,8 +290,8 @@ class EndpointResource(Resource):
         response = make_response(r)
 
         # Avoid duplicated Content-type
-        content_type = None  # pragma: yes cover
-        for idx, val in enumerate(response.headers):  # pragma: yes cover
+        content_type = None  # pragma: no cover
+        for idx, val in enumerate(response.headers):  # pragma: no cover
             if val[0] != "Content-Type":
                 continue
             if content_type is None:
@@ -335,7 +335,7 @@ class EndpointResource(Resource):
     # Only used in mistral
     # this is a simple wrapper of restapi.swagger.input_validation
     @staticmethod
-    def validate_input(json_parameters, definitionName):  # pragma: yes cover
+    def validate_input(json_parameters, definitionName):  # pragma: no cover
 
         try:
             return input_validation(json_parameters, definitionName)

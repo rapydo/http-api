@@ -21,14 +21,14 @@ def read_configuration(
     # Verify custom project configuration
     project = custom_configuration.get("project")
     # Can't be tested because it is included in default configuration
-    if project is None:  # pragma: yes cover
+    if project is None:  # pragma: no cover
         raise AttributeError("Missing project configuration")
 
     variables = ["title", "description", "version", "rapydo"]
 
     for key in variables:
         # Can't be tested because it is included in default configuration
-        if project.get(key) is None:  # pragma: yes cover
+        if project.get(key) is None:  # pragma: no cover
             log.exit(
                 "Project not configured, missing key '{}' in file {}/{}",
                 key,
@@ -50,17 +50,17 @@ def read_configuration(
 
     if extends_from == "projects":
         extend_path = projects_path
-    elif extends_from.startswith("submodules/"):  # pragma: yes cover
+    elif extends_from.startswith("submodules/"):  # pragma: no cover
         repository_name = (extends_from.split("/")[1]).strip()
         if repository_name == "":
             log.exit("Invalid repository name in extends-from, name is empty")
 
         extend_path = submodules_path
-    else:  # pragma: yes cover
+    else:  # pragma: no cover
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
         log.exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
-    if not os.path.exists(extend_path):  # pragma: yes cover
+    if not os.path.exists(extend_path):  # pragma: no cover
         log.exit("From project not found: {}", extend_path)
 
     extend_file = f"extended_{PROJECT_CONF_FILENAME}"

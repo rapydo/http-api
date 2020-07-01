@@ -77,7 +77,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         # parents is not expected to be a non-empty list,
         # otherwise something is going wrong
         # This if should always fail
-        if not parents:  # pragma: yes cover
+        if not parents:  # pragma: no cover
             log.warning(
                 "Invalid {} definition, unable to determine the visibility {} {}",
                 schema_name,
@@ -88,7 +88,7 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
             return True
 
         # Are we in a loop due to a cyclic dependency? Let's stop it
-        if recursion > 10:  # pragma: yes cover
+        if recursion > 10:  # pragma: no cover
             # Let's consider it as private and filter it out
             return True
 

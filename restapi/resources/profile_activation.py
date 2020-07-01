@@ -37,7 +37,7 @@ def send_activation_link(auth, user):
     subject = os.getenv("EMAIL_ACTIVATION_SUBJECT", default_subject)
 
     sent = send_mail(html_body, subject, user.email, plain_body=body)
-    if not sent:  # pragma: yes cover
+    if not sent:  # pragma: no cover
         raise BaseException("Error sending email, please retry")
 
     auth.save_token(user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
@@ -92,7 +92,7 @@ class ProfileActivation(MethodResource, EndpointResource):
         token_obj = self.auth.get_tokens(token_jti=jti)
         # Cannot be tested, this is an extra test to prevent any unauthorized access...
         # but invalid tokens are already refused above, with auth.verify_token
-        if len(token_obj) == 0:  # pragma: yes cover
+        if len(token_obj) == 0:  # pragma: no cover
             raise RestApiException(
                 "Invalid activation token: this request is no longer valid",
                 status_code=400,

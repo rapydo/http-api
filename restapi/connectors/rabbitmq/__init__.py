@@ -23,11 +23,11 @@ class RabbitExt(Connector):
         )
 
     # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: yes cover
+    def initialize(self):  # pragma: no cover
         pass
 
     # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: yes cover
+    def destroy(self):  # pragma: no cover
         pass
 
     def connect(self, **kwargs):
@@ -157,7 +157,7 @@ class RabbitExt(Connector):
             log.error("Failed to write message, channel is dead ({})", e)
             self.channel = None
 
-        except AttributeError as e:  # pragma: yes cover
+        except AttributeError as e:  # pragma: no cover
             log.error("Failed to write message:, {}", e)
 
         return False
