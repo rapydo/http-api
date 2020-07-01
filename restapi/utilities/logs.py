@@ -21,9 +21,16 @@ if IS_CELERY_CONTAINER == "0":
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
+    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
+    if not os.path.isdir(LOGS_FOLDER):
+        os.makedirs(LOGS_FOLDER, exist_ok=True)
 # Celery (variables name due to scaling)
 else:  # pragma: no cover
     LOGS_FILE = f"celery_{HOSTNAME}"
+    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
+    if not os.path.isdir(LOGS_FOLDER):
+        os.makedirs(LOGS_FOLDER, exist_ok=True)
+
 
 LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 
