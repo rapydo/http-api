@@ -76,17 +76,17 @@ def catch_errors(exception=None, **kwargs):
             # Catch any other exception
 
             # errors with RabbitMQ credentials raised when sending Celery tasks
-            except AccessRefused as e:  # pragma: no cover
+            except AccessRefused as e:  # pragma: yes cover
                 log.critical(e)
                 return self.response("Unexpected Server Error", code=500)
             except Exception as e:
 
-                if SENTRY_URL is not None:  # pragma: no cover
+                if SENTRY_URL is not None:  # pragma: yes cover
                     capture_exception(e)
 
                 excname = e.__class__.__name__
                 message = str(e)
-                if not message:  # pragma: no cover
+                if not message:  # pragma: yes cover
                     message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)

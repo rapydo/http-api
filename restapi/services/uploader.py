@@ -96,7 +96,7 @@ class Uploader:
 
         # Check exists - but it is basicaly a test that cannot fail...
         # The has just been uploaded!
-        if not os.path.exists(abs_file):  # pragma: no cover
+        if not os.path.exists(abs_file):  # pragma: yes cover
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################

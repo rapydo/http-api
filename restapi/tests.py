@@ -202,7 +202,7 @@ class BaseTests:
 
         try:
             response = json.loads(http_out.get_data().decode())
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # pragma: yes cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(f"Malformed response: {http_out}")
 
@@ -353,7 +353,7 @@ class BaseTests:
 
         return {"Authorization": f"Bearer {content}"}, content
 
-    def randomString(self, length=16, prefix=""):  # pragma: no cover
+    def randomString(self, length=16, prefix=""):  # pragma: yes cover
         # Deprecated since 0.7.4
         log.warning("Deprecated, use fake.password instead")
         return prefix + fake.password(

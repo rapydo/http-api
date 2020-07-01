@@ -32,7 +32,7 @@ if detector.check_availability("neo4j"):
         if auth_service == "mongo":
             return None
 
-        log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
+        log.error("Unknown auth service: {}", auth_service)  # pragma: yes cover
 
     class Coordinator(OutputSchema):
         uuid = fields.Str()
@@ -131,7 +131,7 @@ if detector.check_availability("neo4j"):
             # Can not be tested because coordinator values are filtered by webargs
             # Only valid uuid will be provided here.
             # This is an extra-security check
-            if not coordinator:  # pragma: no cover
+            if not coordinator:  # pragma: yes cover
                 raise Unauthorized("User not found")
 
             # GRAPH #
@@ -172,7 +172,7 @@ if detector.check_availability("neo4j"):
                 # None can not be tested because coordinator is required in post
                 # => it is not possible to have a group without a coordinator.
                 # This is an extra security check
-                if p is None:  # pragma: no cover
+                if p is None:  # pragma: yes cover
                     group.coordinator.connect(coordinator)
                 else:
                     group.coordinator.reconnect(p, coordinator)

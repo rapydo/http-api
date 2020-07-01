@@ -47,23 +47,23 @@ class Connector(metaclass=abc.ABCMeta):
         self.disconnect()
 
     @abc.abstractmethod
-    def get_connection_exception(self):  # pragma: no cover
+    def get_connection_exception(self):  # pragma: yes cover
         return None
 
     @abc.abstractmethod
-    def connect(self, **kwargs):  # pragma: no cover
+    def connect(self, **kwargs):  # pragma: yes cover
         return
 
     @abc.abstractmethod
-    def disconnect(self):  # pragma: no cover
+    def disconnect(self):  # pragma: yes cover
         return
 
     @abc.abstractmethod
-    def initialize(self):  # pragma: no cover
+    def initialize(self):  # pragma: yes cover
         pass
 
     @abc.abstractmethod
-    def destroy(self):  # pragma: no cover
+    def destroy(self):  # pragma: yes cover
         pass
 
     @classmethod
@@ -149,11 +149,11 @@ class Connector(metaclass=abc.ABCMeta):
             return obj
 
         # Deprecated since 0.7.4
-        if global_instance is not None:  # pragma: no cover
+        if global_instance is not None:  # pragma: yes cover
             log.warning("Deprecated use of global_instance flag")
 
         # Deprecated since 0.7.4
-        if isauth is not None:  # pragma: no cover
+        if isauth is not None:  # pragma: yes cover
             log.warning("Deprecated use of isauth flag")
 
         unique_hash = str(sorted(kwargs.items()))

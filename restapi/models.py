@@ -54,7 +54,7 @@ class Neo4jSchema(OutputSchema):
             pass
         elif isinstance(fields, list):
             pass
-        else:  # pragma: no cover
+        else:  # pragma: yes cover
             log.error("Invalid fields: {}", fields)
             fields = ()
 
@@ -107,7 +107,7 @@ class Neo4jSchema(OutputSchema):
                     self.declared_fields[attribute] = fields.AwareDateTime()
                 elif isinstance(prop, properties.UniqueIdProperty):
                     self.declared_fields[attribute] = fields.Str()
-                else:  # pragma: no cover
+                else:  # pragma: yes cover
                     log.error(
                         "Unsupport neomodel property: {}, fallback to StringProperty",
                         prop.__class__.__name__,

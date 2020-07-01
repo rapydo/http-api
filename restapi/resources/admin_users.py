@@ -100,7 +100,7 @@ def get_groups():
     if auth_service == "mongo":
         return None
 
-    log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
+    log.error("Unknown auth service: {}", auth_service)  # pragma: yes cover
 
 
 class Role(OutputSchema):
@@ -367,7 +367,7 @@ class AdminUsers(MethodResource, EndpointResource):
             self.auth.db.session.delete(user)
             self.auth.db.session.commit()
         else:
-            raise RestApiException(  # pragma: no cover
+            raise RestApiException(  # pragma: yes cover
                 "Invalid auth backend, all known db are disabled"
             )
 

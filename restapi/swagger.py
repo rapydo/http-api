@@ -43,7 +43,7 @@ FLASK_TO_SWAGGER_TYPES = {
 
 
 # to be deprecated
-def input_validation(json_parameters, definitionName):  # pragma: no cover
+def input_validation(json_parameters, definitionName):  # pragma: yes cover
 
     definition = mem.customizer._definitions["definitions"][definitionName]
     spec = mem.customizer._validated_spec
@@ -88,10 +88,10 @@ class Swagger:
 
     def read_my_swagger(self, method, endpoint, mapping):
 
-        if not isinstance(mapping, dict):  # pragma: no cover
+        if not isinstance(mapping, dict):  # pragma: yes cover
             raise TypeError(f"Wrong type: {type(mapping)}")
 
-        if len(mapping) < 1:  # pragma: no cover
+        if len(mapping) < 1:  # pragma: yes cover
             raise ValueError(f"No definition found in: {mapping}")
 
         # Specs should contain only labels written in spec before
@@ -108,12 +108,12 @@ class Swagger:
 
             # Deprecated since 0.7.4
             custom_specs = specs.pop("custom", None)
-            if custom_specs is not None:  # pragma: no cover
+            if custom_specs is not None:  # pragma: yes cover
                 log.warning("Deprecated use of custom in specs")
 
             # Deprecated since 0.7.4
             cparam = specs.pop("custom_parameters", None)
-            if cparam is not None:  # pragma: no cover
+            if cparam is not None:  # pragma: yes cover
                 log.warning("Deprecated use of custom in specs")
 
             private = specs.pop("private", False)
@@ -142,7 +142,7 @@ class Swagger:
 
                 enum = param.pop("enum", None)
                 # to be deprecated
-                if enum is not None:  # pragma: no cover
+                if enum is not None:  # pragma: yes cover
                     param["enum"] = []
                     for option in enum:
                         if isinstance(option, str):
@@ -154,7 +154,7 @@ class Swagger:
                                 param["enum"].append(k)
 
                 # handle parameters in URI for Flask
-                if param["in"] == "query":  # pragma: no cover
+                if param["in"] == "query":  # pragma: yes cover
                     # Deprecated since 0.7.4
                     log.warning(
                         "{}.py: deprecated query parameter '{}' in {} {}",
@@ -166,7 +166,7 @@ class Swagger:
                     query_params.append(param)
 
             # Deprecated since 0.7.4
-            if len(query_params) > 0:  # pragma: no cover
+            if len(query_params) > 0:  # pragma: yes cover
                 self.query_parameters(
                     endpoint.cls, method=method, uri=uri, params=query_params
                 )
@@ -200,7 +200,7 @@ class Swagger:
         return endpoint
 
     # Deprecated since 0.7.4
-    def query_parameters(self, cls, method, uri, params):  # pragma: no cover
+    def query_parameters(self, cls, method, uri, params):  # pragma: yes cover
         """
         apply decorator to endpoint for query parameters
         # self._qparams[classname][URI][method][name]
@@ -344,7 +344,7 @@ class Swagger:
                 swag_dict, config=bravado_config
             )
             log.debug("Swagger configuration is validated")
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # pragma: yes cover
             error = str(e).split("\n")[0]
             log.error("Failed to validate:\n{}\n", error)
             return False

@@ -41,14 +41,14 @@ class Detector:
         self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
 
     @staticmethod
-    def get_global_var(key, default=None):  # pragma: no cover
+    def get_global_var(key, default=None):  # pragma: yes cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_global_var, use os.getenv or Env.get")
         return os.getenv(key, default)
 
     @staticmethod
     @lru_cache
-    def get_bool_envvar(bool_var):  # pragma: no cover
+    def get_bool_envvar(bool_var):  # pragma: yes cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
 
@@ -56,7 +56,7 @@ class Detector:
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):  # pragma: no cover
+    def get_bool_from_os(name):  # pragma: yes cover
         # Deprecated since 0.7.4
         log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 
@@ -176,7 +176,7 @@ class Detector:
 
     # Deprecated since 0.7.4
     @staticmethod
-    def load_group(label):  # pragma: no cover
+    def load_group(label):  # pragma: yes cover
 
         log.warning("Deprecated use of detector.load_group, use Env.load_group instead")
         return Env.load_group(label)
@@ -203,7 +203,7 @@ class Detector:
             variables[key] = value
 
             suffix = ".dockerized.io"
-            if key == "host" and not value.endswith(suffix):  # pragma: no cover
+            if key == "host" and not value.endswith(suffix):  # pragma: yes cover
                 variables["external"] = True
                 log.verbose("Service {} detected as external: {}", prefix, value)
 
@@ -221,7 +221,7 @@ class Detector:
             ConnectorClass = service.get("class")
 
             if ConnectorClass is None:
-                if connector_name != AUTH_NAME:  # pragma: no cover
+                if connector_name != AUTH_NAME:  # pragma: yes cover
                     log.exit(
                         "Connector misconfiguration {} {}", connector_name, service
                     )
@@ -229,7 +229,7 @@ class Detector:
 
             try:
                 connector_instance = ConnectorClass(app)
-            except TypeError as e:  # pragma: no cover
+            except TypeError as e:  # pragma: yes cover
                 log.exit("Your class {} is not compliant:\n{}", connector_name, e)
 
             self.services[connector_name]["connector"] = connector_instance

@@ -67,6 +67,6 @@ class Tokens(MethodResource, EndpointResource):
             # Added just to make very sure, but it can never happen because
             # invalidate_token can only fail if the token is invalid
             # since this is an authenticated endpoint the token is already verified
-            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
+            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: yes cover
 
         raise Forbidden("Token not emitted for your account or does not exist")

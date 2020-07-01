@@ -167,9 +167,9 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
         self.disconnected = True
 
     # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: no cover
+    def initialize(self):  # pragma: yes cover
         pass
 
     # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: no cover
+    def destroy(self):  # pragma: yes cover
         pass
