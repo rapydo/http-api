@@ -75,7 +75,7 @@ class PushpinExt(Connector):
             self.pubctrl.publish(channel, item, blocking=True)
             log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False

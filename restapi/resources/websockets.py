@@ -69,15 +69,14 @@ class PushpinWebSocket(MethodResource, EndpointResource):
 
         try:
             event_type = in_events.type
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.error(e)
             raise RestApiException(
                 "Cannot decode websocket request: invalid type", status_code=400
             )
 
-        if event_type is None:
-            log.error("Event type is None")
-            raise RestApiException("Cannot decode websocket request")
+        if event_type is None:  # pragma: no cover
+            raise RestApiException("Cannot decode websocket request, no event type")
 
         out_events = []
         if event_type == "OPEN":

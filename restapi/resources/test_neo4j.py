@@ -37,8 +37,9 @@ if TESTING and detector.check_availability("neo4j"):
         group2 = Neo4jSchema(Group, fields=("*",))
         group3 = Neo4jSchema(Group, fields=["*"])
         group4 = Neo4jSchema(Group, fields=[])
-        group5 = Neo4jSchema(Group, fields="")
-        group6 = Neo4jSchema(Group, fields=None)
+        group5 = Neo4jSchema(Group, fields=["fullname", "shortname"])
+        group6 = Neo4jSchema(Group, fields="")
+        group7 = Neo4jSchema(Group, fields=None)
 
         choices1 = Neo4jChoice(CHOICES_tuple)
         choices2 = Neo4jChoice(CHOICES_dict)

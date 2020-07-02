@@ -297,7 +297,7 @@ class Authentication(BaseAuthentication):
 
             if missing_user or missing_role:
                 self.db.session.commit()
-        except sqlalchemy.exc.OperationalError:
+        except sqlalchemy.exc.OperationalError:  # pragma: no cover
             self.db.session.rollback()
             # A migration / rebuild is required?
             raise AttributeError("Inconsistences between DB schema and data models")
