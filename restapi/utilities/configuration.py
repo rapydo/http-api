@@ -1,5 +1,4 @@
 import os
-from collections import OrderedDict
 
 import yaml
 
@@ -96,25 +95,6 @@ def mix(base, custom):
     return base
 
 
-class OrderedLoader(yaml.SafeLoader):
-    """
-    A 'workaround' good enough for ordered loading of dictionaries
-
-    https://stackoverflow.com/a/21912744
-
-    NOTE: This was created to skip dependencies.
-    Otherwise this option could be considered:
-    https://pypi.python.org/pypi/ruamel.yaml
-    """
-
-    pass
-
-
-def construct_mapping(loader, node):
-    loader.flatten_mapping(node)
-    return OrderedDict(loader.construct_pairs(node))
-
-
 def load_yaml_file(file, path):
 
     filepath = os.path.join(path, file)
@@ -126,10 +106,7 @@ def load_yaml_file(file, path):
 
     with open(filepath) as fh:
         try:
-            OrderedLoader.add_constructor(
-                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
-            )
-            docs = list(yaml.load_all(fh, OrderedLoader))
+            docs = list(yaml.load_all(fh, yaml.loader.Loader))
 
             if len(docs) == 0:
                 raise AttributeError(f"YAML file is empty: {filepath}")

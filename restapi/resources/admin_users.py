@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from flask_apispec import MethodResource, marshal_with, use_kwargs
 from marshmallow import fields, validate
 
@@ -116,7 +114,7 @@ class Group(OutputSchema):
 
 
 def get_output_schema():
-    attributes = OrderedDict()
+    attributes = {}
 
     attributes["uuid"] = fields.Str()
     attributes["email"] = fields.Email()
@@ -154,7 +152,7 @@ def getInputSchema(is_put_method):
 
     set_required = not is_put_method
 
-    attributes = OrderedDict()
+    attributes = {}
     if not is_put_method:
         attributes["email"] = fields.Email(required=set_required)
     attributes["password"] = fields.Str(

@@ -1,6 +1,5 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from collections import OrderedDict
 # from flask_apispec import MethodResource
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
@@ -103,7 +102,7 @@
 #     set_required = not strip_required
 #     auth = EndpointResource.load_authentication()
 
-#     attributes = OrderedDict()
+#     attributes = {}
 #     if not exclude_email:
 #         attributes["email"] = fields.Email(required=set_required)
 #     attributes["password"] = fields.Str(

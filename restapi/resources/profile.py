@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from flask_apispec import MethodResource, marshal_with, use_kwargs
 from marshmallow import fields, validate
 
@@ -45,7 +43,7 @@ class Group(OutputSchema):
 
 
 def getProfileData():
-    attributes = OrderedDict()
+    attributes = {}
 
     attributes["uuid"] = fields.Str(required=True)
     attributes["email"] = fields.Email(required=True)
