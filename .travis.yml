@@ -20,6 +20,11 @@ env:
   - TEMPLATE=celery-rabbit-mongo
   - TEMPLATE=celery-redis-redis
   - TEMPLATE=celery-redis-mongo
+  - TEMPLATE=failuretest
+
+jobs:
+  allow_failures:
+    - env: TEMPLATE=failuretest
 
 script:
   # Randomize auth service to test some services
