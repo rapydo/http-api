@@ -1,3 +1,4 @@
+import email
 import json
 
 from restapi.utilities.logs import log
@@ -46,6 +47,23 @@ class SMTP:
             file.write(json.dumps(data))
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
         log.info("Mail mock mail written in {}", fpath)
+
+        log.info("Extracting body")
+        fpath = "/logs/mock.mail.lastsent.body"
+        b = email.message_from_string(msg)
+        payload = ""
+        if b.is_multipart():
+            for payload in b.get_payload():
+                # get the first payload (the non html version)
+                payload = payload.get_payload()
+                break
+        else:
+            payload = b.get_payload()
+
+        with open(fpath, "w+") as file:
+            file.write(payload)
+
+        log.info("Mail body written in {}", fpath)
 
 
 class SMTP_SSL(SMTP):
