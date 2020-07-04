@@ -137,20 +137,6 @@ OBSCURED_FIELDS = [
 ]
 
 
-# def re_obscure_pattern(string):
-
-#     patterns = {'http_credentials': r'[^:]+\:([^@:]+)\@[^:]+:[^:]'}
-
-#     for _, pattern in patterns.items():
-#         p = re.compile(pattern)
-#         m = p.search(string)
-#         if m:
-#             g = m.group(1)
-#             string = string.replace(g, OBSCURE_VALUE)
-
-#     return string
-
-
 def handle_log_output(original_parameters_string):
     """ Avoid printing passwords! """
     if original_parameters_string is None:

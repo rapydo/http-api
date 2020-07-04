@@ -39,6 +39,10 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
+        registration_data["password_confirm"] = fake.password(strong=True)
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 400
+
         registration_data["password"] = fake.password(strong=True)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
@@ -46,6 +50,11 @@ class TestApp(BaseTests):
         assert self.get_content(r) == m
 
         registration_data["email"] = fake.ascii_email()
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        assert self.get_content(r) == "Your password doesn't match the confirmatio"
+
+        registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200

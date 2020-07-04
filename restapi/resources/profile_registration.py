@@ -4,7 +4,7 @@ from marshmallow import fields, validate
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.env import Env
-from restapi.exceptions import RestApiException
+from restapi.exceptions import Conflict, RestApiException
 from restapi.models import InputSchema
 from restapi.resources.profile_activation import send_activation_link
 from restapi.rest.definition import EndpointResource
@@ -20,6 +20,11 @@ if send_mail_is_active():
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
         password = fields.Str(
+            required=True,
+            password=True,
+            validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        )
+        password_confirm = fields.Str(
             required=True,
             password=True,
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
@@ -50,9 +55,10 @@ if send_mail_is_active():
             email = kwargs.get("email")
             user = self.auth.get_user_object(username=email)
             if user is not None:
-                raise RestApiException(
-                    f"This user already exists: {email}", status_code=409,
-                )
+                raise Conflict(f"This user already exists: {email}")
+
+            if kwargs.get("passowrd") != kwargs.get("password_confirm"):
+                raise Conflict("Your password doesn't match the confirmation")
 
             kwargs["is_active"] = False
             user = self.auth.create_user(kwargs, [self.auth.default_role])
