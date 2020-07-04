@@ -47,6 +47,10 @@ class TestApp(BaseTests):
 
         registration_data["password"] = fake.password(min_pwd_len - 1)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 400
+
+        registration_data["password"] = fake.password(min_pwd_len)
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
@@ -55,12 +59,6 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
-
-        registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
-        assert r.status_code == 409
-        m = f"Password is too short, use at least {min_pwd_len} characters"
-        assert self.get_content(r) == m
 
         registration_data["password"] = fake.password(min_pwd_len, low=False, up=True)
         registration_data["password_confirm"] = registration_data["password"]
