@@ -721,12 +721,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_password_strength(self, pwd, old_pwd):
 
-        if pwd == old_pwd:
-            return False, "The new password cannot match the previous password"
+        if old_pwd:
+            if pwd == old_pwd:
+                return False, "The new password cannot match the previous password"
 
-        # in case old_pwd is a hash
-        if self.verify_password(pwd, old_pwd):
-            return False, "The new password cannot match the previous password"
+            # in case old_pwd is a hash
+            if self.verify_password(pwd, old_pwd):
+                return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
             MIN = self.MIN_PASSWORD_LENGTH

@@ -43,7 +43,9 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["password"] = fake.password(strong=True)
+        min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
+
+        registration_data["password"] = fake.password(min_pwd_len - 1)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = f"This user already exists: {BaseAuthentication.default_user}"
@@ -54,6 +56,43 @@ class TestApp(BaseTests):
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmatio"
 
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = f"Password is too short, use at least {min_pwd_len} characters"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = fake.password(min_pwd_len, low=False, up=True)
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, missing lower case letters"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = fake.password(min_pwd_len, low=True)
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, missing upper case letters"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = fake.password(min_pwd_len, low=True, up=True)
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, missing numbers"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = fake.password(
+            min_pwd_len, low=True, up=True, digits=True
+        )
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, missing special characters"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = fake.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
