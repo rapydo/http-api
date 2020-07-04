@@ -54,7 +54,7 @@ class TestApp(BaseTests):
         registration_data["email"] = fake.ascii_email()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
-        assert self.get_content(r) == "Your password doesn't match the confirmatio"
+        assert self.get_content(r) == "Your password doesn't match the confirmation"
 
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
