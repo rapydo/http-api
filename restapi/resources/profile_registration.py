@@ -57,7 +57,8 @@ if send_mail_is_active():
             if user is not None:
                 raise Conflict(f"This user already exists: {email}")
 
-            if kwargs.get("password") != kwargs.get("password_confirm"):
+            password_confirm = kwargs.pop("password_confirm")
+            if kwargs.get("password") != password_confirm:
                 raise Conflict("Your password doesn't match the confirmation")
 
             if self.auth.VERIFY_PASSWORD_STRENGTH:
