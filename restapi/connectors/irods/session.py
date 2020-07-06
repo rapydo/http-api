@@ -35,7 +35,7 @@ class iRODSPickleSession(iRODSSession):  # pragma: no cover
     def serialize(self):
         """Returns a byte serialized string from the current session"""
         serialized = pickle.dumps(self)
-        return base64.encodestring(serialized)
+        return base64.encodebytes(serialized)
 
     @staticmethod
     def deserialize(obj):
