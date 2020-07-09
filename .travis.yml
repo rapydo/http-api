@@ -133,7 +133,7 @@ script:
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   - bash codecov_report -R submodules/http-api
 
-  - rapydo remove --all
+  # - rapydo remove --all
 
 notifications:
   email: false
