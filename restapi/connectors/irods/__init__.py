@@ -1,200 +1,133 @@
-# -*- coding: utf-8 -*-
-
 """
 iRODS file-system flask connector
 """
 
-# import os
 import logging
 
-# from irods.session import iRODSSession
+from gssapi.raw import GSSError
 from irods import exception as iexceptions
 
-# from restapi.confs import PRODUCTION
-from restapi.utilities.logs import log
 from restapi.connectors import Connector
-from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
-from restapi.connectors.irods.client import IrodsException, IrodsPythonClient
 from restapi.connectors.irods.certificates import Certificates
+from restapi.connectors.irods.client import IrodsPythonClient
+from restapi.connectors.irods.session import iRODSPickleSession as iRODSSession
+from restapi.env import Env
+from restapi.exceptions import ServiceUnavailable
+from restapi.utilities.logs import log
 
 # Silence too much logging from irods
-irodslogger = logging.getLogger('irods')
+irodslogger = logging.getLogger("irods")
 irodslogger.setLevel(logging.INFO)
 
-NORMAL_AUTH_SCHEME = 'credentials'
-GSI_AUTH_SCHEME = 'GSI'
-PAM_AUTH_SCHEME = 'PAM'
+NORMAL_AUTH_SCHEME = "credentials"
+GSI_AUTH_SCHEME = "GSI"
+PAM_AUTH_SCHEME = "PAM"
+DEFAULT_CHUNK_SIZE = 1_048_576
 
 
-class IrodsPythonExt(Connector):
-
+# Excluded from coverage because it is only used by a very specific service
+# No further tests will be included in the core
+class IrodsPythonExt(Connector, IrodsPythonClient):
     def get_connection_exception(self):
-        return None
-
-    def preconnect(self, **kwargs):
-
-        session = kwargs.get('user_session')
-
-        external = self.variables.get('external')
-
-        # Retrieve authentication schema
-        self.authscheme = kwargs.get('authscheme')
-        # Authentication scheme fallback to default from project_configuration
-        if self.authscheme is None or self.authscheme.strip() == '':
-            self.authscheme = self.variables.get('authscheme')
-        # Authentication scheme fallback to default (credentials)
-        if self.authscheme is None or self.authscheme.strip() == '':
-            self.authscheme = NORMAL_AUTH_SCHEME
-
-        if session is not None:
-            user = session.email
-        else:
-            user = kwargs.get('user')
-            self.password = kwargs.get('password')
-
-            gss = kwargs.get('gss', False)
-            myproxy_host = self.variables.get("myproxy_host")
-
-            admin = kwargs.get('be_admin', False)
-            if user is None:
-                user_key = 'default_admin_user' if admin else 'user'
-                user = self.variables.get(user_key)
-
-            if self.password is None:
-                if self.authscheme == NORMAL_AUTH_SCHEME:
-                    self.password = self.variables.get('password')
-                elif self.authscheme == PAM_AUTH_SCHEME:
-                    self.password = self.variables.get('password')
-
-            log.verbose(
-                "Check connection parameters:"
-                + "\nexternal[{}], auth[{}], user[{}], admin[{}]",
-                external,
-                self.authscheme,
-                user,
-                admin,
-            )
-
-            # Check if the user requested for GSI explicitely
-            if self.authscheme == GSI_AUTH_SCHEME:
-                # if self.variables.get('external'):
-                gss = True
-
-        if user is None:
-            raise AttributeError("No user is defined")
-        else:
-            self.user = user
-            log.debug("Irods user: {}", self.user)
-
-        ######################
-        # Irods/b2safe direct credentials
-        if session is not None:
-            return True
-        ######################
-        # Identity with GSI
-        elif gss:
-
-            if self.authscheme != GSI_AUTH_SCHEME:
-                log.debug("Forcing {} authscheme", GSI_AUTH_SCHEME)
-                self.authscheme = GSI_AUTH_SCHEME
-
-            proxy_cert_name = "{}{}".format(
-                self.variables.get('certificates_prefix', ""),
-                kwargs.get("proxy_cert_name"),
-            )
-
-            valid_cert = Certificates.globus_proxy(
-                proxy_file=kwargs.get('proxy_file'),
-                user_proxy=self.user,
-                cert_dir=self.variables.get("x509_cert_dir"),
-                myproxy_host=myproxy_host,
-                cert_name=proxy_cert_name,
-                cert_pwd=kwargs.get("proxy_pass"),
-            )
-
-            if not valid_cert:
-                return False
-
-        elif self.authscheme == PAM_AUTH_SCHEME:
-            pass
-
-        elif self.password is not None:
-            self.authscheme = NORMAL_AUTH_SCHEME
-
-        else:
-            raise NotImplementedError(
-                "Unable to create session: invalid iRODS-auth scheme"
-            )
-
-        return True
-
-    def postconnect(self, obj, **kwargs):
-        return True
+        # Do not catch irods.exceptions.PAM_AUTH_PASSWORD_FAILED and
+        # irods.expcetions.CAT_INVALID_AUTHENTICATION because they are used
+        # by b2safeproxy to identify wrong credentials
+        return (
+            NotImplementedError,
+            ServiceUnavailable,
+            AttributeError,
+            GSSError,
+            FileNotFoundError,
+        )
 
     def connect(self, **kwargs):
 
-        check_connection = True
-        timeout = kwargs.get('timeout', 15.0)
-        session = kwargs.get('user_session')
-        default_zone = self.variables.get('zone')
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
-        if session is not None:
+        session = variables.get("user_session")
+
+        authscheme = variables.get("authscheme", NORMAL_AUTH_SCHEME)
+
+        if session:
+            user = session.email
+        else:
+
+            admin = variables.get("be_admin", False)
+            user_key = "default_admin_user" if admin else "user"
+            user = variables.get(user_key)
+            password = variables.get("password")
+
+        if user is None:
+            raise AttributeError("No user is defined")
+        log.debug("Irods user: {}", user)
+
+        ######################
+        if session:
             # recover the serialized session
-            obj = self.deserialize(session.session)
+            obj = iRODSSession.deserialize(session.session)
 
-        elif self.authscheme == NORMAL_AUTH_SCHEME:
+        elif authscheme == GSI_AUTH_SCHEME:
 
-            obj = iRODSSession(
-                user=self.user,
-                password=self.password,
-                authentication_scheme='native',
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
-                zone=default_zone,
+            cert_pref = variables.get("certificates_prefix", "")
+            cert_name = variables.get("proxy_cert_name")
+
+            valid_cert = Certificates.globus_proxy(
+                proxy_file=variables.get("proxy_file"),
+                user_proxy=user,
+                cert_dir=variables.get("x509_cert_dir"),
+                myproxy_host=variables.get("myproxy_host"),
+                cert_name=f"{cert_pref}{cert_name}",
+                cert_pwd=variables.get("proxy_pass"),
             )
 
-        elif self.authscheme == GSI_AUTH_SCHEME:
+            if not valid_cert:
+                raise ServiceUnavailable("Invalid proxy settings")
 
             # Server host certificate
             # In case not set, recover from the shared dockerized certificates
-            host_dn = self.variables.get('dn', None)
-            if isinstance(host_dn, str) and host_dn.strip() == '':
-                host_dn = None
-            if host_dn is None:
-                host_dn = Certificates.get_dn_from_cert(
-                    certdir='host', certfilename='hostcert'
-                )
+            if host_dn := variables.get("dn", None):
+                log.verbose('Existing DN:\n"{}"', host_dn)
             else:
-                log.verbose("Existing DN:\n\"{}\"", host_dn)
+                host_dn = Certificates.get_dn_from_cert(
+                    certdir="host", certfilename="hostcert"
+                )
 
             obj = iRODSSession(
-                user=self.user,
-                authentication_scheme=self.authscheme,
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
+                user=user,
+                authentication_scheme=authscheme,
+                host=variables.get("host"),
+                port=variables.get("port"),
                 server_dn=host_dn,
-                zone=default_zone,
+                zone=variables.get("zone"),
             )
 
-            # Do not check for user if its a proxy certificate:
-            # we want to verify if they expired later
-            if kwargs.get('only_check_proxy', False):
-                check_connection = False
-
-        elif self.authscheme == PAM_AUTH_SCHEME:
+        elif authscheme == PAM_AUTH_SCHEME:
 
             obj = iRODSSession(
-                user=self.user,
-                password=self.password,
-                authentication_scheme=self.authscheme,
-                host=self.variables.get('host'),
-                port=self.variables.get('port'),
-                zone=default_zone,
+                user=user,
+                password=password,
+                authentication_scheme=authscheme,
+                host=variables.get("host"),
+                port=variables.get("port"),
+                zone=variables.get("zone"),
+            )
+
+        elif password is not None:
+            authscheme = NORMAL_AUTH_SCHEME
+
+            obj = iRODSSession(
+                user=user,
+                password=password,
+                authentication_scheme="native",
+                host=variables.get("host"),
+                port=variables.get("port"),
+                zone=variables.get("zone"),
             )
 
         else:
             raise NotImplementedError(
-                "Invalid iRODS authentication scheme: {}".format(self.authscheme)
+                f"Invalid iRODS authentication scheme: {authscheme}"
             )
 
         # # set timeout on existing socket/connection
@@ -207,70 +140,36 @@ class IrodsPythonExt(Connector):
 
         # based on https://github.com/irods/python-irodsclient/pull/90
         # NOTE: timeout has to be below 30s (http request timeout)
-        obj.connection_timeout = timeout
-
-        #########################
-        # TODO: this connection test, like in restapi wait
-        # should be used for debugging, with the output in case of failure
-        # restapi verify SERVICE
-        #########################
-
-        # Back-compatibility fix, remove-me after the prc PR
-        try:
-            PAM_EXCEPTION = iexceptions.PAM_AUTH_PASSWORD_FAILED
-        except AttributeError:
-            # An exception that should never occur since already tested
-            PAM_EXCEPTION = iexceptions.CAT_INVALID_AUTHENTICATION
+        obj.connection_timeout = Env.to_int(variables.get("timeout"), 15.0)
 
         # Do a simple command to test this session
-        if check_connection:
-            catch_exceptions = kwargs.get('catch_exceptions', False)
+        if not Env.to_bool(variables.get("only_check_proxy")):
             try:
-                u = obj.users.get(self.user, user_zone=default_zone)
+                u = obj.users.get(user, user_zone=variables.get("zone"))
 
             except iexceptions.CAT_INVALID_AUTHENTICATION as e:
-                if catch_exceptions:
-                    raise IrodsException("CAT_INVALID_AUTHENTICATION")
-                else:
-                    raise e
+                raise e
 
             # except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
-            except PAM_EXCEPTION as e:
-                if catch_exceptions:
-                    raise IrodsException("PAM_AUTH_PASSWORD_FAILED")
-                else:
-                    raise e
+            except iexceptions.PAM_AUTH_PASSWORD_FAILED as e:
+                raise e
 
             log.verbose("Tested session retrieving '{}'", u.name)
 
-        client = IrodsPythonClient(prc=obj, variables=self.variables)
-        return client
+        self.prc = obj
+        self.variables = variables
+        self.chunk_size = self.variables.get("chunksize", DEFAULT_CHUNK_SIZE)
 
-    def initialize(self, pinit, pdestroy, abackend=None):
+        return self
 
-        # if pinit and not self.variables.get('external'):
-        #     log.debug("waiting for internal certificates")
-        #     # should actually connect with user and password
-        #     # and verify if GSI is already registered with admin rodsminer
-        #     import time
-        #     time.sleep(5)
+    def disconnect(self):
+        self.prc.cleanup()
+        self.disconnected = True
 
-        # recover instance with the parent method
-        session = self.get_instance()
+    # initialize is only invoked for backend databases
+    def initialize(self):  # pragma: no cover
+        pass
 
-        # IF variable 'IRODS_ANONYMOUS? is set THEN
-        # Check if external iRODS / B2SAFE has the 'anonymous' user available
-        user = 'anonymous'
-        if self.variables.get('external') and self.variables.get(user):
-            if not session.query_user_exists(user):
-                log.exit(
-                    "Cannot find '{}' inside "
-                    "the currently connected iRODS instance",
-                    user,
-                )
-
-        return session
-
-    @staticmethod
-    def deserialize(obj):
-        return iRODSSession.deserialize(obj)
+    # destroy is only invoked for backend databases
+    def destroy(self):  # pragma: no cover
+        pass

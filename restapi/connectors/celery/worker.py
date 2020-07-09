@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Celery pattern. Some interesting read here:
 
@@ -10,11 +8,8 @@ a flask templating framework like ours.
 So we made some improvement along the code.
 
 """
-
 from restapi.server import create_app
-# from restapi.confs import CUSTOM_PACKAGE
 from restapi.services.detect import detector
-# from restapi.utilities.meta import Meta
 from restapi.utilities.logs import log
 
 ################################################
@@ -22,7 +17,7 @@ from restapi.utilities.logs import log
 # This is necessary to have the app context available
 app = create_app(worker_mode=True)
 
-celery_app = detector.connectors_instances.get('celery').celery_app
+celery_app = detector.get_connector("celery").celery_app
 celery_app.app = app
 
 
@@ -31,14 +26,5 @@ def get_service(service, **kwargs):
 
 
 celery_app.get_service = get_service
-
-################################################
-# Import tasks modules to make sure all tasks are available
-
-# main_package = "commons.tasks."
-# # Base tasks
-# submodules = Meta.import_submodules_from_package(main_package + "base")
-# # Custom tasks
-# submodules = Meta.import_submodules_from_package("{}.tasks".format(CUSTOM_PACKAGE))
 
 log.debug("Celery worker is ready {}", celery_app)

@@ -1,69 +1,98 @@
-# -*- coding: utf-8 -*-
-from restapi.tests import BaseTests, API_URI, AUTH_URI
+from restapi.tests import API_URI, AUTH_URI, BaseTests
+
 # from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-
     def test_tokens(self, client):
 
-        # CREATING 3 TOKENS
-        NUM_TOKENS = 3
-        first_token = None
-        tokens_header = None
+        last_token = None
+        last_tokens_header = None
         token_id = None
 
-        for _ in range(NUM_TOKENS):
+        for _ in range(3):
             header, token = self.do_login(client, None, None)
-            if tokens_header is None:
-                tokens_header = header
-                first_token = token
+            last_tokens_header = header
+            last_token = token
 
-        endpoint = AUTH_URI + '/tokens'
-
-        # TEST GET ALL TOKENS (expected at least NUM_TOKENS)
-        r = client.get(endpoint, headers=tokens_header)
+        # TEST GET ALL TOKENS
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         content = self.get_content(r)
         assert r.status_code == 200
-        assert len(content) >= NUM_TOKENS
+
+        # Probably due to password expiration:
+        # change password invalidated tokens created before
+        # => create tokens again
+        if len(content) < 3:
+
+            for _ in range(3):
+                header, token = self.do_login(client, None, None)
+                last_tokens_header = header
+                last_token = token
+
+            # TEST GET ALL TOKENS
+            r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
+            content = self.get_content(r)
+            assert r.status_code == 200
+            assert len(content) >= 3
 
         # save a token to be used for further tests
         for c in content:
-            if c["token"] == first_token:
+            if c["token"] == last_token:
                 continue
             token_id = c["id"]
 
         # SINGLE TOKEN IS NOT ALLOWED
-        endpoint_single = "{}/{}".format(endpoint, token_id)
-        r = client.get(endpoint_single, headers=tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 405
 
-        # TEST GET ALL TOKENS (expected at least NUM_TOKENS)
-        r = client.get(API_URI + "/admin/tokens", headers=tokens_header)
+        # TEST GET ALL TOKENS
+        r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
         assert r.status_code == 200
-        assert len(self.get_content(r)) >= NUM_TOKENS
+        assert len(self.get_content(r)) >= 3
 
         # DELETE INVALID TOKEN
-        r = client.delete(
-            API_URI + "/admin/tokens/xyz",
-            headers=tokens_header
-        )
+        r = client.delete(f"{API_URI}/admin/tokens/xyz", headers=last_tokens_header)
         assert r.status_code == 404
 
-        endpoint_single = "{}/{}".format(endpoint, token_id)
-
         # TEST DELETE OF A SINGLE TOKEN
-        r = client.delete(endpoint_single, headers=tokens_header)
+        r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 204
 
         # TEST AN ALREADY DELETED TOKEN
-        r = client.delete(endpoint_single, headers=tokens_header)
-        assert r.status_code == 401
+        r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
+        assert r.status_code == 403
 
         # TEST INVALID DELETE OF A SINGLE TOKEN
-        r = client.delete(endpoint + "/0", headers=tokens_header)
-        assert r.status_code == 401
+        r = client.delete(f"{AUTH_URI}/tokens/0", headers=last_tokens_header)
+        assert r.status_code == 403
 
         # TEST TOKEN IS STILL VALID
-        r = client.get(endpoint, headers=tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200
+
+        # TEST TOKEN DELETION VIA ADMIN ENDPOINT
+        header, token = self.do_login(client, None, None)
+
+        # TEST GET ALL TOKENS
+        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
+        content = self.get_content(r)
+        assert r.status_code == 200
+
+        token_id = None
+        for c in content:
+            if c["token"] == token:
+                token_id = c["id"]
+                break
+
+        assert token_id is not None
+
+        r = client.delete(
+            f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
+        )
+        assert r.status_code == 204
+
+        r = client.delete(
+            f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
+        )
+        assert r.status_code == 404

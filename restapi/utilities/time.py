@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
-
 from datetime import datetime
+
 import dateutil.parser
 import pytz
 
-from restapi.utilities.logs import log
+EPOCH = datetime.fromtimestamp(0, pytz.utc)
 
+
+# to be deprecated
 def date_from_string(date, fmt="%d/%m/%Y"):
 
     if not date:
@@ -23,12 +24,11 @@ def date_from_string(date, fmt="%d/%m/%Y"):
     return return_date
 
 
-def string_from_timestamp(timestamp):
-    if timestamp == "":
-        return ""
-    try:
-        date = datetime.fromtimestamp(float(timestamp))
-        return date.isoformat()
-    except BaseException:
-        log.warning("Errors parsing {}", timestamp)
-        return ""
+def get_now(tzinfo):
+
+    if tzinfo is None:
+        # Create a offset-naive datetime
+        return datetime.now()
+
+    # Create a offset-aware datetime
+    return datetime.now(pytz.utc)

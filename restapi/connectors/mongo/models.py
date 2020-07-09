@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Base Models for mongo database.
 
@@ -7,13 +5,13 @@ Docs:
 https://pymodm.readthedocs.io
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
+import os
 
-from pymodm import fields
-from pymodm import MongoModel
+from pymodm import MongoModel, fields
 from pymongo.operations import IndexModel
-from restapi.connectors.mongo import AUTH_DB
 
 # from pymongo.write_concern import WriteConcern
+AUTH_DB = os.getenv("MONGO_DATABASE")
 
 
 ####################
@@ -26,7 +24,7 @@ class Role(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [IndexModel('name', unique=True)]
+        indexes = [IndexModel("name", unique=True)]
 
 
 class User(MongoModel):
@@ -51,10 +49,7 @@ class User(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [
-            IndexModel('uuid', unique=True),
-            IndexModel('email', unique=True)
-        ]
+        indexes = [IndexModel("uuid", unique=True), IndexModel("email", unique=True)]
 
 
 class Token(MongoModel):
@@ -74,4 +69,4 @@ class Token(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [IndexModel('token', unique=True)]
+        indexes = [IndexModel("token", unique=True)]

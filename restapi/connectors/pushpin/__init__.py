@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
-from gripcontrol import GripPubControl
-from gripcontrol import WebSocketMessageFormat
+from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
 
-from restapi.utilities.logs import log
 from restapi.connectors import Connector
+from restapi.utilities.logs import log
 
 
 class ServiceUnavailable(BaseException):
@@ -13,79 +10,72 @@ class ServiceUnavailable(BaseException):
 
 
 class PushpinExt(Connector):
-
     def get_connection_exception(self):
         return ServiceUnavailable
 
-    def preconnect(self, **kwargs):
-        return True
+    # initialize is only invoked for backend databases
+    def initialize(self):  # pragma: no cover
+        pass
 
-    def postconnect(self, obj, **kwargs):
-        return True
-
-    def initialize(self, pinit, pdestroy, abackend=None):
-        return self.get_instance()
+    # destroy is only invoked for backend databases
+    def destroy(self):  # pragma: no cover
+        pass
 
     def connect(self, **kwargs):
 
-        variables = kwargs or self.variables
+        variables = self.variables.copy()
+        variables.update(kwargs)
 
-        host = variables.get('host')
-        port = variables.get('port')
+        host = variables.get("host")
+        port = variables.get("port")
 
-        control_uri = 'http://{}:{}'.format(host, port)
-        pubctrl = GripPubControl({
-            'control_uri': control_uri
-        })
+        control_uri = f"http://{host}:{port}"
+        self.pubctrl = GripPubControl({"control_uri": control_uri})
 
-        client = PushpinClient(pubctrl)
+        is_active = self.publish_on_stream("admin", "Connection test", sync=True)
 
-        is_active = client.publish_on_stream('admin', 'Connection test', sync=True)
+        if not is_active:
+            raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
+        return self
 
-        if is_active:
-            return client
-
-        raise ServiceUnavailable("Pushpin unavailable on {}".format(control_uri))
-
-
-class PushpinClient:
-
-    def __init__(self, pub):
-        self.pub = pub
+    def disconnect(self):
+        self.disconnected = True
+        return
 
     @staticmethod
     def callback(result, message):
         if result:
-            log.debug('Message successfully published on pushpin')
+            log.debug("Message successfully published on pushpin")
         else:
-            log.error('Publish failed on pushpin: {}', message)
+            log.error("Publish failed on pushpin: {}", message)
 
     def publish_on_stream(self, channel, message, sync=False):
         if not sync:
-            self.pub.publish_http_stream(
-                channel, message, callback=PushpinClient.callback)
+            self.pubctrl.publish_http_stream(
+                channel, message, callback=PushpinExt.callback
+            )
             return True
 
         try:
-            self.pub.publish_http_stream(channel, message, blocking=True)
-            log.debug('Message successfully published on pushpin')
+            self.pubctrl.publish_http_stream(channel, message, blocking=True)
+            log.debug("Message successfully published on pushpin")
             return True
         except BaseException as e:
-            log.error('Publish failed on pushpin: {}', message)
+            log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
 
     def publish_on_socket(self, channel, message, sync=False):
         item = Item(WebSocketMessageFormat(message, binary=False))
         if not sync:
-            self.pub.publish(channel, item, callback=self.callback)
+            self.pubctrl.publish(channel, item, callback=self.callback)
             return True
 
         try:
-            self.pub.publish(channel, item, blocking=True)
-            log.debug('Message successfully published on pushpin')
+            self.pubctrl.publish(channel, item, blocking=True)
+            log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:
-            log.error('Publish failed on pushpin: {}', message)
+        except BaseException as e:  # pragma: no cover
+            log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False

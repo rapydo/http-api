@@ -1,41 +1,41 @@
-# -*- coding: utf-8 -*-
-
-import os
-import sys
 import json
-import urllib
+import os
 import re
+import sys
+import urllib
+
 from loguru import logger as log
 
 from restapi.confs import PRODUCTION
+from restapi.env import Env
 
-
-log_level = os.environ.get('DEBUG_LEVEL', 'DEBUG')
+log_level = os.getenv("DEBUG_LEVEL", "DEBUG")
 LOGS_FOLDER = "/logs"
-HOSTNAME = os.environ.get("HOSTNAME", "backend")
-CONTAINER_ID = os.environ.get("CONTAINER_ID", "")
-IS_CELERY_CONTAINER = os.environ.get("IS_CELERY_CONTAINER", "0")
+HOSTNAME = os.getenv("HOSTNAME", "backend")
+CONTAINER_ID = os.getenv("CONTAINER_ID", "")
+IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
 
 # BACKEND-SERVER
-if IS_CELERY_CONTAINER == '0':
+if IS_CELERY_CONTAINER == "0":
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
-elif HOSTNAME != CONTAINER_ID:
+elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
+    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
+    if not os.path.isdir(LOGS_FOLDER):
+        os.makedirs(LOGS_FOLDER, exist_ok=True)
 # Celery (variables name due to scaling)
-else:
-    LOGS_FILE = "celery_{}".format(HOSTNAME)
+else:  # pragma: no cover
+    LOGS_FILE = f"celery_{HOSTNAME}"
+    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
+    if not os.path.isdir(LOGS_FOLDER):
+        os.makedirs(LOGS_FOLDER, exist_ok=True)
 
-LOGS_PATH = os.path.join(LOGS_FOLDER, "{}.log".format(LOGS_FILE))
+
+LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
-
-
-def get_logger(not_used):
-    # Deprecated since 0.7.1
-    log.warning("Deprecated get_logger, import log instead")
-    return log
 
 
 def verbose(*args, **kwargs):
@@ -43,14 +43,8 @@ def verbose(*args, **kwargs):
 
 
 def critical_exit(message="", *args, **kwargs):
-    error_code = kwargs.pop('error_code', 1)
-    if not isinstance(error_code, int):
-        raise ValueError("Error code must be an integer")
-    if error_code < 1:
-        raise ValueError("Cannot exit with value below 1")
-
     log.critical(message, *args, **kwargs)
-    sys.exit(error_code)
+    sys.exit(1)
 
 
 log.verbose = verbose
@@ -63,27 +57,6 @@ log.remove()
 def print_message_on_stderr(record):
     return record.get("exception") is None
 
-
-fmt = ""
-fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
-fmt += "[<level>{level}</level> "
-fmt += "<fg #666>{name}:{line}</fg #666>] "
-fmt += "<fg #FFF>{message}</fg #FFF>"
-
-log.add(
-    sys.stderr,
-    level=log_level,
-    colorize=True,
-    format=fmt,
-    # If True the exception trace is extended upward, beyond the catching point
-    # to show the full stacktrace which generated the error.
-    backtrace=False,
-    # Display variables values in exception trace to eases the debugging.
-    # Disabled in production to avoid leaking sensitive data.
-    # Note: enabled in development mode on the File Logger
-    diagnose=False,
-    filter=print_message_on_stderr
-)
 
 if LOGS_PATH is not None:
     try:
@@ -109,39 +82,59 @@ if LOGS_PATH is not None:
             # This is the case when picle fails to serialize before sending to the queue
             catch=True,
         )
-    except PermissionError as p:
+    except PermissionError as p:  # pragma: no cover
         log.error(p)
         LOGS_PATH = None
 
+
+fmt = ""
+fmt += "<fg #FFF>{time:YYYY-MM-DD HH:mm:ss,SSS}</fg #FFF> "
+fmt += "[<level>{level}</level> "
+fmt += "<fg #666>{name}:{line}</fg #666>] "
+fmt += "<fg #FFF>{message}</fg #FFF>"
+
+
+# Set the default logger with the given log level and save the log_id as static variable
+# Further call to this function will remove the previous logger (based on saved log_id)
+def set_logger(level):
+
+    if hasattr(set_logger, "log_id"):
+        log.remove(set_logger.log_id)
+
+    log_id = log.add(
+        sys.stderr,
+        level=level,
+        colorize=True,
+        format=fmt,
+        # If True the exception trace is extended upward, beyond the catching point
+        # to show the full stacktrace which generated the error.
+        backtrace=False,
+        # Display variables values in exception trace to eases the debugging.
+        # Disabled in production to avoid leaking sensitive data.
+        # Note: enabled in development mode on the File Logger
+        diagnose=False,
+        filter=print_message_on_stderr,
+    )
+
+    set_logger.log_id = log_id
+
+
+set_logger(log_level)
+
 # Logs utilities
 
-
-MAX_CHAR_LEN = 200
-OBSCURE_VALUE = '****'
+MAX_CHAR_LEN = Env.get_int("MAX_LOGS_LENGTH", 200)
+OBSCURE_VALUE = "****"
 OBSCURED_FIELDS = [
-    'password',
-    'pwd',
-    'token',
-    'access_token',
-    'file',
-    'filename',
-    'new_password',
-    'password_confirm',
+    "password",
+    "pwd",
+    "token",
+    "access_token",
+    "file",
+    "filename",
+    "new_password",
+    "password_confirm",
 ]
-
-
-# def re_obscure_pattern(string):
-
-#     patterns = {'http_credentials': r'[^:]+\:([^@:]+)\@[^:]+:[^:]'}
-
-#     for _, pattern in patterns.items():
-#         p = re.compile(pattern)
-#         m = p.search(string)
-#         if m:
-#             g = m.group(1)
-#             string = string.replace(g, OBSCURE_VALUE)
-
-#     return string
 
 
 def handle_log_output(original_parameters_string):
@@ -156,7 +149,7 @@ def handle_log_output(original_parameters_string):
     else:
         mystr = str(original_parameters_string)
 
-    if mystr.strip() == '':
+    if mystr.strip() == "":
         return {}
 
     urlencoded = False
@@ -174,7 +167,7 @@ def handle_log_output(original_parameters_string):
 
 
 def obfuscate_url(url):
-    return re.sub(r'\/\/.*:.*@', '//***:***@', url)
+    return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
 def obfuscate_dict(parameters, urlencoded=False):
@@ -187,17 +180,19 @@ def obfuscate_dict(parameters, urlencoded=False):
 
         if key in OBSCURED_FIELDS:
             value = OBSCURE_VALUE
-        elif isinstance(value, str):
-            try:
-                if len(value) > MAX_CHAR_LEN:
-                    value = value[:MAX_CHAR_LEN] + "..."
-            except IndexError:
-                pass
         elif urlencoded and isinstance(value, list):
             # urllib.parse.parse_qs converts all elements in single-elements lists...
             # converting back to the original element
             if len(value) == 1:
                 value = value[0]
+        else:
+            value = str(value)
+            try:
+                if len(value) > MAX_CHAR_LEN:
+                    value = value[:MAX_CHAR_LEN] + "..."
+            except IndexError:
+                pass
+
         output[key] = value
 
     return output

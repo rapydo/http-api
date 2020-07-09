@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Upload data to APIs.
 
@@ -14,13 +12,13 @@ http://stackoverflow.com/a/9533843/2114395
 
 import os
 
-# import shutil
-from flask import request  # , send_from_directory
-from werkzeug.utils import secure_filename
+from flask import request
+from plumbum.cmd import file
 from werkzeug.http import parse_content_range_header
-from restapi.confs import UPLOAD_PATH, PRODUCTION
-from restapi.services.detect import detector
-from restapi.exceptions import RestApiException
+from werkzeug.utils import secure_filename
+
+from restapi.confs import UPLOAD_PATH, get_backend_url
+from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.utilities.logs import log
 
 
@@ -29,18 +27,15 @@ from restapi.utilities.logs import log
 class Uploader:
 
     allowed_exts = []
-    # allowed_exts = ['png', 'jpg', 'jpeg', 'tiff']
 
-    @staticmethod
-    def split_dir_and_extension(filepath):
-        filebase, fileext = os.path.splitext(filepath)
-        return filebase, fileext.strip('.')
+    def set_allowed_exts(self, exts):
+        self.allowed_exts = exts
 
     def allowed_file(self, filename):
-        if len(self.allowed_exts) < 1:
+        if not self.allowed_exts:
             return True
         return (
-            '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_exts
+            "." in filename and filename.rsplit(".", 1)[1].lower() in self.allowed_exts
         )
 
     @staticmethod
@@ -55,170 +50,54 @@ class Uploader:
             return os.path.dirname(abs_file)
         return abs_file
 
-    # Used by AngularJS
-    # @staticmethod
-    # def ngflow_upload(
-    #     filename,
-    #     destination,
-    #     content,
-    #     chunk_number,
-    #     chunk_size,
-    #     chunk_total,
-    #     overwrite=True,
-    # ):
-
-    #     chunk_number = int(chunk_number)
-    #     chunk_size = int(chunk_size)
-    #     chunk_total = int(chunk_total)
-    #     sec_filename = secure_filename(filename)
-    #     abs_fname = os.path.join(destination, sec_filename)
-
-    #     # FIXME: what happens if chunk 2 arrives before chunk 1?
-    #     if overwrite and chunk_number == 1:
-    #         if os.path.exists(abs_fname):
-    #             os.remove(abs_fname)
-
-    #     # FIXME: file is saved as data, not as ASCII/TEXT
-    #     # with open(abs_fname, "wb") as f:
-    #     with open(abs_fname, "ab") as f:
-    #         # f.seek((int(chunk_number) - 1) * int(chunk_size), 0)
-    #         content.save(f)
-    #         f.close()
-
-    #     return abs_fname, sec_filename
-
-    # no one is using this
-    # def upload_data(self, filename, subfolder=None, force=False):
-
-    #     filename = secure_filename(filename)
-
-    #     # Check file extension?
-    #     if not self.allowed_file(filename):
-    #         raise RestApiException("Wrong extension, file extension not allowed")
-
-    #     content = request.data
-
-    #     abs_file = self.absolute_upload_file(filename, subfolder)
-    #     log.info("File request for {}", abs_file)
-
-    #     if os.path.exists(abs_file):
-
-    #         log.warning("File already exists")
-    #         if force:
-    #             os.remove(abs_file)
-    #             log.debug("Forced removal")
-    #         else:
-    #             raise RestApiException(
-    #                 "File '{}' already exists".format(filename),
-    #                 status_code=400,
-    #             )
-
-    #     with open(abs_file, "ab") as f:
-    #         f.write(content)
-    #         f.close()
-
-    #     # Check exists
-    #     if not os.path.exists(abs_file):
-    #         raise RestApiException(
-    #             "Server error: unable to recover the uploaded file",
-    #             status_code=503,
-    #         )
-
-    #     # Extra info
-    #     ftype = None
-    #     fcharset = None
-    #     try:
-    #         # Check the type
-    #         from plumbum.cmd import file
-
-    #         out = file["-ib", abs_file]()
-    #         tmp = out.split(';')
-    #         ftype = tmp[0].strip()
-    #         fcharset = tmp[1].split('=')[1].strip()
-    #     except Exception:
-    #         log.warning("Unknown type for '{}'", abs_file)
-
-    #     ########################
-    #     # ## Final response
-
-    #     # Default redirect is to 302 state, which makes client
-    #     # think that response was unauthorized....
-    #     # see http://dotnet.dzone.com/articles/getting-know-cross-origin
-
-    #     return self.response(
-    #         {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
-    #         code=200,
-    #     )
+    @staticmethod
+    def get_file_metadata(abs_file):
+        try:
+            # Check the type
+            # Example of output:
+            # text/plain; charset=us-ascii
+            out = file["-ib", abs_file]().split(";")
+            return {"type": out[0].strip(), "charset": out[1].split("=")[1].strip()}
+        except Exception:
+            log.warning("Unknown type for '{}'", abs_file)
+            return {}
 
     # this method is used by b2stage and mistral
     def upload(self, subfolder=None, force=False):
 
-        if 'file' not in request.files:
+        if "file" not in request.files:
+            raise BadRequest("No files specified")
 
-            raise RestApiException(
-                "No files specified",
-                status_code=400,
-            )
-
-        myfile = request.files['file']
+        myfile = request.files["file"]
 
         # Check file extension?
         if not self.allowed_file(myfile.filename):
-            raise RestApiException("File extension not allowed")
+            raise BadRequest("File extension not allowed")
 
         # Check file name
-        filename = secure_filename(myfile.filename)
-        abs_file = self.absolute_upload_file(filename, subfolder)
+        fname = secure_filename(myfile.filename)
+        abs_file = Uploader.absolute_upload_file(fname, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
-        # ## IMPORTANT NOTE TO SELF:
-        # If you are going to receive chunks here there could be problems.
-        # In fact a chunk will truncate the connection
-        # and make a second request.
-        # You will end up with having already the file
-        # But corrupted...
         if os.path.exists(abs_file):
-
-            log.warning("Already exists")
-            if force:
-                os.remove(abs_file)
-                log.debug("Forced removal")
-            else:
-                e = "File '{}' already exists, use force parameter to overwrite".format(
-                    filename
+            if not force:
+                raise BadRequest(
+                    f"File '{fname}' already exists, use force parameter to overwrite"
                 )
-                raise RestApiException(e, status_code=400)
+            os.remove(abs_file)
+            log.debug("Already exists, forced removal")
 
         # Save the file
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception:
-            raise RestApiException(
-                "Permission denied: failed to write the file",
-                status_code=503,
-            )
+            raise ServiceUnavailable("Permission denied: failed to write the file")
 
-        # Check exists
-        if not os.path.exists(abs_file):
-            raise RestApiException(
-                "Unable to retrieve the uploaded file",
-                status_code=503,
-            )
-
-        # Extra info
-        ftype = None
-        fcharset = None
-        try:
-            # Check the type
-            from plumbum.cmd import file
-
-            out = file["-ib", abs_file]()
-            tmp = out.split(';')
-            ftype = tmp[0].strip()
-            fcharset = tmp[1].split('=')[1].strip()
-        except Exception:
-            log.warning("Unknown type for '{}'", abs_file)
+        # Check exists - but it is basicaly a test that cannot fail...
+        # The has just been uploaded!
+        if not os.path.exists(abs_file):  # pragma: no cover
+            raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################
         # ## Final response
@@ -228,72 +107,8 @@ class Uploader:
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
         return self.response(
-            {'filename': filename, 'meta': {'type': ftype, 'charset': fcharset}},
-            code=200,
+            {"filename": fname, "meta": self.get_file_metadata(abs_file)}, code=200,
         )
-
-    # no one is using this
-    # @staticmethod
-    # def upload_chunked(destination, force=False, chunk_size=None):
-
-    #     # Default chunk size, put this somewhere
-    #     if chunk_size is None:
-    #         chunk_size = 1048576
-
-    #     if os.path.exists(destination):
-
-    #         log.warning("Already exists")
-    #         if force:
-    #             os.remove(destination)
-    #             log.debug("Forced removal")
-    #         else:
-    #             log.error("File '{}' already exists", destination)
-    #             return False
-
-    #     with open(destination, "ab") as f:
-    #         while True:
-    #             chunk = request.stream.read(chunk_size)
-    #             if not chunk:
-    #                 break
-    #             f.write(chunk)
-
-    #     # Check exists
-    #     if not os.path.exists(destination):
-    #         log.error("Unable to recover the uploaded file: {}", destination)
-    #         return False
-
-    #     log.info("File uploaded: {}", destination)
-    #     return True
-
-    # no one is using this
-    # def remove(self, filename, subfolder=None, skip_response=False):
-    #     """ Remove the file if requested """
-
-    #     abs_file = self.absolute_upload_file(filename, subfolder)
-
-    #     # Check file existence
-    #     if not os.path.exists(abs_file):
-    #         log.critical("File '{}' not found", abs_file)
-    #         return self.response(
-    #             errors="Requested file does not exists",
-    #             code=404,
-    #         )
-
-    #     # Remove the real file
-    #     try:
-    #         os.remove(abs_file)
-    #     except Exception:
-    #         log.critical("Cannot remove local file {}", abs_file)
-    #         return self.response(
-    #             errors="Permission denied: failed to remove the file",
-    #             code=503,
-    #         )
-    #     log.warning("Removed '{}'", abs_file)
-
-    #     if skip_response:
-    #         return
-
-    #     return self.response("Deleted", code=200)
 
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
@@ -313,28 +128,108 @@ class Uploader:
                 os.remove(file_path)
                 log.debug("Forced removal")
             else:
-                return self.response(
-                    errors="File '{}' already exists".format(filename),
-                    code=400,
-                )
+                return self.response(f"File '{filename}' already exists", code=400,)
 
-        domain = detector.get_global_var('DOMAIN')
-        if PRODUCTION:
-            host = "https://{}".format(domain)
-        else:
-            host = "http://{}:8080".format(domain)
-        url = "{}{}/{}".format(host, request.path, filename)
+        host = get_backend_url()
+        url = f"{host}{request.path}/{filename}"
 
         log.info("Upload initialized on url: {}", url)
 
         return self.response(
             "",
-            headers={
-                "Access-Control-Expose-Headers": "Location",
-                "Location": url
-            },
-            code=201
+            headers={"Access-Control-Expose-Headers": "Location", "Location": url},
+            code=201,
         )
+
+    @staticmethod
+    def parse_content_range(range_header):
+
+        if range_header is None:
+            return None, None, None
+
+        content_range = parse_content_range_header(range_header)
+
+        if content_range is None:
+            log.error("Unable to parse Content-Range: {}", range_header)
+            tokens = range_header.split("/")
+
+            if len(tokens) != 2:
+                log.error("Invalid Content-Range: {}", range_header)
+                return None, None, None
+
+            if not tokens[1].isnumeric():
+                log.error("Invalid Content-Range: {}", range_header)
+                return None, None, None
+
+            total_length = int(tokens[1])
+            start = 0
+            stop = total_length
+
+            return total_length, start, stop
+
+        # log.critical(content_range.units)
+        total_length = int(content_range.length)
+        # es: 'bytes */35738983'
+        if content_range.start is None:
+            start = 0
+        else:
+            start = int(content_range.start)
+
+        if content_range.stop is None:
+            stop = total_length
+        else:
+            stop = int(content_range.stop)
+
+        return total_length, start, stop
+
+    # def chunk_upload(self, upload_dir, filename, chunk_size=None):
+    #     filename = secure_filename(filename)
+
+    #     try:
+    #         range_header = request.headers.get("Content-Range")
+
+    #         total_length, start, stop = self.parse_content_range(range_header)
+
+    #         if total_length is None:
+    #             return False, self.response("Invalid request", code=400)
+
+    #         completed = (stop >= total_length)
+
+    #     except BaseException as e:
+    #         log.error("Unable to parse Content-Range: {}", range_header)
+    #         log.error(str(e))
+    #         completed = False
+    #         return completed, self.response("Invalid request", code=400)
+
+    #     # Default chunk size, put this somewhere
+    #     if chunk_size is None:
+    #         chunk_size = 1048576
+
+    #     file_path = os.path.join(upload_dir, filename)
+    #     with open(file_path, "ab") as f:
+    #         while True:
+    #             chunk = request.stream.read(chunk_size)
+    #             if not chunk:
+    #                 break
+    #             f.seek(start)
+    #             f.write(chunk)
+
+    #     if completed:
+
+    #         return completed, self.response(
+    #             {
+    #                 'filename': filename,
+    #                 'meta': self.get_file_metadata(file_path)
+    #             }, code=200)
+
+    #     return completed, self.response(
+    #         "partial",
+    #         headers={
+    #             "Access-Control-Expose-Headers": "Range",
+    #             f"Range": "0-{stop - 1}"
+    #         },
+    #         code=206
+    #     )
 
     def chunk_upload(self, upload_dir, filename, chunk_size=None):
         filename = secure_filename(filename)
@@ -359,7 +254,7 @@ class Uploader:
                 # log.critical(content_range.stop)
                 # log.critical(content_range.length)
                 # log.critical(content_range.units)
-                completed = (stop >= total_length)
+                completed = stop >= total_length
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
@@ -380,32 +275,22 @@ class Uploader:
                 f.write(chunk)
 
         if completed:
+            return (
+                completed,
+                self.response(
+                    {"filename": filename, "meta": self.get_file_metadata(file_path)},
+                    code=200,
+                ),
+            )
 
-            # Extra info
-            ftype = None
-            fcharset = None
-            try:
-                # Check the type
-                from plumbum.cmd import file
-
-                out = file["-ib", file_path]()
-                tmp = out.split(';')
-                ftype = tmp[0].strip()
-                fcharset = tmp[1].split('=')[1].strip()
-            except Exception:
-                log.warning("Unknown type for '{}'", file_path)
-
-            return completed, self.response(
-                {
-                    'filename': filename,
-                    'meta': {'type': ftype, 'charset': fcharset}
-                }, code=200)
-
-        return completed, self.response(
-            "partial",
-            headers={
-                "Access-Control-Expose-Headers": "Range",
-                "Range": "0-{}".format(stop - 1)
-            },
-            code=206
+        return (
+            completed,
+            self.response(
+                "partial",
+                headers={
+                    "Access-Control-Expose-Headers": "Range",
+                    "Range": "0-{}".format(stop - 1),
+                },
+                code=206,
+            ),
         )

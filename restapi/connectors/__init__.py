@@ -1,59 +1,70 @@
-# -*- coding: utf-8 -*-
-
 import abc
+import os
 from datetime import datetime, timedelta
 
 from flask import _app_ctx_stack as stack
+
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
 class Connector(metaclass=abc.ABCMeta):
 
-    models = {}  # I get models on a cls level, instead of instances
+    models = {}
+    # will contain:
+    # objs = {
+    #     'thread-id': {
+    #         'ConnectorName': {
+    #             'params-unique-key': instance
+    #         }
+    #     }
+    # }
+    objs = {}
 
-    def __init__(self, app=None, **kwargs):
+    def __init__(self, app):
 
-        self.objs = {}
-        self.set_name()
-        self.args = kwargs
-
+        self.name = self.__class__.__name__.lower()
         self.app = app
-        if app is not None:
-            self.init_app(app)
+        # Will be modified by self.disconnect()
+        self.disconnected = False
 
+        # to implement request-level instances:
+        # 1 . implement a flag or new get_intance to change the key identifier
+        #     i.e. instead of thread.get_native_id set something identifying the request
+        #          probably based on stack.top
+        # 2 . register this teardown for such intances
+        # 3 . call disconnect for such objects
+        # app.teardown_appcontext(self.teardown)
+
+    # def teardown(self, exception):
+    #     if obj := self.get_object('identify the request level object') is not None:
+    #         obj.disconnect()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, value, tb):
+        self.disconnect()
 
     @abc.abstractmethod
-    def get_connection_exception(self):
+    def get_connection_exception(self):  # pragma: no cover
         return None
 
     @abc.abstractmethod
-    def preconnect(self, **kwargs):
-        return True
-
-    @abc.abstractmethod
-    def connect(self, **kwargs):
+    def connect(self, **kwargs):  # pragma: no cover
         return
 
     @abc.abstractmethod
-    def postconnect(self, obj, **kwargs):
-        return True
+    def disconnect(self):  # pragma: no cover
+        return
 
     @abc.abstractmethod
-    def initialize(self, pinit, pdestroy, abackend=None):
-        return self.get_instance()
+    def initialize(self):  # pragma: no cover
+        pass
 
-
-    def close_connection(self, ctx):
-        """ override this method if you must close
-        your connection after each request"""
-
-        # obj = self.get_object(ref=ctx)
-        # obj.close()
-        self.set_object(obj=None, ref=ctx)  # it could be overidden
-
-    def set_name(self):
-        """ a different name for each extended object """
-        self.name = self.__class__.__name__.lower()
+    @abc.abstractmethod
+    def destroy(self):  # pragma: no cover
+        pass
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
@@ -82,184 +93,87 @@ class Connector(metaclass=abc.ABCMeta):
     def set_variables(cls, envvars):
         cls.variables = envvars
 
-    def init_app(self, app):
-        app.teardown_appcontext(self.teardown)
-
-    def pre_object(self, ref, key):
-        """ Make sure reference and key are strings """
-
-        if ref is None:
-            ref = self.__class__.__name__
-        elif isinstance(ref, object):
-            ref = ref.__class__.__name__
-        elif not isinstance(ref, str):
-            ref = str(ref)
-
-        if not isinstance(key, str):
-            key = str(key)
-
-        return ref + key
-
-    def set_object(self, obj, key='[]', ref=None):
+    def set_object(self, obj, key="[]") -> None:
         """ set object into internal array """
 
-        h = self.pre_object(ref, key)
-        self.objs[h] = obj
-        return obj
+        tid = os.getpid()
+        self.objs.setdefault(tid, {})
+        self.objs[tid].setdefault(self.name, {})
+        self.objs[tid][self.name][key] = obj
 
-    def get_object(self, key='[]', ref=None):
+    def get_object(self, key="[]"):
         """ recover object if any """
 
-        h = self.pre_object(ref, key)
-        obj = self.objs.get(h, None)
-        return obj
+        tid = os.getpid()
+        self.objs.setdefault(tid, {})
+        self.objs[tid].setdefault(self.name, {})
+        return self.objs[tid][self.name].get(key, None)
 
     def initialize_connection(self, **kwargs):
 
-        obj = None
+        # Create a new instance of itself
+        obj = self.__class__(self.app)
 
-        # BEFORE
-        ok = self.preconnect(**kwargs)
+        exceptions = obj.get_connection_exception()
+        if exceptions is None:
+            exceptions = (BaseException,)
 
-        if not ok:
-            log.critical("Unable to make preconnection for {}", self.name)
-            return obj
-
-        # Try until it's connected
-        if len(kwargs) > 0:
-            obj = self.connect(**kwargs)
-        else:
-            obj = self.retry()
-            log.verbose("Connected! {}", self.name)
-
-        # AFTER
-        self.postconnect(obj, **kwargs)
+        try:
+            obj = obj.connect(**kwargs)
+        except exceptions as e:
+            log.error("{} raised {}: {}", obj.name, e.__class__.__name__, e)
+            raise ServiceUnavailable({"Service Unavailable": "Internal server error"})
 
         obj.connection_time = datetime.now()
         return obj
 
     def set_models_to_service(self, obj):
 
-        if len(self.models) < 1 and self.__class__.__name__ == 'NeoModel':
-            raise Exception()
-
         for name, model in self.models.items():
             # Save attribute inside class with the same name
             log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
-            obj.models = self.models
+        obj.models = self.models
 
-        return obj
+    def get_instance(
+        self, cache_expiration=None, global_instance=None, isauth=None, **kwargs
+    ):
 
-    def retry(self, retry_interval=3, max_retries=-1):
-        retry_count = 0
+        # When context is empty this is a connection at loading time
+        # Do not save it
+        if stack.top is None:
+            log.verbose("First connection for {}", self.name)
+            # can raise ServiceUnavailable exception
+            obj = self.initialize_connection()
+            self.set_models_to_service(obj)
+            return obj
 
-        # Get the exception which will signal a missing connection
-        exceptions = self.get_connection_exception()
-        if exceptions is None:
-            exceptions = (BaseException,)
+        # Deprecated since 0.7.4
+        if global_instance is not None:  # pragma: no cover
+            log.warning("Deprecated use of global_instance flag")
 
-        while max_retries != 0 or retry_count < max_retries:
+        # Deprecated since 0.7.4
+        if isauth is not None:  # pragma: no cover
+            log.warning("Deprecated use of isauth flag")
 
-            retry_count += 1
-            if retry_count > 1:
-                log.verbose("testing again in {} secs", retry_interval)
-
-            try:
-                obj = self.connect()
-            except exceptions as e:
-                log.error("Catched: {}({})", e.__class__.__name__, e)
-                log.exit("Service '{}' not available", self.name)
-            else:
-                break
-
-            # Increment sleeps time if doing a lot of retries
-            if retry_count % 3 == 0:
-                log.debug("Incrementing interval")
-                retry_interval += retry_interval
-
-        return obj
-
-    def teardown(self, exception):
-        ctx = stack.top
-        if self.get_object(ref=ctx) is not None:
-            self.close_connection(ctx)
-
-    def get_instance(self, **kwargs):
-
-        # Parameters
-        global_instance = kwargs.pop('global_instance', False)
-        isauth = kwargs.pop('authenticator', False)
-        cache_expiration = kwargs.pop('cache_expiration', None)
-        # pinit = kwargs('project_initialization', False)
-
-        # Variables
-        obj = None
-        ctx = stack.top
-        ref = self
         unique_hash = str(sorted(kwargs.items()))
 
-        # When not using the context, this is the first connection
-        if ctx is None:
-            # First connection, before any request
-            obj = self.initialize_connection()
-            if obj is None:
-                return None
-            self.set_object(obj=obj, ref=ref)
+        obj = self.get_object(key=unique_hash)
 
-            log.verbose("First connection for {}", self.name)
+        if obj and cache_expiration:
+            now = datetime.now()
+            exp = timedelta(seconds=cache_expiration)
 
-        else:
+            if now >= obj.connection_time + exp:
+                log.info("Cache expired for {}", self)
+                obj.disconnect()
+                obj = None
 
-            if not isauth:
-                if not global_instance:
-                    ref = ctx
+        if obj and not obj.disconnected:
+            return obj
 
-                obj = self.get_object(ref=ref, key=unique_hash)
-
-            if obj is not None and cache_expiration is not None:
-                now = datetime.now()
-                exp = timedelta(seconds=cache_expiration)
-
-                if now < obj.connection_time + exp:
-                    log.verbose("Cache is still valid for {}", self)
-                else:
-                    log.info("Cache expired for {}", self)
-                    obj = None
-
-            if obj is None:
-                obj = self.initialize_connection(**kwargs)
-                if obj is None:
-                    return None
-                self.set_object(obj=obj, ref=ref, key=unique_hash)
-            else:
-                pass
-
-        obj = self.set_models_to_service(obj)
-
+        # can raise ServiceUnavailable exception
+        obj = self.initialize_connection(**kwargs)
+        self.set_models_to_service(obj)
+        self.set_object(obj=obj, key=unique_hash)
         return obj
-
-
-def get_debug_instance(MyClass):
-    """
-    Obtain a debug instance from any flask ext we have in the app
-
-    e.g.
-    from restapi.connectors import get_debug_instance
-    from restapi.connectors.celery import CeleryExt
-    obj = get_debug_instance(CeleryExt)
-    """
-
-    #######
-    # NOTE: impors are needed here for logging to work correctly
-    from restapi.services.detect import detector
-
-    log.verbose("Detector imported: {}", detector)  # avoid PEP complaints
-    # FIXME: e.g. importing-programmatically
-    # docs.python.org/3/library/importlib.html
-
-    #######
-    instance = MyClass()
-    obj = instance.initialize_connection()
-    obj = instance.set_models_to_service(obj)
-    return obj

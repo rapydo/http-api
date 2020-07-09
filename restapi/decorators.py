@@ -1,34 +1,30 @@
-# -*- coding: utf-8 -*-
-
 from functools import wraps
+
 import werkzeug.exceptions
+from amqp.exceptions import AccessRefused
+from flask_apispec import use_kwargs
+from marshmallow import fields, post_load, validate
 from sentry_sdk import capture_exception
+
 from restapi.confs import SENTRY_URL
-from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
-# imported here as utility for endpoints
-from restapi.services.authentication.bearer import authentication as auth
+from restapi.exceptions import (
+    BadRequest,
+    Conflict,
+    DatabaseDuplicatedEntry,
+    RestApiException,
+)
+from restapi.models import InputSchema
+from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
 
 
-def from_restapi_exception(self, e):
-    if e.is_warning:
-        log.warning(e)
-    else:
-        log.exception(e)
-        log.error(e)
-    return self.response(errors=e.args[0], code=e.status_code)
-
-
-def catch_errors(exception=None, catch_generic=True, **kwargs):
+def catch_errors(**kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
     """
-
-    if exception is None:
-        exception = RestApiException
 
     def decorator(func):
         @wraps(func)
@@ -38,27 +34,17 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             try:
                 out = func(self, *args, **kwargs)
             # Catch the exception requested by the user
-            except exception as e:
-
-                if isinstance(e, RestApiException):
-                    return from_restapi_exception(self, e)
-
-                log.exception(e)
-                log.error(e)
-
-                if hasattr(e, "status_code"):
-                    error_code = getattr(e, "status_code")
-                else:
-                    error_code = 400
-
-                return self.response(errors=str(e), code=error_code)
-
-            # Catch the basic API exception
             except RestApiException as e:
 
-                return from_restapi_exception(self, e)
+                if e.is_warning:
+                    log.warning(e)
+                else:
+                    log.exception(e)
+                    log.error(e)
 
-            except werkzeug.exceptions.BadRequest:
+                return self.response(e.args[0], code=e.status_code)
+
+            except werkzeug.exceptions.BadRequest:  # pragma: no cover
                 # do not stop werkzeug BadRequest
                 raise
 
@@ -71,25 +57,27 @@ def catch_errors(exception=None, catch_generic=True, **kwargs):
             except werkzeug.exceptions.RequestedRangeNotSatisfiable:
                 raise
             # Catch any other exception
+
+            # errors with RabbitMQ credentials raised when sending Celery tasks
+            except AccessRefused as e:  # pragma: no cover
+                log.critical(e)
+                return self.response("Unexpected Server Error", code=500)
             except Exception as e:
 
-                if SENTRY_URL is not None:
+                if SENTRY_URL is not None:  # pragma: no cover
                     capture_exception(e)
 
                 excname = e.__class__.__name__
                 message = str(e)
-                if not message:
+                if not message:  # pragma: no cover
                     message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)
-                if catch_generic:
-                    if excname in ['AttributeError', 'ValueError', 'KeyError']:
-                        error = 'Server failure; please contact admin.'
-                    else:
-                        error = {excname: message}
-                    return self.response(errors=error, code=400)
+                if excname in ["AttributeError", "ValueError", "KeyError"]:
+                    error = "Server failure; please contact admin."
                 else:
-                    raise e
+                    error = {excname: message}
+                return self.response(error, code=400)
 
             return out
 
@@ -109,10 +97,79 @@ def catch_graph_exceptions(func):
 
         except DatabaseDuplicatedEntry as e:
 
-            raise RestApiException(str(e), status_code=409)
+            raise Conflict(str(e))
 
         except RequiredProperty as e:
 
-            raise RestApiException(str(e), status_code=400)
+            raise BadRequest(e)
+
+    return wrapper
+
+
+class Pagination(InputSchema):
+    get_total = fields.Boolean(
+        required=False, description="Request the total number of elements"
+    )
+    page = fields.Int(
+        required=False,
+        description="Current page number",
+        validate=validate.Range(min=1),
+    )
+    size = fields.Int(
+        required=False,
+        description="Number of elements to retrieve",
+        validate=validate.Range(min=1, max=100),
+    )
+
+    @post_load
+    def verify_parameters(self, data, **kwargs):
+        if "get_total" in data:
+            data["page"] = None
+            data["size"] = None
+        else:
+            data.setdefault("get_total", False)
+            data.setdefault("page", 1)
+            data.setdefault("size", 20)
+
+        return data
+
+
+def get_pagination(func):
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(Pagination, locations=["query"])
+    def get_wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
+
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(Pagination, locations=["form", "json"])
+    def wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
+
+    if func.__name__ == "get":
+        return get_wrapper
+    return wrapper
+
+
+class ChunkUpload(InputSchema):
+    name = fields.Str(required=True)
+    mimeType = fields.Str(required=True)
+    size = fields.Int(required=True, validate=validate.Range(min=1))
+    lastModified = fields.Int(required=True, validate=validate.Range(min=1))
+
+
+def init_chunk_upload(func):
+    @wraps(func)
+    # Should be converted in use_args, if/when available
+    # https://github.com/jmcarp/flask-apispec/issues/189
+    @use_kwargs(ChunkUpload)
+    def wrapper(self, *args, **kwargs):
+
+        return func(self, *args, **kwargs)
 
     return wrapper

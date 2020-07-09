@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-
 from flask_apispec import MethodResource
-from restapi.rest.definition import EndpointResource
+
 from restapi import decorators
+from restapi.rest.definition import EndpointResource
 
 
 class Status(MethodResource, EndpointResource):
     """ Check if APIs are online """
 
     ALLOW_HTML_RESPONSE = True
-    labels = ['helpers']
+    labels = ["helpers"]
 
     _GET = {
         "/status": {
@@ -22,14 +21,14 @@ class Status(MethodResource, EndpointResource):
     @decorators.catch_errors()
     def get(self, service=None):
 
-        return self.response('Server is alive')
+        return self.response("Server is alive")
 
 
 class AuthStatus(MethodResource, EndpointResource):
     """ Check if APIs are online """
 
     baseuri = "/auth"
-    labels = ['helpers']
+    labels = ["helpers"]
 
     _GET = {
         "/status": {

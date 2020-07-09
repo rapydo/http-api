@@ -1,21 +1,82 @@
-# -*- coding: utf-8 -*-
+from flask_apispec import MethodResource, marshal_with, use_kwargs
+from marshmallow import fields, validate
 
-from restapi.rest.definition import EndpointResource
 from restapi import decorators
-from restapi.exceptions import RestApiException
-from restapi.connectors.authentication import HandleSecurity
-from restapi.utilities.meta import Meta
+from restapi.models import InputSchema, OutputSchema
+from restapi.rest.definition import EndpointResource
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+
+auth = EndpointResource.load_authentication()
 
 
-class Profile(EndpointResource):
+class NewPassword(InputSchema):
+    password = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+    )
+    new_password = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+    )
+    password_confirm = fields.Str(
+        required=True,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+    )
+    totp_code = fields.Str(required=False)
+
+
+class UserProfile(InputSchema):
+    name = fields.Str()
+    surname = fields.Str()
+    privacy_accepted = fields.Boolean()
+
+
+class Group(OutputSchema):
+    uuid = fields.Str()
+    shortname = fields.Str()
+    fullname = fields.Str()
+
+
+def getProfileData():
+    attributes = {}
+
+    attributes["uuid"] = fields.Str(required=True)
+    attributes["email"] = fields.Email(required=True)
+    attributes["name"] = fields.Str(required=True)
+    attributes["surname"] = fields.Str(required=True)
+    attributes["isAdmin"] = fields.Boolean(required=True)
+    attributes["isLocalAdmin"] = fields.Boolean(required=True)
+    attributes["privacy_accepted"] = fields.Boolean(required=True)
+    attributes["roles"] = fields.Dict(required=True)
+
+    attributes["group"] = fields.Nested(Group, required=False)
+
+    attributes["SECOND_FACTOR"] = fields.Str(required=False)
+
+    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+        if custom_fields := customizer.get_custom_fields(False):
+            attributes.update(custom_fields)
+
+    schema = OutputSchema.from_dict(attributes)
+    return schema()
+
+
+class Profile(MethodResource, EndpointResource):
     """ Current user informations """
 
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profile"]
 
-    GET = {
+    auth_service = detector.authentication_service
+    neo4j_enabled = auth_service == "neo4j"
+
+    _GET = {
         "/profile": {
             "summary": "List profile attributes",
             "responses": {
@@ -23,133 +84,80 @@ class Profile(EndpointResource):
             },
         }
     }
-    PUT = {
+    _PUT = {
         "/profile": {
-            "summary": "Update profile attributes",
-            "parameters": [
-                {
-                    "name": "credentials",
-                    "in": "body",
-                    "schema": {"$ref": "#/definitions/ProfileUpdate"},
-                }
-            ],
-            "responses": {"204": {"description": "Updated has been successful"}},
+            "summary": "Update user password",
+            "responses": {"204": {"description": "Password updated"}},
+        }
+    }
+    _PATCH = {
+        "/profile": {
+            "summary": "Update profile information",
+            "responses": {"204": {"description": "Profile updated"}},
         }
     }
 
     @decorators.catch_errors()
     @decorators.auth.required()
+    @marshal_with(getProfileData(), code=200)
     def get(self):
 
-        current_user = self.get_current_user()
+        current_user = self.get_user()
         data = {
-            'uuid': current_user.uuid,
-            'status': "Valid user",
-            'email': current_user.email,
+            "uuid": current_user.uuid,
+            "email": current_user.email,
+            "name": current_user.name,
+            "surname": current_user.surname,
+            "isAdmin": self.verify_admin(),
+            "isLocalAdmin": self.verify_local_admin(),
+            "privacy_accepted": current_user.privacy_accepted,
+            # Convert list of Roles into a dict with name: description
+            "roles": {role.name: role.description for role in current_user.roles},
         }
-
-        # roles = []
-        roles = {}
-        for role in current_user.roles:
-            # roles.append(role.name)
-            roles[role.name] = role.description
-        data["roles"] = roles
-
-        try:
-            for g in current_user.belongs_to.all():
-                data["group"] = {
-                    "uuid": g.uuid,
-                    "shortname": g.shortname,
-                    "fullname": g.fullname,
-                }
-        except BaseException as e:
-            log.verbose(e)
-
-        data["isAdmin"] = self.auth.verify_admin()
-        data["isLocalAdmin"] = self.auth.verify_local_admin()
-        data["privacy_accepted"] = current_user.privacy_accepted
-
-        if hasattr(current_user, 'name'):
-            data["name"] = current_user.name
-
-        if hasattr(current_user, 'surname'):
-            data["surname"] = current_user.surname
+        if self.neo4j_enabled:
+            data["group"] = current_user.belongs_to.single()
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            data['2fa'] = self.auth.SECOND_FACTOR_AUTHENTICATION
+            data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
-        if obj is not None:
-            try:
-                data = obj.manipulate(ref=self, user=current_user, data=data)
-            except BaseException as e:
-                log.error("Could not custom manipulate profile:\n{}", e)
+        if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+            data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
 
-    def update_password(self, user, data):
+    @decorators.catch_errors()
+    @decorators.auth.required()
+    @use_kwargs(NewPassword)
+    def put(self, password, new_password, password_confirm, totp_code=None):
+        """ Update password for current user """
 
-        password = data.get('password')
-        new_password = data.get('new_password')
-        password_confirm = data.get('password_confirm')
+        user = self.get_user()
 
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 
         if totp_authentication:
-            totp_code = data.get('totp_code')
-        else:
-            totp_code = None
+            self.auth.verify_totp(user, totp_code)
+        self.auth.make_login(user.email, password)
 
-        security = HandleSecurity(self.auth)
-
-        if new_password is None or password_confirm is None:
-            msg = "New password is missing"
-            raise RestApiException(msg, status_code=400)
-
-        if totp_authentication:
-            security.verify_totp(user, totp_code)
-        else:
-            token, _ = self.auth.make_login(user.email, password)
-            security.verify_token(user.email, token)
-
-        security.change_password(user, password, new_password, password_confirm)
-
-        # NOTE already in change_password
-        # but if removed new pwd is not saved
-        return self.auth.save_user(user)
-
-    def update_profile(self, user, data):
-
-        avoid_update = ['uuid', 'authmethod', 'is_active', 'roles']
-
-        try:
-            for key, value in data.items():
-                if key.startswith('_') or key in avoid_update:
-                    continue
-                log.debug("Profile new value: {}={}", key, value)
-                setattr(user, key, value)
-        except BaseException as e:
-            log.error("Failed to update profile:\n{}: {}", e.__class__.__name__, e)
-        else:
-            log.info("Profile updated")
+        self.auth.change_password(user, password, new_password, password_confirm)
 
         self.auth.save_user(user)
 
+        return self.empty_response()
+
     @decorators.catch_errors()
     @decorators.auth.required()
-    def put(self):
+    @use_kwargs(UserProfile)
+    def patch(self, **kwargs):
         """ Update profile for current user """
 
-        user = self.auth.get_user()
-        data = self.get_input()
+        user = self.get_user()
 
-        if 'password' in data:
-            self.update_password(user, data)
-            return self.empty_response()
+        db = self.get_service_instance(detector.authentication_service)
+        db.update_properties(user, kwargs, kwargs)
 
-        if 'new_password' in data or 'password_confirm' in data:
-            raise RestApiException("Invalid request", status_code=400)
+        log.info("Profile updated")
 
-        self.update_profile(user, data)
+        self.auth.save_user(user)
 
         return self.empty_response()

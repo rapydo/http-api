@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
-
 import os
 from functools import lru_cache
-from flask import request, stream_with_context, Response
 
+from flask import Response, request, stream_with_context
+from irods import exception as iexceptions
+from irods import models
 from irods.access import iRODSAccess
+from irods.manager.data_object_manager import DataObjectManager
 from irods.rule import Rule
 from irods.ticket import Ticket
-from irods import models
-from irods import exception as iexceptions
-from restapi.exceptions import RestApiException
 
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
@@ -18,23 +17,11 @@ class IrodsException(RestApiException):
     pass
 
 
-class IrodsPythonClient:
+# Mostly excluded from coverage because it is only used by a very specific service
+# No further tests will be included in the core
+class IrodsPythonClient:  # pragma: no cover
 
-    anonymous_user = 'anonymous'
-
-    def __init__(self, prc, variables, default_chunk_size=1048576):
-        self.prc = prc
-        self.variables = variables
-        self.chunk_size = self.variables.get('chunksize', default_chunk_size)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _type, value, tb):
-        self.prc.cleanup()
-
-    def connect(self):
-        return self
+    anonymous_user = "anonymous"
 
     @staticmethod
     def get_collection_from_path(absolute_path):
@@ -44,8 +31,8 @@ class IrodsPythonClient:
     def get_absolute_path(*args, root=None):
         if len(args) < 1:
             return root
-        if root is None and not args[0].startswith('/'):
-            root = '/'
+        if root is None and not args[0].startswith("/"):
+            root = "/"
         return os.path.join(root, *args)
 
     # ##################################
@@ -81,12 +68,12 @@ class IrodsPythonClient:
         try:
             return self.prc.data_objects.get(path)
         except (iexceptions.CollectionDoesNotExist, iexceptions.DataObjectDoesNotExist):
-            raise IrodsException("{} not found or no permissions".format(path))
+            raise IrodsException(f"{path} not found or no permissions")
 
     @staticmethod
     def getPath(path, prefix=None):
-        if prefix is not None and prefix != '':
-            path = path[len(prefix):]
+        if prefix is not None and prefix != "":
+            path = path[len(prefix) :]
             if path[0] == "/":
                 path = path[1:]
 
@@ -169,7 +156,7 @@ class IrodsPythonClient:
 
             return data
         except iexceptions.CollectionDoesNotExist:
-            raise IrodsException("Not found (or no permission): {}".format(path))
+            raise IrodsException(f"Not found (or no permission): {path}")
 
         # replicas = []
         # for line in lines:
@@ -198,14 +185,13 @@ class IrodsPythonClient:
         except iexceptions.CATALOG_ALREADY_HAS_ITEM_BY_THAT_NAME:
             if not ignore_existing:
                 raise IrodsException(
-                    "Irods collection already exists",
-                    status_code=400,
+                    "Irods collection already exists", status_code=409,
                 )
             else:
                 log.debug("Irods collection already exists: {}", path)
 
         except (iexceptions.CAT_NO_ACCESS_PERMISSION, iexceptions.SYS_NO_API_PRIV):
-            raise IrodsException("You have no permissions on path {}".format(path))
+            raise IrodsException(f"You have no permissions on path {path}")
 
         return None
 
@@ -221,35 +207,32 @@ class IrodsPythonClient:
             raise IrodsException("CAT_NO_ACCESS_PERMISSION")
 
         except iexceptions.SYS_INTERNAL_NULL_INPUT_ERR:
-            raise IrodsException(
-                "Unable to create object, invalid path: {}".format(path))
+            raise IrodsException(f"Unable to create object, invalid path: {path}")
 
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
-                raise IrodsException(
-                    "Irods object already exists", status_code=400
-                )
+                raise IrodsException("Irods object already exists", status_code=400)
             log.debug("Irods object already exists: {}", path)
 
         return False
 
-    def icopy(self, sourcepath, destpath, ignore_existing=False, warning=None):
+    def icopy(
+        self,
+        sourcepath,
+        destpath,
+        ignore_existing=False,
+        warning="Irods object already exists",
+    ):
 
         # Replace 'copy'
 
-        from irods.manager.data_object_manager import DataObjectManager
-
         dm = DataObjectManager(self.prc)
-        if warning is None:
-            warning = 'Irods object already exists'
 
         try:
             dm.copy(sourcepath, destpath)
         except iexceptions.OVERWRITE_WITHOUT_FORCE_FLAG:
             if not ignore_existing:
-                raise IrodsException(
-                    "Irods object already exists", status_code=400
-                )
+                raise IrodsException("Irods object already exists", status_code=400)
             log.warning("{}: {}", warning, destpath)
         else:
             log.debug("Copied: {} -> {}", sourcepath, destpath)
@@ -287,18 +270,18 @@ class IrodsPythonClient:
             source = self.prc.data_objects.get(sourcepath)
             self.create_empty(destpath, directory=False, ignore_existing=force)
             target = self.prc.data_objects.get(destpath)
-            with source.open('r+') as f:
-                with target.open('w') as t:
+            with source.open("r+") as f:
+                with target.open("w") as t:
                     for line in f:
                         # if t.writable():
                         t.write(line)
         except iexceptions.DataObjectDoesNotExist:
             raise IrodsException(
-                "DataObject not found (or no permission): {}".format(sourcepath)
+                f"DataObject not found (or no permission): {sourcepath}"
             )
         except iexceptions.CollectionDoesNotExist:
             raise IrodsException(
-                "Collection not found (or no permission): {}".format(sourcepath)
+                f"Collection not found (or no permission): {sourcepath}"
             )
 
     def move(self, src_path, dest_path):
@@ -353,7 +336,7 @@ class IrodsPythonClient:
     def write_file_content(self, path, content, position=0):
         try:
             obj = self.prc.data_objects.get(path)
-            with obj.open('w+') as handle:
+            with obj.open("w+") as handle:
 
                 if position > 0 and handle.seekable():
                     handle.seek(position)
@@ -371,7 +354,7 @@ class IrodsPythonClient:
     def readable(self, path):
         try:
             obj = self.prc.data_objects.get(path)
-            with obj.open('r+') as handle:
+            with obj.open("r+") as handle:
                 return handle.readable()
         except iexceptions.CollectionDoesNotExist:
             return False
@@ -382,7 +365,7 @@ class IrodsPythonClient:
         try:
             data = []
             obj = self.prc.data_objects.get(path)
-            with obj.open('r+') as handle:
+            with obj.open("r+") as handle:
 
                 if handle.readable():
 
@@ -400,7 +383,7 @@ class IrodsPythonClient:
             obj = self.prc.data_objects.get(absolute_path)
 
             # TODO: could use io package?
-            with obj.open('r') as handle:
+            with obj.open("r") as handle:
                 with open(destination, "wb") as target:
                     for line in handle:
                         target.write(line)
@@ -451,7 +434,7 @@ class IrodsPythonClient:
             obj = self.prc.data_objects.get(absolute_path)
 
             # NOTE: what about binary option?
-            handle = obj.open('r')
+            handle = obj.open("r")
             if headers is None:
                 headers = {}
             return Response(
@@ -491,7 +474,7 @@ class IrodsPythonClient:
             obj = self.prc.data_objects.get(destination)
 
             try:
-                with obj.open('w') as target:
+                with obj.open("w") as target:
                     self.write_in_chunks(target, self.chunk_size)
 
             except BaseException as ex:
@@ -530,7 +513,7 @@ class IrodsPythonClient:
                 obj = self.prc.data_objects.get(destination)
 
                 try:
-                    with obj.open('w') as target:
+                    with obj.open("w") as target:
                         # for line in handle:
                         #     target.write(line)
                         while True:
@@ -569,7 +552,7 @@ class IrodsPythonClient:
 
         if coll_or_obj is None:
             raise IrodsException(
-                "Cannot get permission: path not found: {}".format(coll_or_obj)
+                f"Cannot get permission: path not found: {coll_or_obj}"
             )
 
         data = {}
@@ -590,7 +573,7 @@ class IrodsPythonClient:
         if zone is None:
             zone = self.get_current_zone()
 
-        key = 'inherit'
+        key = "inherit"
         ACL = iRODSAccess(access_name=key, path=path, user_zone=zone)
         try:
             self.prc.permissions.set(ACL)  # , recursive=False)
@@ -604,7 +587,7 @@ class IrodsPythonClient:
         else:
             return True
 
-    def create_collection_inheritable(self, ipath, user, permissions='own'):
+    def create_collection_inheritable(self, ipath, user, permissions="own"):
 
         # Create the directory
         self.create_empty(ipath, directory=True, ignore_existing=True)
@@ -622,7 +605,7 @@ class IrodsPythonClient:
 
         # If not specified, remove permission
         if permission is None:
-            permission = 'null'
+            permission = "null"
 
         try:
 
@@ -653,7 +636,7 @@ class IrodsPythonClient:
                 permission = "noinherit"
 
             ACL = iRODSAccess(
-                access_name=permission, path=path, user_name='', user_zone=''
+                access_name=permission, path=path, user_name="", user_zone=""
             )
             self.prc.permissions.set(ACL, recursive=recursive)
             log.debug("Set inheritance {} to {}", inheritance, path)
@@ -669,10 +652,10 @@ class IrodsPythonClient:
 
         zone = self.get_current_zone(prepend_slash=True)
 
-        home = self.variables.get('home', 'home')
+        home = self.variables.get("home", "home")
         if home.startswith(zone):
-            home = home[len(zone):]
-        home = home.lstrip('/')
+            home = home[len(zone) :]
+        home = home.lstrip("/")
 
         if not append_user:
             user = ""
@@ -686,11 +669,10 @@ class IrodsPythonClient:
 
     def get_current_zone(self, prepend_slash=False, suffix=None):
         zone = self.prc.zone
-        has_suffix = suffix is not None
-        if prepend_slash or has_suffix:
-            zone = '/' + zone
-        if has_suffix:
-            return zone + '/' + suffix
+        if prepend_slash or suffix:
+            zone = f"/{zone}"
+        if suffix:
+            return f"{zone}/{suffix}"
         else:
             return zone
 
@@ -698,7 +680,7 @@ class IrodsPythonClient:
     def get_user_info(self, username=None):
 
         if username is None:
-            username = self.get_current_user()
+            return None
         try:
             user = self.prc.users.get(username)
             data = {}
@@ -722,7 +704,7 @@ class IrodsPythonClient:
                 for _, grp in obj.items():
                     groups.append(grp)
 
-            data['groups'] = groups
+            data["groups"] = groups
             return data
         except iexceptions.UserDoesNotExist:
             return None
@@ -731,22 +713,24 @@ class IrodsPythonClient:
         info = self.get_user_info(username)
         if info is None:
             return False
-        if 'groups' not in info:
+        if "groups" not in info:
             return False
-        return groupname in info['groups']
+        return groupname in info["groups"]
 
     # TODO: merge the two following 'user_exists'
     def check_user_exists(self, username, checkGroup=None):
         userdata = self.get_user_info(username)
         if userdata is None:
-            return False, "User {} does not exist".format(username)
+            return False, f"User {username} does not exist"
         if checkGroup is not None:
-            if checkGroup not in userdata['groups']:
-                return False, "User {} is not in group {}".format(username, checkGroup)
+            if checkGroup not in userdata["groups"]:
+                return False, f"User {username} is not in group {checkGroup}"
         return True, "OK"
 
     def query_user_exists(self, user):
-        results = self.prc.query(models.User.name).filter(models.User.name == user).first()
+        results = (
+            self.prc.query(models.User.name).filter(models.User.name == user).first()
+        )
 
         if results is None:
             return False
@@ -819,9 +803,9 @@ class IrodsPythonClient:
             log.error("Asking for NULL user...")
             return False
 
-        user_type = 'rodsuser'
+        user_type = "rodsuser"
         if admin:
-            user_type = 'rodsadmin'
+            user_type = "rodsadmin"
 
         try:
             user_data = self.prc.users.create(user, user_type)
@@ -834,7 +818,7 @@ class IrodsPythonClient:
 
     def modify_user_password(self, user, password):
         log.debug("Changing {} password", user)
-        return self.prc.users.modify(user, 'password', password)
+        return self.prc.users.modify(user, "password", password)
 
     def remove_user(self, user_name):
         user = self.prc.users.get(user_name)
@@ -846,11 +830,10 @@ class IrodsPythonClient:
         try:
             data = (
                 self.prc.query(
-                    models.User.id,
-                    models.User.name,
-                    models.User.type,
-                    models.User.zone
-                ).filter(models.User.name == user).one()
+                    models.User.id, models.User.name, models.User.type, models.User.zone
+                )
+                .filter(models.User.name == user)
+                .one()
             )
         except iexceptions.NoResultFound:
             return None
@@ -866,16 +849,16 @@ class IrodsPythonClient:
             dn = None
 
         return {
-            'name': data[models.User.name],
-            'type': data[models.User.type],
-            'zone': data[models.User.zone],
-            'dn': dn,
+            "name": data[models.User.name],
+            "type": data[models.User.type],
+            "zone": data[models.User.zone],
+            "dn": dn,
         }
 
     def modify_user_dn(self, user, dn, zone):
 
         # addAuth / rmAuth
-        self.prc.users.modify(user, 'addAuth', dn)
+        self.prc.users.modify(user, "addAuth", dn)
         # self.prc.users.modify(user, 'addAuth', dn, user_zone=zone)
 
     def rule(self, name, body, inputs, output=False):
@@ -884,21 +867,21 @@ class IrodsPythonClient:
 
         # A bit completed to use {}.format syntax...
         rule_body = textwrap.dedent(
-            '''\
+            """\
             %s {{
                 %s
-        }}'''
+        }}"""
             % (name, body)
         )
 
         outname = None
         if output:
-            outname = 'ruleExecOut'
+            outname = "ruleExecOut"
         myrule = Rule(self.prc, body=rule_body, params=inputs, output=outname)
         try:
             raw_out = myrule.execute()
         except BaseException as e:
-            msg = 'Irule failed: {}'.format(e.__class__.__name__)
+            msg = f"Irule failed: {e.__class__.__name__}"
             log.error(msg)
             log.warning(e)
             raise e
@@ -912,21 +895,21 @@ class IrodsPythonClient:
 
                 import re
 
-                file_coding = 'utf-8'
+                file_coding = "utf-8"
 
                 buf = out_array.stdoutBuf.buf
                 if buf is not None:
                     # it's binary data (BinBytesBuf) so must be decoded
                     buf = buf.decode(file_coding)
-                    buf = re.sub(r'\s+', '', buf)
-                    buf = re.sub(r'\\x00', '', buf)
-                    buf = buf.rstrip('\x00')
+                    buf = re.sub(r"\s+", "", buf)
+                    buf = re.sub(r"\\x00", "", buf)
+                    buf = buf.rstrip("\x00")
                     log.debug("Out buff: {}", buf)
 
                 err_buf = out_array.stderrBuf.buf
                 if err_buf is not None:
                     err_buf = err_buf.decode(file_coding)
-                    err_buf = re.sub(r'\s+', '', err_buf)
+                    err_buf = re.sub(r"\s+", "", err_buf)
                     log.debug("Err buff: {}", err_buf)
 
                 return buf
@@ -937,9 +920,9 @@ class IrodsPythonClient:
         # object_path = "/sdcCineca/home/httpadmin/tmp.txt"
         # test_name = 'paolo2'
         # inputs = {  # extra quotes for string literals
-        #     '*object': '"{}"'.format(object_path),
-        #     '*name': '"{}"'.format(test_name),
-        #     '*value': '"{}"'.format(test_name),
+        #     '*object': f'"{object_path}"',
+        #     '*name': f'"{test_name}"',
+        #     '*value': f'"{test_name}"',
         # }
         # body = \"\"\"
         #     # add metadata
@@ -951,7 +934,7 @@ class IrodsPythonClient:
     def ticket(self, path):
         ticket = Ticket(self.prc)
         # print("TEST", self.prc, path)
-        ticket.issue('read', path)
+        ticket.issue("read", path)
         return ticket
 
     def ticket_supply(self, code):
@@ -963,7 +946,7 @@ class IrodsPythonClient:
         # self.ticket_supply(code)
 
         try:
-            with self.prc.data_objects.open(path, 'r') as obj:
+            with self.prc.data_objects.open(path, "r") as obj:
                 log.verbose(obj.__class__.__name__)
         except iexceptions.SYS_FILE_DESC_OUT_OF_RANGE:
             return False
@@ -971,7 +954,7 @@ class IrodsPythonClient:
             return True
 
     def stream_ticket(self, path, headers=None):
-        obj = self.prc.data_objects.open(path, 'r')
+        obj = self.prc.data_objects.open(path, "r")
         return Response(
             stream_with_context(self.read_in_chunks(obj, self.chunk_size)),
             headers=headers,
@@ -1000,239 +983,3 @@ class IrodsPythonClient:
             return None
         else:
             return data
-
-
-# ####################################################
-# ####################################################
-# ####################################################
-# FROM old client.py:
-# ####################################################
-# ####################################################
-# ####################################################
-
-#     def query_icat(self, query, key):
-#         com = 'iquest'
-#         args = [query]
-#         output = self.basic_icom(com, args)
-#         log.debug("{} query: [{}]\n{}", com, query, output)
-#         if 'CAT_NO_ROWS_FOUND' in output:
-#             return None
-#         return output.split('\n')[0].lstrip("{} = ".format(key))
-
-#     def query_user(self, select="USER_NAME", where="USER_NAME", field=None):
-#         query = "SELECT {} WHERE {} = '{}'".format(select, where, field)
-#         return self.query_icat(query, select)
-
-#     def get_base_dir(self):
-#         com = "ipwd"
-#         iout = self.basic_icom(com).strip()
-#         log.verbose("Base dir is {}", iout)
-#         return iout
-
-#     ############################################
-#     # ######### Resources Management ###########
-#     ############################################
-
-#     # for resources use this object manager:
-#     # self.prc.resources
-#     def list_resources(self):
-#         com = 'ilsresc'
-#         iout = self.basic_icom(com).strip()
-#         log.debug("Resources {}", iout)
-#         return iout.split("\n")
-
-#     def get_base_resource(self):
-#         resources = self.list_resources()
-#         if len(resources) > 0:
-#             return resources[0]
-#         return None
-
-#     def get_resources_from_file(self, filepath):
-#         output = self.list(path=filepath, detailed=True)
-#         resources = []
-#         for elements in output:
-#             # elements = line.split()
-#             if len(elements) < 3:
-#                 continue
-#             resources.append(elements[2])
-
-#         log.debug("{}: found resources {}",  filepath, resources)
-#         return resources
-
-#     def admin(self, command, user=None, extra=None):
-#         """
-#         Admin commands to manage users and stuff like that.
-#         Note: it will give irods errors if current user has not privileges.
-#         """
-
-#         com = 'iadmin'
-#         args = [command]
-#         if user is not None:
-#             args.append(user)
-#         if extra is not None:
-#             args.append(extra)
-#         log.debug("iRODS admininistration command '{}'", command)
-#         return self.basic_icom(com, args)
-
-#     def admin_list(self):
-#         """
-#         How to explore collections in a debug way
-#         """
-#         return self.admin('ls')
-
-# # FIXME:
-#     def get_current_user_environment(self):
-#         com = 'ienv'
-#         output = self.basic_icom(com)
-#         print("ENV IS", output)
-#         return output
-
-#     def current_location(self, ifile):
-#         """
-#         irods://130.186.13.14:1247/cinecaDMPZone/home/pdonorio/replica/test2
-#         """
-#         protocol = 'irods'
-#         URL = "{}://{}:{}{}".format(
-#             protocol,
-#             self._current_environment['IRODS_HOST'],
-#             self._current_environment['IRODS_PORT'],
-#             os.path.join(self._base_dir, ifile))
-#         return URL
-
-#     def get_resource_from_dataobject(self, ifile):
-#         """ The attribute of resource from a data object """
-#         details = self.list(ifile, True)
-#         resources = []
-#         for element in details:
-#             # 2nd position is the resource in irods ils -l
-#             resources.append(element[2])
-#         return resources
-
-#     def get_resources_admin(self):
-#         resources = []
-#         out = self.admin(command='lr')
-#         if isinstance(out, str):
-#             resources = out.strip().split('\n')
-#         return resources
-
-#     def get_default_resource_admin(self, skip=['bundleResc']):
-#         # FIXME: find out the right way to get the default irods resource
-
-#         # note: we could use ienv
-#         resources = self.get_resources_admin()
-#         if len(resources) > 0:
-#             # Remove strange resources
-#             for element in skip:
-#                 if element in resources:
-#                     resources.pop(resources.index(element))
-#             return list(resources)[::-1].pop()
-#         return None
-
-#     def handle_collection_path(self, ipath):
-#         """
-#             iRODS specific pattern to handle paths
-#         """
-
-#         home = self.get_base_dir()
-
-#         # Should add the base dir if doesn't start with /
-#         if ipath is None or ipath == '':
-#             ipath = home
-#         elif ipath[0] != '/':
-#             ipath = home + '/' + ipath
-#         else:
-#             current_zone = self.get_current_zone()
-#             if not ipath.startswith('/' + current_zone):
-#                 # Add the zone
-#                 ipath = '/' + current_zone + ipath
-
-#         # Append / if missing in the end
-#         if ipath[-1] != '/':
-#             ipath += '/'
-
-#         return ipath
-
-#     def get_irods_path(self, collection, filename=None):
-
-#         path = self.handle_collection_path(collection)
-#         if filename is not None:
-#             path += filename
-#         return path
-
-#     # def get_default_user(self):
-#     #     return IRODS_DEFAULT_USER
-
-#     def translate_graph_user(self, graph, graph_user):
-#         from restapi.services.irods.translations import Irods2Graph
-#         return Irods2Graph(graph, self).graphuser2irodsuser(graph_user)
-
-# ################################################
-# ################################################
-# #  NEED TO CHECK ALL OF THIS ICOMMANDS BELOW
-# ################################################
-# ################################################
-
-#     def search(self, path, like=True):
-#         com = "ilocate"
-#         if like:
-#             path += '%'
-#         log.debug("iRODS search for {}", path)
-#         # Execute
-#         out = self.execute_command(com, path)
-#         content = out.strip().split('\n')
-#         print("TEST", content)
-#         return content
-
-#     def replica(self, dataobj, replicas_num=1, resOri=None, resDest=None):
-#         """ Replica
-#         Replicate a file in iRODS to another storage resource.
-#         Note that replication is always within a zone.
-#         """
-
-#         com = "irepl"
-#         if resOri is None:
-#             resOri = self.first_resource
-#         if resDest is None:
-#             resDest = self.second_resource
-
-#         args = [dataobj]
-#         args.append("-P")  # debug copy
-#         args.append("-n")
-#         args.append(replicas_num)
-#         # Ori
-#         args.append("-S")
-#         args.append(resOri)
-#         # Dest
-#         args.append("-R")
-#         args.append(resDest)
-
-#         return self.basic_icom(com, args)
-
-#     def replica_list(self, dataobj):
-#         return self.get_resource_from_dataobject(dataobj)
-
-
-def get_and_verify_irods_session(function, parameters):
-
-    obj = None
-    username = parameters.get('user')
-
-    try:
-        obj = function(**parameters)
-
-    except iexceptions.CAT_INVALID_USER:
-        log.warning("Invalid user: {}", username)
-    except iexceptions.UserDoesNotExist:
-        log.warning("Invalid iCAT user: {}", username)
-    except iexceptions.CAT_INVALID_AUTHENTICATION:
-        log.warning("Invalid password for {}", username)
-    except BaseException as e:
-        log.warning("Failed with unknown reason:\n[{}] \"{}\"", type(e), e)
-        error = 'Failed to verify credentials against B2SAFE. ' + 'Unknown error: '
-        if str(e).strip() == '':
-            error += e.__class__.__name__
-        else:
-            error += str(e)
-        raise IrodsException(error)
-
-    return obj

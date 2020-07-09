@@ -1,146 +1,192 @@
-# -*- coding: utf-8 -*-
-
-"""
-Detect which services are running, by testing environment variables
-set with containers/docker-compose/do.py
-
-Note: docker links and automatic variables removed as unsafe with compose V3
-
-"""
-
 import os
 from functools import lru_cache
 
-from restapi.confs import ABS_RESTAPI_CONFSPATH, EXTENDED_PROJECT_DISABLED
-from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE, EXTENDED_PACKAGE
-from restapi.utilities.meta import Meta
-from restapi.utilities.configuration import load_yaml_file
+from glom import glom
+
+from restapi.confs import (
+    ABS_RESTAPI_PATH,
+    BACKEND_PACKAGE,
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+)
+from restapi.connectors import Connector
+from restapi.env import Env
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+
+AUTH_NAME = "authentication"
+CONNECTORS_FOLDER = "connectors"
 
 
 class Detector:
     def __init__(self):
 
-        self.authentication_service = None
-        self.authentication_name = 'authentication'
-        self.services_configuration = []
-        self.services_classes = {}
-        self.connectors_instances = {}
-        self.available_services = {}
-        self.check_configuration()
-        self.load_classes()
+        self.authentication_service = Env.get("AUTH_SERVICE")
+
+        log.info("Authentication service: {}", self.authentication_service)
+
+        self.authentication_instance = None
+
+        self.services = {AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}}
+
+        self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
+
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            self.load_services(
+                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE
+            )
+
+        self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
 
     @staticmethod
-    def get_global_var(key, default=None):
-        return os.environ.get(key, default)
+    def get_global_var(key, default=None):  # pragma: no cover
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_global_var, use os.getenv or Env.get")
+        return os.getenv(key, default)
 
     @staticmethod
-    @lru_cache()
-    def get_bool_envvar(bool_var):
+    @lru_cache
+    def get_bool_envvar(bool_var):  # pragma: no cover
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
 
-        if isinstance(bool_var, bool):
-            return bool_var
-
-        # if not directly a bool, try an interpretation
-        # INTEGERS
-        try:
-            tmp = int(bool_var)
-            return bool(tmp)
-        except ValueError:
-            pass
-
-        # STRINGS
-        if isinstance(bool_var, str):
-            # false / False / FALSE
-            if bool_var.lower() == 'false':
-                return False
-            # any non empty string has to be considered True
-            if len(bool_var) > 0:
-                return True
-
-        return False
+        return Env.to_bool(bool_var)
 
     @staticmethod
     @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):
+    def get_bool_from_os(name):  # pragma: no cover
+        # Deprecated since 0.7.4
+        log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
 
-        bool_var = os.environ.get(name, False)
-        return Detector.get_bool_envvar(bool_var)
+        return Env.get_bool(name)
 
-    def get_service_instance(self, service_name, global_instance=True, **kwargs):
-        farm = self.connectors_instances.get(service_name)
-        if farm is None:
-            raise AttributeError("Service {} not found".format(service_name))
-        instance = farm.get_instance(global_instance=global_instance, **kwargs)
-        return instance
+    def get_connector(self, name):
 
-    def check_configuration(self):
+        service = self.services.get(name)
 
-        try:
-            self.services_configuration = load_yaml_file(
-                file='connectors.yaml', path=ABS_RESTAPI_CONFSPATH)
-        except AttributeError as e:
-            log.exit(e)
+        if service is None:
+            raise ServiceUnavailable(f"Service {name} not found")
 
-        for service in self.services_configuration:
+        if not service.get("available", False):
+            raise ServiceUnavailable(f"Service {name} is not available")
 
-            name = service.get('name')
-            prefix = "{}_".format(service.get('prefix'))
+        connector = service.get("connector")
+
+        if connector is None:
+            raise ServiceUnavailable(f"Connector {name} is not available")
+
+        return connector
+
+    def get_service_instance(self, service_name, **kwargs):
+        if service_name == AUTH_NAME:
+            return self.authentication_instance
+
+        connector = self.get_connector(service_name)
+
+        return connector.get_instance(**kwargs)
+
+    def load_services(self, path, module):
+
+        main_folder = os.path.join(path, CONNECTORS_FOLDER)
+        if not os.path.isdir(main_folder):
+            log.debug("Connectors folder not found: {}", main_folder)
+            return False
+
+        # Looking for all file in apis folder
+        for connector in os.listdir(main_folder):
+            connector_path = os.path.join(path, CONNECTORS_FOLDER, connector)
+            if not os.path.isdir(connector_path):
+                continue
+            if connector.startswith("_"):
+                continue
+
+            # This is the only exception... we should rename sqlalchemy as alchemy
+            if connector == "sqlalchemy":
+                prefix = "alchemy"
+            else:
+                prefix = connector
 
             variables = Detector.load_variables(prefix=prefix)
 
-            connect = Detector.get_bool_envvar(variables.get("enable_connector", True))
-            if not connect:
-                log.info("{} connector is disabled", name)
+            if not Env.to_bool(variables.get("enable_connector", True)):
+                log.info("{} connector is disabled", connector)
                 continue
 
             # Was this service enabled from the developer?
-            enabled = Detector.get_bool_envvar(variables.get("enable", False))
+            enabled = Env.to_bool(variables.get("enable"))
             external = variables.get("external", False)
 
-            self.available_services[name] = enabled or external
+            self.services.setdefault(connector, {})
+            self.services[connector]["available"] = enabled or external
 
-            if self.available_services[name]:
+            if not self.services[connector]["available"]:
+                continue
 
-                service['variables'] = variables
-
-                # set auth service
-                if name == self.authentication_name:
-                    self.authentication_service = variables.get('service')
-
-        if self.authentication_service is None:
-            log.info("No service defined for authentication")
-        else:
-            log.info(
-                "Authentication is based on '{}' service",
-                self.authentication_service
+            log.verbose("Looking for connector class in {}", connector_path)
+            connector_module = Meta.get_module_from_string(
+                ".".join((module, CONNECTORS_FOLDER, connector))
             )
+            classes = Meta.get_new_classes_from_module(connector_module)
+            for class_name, connector_class in classes.items():
+                if not issubclass(connector_class, Connector):
+                    continue
 
+                log.verbose("Found connector class: {}", class_name)
+                break
+            else:
+                log.error("No connector class found in {}/{}", path, connector)
+                self.services[connector]["available"] = False
+                continue
+
+            self.services[connector]["variables"] = variables
+
+            connector_class.set_variables(variables)
+
+            # NOTE: module loading algoritm is based on core connectors
+            # if you need project connectors with models please review this part
+            models_file = os.path.join(connector_path, "models.py")
+
+            if not os.path.isfile(models_file):
+                log.verbose("No model found in {}", connector_path)
+            else:
+                log.debug("Loading models from {}", connector_path)
+
+                base_models = Meta.import_models(
+                    connector, BACKEND_PACKAGE, exit_on_fail=True
+                )
+                if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                    extended_models = {}
+                else:
+                    extended_models = Meta.import_models(
+                        connector, EXTENDED_PACKAGE, exit_on_fail=False
+                    )
+                custom_models = Meta.import_models(
+                    connector, CUSTOM_PACKAGE, exit_on_fail=False
+                )
+
+                connector_class.set_models(base_models, extended_models, custom_models)
+
+            self.services[connector]["class"] = connector_class
+
+            log.debug("Got class definition for {}", connector_class)
+
+        return True
+
+    # Deprecated since 0.7.4
     @staticmethod
-    def load_group(label):
+    def load_group(label):  # pragma: no cover
 
-        variables = {}
-        for var, value in os.environ.items():
-            var = var.lower()
-            if var.startswith(label):
-                key = var[len(label):].strip('_')
-                value = value.strip('"').strip("'")
-                variables[key] = value
-        return variables
-
-    def output_service_variables(self, service_name):
-        service_class = self.services_classes.get(service_name, {})
-        try:
-            return service_class.variables
-        except BaseException:
-            return {}
+        log.warning("Deprecated use of detector.load_group, use Env.load_group instead")
+        return Env.load_group(label)
 
     @staticmethod
     def load_variables(prefix):
 
-        variables = {
-            'external': False
-        }
+        prefix += "_"
+
+        variables = {"external": False}
 
         for var, value in os.environ.items():
 
@@ -150,170 +196,82 @@ class Detector:
                 continue
 
             # Fix key and value before saving
-            key = var[len(prefix):]
+            key = var[len(prefix) :]
             # One thing that we must avoid is any quote around our value
             value = value.strip('"').strip("'")
             # save
             variables[key] = value
 
-            if key == 'host' and not value.endswith('.dockerized.io'):
-                variables['external'] = True
+            suffix = ".dockerized.io"
+            if key == "host" and not value.endswith(suffix):  # pragma: no cover
+                variables["external"] = True
                 log.verbose("Service {} detected as external: {}", prefix, value)
 
         return variables
 
-    @staticmethod
-    def load_connector(connector, classname):
-
-        module_name = "{}.connectors.{}".format(BACKEND_PACKAGE, connector)
-        module = Meta.get_module_from_string(
-            modulestring=module_name,
-            exit_on_fail=True
-        )
-        if module is None:
-            log.exit("Failed to load {}", module_name)
-
-        return getattr(module, classname)
-
-    def load_classes(self):
-
-        for service in self.services_configuration:
-
-            name = service.get('name')
-
-            if not self.available_services.get(name):
-                continue
-            log.verbose("Looking for class {}", name)
-
-            variables = service.get('variables')
-            class_name = service.get('class')
-            connector_name = service.get('name')
-
-            # Get the existing class
-            try:
-                MyClass = self.load_connector(connector_name, class_name)
-
-                # Passing variables
-                MyClass.set_variables(variables)
-
-                if service.get('load_models'):
-
-                    base_models = Meta.import_models(
-                        name, BACKEND_PACKAGE, exit_on_fail=True
-                    )
-                    if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                        extended_models = {}
-                    else:
-                        extended_models = Meta.import_models(
-                            name, EXTENDED_PACKAGE, exit_on_fail=False
-                        )
-                    custom_models = Meta.import_models(
-                        name, CUSTOM_PACKAGE, exit_on_fail=False
-                    )
-
-                    MyClass.set_models(base_models, extended_models, custom_models)
-
-            except AttributeError as e:
-                log.error(str(e))
-                log.exit('Invalid connector class: {}', class_name)
-
-            # Save
-            self.services_classes[name] = MyClass
-            log.debug("Got class definition for {}", MyClass)
-
-        if len(self.services_classes) < 1:
-            raise KeyError("No classes were recovered!")
-
-        return self.services_classes
-
-    def init_services(
-        self, app, worker_mode=False, project_init=False, project_clean=False
-    ):
+    def init_services(self, app, project_init=False, project_clean=False):
 
         instances = {}
-        auth_backend = None
+        for connector_name, service in self.services.items():
 
-        for service in self.services_configuration:
-
-            name = service.get('name')
-
-            if not self.available_services.get(name):
+            if not service.get("available", False):
                 continue
 
-            if name == self.authentication_name and auth_backend is None:
-                if self.authentication_service is None:
-                    log.warning("No authentication")
-                    continue
-                else:
-                    log.exit(
-                        "Auth service '{}' is unreachable".format(
-                            self.authentication_service)
-                    )
-
-            args = {}
-            if name == 'celery':
-                args['worker_mode'] = worker_mode
-
             # Get connectors class and build the connector object
-            Connector = self.services_classes.get(name)
+            ConnectorClass = service.get("class")
+
+            if ConnectorClass is None:
+                if connector_name != AUTH_NAME:  # pragma: no cover
+                    log.exit(
+                        "Connector misconfiguration {} {}", connector_name, service
+                    )
+                continue
+
             try:
-                instance = Connector(app, **args)
-            except TypeError as e:
-                log.exit('Your class {} is not compliant:\n{}', name, e)
-            else:
-                self.connectors_instances[name] = instance
+                connector_instance = ConnectorClass(app)
+            except TypeError as e:  # pragma: no cover
+                log.exit("Your class {} is not compliant:\n{}", connector_name, e)
 
-            if not project_init:
-                do_init = False
-            elif name == self.authentication_service:
-                do_init = True
-            elif name == self.authentication_name:
-                do_init = True
-            else:
-                do_init = False
+            self.services[connector_name]["connector"] = connector_instance
 
-            # Initialize the real service getting the first service object
-            log.debug("Initializing {} (pinit={})", name, do_init)
-            service_instance = instance.initialize(
-                pinit=do_init,
-                pdestroy=project_clean,
-                abackend=auth_backend
-            )
-            instances[name] = service_instance
+            instances[connector_name] = connector_instance.get_instance()
 
-            if name == self.authentication_service:
-                auth_backend = service_instance
+        if self.authentication_service is None:
+            log.warning("No authentication service configured")
+        elif self.authentication_service not in self.services:
+            log.exit("Auth service '{}' is unreachable", self.authentication_service)
+        elif not self.services[self.authentication_service].get("available", False):
+            log.exit("Auth service '{}' is not available", self.authentication_service)
 
-            # Injecting tasks from *vanilla_package/tasks* into the Celery Connecttor
-            if name == 'celery':
-                do_init = True
+        if self.authentication_service is not None:
+            auth_module = Meta.get_authentication_module(self.authentication_service)
+            db = instances[self.authentication_service]
+            self.authentication_instance = auth_module.Authentication(db)
 
-                task_package = "{}.tasks".format(CUSTOM_PACKAGE)
+            # Only once in a lifetime
+            if project_init:
 
-                submodules = Meta.import_submodules_from_package(
-                    task_package, exit_on_fail=True
+                connector = self.services.get(self.authentication_service).get(
+                    "connector"
                 )
-                for submodule in submodules:
-                    tasks = Meta.get_celery_tasks_from_module(submodule)
+                log.debug("Initializing {}", self.authentication_service)
+                connector.initialize()
 
-                    for func_name, funct in tasks.items():
-                        setattr(Connector, func_name, funct)
+                with app.app_context():
+                    self.authentication_instance.init_users_and_roles()
+                    log.info("Initialized authentication module")
 
-        if len(self.connectors_instances) < 1:
-            raise KeyError("No instances available for modules")
+                self.project_initialization(instances, app=app)
 
-        # Only once in a lifetime
-        if project_init:
-            self.project_initialization(instances, app=app)
+            if project_clean:
+                connector = self.services.get(self.authentication_service).get(
+                    "connector"
+                )
+                log.debug("Destroying {}", self.authentication_service)
+                connector.destroy()
 
     def check_availability(self, name):
-
-        if '.' in name:
-            # In this case we are receiving a module name
-            # e.g. restapi.services.mongodb
-            name = name.split('.')[::-1][0]
-
-        return self.available_services.get(name)
+        return glom(self.services, f"{name}.available", default=False)
 
     @classmethod
     def project_initialization(self, instances, app=None):
@@ -323,28 +281,29 @@ class Detector:
         project/YOURPROJECT/backend/initialization/initialization.py
         """
 
-        try:
-            module_path = "{}.{}.{}".format(
-                CUSTOM_PACKAGE,
-                'initialization',
-                'initialization',
-            )
-            module = Meta.get_module_from_string(module_path)
-            Initializer = Meta.get_class_from_string(
-                'Initializer', module, skip_error=True
-            )
-            if Initializer is None:
-                log.debug("No custom init available")
-            else:
-                try:
-                    Initializer(instances, app=app)
-                except BaseException as e:
-                    log.error("Errors during custom initialization: {}", e)
-                else:
-                    log.info("Vanilla project has been initialized")
+        initializer = Meta.get_customizer_instance(
+            "initialization.initialization", "Initializer", services=instances, app=app,
+        )
+        if initializer:
+            log.info("Vanilla project has been initialized")
+        else:
+            log.error("Errors during custom initialization")
 
-        except BaseException:
-            log.debug("No custom init available")
+    def get_debug_instance(self, connector):
+
+        if connector not in self.services:
+            log.error("Connector {} not found", connector)
+            return None
+
+        if not self.services[connector].get("available", False):
+            log.error("Connector {} is not available", connector)
+            return None
+
+        if "connector" not in self.services[connector]:
+            c = self.services[connector].get("class")
+            self.services[connector]["connector"] = c(app=None)
+
+        return self.get_service_instance(connector)
 
 
 detector = Detector()

@@ -2,28 +2,24 @@ os: linux
 dist: bionic
 language: python
 python:
-- 3.8
+  - 3.8
 services:
-- docker
+  - docker
 env:
-
-- TEMPLATE=postgres
-- TEMPLATE=mysql
-- TEMPLATE=neo4j
-- TEMPLATE=mongo
-- TEMPLATE=celery-rabbit-rabbit
-- TEMPLATE=celery-rabbit-redis
-- TEMPLATE=celery-rabbit-mongo
-- TEMPLATE=celery-redis-redis
-- TEMPLATE=celery-redis-mongo
-# this enabled extra services like irods, ftp and pushin
-# and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
-# html email templates and more in the future
-- TEMPLATE=extraoptions
-# Temporary disabled, some issues with DB models...
-# - TEMPLATE=extended
-# to be deprecated
-- TEMPLATE=wrapped
+  # this enabled extra services like irods, ftp and pushin
+  # and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
+  # html email templates, extended projects
+  # It is executed as first because it is the slowest
+  - TEMPLATE=extraoptions
+  - TEMPLATE=postgres
+  - TEMPLATE=mysql
+  - TEMPLATE=neo4j
+  - TEMPLATE=mongo
+  - TEMPLATE=celery-rabbit-rabbit
+  - TEMPLATE=celery-rabbit-redis
+  - TEMPLATE=celery-rabbit-mongo
+  - TEMPLATE=celery-redis-redis
+  - TEMPLATE=celery-redis-mongo
 
 script:
   # Randomize auth service to test some services
@@ -36,24 +32,27 @@ script:
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
   - export TESTING=1
-  - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d "'")
-  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+  - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
+  - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
 
   - mkdir $TEMPLATE
   - cd $TEMPLATE
   # Note that  --env REGISTER_FAILED_LOGIN=True is set only for certain templates,
   # to have different use cases during tests
 
-  - > # this enable multiline commands
-
+  - >
     if [[ "$TEMPLATE" == "postgres" ]]; then
-      rapydo create prj --auth postgres --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth postgres --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
-      rapydo create prj --auth mysql --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth mysql --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
-      rapydo create prj --auth neo4j --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth neo4j --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
-      rapydo create prj --auth mongo --frontend no --env REGISTER_FAILED_LOGIN=True;
+      # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
+      rapydo create prj --auth mongo --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
@@ -69,44 +68,52 @@ script:
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
-      rapydo create prj --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=3,DISABLE_UNUSED_CREDENTIALS_AFTER=30,REGISTER_FAILED_LOGIN=True,MAX_LOGIN_ATTEMPTS=5;
-
-    elif [[ "$TEMPLATE" == "extended" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --extend prjbase --auth ${RANDOM_AUTH} --frontend no --current;
-
-
-
-    elif [[ "$TEMPLATE" == "wrapped" ]]; then
-      rapydo create prj --auth ${RANDOM_AUTH} --wrapped --frontend no;
+      rapydo create prj --current --extend prjbase --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=10,AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30,AUTH_REGISTER_FAILED_LOGIN=True,AUTH_MAX_LOGIN_ATTEMPTS=5,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     else
       echo "Unknown template: ${TEMPLATE}";
       travis_terminate 1;
-    fi
-
+    fi || travis_terminate 1;
 
   - git remote add origin https://your_remote_git/your_project.git
-  - rapydo -p prj init
-  - if [[ $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
-  - rapydo start
-  - sleep 2
-  - rapydo logs
-  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
 
-  # Send coverage
-  - rapydo dump
-  - backend_container=$(docker-compose ps -q backend)
-  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   # this is the recommended command from codecov. But when curl fails due to a network
   # timeout the whole command exits with 0. As a results some jobs are all passed but
   # the coverage stats are degraded, because one of the stages is missing!
   # - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
   - wget https://codecov.io/bash -O codecov_report
+
+  # Tests in dev mode
+  - rapydo -p prj init
+  # - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+
+  - >
+    if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
+      rapydo add task example;
+    elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
+      rapydo add task example;
+    elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
+      rapydo add task example;
+    elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
+      rapydo add task example;
+    elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
+      rapydo add task example;
+    fi || travis_terminate 1;
+
+  - rapydo start
+  - sleep 2
+  - rapydo logs
+  - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
+
+  # Send coverage
+  - rapydo dump
+  - backend_container=$(docker-compose ps -q backend)
+  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   - bash codecov_report -R submodules/http-api
 
-  # Test production
+  # Basic production test
   - rapydo remove --all
   - rapydo --production init --force
   - rapydo pull
@@ -115,15 +122,18 @@ script:
   # wait for all services to start (tried with 20... not always enough!)
   - sleep 25
   - rapydo logs
-  # too may issues with mongo in production mode... Everything seems to work,
-  # but often nginx does not respond and log:
-  # "GET /api/status HTTP/2.0" 499 0 "-" "curl/7.58.0" "-"
-  # So... just skip this test with mongo...
-  - if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
-
+  - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - rapydo -s proxy,backend logs --tail 20
 
-  - rapydo remove --all
+  # Tests in production mode
+  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  # Send coverage
+  - rapydo dump
+  - backend_container=$(docker-compose ps -q backend)
+  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
+  - bash codecov_report -R submodules/http-api
+
+  # - rapydo remove --all
 
 notifications:
   email: false

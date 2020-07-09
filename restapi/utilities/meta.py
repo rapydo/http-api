@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Meta thinking: python objects & introspection
 
@@ -7,9 +5,10 @@ usefull documentation:
 http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.html
 """
 
-import pkgutil
 import inspect
+import pkgutil
 from importlib import import_module
+
 from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
@@ -17,19 +16,9 @@ from restapi.utilities.logs import log
 class Meta:
     """Utilities with meta in mind"""
 
-    def __init__(self):
+    def __init__(self):  # pragma: no cover
         # Deprecated since 0.7.3
         log.warning("Deprecated initialization of Meta package")
-
-    @staticmethod
-    def get_submodules_from_package(package):
-        submodules = []
-        if package is None:
-            return submodules
-        for _, modname, ispkg in pkgutil.iter_modules(package.__path__):
-            if not ispkg:
-                submodules.append(modname)
-        return submodules
 
     @staticmethod
     def get_classes_from_module(module):
@@ -37,19 +26,16 @@ class Meta:
         Find classes inside a python module file.
         """
 
-        classes = {}
         try:
-            classes = dict(
-                [
-                    (name, cls)
-                    for name, cls in module.__dict__.items()
-                    if isinstance(cls, type)
-                ]
-            )
+            return {
+                name: cls
+                for name, cls in module.__dict__.items()
+                if isinstance(cls, type)
+            }
         except AttributeError:
             log.warning("Could not find any class in module {}", module)
 
-        return classes
+        return {}
 
     @staticmethod
     def get_new_classes_from_module(module):
@@ -65,10 +51,7 @@ class Meta:
 
     @staticmethod
     def get_module_from_string(
-        modulestring,
-        prefix_package=False,
-        exit_if_not_found=False,
-        exit_on_fail=False
+        modulestring, prefix_package=False, exit_if_not_found=False, exit_on_fail=False
     ):
         """
         Getting a module import
@@ -77,16 +60,16 @@ class Meta:
 
         module = None
         if prefix_package:
-            modulestring = BACKEND_PACKAGE + '.' + modulestring.lstrip('.')
+            modulestring = f"{BACKEND_PACKAGE}.{modulestring.lstrip('.')}"
 
         try:
             # Meta language for dinamically import
             module = import_module(modulestring)
-        except ModuleNotFoundError as e:  # pylint:disable=catching-non-exception
+        except ModuleNotFoundError as e:
             if exit_on_fail:
                 raise e
             elif exit_if_not_found:
-                log.exit("Failed to load module:\n{}", e)
+                log.exit("Failed to load {} module:\nError: {}", modulestring, e)
             # else:
             #     log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
@@ -96,42 +79,6 @@ class Meta:
                 log.error("Module {} not found.\nError: {}", modulestring, e)
 
         return module
-
-    @staticmethod
-    def import_submodules_from_package(
-        package_name, exit_if_not_found=False, exit_on_fail=False
-    ):
-
-        submodules = []
-        package = Meta.get_module_from_string(package_name)
-
-        for module_name in Meta.get_submodules_from_package(package):
-            module_path = package_name + '.' + module_name
-            log.debug("Loading module '{}'", module_path)
-
-            submod = Meta.get_module_from_string(
-                module_path,
-                exit_if_not_found=exit_if_not_found,
-                exit_on_fail=exit_on_fail,
-            )
-            submodules.append(submod)
-        return submodules
-
-    @staticmethod
-    def get_class_from_string(classname, module, skip_error=False):
-        """ Get a specific class from a module using a string variable """
-
-        myclass = None
-        try:
-            # Meta language for dinamically import
-            myclass = getattr(module, classname)
-        except AttributeError as e:
-            if not skip_error:
-                log.critical("Failed to load class from module: " + str(e))
-            else:
-                pass
-
-        return myclass
 
     @staticmethod
     def get_self_reference_from_args(*args):
@@ -144,42 +91,35 @@ class Meta:
 
         if len(args) > 0:
             candidate_as_self = args[0]
-            cls_attribute = getattr(candidate_as_self, '__class__', None)
+            cls_attribute = getattr(candidate_as_self, "__class__", None)
             if cls_attribute is not None and inspect.isclass(cls_attribute):
                 return args[0]
         return None
 
     @staticmethod
-    def obj_from_models(obj_name, module_name, package):
-        module_name = "{}.models.{}".format(package, module_name)
-        module = Meta.get_module_from_string(module_name, exit_on_fail=True)
-
-        obj = getattr(module, obj_name, None)
-        return obj
-
-    @staticmethod
     def import_models(name, package, exit_on_fail=True):
 
-        models = {}
-        module_name = "{}.models.{}".format(package, name)
+        if package == BACKEND_PACKAGE:
+            module_name = f"{package}.connectors.{name}.models"
+        else:
+            module_name = f"{package}.models.{name}"
+
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
-            log.error("Cannot load {} models")
+            log.error("Cannot load {} models from {}", name, module_name)
             if exit_on_fail:
                 log.exit(e)
 
             log.warning(e)
             return {}
 
-        models = Meta.get_new_classes_from_module(module)
-
-        return models
+        return Meta.get_new_classes_from_module(module)
 
     @staticmethod
     def get_authentication_module(auth_service):
 
-        module_name = "services.authentication.{}".format(auth_service)
+        module_name = f"connectors.{auth_service}"
         log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
@@ -188,7 +128,7 @@ class Meta:
         return module
 
     @staticmethod
-    def get_celery_tasks_from_module(submodule):
+    def get_celery_tasks(package_name):
         """
             Extract all celery tasks from a module.
             Celery tasks are functions decorated by @celery_app.task(...)
@@ -196,38 +136,55 @@ class Meta:
             celery.local.PromiseProxy
         """
         tasks = {}
-        functions = inspect.getmembers(submodule)
-        for func in functions:
+        # package = tasks folder
+        package = Meta.get_module_from_string(package_name)
+        if package is None:
+            return tasks
 
-            obj_type = type(func[1])
-
-            if obj_type.__module__ != "celery.local":
+        # get all modules in package (i.e. py files)
+        for _, module_name, ispkg in pkgutil.iter_modules(package.__path__):
+            # skip modules (i.e. subfolders)
+            if ispkg:
                 continue
 
-            tasks[func[0]] = func[1]
+            module_path = f"{package_name}.{module_name}"
+            log.debug("Loading module '{}'", module_path)
+
+            # convert file name in submodule, i.e.
+            # tasks.filename
+            submodule = Meta.get_module_from_string(module_path, exit_on_fail=True,)
+
+            # get all functions in py file
+            functions = inspect.getmembers(submodule)
+            for func in functions:
+
+                obj_type = type(func[1])
+
+                if obj_type.__module__ != "celery.local":
+                    continue
+
+                tasks[func[0]] = func[1]
         return tasks
 
     @staticmethod
-    def get_customizer_class(module_relpath, class_name, args=None):
+    def get_customizer_instance(module_relpath, class_name, **kwargs):
 
-        abspath = "{}.{}".format(CUSTOM_PACKAGE, module_relpath)
-        MyClass = Meta.get_class_from_string(
-            class_name,
-            Meta.get_module_from_string(abspath),
-            skip_error=True,
-        )
+        abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
-        instance = None
-        if args is None:
-            args = {}
+        module = Meta.get_module_from_string(abspath)
 
-        if MyClass is None:
-            log.verbose("No customizer available for {}", class_name)
-        else:
-            try:
-                instance = MyClass(**args)
-            except BaseException as e:
-                log.error("Errors during customizer: {}", e)
-            else:
-                log.verbose("Customizer called: {}", class_name)
-        return instance
+        if module is None:
+            log.debug("{} path does not exist", abspath)
+            return None
+
+        if not hasattr(module, class_name):
+            log.verbose("{} not found in {}", class_name, abspath)
+            return None
+
+        MyClass = getattr(module, class_name)
+
+        try:
+            return MyClass(**kwargs)
+        except BaseException as e:  # pragma: no cover
+            log.error("Errors loading {}.{}: {}", abspath, class_name, e)
+            return None

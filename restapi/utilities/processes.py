@@ -1,13 +1,31 @@
-# -*- coding: utf-8 -*-
-
-import os
-import time
 import errno
-import socket
-import psutil
 import math
+import os
+import signal
+import socket
+import time
 from datetime import datetime
+
+import psutil
+
 from restapi.utilities.logs import log
+
+
+class Timeout(Exception):
+    pass
+
+
+def handler(signum, frame):
+    raise Timeout("Operation timeout: interrupted")
+
+
+def start_timeout(time):
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(time)
+
+
+def stop_timeout():
+    signal.alarm(0)
 
 
 def find_process(process_name, keywords=None, prefix=None):
@@ -16,7 +34,7 @@ def find_process(process_name, keywords=None, prefix=None):
         keywords = []
 
     if prefix:
-        keywords.append("{}{}".format(prefix, process_name))
+        keywords.append(f"{prefix}{process_name}")
 
     current_pid = os.getpid()
 
@@ -33,11 +51,10 @@ def find_process(process_name, keywords=None, prefix=None):
         if not all(elem in cmd for elem in keywords):
             continue
 
-        cmdline = ' '.join(cmd)
+        cmdline = " ".join(cmd)
         d = datetime.fromtimestamp(process.create_time()).strftime("%Y-%m-%d %H:%M:%S")
         log.warning(
-            'Process is running\nPID: {}\nCreated: {}\nCmd: {}',
-            pid, d, cmdline
+            "Process is running\nPID: {}\nCreated: {}\nCmd: {}", pid, d, cmdline
         )
         return True
 

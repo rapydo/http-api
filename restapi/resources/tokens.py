@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-
-from flask_apispec import MethodResource
-from flask_apispec import marshal_with
+from flask_apispec import MethodResource, marshal_with
 from marshmallow import fields
-from restapi.models import Schema
+
 from restapi import decorators
+from restapi.exceptions import BadRequest, Forbidden
+from restapi.models import OutputSchema
 from restapi.rest.definition import EndpointResource
-from restapi.exceptions import RestApiException
 
 # from restapi.utilities.logs import log
 
 
-class TokenSchema(Schema):
+class TokenSchema(OutputSchema):
     id = fields.Str()
     IP = fields.Str()
     location = fields.Str()
@@ -45,7 +43,7 @@ class Tokens(MethodResource, EndpointResource):
     @decorators.auth.required()
     def get(self):
 
-        user = self.get_current_user()
+        user = self.get_user()
 
         tokens = self.auth.get_tokens(user=user)
 
@@ -56,7 +54,7 @@ class Tokens(MethodResource, EndpointResource):
     @decorators.auth.required()
     def delete(self, token_id):
 
-        user = self.get_current_user()
+        user = self.get_user()
         tokens = self.auth.get_tokens(user=user)
 
         for token in tokens:
@@ -69,12 +67,6 @@ class Tokens(MethodResource, EndpointResource):
             # Added just to make very sure, but it can never happen because
             # invalidate_token can only fail if the token is invalid
             # since this is an authenticated endpoint the token is already verified
-            raise RestApiException(  # pragma: no cover
-                "Failed token invalidation: '{}'".format(token),
-                status_code=400
-            )
+            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
 
-        raise RestApiException(
-            "Token not emitted for your account or does not exist",
-            status_code=401
-        )
+        raise Forbidden("Token not emitted for your account or does not exist")

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Using x509 certificates
 """
@@ -9,22 +7,21 @@ import pwd
 import re
 from datetime import datetime, timedelta
 
+import dateutil.parser
 import pytz
+from OpenSSL import crypto
+from plumbum import local
+from plumbum.commands.processes import ProcessExecutionError
 
 from restapi.utilities.logs import log
 
-try:
-    from OpenSSL import crypto
-    from plumbum import local
-    import dateutil.parser
-except ImportError as e:
-    log.exit("\nThis module requires an extra package:\n{}", e)
 
+# Mostly excluded from coverage because it is only used by a very specific service
+# No further tests will be included in the core
+class Certificates:  # pragma: no cover
 
-class Certificates:
-
-    _dir = os.environ.get('CERTDIR')
-    _proxyfile = 'userproxy.crt'
+    _dir = os.getenv("CERTDIR")
+    _proxyfile = "userproxy.crt"
 
     def __init__(self):
         log.warning(
@@ -32,23 +29,23 @@ class Certificates:
         )
 
     @classmethod
-    def get_dn_from_cert(cls, certdir, certfilename, ext='pem'):
+    def get_dn_from_cert(cls, certdir, certfilename, ext="pem"):
 
-        dn = ''
-        cpath = os.path.join(cls._dir, certdir, "{}.{}".format(certfilename, ext))
+        dn = ""
+        cpath = os.path.join(cls._dir, certdir, f"{certfilename}.{ext}")
         with open(cpath) as fh:
             content = fh.read()
             cert = crypto.load_certificate(crypto.FILETYPE_PEM, content)
             sub = cert.get_subject()
 
             for tup in sub.get_components():
-                dn += '/' + tup[0].decode() + '=' + tup[1].decode()
+                dn += f"/{tup[0].decode()}={tup[1].decode()}"
 
             log.verbose("Host DN computed is {}", dn)
             return dn
 
     @staticmethod
-    def generate_csr_and_key(user='TestUser'):
+    def generate_csr_and_key(user="TestUser"):
         """
         TestUser is the user proposed by the documentation,
         which will be ignored
@@ -65,8 +62,8 @@ class Certificates:
     @staticmethod
     def set_globus_proxy_cert(key, cert):  # , proxy=None):
 
-        os.environ['X509_USER_KEY'] = key
-        os.environ['X509_USER_CERT'] = cert
+        os.environ["X509_USER_KEY"] = key
+        os.environ["X509_USER_CERT"] = cert
 
         # NOTE: for proxy we use above as temporary fix
         # check in the future why the right variable doesn't work anymore
@@ -84,9 +81,9 @@ class Certificates:
     ):
 
         if cert_dir is None:
-            os.environ['X509_CERT_DIR'] = os.path.join(cls._dir, 'simple_ca')
+            os.environ["X509_CERT_DIR"] = os.path.join(cls._dir, "simple_ca")
         else:
-            os.environ['X509_CERT_DIR'] = cert_dir
+            os.environ["X509_CERT_DIR"] = cert_dir
 
         cpath = os.path.join(cls._dir, user_proxy)
 
@@ -100,15 +97,15 @@ class Certificates:
         # 2. normal certificates (e.g. 'guest')
         elif os.path.isdir(cpath):
             Certificates.set_globus_proxy_cert(
-                key=os.path.join(cpath, 'userkey.pem'),
-                cert=os.path.join(cpath, 'usercert.pem'),
+                key=os.path.join(cpath, "userkey.pem"),
+                cert=os.path.join(cpath, "usercert.pem"),
             )
 
         ################
         # 3. mattia's certificates?
         elif myproxy_host is not None:
 
-            proxy_cert_file = cpath + '.pem'
+            proxy_cert_file = cpath + ".pem"
             if not os.path.isfile(proxy_cert_file):
                 # Proxy file does not exist
                 valid = False
@@ -179,11 +176,11 @@ class Certificates:
         for key, filepath in os.environ.items():
 
             # skip non certificates variables
-            if not key.startswith('X509'):
+            if not key.startswith("X509"):
                 continue
 
             # check if current HTTP API user can read needed certificates
-            if key.lower().endswith('cert_dir'):
+            if key.lower().endswith("cert_dir"):
                 # here it has been proven to work even if not readable...
                 if not Certificates.path_is_readable(filepath):
                     failed = True
@@ -203,7 +200,7 @@ class Certificates:
                     )
 
         if failed:
-            raise AttributeError('Certificates ownership problem')
+            raise AttributeError("Certificates ownership problem")
 
     @staticmethod
     def check_cert_validity(certfile, validity_interval=1):
@@ -212,8 +209,6 @@ class Certificates:
         # TODO: change the openssl bash command with the pyOpenSSL API
         # if so we may remove 'plumbum' from requirements of rapydo-http repo
 
-        from plumbum import local
-        from plumbum.commands.processes import ProcessExecutionError
         try:
 
             # Pattern in plumbum library for executing a shell command

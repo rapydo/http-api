@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
 # TO BE ENABLED WHEN REQUIRED
 
-# from collections import OrderedDict
 # from flask_apispec import MethodResource
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
 # from marshmallow import fields, validate
-# from restapi.models import Schema
+# from restapi.models import InputSchema, OutputSchema
 
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
@@ -35,7 +32,7 @@
 #         if r.name not in allowed_roles:
 #             continue
 
-#         roles["roles_{}".format(r.name)] = r.description
+#         roles[f"roles_{r.name}"] = r.description
 
 #     return roles
 
@@ -48,7 +45,7 @@
 #         groups = []
 #         neo4j = detector.get_service_instance('neo4j')
 
-#         # current_user = self.get_current_user()
+#         # current_user = self.get_user()
 #         # for idx, val in enumerate(new_schema):
 #         #     # FIXME: groups management is only implemented for neo4j
 #         #     if val["name"] == "group":
@@ -77,7 +74,7 @@
 #         #             if g == default_group:
 #         #                 continue
 
-#         #             group_name = "{} - {}".format(g.shortname, g.fullname)
+#         #             group_name = f"{g.shortname} - {g.fullname}"
 #         #             new_schema[idx]["enum"].append({g.uuid: group_name})
 #         #             if defg is None:
 #         #                 defg = g.uuid
@@ -86,7 +83,7 @@
 #         #         if (len(new_schema[idx]["enum"])) == 1:
 #         #             new_schema[idx]["default"] = defg
 #         # for g in neo4j.Group.nodes.all():
-#         #     group_name = "{} - {}".format(g.shortname, g.fullname)
+#         #     group_name = f"{g.shortname} - {g.fullname}"
 #         #     groups.append({g.uuid: group_name})
 
 #         return groups
@@ -105,7 +102,7 @@
 #     set_required = not strip_required
 #     auth = EndpointResource.load_authentication()
 
-#     attributes = OrderedDict()
+#     attributes = {}
 #     if not exclude_email:
 #         attributes["email"] = fields.Email(required=set_required)
 #     attributes["password"] = fields.Str(
@@ -131,21 +128,16 @@
 #             )
 #         )
 
-#     obj = Meta.get_customizer_class('apis.profile', 'CustomProfile')
-#     if obj is not None and hasattr(obj, "get_custom_fields"):
-#         try:
-#             custom_fields = obj.get_custom_fields(strip_required)
-#             if custom_fields:
-#                 attributes.update(custom_fields)
-#         except BaseException as e:
-#             log.error("Could not retrieve custom profile fields:\n{}", e)
+#     if customizer := Meta.get_customizer_instance('apis.profile', 'CustomProfile'):
+#         if custom_fields := customizer.get_custom_fields(strip_required):
+#             attributes.update(custom_fields)
 
 #     if send_mail_is_active():
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )
 
-#     return Schema.from_dict(attributes)
+#     return InputSchema.from_dict(attributes)
 
 
 # class LocalAdminUsers(MethodResource, EndpointResource):
@@ -209,7 +201,7 @@
 #             return False
 
 #         # You cannot modify ADMINs
-#         if self.auth.role_admin in self.auth.get_roles_from_user(user):
+#         if ADMIN_ROLE in self.auth.get_roles_from_user(user):
 #             return False
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -234,7 +226,7 @@
 
 #         data = []
 
-#         is_admin = self.auth.verify_admin()
+#         is_admin = self.verify_admin()
 
 #         users = self.auth.get_users(user_id)
 #         if users is None:
@@ -244,7 +236,7 @@
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 
-#         current_user = self.get_current_user()
+#         current_user = self.get_user()
 #         for user in users:
 
 #             if not self.is_authorized(current_user, user, is_admin):
@@ -295,7 +287,7 @@
 
 #             if group is not None:
 #                 if group.shortname != "default":
-#                     current_user = self.get_current_user()
+#                     current_user = self.get_user()
 #                     if not group.coordinator.is_connected(current_user):
 #                         raise RestApiException(
 #                             "You are not allowed to assign users to this group"
@@ -323,8 +315,8 @@
 
 #         user = user[0]
 
-#         current_user = self.get_current_user()
-#         is_admin = self.auth.verify_admin()
+#         current_user = self.get_user()
+#         is_admin = self.verify_admin()
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
@@ -355,16 +347,8 @@
 
 #         self.auth.link_roles(user, roles)
 
-#         if self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
-#             self.update_properties(user, kwargs, kwargs)
-#         elif self.sql_enabled:
-#             self.update_sql_properties(user, kwargs, kwargs)
-#         elif self.mongo_enabled:
-#             self.update_mongo_properties(user, kwargs, kwargs)
-#         else:
-#             raise RestApiException("Invalid auth backend, all known db are disabled")
-
+#         db = self.get_service_instance(detector.authentication_service)
+#         db.update_properties(user, kwargs, kwargs)
 #         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -398,7 +382,7 @@
 #     @decorators.auth.required(roles=['local_admin'])
 #     def delete(self, user_id):
 
-#         is_admin = self.auth.verify_admin()
+#         is_admin = self.verify_admin()
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 
@@ -411,7 +395,7 @@
 
 #         user = user[0]
 
-#         current_user = self.get_current_user()
+#         current_user = self.get_user()
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"

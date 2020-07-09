@@ -1,212 +1,277 @@
-# -*- coding: utf-8 -*-
 import io
-from restapi.tests import BaseTests, API_URI
+
+from restapi.tests import API_URI, BaseTests
 
 
 class TestUploadAndDownload(BaseTests):
-    fname = "myfile.txt"
-    fcontent = "v"
+    def test_upload(self, client, fake):
 
-    def test_upload(self, client):
+        self.fcontent = fake.paragraph()
+        self.save("fcontent", self.fcontent)
+
+        self.fname = f"{fake.pystr()}.notallowed"
 
         r = client.put(
-            API_URI + '/tests/upload',
+            f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                "force": True
-            }
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
+            },
+        )
+        assert r.status_code == 400
+        assert self.get_content(r) == "File extension not allowed"
+
+        self.fname = f"{fake.pystr()}.not"
+
+        r = client.put(
+            f"{API_URI}/tests/upload",
+            data={
+                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
+            },
+        )
+        assert r.status_code == 400
+        assert self.get_content(r) == "File extension not allowed"
+
+        self.fname = f"{fake.pystr()}.txt"
+        self.save("fname", self.fname)
+
+        r = client.put(
+            f"{API_URI}/tests/upload",
+            data={
+                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
+                # By setting force False only txt files will be allowed for upload
+                # Strange, but it is how the endpoint is configured to improve the tests
+                "force": False,
+            },
         )
         assert r.status_code == 200
 
         r = client.put(
-            API_URI + '/tests/upload',
-            data={
-                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-            }
+            f"{API_URI}/tests/upload",
+            data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
         )
         assert r.status_code == 400
-        err = "File '{}' already exists, use force parameter to overwrite".format(
-            self.fname
-        )
+        err = f"File '{self.fname}' already exists, use force parameter to overwrite"
         assert self.get_content(r) == err
 
         r = client.put(
-            API_URI + '/tests/upload',
+            f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                "force": True
-            }
+                "force": True,
+            },
         )
         assert r.status_code == 200
 
         c = self.get_content(r)
-        assert c.get('filename') == self.fname
-        meta = c.get('meta')
+        assert c.get("filename") == self.fname
+        meta = c.get("meta")
         assert meta is not None
-        # It is binary because sent as BytesIO
-        assert meta.get('charset') == 'binary'
-        assert meta.get('type') == 'application/octet-stream'
+        assert meta.get("charset") is not None
+        assert meta.get("type") is not None
 
-    def test_download(self, client):
+    def test_download(self, client, fake):
 
-        endpoint = API_URI + '/tests/download/'
+        self.fname = self.get("fname")
+        self.fcontent = self.get("fcontent")
 
-        r = client.get(endpoint + 'doesnotexist')
+        r = client.get(f"{API_URI}/tests/download/doesnotexist")
         assert r.status_code == 400
 
         # no filename provided
-        r = client.get(API_URI + '/tests/download')
+        r = client.get(f"{API_URI}/tests/download")
         assert r.status_code == 400
 
-        r = client.get(endpoint + self.fname)
+        r = client.get(f"{API_URI}/tests/download/{self.fname}")
         assert r.status_code == 200
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         assert content == self.fcontent
 
-        new_content = 'new content'
+        new_content = "new content"
         r = client.put(
-            API_URI + '/tests/upload',
+            f"{API_URI}/tests/upload",
             data={
                 "file": (io.BytesIO(str.encode(new_content)), self.fname),
-                "force": True
-            }
+                "force": True,
+            },
         )
         assert r.status_code == 200
 
-        r = client.get(endpoint + self.fname)
+        r = client.get(f"{API_URI}/tests/download/{self.fname}")
         assert r.status_code == 200
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         assert content != self.fcontent
         assert content == new_content
 
-        r = client.get(endpoint + self.fname, data={'stream': True})
+        r = client.get(
+            f"{API_URI}/tests/download/{self.fname}", query_string={"stream": True}
+        )
         assert r.status_code == 200
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         assert content == new_content
 
-        r = client.get(endpoint + 'doesnotexist', data={'stream': True})
+        r = client.get(
+            f"{API_URI}/tests/download/doesnotexist", query_string={"stream": True}
+        )
         assert r.status_code == 400
 
-    def test_chunked(self, client):
+    def test_chunked(self, client, fake):
 
-        r = client.post(API_URI + '/tests/upload', data={'force': True})
+        self.fname = self.get("fname")
+        self.fcontent = self.get("fcontent")
+
+        r = client.post(f"{API_URI}/tests/upload", data={"force": True})
+        assert r.status_code == 400
+
+        data = {
+            "force": True,
+            "name": "fixed.filename",
+            "size": "999",
+            "mimeType": "application/zip",
+            "lastModified": 1590302749209,
+        }
+        r = client.post(f"{API_URI}/tests/upload", data=data)
         assert r.status_code == 201
-        assert self.get_content(r) == ''
+        assert self.get_content(r) == ""
 
-        with io.StringIO('massive-body') as f:
-            r = client.put(
-                API_URI + '/tests/upload/chunked',
-                data=f
-            )
+        with io.StringIO(fake.text()) as f:
+            r = client.put(f"{API_URI}/tests/upload/chunked", data=f)
         assert r.status_code == 400
-        assert self.get_content(r) == 'Invalid request'
+        assert self.get_content(r) == "Invalid request"
 
-        with io.StringIO('massive-body') as f:
+        with io.StringIO(fake.text()) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f"{API_URI}/tests/upload/chunked",
                 data=f,
-                headers={
-                    "Content-Range": '!'
-                }
+                headers={"Content-Range": "!"},
             )
         assert r.status_code == 400
-        assert self.get_content(r) == 'Invalid request'
+        assert self.get_content(r) == "Invalid request"
 
-        up_data = "HelloWorld"
+        up_data = fake.pystr(min_chars=24, max_chars=48)
+        STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f"{API_URI}/tests/upload/chunked",
                 data=f,
-                headers={
-                    "Content-Range": 'bytes 0-5/10'
-                }
+                headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
         assert r.status_code == 206
-        assert self.get_content(r) == 'partial'
+        assert self.get_content(r) == "partial"
 
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                API_URI + '/tests/upload/chunked',
+                f"{API_URI}/tests/upload/chunked",
                 data=f,
-                headers={
-                    "Content-Range": 'bytes 5-10/10'
-                }
+                headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
         assert r.status_code == 200
         c = self.get_content(r)
-        assert c.get('filename') is not None
-        uploaded_filename = c.get('filename')
-        meta = c.get('meta')
+        assert c.get("filename") is not None
+        uploaded_filename = c.get("filename")
+        meta = c.get("meta")
         assert meta is not None
-        assert meta.get('charset') == 'us-ascii'
-        assert meta.get('type') == 'text/plain'
+        assert meta.get("charset") == "us-ascii"
+        assert meta.get("type") == "text/plain"
 
-        r = client.get(API_URI + '/tests/download/' + uploaded_filename)
+        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
         assert r.status_code == 200
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
+        assert content == up_data
+
+        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
+        assert r.status_code == 200
+        content = r.data.decode("utf-8")
         assert content == up_data
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True}
-        )
-        assert r.status_code == 200
-        content = r.data.decode('utf-8')
-        assert content == up_data
-
-        r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': ''}
+            f"{API_URI}/tests/download/{uploaded_filename}", headers={"Range": ""}
         )
         assert r.status_code == 416
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': '0-9'}
+            f"{API_URI}/tests/download/{uploaded_filename}",
+            headers={"Range": f"0-{STR_LEN - 1}"},
         )
         assert r.status_code == 416
 
+        # Back-compatibility fix. This is due to the backendirods container
+        # that forces the installation of Werkzeug 0.16.1 instead of 1.0+
+        from werkzeug import __version__ as werkzeug_version
+
+        old_werkzeug = werkzeug_version == "0.16.1"
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': 'bytes=0-9999999999999999'}
+            f"{API_URI}/tests/download/{uploaded_filename}",
+            headers={"Range": "bytes=0-9999999999999999"},
         )
-        assert r.status_code == 200
+        if old_werkzeug:
+            assert r.status_code == 200
+        else:
+            assert r.status_code == 206
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': 'bytes=0-4'}
+            f"{API_URI}/tests/download/{uploaded_filename}",
+            headers={"Range": "bytes=0-4"},
         )
         assert r.status_code == 206
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         assert content == up_data[0:5]
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': 'bytes=5-9'}
+            f"{API_URI}/tests/download/{uploaded_filename}",
+            headers={"Range": f"bytes=5-{STR_LEN - 1}"},
         )
         assert r.status_code == 206
-        content = r.data.decode('utf-8')
+        content = r.data.decode("utf-8")
         assert content == up_data[5:]
 
         r = client.get(
-            API_URI + '/tests/download/' + uploaded_filename,
-            data={'partial': True},
-            headers={'Range': 'bytes=0-9'}
+            f"{API_URI}/tests/download/{uploaded_filename}",
+            headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
-        assert r.status_code == 200
-        content = r.data.decode('utf-8')
+        if old_werkzeug:
+            assert r.status_code == 200
+        else:
+            assert r.status_code == 206
+        content = r.data.decode("utf-8")
         assert content == up_data
 
-        r = client.post(API_URI + '/tests/upload')
+        # Send a new string as content file. Will be appended as prefix
+        up_data2 = fake.pystr(min_chars=24, max_chars=48)
+        STR_LEN = len(up_data2)
+        with io.StringIO(up_data2) as f:
+            r = client.put(
+                f"{API_URI}/tests/upload/chunked",
+                data=f,
+                headers={"Content-Range": f"bytes */{STR_LEN}"},
+            )
         assert r.status_code == 400
-        err = "File '{}' already exists".format(uploaded_filename)
+        # c = self.get_content(r)
+        # assert c.get('filename') is not None
+        # uploaded_filename = c.get('filename')
+        # meta = c.get('meta')
+        # assert meta is not None
+        # assert meta.get('charset') == 'us-ascii'
+        # assert meta.get('type') == 'text/plain'
+
+        # r = client.get(f'{API_URI}/tests/download/{uploaded_filename}')
+        # assert r.status_code == 200
+        # content = r.data.decode('utf-8')
+        # # Uhmmm... should not be up_data2 + up_data ??
+        # assert content == up_data + up_data2
+
+        data["force"] = False
+        r = client.post(f"{API_URI}/tests/upload", data=data)
+        assert r.status_code == 400
+        err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
-        r = client.post(API_URI + '/tests/upload', data={'force': True})
+        data["force"] = True
+        r = client.post(f"{API_URI}/tests/upload", data=data)
         assert r.status_code == 201
-        assert self.get_content(r) == ''
+        assert self.get_content(r) == ""

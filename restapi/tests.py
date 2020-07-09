@@ -1,121 +1,239 @@
-# -*- coding: utf-8 -*-
-import os
-import pytest
 import json
+import os
+import secrets
 import string
-import random
-import jwt
 import uuid
-import pytz
 from datetime import datetime, timedelta
-from glom import glom
 
-from restapi.confs import DEFAULT_HOST, DEFAULT_PORT, API_URL, AUTH_URL
+import jwt
+import pyotp
+import pytest
+import pytz
+from faker import Faker
+from faker.providers import BaseProvider
+
+from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
 from restapi.services.authentication import BaseAuthentication
-
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-SERVER_URI = 'http://{}:{}'.format(DEFAULT_HOST, DEFAULT_PORT)
-API_URI = '{}{}'.format(SERVER_URI, API_URL)
-AUTH_URI = '{}{}'.format(SERVER_URI, AUTH_URL)
+SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
+API_URI = f"{SERVER_URI}{API_URL}"
+AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
+
+
+# Create a random password to be used to build data for tests
+class PasswordProvider(BaseProvider):
+    def password(
+        self,
+        length=8,
+        strong=False,  # this enables all low, up, digits and symbols
+        low=True,
+        up=False,
+        digits=False,
+        symbols=False,
+    ):
+
+        if strong:
+            if length < 16:
+                length = 16
+            low = True
+            up = True
+            digits = True
+            symbols = True
+
+        charset = ""
+        if low:
+            charset += string.ascii_lowercase
+        if up:
+            charset += string.ascii_uppercase
+        if digits:
+            charset += string.digits
+        if symbols:
+            charset += string.punctuation
+
+        rand = secrets.SystemRandom()
+
+        randstr = "".join(rand.choices(charset, k=length))
+        if low and not any(s in randstr for s in string.ascii_lowercase):
+            log.warning(
+                f"{randstr} is not strong enough: missing lower case. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if up and not any(s in randstr for s in string.ascii_uppercase):
+            log.warning(
+                f"{randstr} is not strong enough: missing upper case. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if digits and not any(s in randstr for s in string.digits):
+            log.warning(
+                f"{randstr} is not strong enough: missing digits. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if symbols and not any(s in randstr for s in string.punctuation):
+            log.warning(
+                f"{randstr} is not strong enough: missing symbols. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+
+        return randstr
+
+
+def get_faker():
+
+    locales = {
+        "ar_EG": "Arabic",
+        "bg_BG": "Bulgarian",
+        "bs_BA": "Bosnian",
+        "cs_CZ": "Czech",
+        "de_DE": "German",
+        "dk_DK": "Danish",
+        "el_GR": "Greek",
+        "en_US": "English",
+        "es_ES": "Spanish",
+        "et_EE": "Estonian",
+        "fa_IR": "Persian",
+        "fi_FI": "Finnish",
+        "fr_FR": "French",
+        "hi_IN": "Hindi",
+        "hr_HR": "Croatian",
+        "hu_HU": "Hungarian",
+        # 'hy_AM': 'Armenian',
+        "it_IT": "Italian",
+        "ja_JP": "Japanese",
+        "ka_GE": "Georgian",
+        "ko_KR": "Korean",
+        "lt_LT": "Lithuanian",
+        "lv_LV": "Latvian",
+        "ne_NP": "Nepali",
+        "nl_NL": "Dutch",
+        "no_NO": "Norwegian",
+        "pl_PL": "Polish",
+        "pt_PT": "Portuguese",
+        "ro_RO": "Romanian",
+        "ru_RU": "Russian",
+        "sl_SI": "Slovene",
+        "sv_SE": "Swedish",
+        "tr_TR": "Turkish",
+        "uk_UA": "Ukrainian",
+        "zh_CN": "Chinese",
+    }
+
+    loc = secrets.choice(list(locales.keys()))
+    log.warning(f"Today I'm {locales.get(loc)}")
+    fake = Faker(loc)
+
+    fake.add_provider(PasswordProvider)
+
+    return fake
+
+
+# How to inject the fixture in the class constructor or definition
+# and make available to all methods?
+fake = get_faker()
 
 
 class BaseTests:
-    def save(self, variable, value, read_only=False):
+
+    # will be used by do_login in case of TOTP
+    # This will save correspondances between user email and provided QR Code
+    QRsecrets = {}
+    TOTP = False
+
+    @classmethod
+    def save(cls, variable, value):
         """
             Save a variable in the class, to be re-used in further tests
-            In read_only mode the variable cannot be rewritten
         """
-        if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "read_only" in data and data["read_only"]:
-                pytest.fail(
-                    "Cannot overwrite a read_only variable [{}]".format(variable))
 
-        data = {'value': value, 'read_only': read_only}
-        setattr(self.__class__, variable, data)
+        setattr(cls, variable, value)
 
-    def get(self, variable):
+    @classmethod
+    def get(cls, variable):
         """
             Retrieve a previously stored variable using the .save method
         """
-        if hasattr(self.__class__, variable):
-            data = getattr(self.__class__, variable)
-            if "value" in data:
-                return data["value"]
+        if hasattr(cls, variable):
+            return getattr(cls, variable)
 
-        raise AttributeError("Class variable {} not found".format(variable))
+        raise AttributeError(f"Class variable {variable} not found")
 
     @staticmethod
     def get_specs(client):
         """
             Retrieve Swagger definition by calling API/specs endpoint
         """
-        r = client.get(API_URI + '/specs')
+        r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
+        content = json.loads(r.data.decode("utf-8"))
         return content
 
     @staticmethod
-    def getInputSchema(client, endpoint, headers):
-        """
-            Retrieve a swagger-like data schema associated with a endpoint
-        """
-        r = client.get(API_URI + '/schemas/' + endpoint, headers=headers)
-        assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
-        if 'Response' in content:
-            return content['Response']['data']
-        return content
-
-    @staticmethod
-    def getDynamicInputSchema(client, endpoint, headers):
+    def getDynamicInputSchema(client, endpoint, headers, html=False):
         """
             Retrieve a dynamic data schema associated with a endpoint
         """
 
         data = {"get_schema": 1}
-        r = client.post("{}/{}".format(API_URI, endpoint), data=data, headers=headers)
+
+        h = headers.copy()
+        if html:
+            h["Accept"] = "text/html"
+
+        r = client.post(f"{API_URI}/{endpoint}", data=data, headers=h)
         assert r.status_code == 200
-        content = json.loads(r.data.decode('utf-8'))
-        if 'Response' in content:
-            return content['Response']['data']
-        return content
+
+        content = r.data.decode("utf-8")
+        if html:
+            return content
+
+        return json.loads(content)
 
     @staticmethod
     def get_content(http_out):
 
         try:
             response = json.loads(http_out.get_data().decode())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
-            raise ValueError(
-                "Malformed response: {}".format(http_out)
-            )
-
-        # Should be {Response: DATA, Meta: RESPONSE_METADATA}
-        # To be removed when WRAP_RESPONSE will be removed
-        if isinstance(response, dict) and len(response) == 2:
-            content = glom(response, "Response.data", default=None)
-
-            if content is None:
-                content = glom(response, "Response.errors", default=None)
-
-            if content is not None:
-                return content
+            raise ValueError(f"Malformed response: {http_out}")
 
         return response
 
-    def do_login(self, client, USER, PWD,
-                 status_code=200, error=None,
-                 user_field='username', pwd_field='password',
-                 data=None):
+    @staticmethod
+    def generate_totp(user):
+        secret = BaseTests.QRsecrets.get(user.lower())
+        if secret:
+            return pyotp.TOTP(secret).now()
+
+        try:
+            auth = detector.get_service_instance("authentication")
+
+            user = auth.get_user_object(username=user)
+
+            secret = BaseAuthentication.get_secret(user)
+
+            return pyotp.TOTP(secret).now()
+        except BaseException as e:
+            log.error(e)
+
+    @staticmethod
+    def do_login(client, USER, PWD, status_code=200, error=None, data=None):
         """
             Make login and return both token and authorization header
         """
 
         if USER is None or PWD is None:
-            BaseAuthentication.myinit()
+            BaseAuthentication.load_default_user()
+            BaseAuthentication.load_roles()
             if USER is None:
                 USER = BaseAuthentication.default_user
             if PWD is None:
@@ -124,181 +242,156 @@ class BaseTests:
         if data is None:
             data = {}
 
-        data[user_field] = USER
-        data[pwd_field] = PWD
+        data["username"] = USER
+        data["password"] = PWD
 
-        r = client.post(AUTH_URI + '/login', data=json.dumps(data))
-        content = json.loads(r.data.decode('utf-8'))
+        r = client.post(f"{AUTH_URI}/login", data=data)
+        content = json.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
-            if isinstance(content, dict) and content.get('actions'):
-                action = content.get('actions')[0]
 
-                if action == 'FIRST LOGIN' or action == 'PASSWORD EXPIRED':
-                    newpwd = "Aa1!{}".format(self.randomString())
-                    headers, _ = self.do_login(
-                        client, USER, PWD,
-                        data={
-                            'new_password': newpwd,
-                            'password_confirm': format(self.randomString()),
-                        },
-                        status_code=409,
+            # This 403 is expected, return an invalid value or you can enter a loop!
+            if status_code == 403:
+                return None, None
+
+            if isinstance(content, dict) and content.get("actions"):
+                actions = content.get("actions", [])
+
+                for action in actions:
+                    if action == "TOTP":
+                        BaseTests.TOTP = True
+                        continue
+                    if action == "FIRST LOGIN":
+                        continue
+                    if action == "PASSWORD EXPIRED":
+                        continue
+                    pytest.fail(f"Unknown post log action requested: {action}")
+
+                data = {}
+                # Will read and store qr_code + init totp_code required for next action
+                if "TOTP" in actions:
+                    if content.get("qr_code"):
+                        # validate that the QR code is a valid PNG image
+                        pass
+
+                    if content.get("qr_url"):
+                        assert content.get("qr_url").startswith("otpauth://totp/")
+                        assert "?secret=" in content.get("qr_url")
+                        secret = content.get("qr_url").split("?secret=")[1]
+                        assert secret is not None
+                        assert len(secret) == 16
+
+                        BaseTests.QRsecrets[USER.lower()] = secret
+
+                if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+                    newpwd = fake.password(strong=True)
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = fake.password(strong=True)
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
+
+                    BaseTests.do_login(
+                        client, USER, PWD, data=data, status_code=409,
                     )
+
+                    # Test failure of password change if TOTP is wrong or not provided
+                    if BaseTests.TOTP:
+                        data["new_password"] = newpwd
+                        data["password_confirm"] = newpwd
+                        data.pop("totp_code", None)
+
+                        BaseTests.do_login(
+                            client, USER, PWD, data=data, status_code=403,
+                        )
+
+                        data["new_password"] = newpwd
+                        data["password_confirm"] = newpwd
+                        data["totp_code"] = fake.pyint()
+                        BaseTests.do_login(
+                            client, USER, PWD, data=data, status_code=401,
+                        )
+
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
-                    self.do_login(
-                        client, USER, PWD,
-                        data={
-                            'new_password': newpwd,
-                            'password_confirm': newpwd,
-                        }
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = newpwd
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
+                    BaseTests.do_login(
+                        client, USER, PWD, data=data,
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
-                    return self.do_login(
-                        client, USER, newpwd,
-                        data={
-                            'new_password': PWD,
-                            'password_confirm': PWD,
-                        }
+                    data["new_password"] = PWD
+                    data["password_confirm"] = PWD
+                    if BaseTests.TOTP:
+                        data["totp_code"] = BaseTests.generate_totp(USER)
+                    return BaseTests.do_login(client, USER, newpwd, data=data,)
+
+                # in this case FIRST LOGIN has not been executed
+                # => login by sending the TOTP code
+                if "TOTP" in actions:
+                    data["totp_code"] = fake.pyint()
+                    BaseTests.do_login(
+                        client, USER, PWD, data=data, status_code=401,
                     )
-                else:
-                    pytest.fail(
-                        "Unknown post log action requested: {}".format(action)
-                    )
+
+                    data["totp_code"] = BaseTests.generate_totp(USER)
+                    return BaseTests.do_login(client, USER, PWD, data=data,)
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
-            c = json.loads(r.data.decode('utf-8'))
-            if 'Response' in c:
-                log.error(c['Response']['errors'])
-            else:
-                log.error(c)
+            c = json.loads(r.data.decode("utf-8"))
+            log.error(c)
 
         assert r.status_code == status_code
 
         if error is not None:
-            if 'Response' in content:
-                errors = content['Response']['errors']
-                if errors is not None:
-                    assert errors[0] == error
-            else:
-                assert content == error
+            assert content == error
 
-        token = ''
-        if content is not None:
-            token = glom(content, "Response.data.token", default=None)
-            if token is None:
-                token = content
-        return {'Authorization': 'Bearer {}'.format(token)}, token
+        # when 200 OK content is the token
+        assert content is not None
 
-    @staticmethod
-    def get_celery(app):
+        return {"Authorization": f"Bearer {content}"}, content
 
-        from restapi.connectors.celery import CeleryExt
-        from restapi.services.detect import detector
-
-        celery = detector.connectors_instances.get('celery')
-        celery.celery_app.app = app
-        CeleryExt.celery_app = celery.celery_app
-        return CeleryExt
-
-    @staticmethod
-    def randomString(length=16, prefix="TEST-"):
-        """
-            Create a random string to be used to build data for tests
-        """
-        rand = random.SystemRandom()
-        charset = string.ascii_uppercase + string.digits
-
-        random_string = prefix
-        for _ in range(length):
-            random_string += rand.choice(charset)
-
-        return random_string
-
-    @staticmethod
-    def checkResponse(response, fields, relationships):
-        """
-        Verify that the response contains the given fields and relationships
-        """
-
-        for f in fields:
-            if f not in response[0]:
-                pytest.fail("Missing property: {}".format(f))
-
-        for r in relationships:
-            if "_{}".format(r) not in response[0]:
-                pytest.fail("Missing relationship: {}".format(r))
+    def randomString(self, length=16, prefix=""):  # pragma: no cover
+        # Deprecated since 0.7.4
+        log.warning("Deprecated, use fake.password instead")
+        return prefix + fake.password(
+            length, low=False, up=True, digits=True, symbols=False
+        )
 
     def buildData(self, schema):
         """
-            Input: a Swagger-like schema
+            Input: a webargs schema
             Output: a dictionary of random data
         """
         data = {}
         for d in schema:
 
-            key = d.get("name")
-            if key is None:
-                key = d.get("key")
+            key = d.get("key")
             field_type = d.get("type")
-            field_format = d.get("format", "")
-            default = d.get("default", None)
-            custom = d.get("custom", {})
-            autocomplete = custom.get("autocomplete", False)
-            test_with = custom.get("test_with", None)
 
-            if autocomplete and test_with is None:
-                continue
-
-            value = None
-            if test_with is not None:
-                value = test_with
-            elif 'enum' in d:
-                if default is not None:
-                    value = default
-                elif len(d["enum"]) > 0:
-                    # get first key
-                    for value in d["enum"][0]:
-                        break
+            if "enum" in d:
+                if len(d["enum"]) > 0:
+                    data[key] = fake.random_element(list(d["enum"].keys()))
                 else:
-                    value = "NOT_FOUND"
+                    pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
-                value = random.SystemRandom().randrange(0, 1000, 1)
-            elif field_format == "date":
-                value = "1969-07-20"  # 20:17:40 UTC
-            elif field_type == "email" or field_format == "email":
-                value = self.randomString()
-                value += "@nomail.com"
-            elif field_type == "multi_section":
-                continue
+                data[key] = fake.pyint()
+            elif field_type == "date":
+                data[key] = fake.date(pattern="%Y-%m-%d")
+            elif field_type == "email":
+                data[key] = fake.ascii_email()
             elif field_type == "boolean":
-                value = True
+                data[key] = fake.pybool()
+            elif field_type == "password":
+                data[key] = fake.password(strong=True)
+            elif field_type == "string":
+                data[key] = fake.pystr(min_chars=16, max_chars=32)
             else:
-                value = self.randomString()
-
-            data[key] = value
+                pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
         return data
-
-    # only used by nig
-    # def getPartialData(self, schema, data):
-    #     """
-    #         Following directives contained in the schema and
-    #         taking as input a pre-built data dictionary, this method
-    #         remove one of the required fields from data
-    #     """
-    #     partialData = data.copy()
-    #     for d in schema:
-    #         if not d['required']:
-    #             continue
-
-    #         # key = d["key"]
-    #         key = d["name"]
-
-    #         del partialData[key]
-    #         return partialData
-    #     return None
 
     @staticmethod
     def method_exists(status):
@@ -323,71 +416,77 @@ class BaseTests:
         post_data=None,
     ):
 
-        endpoint = "{}/{}".format(API_URI, endpoint)
-
         if headers is not None:
 
             if self.method_exists(get_status):
-                r = client.get(endpoint)
+                r = client.get(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
             if self.method_exists(post_status):
-                r = client.post(endpoint, data=post_data)
+                r = client.post(f"{API_URI}/{endpoint}", data=post_data)
                 assert r.status_code == 401
 
             if self.method_exists(put_status):
-                r = client.put(endpoint)
+                r = client.put(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
             if self.method_exists(del_status):
-                r = client.delete(endpoint)
+                r = client.delete(f"{API_URI}/{endpoint}")
                 assert r.status_code == 401
 
         get_r = post_r = put_r = delete_r = None
 
         if get_status is not None:
-            get_r = client.get(endpoint, headers=headers)
+            get_r = client.get(f"{API_URI}/{endpoint}", headers=headers)
             assert get_r.status_code == get_status
 
         if post_status is not None:
-            post_r = client.post(endpoint, headers=headers, data=post_data)
+            post_r = client.post(
+                f"{API_URI}/{endpoint}", headers=headers, data=post_data
+            )
             assert post_r.status_code == post_status
 
         if put_status is not None:
-            put_r = client.put(endpoint, headers=headers)
+            put_r = client.put(f"{API_URI}/{endpoint}", headers=headers)
             assert put_r.status_code == put_status
 
         if del_status is not None:
-            delete_r = client.delete(endpoint, headers=headers)
+            delete_r = client.delete(f"{API_URI}/{endpoint}", headers=headers)
             assert delete_r.status_code == del_status
 
         return get_r, post_r, put_r, delete_r
 
     @staticmethod
     def read_mock_email():
-        fpath = "/code/mock.mail.lastsent.json"
+        fpath = "/logs/mock.mail.lastsent.json"
         if not os.path.exists(fpath):
             return None
 
-        with open(fpath, 'r') as file:
+        with open(fpath) as file:
             data = json.load(file)
-        if 'msg' in data:
-            tokens = data['msg'].split("\n\n")
-            data['headers'] = tokens[0]
-            data['body'] = tokens[1]
+        if "msg" in data:
+            tokens = data["msg"].split("\n\n")
+            data["headers"] = tokens[0]
+            data["body"] = "".join(tokens[1:])
 
         os.unlink(fpath)
         return data
 
-    def get_crafted_token(self, token_type, user_id=None,
-                          expired=False, immature=False,
-                          wrong_secret=False, wrong_algorithm=False):
+    def get_crafted_token(
+        self,
+        token_type,
+        user_id=None,
+        expired=False,
+        immature=False,
+        wrong_secret=False,
+        wrong_algorithm=False,
+    ):
 
         if wrong_secret:
-            secret = self.randomString()
+            secret = fake.password()
         else:
-            f = os.environ.get('JWT_APP_SECRETS') + "/secret.key"
-            secret = open(f, 'rb').read()
+            f = os.getenv("JWT_APP_SECRETS") + "/secret.key"
+            secret = open(f, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"
@@ -397,26 +496,19 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload = {
-            'user_id': user_id,
-            'jti': str(uuid.uuid4())
-        }
+        payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
-        payload['iat'] = now
+        payload["iat"] = now
         if immature:
-            payload['nbf'] = now + timedelta(seconds=999)
+            payload["nbf"] = now + timedelta(seconds=999)
         else:
-            payload['nbf'] = now - timedelta(seconds=999)
+            payload["nbf"] = now - timedelta(seconds=999)
         if expired:
-            payload['exp'] = now - timedelta(seconds=999)
+            payload["exp"] = now - timedelta(seconds=999)
         else:
-            payload['exp'] = now + timedelta(seconds=999)
+            payload["exp"] = now + timedelta(seconds=999)
 
-        token = jwt.encode(
-            payload,
-            secret,
-            algorithm=algorithm
-        ).decode('ascii')
+        token = jwt.encode(payload, secret, algorithm=algorithm).decode("ascii")
 
         return token

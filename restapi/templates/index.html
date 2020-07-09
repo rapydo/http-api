@@ -2,31 +2,27 @@
 <html lang="en">
   <head>
     <title>HTTP-API</title>
-    <meta charset="utf-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1.0">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="description" content="">
-    <meta name="author" content="">
-</head>
-<body>
-{% if is_error %}
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1.0"
+    />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+  </head>
+  <body>
+    {% if is_error %}
 
-    <main style='color:red;'>
-        {{ body_content }}<br/>
-    </main>
+    <main style="color: red;">{{ body_content }}<br /></main>
 
-{% elif body_content is mapping %}
-
-    {% for key, value in body_content.items() %}
-        <b>{{ key }}</b>: {{ value }}<br/> 
-    {% endfor %}
-
-{% else %}
+    {% elif body_content is mapping %} {% for key, value in body_content.items()
+    %}
+    <b>{{ key }}</b>: {{ value }}<br />
+    {% endfor %} {% else %}
     <main>
-        {{ body_content }}
+      {{ body_content }}
     </main>
-{% endif %}
-
-</body>
+    {% endif %}
+  </body>
 </html>
