@@ -27,7 +27,6 @@ from restapi.utilities.processes import (
     wait_socket,
 )
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.time import date_from_string
 
 
 class TestApp(BaseTests):
@@ -276,43 +275,6 @@ class TestApp(BaseTests):
         assert hcodes.HTTP_NOT_IMPLEMENTED == 501
         assert hcodes.HTTP_SERVICE_UNAVAILABLE == 503
         assert hcodes.HTTP_INTERNAL_TIMEOUT == 504
-
-        today = datetime.today()
-        fmt = "%Y-%m-%d"
-        assert date_from_string(None) == ""
-        assert date_from_string("") == ""
-
-        d = date_from_string(today.strftime("%Y/%m/%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y-%m-%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y/%m/%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%sZ"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        # Uhmm
-        assert d.tzinfo != pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        today = datetime.now(pytz.timezone("Europe/Rome"))
-        d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%s%z"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo != pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
 
         assert not _send_mail("body", "subject", "to_addr", "from_addr", None)
         assert not _send_mail("body", "subject", "to_addr", None, "myhost")
