@@ -87,7 +87,7 @@ script:
 
   # Tests in dev mode
   - rapydo -p prj init
-  # - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  - rapydo pull
 
   - >
     if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
