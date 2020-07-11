@@ -37,39 +37,39 @@ script:
 
   - mkdir $TEMPLATE
   - cd $TEMPLATE
-  # Note that  --env REGISTER_FAILED_LOGIN=True is set only for certain templates,
+  # Note that  -e REGISTER_FAILED_LOGIN=True is set only for certain templates,
   # to have different use cases during tests
 
   - >
     if [[ "$TEMPLATE" == "postgres" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth postgres --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth postgres --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth mysql --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth mysql --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth neo4j --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth neo4j --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth mongo --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth mongo --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
-      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
-      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit -s redis --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
-      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit -s mongo --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
-      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s redis --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
-      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s redis -s mongo --auth ${RANDOM_AUTH} --frontend no;
 
 
     elif [[ "$TEMPLATE" == "extraoptions" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --current --extend prjbase --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=10,AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30,AUTH_REGISTER_FAILED_LOGIN=True,AUTH_MAX_LOGIN_ATTEMPTS=5,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --current --extend prjbase -s irods -s ftp -s pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=true -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     else
