@@ -258,8 +258,7 @@ class Uploader:
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)
             log.error(str(e))
-            completed = False
-            return completed, self.response(errors="Invalid request", code=400)
+            raise BadRequest("Invalid request")
 
         # Default chunk size, put this somewhere
         if chunk_size is None:
