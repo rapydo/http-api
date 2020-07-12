@@ -156,13 +156,13 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, schema, properties=None):
+    def update_properties(instance, properties, schema=None):
 
         # Deprecated since 0.7.5
-        if properties:
+        if schema:
             log.warning("Deprecated parameters in update_properties")
 
-        for field, value in schema.items():
+        for field, value in properties.items():
             instance.__dict__[field] = value
 
     @catch_db_exceptions

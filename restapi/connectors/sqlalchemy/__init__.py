@@ -182,13 +182,13 @@ class SQLAlchemy(Connector):
             db.drop_all()
 
     @staticmethod
-    def update_properties(instance, schema, properties=None):
+    def update_properties(instance, properties, schema=None):
 
         # Deprecated since 0.7.5
-        if properties:
-            log.warning("Deprecated parameters in update_properties")
+        if schema:
+            log.warning("Deprecated schema parameter in update_properties")
 
-        for field, value in schema.items():
+        for field, value in properties.items():
             set_attribute(instance, field, value)
 
 
