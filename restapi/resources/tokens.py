@@ -39,7 +39,6 @@ class Tokens(MethodResource, EndpointResource):
     }
 
     @marshal_with(TokenSchema(many=True), code=200)
-    @decorators.catch_errors()
     @decorators.auth.required()
     def get(self):
 
@@ -50,7 +49,6 @@ class Tokens(MethodResource, EndpointResource):
         return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
-    @decorators.catch_errors()
     @decorators.auth.required()
     def delete(self, token_id):
 

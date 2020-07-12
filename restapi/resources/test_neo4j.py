@@ -1,7 +1,6 @@
 from flask_apispec import MethodResource, marshal_with
 from marshmallow import fields
 
-from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
@@ -57,7 +56,6 @@ if TESTING and detector.check_availability("neo4j"):
             },
         }
 
-        @decorators.catch_errors()
         @graph_transactions
         @marshal_with(Output, code=200)
         def get(self, test):

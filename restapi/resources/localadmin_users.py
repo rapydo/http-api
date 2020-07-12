@@ -219,7 +219,6 @@
 
 #         return False
 
-#     @decorators.catch_errors()
 #     @decorators.auth.required(roles=['local_admin'])
 #     @marshal_with(get_output_schema(), code=200)
 #     def get(self, user_id=None):
@@ -246,7 +245,6 @@
 
 #         return self.response(data)
 
-#     @decorators.catch_errors()
 #     @decorators.auth.required(roles=['local_admin'])
 #     @use_kwargs(get_input_schema())
 #     def post(self, **kwargs):
@@ -301,7 +299,6 @@
 
 #         return self.response(user.uuid)
 
-#     @decorators.catch_errors()
 #     @decorators.auth.required(roles=['local_admin'])
 #     @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     def put(self, user_id, **kwargs):
@@ -378,7 +375,6 @@
 
 #         return self.empty_response()
 
-#     @decorators.catch_errors()
 #     @decorators.auth.required(roles=['local_admin'])
 #     def delete(self, user_id):
 

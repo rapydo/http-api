@@ -41,7 +41,6 @@ class AdminTokens(MethodResource, EndpointResource):
     }
 
     @marshal_with(TokenAdminSchema(many=True), code=200)
-    @decorators.catch_errors()
     @decorators.auth.required(roles=["admin_root"])
     def get(self):
 
@@ -56,7 +55,6 @@ class AdminTokens(MethodResource, EndpointResource):
 
         return self.response(response)
 
-    @decorators.catch_errors()
     @decorators.auth.required(roles=["admin_root"])
     def delete(self, token_id):
 

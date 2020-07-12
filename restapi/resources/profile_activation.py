@@ -4,7 +4,6 @@ import jwt
 from flask_apispec import MethodResource, use_kwargs
 from marshmallow import fields
 
-from restapi import decorators
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
@@ -63,7 +62,6 @@ class ProfileActivation(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     def put(self, token):
 
         token = token.replace("%2B", ".")
@@ -116,7 +114,6 @@ class ProfileActivation(MethodResource, EndpointResource):
 
         return self.response("Account activated")
 
-    @decorators.catch_errors()
     @use_kwargs({"username": fields.Email(required=True)})
     def post(self, username):
 

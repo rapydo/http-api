@@ -31,7 +31,6 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     @decorators.auth.required(allow_access_token_parameter=True)
     def put(self, channel, sync):
 
@@ -45,7 +44,6 @@ class PushpinWebSocket(MethodResource, EndpointResource):
 
         return self.response(f"Message received: {published} (sync={sync})")
 
-    @decorators.catch_errors()
     @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 
@@ -113,7 +111,6 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     def put(self, channel, sync):
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
@@ -126,7 +123,6 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
 
         return self.response(f"Message received: {published} (sync={sync})")
 
-    @decorators.catch_errors()
     @decorators.auth.required(allow_access_token_parameter=True)
     def post(self, channel):
 

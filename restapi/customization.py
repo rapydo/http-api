@@ -12,6 +12,7 @@ from flask.views import MethodViewType
 from flask_apispec.utils import Annotation
 from flask_apispec.views import MethodResourceMeta
 
+from restapi import decorators
 from restapi.confs import (
     ABS_RESTAPI_PATH,
     API_URL,
@@ -20,7 +21,7 @@ from restapi.confs import (
     CUSTOM_PACKAGE,
 )
 from restapi.env import Env
-from restapi.services.detect import detector  # do not remove this unsed import
+from restapi.services.detect import detector  # do not remove this unused import
 from restapi.swagger import Swagger
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
@@ -257,12 +258,17 @@ class Customizer:
 
                         # conf from GET, POST, ... dictionaries
                         conf = getattr(epclss, method_name)
-
                         # endpoint uris /api/bar, /api/food
                         kk = conf.keys()
 
                         # get, post, put, patch, delete functions
                         fn = getattr(epclss, method_fn)
+
+                        # Adding the catch_errors decorator to every endpoint
+                        # I'm using a magic bool variabile to be able to raise warning
+                        # in case of the normal [deprecated] use
+                        decorator = decorators.catch_errors(magic=True)
+                        setattr(epclss, method_fn, decorator(fn))
 
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get("auth.required", False)

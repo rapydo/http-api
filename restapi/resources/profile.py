@@ -97,7 +97,6 @@ class Profile(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     @decorators.auth.required()
     @marshal_with(getProfileData(), code=200)
     def get(self):
@@ -125,7 +124,6 @@ class Profile(MethodResource, EndpointResource):
 
         return self.response(data)
 
-    @decorators.catch_errors()
     @decorators.auth.required()
     @use_kwargs(NewPassword)
     def put(self, password, new_password, password_confirm, totp_code=None):
@@ -145,7 +143,6 @@ class Profile(MethodResource, EndpointResource):
 
         return self.empty_response()
 
-    @decorators.catch_errors()
     @decorators.auth.required()
     @use_kwargs(UserProfile)
     def patch(self, **kwargs):

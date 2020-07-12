@@ -21,7 +21,6 @@ class Verify(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     @decorators.auth.required(roles=["admin_root"])
     def get(self, service):
 

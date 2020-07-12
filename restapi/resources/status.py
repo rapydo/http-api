@@ -18,7 +18,6 @@ class Status(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     def get(self, service=None):
 
         return self.response("Server is alive")
@@ -38,7 +37,6 @@ class AuthStatus(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     @decorators.auth.required()
     def get(self, service=None):
 

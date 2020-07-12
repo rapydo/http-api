@@ -1,9 +1,7 @@
 from flask_apispec import MethodResource
 
-from restapi import decorators
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
-from restapi.utilities.logs import log
 
 if TESTING:
 
@@ -17,7 +15,6 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
         def get(self):
             """
             The rational behind this test is that get_user_if_logged does not updated

@@ -52,7 +52,6 @@ class Login(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     @use_kwargs(Credentials)
     def post(
         self,

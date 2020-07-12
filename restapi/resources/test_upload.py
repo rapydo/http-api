@@ -39,7 +39,6 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
         @use_kwargs({"force": fields.Bool()})
         def put(self, chunked=None, force=False):
 
@@ -57,7 +56,6 @@ if TESTING:
                 response = self.upload(force=force)
             return response
 
-        @decorators.catch_errors()
         @decorators.init_chunk_upload
         @use_kwargs({"force": fields.Bool()})
         def post(self, force=False, **kwargs):

@@ -27,7 +27,6 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
         @decorators.get_pagination
         def get(self, get_total=None, page=None, size=None):
 
@@ -37,7 +36,6 @@ if TESTING:
             offset = (page - 1) * size
             return TestPagination.values[offset : offset + size]
 
-        @decorators.catch_errors()
         @decorators.get_pagination
         def post(self, get_total=None, page=None, size=None):
 

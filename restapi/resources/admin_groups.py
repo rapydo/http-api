@@ -104,7 +104,6 @@ if detector.check_availability("neo4j"):
             }
         }
 
-        @decorators.catch_errors()
         @decorators.catch_graph_exceptions
         @decorators.auth.required(roles=["admin_root"])
         @marshal_with(Group(many=True), code=200)
@@ -116,7 +115,6 @@ if detector.check_availability("neo4j"):
                 g.coordinator = g.coordinator.single()
             return self.response(groups)
 
-        @decorators.catch_errors()
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=["admin_root"])
@@ -140,7 +138,6 @@ if detector.check_availability("neo4j"):
 
             return self.response(group.uuid)
 
-        @decorators.catch_errors()
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=["admin_root"])
@@ -179,7 +176,6 @@ if detector.check_availability("neo4j"):
 
             return self.empty_response()
 
-        @decorators.catch_errors()
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=["admin_root"])
