@@ -71,10 +71,6 @@ def create_app(
     elif worker_mode:
         skip_endpoint_mapping = True
 
-    # Fix proxy wsgi for production calls
-    # from werkzeug.middleware.proxy_fix import ProxyFix
-    # microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
-
     # CORS
     if not PRODUCTION:
         cors = CORS(

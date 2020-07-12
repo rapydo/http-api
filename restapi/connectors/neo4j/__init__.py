@@ -174,8 +174,13 @@ class NeoModel(Connector):
             raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
 
+    # Deprecated since 0.7.5
     @staticmethod
     def getSingleLinkedNode(relation):
+
+        log.warning(
+            "Deprecated use of getSingleLinkedNode, use {}.single() instead", relation
+        )
 
         nodes = relation.all()
         if len(nodes) <= 0:
