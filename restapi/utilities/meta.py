@@ -16,10 +16,6 @@ from restapi.utilities.logs import log
 class Meta:
     """Utilities with meta in mind"""
 
-    def __init__(self):  # pragma: no cover
-        # Deprecated since 0.7.3
-        log.warning("Deprecated initialization of Meta package")
-
     @staticmethod
     def get_classes_from_module(module):
         """
