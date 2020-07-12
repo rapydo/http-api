@@ -156,7 +156,7 @@ if detector.check_availability("neo4j"):
             coordinator_uuid = kwargs.pop("coordinator", None)
 
             db = self.get_service_instance(detector.authentication_service)
-            db.update_properties(group, kwargs, kwargs)
+            db.update_properties(group, kwargs)
 
             group.save()
 

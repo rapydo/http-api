@@ -322,7 +322,7 @@ class AdminUsers(MethodResource, EndpointResource):
         if self.neo4j_enabled:
             self.graph = db
 
-        db.update_properties(user, kwargs, kwargs)
+        db.update_properties(user, kwargs)
 
         self.auth.save_user(user)
 
