@@ -1,15 +1,13 @@
 import os
 import tempfile
 import time
-from datetime import datetime
 
 import psutil
 import pytest
-import pytz
-from marshmallow import fields
 
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.models import fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
 from restapi.services.mail import send as _send_mail

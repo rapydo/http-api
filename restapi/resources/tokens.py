@@ -1,9 +1,8 @@
 from flask_apispec import marshal_with
-from marshmallow import fields
 
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
-from restapi.models import OutputSchema
+from restapi.models import OutputSchema, fields
 from restapi.rest.definition import EndpointResource
 
 # from restapi.utilities.logs import log

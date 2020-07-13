@@ -2,9 +2,8 @@
 
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
-# from marshmallow import fields, validate
-# from restapi.models import InputSchema, OutputSchema
 
+# from restapi.models import fields, validate, InputSchema, OutputSchema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry

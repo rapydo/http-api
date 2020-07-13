@@ -1,10 +1,9 @@
 from flask_apispec import marshal_with
-from marshmallow import fields
 
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
-from restapi.models import Neo4jChoice, Neo4jSchema, OutputSchema
+from restapi.models import Neo4jChoice, Neo4jSchema, OutputSchema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log

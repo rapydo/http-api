@@ -1,7 +1,7 @@
 from flask_apispec import use_kwargs
-from marshmallow import fields
 
 from restapi.confs import TESTING, UPLOAD_PATH
+from restapi.models import fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.download import Downloader
 from restapi.services.uploader import Uploader

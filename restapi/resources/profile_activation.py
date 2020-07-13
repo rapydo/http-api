@@ -2,10 +2,10 @@ import os
 
 import jwt
 from flask_apispec import use_kwargs
-from marshmallow import fields
 
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.exceptions import RestApiException
+from restapi.models import fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.mail import send_mail
 from restapi.utilities.logs import log

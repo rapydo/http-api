@@ -2,11 +2,10 @@ from datetime import datetime
 
 import pytz
 from flask_apispec import use_kwargs
-from marshmallow import fields, validate
 
 from restapi import decorators
 from restapi.exceptions import Forbidden
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.time import EPOCH, get_now
 

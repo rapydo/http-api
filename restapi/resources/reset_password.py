@@ -1,10 +1,10 @@
 import jwt
 from flask_apispec import use_kwargs
-from marshmallow import fields, validate
 
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
+from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.logs import log

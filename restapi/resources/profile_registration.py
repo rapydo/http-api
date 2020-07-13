@@ -1,10 +1,9 @@
 from flask_apispec import use_kwargs
-from marshmallow import fields, validate
 
 from restapi.confs import get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.resources.profile_activation import send_activation_link
 from restapi.rest.definition import EndpointResource
 from restapi.services.mail import send_mail, send_mail_is_active

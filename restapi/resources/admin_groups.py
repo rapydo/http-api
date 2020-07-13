@@ -1,10 +1,9 @@
 from flask_apispec import marshal_with, use_kwargs
-from marshmallow import fields, validate
 
 from restapi import decorators
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
-from restapi.models import InputSchema, OutputSchema
+from restapi.models import InputSchema, OutputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log

@@ -3,7 +3,7 @@ from functools import wraps
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
 from flask_apispec import use_kwargs
-from marshmallow import fields, post_load, validate
+from marshmallow import post_load
 from sentry_sdk import capture_exception
 
 from restapi.confs import SENTRY_URL
@@ -13,7 +13,7 @@ from restapi.exceptions import (
     DatabaseDuplicatedEntry,
     RestApiException,
 )
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
 
