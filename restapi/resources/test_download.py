@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields
 
 from restapi.confs import TESTING, UPLOAD_PATH
@@ -8,7 +8,7 @@ from restapi.services.uploader import Uploader
 
 if TESTING:
 
-    class TestDownload(MethodResource, EndpointResource):
+    class TestDownload(EndpointResource):
 
         labels = ["tests"]
         # Set an invalid baseuri to test the automatic fallback to /api

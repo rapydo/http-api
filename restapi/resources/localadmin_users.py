@@ -1,6 +1,5 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from flask_apispec import MethodResource
 # from flask_apispec import marshal_with
 # from flask_apispec import use_kwargs
 # from marshmallow import fields, validate
@@ -140,7 +139,7 @@
 #     return InputSchema.from_dict(attributes)
 
 
-# class LocalAdminUsers(MethodResource, EndpointResource):
+# class LocalAdminUsers(EndpointResource):
 
 #     auth_service = detector.authentication_service
 #     neo4j_enabled = auth_service == 'neo4j'

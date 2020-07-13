@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with
+from flask_apispec import marshal_with
 from marshmallow import fields
 
 from restapi.confs import TESTING
@@ -43,7 +43,7 @@ if TESTING and detector.check_availability("neo4j"):
         choices1 = Neo4jChoice(CHOICES_tuple)
         choices2 = Neo4jChoice(CHOICES_dict)
 
-    class TestNeo4j(MethodResource, EndpointResource):
+    class TestNeo4j(EndpointResource):
 
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]

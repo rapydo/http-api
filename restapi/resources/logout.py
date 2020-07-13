@@ -1,10 +1,8 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 
 
-class Logout(MethodResource, EndpointResource):
+class Logout(EndpointResource):
     """ Let the logged user escape from here, invalidating current token """
 
     baseuri = "/auth"

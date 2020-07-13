@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with
+from flask_apispec import marshal_with
 from marshmallow import fields
 
 from restapi import decorators
@@ -20,7 +20,7 @@ class TokenAdminSchema(TokenSchema):
     user = fields.Nested(User)
 
 
-class AdminTokens(MethodResource, EndpointResource):
+class AdminTokens(EndpointResource):
     """ List all tokens for all users """
 
     labels = ["authentication"]

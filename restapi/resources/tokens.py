@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with
+from flask_apispec import marshal_with
 from marshmallow import fields
 
 from restapi import decorators
@@ -19,7 +19,7 @@ class TokenSchema(OutputSchema):
     last_access = fields.DateTime()
 
 
-class Tokens(MethodResource, EndpointResource):
+class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
     baseuri = "/auth"

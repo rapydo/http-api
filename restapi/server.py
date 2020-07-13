@@ -10,7 +10,7 @@ import sentry_sdk
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
-from flask_apispec import FlaskApiSpec, MethodResource
+from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
@@ -193,19 +193,8 @@ def create_app(
                 try:
                     mem.docs.register(endpoint.cls)
                 except TypeError as e:
-                    # log.warning("{} on {}", type(e), endpoint.cls)
-                    # Enable this warning to start conversion to FlaskFastApi
-                    # Find other warning like this by searching:
-                    # **FASTAPI**
-                    # for m, v in endpoint.custom['params'].items():
-                    #     log.critical("{} = {}", m, v)
-                    if MethodResource in endpoint.cls.__bases__:
-                        log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
-                    elif endpoint.iscore:
-                        if endpoint.cls.__name__ != "SwaggerSpecifications":
-                            log.warning("Core endpoint: {}", endpoint.cls.__name__)
-                    else:
-                        log.verbose("{} on {}", type(e), endpoint.cls)
+                    print(e)
+                    log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)

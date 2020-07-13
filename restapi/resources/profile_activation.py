@@ -1,7 +1,7 @@
 import os
 
 import jwt
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields
 
 from restapi.confs import get_frontend_url, get_project_configuration
@@ -42,7 +42,7 @@ def send_activation_link(auth, user):
     auth.save_token(user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
-class ProfileActivation(MethodResource, EndpointResource):
+class ProfileActivation(EndpointResource):
     depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
     baseuri = "/auth"
     labels = ["base", "profiles"]

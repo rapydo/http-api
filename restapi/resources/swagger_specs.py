@@ -1,5 +1,4 @@
 from flask import jsonify
-from flask_apispec import MethodResource
 from glom import glom
 
 from restapi.confs import get_backend_url
@@ -38,7 +37,7 @@ class SwaggerSpecifications(EndpointResource):
         return jsonify(specs)
 
 
-class NewSwaggerSpecifications(MethodResource, EndpointResource):
+class NewSwaggerSpecifications(EndpointResource):
     """
     Specifications output throught Swagger (open API) standards
     """

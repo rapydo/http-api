@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytz
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 
 from restapi import decorators
@@ -34,7 +34,7 @@ class Credentials(InputSchema):
     totp_code = fields.Str(required=False)
 
 
-class Login(MethodResource, EndpointResource):
+class Login(EndpointResource):
     """ Let a user login by using the configured method """
 
     baseuri = "/auth"

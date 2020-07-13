@@ -1,11 +1,9 @@
-from flask_apispec import MethodResource
-
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 
 if TESTING:
 
-    class TestAuthentication(MethodResource, EndpointResource):
+    class TestAuthentication(EndpointResource):
 
         _GET = {
             "/tests/authentication": {

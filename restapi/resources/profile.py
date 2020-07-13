@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
+from flask_apispec import marshal_with, use_kwargs
 from marshmallow import fields, validate
 
 from restapi import decorators
@@ -66,7 +66,7 @@ def getProfileData():
     return schema()
 
 
-class Profile(MethodResource, EndpointResource):
+class Profile(EndpointResource):
     """ Current user informations """
 
     baseuri = "/auth"

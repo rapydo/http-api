@@ -1,12 +1,10 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
 
-class Verify(MethodResource, EndpointResource):
+class Verify(EndpointResource):
     """ Service connection testing """
 
     ALLOW_HTML_RESPONSE = True

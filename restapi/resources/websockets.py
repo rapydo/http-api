@@ -1,5 +1,4 @@
 from flask import Response, request
-from flask_apispec import MethodResource
 from gripcontrol import (
     WebSocketEvent,
     create_grip_channel_header,
@@ -14,7 +13,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 
-class PushpinWebSocket(MethodResource, EndpointResource):
+class PushpinWebSocket(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
@@ -93,7 +92,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         raise RestApiException("Cannot understand websocket request", status_code=400)
 
 
-class PushpinHTTPStream(MethodResource, EndpointResource):
+class PushpinHTTPStream(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 

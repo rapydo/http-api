@@ -1,6 +1,6 @@
 from urllib import parse as urllib_parse
 
-from flask import Response, jsonify, render_template, request
+from flask import render_template, request
 from marshmallow import fields, validate
 from marshmallow.utils import _Missing
 
@@ -93,7 +93,14 @@ def log_response(response):
 class ResponseMaker:
     @staticmethod
     def get_accepted_formats():
-
+        """
+        Possible outputs:
+        '*/*'
+        'application/json'
+        'text/html'
+        'application/xml'
+        'text/csv'
+        """
         for val in request.headers:
             if val[0] == "Accept":
                 return [x.strip() for x in val[1].split(",")]
@@ -111,41 +118,6 @@ class ResponseMaker:
         html_page = render_template("index.html", **html_data)
 
         return html_page, headers
-
-    @staticmethod
-    def respond_to_browser(content, code, headers):
-        log.debug("Request from a browser: reply with HTML.")
-
-        is_error = code >= 400
-        if isinstance(content, list):
-            content = content.pop()
-        html_data = {"body_content": content, "is_error": is_error}
-        html_page = render_template("index.html", **html_data)
-        return Response(html_page, mimetype="text/html", status=code, headers=headers)
-
-    @staticmethod
-    def generate_response(content, code, headers, head_method):
-        """
-        Generating from our user/custom/internal response
-        the data necessary for a Flask response (make_response() method):
-        a tuple (content, status, headers)
-        """
-
-        # Possible outputs:
-        # '*/*'
-        # 'application/json'
-        # 'text/html'
-        # 'application/xml'
-        # 'text/csv'
-        accepted_formats = ResponseMaker.get_accepted_formats()
-
-        if "text/html" in accepted_formats:
-            return ResponseMaker.respond_to_browser(content, code, headers)
-
-        content = jsonify(content)
-
-        # return a standard flask response tuple(content, code, headers)
-        return (content, code, headers)
 
     @staticmethod
     def respond_with_schema(schema):
@@ -225,17 +197,13 @@ class ResponseMaker:
                         )
 
                 fields.append(f)
-            return ResponseMaker.generate_response(
-                content=fields, code=200, headers={}, head_method=False
-            )
+            # fields = jsonify(fields)
+            return (fields, 200, {})
         except BaseException as e:  # pragma: no cover
             log.error(e)
-            return ResponseMaker.generate_response(
-                content={"Server internal error": "Failed to retrieve input schema"},
-                code=500,
-                headers={},
-                head_method=False,
-            )
+            content = {"Server internal error": "Failed to retrieve input schema"}
+            # content = jsonify(content)
+            return (content, 500, {})
 
     @staticmethod
     def get_schema_type(schema):

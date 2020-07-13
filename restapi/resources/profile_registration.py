@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 
 from restapi.confs import get_project_configuration
@@ -29,7 +29,7 @@ if send_mail_is_active():
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
 
-    class ProfileRegistration(MethodResource, EndpointResource):
+    class ProfileRegistration(EndpointResource):
         """ Current user informations """
 
         baseuri = "/auth"

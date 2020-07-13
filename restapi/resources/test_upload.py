@@ -1,5 +1,5 @@
 # from flask import request
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields
 
 from restapi import decorators
@@ -10,7 +10,7 @@ from restapi.utilities.logs import log
 
 if TESTING:
 
-    class TestUpload(MethodResource, EndpointResource, Uploader):
+    class TestUpload(EndpointResource, Uploader):
 
         labels = ["tests"]
         # Set an invalid baseuri to test the automatic fallback to /api

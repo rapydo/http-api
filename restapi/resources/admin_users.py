@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
+from flask_apispec import marshal_with, use_kwargs
 from marshmallow import fields, validate
 
 from restapi import decorators
@@ -191,7 +191,7 @@ def getInputSchema(is_put_method):
     return InputSchema.from_dict(attributes)
 
 
-class AdminUsers(MethodResource, EndpointResource):
+class AdminUsers(EndpointResource):
 
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == "neo4j"

@@ -1,5 +1,5 @@
 import jwt
-from flask_apispec import MethodResource, use_kwargs
+from flask_apispec import use_kwargs
 from marshmallow import fields, validate
 
 from restapi.confs import get_frontend_url, get_project_configuration
@@ -33,7 +33,7 @@ def send_password_reset_link(uri, title, reset_email):
 # This endpoint require the server to send the reset token via email
 if send_mail_is_active():
 
-    class RecoverPassword(MethodResource, EndpointResource):
+    class RecoverPassword(EndpointResource):
 
         baseuri = "/auth"
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]

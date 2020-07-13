@@ -1,4 +1,3 @@
-# from flask_apispec import MethodResource
 # from restapi.rest.definition import EndpointResource
 # from restapi import decorators
 # from restapi.services.detect import detector
@@ -9,7 +8,7 @@
 # you get a queue endpoint for free
 # if detector.check_availability('celery'):
 
-#     class Queue(MethodResource, EndpointResource):
+#     class Queue(EndpointResource):
 
 #         depends_on = ["CELERY_ENABLE"]
 #         labels = ["tasks"]

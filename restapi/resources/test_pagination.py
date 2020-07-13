@@ -1,5 +1,3 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
@@ -8,7 +6,7 @@ from restapi.rest.definition import EndpointResource
 
 if TESTING:
 
-    class TestPagination(MethodResource, EndpointResource):
+    class TestPagination(EndpointResource):
 
         # 150 integers from 1 to 150
         values = list(range(1, 151))

@@ -28,7 +28,7 @@ DEFAULT_PERPAGE = 10
 
 ###################
 # Extending the concept of rest generic resource
-class EndpointResource(Resource):
+class EndpointResource(MethodResource, Resource):
 
     baseuri = API_URL
     depends_on = []
@@ -257,55 +257,25 @@ class EndpointResource(Resource):
             log.warning("RESPONSE: Warning, no data and no errors")
             code = 204
 
-        # Request from a ApiSpec endpoint, skipping all flask-related following steps
-        if isinstance(self, MethodResource):
+        # Do not bypass FlaskApiSpec response management otherwise marshalling
+        # will be not applied. Consider the following scenario:
+        # @marshal(OnlyOneFieldSchema)
+        # def get():
+        #    return self.response(all_information)
+        # If you bypass the marshalling you will expose the all_information by
+        # retrieving it from a browser (or by forcing the Accept header)
+        # i.e. html responses will only work on non-MethodResource endpoints
+        # If you accept the risk or you do not use marshalling add to endpoint class
+        # ALLOW_HTML_RESPONSE = True
+        if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
+            accepted_formats = ResponseMaker.get_accepted_formats()
+            if "text/html" in accepted_formats:
+                content, headers = ResponseMaker.get_html(content, code, headers)
+                return Response(
+                    content, mimetype="text/html", status=code, headers=headers
+                )
 
-            # Do not bypass FlaskApiSpec response management otherwise marshalling
-            # will be not applied. Consider the following scenario:
-            # @marshal(OnlyOneFieldSchema)
-            # def get():
-            #    return self.response(all_information)
-            # If you bypass the marshalling you will expose the all_information by
-            # retrieving it from a browser (or by forcing the Accept header)
-            # i.e. html responses will only work on non-MethodResource endpoints
-            # If you accept the risk or you do not use marshalling add to endpoint class
-            # ALLOW_HTML_RESPONSE = True
-            if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
-                accepted_formats = ResponseMaker.get_accepted_formats()
-                if "text/html" in accepted_formats:
-                    content, headers = ResponseMaker.get_html(content, code, headers)
-                    return Response(
-                        content, mimetype="text/html", status=code, headers=headers
-                    )
-
-            return (content, code, headers)
-
-        # to be deprecated
-
-        # Convert the response in a Flask response, i.e. make_response(tuple)
-        r = ResponseMaker.generate_response(
-            content=content, code=code, headers=headers, head_method=head_method
-        )
-
-        response = make_response(r)
-
-        # Avoid duplicated Content-type
-        content_type = None  # pragma: no cover
-        for idx, val in enumerate(response.headers):  # pragma: no cover
-            if val[0] != "Content-Type":
-                continue
-            if content_type is None:
-                content_type = idx
-                continue
-            log.warning(
-                "Duplicated Content-Type, removing {} and keeping {}",
-                response.headers[content_type][1],
-                val[1],
-            )
-            response.headers.pop(content_type)
-            break
-
-        return response
+        return (content, code, headers)
 
     def empty_response(self):
         """ Empty response as defined by the protocol """

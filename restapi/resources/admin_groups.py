@@ -1,4 +1,4 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
+from flask_apispec import marshal_with, use_kwargs
 from marshmallow import fields, validate
 
 from restapi import decorators
@@ -66,7 +66,7 @@ if detector.check_availability("neo4j"):
     def get_PUT_input(request):
         return InputGroup(strip_required=True)
 
-    class AdminGroups(MethodResource, EndpointResource):
+    class AdminGroups(EndpointResource):
 
         labels = ["admin"]
         _GET = {
