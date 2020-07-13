@@ -1,12 +1,11 @@
 from urllib import parse as urllib_parse
 
-from flask import render_template, request
-from marshmallow import fields, validate
+from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
-from restapi.models import GET_SCHEMA_KEY
+from restapi.models import GET_SCHEMA_KEY, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
@@ -197,13 +196,11 @@ class ResponseMaker:
                         )
 
                 fields.append(f)
-            # fields = jsonify(fields)
-            return (fields, 200, {})
+            return (jsonify(fields), 200, {})
         except BaseException as e:  # pragma: no cover
             log.error(e)
             content = {"Server internal error": "Failed to retrieve input schema"}
-            # content = jsonify(content)
-            return (content, 500, {})
+            return (jsonify(content), 500, {})
 
     @staticmethod
     def get_schema_type(schema):
