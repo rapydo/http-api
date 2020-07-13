@@ -1,11 +1,10 @@
 import inspect
 
-import webargs
 from marshmallow import Schema as MarshmallowSchema
-from marshmallow import fields  # also imported from endpoints
 from marshmallow import validate  # use as alias from endpoints
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
+from webargs import fields  # also imported from endpoints
 
 from restapi.utilities.logs import log
 
@@ -145,7 +144,7 @@ class Neo4jChoice(fields.Field):
         return value
 
 
-class UniqueDelimitedList(webargs.fields.DelimitedList):
+class UniqueDelimitedList(fields.DelimitedList):
     def _deserialize(self, value, attr, data, **kwargs):
         values = super()._deserialize(value, attr, data, **kwargs)
 

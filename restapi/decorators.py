@@ -2,7 +2,7 @@ from functools import wraps
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
-from flask_apispec import use_kwargs
+from flask_apispec import marshal_with, use_kwargs  # also imported from endpoints
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
@@ -18,6 +18,7 @@ from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for e
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
+log.verbose("Marshal loaded {}", marshal_with)
 
 
 def catch_errors(magic=False, **kwargs):

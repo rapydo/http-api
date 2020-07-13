@@ -354,7 +354,7 @@ class BaseTests:
 
     def buildData(self, schema):
         """
-            Input: a webargs schema
+            Input: a Marshmallow schema
             Output: a dictionary of random data
         """
         data = {}
