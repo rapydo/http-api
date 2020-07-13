@@ -3,7 +3,7 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
-from flask import Response, make_response
+from flask import Response
 from flask_apispec import MethodResource
 from flask_restful import Resource, reqparse, request
 from jsonschema.exceptions import ValidationError
@@ -61,11 +61,7 @@ class EndpointResource(MethodResource, Resource):
 
         return auth
 
-    # @staticmethod
-    # def get_service_instance(service_name, **kwargs):
-    #     return detector.get_service_instance(service_name, **kwargs)
-
-    # to be deprecated (in conjuction with get_input)
+    # to be removed in conjuction with get_input
     def init_parameters(self):
         # Make sure you can parse arguments at every call
         self._args = {}

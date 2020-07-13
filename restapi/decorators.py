@@ -22,16 +22,16 @@ log.verbose("Marshal loaded {}", marshal_with)
 
 
 def catch_errors(magic=False, **kwargs):
-
-    # Deprecated since 0.7.5
-    if not magic:
-        log.warning(
-            "Deprecated use of catch_errors, just remove it... now it is automatic"
-        )
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
     """
+
+    # Deprecated since 0.7.5
+    if not magic:  # pragma: no cover
+        log.warning(
+            "Deprecated use of catch_errors, just remove it... now it is automatic"
+        )
 
     def decorator(func):
         @wraps(func)

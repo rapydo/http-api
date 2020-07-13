@@ -29,6 +29,8 @@ from restapi.utilities.meta import Meta
 
 CONF_FOLDERS = Env.load_group(label="project_confs")
 
+log.verbose("Detector loaded: {}", detector)
+
 
 @ClassOfAttributes
 class EndpointElements:
