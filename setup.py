@@ -31,19 +31,19 @@ setup(
         # Flask and plugins
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.8.8",
+        "flask-apispec==0.9.0",
         "Flask-Cors==3.0.8",
-        "Flask-SQLAlchemy==2.4.1",
+        "Flask-SQLAlchemy==2.4.3",
         "Flask-Migrate==2.5.3",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
         # Tests
         "pytest-flask==1.0.0",
-        "pytest-cov==2.8.1",
+        "pytest-cov==2.10.0",
         # "pytest-mock==3.1.1",  # not used...
-        "schemathesis==1.6.2",
-        "Faker==4.1.0",
+        "schemathesis==2.1.0",
+        "Faker==4.1.1",
         # DB and services drivers
         "neomodel==3.3.2",
         "psycopg2-binary",
@@ -52,7 +52,7 @@ setup(
         "redis",
         "pika",
         "celery",
-        "flower==0.9.4",
+        "flower==0.9.5",
         "celery-redbeat==1.0.0",
         "celerybeat-mongo==0.2.0",
         # TOTP
@@ -71,7 +71,7 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.14.4",
+        "sentry-sdk[flask]==0.16.1",
     ],
     classifiers=[
         "Programming Language :: Python",
