@@ -1,5 +1,4 @@
-from flask_apispec import use_kwargs
-
+from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource
@@ -31,7 +30,7 @@ if TESTING:
             },
         }
 
-        @use_kwargs({"stream": fields.Bool()}, locations=["query"])
+        @decorators.use_kwargs({"stream": fields.Bool()}, locations=["query"])
         def get(self, fname=None, stream=False):
 
             if stream:

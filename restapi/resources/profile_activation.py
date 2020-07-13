@@ -1,8 +1,8 @@
 import os
 
 import jwt
-from flask_apispec import use_kwargs
 
+from restapi import decorators
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.exceptions import RestApiException
 from restapi.models import fields
@@ -114,7 +114,7 @@ class ProfileActivation(EndpointResource):
 
         return self.response("Account activated")
 
-    @use_kwargs({"username": fields.Email(required=True)})
+    @decorators.use_kwargs({"username": fields.Email(required=True)})
     def post(self, username):
 
         user = self.auth.get_user_object(username=username)

@@ -1,5 +1,4 @@
-from flask_apispec import marshal_with
-
+from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
@@ -56,7 +55,7 @@ if TESTING and detector.check_availability("neo4j"):
         }
 
         @graph_transactions
-        @marshal_with(Output, code=200)
+        @decorators.marshal_with(Output, code=200)
         def get(self, test):
             self.neo4j = self.get_service_instance("neo4j")
             try:

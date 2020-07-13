@@ -1,5 +1,4 @@
-from flask_apispec import use_kwargs
-
+from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
@@ -45,7 +44,7 @@ if send_mail_is_active():
             }
         }
 
-        @use_kwargs(User)
+        @decorators.use_kwargs(User)
         def post(self, **kwargs):
             """ Register new user """
 

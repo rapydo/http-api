@@ -1,5 +1,3 @@
-from flask_apispec import marshal_with, use_kwargs
-
 from restapi import decorators
 from restapi.models import InputSchema, OutputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
@@ -97,7 +95,7 @@ class Profile(EndpointResource):
     }
 
     @decorators.auth.required()
-    @marshal_with(getProfileData(), code=200)
+    @decorators.marshal_with(getProfileData(), code=200)
     def get(self):
 
         current_user = self.get_user()
@@ -124,7 +122,7 @@ class Profile(EndpointResource):
         return self.response(data)
 
     @decorators.auth.required()
-    @use_kwargs(NewPassword)
+    @decorators.use_kwargs(NewPassword)
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
@@ -143,7 +141,7 @@ class Profile(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.required()
-    @use_kwargs(UserProfile)
+    @decorators.use_kwargs(UserProfile)
     def patch(self, **kwargs):
         """ Update profile for current user """
 

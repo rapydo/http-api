@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytz
-from flask_apispec import use_kwargs
 
 from restapi import decorators
 from restapi.exceptions import Forbidden
@@ -51,7 +50,7 @@ class Login(EndpointResource):
         }
     }
 
-    @use_kwargs(Credentials)
+    @decorators.use_kwargs(Credentials)
     def post(
         self,
         username,

@@ -1,6 +1,3 @@
-# from flask import request
-from flask_apispec import use_kwargs
-
 from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
 from restapi.models import fields
@@ -39,7 +36,7 @@ if TESTING:
             },
         }
 
-        @use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs({"force": fields.Bool()})
         def put(self, chunked=None, force=False):
 
             if chunked:
@@ -57,7 +54,7 @@ if TESTING:
             return response
 
         @decorators.init_chunk_upload
-        @use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs({"force": fields.Bool()})
         def post(self, force=False, **kwargs):
 
             filename = "fixed.filename"

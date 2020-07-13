@@ -1,5 +1,3 @@
-from flask_apispec import marshal_with, use_kwargs
-
 from restapi import decorators
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
@@ -105,7 +103,7 @@ if detector.check_availability("neo4j"):
 
         @decorators.catch_graph_exceptions
         @decorators.auth.required(roles=["admin_root"])
-        @marshal_with(Group(many=True), code=200)
+        @decorators.marshal_with(Group(many=True), code=200)
         def get(self):
 
             self.graph = self.get_service_instance("neo4j")
@@ -117,7 +115,7 @@ if detector.check_availability("neo4j"):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=["admin_root"])
-        @use_kwargs(get_POST_input)
+        @decorators.use_kwargs(get_POST_input)
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
@@ -140,7 +138,7 @@ if detector.check_availability("neo4j"):
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.auth.required(roles=["admin_root"])
-        @use_kwargs(get_PUT_input)
+        @decorators.use_kwargs(get_PUT_input)
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")

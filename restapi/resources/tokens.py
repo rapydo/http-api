@@ -1,5 +1,3 @@
-from flask_apispec import marshal_with
-
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
 from restapi.models import OutputSchema, fields
@@ -37,7 +35,7 @@ class Tokens(EndpointResource):
         },
     }
 
-    @marshal_with(TokenSchema(many=True), code=200)
+    @decorators.marshal_with(TokenSchema(many=True), code=200)
     @decorators.auth.required()
     def get(self):
 

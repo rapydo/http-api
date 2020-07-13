@@ -1,8 +1,5 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from flask_apispec import marshal_with
-# from flask_apispec import use_kwargs
-
 # from restapi.models import fields, validate, InputSchema, OutputSchema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
@@ -218,7 +215,7 @@
 #         return False
 
 #     @decorators.auth.required(roles=['local_admin'])
-#     @marshal_with(get_output_schema(), code=200)
+#     @decorators.marshal_with(get_output_schema(), code=200)
 #     def get(self, user_id=None):
 
 #         data = []
@@ -244,7 +241,7 @@
 #         return self.response(data)
 
 #     @decorators.auth.required(roles=['local_admin'])
-#     @use_kwargs(get_input_schema())
+#     @decorators.use_kwargs(get_input_schema())
 #     def post(self, **kwargs):
 
 #         roles, roles_keys = parse_roles(kwargs)
@@ -298,7 +295,7 @@
 #         return self.response(user.uuid)
 
 #     @decorators.auth.required(roles=['local_admin'])
-#     @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
+#     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     def put(self, user_id, **kwargs):
 
 #         user = self.auth.get_users(user_id)

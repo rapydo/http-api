@@ -1,6 +1,6 @@
 import jwt
-from flask_apispec import use_kwargs
 
+from restapi import decorators
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
@@ -61,7 +61,7 @@ if send_mail_is_active():
             }
         }
 
-        @use_kwargs({"reset_email": fields.Email(required=True)})
+        @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
         def post(self, reset_email):
 
             reset_email = reset_email.lower()
@@ -104,7 +104,7 @@ if send_mail_is_active():
 
             return self.response(msg)
 
-        @use_kwargs(
+        @decorators.use_kwargs(
             {
                 "new_password": fields.Str(
                     required=False,

@@ -1,5 +1,3 @@
-from flask_apispec import marshal_with, use_kwargs
-
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
@@ -242,7 +240,7 @@ class AdminUsers(EndpointResource):
     }
 
     @decorators.auth.required(roles=["admin_root"])
-    @marshal_with(get_output_schema(), code=200)
+    @decorators.marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
 
         users = self.auth.get_users(user_id)
@@ -254,7 +252,7 @@ class AdminUsers(EndpointResource):
         return self.response(users)
 
     @decorators.auth.required(roles=["admin_root"])
-    @use_kwargs(getPOSTSchema)
+    @decorators.use_kwargs(getPOSTSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -289,7 +287,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.required(roles=["admin_root"])
-    @use_kwargs(getPUTSchema)
+    @decorators.use_kwargs(getPUTSchema)
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)

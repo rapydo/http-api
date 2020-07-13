@@ -1,5 +1,3 @@
-from flask_apispec import marshal_with
-
 from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.models import OutputSchema, fields
@@ -39,7 +37,7 @@ class AdminTokens(EndpointResource):
         },
     }
 
-    @marshal_with(TokenAdminSchema(many=True), code=200)
+    @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.auth.required(roles=["admin_root"])
     def get(self):
 
