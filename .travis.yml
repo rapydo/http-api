@@ -31,7 +31,6 @@ script:
   - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
-  - export TESTING=1
   - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
 
@@ -86,7 +85,7 @@ script:
   - wget https://codecov.io/bash -O codecov_report
 
   # Tests in dev mode
-  - rapydo -p prj init
+  - rapydo --testing --project prj init
   - rapydo pull
 
   - >
