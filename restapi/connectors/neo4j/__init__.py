@@ -431,7 +431,7 @@ class Authentication(BaseAuthentication):
                 t["IP"] = token.IP
                 t["location"] = token.location
                 if get_all:
-                    t["user"] = self.db.getSingleLinkedNode(token.emitted_for)
+                    t["user"] = token.emitted_for.single()
 
                 tokens_list.append(t)
 
