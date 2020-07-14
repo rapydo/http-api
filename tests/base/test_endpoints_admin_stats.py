@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from restapi.tests import API_URI, BaseTests
 
@@ -83,30 +83,79 @@ class TestApp(BaseTests):
         assert "blocks_sent" in stats["io"]
         assert stats["io"]["blocks_sent"] >= 0
 
-    #     # ### NETWORK ###
-    #     assert "network_latency" in stats
-    #     "avg": 31.79,
-    #     "max": 50.32,
-    #     "min": 21.64
-    #     # ### PROCS ###
-    #     assert "procs" in stats
-    #     "uninterruptible_sleep": 0,
-    #     "waiting_for_run": 0
-    #     # ### RAM ###
-    #     assert "ram" in stats
-    #     "active": 11191,
-    #     "buffer": 552,
-    #     "cache": 3938,
-    #     "free": 987,
-    #     "inactive": 2333,
-    #     "total": 15894,
-    #     "used": 10416
-    #     # ### SWAP ###
-    #     assert "swap" in stats
-    # "": {
-    #     "free": 1947,
-    #     "from_disk": 0,
-    #     "to_disk": 1,
-    #     "total": 2047,
-    #     "used": 100
-    # }
+        # ### NETWORK ###
+        assert "network_latency" in stats
+
+        assert "min" in stats["network_latency"]
+        assert stats["network_latency"]["min"] >= 0
+        assert stats["network_latency"]["min"] <= stats["network_latency"]["avg"]
+        assert stats["network_latency"]["min"] <= stats["network_latency"]["max"]
+
+        assert "avg" in stats["network_latency"]
+        assert stats["network_latency"]["avg"] >= 0
+        assert stats["network_latency"]["avg"] >= stats["network_latency"]["min"]
+        assert stats["network_latency"]["avg"] <= stats["network_latency"]["max"]
+
+        assert "max" in stats["network_latency"]
+        assert stats["network_latency"]["max"] >= 0
+        assert stats["network_latency"]["max"] >= stats["network_latency"]["min"]
+        assert stats["network_latency"]["max"] >= stats["network_latency"]["avg"]
+
+        # ### PROCS ###
+        assert "procs" in stats
+
+        assert "uninterruptible_sleep" in stats["procs"]
+        assert stats["procs"]["uninterruptible_sleep"] >= 0
+
+        assert "waiting_for_run" in stats["procs"]
+        assert stats["procs"]["waiting_for_run"] >= 0
+
+        # ### RAM ###
+        assert "ram" in stats
+
+        assert "total" in stats["ram"]
+        assert stats["ram"]["total"] >= 0
+
+        assert "used" in stats["ram"]
+        assert stats["ram"]["used"] >= 0
+        assert stats["ram"]["used"] <= stats["ram"]["total"]
+
+        assert "active" in stats["ram"]
+        assert stats["ram"]["active"] >= 0
+        assert stats["ram"]["active"] <= stats["ram"]["total"]
+
+        assert "buffer" in stats["ram"]
+        assert stats["ram"]["buffer"] >= 0
+        assert stats["ram"]["buffer"] <= stats["ram"]["total"]
+
+        assert "cache" in stats["ram"]
+        assert stats["ram"]["cache"] >= 0
+        assert stats["ram"]["cache"] <= stats["ram"]["total"]
+
+        assert "free" in stats["ram"]
+        assert stats["ram"]["free"] >= 0
+        assert stats["ram"]["free"] <= stats["ram"]["total"]
+
+        assert "inactive" in stats["ram"]
+        assert stats["ram"]["inactive"] >= 0
+        assert stats["ram"]["inactive"] <= stats["ram"]["total"]
+
+        # ### SWAP ###
+        assert "swap" in stats
+
+        assert "total" in stats["swap"]
+        assert stats["swap"]["total"] >= 0
+
+        assert "free" in stats["swap"]
+        assert stats["swap"]["free"] >= 0
+        assert stats["swap"]["free"] <= stats["swap"]["total"]
+
+        assert "used" in stats["swap"]
+        assert stats["swap"]["used"] >= 0
+        assert stats["swap"]["used"] <= stats["swap"]["total"]
+
+        assert "from_disk" in stats["swap"]
+        assert stats["swap"]["from_disk"] >= 0
+
+        assert "to_disk" in stats["swap"]
+        assert stats["swap"]["to_disk"] >= 0
