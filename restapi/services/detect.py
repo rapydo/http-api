@@ -234,7 +234,10 @@ class Detector:
 
             self.services[connector_name]["connector"] = connector_instance
 
-            instances[connector_name] = connector_instance.get_instance()
+            try:
+                instances[connector_name] = connector_instance.get_instance()
+            except ServiceUnavailable:
+                log.exit("Service unavailable: {}", connector_name)
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")
