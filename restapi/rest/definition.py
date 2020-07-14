@@ -5,7 +5,7 @@ we could provide back then
 
 from flask import Response
 from flask_apispec import MethodResource
-from flask_restful import Resource, reqparse, request
+from flask_restful import Resource, request
 from jsonschema.exceptions import ValidationError
 
 from restapi.confs import API_URL
@@ -15,7 +15,6 @@ from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import ADMIN_ROLE, LOCAL_ADMIN_ROLE
 from restapi.services.detect import AUTH_NAME, detector
 from restapi.swagger import input_validation
-from restapi.utilities.globals import mem
 from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
@@ -42,16 +41,7 @@ class EndpointResource(MethodResource, Resource):
 
         self.auth = self.load_authentication()
         self.get_service_instance = detector.get_service_instance
-        try:
-            # to be deprecated
-            self.init_parameters()
-        except RuntimeError:
-            # Once converted everything to FastApi remove this init_parameters
-            # Find other warning like this by searching:
-            # **FASTAPI**
-            # log.warning(
-            #     "self.init_parameters should be removed since handle by webargs")
-            pass
+        self._json_args = {}
 
     @staticmethod
     def load_authentication():
@@ -61,101 +51,25 @@ class EndpointResource(MethodResource, Resource):
 
         return auth
 
-    # to be removed in conjuction with get_input
-    def init_parameters(self):
-        # Make sure you can parse arguments at every call
-        self._args = {}
-        self._json_args = {}
-
-        # Query parameters
-        self._parser = reqparse.RequestParser()
-
-        classname = self.__class__.__name__
-        uri = str(request.url_rule)
-        method = request.method.lower()
-
-        # FIXME: this works only for 'query' parameters
-        # recover from the global mem parameters query parameters
-        current_params = (
-            mem.customizer._query_params.get(classname, {}).get(uri, {}).get(method, {})
-        )
-
-        # Deprecated since 0.7.4
-        if len(current_params) > 0:  # pragma: no cover
-
-            act = "store"  # store is normal, append is a list
-            loc = ["headers", "values"]  # multiple locations
-            trim = True
-
-            for param, data in current_params.items():
-
-                # FIXME: Add a method to convert types swagger <-> flask
-                tmptype = data.get("type", "string")
-                if tmptype == "boolean":
-                    mytype = bool
-                if tmptype == "number":
-                    mytype = int
-                else:
-                    mytype = str
-
-                # TO CHECK: I am creating an option to handle arrays
-                if tmptype == "select":
-                    act = "append"
-
-                self._parser.add_argument(
-                    param,
-                    type=mytype,
-                    default=data.get("default", None),
-                    required=data.get("required", False),
-                    trim=trim,
-                    action=act,
-                    location=loc,
-                )
-                log.verbose("Accept param '{}' type {}", param, mytype)
-
-    # to be deprecated (and after: init_parameters)
+    # to be deprecated
     def get_input(self):  # pragma: no cover
-        """
-        Recover parameters from current requests.
-
-        Note that we talk about JSON only when having a PUT method,
-        while there is URL encoding for GET, DELETE
-        and Headers encoding with POST.
-
-        Non-JSON Parameters are already parsed at this point,
-        while JSON parameters may be already saved from another previous call
-        """
-
-        # Parameters may be necessary at any method: Parse them all.
-        self._args = self._parser.parse_args()
 
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
-        if len(self._json_args) < 1 and request.mimetype != "application/octet-stream":
+        if not self._json_args and request.mimetype != "application/octet-stream":
             try:
                 self._json_args = request.get_json(force=True)
             except Exception as e:
                 log.verbose("Error retrieving input parameters, {}", e)
 
             # json payload and formData cannot co-exist
-            if len(self._json_args) < 1:
+            if not self._json_args:
                 self._json_args = request.form
 
-            # NOTE: if JSON all parameters are just string at the moment...
-            for key, value in self._json_args.items():
+        if self._json_args:
+            log.verbose("Parameters {}", obfuscate_dict(self._json_args))
 
-                if value is None:
-                    continue
-                # TODO: remove and check
-                # how to fix the `request.form` emptiness
-
-                if key in self._args and self._args[key] is not None:
-                    key += "_json"
-                self._args[key] = value
-
-        if len(self._args) > 0:
-            log.verbose("Parameters {}", obfuscate_dict(self._args))
-        return self._args
+        return self._json_args
 
     # Deprecated since 0.7.4
     def get_paging(self, force_read_parameters=False):  # pragma: no cover

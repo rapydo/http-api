@@ -48,7 +48,6 @@ class Customizer:
         self._endpoints = []
         self._definitions = {}
         self._configurations = {}
-        self._query_params = {}
 
     def load_configuration(self):
         # Reading configuration

@@ -69,8 +69,6 @@ class Swagger:
         self._paths = {}
         # Original paths as flask should map
         self._original_paths = {}
-        # The complete set of query parameters for all classes
-        self._qparams = {}
         self._used_swagger_tags = set()
         self._private_endpoints = {}
 
@@ -134,7 +132,6 @@ class Swagger:
                 newuri = newuri.replace(f"<{parameter}>", f"{{{pname}}}")
 
             # cycle parameters and add them to the endpoint class
-            query_params = []
             for param in specs["parameters"]:
 
                 # Remove custom attributes from parameters to prevent validation errors
@@ -153,9 +150,8 @@ class Swagger:
                             for k in option:
                                 param["enum"].append(k)
 
-                # handle parameters in URI for Flask
+                # Deprecated since 0.7.4
                 if param["in"] == "query":  # pragma: no cover
-                    # Deprecated since 0.7.4
                     log.warning(
                         "{}.py: deprecated query parameter '{}' in {} {}",
                         endpoint.cls.__name__,
@@ -163,13 +159,6 @@ class Swagger:
                         method.upper(),
                         label,
                     )
-                    query_params.append(param)
-
-            # Deprecated since 0.7.4
-            if len(query_params) > 0:  # pragma: no cover
-                self.query_parameters(
-                    endpoint.cls, method=method, uri=uri, params=query_params
-                )
 
             # Swagger does not like empty arrays
             if len(specs["parameters"]) < 1:
@@ -198,21 +187,6 @@ class Swagger:
             log.verbose("Built definition '{}:{}'", method.upper(), newuri)
 
         return endpoint
-
-    # Deprecated since 0.7.4
-    def query_parameters(self, cls, method, uri, params):  # pragma: no cover
-        """
-        apply decorator to endpoint for query parameters
-        # self._qparams[classname][URI][method][name]
-        """
-
-        clsname = cls.__name__
-        self._qparams.setdefault(clsname, {})
-        self._qparams[clsname].setdefault(uri, {})
-        self._qparams[clsname][uri].setdefault(method, {})
-
-        for param in params:
-            self._qparams[clsname][uri][method].setdefault(param["name"], param)
 
     def swaggerish(self):
         """
@@ -276,10 +250,6 @@ class Swagger:
                 self._endpoints[key] = self.read_my_swagger(method, endpoint, mapping)
 
         self._customizer._private_endpoints = self._private_endpoints
-        ###################
-        # Save query parameters globally
-        # Deprecated since 0.7.4
-        self._customizer._query_params = self._qparams
         output["paths"] = self._paths
 
         ###################
