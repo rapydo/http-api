@@ -72,7 +72,7 @@ class TestApp(BaseTests):
         assert stats["disk"]["occupacy"] <= 100
 
         p = stats["disk"]["used_disk_space"] / stats["disk"]["total_disk_space"]
-        assert abs(stats["disk"]["occupacy"] - round(p, 2)) < 0.5
+        assert abs(stats["disk"]["occupacy"] - round(100 * p, 2)) < 0.5
 
         # ### IO ###
         assert "io" in stats
