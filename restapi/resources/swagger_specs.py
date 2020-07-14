@@ -26,8 +26,7 @@ class SwaggerSpecifications(EndpointResource):
     def get(self):
 
         # NOTE: swagger dictionary is read only once, at server init time
-        specs = mem.customizer._definitions
-
+        specs = mem.customizer.swagger_specs
         api_url = get_backend_url()
         scheme, host = api_url.rstrip("/").split("://")
         specs["host"] = host

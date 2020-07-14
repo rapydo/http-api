@@ -46,7 +46,7 @@ class Customizer:
     def __init__(self):
 
         self._endpoints = []
-        self._definitions = {}
+        self.swagger_specs = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -375,4 +375,4 @@ class Customizer:
         if not swag.validation(swag_dict):  # pragma: no cover
             log.exit("Current swagger definition is invalid")
 
-        self._definitions = swag_dict
+        self.swagger_specs = swag_dict

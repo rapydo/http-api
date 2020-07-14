@@ -45,7 +45,7 @@ FLASK_TO_SWAGGER_TYPES = {
 # to be deprecated
 def input_validation(json_parameters, definitionName):  # pragma: no cover
 
-    definition = mem.customizer._definitions["definitions"][definitionName]
+    definition = mem.customizer.swagger_specs["definitions"][definitionName]
     spec = mem.customizer._validated_spec
 
     # Can raise jsonschema.exceptions.ValidationError
