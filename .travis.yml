@@ -114,7 +114,7 @@ script:
 
   # Basic production test
   - rapydo remove --all
-  - rapydo --production init --force
+  - rapydo --production --testing init --force
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
