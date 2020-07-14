@@ -113,7 +113,7 @@ class NewSwaggerSpecifications(EndpointResource):
         scheme, host = api_url.rstrip("/").split("://")
         specs["host"] = host
         specs["schemes"] = [scheme]
-        specs["tags"] = mem.customizer._configurations["cleaned_tags"]
+        specs["tags"] = mem.configuration["cleaned_tags"]
 
         # Remove get_schema parameters from Definitions
         for schema, definition in specs.get("definitions", {}).items():

@@ -254,14 +254,14 @@ class Swagger:
 
         ###################
         tags = []
-        for tag, desc in self._customizer._configurations["tags"].items():
+        for tag, desc in mem.configuration["tags"].items():
             if tag not in self._used_swagger_tags:
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({"name": tag, "description": desc})
 
         # Also used in NEW swagger specs
-        self._customizer._configurations["cleaned_tags"] = tags
+        mem.configuration["cleaned_tags"] = tags
 
         output["tags"] = tags
 

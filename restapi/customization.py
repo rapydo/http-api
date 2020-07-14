@@ -47,7 +47,6 @@ class Customizer:
 
         self._endpoints = []
         self._definitions = {}
-        self._configurations = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -58,7 +57,7 @@ class Customizer:
         submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
 
         try:
-            self._configurations, self._extended_project, _ = read_configuration(
+            configuration, self._extended_project, _ = read_configuration(
                 default_file_path=defaults_path,
                 base_project_path=base_path,
                 projects_path=projects_path,
@@ -67,7 +66,7 @@ class Customizer:
         except AttributeError as e:  # pragma: no cover
             log.exit(e)
 
-        return self._configurations
+        return configuration
 
     @staticmethod
     def skip_endpoint(depends_on):
