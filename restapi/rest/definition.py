@@ -69,7 +69,13 @@ class EndpointResource(MethodResource, Resource):
         if self._json_args:
             log.verbose("Parameters {}", obfuscate_dict(self._json_args))
 
-        return self._json_args
+        # Convert a Flask object to a normal dict... prevent uncatchable errors like:
+        # werkzeug.exceptions.BadRequestKeyError
+        # When accessing this object
+        parameters = {}
+        for k, v in self._json_args.items():
+            parameters[k] = v
+        return parameters
 
     # Deprecated since 0.7.4
     def get_paging(self, force_read_parameters=False):  # pragma: no cover

@@ -26,12 +26,12 @@ class StatsSchema(OutputSchema):
     ram = fields.Nested(
         {
             "total": fields.Int(),
+            "used": fields.Int(),
             "active": fields.Int(),
             "inactive": fields.Int(),
             "buffer": fields.Int(),
             "free": fields.Int(),
             "cache": fields.Int(),
-            "used": fields.Int(),
         }
     )
 
@@ -105,15 +105,14 @@ class AdminStats(EndpointResource):
 
         # Here we are converting the load average into percentage.
         # The higher the percentage the higher the load
-        cpu_load = [x / os.cpu_count() * 100 for x in os.getloadavg()][-1]
-        statistics["cpu"]["load"] = cpu_load
+        statistics["cpu"]["load"] = (100 * os.getloadavg()[-1]) / os.cpu_count()
 
-        # Total amount of RAM
-        grep = local["grep"]
-        regexp = r"MemTotal:\s+(\d+) kB"
+        # # Total amount of RAM
+        # grep = local["grep"]
+        # regexp = r"MemTotal:\s+(\d+) kB"
 
-        if m := re.search(regexp, grep(["MemTotal", "/proc/meminfo"])):
-            statistics["ram"]["total_ram"] = m.group(1)
+        # if m := re.search(regexp, grep(["MemTotal", "/proc/meminfo"])):
+        #     statistics["ram"]["total"] = m.group(1)
 
         vmstat = local["vmstat"]
         vm = vmstat().split("\n")
