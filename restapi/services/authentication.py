@@ -546,6 +546,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if required_roles == ALL_ROLES:
             for role in roles:
+                if isinstance(role, Role):
+                    role = role.value
+
                 if role not in current_roles:
                     if warnings:
                         log.warning("Auth role '{}' missing for request", role)
@@ -554,6 +557,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if required_roles == ANY_ROLE:
             for role in roles:
+                if isinstance(role, Role):
+                    role = role.value
+
                 if role in current_roles:
                     return True
             return False
