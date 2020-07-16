@@ -51,9 +51,12 @@ class EndpointResource(MethodResource, Resource):
 
         return auth
 
-    # to be deprecated
+    # Deprecated since 0.7.5
     def get_input(self):  # pragma: no cover
 
+        log.warning(
+            "Deprecated use of self.get_input(), use webargs-defined parameters instead"
+        )
         # if is an upload in streaming, I must not consume
         # request.data or request.json, otherwise it get lost
         if not self._json_args and request.mimetype != "application/octet-stream":
