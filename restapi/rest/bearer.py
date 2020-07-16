@@ -64,8 +64,40 @@ class HTTPTokenAuth:
 
         return None, None
 
+    # Deprecated since 0.7.5
     @staticmethod
-    def required(roles=None, required_roles=None, allow_access_token_parameter=False):
+    def required(
+        roles=None, required_roles=None, allow_access_token_parameter=False
+    ):  # pragma: no cover
+        log.warning(
+            "Deprecated use of auth.required decorator, "
+            "use require/require_all/require_any"
+        )
+
+        return HTTPTokenAuth.require(
+            roles=roles,
+            required_roles=required_roles,
+            allow_access_token_parameter=allow_access_token_parameter,
+        )
+
+    @staticmethod
+    def require_all(*arg, allow_access_token_parameter=False):
+        return HTTPTokenAuth.require(
+            roles=arg,
+            required_roles="all",
+            allow_access_token_parameter=allow_access_token_parameter,
+        )
+
+    @staticmethod
+    def require_any(*arg, allow_access_token_parameter=False):
+        return HTTPTokenAuth.require(
+            roles=arg,
+            required_roles="any",
+            allow_access_token_parameter=allow_access_token_parameter,
+        )
+
+    @staticmethod
+    def require(roles=None, required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
         def decorator(func):
             # it is used in Customization to verify if an endpoint is requiring
