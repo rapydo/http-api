@@ -3,7 +3,7 @@ from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.models import InputSchema, OutputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
 from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.logs import log
@@ -98,7 +98,7 @@ def get_groups():
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
 
-class Role(OutputSchema):
+class Roles(OutputSchema):
 
     name = fields.Str()
     description = fields.Str()
@@ -122,7 +122,7 @@ def get_output_schema():
     attributes["last_password_change"] = fields.DateTime(allow_none=True)
     attributes["is_active"] = fields.Boolean()
     attributes["privacy_accepted"] = fields.Boolean()
-    attributes["roles"] = fields.List(fields.Nested(Role))
+    attributes["roles"] = fields.List(fields.Nested(Roles))
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
@@ -239,7 +239,7 @@ class AdminUsers(EndpointResource):
         }
     }
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
 
@@ -251,7 +251,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(users)
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getPOSTSchema)
     def post(self, **kwargs):
 
@@ -286,7 +286,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(user.uuid)
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getPUTSchema)
     def put(self, user_id, **kwargs):
 
@@ -340,7 +340,7 @@ class AdminUsers(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

@@ -11,6 +11,7 @@
 # from restapi.services.mail import send_mail_is_active
 # from restapi.resources.admin_users import send_notification, parse_roles, parse_group
 # from restapi.resources.admin_users import get_output_schema
+# from restapi.services.authentication import Role
 
 # from restapi.utilities.logs import log
 
@@ -196,7 +197,7 @@
 #             return False
 
 #         # You cannot modify ADMINs
-#         if ADMIN_ROLE in self.auth.get_roles_from_user(user):
+#         if ADMIN in self.auth.get_roles_from_user(user):
 #             return False
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -214,7 +215,7 @@
 
 #         return False
 
-#     @decorators.auth.require_all("local_admin")
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.marshal_with(get_output_schema(), code=200)
 #     def get(self, user_id=None):
 
@@ -240,7 +241,7 @@
 
 #         return self.response(data)
 
-#     @decorators.auth.require_all("local_admin")
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.use_kwargs(get_input_schema())
 #     def post(self, **kwargs):
 
@@ -294,7 +295,7 @@
 
 #         return self.response(user.uuid)
 
-#     @decorators.auth.require_all("local_admin")
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     def put(self, user_id, **kwargs):
 
@@ -370,7 +371,7 @@
 
 #         return self.empty_response()
 
-#     @decorators.auth.require_all("local_admin")
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     def delete(self, user_id):
 
 #         is_admin = self.verify_admin()

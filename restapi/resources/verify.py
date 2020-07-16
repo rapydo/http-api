@@ -1,6 +1,7 @@
 from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 from restapi.services.detect import detector
 
 
@@ -19,7 +20,7 @@ class Verify(EndpointResource):
         }
     }
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     def get(self, service):
 
         if not detector.check_availability(service):

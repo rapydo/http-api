@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import re
 from datetime import datetime, timedelta
+from enum import Enum
 from io import BytesIO
 
 import jwt
@@ -45,9 +46,13 @@ NULL_IP = "0.0.0.0"
 ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
-ADMIN_ROLE = "admin_root"
-LOCAL_ADMIN_ROLE = "local_admin"
-USER_ROLE = "normal_user"
+
+
+class Role(Enum):
+    ADMIN = "admin_root"
+    LOCAL_ADMIN = "local_admin"
+    STAFF = "staff_user"
+    USER = "normal_user"
 
 
 class InvalidToken(BaseException):

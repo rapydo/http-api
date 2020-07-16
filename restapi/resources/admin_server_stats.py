@@ -8,6 +8,7 @@ from plumbum import local
 from restapi import decorators
 from restapi.models import OutputSchema, fields
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 
 
 class StatsSchema(OutputSchema):
@@ -81,7 +82,7 @@ class AdminStats(EndpointResource):
         },
     }
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(StatsSchema(), code=200)
     def get(self):
         statistics = {

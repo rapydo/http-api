@@ -3,6 +3,7 @@ from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
 from restapi.models import InputSchema, OutputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -101,7 +102,7 @@ if detector.check_availability("neo4j"):
             }
         }
 
-        @decorators.auth.require_all("admin_root")
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @decorators.marshal_with(Group(many=True), code=200)
         def get(self):
@@ -112,7 +113,7 @@ if detector.check_availability("neo4j"):
                 g.coordinator = g.coordinator.single()
             return self.response(groups)
 
-        @decorators.auth.require_all("admin_root")
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.use_kwargs(get_POST_input)
@@ -135,7 +136,7 @@ if detector.check_availability("neo4j"):
 
             return self.response(group.uuid)
 
-        @decorators.auth.require_all("admin_root")
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
         @decorators.use_kwargs(get_PUT_input)
@@ -173,7 +174,7 @@ if detector.check_availability("neo4j"):
 
             return self.empty_response()
 
-        @decorators.auth.require_all("admin_root")
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
         def delete(self, group_id):

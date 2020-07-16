@@ -3,6 +3,7 @@ from restapi.exceptions import RestApiException
 from restapi.models import OutputSchema, fields
 from restapi.resources.tokens import TokenSchema
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 from restapi.utilities.logs import log
 
 
@@ -37,7 +38,7 @@ class AdminTokens(EndpointResource):
         },
     }
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     def get(self):
 
@@ -52,7 +53,7 @@ class AdminTokens(EndpointResource):
 
         return self.response(response)
 
-    @decorators.auth.require_all("admin_root")
+    @decorators.auth.require_all(Role.ADMIN)
     def delete(self, token_id):
 
         tokens = self.auth.get_tokens(token_jti=token_id)
