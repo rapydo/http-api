@@ -35,7 +35,7 @@ class AuthStatus(EndpointResource):
         }
     }
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     def get(self, service=None):
 
         return self.response(True)

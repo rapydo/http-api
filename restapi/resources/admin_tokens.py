@@ -37,7 +37,7 @@ class AdminTokens(EndpointResource):
         },
     }
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     def get(self):
 
@@ -52,7 +52,7 @@ class AdminTokens(EndpointResource):
 
         return self.response(response)
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     def delete(self, token_id):
 
         tokens = self.auth.get_tokens(token_jti=token_id)

@@ -35,7 +35,7 @@ class Tokens(EndpointResource):
         },
     }
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     @decorators.marshal_with(TokenSchema(many=True), code=200)
     def get(self):
 
@@ -46,7 +46,7 @@ class Tokens(EndpointResource):
         return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
-    @decorators.auth.required()
+    @decorators.auth.require()
     def delete(self, token_id):
 
         user = self.get_user()

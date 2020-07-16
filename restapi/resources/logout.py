@@ -16,7 +16,7 @@ class Logout(EndpointResource):
         }
     }
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     def get(self):
         self.auth.invalidate_token(token=self.get_token())
         return self.empty_response()

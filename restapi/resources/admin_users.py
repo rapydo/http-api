@@ -239,7 +239,7 @@ class AdminUsers(EndpointResource):
         }
     }
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     @decorators.marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
 
@@ -251,7 +251,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(users)
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     @decorators.use_kwargs(getPOSTSchema)
     def post(self, **kwargs):
 
@@ -286,7 +286,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(user.uuid)
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     @decorators.use_kwargs(getPUTSchema)
     def put(self, user_id, **kwargs):
 
@@ -340,7 +340,7 @@ class AdminUsers(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

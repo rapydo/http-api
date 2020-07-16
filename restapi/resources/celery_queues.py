@@ -41,9 +41,7 @@
 #         }
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(
-#             roles=['admin_root', 'staff_user'], required_roles='any'
-#         )
+#         @decorators.auth.require_any('admin_root', 'staff_user')
 #         def get(self, task_id=None):
 
 #             data = []
@@ -168,14 +166,14 @@
 #             return self.response(data)
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(roles=['admin_root'])
+#         @decorators.auth.require_all('admin_root')
 #         def put(self, task_id):
 #             celery = self.get_service_instance('celery')
 #             celery.control.revoke(task_id)
 #             return self.empty_response()
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(roles=['admin_root'])
+#         @decorators.auth.require_all('admin_root')
 #         def delete(self, task_id):
 #             celery = self.get_service_instance('celery')
 #             celery.control.revoke(task_id, terminate=True)

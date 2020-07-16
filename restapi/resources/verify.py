@@ -19,7 +19,7 @@ class Verify(EndpointResource):
         }
     }
 
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all("admin_root")
     def get(self, service):
 
         if not detector.check_availability(service):

@@ -94,7 +94,7 @@ class Profile(EndpointResource):
         }
     }
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     @decorators.marshal_with(getProfileData(), code=200)
     def get(self):
 
@@ -121,7 +121,7 @@ class Profile(EndpointResource):
 
         return self.response(data)
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     @decorators.use_kwargs(NewPassword)
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
@@ -140,7 +140,7 @@ class Profile(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.required()
+    @decorators.auth.require()
     @decorators.use_kwargs(UserProfile)
     def patch(self, **kwargs):
         """ Update profile for current user """
