@@ -101,8 +101,8 @@ if detector.check_availability("neo4j"):
             }
         }
 
-        @decorators.catch_graph_exceptions
         @decorators.auth.required(roles=["admin_root"])
+        @decorators.catch_graph_exceptions
         @decorators.marshal_with(Group(many=True), code=200)
         def get(self):
 
@@ -112,9 +112,9 @@ if detector.check_availability("neo4j"):
                 g.coordinator = g.coordinator.single()
             return self.response(groups)
 
+        @decorators.auth.required(roles=["admin_root"])
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
         @decorators.use_kwargs(get_POST_input)
         def post(self, **kwargs):
 
@@ -135,9 +135,9 @@ if detector.check_availability("neo4j"):
 
             return self.response(group.uuid)
 
+        @decorators.auth.required(roles=["admin_root"])
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
         @decorators.use_kwargs(get_PUT_input)
         def put(self, group_id, **kwargs):
 
@@ -173,9 +173,9 @@ if detector.check_availability("neo4j"):
 
             return self.empty_response()
 
+        @decorators.auth.required(roles=["admin_root"])
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
         def delete(self, group_id):
 
             self.graph = self.get_service_instance("neo4j")

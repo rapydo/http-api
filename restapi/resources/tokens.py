@@ -35,8 +35,8 @@ class Tokens(EndpointResource):
         },
     }
 
-    @decorators.marshal_with(TokenSchema(many=True), code=200)
     @decorators.auth.required()
+    @decorators.marshal_with(TokenSchema(many=True), code=200)
     def get(self):
 
         user = self.get_user()

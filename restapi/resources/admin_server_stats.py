@@ -81,8 +81,8 @@ class AdminStats(EndpointResource):
         },
     }
 
-    @decorators.marshal_with(StatsSchema(), code=200)
     @decorators.auth.required(roles=["admin_root"])
+    @decorators.marshal_with(StatsSchema(), code=200)
     def get(self):
         statistics = {
             "cpu": {},

@@ -37,8 +37,8 @@ class AdminTokens(EndpointResource):
         },
     }
 
-    @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.auth.required(roles=["admin_root"])
+    @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     def get(self):
 
         tokens = self.auth.get_tokens(get_all=True)

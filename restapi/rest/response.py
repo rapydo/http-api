@@ -90,6 +90,9 @@ def log_response(response):
 
 
 class ResponseMaker:
+
+    # Have a look here: (from flask import request)
+    # request.user_agent.browser
     @staticmethod
     def get_accepted_formats():
         """
