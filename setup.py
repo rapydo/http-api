@@ -33,7 +33,7 @@ setup(
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.9.0",
         "Flask-Cors==3.0.8",
-        "Flask-SQLAlchemy==2.4.3",
+        "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
         "PyJWT",
         "pyOpenSSL",
