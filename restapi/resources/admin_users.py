@@ -145,7 +145,7 @@ def getInputSchema(request):
     set_required = request.method == "POST"
 
     attributes = {}
-    if not request.method != "PUT":
+    if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 
     attributes["password"] = fields.Str(

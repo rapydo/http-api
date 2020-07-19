@@ -124,9 +124,6 @@ class Detector:
             if not self.services[connector]["available"]:
                 continue
 
-            log.critical(connector)
-            log.critical(variables)
-
             log.verbose("Looking for connector class in {}", connector_path)
             connector_module = Meta.get_module_from_string(
                 ".".join((module, CONNECTORS_FOLDER, connector))
