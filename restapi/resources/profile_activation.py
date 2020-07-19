@@ -7,12 +7,11 @@ from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.exceptions import RestApiException
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource
-from restapi.services.mail import send_mail
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
 
-def send_activation_link(auth, user):
+def send_activation_link(smtp, auth, user):
 
     title = get_project_configuration("project.title", default="Unkown title")
 
@@ -35,7 +34,7 @@ def send_activation_link(auth, user):
     default_subject = f"{title} account activation"
     subject = os.getenv("EMAIL_ACTIVATION_SUBJECT", default_subject)
 
-    sent = send_mail(html_body, subject, user.email, plain_body=body)
+    sent = smtp.send(html_body, subject, user.email, plain_body=body)
     if not sent:  # pragma: no cover
         raise BaseException("Error sending email, please retry")
 
@@ -122,7 +121,8 @@ class ProfileActivation(EndpointResource):
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-            send_activation_link(self.auth, user)
+            smtp = self.get_service_instance("smtp")
+            send_activation_link(smtp, self.auth, user)
         msg = (
             "We are sending an email to your email address where "
             "you will find the link to activate your account"

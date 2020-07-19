@@ -124,6 +124,9 @@ class Detector:
             if not self.services[connector]["available"]:
                 continue
 
+            log.critical(connector)
+            log.critical(variables)
+
             log.verbose("Looking for connector class in {}", connector_path)
             connector_module = Meta.get_module_from_string(
                 ".".join((module, CONNECTORS_FOLDER, connector))
@@ -202,8 +205,12 @@ class Detector:
             # save
             variables[key] = value
 
-            suffix = ".dockerized.io"
-            if key == "host" and not value.endswith(suffix):  # pragma: no cover
+        if "host" in variables:
+            value = variables.get("host")
+            if not value:
+                variables["enable"] = 0
+
+            elif not value.endswith(".dockerized.io"):  # pragma: no cover
                 variables["external"] = True
                 log.verbose("Service {} detected as external: {}", prefix, value)
 

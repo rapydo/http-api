@@ -1,17 +1,16 @@
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import InputSchema, Schema, fields, validate
+from restapi.models import InputSchema, OutputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
-from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 from restapi.utilities.templates import get_html_template
 
 
-def send_notification(user, unhashed_password, is_update=False):
+def send_notification(smtp, user, unhashed_password, is_update=False):
 
     title = get_project_configuration("project.title", default="Unkown title")
 
@@ -32,9 +31,9 @@ Password: {unhashed_password}
     """
 
     if html is None:
-        send_mail(body, subject, user.email)
+        smtp.send(body, subject, user.email)
     else:
-        send_mail(html, subject, user.email, plain_body=body)
+        smtp.send(html, subject, user.email, plain_body=body)
 
 
 def get_roles(auth):
@@ -98,13 +97,13 @@ def get_groups():
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
 
-class Roles(Schema):
+class Roles(OutputSchema):
 
     name = fields.Str()
     description = fields.Str()
 
 
-class Group(Schema):
+class Group(OutputSchema):
     uuid = fields.Str()
     fullname = fields.Str()
     shortname = fields.Str()
@@ -127,10 +126,10 @@ def get_output_schema():
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(False):
+        if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes)
+    schema = OutputSchema.from_dict(attributes)
     return schema(many=True)
 
 
@@ -141,14 +140,12 @@ def getInputSchema(request):
     if not request:
         return {}
 
-    is_put_method = request.method == "PUT"
-
     auth = EndpointResource.load_authentication()
 
     set_required = request.method == "POST"
 
     attributes = {}
-    if request.method != "PUT":
+    if not request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 
     attributes["password"] = fields.Str(
@@ -174,10 +171,10 @@ def getInputSchema(request):
         )
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(is_put_method):
+        if custom_fields := customizer.get_custom_fields(request):
             attributes.update(custom_fields)
 
-    if send_mail_is_active():
+    if detector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(
@@ -281,7 +278,8 @@ class AdminUsers(EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            send_notification(user, unhashed_password, is_update=False)
+            smtp = self.get_service_instance("smtp")
+            send_notification(smtp, user, unhashed_password, is_update=False)
 
         return self.response(user.uuid)
 
@@ -335,7 +333,8 @@ class AdminUsers(EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            send_notification(user, unhashed_password, is_update=True)
+            smtp = self.get_service_instance("smtp")
+            send_notification(smtp, user, unhashed_password, is_update=True)
 
         return self.empty_response()
 

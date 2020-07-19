@@ -167,6 +167,9 @@ def mywait():
             host, port = get_service_address(service_vars, "host", "port", backend)
 
             wait_socket(host, port, backend)
+        elif name == "smtp":
+            pass
+
         else:
             host, port = get_service_address(myclass.variables, "host", "port", name)
 

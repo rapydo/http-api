@@ -7,7 +7,7 @@ from celery import Celery
 from restapi.confs import CUSTOM_PACKAGE, get_project_configuration
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.detect import detector
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
@@ -214,7 +214,7 @@ class CeleryExt(Connector):
     def get_periodic_task(cls, name):
 
         if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import PeriodicTask, DoesNotExist
+            from celerybeatmongo.models import DoesNotExist, PeriodicTask
 
             try:
                 return PeriodicTask.objects.get(name=name)
@@ -376,7 +376,7 @@ def send_errors_by_email(func):
             log.error("Failed task arguments: {}", arguments[0:256])
             log.error("Task error: {}", traceback.format_exc())
 
-            if send_mail_is_active():
+            if detector.check_availability("smtp"):
                 log.info("Sending error report by email", task_id, task_name)
 
                 body = f"""
@@ -393,6 +393,7 @@ Error: {traceback.format_exc()}
                     "project.title", default="Unkown title",
                 )
                 subject = f"{project}: task {task_name} failed"
-                send_mail(body, subject)
+                smtp = detector.get_service_instance("smtp")
+                smtp.send(body, subject)
 
     return wrapper

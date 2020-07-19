@@ -6,14 +6,14 @@ from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
 auth = EndpointResource.load_authentication()
 
 
-def send_password_reset_link(uri, title, reset_email):
+def send_password_reset_link(smtp, uri, title, reset_email):
     # Internal templating
     body = f"Follow this link to reset your password: {uri}"
     html_body = get_html_template("reset_password.html", {"url": uri})
@@ -24,14 +24,14 @@ def send_password_reset_link(uri, title, reset_email):
     subject = f"{title} Password Reset"
 
     # Internal email sending
-    c = send_mail(html_body, subject, reset_email, plain_body=body)
+    c = smtp.send(html_body, subject, reset_email, plain_body=body)
     # it cannot fail during tests, because the email sending is mocked
     if not c:  # pragma: no cover
         raise RestApiException("Error sending email, please retry")
 
 
 # This endpoint require the server to send the reset token via email
-if send_mail_is_active():
+if detector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
 
@@ -91,7 +91,8 @@ if send_mail_is_active():
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            send_password_reset_link(complete_uri, title, reset_email)
+            smtp = self.get_service_instance("smtp")
+            send_password_reset_link(smtp, complete_uri, title, reset_email)
 
             ##################
             # Completing the reset task

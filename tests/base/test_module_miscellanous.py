@@ -10,7 +10,6 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.models import fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
-from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -273,103 +272,6 @@ class TestApp(BaseTests):
         assert hcodes.HTTP_NOT_IMPLEMENTED == 501
         assert hcodes.HTTP_SERVICE_UNAVAILABLE == 503
         assert hcodes.HTTP_INTERNAL_TIMEOUT == 504
-
-        assert not _send_mail("body", "subject", "to_addr", "from_addr", None)
-        assert not _send_mail("body", "subject", "to_addr", None, "myhost")
-        assert not _send_mail("body", "subject", None, "from_addr", "myhost")
-
-        assert not _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x"
-        )
-
-        # standard port
-        assert _send_mail("body", "subject", "to_addr", "from_addr", "myhost")
-        # local server (no port)
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None
-        )
-        # TLS port
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465
-        )
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465"
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        assert mail.get("cc") == ["to_addr"]
-        assert mail.get("bcc") is None
-
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", cc="test1", bcc="test2"
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr", ["test1"], ["test2"]]
-
-        assert _send_mail(
-            "body",
-            "subject",
-            "to_addr",
-            "from_addr",
-            "myhost",
-            cc=["test1", "test2"],
-            bcc=["test3", "test4"],
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
-
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", cc=10, bcc=20
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        # cc and bcc with wrong type (int in this case!) are ignored
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr"]
-
-        # HTML emails require a plain body, if not provided it default with the html
-        # body -> no errors
-        assert _send_mail(
-            "body",
-            "subject",
-            "to_addr",
-            "from_addr",
-            "myhost",
-            html=True,
-            plain_body=None,
-        )
 
         data = {"a": 1}
         assert mix(None, data) == data

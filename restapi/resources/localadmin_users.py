@@ -8,7 +8,6 @@
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
 # from restapi.utilities.meta import Meta
-# from restapi.services.mail import send_mail_is_active
 # from restapi.resources.admin_users import send_notification, parse_roles, parse_group
 # from restapi.resources.admin_users import get_output_schema
 # from restapi.services.authentication import Role
@@ -128,7 +127,7 @@
 #         if custom_fields := customizer.get_custom_fields(strip_required):
 #             attributes.update(custom_fields)
 
-#     if send_mail_is_active():
+#     if detector.check_availability("smtp"):
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )
