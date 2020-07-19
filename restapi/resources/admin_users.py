@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import InputSchema, OutputSchema, fields, validate
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
@@ -98,13 +98,13 @@ def get_groups():
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
 
-class Roles(OutputSchema):
+class Roles(Schema):
 
     name = fields.Str()
     description = fields.Str()
 
 
-class Group(OutputSchema):
+class Group(Schema):
     uuid = fields.Str()
     fullname = fields.Str()
     shortname = fields.Str()
@@ -130,7 +130,7 @@ def get_output_schema():
         if custom_fields := customizer.get_custom_fields(False):
             attributes.update(custom_fields)
 
-    schema = OutputSchema.from_dict(attributes)
+    schema = Schema.from_dict(attributes)
     return schema(many=True)
 
 

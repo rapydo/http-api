@@ -2,19 +2,19 @@ from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
-from restapi.models import Neo4jChoice, Neo4jSchema, OutputSchema, fields
+from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 if TESTING and detector.check_availability("neo4j"):
 
-    from restapi.connectors.neo4j.models import User, Group
+    from restapi.connectors.neo4j.models import Group, User
 
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
 
-    class Output(OutputSchema):
+    class Output(Schema):
         val = fields.Integer()
         created = fields.DateTime()
         modified1 = fields.DateTime()

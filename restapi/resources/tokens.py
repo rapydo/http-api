@@ -1,12 +1,12 @@
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
-from restapi.models import OutputSchema, fields
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 
 # from restapi.utilities.logs import log
 
 
-class TokenSchema(OutputSchema):
+class TokenSchema(Schema):
     id = fields.Str()
     IP = fields.Str()
     location = fields.Str()

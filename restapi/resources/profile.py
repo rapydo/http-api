@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.models import InputSchema, OutputSchema, fields, validate
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -33,7 +33,7 @@ class UserProfile(InputSchema):
     privacy_accepted = fields.Boolean()
 
 
-class Group(OutputSchema):
+class Group(Schema):
     uuid = fields.Str()
     shortname = fields.Str()
     fullname = fields.Str()
@@ -59,7 +59,7 @@ def getProfileData():
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
-    schema = OutputSchema.from_dict(attributes)
+    schema = Schema.from_dict(attributes)
     return schema()
 
 

@@ -6,12 +6,12 @@ from datetime import datetime
 from plumbum import local
 
 from restapi import decorators
-from restapi.models import OutputSchema, fields
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 
 
-class StatsSchema(OutputSchema):
+class StatsSchema(Schema):
     boot_time = fields.DateTime()
     cpu = fields.Nested(
         {

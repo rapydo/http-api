@@ -1,7 +1,7 @@
 import inspect
 
-from marshmallow import Schema as MarshmallowSchema
-from marshmallow import validate  # use as alias from endpoints
+from marshmallow import Schema  # also used from endpoint for Schemas
+from marshmallow import validate  # used as alias from endpoints
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
@@ -15,11 +15,7 @@ ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 log.verbose("{} loaded", validate)
 
 
-class OutputSchema(MarshmallowSchema):
-    pass
-
-
-class InputSchema(MarshmallowSchema):
+class InputSchema(Schema):
     def __init__(self, strip_required=False, *args, **kwargs):
         super().__init__(**kwargs)
         if strip_required:
@@ -43,7 +39,7 @@ class InputSchema(MarshmallowSchema):
         return data
 
 
-class Neo4jSchema(OutputSchema):
+class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
         super().__init__(**kwargs)
 

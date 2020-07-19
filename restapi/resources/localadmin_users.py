@@ -1,6 +1,6 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from restapi.models import fields, validate, InputSchema, OutputSchema
+# from restapi.models import fields, validate, InputSchema, Schema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry

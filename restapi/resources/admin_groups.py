@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
-from restapi.models import InputSchema, OutputSchema, fields, validate
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
@@ -32,13 +32,13 @@ if detector.check_availability("neo4j"):
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
-    class Coordinator(OutputSchema):
+    class Coordinator(Schema):
         uuid = fields.Str()
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
 
-    class Group(OutputSchema):
+    class Group(Schema):
         uuid = fields.Str()
         fullname = fields.Str()
         shortname = fields.Str()

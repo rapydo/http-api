@@ -1,13 +1,13 @@
 from restapi import decorators
 from restapi.exceptions import RestApiException
-from restapi.models import OutputSchema, fields
+from restapi.models import Schema, fields
 from restapi.resources.tokens import TokenSchema
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log
 
 
-class User(OutputSchema):
+class User(Schema):
     email = fields.Email()
     name = fields.Str()
     surname = fields.Str()
