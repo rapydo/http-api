@@ -24,8 +24,10 @@ if not detector.check_availability(CONNECTOR):
     except ServiceUnavailable:
         pass
 
-    log.warning("Skipping neo4j test: service not available")
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
 else:
+
+    log.info("Executing {} tests", CONNECTOR)
 
     class TestNeo4j(BaseTests):
         def test_endpoint(self, client):

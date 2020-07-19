@@ -22,8 +22,10 @@ def test_mongo(app):
         except ServiceUnavailable:
             pass
 
-        log.warning("Skipping mongo test: service not available")
+        log.warning("Skipping {} tests: service not available", CONNECTOR)
         return False
+
+    log.info("Executing {} tests", CONNECTOR)
 
     # Run this before the init_services,
     # get_debug_instance is able to load what is needed

@@ -21,7 +21,7 @@ def test_smtp(app, faker):
         except ServiceUnavailable:
             pass
 
-        log.warning("Skipping smtp test: service not available")
+        log.warning("Skipping {} tests: service not available", CONNECTOR)
         return False
 
     # Run this before the init_services,
