@@ -7,7 +7,6 @@ from celery import Celery
 from restapi.confs import CUSTOM_PACKAGE, get_project_configuration
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.services.detect import detector
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
@@ -375,6 +374,8 @@ def send_errors_by_email(func):
             arguments = str(self.request.args)
             log.error("Failed task arguments: {}", arguments[0:256])
             log.error("Task error: {}", traceback.format_exc())
+
+            from restapi.services.detect import detector
 
             if detector.check_availability("smtp"):
                 log.info("Sending error report by email", task_id, task_name)
