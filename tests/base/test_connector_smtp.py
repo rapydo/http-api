@@ -51,20 +51,9 @@ def test_smtp(app, faker):
     assert obj is not None
     assert obj.smtp is not None
 
-    with detector.get_service_instance(CONNECTOR) as obj:
-        assert obj is not None
-        assert obj.smtp is not None
-    assert obj.smtp is None
-
-    with detector.get_service_instance(CONNECTOR, noreply=None, admin=None) as obj:
-        assert not obj.send("body", "subject")
-        assert not obj.send("body", "subject", "to_addr")
-        assert obj.send("body", "subject", "to_addr", "from_addr")
-
-    with detector.get_service_instance(CONNECTOR) as obj:
-        assert not obj.send("body", "subject")
-        assert not obj.send("body", "subject", "to_addr")
-        assert obj.send("body", "subject", "to_addr", "from_addr")
+    assert not obj.send("body", "subject")
+    assert not obj.send("body", "subject", "to_addr")
+    assert obj.send("body", "subject", "to_addr", "from_addr")
 
     obj = detector.get_service_instance(CONNECTOR)
 
@@ -125,3 +114,13 @@ def test_smtp(app, faker):
     assert mail.get("from") == "from_addr"
     # format is [to, [cc...], [bcc...]]
     assert mail.get("cc") == ["to_addr"]
+
+    with detector.get_service_instance(CONNECTOR) as obj:
+        assert obj is not None
+        assert obj.smtp is not None
+    assert obj.smtp is None
+
+    with detector.get_service_instance(CONNECTOR, noreply=None, admin=None) as obj:
+        assert not obj.send("body", "subject")
+        assert not obj.send("body", "subject", "to_addr")
+        assert obj.send("body", "subject", "to_addr", "from_addr")
