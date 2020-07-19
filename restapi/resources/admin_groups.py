@@ -58,11 +58,11 @@ if detector.check_availability("neo4j"):
             validate=validate.OneOf(choices=users.keys(), labels=users.values()),
         )
 
-    def get_POST_input(request):
-        return InputGroup(strip_required=False)
+    def get_input_group(request):
+        if not request:
+            return {}
 
-    def get_PUT_input(request):
-        return InputGroup(strip_required=True)
+        return InputGroup(strip_required=request.method == "PUT")
 
     class AdminGroups(EndpointResource):
 
@@ -116,7 +116,7 @@ if detector.check_availability("neo4j"):
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.use_kwargs(get_POST_input)
+        @decorators.use_kwargs(get_input_group)
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
@@ -139,7 +139,7 @@ if detector.check_availability("neo4j"):
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.use_kwargs(get_PUT_input)
+        @decorators.use_kwargs(get_input_group)
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")

@@ -136,15 +136,13 @@ def get_output_schema():
 
 # Note that these are callables returning a model, not models!
 # They will be excuted a runtime
-def getPOSTSchema(request):
-    return getInputSchema(is_put_method=False)
+def getInputSchema(request):
 
+    if not request:
+        return {}
 
-def getPUTSchema(request):
-    return getInputSchema(is_put_method=True)
+    is_put_method = request.method == "PUT"
 
-
-def getInputSchema(is_put_method):
     auth = EndpointResource.load_authentication()
 
     set_required = not is_put_method
@@ -252,7 +250,7 @@ class AdminUsers(EndpointResource):
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getPOSTSchema)
+    @decorators.use_kwargs(getInputSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -287,7 +285,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getPUTSchema)
+    @decorators.use_kwargs(getInputSchema)
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
