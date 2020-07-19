@@ -4,6 +4,7 @@ import pytest
 
 from restapi.env import Env
 from restapi.exceptions import RestApiException
+from restapi.services.authentication import Role
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
@@ -124,8 +125,7 @@ class TestApp(BaseTests):
             pytest.fail("Unexpected exception raised")
 
         # import here to prevent loading before initializing things...
-        from restapi.services.authentication import BaseAuthentication
-        from restapi.services.authentication import InvalidToken
+        from restapi.services.authentication import BaseAuthentication, InvalidToken
 
         auth = detector.get_service_instance("authentication")
 
@@ -279,3 +279,18 @@ class TestApp(BaseTests):
         assert user is not None
 
         assert auth.verify_token_validity(jti, user)
+
+        # None user has no roles ... verify_roles will always be False
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="invalid")
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="ALL")
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="ANY")
+
+        # Default user is Admin, verify_roles is True, except when invalid is passed
+        assert auth.verify_roles(user, [Role.ADMIN], required_roles="ALL")
+        assert auth.verify_roles(user, [Role.ADMIN], required_roles="ANY")
+        assert not auth.verify_roles(user, [Role.ADMIN], required_roles="invalid")
+
+        # Default user is Admin, but not 'A', False if ALL is requested, True if ANY
+        assert not auth.verify_roles(user, [Role.ADMIN, "A"], required_roles="ALL")
+        assert auth.verify_roles(user, [Role.ADMIN, "A"], required_roles="ANY")
+        assert not auth.verify_roles(user, [Role.ADMIN, "A"], required_roles="invalid")

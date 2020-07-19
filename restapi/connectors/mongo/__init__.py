@@ -114,8 +114,8 @@ class MongoExt(Connector):
     def update_properties(instance, properties, schema=None):
 
         # Deprecated since 0.7.5
-        if schema:
-            log.warning("Deprecated parameters in update_properties")
+        if schema:  # pragma: no cover
+            log.warning("Deprecated schema parameter in update_properties")
 
         for field, value in properties.items():
             setattr(instance, field, value)
