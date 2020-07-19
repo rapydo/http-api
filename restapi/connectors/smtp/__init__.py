@@ -87,7 +87,7 @@ class Mail(Connector):
 
         try:
 
-            if html := plain_body is not None:
+            if plain_body is not None:
                 msg = MIMEMultipart("alternative")
             else:
                 msg = MIMEText(body)
@@ -125,10 +125,7 @@ class Mail(Connector):
             date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
             msg["Date"] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
 
-            if html:
-                if plain_body is None:
-                    log.warning("Plain body is none")
-                    plain_body = body
+            if plain_body is not None:
                 part1 = MIMEText(plain_body, "plain")
                 part2 = MIMEText(body, "html")
                 msg.attach(part1)

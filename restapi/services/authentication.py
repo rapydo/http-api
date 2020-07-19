@@ -599,7 +599,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ):
             try:
                 userdata = customizer.custom_user_properties(userdata)
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Unable to customize user properties: {}", e)
 
         if "email" in userdata:
@@ -613,7 +613,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ):
             try:
                 customizer.custom_post_handle_user_input(self, user_node, input_data)
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Unable to customize user properties: {}", e)
 
     # ################

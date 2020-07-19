@@ -41,29 +41,29 @@ def test_smtp(app, faker):
 
     obj = detector.get_service_instance(CONNECTOR)
     assert obj is not None
+    assert obj.smtp is not None
 
-    # assert not obj.send("body", "subject", "to_addr", "from_addr", None)
-    # assert not obj.send("body", "subject", "to_addr", None, "myhost")
-    # assert not obj.send("body", "subject", None, "from_addr", "myhost")
+    obj = detector.get_service_instance(CONNECTOR, port=465)
+    assert obj is not None
+    assert obj.smtp is not None
 
-    # assert not obj.send(
-    #     "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x"
-    # )
+    obj = detector.get_service_instance(CONNECTOR, port=587)
+    assert obj is not None
+    assert obj.smtp is not None
 
-    # # standard port
-    # assert obj.send("body", "subject", "to_addr", "from_addr", "myhost")
-    # # local server (no port)
-    # assert obj.send(
-    #     "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None
-    # )
-    # # TLS port
-    # assert obj.send(
-    #     "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465
-    # )
-    # assert obj.send(
-    #     "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465"
-    # )
+    with detector.get_service_instance(CONNECTOR) as obj:
+        assert obj is not None
+        assert obj.smtp is not None
+    assert obj.smtp is None
 
+    obj = detector.get_service_instance(CONNECTOR, noreply=None, admin=None)
+    assert not obj.send("body", "subject")
+    assert not obj.send("body", "subject", "to_addr")
+    assert obj.send("body", "subject", "to_addr", "from_addr")
+
+    obj = detector.get_service_instance(CONNECTOR)
+    assert obj.send("body", "subject")
+    assert obj.send("body", "subject", "to_addr")
     assert obj.send("body", "subject", "to_addr", "from_addr")
 
     mail = BaseTests.read_mock_email()
