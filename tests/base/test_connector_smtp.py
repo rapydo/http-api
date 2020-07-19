@@ -56,13 +56,17 @@ def test_smtp(app, faker):
         assert obj.smtp is not None
     assert obj.smtp is None
 
-    obj = detector.get_service_instance(CONNECTOR, noreply=None, admin=None)
-    assert not obj.send("body", "subject")
-    assert not obj.send("body", "subject", "to_addr")
-    assert obj.send("body", "subject", "to_addr", "from_addr")
+    with detector.get_service_instance(CONNECTOR, noreply=None, admin=None) as obj:
+        assert not obj.send("body", "subject")
+        assert not obj.send("body", "subject", "to_addr")
+        assert obj.send("body", "subject", "to_addr", "from_addr")
+
+    with detector.get_service_instance(CONNECTOR) as obj:
+        assert not obj.send("body", "subject")
+        assert not obj.send("body", "subject", "to_addr")
+        assert obj.send("body", "subject", "to_addr", "from_addr")
 
     obj = detector.get_service_instance(CONNECTOR)
-    assert obj.send("body", "subject", "to_addr", "from_addr")
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
