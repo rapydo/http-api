@@ -72,6 +72,7 @@ if detector.check_availability("smtp"):
             try:
                 self.auth.custom_post_handle_user_input(user, kwargs)
 
+                smtp = self.get_service_instance("smtp")
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
@@ -80,10 +81,9 @@ if detector.check_availability("smtp"):
                     subject = f"{title} New credentials requested"
                     body = f"New credentials request from {user.email}"
 
-                    smtp = self.get_service_instance("smtp")
                     smtp.send(body, subject)
 
-                send_activation_link(self.auth, user)
+                send_activation_link(smtp, self.auth, user)
 
             except BaseException as e:
                 user.delete()
