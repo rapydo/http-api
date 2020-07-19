@@ -42,6 +42,7 @@ if detector.check_availability("neo4j"):
             assert fullname is not None
 
             newdata = {
+                "shortname": fake.company(),
                 "fullname": fake.company(),
                 # we should change the coordinator...
                 # But set again the same coordinator is enough for now
