@@ -27,13 +27,13 @@ class Mail(Connector):
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        self.variables = self.variables.copy()
+        self.variables.update(kwargs)
 
-        if port := variables.get("port"):
+        if port := self.variables.get("port"):
             port = Env.to_int(port)
 
-        host = variables.get("host")
+        host = self.variables.get("host")
 
         if not port:
             smtp = SMTP(host)
@@ -49,9 +49,9 @@ class Mail(Connector):
             smtp.connect(host, port)
             smtp.ehlo()
 
-        if variables.get("username") and variables.get("password"):
+        if self.variables.get("username") and self.variables.get("password"):
             log.verbose("Authenticating SMTP")
-            smtp.login(variables.get("username"), variables.get("password"))
+            smtp.login(self.variables.get("username"), self.variables.get("password"))
 
         self.smtp = smtp
         return self
