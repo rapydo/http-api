@@ -51,8 +51,8 @@ def test_smtp(app, faker):
     assert obj is not None
     assert obj.smtp is not None
 
-    assert not obj.send("body", "subject")
-    assert not obj.send("body", "subject", "to_addr")
+    assert obj.send("body", "subject")
+    assert obj.send("body", "subject", "to_addr")
     assert obj.send("body", "subject", "to_addr", "from_addr")
 
     obj = detector.get_service_instance(CONNECTOR)
