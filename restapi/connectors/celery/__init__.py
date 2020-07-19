@@ -20,14 +20,6 @@ class CeleryExt(Connector):
     def get_connection_exception(self):
         return None
 
-    # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: no cover
-        pass
-
-    # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: no cover
-        pass
-
     def connect(self, **kwargs):
 
         # set here to avoid warnings like 'Possible hardcoded password'

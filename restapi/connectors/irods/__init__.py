@@ -165,11 +165,3 @@ class IrodsPythonExt(Connector, IrodsPythonClient):
     def disconnect(self):
         self.prc.cleanup()
         self.disconnected = True
-
-    # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: no cover
-        pass
-
-    # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: no cover
-        pass

@@ -22,14 +22,6 @@ class RabbitExt(Connector):
             socket.gaierror,
         )
 
-    # initialize is only invoked for backend databases
-    def initialize(self):  # pragma: no cover
-        pass
-
-    # destroy is only invoked for backend databases
-    def destroy(self):  # pragma: no cover
-        pass
-
     def connect(self, **kwargs):
 
         variables = self.variables.copy()

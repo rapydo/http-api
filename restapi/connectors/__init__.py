@@ -58,13 +58,11 @@ class Connector(metaclass=abc.ABCMeta):
     def disconnect(self):  # pragma: no cover
         return
 
-    @abc.abstractmethod
-    def initialize(self):  # pragma: no cover
-        pass
-
-    @abc.abstractmethod
     def destroy(self):  # pragma: no cover
-        pass
+        log.exit("Missing destroy method in {}", self.__class__.__name__)
+
+    def initialize(self):  # pragma: no cover
+        log.exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
