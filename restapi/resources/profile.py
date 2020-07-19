@@ -56,7 +56,7 @@ def getProfileData():
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(False):
+        if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
     schema = OutputSchema.from_dict(attributes)

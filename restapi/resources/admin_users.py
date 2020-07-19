@@ -145,11 +145,12 @@ def getInputSchema(request):
 
     auth = EndpointResource.load_authentication()
 
-    set_required = not is_put_method
+    set_required = request.method == "POST"
 
     attributes = {}
-    if not is_put_method:
+    if not request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
+
     attributes["password"] = fields.Str(
         required=set_required,
         password=True,

@@ -126,7 +126,7 @@ class ResponseMaker:
 
         fields = []
         try:
-            for field, field_def in schema._declared_fields.items():
+            for field, field_def in schema.declared_fields.items():
                 if field == GET_SCHEMA_KEY:
                     continue
 

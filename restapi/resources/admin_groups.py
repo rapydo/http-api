@@ -59,10 +59,12 @@ if detector.check_availability("neo4j"):
         )
 
     def get_input_group(request):
-        if not request:
-            return {}
+        # if not request:
+        #     return {}
 
-        return InputGroup(strip_required=request.method == "PUT")
+        # return InputGroup(strip_required=request.method == "PUT")
+
+        return InputGroup()
 
     class AdminGroups(EndpointResource):
 
