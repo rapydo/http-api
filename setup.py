@@ -38,7 +38,7 @@ setup(
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.8.7",
         "Flask-Cors==3.0.8",
-        "Flask-SQLAlchemy==2.4.1",
+        "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate",
         "uWSGI",
 
