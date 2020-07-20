@@ -72,18 +72,18 @@ class Mail(Connector):
         plain_body=None,
     ):
 
+        if not to_address:
+            to_address = self.variables.get("admin")
+        if not to_address:
+            log.error("Skipping send email: destination address not configured")
+            return False
+
         if not from_address:
             from_address = self.variables.get("noreply")
         if not from_address:
             from_address = self.variables.get("admin")
         if not from_address:
             log.error("Skipping send email: from address not configured")
-            return False
-
-        if not to_address:
-            to_address = self.variables.get("admin")
-        if not to_address:
-            log.error("Skipping send email: destination address not configured")
             return False
 
         try:
