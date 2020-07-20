@@ -52,7 +52,7 @@ setup(
         "Flask-OAuthlib==0.9.5",
 
         "Flask-RESTful==0.3.7",
-        "Flask-SQLAlchemy==2.4.1",
+        "Flask-SQLAlchemy==2.4.4",
         # AssertionError: Passing keyword arguments to inject is no
         # longer supported. Use inject in combination with parameter
         # annotations to declare dependencies. :/
