@@ -59,6 +59,7 @@ class Mail(Connector):
         return self
 
     def disconnect(self):
+        self.disconnected = True
         self.smtp.quit()
         self.smtp = None
 
