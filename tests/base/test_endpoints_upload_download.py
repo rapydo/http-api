@@ -200,19 +200,11 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 416
 
-        # Back-compatibility fix. This is due to the backendirods container
-        # that forces the installation of Werkzeug 0.16.1 instead of 1.0+
-        from werkzeug import __version__ as werkzeug_version
-
-        old_werkzeug = werkzeug_version == "0.16.1"
         r = client.get(
             f"{API_URI}/tests/download/{uploaded_filename}",
             headers={"Range": "bytes=0-9999999999999999"},
         )
-        if old_werkzeug:
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
 
         r = client.get(
             f"{API_URI}/tests/download/{uploaded_filename}",
@@ -234,10 +226,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
-        if old_werkzeug:
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
         content = r.data.decode("utf-8")
         assert content == up_data
 
