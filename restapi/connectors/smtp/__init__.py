@@ -27,13 +27,13 @@ class Mail(Connector):
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):
-        self.extended_variables = self.variables.copy()
-        self.extended_variables.update(kwargs)
+        self.variables = self.variables.copy()
+        self.variables.update(kwargs)
 
-        if port := self.extended_variables.get("port"):
+        if port := self.variables.get("port"):
             port = Env.to_int(port)
 
-        host = self.extended_variables.get("host")
+        host = self.variables.get("host")
 
         if not port:
             smtp = SMTP(host)
@@ -49,11 +49,9 @@ class Mail(Connector):
             smtp.connect(host, port)
             smtp.ehlo()
 
-        username = self.extended_variables.get("username")
-        password = self.extended_variables.get("password")
-        if username and password:
+        if self.variables.get("username") and self.variables.get("password"):
             log.verbose("Authenticating SMTP")
-            smtp.login(username, password)
+            smtp.login(self.variables.get("username"), self.variables.get("password"))
 
         self.smtp = smtp
         return self
@@ -75,15 +73,15 @@ class Mail(Connector):
     ):
 
         if not from_address:
-            from_address = self.extended_variables.get("noreply")
+            from_address = self.variables.get("noreply")
         if not from_address:
-            from_address = self.extended_variables.get("admin")
+            from_address = self.variables.get("admin")
         if not from_address:
             log.error("Skipping send email: from address not configured")
             return False
 
         if not to_address:
-            to_address = self.extended_variables.get("admin")
+            to_address = self.variables.get("admin")
         if not to_address:
             log.error("Skipping send email: destination address not configured")
             return False
