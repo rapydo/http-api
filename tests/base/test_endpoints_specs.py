@@ -50,10 +50,12 @@ class TestApp(BaseTests):
         # assert "application/json" in content["consumes"]
         # assert "application/json" in content["produces"]
         assert "tags" in content
+        # This is no longer in root definition
+        # Now it is set for each endpoint, when required
         assert "security" not in content
         # assert "Bearer" in content["security"][0]
-        assert "securityDefinitions" not in content
-        # assert "Bearer" in content["securityDefinitions"]
+        assert "securityDefinitions" in content
+        assert "Bearer" in content["securityDefinitions"]
 
         headers, _ = self.do_login(client, None, None)
         r = client.get(f"{API_URI}/swagger", headers=headers)
@@ -74,7 +76,9 @@ class TestApp(BaseTests):
         # assert "application/json" in content["consumes"]
         # assert "application/json" in content["produces"]
         assert "tags" in content
+        # This is no longer in root definition
+        # Now it is set for each endpoint, when required
         assert "security" not in content
         # assert "Bearer" in content["security"][0]
-        assert "securityDefinitions" not in content
-        # assert "Bearer" in content["securityDefinitions"]
+        assert "securityDefinitions" in content
+        assert "Bearer" in content["securityDefinitions"]

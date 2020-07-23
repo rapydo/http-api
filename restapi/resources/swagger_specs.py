@@ -113,6 +113,9 @@ class NewSwaggerSpecifications(EndpointResource):
         specs["host"] = host
         specs["schemes"] = [scheme]
         specs["tags"] = mem.configuration["cleaned_tags"]
+        specs["securityDefinitions"] = {
+            "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+        }
 
         # Remove get_schema parameters from Definitions
         for schema, definition in specs.get("definitions", {}).items():
@@ -120,6 +123,23 @@ class NewSwaggerSpecifications(EndpointResource):
 
         user = self.get_user_if_logged(allow_access_token_parameter=True)
         if user:
+            # Set security requirements for endpoint
+            for key, data in specs.items():
+
+                # Find endpoint mapping flagged as private
+                if key == "paths":
+                    for uri, endpoint in data.items():
+                        u = uri.replace("{", "<").replace("}", ">")
+                        for method, definition in endpoint.items():
+                            auth_required = glom(
+                                mem.customizer._authenticated_endpoints,
+                                f"{u}.{method}",
+                                default=False,
+                            )
+
+                            if auth_required:
+                                definition["security"] = [{"Bearer": []}]
+
             return jsonify(specs)
 
         log.info("Unauthenticated request, filtering out private endpoints")
@@ -134,9 +154,9 @@ class NewSwaggerSpecifications(EndpointResource):
             # Find endpoint mapping flagged as private
             if key == "paths":
                 for uri, endpoint in data.items():
+                    u = uri.replace("{", "<").replace("}", ">")
                     for method, definition in endpoint.items():
 
-                        u = uri.replace("{", "<").replace("}", ">")
                         is_private = glom(
                             mem.customizer._private_endpoints,
                             f"{u}.{method}",
@@ -157,6 +177,15 @@ class NewSwaggerSpecifications(EndpointResource):
                         if is_private:
                             log.debug("Skipping {} {}", method, uri)
                             continue
+
+                        auth_required = glom(
+                            mem.customizer._authenticated_endpoints,
+                            f"{u}.{method}",
+                            default=False,
+                        )
+
+                        if auth_required:
+                            definition["security"] = [{"Bearer": []}]
 
                         filtered_specs.setdefault(key, {})
                         filtered_specs[key].setdefault(uri, {})

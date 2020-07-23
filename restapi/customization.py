@@ -47,6 +47,9 @@ class Customizer:
 
         self._endpoints = []
         self.swagger_specs = {}
+        self._authenticated_endpoints = {}
+        # This is filled by Swagger
+        self._private_endpoints = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -162,7 +165,6 @@ class Customizer:
         )
 
         ERROR_401 = {
-            # 'description': 'Missing or invalid credentials or token'
             "description": "This endpoint requires a valid authorization token"
         }
         ERROR_400 = {
@@ -275,13 +277,19 @@ class Customizer:
                         for u in conf:
                             conf[u].setdefault("responses", {})
 
+                            full_uri = f"/{base}{u}"
+                            self._authenticated_endpoints.setdefault(full_uri, {})
+                            # method_fn is equivalent to m.lower()
+                            self._authenticated_endpoints[full_uri].setdefault(
+                                method_fn, auth_required
+                            )
+
                             conf[u]["responses"].setdefault("400", ERROR_400)
                             if auth_required:
                                 conf[u]["responses"].setdefault("401", ERROR_401)
                                 conf[u]["responses"].setdefault("404", ERROR_404_AUTH)
                             else:
                                 conf[u]["responses"].setdefault("404", ERROR_404)
-
                             # inject _METHOD dictionaries into __apispec__ attribute
                             # __apispec__ is normally populated by using @docs decorator
                             if isinstance(epclss, MethodResourceMeta):
