@@ -134,7 +134,7 @@ def get_output_schema():
 
 
 # Note that these are callables returning a model, not models!
-# They will be excuted a runtime
+# They will be executed a runtime
 def getInputSchema(request):
 
     if not request:

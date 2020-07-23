@@ -147,7 +147,7 @@ if detector.check_availability("neo4j"):
             self.graph = self.get_service_instance("neo4j")
 
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
-            if group is None:
+            if not group:
                 raise NotFound("Group not found")
 
             coordinator_uuid = kwargs.pop("coordinator", None)
@@ -185,7 +185,7 @@ if detector.check_availability("neo4j"):
 
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
 
-            if group is None:
+            if not group:
                 raise NotFound("Group not found")
 
             group.delete()

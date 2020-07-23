@@ -24,13 +24,9 @@ def handle_marshmallow_errors(error):
         log.error(e)
 
     for k, msg in error.data.get("messages").items():
-        msg_len = len(msg)
-        if msg_len == 0:  # pragma: no cover
+        if not msg:  # pragma: no cover
             continue
-        elif len(msg) == 1:
-            log.info("{}: {}", k, msg[0])
-        else:  # pragma: no cover
-            log.info("{}: {}", k, msg)
+        log.info("{}: {}", k, msg)
 
     return (error.data.get("messages"), 400, {})
 
