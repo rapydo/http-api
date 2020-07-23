@@ -144,6 +144,8 @@ def create_app(
                     version=get_project_configuration(
                         "project.version", default="0.0.1"
                     ),
+                    # OpenAPI 3 changed the definition of the security level
+                    # change securityDefinitions/security in swagger_spec.py accordingly
                     openapi_version="2.0",
                     # OpenApi 3 not working with FlaskApiSpec
                     # -> Duplicate parameter with name body and location body

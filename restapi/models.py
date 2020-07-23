@@ -148,3 +148,23 @@ class UniqueDelimitedList(fields.DelimitedList):
             raise ValidationError("Provided list contains duplicates")
 
         return values
+
+
+class AdvancedList(fields.List):
+    def __init__(self, *args, unique=False, min_items=0, **kwargs):
+        self.unique = unique
+        self.min_items = min_items
+        super().__init__(*args, **kwargs)
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        value = super()._deserialize(value, attr, data, **kwargs)
+
+        if self.unique:
+            value = list(set(value))
+
+        if len(value) < self.min_items:
+            raise ValidationError(
+                f"Expected at least {self.min_items} items, received {len(value)}"
+            )
+
+        return value
