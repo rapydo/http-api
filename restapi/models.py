@@ -159,6 +159,9 @@ class AdvancedList(fields.List):
     def _deserialize(self, value, attr, data, **kwargs):
         value = super()._deserialize(value, attr, data, **kwargs)
 
+        if not isinstance(value, list):
+            raise ValidationError("Invalid type")
+
         if self.unique:
             value = list(set(value))
 
