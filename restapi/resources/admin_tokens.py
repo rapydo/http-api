@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest, NotFound
 from restapi.models import Schema, fields
 from restapi.resources.tokens import TokenSchema
 from restapi.rest.definition import EndpointResource
@@ -59,11 +59,9 @@ class AdminTokens(EndpointResource):
         tokens = self.auth.get_tokens(token_jti=token_id)
 
         if not tokens:
-            raise RestApiException("This token does not exist", status_code=404)
+            raise NotFound("This token does not exist")
         token = tokens[0]
 
         if not self.auth.invalidate_token(token=token["token"]):
-            raise RestApiException(
-                f"Failed token invalidation: '{token}'", status_code=400
-            )
+            raise BadRequest(f"Failed token invalidation: '{token}'")
         return self.empty_response()

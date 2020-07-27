@@ -46,35 +46,27 @@ class Meta:
         return classes
 
     @staticmethod
-    def get_module_from_string(
-        modulestring, prefix_package=False, exit_if_not_found=False, exit_on_fail=False
-    ):
+    def get_module_from_string(modulestring, prefix_package=False, exit_on_fail=False):
         """
         Getting a module import
         when your module is stored as a string in a variable
         """
 
-        module = None
         if prefix_package:
             modulestring = f"{BACKEND_PACKAGE}.{modulestring.lstrip('.')}"
 
         try:
-            # Meta language for dinamically import
-            module = import_module(modulestring)
+            return import_module(modulestring)
         except ModuleNotFoundError as e:
             if exit_on_fail:
                 raise e
-            elif exit_if_not_found:
-                log.exit("Failed to load {} module:\nError: {}", modulestring, e)
-            # else:
-            #     log.warning("Failed to load module:\n{}", e)
+            # log.warning("Failed to load module:\n{}", e)
         except BaseException as e:
             if exit_on_fail:
                 raise e
-            else:
-                log.error("Module {} not found.\nError: {}", modulestring, e)
+            log.error("Module {} not found.\nError: {}", modulestring, e)
 
-        return module
+        return None
 
     @staticmethod
     def get_self_reference_from_args(*args):

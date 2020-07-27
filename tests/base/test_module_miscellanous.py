@@ -154,23 +154,6 @@ class TestApp(BaseTests):
         except ModuleNotFoundError:
             pass
 
-        try:
-            Meta.get_module_from_string(
-                "this-should-not-exist", exit_if_not_found=True,
-            )
-            pytest.fail("SystemExit not raised")
-        except SystemExit:
-            pass
-
-        # Check flag precedence
-        try:
-            Meta.get_module_from_string(
-                "this-should-not-exist", exit_if_not_found=True, exit_on_fail=True,
-            )
-            pytest.fail("ModuleNotFoundError not raised")
-        except ModuleNotFoundError:
-            pass
-
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
         s = Meta.get_self_reference_from_args()
@@ -184,16 +167,12 @@ class TestApp(BaseTests):
 
         try:
             Meta.import_models("this-should", "not-exist", exit_on_fail=True)
-            pytest.fail("SystemExit not raised")
-        except SystemExit:
+            pytest.fail("Exception not raised")
+        except BaseException:
             pass
 
         # Check exit_on_fail default value
-        try:
-            Meta.import_models("this-should", "not-exist")
-            pytest.fail("SystemExit not raised")
-        except SystemExit:
-            pass
+        assert Meta.import_models("this-should", "not-exist") is None
 
         assert Meta.get_customizer_instance("invalid.path", "InvalidClass") is None
         assert (

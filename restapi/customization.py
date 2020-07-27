@@ -196,9 +196,7 @@ class Customizer:
                 module_name = f"{apiclass_module}.{module_file}"
                 # Convert module name into a module
                 log.debug("Importing {}", module_name)
-                module = Meta.get_module_from_string(
-                    module_name, exit_if_not_found=True,
-                )
+                module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
 
                 # Extract classes from the module
                 classes = Meta.get_new_classes_from_module(module)
