@@ -167,12 +167,16 @@ class TestApp(BaseTests):
 
         try:
             Meta.import_models("this-should", "not-exist", exit_on_fail=True)
-            pytest.fail("Exception not raised")
-        except BaseException:
+            pytest.fail("SystemExit not raised")
+        except SystemExit:
             pass
 
         # Check exit_on_fail default value
-        assert Meta.import_models("this-should", "not-exist") is None
+        try:
+            Meta.import_models("this-should", "not-exist")
+            pytest.fail("SystemExit not raised")
+        except SystemExit:
+            pass
 
         assert Meta.get_customizer_instance("invalid.path", "InvalidClass") is None
         assert (
