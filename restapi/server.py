@@ -4,6 +4,8 @@ We create all the internal flask components here.
 """
 import logging
 import os
+import signal
+import sys
 import warnings
 
 import sentry_sdk
@@ -30,6 +32,11 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 
+def teardown_handler(signal, frame):
+    log.critical("Goodbye!")
+    sys.exit(0)
+
+
 def create_app(
     name=__name__,
     init_mode=False,
@@ -54,6 +61,8 @@ def create_app(
     # Add template dir for output in HTML
     kwargs["template_folder"] = os.path.join(ABS_RESTAPI_PATH, "templates")
 
+    signal.signal(signal.SIGINT, teardown_handler)
+    signal.signal(signal.SIGTERM, teardown_handler)
     # Flask app instance
     microservice = Flask(name, **kwargs)
 
