@@ -53,7 +53,7 @@ class TestApp(BaseTests):
         # TEST GET ALL TOKENS
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"get_total": True},
+            query_string={"get_total": True},
             headers=last_tokens_header,
         )
         assert r.status_code == 206
@@ -63,7 +63,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"get_total": True, "page": 1, "size": 20},
+            query_string={"get_total": True, "page": 1, "size": 20},
             headers=last_tokens_header,
         )
         assert r.status_code == 206
@@ -73,28 +73,28 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"page": 0, "size": 20},
+            query_string={"page": 0, "size": 20},
             headers=last_tokens_header,
         )
         assert r.status_code == 400
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"page": 1, "size": 0},
+            query_string={"page": 1, "size": 0},
             headers=last_tokens_header,
         )
         assert r.status_code == 400
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"page": 1, "size": 101},
+            query_string={"page": 1, "size": 101},
             headers=last_tokens_header,
         )
         assert r.status_code == 400
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"page": 99999, "size": 20},
+            query_string={"page": 99999, "size": 20},
             headers=last_tokens_header,
         )
         assert r.status_code == 200
@@ -102,7 +102,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            parameters={"page": 1, "size": 2},
+            query_string={"page": 1, "size": 2},
             headers=last_tokens_header,
         )
         assert r.status_code == 200
