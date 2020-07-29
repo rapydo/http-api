@@ -32,8 +32,10 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 
+# in dev: it works with SIGINT but not with SIGTERM
+# in prod: it does not work at all
 def teardown_handler(signal, frame):
-    log.critical("Goodbye!")
+    log.info("Goodbye!")
     sys.exit(0)
 
 

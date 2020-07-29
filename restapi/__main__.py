@@ -18,8 +18,6 @@ if PRODUCTION:
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 BIND_INTERFACE = "0.0.0.0"
 
-#############################
-# BE FLASK
 app = create_app(name="REST_API")
 
 if __name__ == "__main__":
