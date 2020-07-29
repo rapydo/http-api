@@ -8,6 +8,9 @@ from webargs import fields  # also imported from endpoints
 
 from restapi.utilities.logs import log
 
+# Note for SQL-Alchemy, consider to use:
+# https://github.com/marshmallow-code/marshmallow-sqlalchemy
+
 GET_SCHEMA_KEY = "get_schema"
 # ISO 8601 format with Zulu time (default Javascript output)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
