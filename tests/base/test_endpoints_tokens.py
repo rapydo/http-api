@@ -47,6 +47,68 @@ class TestApp(BaseTests):
         assert r.status_code == 405
 
         # TEST GET ALL TOKENS
+        r = client.get(f"{API_URI}/admin/tokens")
+        assert r.status_code == 401
+
+        # TEST GET ALL TOKENS
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"get_total": True},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"get_total": True, "page": 1, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"page": 0, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"page": 1, "size": 0},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"page": 1, "size": 101},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"page": 99999, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        assert len(self.get_content(r)) == 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            parameters={"page": 1, "size": 2},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        assert len(self.get_content(r)) == 2
+
+        # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
         assert r.status_code == 200
         assert len(self.get_content(r)) >= 3
