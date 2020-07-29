@@ -106,7 +106,7 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        assert len(self.get_content(r)) == 2
+        assert len(self.get_content(r)) <= 2
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
