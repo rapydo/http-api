@@ -168,9 +168,12 @@ class TestApp(BaseTests):
         assert not auth.verify_password(None, None)
 
         ip_data = auth.localize_ip("8.8.8.8")
+
         assert ip_data is not None
         # I don't know if this tests will be stable...
         assert ip_data == "United States"
+
+        assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
         def verify_token_is_valid(token, ttype=None):
             unpacked_token = auth.verify_token(token, token_type=ttype)

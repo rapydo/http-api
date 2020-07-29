@@ -315,13 +315,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @staticmethod
-    def get_remote_ip():  # pragma: no cover
+    def get_remote_ip():
         try:
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-                return forwarded_ips[-1]
+                # it can be something like: ['IP1, IP2']
+                return forwarded_ips[-1].split(",")[0].strip()
 
-            if PRODUCTION and not TESTING:
-                log.warning("Server in production X-Forwarded-For header is missing")
+            if PRODUCTION and not TESTING:  # pragma: no cover
+                log.warning(
+                    "Production mode is enabled, but X-Forwarded-For header is missing"
+                )
 
             return request.remote_addr
         except RuntimeError as e:
@@ -360,10 +363,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     log.error("Missing continent.names.en in {}", data)
                     return None
             return None  # pragma: no cover
-        except BaseException as e:  # pragma: no cover
+        except BaseException as e:
             log.error("{}. Input was {}", e, ip)
 
-        return None  # pragma: no cover
+        return None
 
     # ###################
     # # Tokens handling #
