@@ -315,13 +315,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @staticmethod
-    def get_remote_ip():
+    def get_remote_ip():  # pragma: no cover
         try:
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
                 # it can be something like: ['IP1, IP2']
                 return forwarded_ips[-1].split(",")[0].strip()
 
-            if PRODUCTION and not TESTING:  # pragma: no cover
+            if PRODUCTION and not TESTING:
                 log.warning(
                     "Production mode is enabled, but X-Forwarded-For header is missing"
                 )

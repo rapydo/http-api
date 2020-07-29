@@ -80,40 +80,6 @@ class EndpointResource(MethodResource, Resource):
             parameters[k] = v
         return parameters
 
-    # Deprecated since 0.7.4
-    def get_paging(self, force_read_parameters=False):  # pragma: no cover
-
-        log.warning(
-            "Deprecated use of get_paging, use @decorators.get_pagination instead"
-        )
-
-        if force_read_parameters:
-            self.get_input()
-        # NOTE: you have to call self.get_input before to use this method
-        limit = self._args.get(PERPAGE_KEY, DEFAULT_PERPAGE)
-        current_page = self._args.get(CURRENTPAGE_KEY, DEFAULT_CURRENTPAGE)
-
-        if limit is None:
-            limit = DEFAULT_PERPAGE
-        if current_page is None:
-            current_page = DEFAULT_CURRENTPAGE
-
-        try:
-            limit = int(limit)
-        except ValueError:
-            log.warning("{} is expected to be an int, not {}", PERPAGE_KEY, limit)
-            limit = DEFAULT_PERPAGE
-
-        try:
-            current_page = int(current_page)
-        except ValueError:
-            log.warning(
-                "{} is expected to be an int, not {}", CURRENTPAGE_KEY, current_page
-            )
-            current_page = DEFAULT_CURRENTPAGE
-
-        return (current_page, limit)
-
     def get_token(self):
         if not hasattr(self, "unpacked_token"):
             return None
