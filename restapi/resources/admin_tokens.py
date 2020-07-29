@@ -13,6 +13,10 @@ class User(Schema):
     surname = fields.Str()
 
 
+class TokenTotalSchema(Schema):
+    total = fields.Int()
+
+
 class TokenAdminSchema(TokenSchema):
     # token_type = fields.Str()
     user = fields.Nested(User)
@@ -39,13 +43,20 @@ class AdminTokens(EndpointResource):
     }
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.get_pagination
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
-    def get(self):
+    @decorators.marshal_with(TokenTotalSchema, code=206)
+    def get(self, get_total, page, size):
 
         tokens = self.auth.get_tokens(get_all=True)
 
+        if get_total:
+            return self.response({"total": len(tokens)}, code=206)
+
+        end = page * size
+        start = end - size
         response = []
-        for t in tokens:
+        for t in tokens[start:end]:
             if t.get("user") is None:
                 log.error("Found a token without any user assigned: {}", t["id"])
                 continue
