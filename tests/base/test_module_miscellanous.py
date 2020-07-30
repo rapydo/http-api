@@ -432,7 +432,7 @@ class TestApp(BaseTests):
         assert len(r["advanced_list"]) == 2
 
         try:
-            schema.load({"unique_delimited_list": ""})
+            schema.load({"advanced_list": {"a": "b"}})
         except ValidationError as e:
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Not a valid list."

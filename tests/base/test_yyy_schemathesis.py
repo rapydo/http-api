@@ -20,10 +20,15 @@ def get_auth_token(client, data):
     content = json.loads(r.data.decode("utf-8"))
 
     if r.status_code == 403:
+        log.warning(type(content))
+        log.warning(content)
+        log.warning(content.get("actions"))
         if isinstance(content, dict) and content.get("actions"):
             actions = content.get("actions")
+            log.warning(actions)
 
             if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+                log.warning("Password change!")
                 currentpwd = data["password"]
                 fake = get_faker()
                 newpwd = fake.password(strong=True)
