@@ -25,7 +25,7 @@ class InputSchema(Schema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # A fake field user to force return of schemas
+    # A fake field used to force return of schemas
     get_schema = fields.Bool(
         required=False, description="Request schema specifications"
     )

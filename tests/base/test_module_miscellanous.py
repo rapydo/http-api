@@ -4,10 +4,11 @@ import time
 
 import psutil
 import pytest
+from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.models import fields
+from restapi.models import AdvancedList, InputSchema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
@@ -370,3 +371,113 @@ class TestApp(BaseTests):
             pytest.fail("No exception raised")
         except ServiceUnavailable:
             pass
+
+    def test_marshmallow_schemas(self):
+        class Input1(InputSchema):
+            unique_delimited_list = UniqueDelimitedList(
+                fields.Str(), delimiter=",", required=True
+            )
+            advanced_list = AdvancedList(
+                fields.Str(), unique=True, min_items=2, required=True
+            )
+
+        schema = Input1(strip_required=False)
+        try:
+            schema.load({})
+        except ValidationError as e:
+            err = "Missing data for required field."
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == err
+            assert "unique_delimited_list" in e.messages
+            assert e.messages["unique_delimited_list"][0] == err
+
+        schema = Input1(strip_required=True)
+        # ValidationError error is not raised because required is stripped of
+        assert len(schema.load({})) == 0
+
+        try:
+            schema.load({"advanced_list": None})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Field may not be null."
+
+        try:
+            schema.load({"advanced_list": ""})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Not a valid list."
+
+        try:
+            schema.load({"advanced_list": [10]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert 0 in e.messages["advanced_list"]
+            assert e.messages["advanced_list"][0][0] == "Not a valid string."
+
+        min_items_error = "Expected at least 2 items, received 1"
+        try:
+            schema.load({"advanced_list": ["a"]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == min_items_error
+
+        try:
+            schema.load({"advanced_list": ["a", "a"]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == min_items_error
+
+        r = schema.load({"advanced_list": ["a", "a", "b"]})
+        assert "advanced_list" in r
+        assert len(r["advanced_list"]) == 2
+
+        try:
+            schema.load({"unique_delimited_list": ""})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Not a valid list."
+
+        r = schema.load({"unique_delimited_list": ""})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 1
+        assert r["unique_delimited_list"][0] == ""
+
+        r = schema.load({"unique_delimited_list": "xyz"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 1
+        assert r["unique_delimited_list"][0] == "xyz"
+
+        r = schema.load({"unique_delimited_list": "a,b"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 2
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+
+        r = schema.load({"unique_delimited_list": "a,b,c"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][1] == "c"
+
+        try:
+            schema.load({"unique_delimited_list": "a,b,b"})
+        except ValidationError as e:
+            assert "unique_delimited_list" in e.messages
+            err = "Provided list contains duplicates"
+            assert e.messages["unique_delimited_list"][0] == err
+
+        # No strips on elements
+        r = schema.load({"unique_delimited_list": "a,b, c"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][1] == " c"
+
+        r = schema.load({"unique_delimited_list": "a,b,c "})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][1] == "c "
