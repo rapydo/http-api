@@ -458,7 +458,7 @@ class TestApp(BaseTests):
         assert len(r["unique_delimited_list"]) == 3
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
-        assert r["unique_delimited_list"][1] == "c"
+        assert r["unique_delimited_list"][2] == "c"
 
         try:
             schema.load({"unique_delimited_list": "a,b,b"})
@@ -473,11 +473,11 @@ class TestApp(BaseTests):
         assert len(r["unique_delimited_list"]) == 3
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
-        assert r["unique_delimited_list"][1] == " c"
+        assert r["unique_delimited_list"][2] == " c"
 
         r = schema.load({"unique_delimited_list": "a,b,c "})
         assert "unique_delimited_list" in r
         assert len(r["unique_delimited_list"]) == 3
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
-        assert r["unique_delimited_list"][1] == "c "
+        assert r["unique_delimited_list"][2] == "c "
