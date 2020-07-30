@@ -2,8 +2,6 @@ from restapi import decorators
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 
-# from restapi.utilities.logs import log
-
 if TESTING:
 
     class TestPagination(EndpointResource):
@@ -26,16 +24,14 @@ if TESTING:
         }
 
         @decorators.get_pagination
-        def get(self, get_total=None, page=None, size=None):
-
-            if get_total:
-                return len(TestPagination.values)
-
-            offset = (page - 1) * size
-            return TestPagination.values[offset : offset + size]
+        def get(self, get_total, page, size):
+            return self.endpoint(get_total, page, size)
 
         @decorators.get_pagination
-        def post(self, get_total=None, page=None, size=None):
+        def post(self, get_total, page, size):
+            return self.endpoint(get_total, page, size)
+
+        def endpoint(self, get_total, page, size):
 
             if get_total:
                 return len(TestPagination.values)
