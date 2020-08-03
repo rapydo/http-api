@@ -55,6 +55,7 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==1.0.0",
         "celerybeat-mongo==0.2.0",
+        "python-telegram-bot==12.8",
         # TOTP
         "pyotp==2.3.0",
         "segno==1.0.0",
