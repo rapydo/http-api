@@ -8,12 +8,7 @@ from telegram import ParseMode
 from telegram.error import Conflict as TelegramConflict
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
-from restapi.confs import (
-    CUSTOM_PACKAGE,
-    EXTENDED_PACKAGE,
-    EXTENDED_PROJECT_DISABLED,
-    get_backend_url,
-)
+from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.services.detect import Detector
@@ -271,13 +266,10 @@ class BotApiClient:
 
     @staticmethod
     def api(path, method, base="api", payload=None):
-        if host := BotApiClient.variables.get("backend_host"):
-            port = Env.get("FLASK_PORT")
-            url = f"http://{host}:{port}"
-        else:
-            url = get_backend_url()
+        host = BotApiClient.variables.get("backend_host")
+        port = Env.get("FLASK_PORT")
+        url = f"http://{host}:{port}/{base}/{path}"
 
-        url = f"{url}/{base}/{path}"
         log.debug("Calling {} on {}", method, url)
 
         try:
