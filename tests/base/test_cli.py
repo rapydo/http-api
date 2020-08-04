@@ -80,6 +80,7 @@ def test_cli():
         client = TelegramClient(
             StringSession(session_str), api_id, api_hash, sequential_updates=True
         )
+        client.start()
         client.send_message(botname, "/status")
         messages = client.get_messages(botname)
         assert messages[0].message == "Server is alive"
