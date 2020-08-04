@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from click.testing import CliRunner
 
@@ -82,7 +84,8 @@ def test_cli():
         )
         client.start()
         client.send_message(botname, "/status")
-        messages = await client.get_messages(botname)
+        messages_coroutine = client.get_messages(botname)
+        messages = asyncio.run(messages_coroutine())
         assert messages[0].message == "Server is alive"
 
         bot.shutdown()
