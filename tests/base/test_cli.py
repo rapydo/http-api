@@ -60,18 +60,16 @@ def test_cli():
     if Env.get_bool("TELEGRAM_ENABLE"):
         start_timeout(6)
         try:
-            response = runner.invoke(cli.bot, [])
-            if str(response) != "<Result Timeout('Operation timeout: interrupted')>":
-                pytest.fail(f"Bot not started? {response}")
+            runner.invoke(cli.bot, [])
         except Timeout:
             pass
 
         stop_timeout()
 
-    from restapi.services.telegram import bot
+        from restapi.services.telegram import bot
 
-    # here you can send command to the bot!? :-)
-    bot.shutdown()
+        # here you can send command to the bot!? :-)
+        bot.shutdown()
 
     variables = {
         "myhost": "myvalue",
