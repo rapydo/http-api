@@ -29,38 +29,12 @@ def my_self(update, context):
     )
 
 
-# class Test(Schema):
-#     a = fields.Int()
-#     b = fields.Str(required=True)
-#     c = fields.Bool(missing=False)
-
-
-# def handle_test_output(data):
-#     if len(data) < 1:
-#         return "No test"
-#     msg = "test:\n\n"
-#     for element in data:
-#         msg += f"- `{element}`\n"
-#     return msg
-
-# @bot.command("test")
-# @bot.restricted_to_users
-# @bot.parameters(Test())
-# @run_async
-# def test(update, context, a, b, c):
-#     if out := bot.api(path="test"):
-#         msg = handle_error(out, do_if_ok=handle_test_output)
-#     else:
-#         msg = "Invalid request"
-#     bot.send_markdown(msg, update)
-
-
 @bot.command("status", help="get server status")
 @bot.restricted_to_users
 @run_async
 def status(update, context):
     try:
-        out = bot.api("status", method="get")
+        out = bot.api.get("status")
         bot.send_markdown(out, update)
     except RestApiException as e:
         bot.send_markdown(str(e), update)
@@ -76,7 +50,7 @@ class Stats(Schema):
 @run_async
 def monitor(update, context, param):
     try:
-        out = bot.api("admin/stats", method="get")
+        out = bot.api.get("admin/stats")
         bot.send_markdown(out, update)
     except RestApiException as e:
         bot.send_markdown(str(e), update)

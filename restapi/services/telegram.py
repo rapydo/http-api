@@ -18,6 +18,7 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
+from restapi.utilities.processes import Timeout
 
 
 class TooManyInputs(ValidationError):
@@ -48,6 +49,8 @@ class Bot:
             log.exit("No admin list")
 
         self.users = Bot.get_ids(self.variables.get("users"))
+
+        self.api = BotApiClient(self.variables)
 
     # Startup workflow: init -> load_commands -> start
     def load_commands(self):
@@ -142,27 +145,6 @@ class Bot:
         for admin in self.admins:
             self.updater.bot.send_message(chat_id=admin, text=msg)
 
-    @staticmethod
-    def api(path, payload=None, method="post", base="api"):
-        url = get_backend_url()
-        url = f"{url}/{base}/{path}"
-        log.debug("Calling {} on {}", method, url)
-        if payload and method in ["post"]:
-            payload = json.dumps(payload)
-
-        try:
-            response = requests.request(method, url=url, data=payload)
-
-            out = response.json()
-        except Exception as e:
-            log.error(f"API call failed: {e}")
-            raise RestApiException(str(e), status_code=500)
-
-        if response.status_code >= 300:
-            raise RestApiException(out, status_code=response.status_code)
-
-        return out
-
     ###########################################
     #   CALLBACKS AND OTHER SERVICE FUNCTIONS
     #          mostly private methods
@@ -184,7 +166,13 @@ class Bot:
 
         elif isinstance(context.error, TelegramConflict):
             self.admins_broadcast(str(context.error))
+            log.warning("Stopping bot")
+            self.updater.stop()
+            log.critical("stopped")
             log.exit(str(context.error))
+        # used to stop the instance during tests
+        elif isinstance(context.error, Timeout):
+            raise context.error
         else:
             log.error(context.error)
             self.admins_broadcast(str(context.error))
@@ -245,6 +233,57 @@ class Bot:
         except ValueError as e:
             log.error(e)
             return []
+
+
+class BotApiClient:
+    def __init__(self, variables):
+        BotApiClient.variables = variables
+
+    @staticmethod
+    def get(path, base="api"):
+        return BotApiClient.api(path, "GET", base=base)
+
+    @staticmethod
+    def put(path, base="api"):
+        return BotApiClient.api(path, "PUT", base=base)
+
+    @staticmethod
+    def patch(path, base="api"):
+        return BotApiClient.api(path, "PATCH", base=base)
+
+    @staticmethod
+    def post(path, base="api", payload=None):
+        if payload:
+            payload = json.dumps(payload)
+        return BotApiClient.api(path, "POST", base=base, payload=payload)
+
+    @staticmethod
+    def delete(path, base="api"):
+        return BotApiClient.api(path, "DELETE", base=base)
+
+    @staticmethod
+    def api(path, method, base="api", payload=None):
+        if host := BotApiClient.variables.get("backend_host"):
+            port = Env.get("FLASK_PORT")
+            url = f"http://{host}:{port}"
+        else:
+            url = get_backend_url()
+
+        url = f"{url}/{base}/{path}"
+        log.debug("Calling {} on {}", method, url)
+
+        try:
+            response = requests.request(method, url=url, data=payload)
+
+            out = response.json()
+        except Exception as e:
+            log.error(f"API call failed: {e}")
+            raise RestApiException(str(e), status_code=500)
+
+        if response.status_code >= 300:
+            raise RestApiException(out, status_code=response.status_code)
+
+        return out
 
 
 bot = Bot()

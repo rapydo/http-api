@@ -44,7 +44,9 @@ def verbose(*args, **kwargs):
 
 def critical_exit(message="", *args, **kwargs):
     log.critical(message, *args, **kwargs)
+    log.critical("exit?")
     sys.exit(1)
+    log.critical("=__=?")
 
 
 log.verbose = verbose
