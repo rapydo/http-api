@@ -4,6 +4,7 @@ from functools import wraps
 import requests
 from marshmallow import ValidationError
 from telegram import ParseMode
+from telegram.error import Conflict as TelegramConflict
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from restapi.confs import (
@@ -24,6 +25,12 @@ class TooManyInputs(ValidationError):
 
 
 class Bot:
+
+    #################
+    #     STARTUP
+    ##################
+
+    # Startup workflow: init -> load_commands -> start
     def __init__(self):
         self.commands = {}
         self.variables = Detector.load_variables(prefix="telegram")
@@ -42,6 +49,8 @@ class Bot:
 
         self.users = Bot.get_ids(self.variables.get("users"))
 
+    # Startup workflow: init -> load_commands -> start
+    def load_commands(self):
         Meta.get_module_from_string("restapi.services.bot")
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
             Meta.get_module_from_string(f"{EXTENDED_PACKAGE}.bot")
@@ -54,42 +63,17 @@ class Bot:
             MessageHandler(Filters.text, self.invalid_message)
         )
 
-    @staticmethod
-    def get_ids(ids_list):
-        if not ids_list:
-            return []
-
-        try:
-            return [int(x.strip()) for x in ids_list.split(",")]
-        except ValueError as e:
-            log.error(e)
-            return []
-
-    def error_callback(self, update, context):
-        if isinstance(context.error, TooManyInputs):
-            update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
-        elif isinstance(context.error, ValidationError):
-            errors = {}
-            for k in context.error.messages:
-                if k in context.error.data:
-                    errors[context.error.data[k]] = context.error.messages[k]
-                else:
-                    errors[k] = context.error.messages[k]
-
-            update.message.reply_text(errors, parse_mode=ParseMode.MARKDOWN)
-
-        else:
-            # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
-            log.error(context.error)
-            update.message.reply_text("Unexpected error", parse_mode=ParseMode.MARKDOWN)
-        # raise context.error
-
+    # Startup workflow: init -> load_commands -> start
     def start(self):
 
         self.updater.start_polling(read_latency=5)
         self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
         return self.updater.idle()
+
+    ##################
+    #    DECORATORS
+    ##################
 
     def command(self, cmd, help="N/A"):
         def decorator(func):
@@ -140,55 +124,9 @@ class Bot:
 
         return decorator
 
-    def is_authorized(self, user_id, required_admin):
-
-        if required_admin:
-            return user_id in self.admins
-
-        return user_id in self.admins + self.users
-
-    def admins_broadcast(self, msg):
-        for admin in self.admins:
-            self.updater.bot.send_message(chat_id=admin, text=msg)
-
-    def check_authorized(self, update, context, required_admin=False):
-        user = update.message.from_user
-        user_id = user.id
-        text = update.message.text
-
-        if self.is_authorized(user_id, required_admin):
-            log.info(f"User {user_id} calls restricted: '{text}'")
-            return True
-
-        msg = "Unauthorized request!\n"
-        for key, value in update.message.__dict__.items():
-            if key == "from_user":
-                for k, v in value.__dict__.items():
-                    if not k.startswith("_") and v is not None:
-                        msg += f"{k}: {v}\n"
-            if key in ["date", "photo", "text"]:
-                # print(key, value)
-                if key == "text":
-                    msg += f"{key}: {value}\n"
-        log.warning(msg)
-        # Notify admins about violation
-        self.admins_broadcast(msg)
-
-        self.updater.bot.send_message(
-            chat_id=update.message.chat_id, text="Invalid command, ask for /help"
-        )
-        return False
-
-    def invalid_message(self, update, context):
-        log.info(
-            "Received invalid message from {}: {}",
-            update.message.from_user.id,
-            update.message.text,
-        )
-        if self.check_authorized(update, context):
-            self.updater.bot.send_message(
-                chat_id=update.message.chat_id, text="Invalid command, ask for /help"
-            )
+    #################
+    #    MESSAGES
+    ##################
 
     def send_markdown(self, msg, update):
         if not msg.strip():
@@ -199,6 +137,10 @@ class Bot:
             text=msg.replace("_", "-"),
             parse_mode=ParseMode.MARKDOWN,
         )
+
+    def admins_broadcast(self, msg):
+        for admin in self.admins:
+            self.updater.bot.send_message(chat_id=admin, text=msg)
 
     @staticmethod
     def api(path, payload=None, method="post", base="api"):
@@ -220,6 +162,89 @@ class Bot:
             raise RestApiException(out, status_code=response.status_code)
 
         return out
+
+    ###########################################
+    #   CALLBACKS AND OTHER SERVICE FUNCTIONS
+    #          mostly private methods
+    ##########################################
+
+    def error_callback(self, update, context):
+        # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
+        if isinstance(context.error, TooManyInputs):
+            update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
+        elif isinstance(context.error, ValidationError):
+            errors = {}
+            for k in context.error.messages:
+                if k in context.error.data:
+                    errors[context.error.data[k]] = context.error.messages[k]
+                else:
+                    errors[k] = context.error.messages[k]
+
+            update.message.reply_text(errors, parse_mode=ParseMode.MARKDOWN)
+
+        elif isinstance(context.error, TelegramConflict):
+            self.admins_broadcast(str(context.error))
+            log.exit(str(context.error))
+        else:
+            log.error(context.error)
+            self.admins_broadcast(str(context.error))
+
+    def invalid_message(self, update, context):
+        log.info(
+            "Received invalid message from {}: {}",
+            update.message.from_user.id,
+            update.message.text,
+        )
+        if self.check_authorized(update, context):
+            self.updater.bot.send_message(
+                chat_id=update.message.chat_id, text="Invalid command, ask for /help"
+            )
+
+    def is_authorized(self, user_id, required_admin):
+
+        if required_admin:
+            return user_id in self.admins
+
+        return user_id in self.admins + self.users
+
+    def check_authorized(self, update, context, required_admin=False):
+        user = update.message.from_user
+        user_id = user.id
+        text = update.message.text
+
+        if self.is_authorized(user_id, required_admin):
+            log.info(f"User {user_id} requested: {text}")
+            return True
+
+        msg = "Unauthorized request!\n"
+        for key, value in update.message.__dict__.items():
+            if key == "from_user":
+                for k, v in value.__dict__.items():
+                    if not k.startswith("_") and v is not None:
+                        msg += f"{k}: {v}\n"
+            if key in ["date", "photo", "text"]:
+                # print(key, value)
+                if key == "text":
+                    msg += f"{key}: {value}\n"
+        log.warning(msg)
+        # Notify admins about violation
+        self.admins_broadcast(msg)
+
+        self.updater.bot.send_message(
+            chat_id=update.message.chat_id, text="Invalid command, ask for /help"
+        )
+        return False
+
+    @staticmethod
+    def get_ids(ids_list):
+        if not ids_list:
+            return []
+
+        try:
+            return [int(x.strip()) for x in ids_list.split(",")]
+        except ValueError as e:
+            log.error(e)
+            return []
 
 
 bot = Bot()

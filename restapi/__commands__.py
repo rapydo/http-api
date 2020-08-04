@@ -260,4 +260,5 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
 def bot():
     from restapi.services.telegram import bot
 
+    bot.load_commands()
     bot.start()
