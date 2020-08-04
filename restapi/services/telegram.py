@@ -15,7 +15,7 @@ from restapi.confs import (
     get_backend_url,
 )
 from restapi.env import Env
-from restapi.exceptions import RestApiException, ServiceUnavailable
+from restapi.exceptions import RestApiException
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta

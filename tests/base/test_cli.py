@@ -66,6 +66,11 @@ def test_cli():
         except Timeout:
             pass
 
+    from restapi.services.telegram import bot
+
+    # here you can send command to the bot!? :-)
+    bot.shutdown()
+
     variables = {
         "myhost": "myvalue",
         "myport": "111",
