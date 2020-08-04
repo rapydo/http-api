@@ -57,14 +57,14 @@ def test_cli():
     response = runner.invoke(cli.tests, ["--core", "--file", "x"])
     assert response.exit_code == 1
 
-    if Env.get_bool("TELEGRAM_ENABLE"):
-        start_timeout(6)
-        try:
-            response = runner.invoke(cli.bot, [])
-            if str(response) != "<Result Timeout('Operation timeout: interrupted')>":
-                pytest.fail(f"Bot not started? {response}")
-        except Timeout:
-            pass
+    # if Env.get_bool("TELEGRAM_ENABLE"):
+    #     start_timeout(6)
+    #     try:
+    #         response = runner.invoke(cli.bot, [])
+    #         if str(response) != "<Result Timeout('Operation timeout: interrupted')>":
+    #             pytest.fail(f"Bot not started? {response}")
+    #     except Timeout:
+    #         pass
 
     variables = {
         "myhost": "myvalue",
