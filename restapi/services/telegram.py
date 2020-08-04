@@ -75,7 +75,7 @@ class Bot:
         )
 
         self.updater.start_polling(read_latency=5)
-        log.info("Booting")
+        log.info("Bot is ready to accept requests")
         return self.updater.idle()
 
     def command(self, cmd, help="N/A"):
