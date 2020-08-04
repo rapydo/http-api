@@ -38,12 +38,6 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
-        # Tests
-        "pytest-flask==1.0.0",
-        "pytest-cov==2.10.0",
-        # "pytest-mock==3.1.1",  # not used...
-        "schemathesis==2.1.0",
-        "Faker==4.1.1",
         # DB and services drivers
         "neomodel==3.3.2",
         "psycopg2-binary",
@@ -73,6 +67,12 @@ setup(
         "websocket-client",
         "gripcontrol==4.0.0",
         "sentry-sdk[flask]==0.16.1",
+        # Tests
+        "pytest-flask==1.0.0",
+        "pytest-cov==2.10.0",
+        "schemathesis==2.1.0",
+        "Faker==4.1.1",
+        "Telethon==1.16.0",
     ],
     classifiers=[
         "Programming Language :: Python",
