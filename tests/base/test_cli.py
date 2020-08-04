@@ -82,7 +82,7 @@ def test_cli():
         )
         client.start()
         client.send_message(botname, "/status")
-        messages = client.get_messages(botname)
+        messages = await client.get_messages(botname)
         assert messages[0].message == "Server is alive"
 
         bot.shutdown()
