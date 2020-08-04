@@ -2,6 +2,7 @@ import pytest
 from click.testing import CliRunner
 
 from restapi import __commands__ as cli
+from restapi.env import Env
 from restapi.services.detect import detector
 from restapi.utilities.processes import Timeout, start_timeout
 
@@ -56,12 +57,13 @@ def test_cli():
     response = runner.invoke(cli.tests, ["--core", "--file", "x"])
     assert response.exit_code == 1
 
-    start_timeout(6)
-    try:
-        response = runner.invoke(cli.bot, [])
-        pytest.fail(f"Bot not started? {response}")
-    except Timeout:
-        pass
+    if Env.get_bool("TELEGRAM_ENABLE"):
+        start_timeout(6)
+        try:
+            response = runner.invoke(cli.bot, [])
+            pytest.fail(f"Bot not started? {response}")
+        except Timeout:
+            pass
 
     variables = {
         "myhost": "myvalue",

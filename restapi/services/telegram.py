@@ -6,11 +6,17 @@ from marshmallow import ValidationError
 from telegram import ParseMode
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
-from restapi.confs import get_backend_url
+from restapi.confs import (
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+    get_backend_url,
+)
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 
 class TooManyInputs(ValidationError):
@@ -35,6 +41,18 @@ class Bot:
             log.exit("No admin list")
 
         self.users = Bot.get_ids(self.variables.get("users"))
+
+        Meta.get_module_from_string("restapi.services.bot")
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            Meta.get_module_from_string(f"{EXTENDED_PACKAGE}.bot")
+
+        Meta.get_module_from_string(f"{CUSTOM_PACKAGE}.bot")
+
+        # Handle the rest as normal messages
+        # NOTE: this has to be the last handler to be attached
+        self.updater.dispatcher.add_handler(
+            MessageHandler(Filters.text, self.invalid_message)
+        )
 
     @staticmethod
     def get_ids(ids_list):
@@ -68,14 +86,8 @@ class Bot:
 
     def start(self):
 
-        # Handle the rest as normal messages
-        # NOTE: this has to be the last handler to be attached
-        self.updater.dispatcher.add_handler(
-            MessageHandler(Filters.text, self.invalid_message)
-        )
-
         self.updater.start_polling(read_latency=5)
-        self.admins_broadcast("Bot is ready")
+        self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
         return self.updater.idle()
 
