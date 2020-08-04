@@ -3,6 +3,7 @@ from click.testing import CliRunner
 
 from restapi import __commands__ as cli
 from restapi.services.detect import detector
+from restapi.utilities.processes import Timeout, start_timeout
 
 
 def test_cli():
@@ -54,6 +55,13 @@ def test_cli():
 
     response = runner.invoke(cli.tests, ["--core", "--file", "x"])
     assert response.exit_code == 1
+
+    start_timeout(6)
+    try:
+        response = runner.invoke(cli.bot, [])
+        pytest.fail("Bot not started?")
+    except Timeout:
+        pass
 
     variables = {
         "myhost": "myvalue",

@@ -3,7 +3,7 @@ from telegram.ext.dispatcher import run_async
 from webargs import fields, validate
 
 from restapi.exceptions import RestApiException
-from restapi.services.telegram import Bot, bot
+from restapi.services.telegram import bot
 
 # from restapi.utilities.logs import log
 
@@ -11,13 +11,12 @@ from restapi.services.telegram import Bot, bot
 @bot.command("help", help="print this help")
 @bot.restricted_to_users
 def help(update, context):
-    bot.commands
     msg = "Available Commands:\n\n"
 
     for cmd, descr in bot.commands.items():
         msg += f" - /{cmd}\t{descr}\n"
 
-    Bot.send_markdown(msg, context, update)
+    bot.send_markdown(msg, update)
 
 
 @bot.command("me", help="info about yourself")
@@ -49,11 +48,11 @@ def my_self(update, context):
 # @bot.parameters(Test())
 # @run_async
 # def test(update, context, a, b, c):
-#     if out := Bot.api(path="test"):
+#     if out := bot.api(path="test"):
 #         msg = handle_error(out, do_if_ok=handle_test_output)
 #     else:
 #         msg = "Invalid request"
-#     Bot.send_markdown(msg, context, update)
+#     bot.send_markdown(msg, update)
 
 
 @bot.command("status", help="get server status")
@@ -61,10 +60,10 @@ def my_self(update, context):
 @run_async
 def status(update, context):
     try:
-        out = Bot.api("status", method="get")
-        Bot.send_markdown(out, context, update)
+        out = bot.api("status", method="get")
+        bot.send_markdown(out, update)
     except RestApiException as e:
-        Bot.send_markdown(str(e), context, update)
+        bot.send_markdown(str(e), update)
 
 
 class Stats(Schema):
@@ -77,7 +76,7 @@ class Stats(Schema):
 @run_async
 def monitor(update, context, param):
     try:
-        out = Bot.api("admin/stats", method="get")
-        Bot.send_markdown(out, context, update)
+        out = bot.api("admin/stats", method="get")
+        bot.send_markdown(out, update)
     except RestApiException as e:
-        Bot.send_markdown(str(e), context, update)
+        bot.send_markdown(str(e), update)

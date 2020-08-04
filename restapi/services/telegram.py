@@ -91,6 +91,14 @@ class Bot:
 
         return decorator
 
+    def restricted_to_admins(self, func):
+        @wraps(func)
+        def wrapper(update, context, *args, **kwargs):
+            if self.check_authorized(update, context, required_admin=True):
+                return func(update, context, *args, **kwargs)
+
+        return wrapper
+
     def restricted_to_users(self, func):
         @wraps(func)
         def wrapper(update, context, *args, **kwargs):
@@ -119,14 +127,6 @@ class Bot:
             return wrapper
 
         return decorator
-
-    def restricted_to_admins(self, func):
-        @wraps(func)
-        def wrapper(update, context, *args, **kwargs):
-            if self.check_authorized(update, context, required_admin=True):
-                return func(update, context, *args, **kwargs)
-
-        return wrapper
 
     def is_authorized(self, user_id, required_admin):
 
@@ -162,7 +162,7 @@ class Bot:
         # Notify admins about violation
         self.admins_broadcast(msg)
 
-        context.bot.send_message(
+        self.updater.bot.send_message(
             chat_id=update.message.chat_id, text="Invalid command, ask for /help"
         )
         return False
@@ -174,16 +174,15 @@ class Bot:
             update.message.text,
         )
         if self.check_authorized(update, context):
-            context.bot.send_message(
+            self.updater.bot.send_message(
                 chat_id=update.message.chat_id, text="Invalid command, ask for /help"
             )
 
-    @staticmethod
-    def send_markdown(msg, context, update):
+    def send_markdown(self, msg, update):
         if not msg.strip():
             return
 
-        context.bot.send_message(
+        self.updater.bot.send_message(
             chat_id=update.message.chat_id,
             text=msg.replace("_", "-"),
             parse_mode=ParseMode.MARKDOWN,
