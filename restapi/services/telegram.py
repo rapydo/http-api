@@ -46,7 +46,7 @@ class Bot:
         self.updater.dispatcher.add_error_handler(self.error_callback)
 
         self.admins = Bot.get_ids(self.variables.get("admins"))
-        if not self.admins:
+        if not self.admins:  # pragma: no cover
             log.exit("No admin list")
 
         self.users = Bot.get_ids(self.variables.get("users"))
