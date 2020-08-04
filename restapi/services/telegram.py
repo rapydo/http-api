@@ -1,4 +1,5 @@
 import json
+import threading
 from functools import wraps
 
 import requests
@@ -14,7 +15,7 @@ from restapi.confs import (
     get_backend_url,
 )
 from restapi.env import Env
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
@@ -66,13 +67,22 @@ class Bot:
             MessageHandler(Filters.text, self.invalid_message)
         )
 
+    def stop(self):
+        self.updater.stop()
+        self.updater.is_idle = False
+
+    def shutdown(self):
+        self.admins_broadcast("Bot is shutting down")
+        threading.Thread(target=self.stop).start()
+
     # Startup workflow: init -> load_commands -> start
     def start(self):
 
         self.updater.start_polling(read_latency=5)
         self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
-        return self.updater.idle()
+        self.updater.idle()
+        log.exit("Bot closed")
 
     ##################
     #    DECORATORS
@@ -166,10 +176,8 @@ class Bot:
 
         elif isinstance(context.error, TelegramConflict):
             self.admins_broadcast(str(context.error))
-            log.warning("Stopping bot")
-            self.updater.stop()
-            log.critical("stopped")
-            log.exit(str(context.error))
+            log.warning("Stopping bot...")
+            self.shutdown()
         # used to stop the instance during tests
         elif isinstance(context.error, Timeout):
             raise context.error

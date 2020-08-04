@@ -122,6 +122,10 @@ script:
   - sleep 25
   - rapydo logs
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  - >
+    if [[ "$TEMPLATE" == "extraoptions" ]]; then
+      rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests"
+    fi
   - rapydo -s proxy,backend logs --tail 20
 
   # Tests in production mode
