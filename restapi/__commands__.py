@@ -8,6 +8,7 @@ from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.confs import PRODUCTION
+from restapi.services.telegram import Bot
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 
@@ -254,3 +255,10 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
     except Exception as e:
         log.error(e)
         sys.exit(1)
+
+
+@cli.command()
+def bot():
+    from restapi.services.telegram import bot
+
+    bot.start()
