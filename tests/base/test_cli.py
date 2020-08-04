@@ -61,7 +61,8 @@ def test_cli():
         start_timeout(6)
         try:
             response = runner.invoke(cli.bot, [])
-            pytest.fail(f"Bot not started? {response}")
+            if not isinstance(response, Timeout):
+                pytest.fail(f"Bot not started? {response}")
         except Timeout:
             pass
 
