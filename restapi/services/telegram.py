@@ -75,6 +75,7 @@ class Bot:
         )
 
         self.updater.start_polling(read_latency=5)
+        self.admins_broadcast("Bot is ready")
         log.info("Bot is ready to accept requests")
         return self.updater.idle()
 
@@ -134,9 +135,9 @@ class Bot:
 
         return user_id in self.admins + self.users
 
-    def admins_broadcast(self, context, msg):
+    def admins_broadcast(self, msg):
         for admin in self.admins:
-            context.bot.send_message(chat_id=admin, text=msg)
+            self.updater.bot.send_message(chat_id=admin, text=msg)
 
     def check_authorized(self, update, context, required_admin=False):
         user = update.message.from_user
@@ -159,7 +160,7 @@ class Bot:
                     msg += f"{key}: {value}\n"
         log.warning(msg)
         # Notify admins about violation
-        self.admins_broadcast(context, msg)
+        self.admins_broadcast(msg)
 
         context.bot.send_message(
             chat_id=update.message.chat_id, text="Invalid command, ask for /help"
