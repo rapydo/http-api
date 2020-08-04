@@ -261,4 +261,5 @@ def bot():
     from restapi.services.telegram import bot
 
     bot.load_commands()
-    bot.start()
+    # This return is used by tests to verify output messages
+    return bot.start()
