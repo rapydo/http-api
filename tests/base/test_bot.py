@@ -1,5 +1,4 @@
 import asyncio
-import os
 import re
 from time import sleep
 
@@ -28,15 +27,21 @@ def test_bot():
     session_str = Env.get("TELETHON_SESSION")
     botname = Env.get("TELEGRAM_BOTNAME")
 
+    from restapi.services.telegram import bot
+
     async def send_command(client, command):
         await client.send_message(botname, command)
         sleep(1)
         messages = await client.get_messages(botname)
         return messages[0].message
 
-    async def test_admin():
+    async def test_commands():
         client = TelegramClient(StringSession(session_str), api_id, api_hash)
         await client.start()
+
+        # ############################# #
+        #           TEST ADMIN          #
+        # ############################# #
 
         message = await send_command(client, "/me")
         assert re.match(r"^Hello .*, your Telegram ID is [0-9]+", message)
@@ -66,16 +71,18 @@ def test_bot():
         error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
         assert message == error
 
-    async def test_user():
-        client = TelegramClient(StringSession(session_str), api_id, api_hash)
-        await client.start()
-
+        # ############################# #
+        #          TEST USER            #
+        # ############################# #
+        bot.users = bot.admins
+        bot.admins = ["1234"]
         # message = await send_command(client, "/me")
 
-    async def test_unauthorized():
-        client = TelegramClient(StringSession(session_str), api_id, api_hash)
-        await client.start()
-
+        # ############################# #
+        #        TEST UNAUTHORIZED      #
+        # ############################# #
+        bot.admins = ["1234"]
+        bot.users = ["1234"]
         message = await send_command(client, "/help")
         error = "Permission denied, you are not authorized to execute this command"
         assert message == error
@@ -84,25 +91,11 @@ def test_bot():
     start_timeout(3)
     try:
         runner.invoke(cli.bot, [])
+        log.warning("timeout is not required?")
     except Timeout:
         pass
     stop_timeout()
 
-    asyncio.run(test_admin())
-
-    from restapi.services.telegram import bot
-
-    # Test as user
-    bot.users = bot.admins
-    bot.admins = ["1234"]
-    asyncio.run(test_user())
-
-    # Test unauthorized
-    bot.admins = ["1234"]
-    bot.users = ["1234"]
-
-    asyncio.run(test_unauthorized())
-
-    # That's all... good bye
+    asyncio.run(test_commands())
 
     bot.shutdown()
