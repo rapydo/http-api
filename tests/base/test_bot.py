@@ -90,22 +90,21 @@ def test_bot():
 
     asyncio.run(test_admin())
 
+    from restapi.services.telegram import Bot, bot
+
     # Test as user
     # pass
 
     # Test unauthorized
     os.environ["TELEGRAM_ADMINS"] = "1234"
     os.environ["TELEGRAM_USERS"] = ""
-    start_timeout(3)
-    try:
-        runner.invoke(cli.bot, [])
-    except Timeout:
-        pass
-    stop_timeout()
+    bot.shutdown()
+    bot = Bot()
+    bot.load_commands()
+    bot.start()
 
     asyncio.run(test_unauthorized())
 
     # That's all... good bye
-    from restapi.services.telegram import bot
 
     bot.shutdown()
