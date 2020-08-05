@@ -58,22 +58,20 @@ def test_bot():
         assert "- /monitor get server monitoring stats" in message
 
         # commands requiring APIs can only be tested in PRODUCTION MODE
-        if not PRODUCTION:
-            log.warning("Skipping tests on BOT commands requiring APIs in DEV mode")
-            return False
+        if PRODUCTION:
 
-        message = await send_command(client, "/status")
-        assert message == "Server is alive"
+            message = await send_command(client, "/status")
+            assert message == "Server is alive"
 
-        message = await send_command(client, "/monitor")
-        assert message == '{"param": "Missing data for required field."}'
+            message = await send_command(client, "/monitor")
+            assert message == '{"param": "Missing data for required field."}'
 
-        message = await send_command(client, "/monitor x")
-        assert message == '{"x": "Must be one of: disk, cpu, ram."}'
+            message = await send_command(client, "/monitor x")
+            assert message == '{"x": "Must be one of: disk, cpu, ram."}'
 
-        message = await send_command(client, "/monitor disk")
-        error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
-        assert message == error
+            message = await send_command(client, "/monitor disk")
+            error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
+            assert message == error
 
         # # ############################# #
         # #          TEST USER            #
