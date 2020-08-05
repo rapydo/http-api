@@ -76,15 +76,15 @@ def test_bot():
         # # ############################# #
         # #          TEST USER            #
         # # ############################# #
-        # bot.users = bot.admins
-        # bot.admins = ["1234"]
-        # # message = await send_command(client, "/me")
+        bot.users = bot.admins
+        bot.admins = []
+        message = await send_command(client, "/me")
 
         # # ############################# #
         # #        TEST UNAUTHORIZED      #
         # # ############################# #
-        bot.admins = ["1234"]
-        bot.users = ["1234"]
+        bot.admins = []
+        bot.users = []
         message = await send_command(client, "/help")
         error = "Permission denied, you are not authorized to execute this command"
         assert message == error
