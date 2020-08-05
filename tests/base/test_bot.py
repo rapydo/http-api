@@ -52,6 +52,10 @@ def test_bot():
 
         message = await send_command(client, "/help")
         assert "Available Commands:" in message
+        assert "- /help print this help" in message
+        assert "- /me info about yourself" in message
+        assert "- /status get server status" in message
+        assert "- /monitor get server monitoring stats" in message
 
         # commands requiring APIs can only be tested in PRODUCTION MODE
         if not PRODUCTION:
@@ -60,6 +64,16 @@ def test_bot():
 
         message = await send_command(client, "/status")
         assert message == "Server is alive"
+
+        message = await send_command(client, "/monitor")
+        assert message == '{"param": "Missing data for required field."}'
+
+        message = await send_command(client, "/monitor x")
+        assert message == '{"x": "Must be one of: disk, cpu, ram."}'
+
+        message = await send_command(client, "/monitor disk")
+        error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
+        assert message == error
 
     asyncio.run(test())
 

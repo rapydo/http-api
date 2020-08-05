@@ -233,7 +233,7 @@ class Bot:
 
         try:
             return [int(x.strip()) for x in ids_list.split(",")]
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             log.error(e)
             return []
 
