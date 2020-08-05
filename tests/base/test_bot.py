@@ -85,11 +85,11 @@ def test_bot():
         # # ############################# #
         # #        TEST UNAUTHORIZED      #
         # # ############################# #
-        # bot.admins = ["1234"]
-        # bot.users = ["1234"]
-        # message = await send_command(client, "/help")
-        # error = "Permission denied, you are not authorized to execute this command"
-        # assert message == error
+        bot.admins = ["1234"]
+        bot.users = ["1234"]
+        message = await send_command(client, "/help")
+        error = "Permission denied, you are not authorized to execute this command"
+        assert message == error
 
     asyncio.run(test())
 
