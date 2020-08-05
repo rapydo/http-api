@@ -222,7 +222,8 @@ class Bot:
         self.admins_broadcast(msg)
 
         self.updater.bot.send_message(
-            chat_id=update.message.chat_id, text="Invalid command, ask for /help"
+            chat_id=update.message.chat_id,
+            text="Permission denied, you are not authorized to execute this command",
         )
         return False
 
