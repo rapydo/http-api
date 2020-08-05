@@ -7,6 +7,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from restapi import __commands__ as cli
+from restapi.confs import PRODUCTION
 from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
@@ -51,6 +52,11 @@ def test_bot():
 
         message = await send_command(client, "/help")
         assert "Available Commands:" in message
+
+        # commands requiring APIs can only be tested in PRODUCTION MODE
+        if not PRODUCTION:
+            log.warning("Skipping tests on BOT commands requiring APIs in DEV mode")
+            return False
 
         message = await send_command(client, "/status")
         assert message == "Server is alive"
