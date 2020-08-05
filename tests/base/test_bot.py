@@ -20,7 +20,14 @@ def test_bot():
         return False
 
     runner = CliRunner()
-    start_timeout(6)
+    if not PRODUCTION:
+        start_timeout(3)
+        try:
+            runner.invoke(cli.launch, [])
+        except Timeout:
+            pass
+
+    start_timeout(3)
     try:
         runner.invoke(cli.bot, [])
     except Timeout:
@@ -44,15 +51,15 @@ def test_bot():
 
     async def test():
         client = TelegramClient(StringSession(session_str), api_id, api_hash)
-        # client = TelegramClient(
-        #   StringSession(session_str), api_id, api_hash, sequential_updates=True
-        # )
         await client.start()
 
         message = await send_command(client, "/me")
         assert re.match(r"^Hello .*, your Telegram ID is [0-9]+", message)
 
-        # commands requiring API can only be tested in PRODUCTION MODE
+        message = await send_command(client, "/help")
+        assert "Available Commands:" in message
+
+        # commands requiring APIs can only be tested in PRODUCTION MODE
         if not PRODUCTION:
             log.warning("Skipping tests on BOT commands requiring APIs in DEV mode")
             return False

@@ -19,8 +19,7 @@ def cli():  # pragma: no cover
     click.echo("*** RESTful HTTP API ***")
 
 
-# Too dangerous to launch it during tests... skipping tests
-def main(args):  # pragma: no cover
+def main(args):
 
     current_app = os.getenv("FLASK_APP")
     if current_app is None or current_app.strip() == "":
@@ -46,9 +45,8 @@ def initializing():
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
 
 
-# Too dangerous to launch it during tests... skipping tests
 @cli.command()
-def launch():  # pragma: no cover
+def launch():
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
