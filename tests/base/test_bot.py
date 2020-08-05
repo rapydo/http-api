@@ -7,7 +7,6 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from restapi import __commands__ as cli
-from restapi.confs import PRODUCTION
 from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
@@ -20,12 +19,6 @@ def test_bot():
         return False
 
     runner = CliRunner()
-    if not PRODUCTION:
-        start_timeout(3)
-        try:
-            runner.invoke(cli.launch, [])
-        except Timeout:
-            pass
 
     start_timeout(3)
     try:

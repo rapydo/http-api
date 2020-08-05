@@ -104,6 +104,11 @@ script:
   - rapydo start
   - sleep 2
   - rapydo logs
+  # This is used to test the bot in dev mode
+  - >
+    if [[ "$TEMPLATE" == "extraoptions" ]]; then
+      rapydo shell backend --default-command --detach
+    fi
   - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
   # Send coverage
@@ -124,7 +129,8 @@ script:
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - >
     if [[ "$TEMPLATE" == "extraoptions" ]]; then
-      rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests"
+      rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+      rapydo -s bot remove;
     fi
   - rapydo -s proxy,backend logs --tail 20
 
