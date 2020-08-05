@@ -14,7 +14,6 @@ from restapi.exceptions import RestApiException
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
-from restapi.utilities.processes import Timeout
 
 
 class TooManyInputs(ValidationError):
@@ -173,9 +172,6 @@ class Bot:
             self.admins_broadcast(str(context.error))
             log.warning("Stopping bot...")
             self.shutdown()
-        # used to stop the instance during tests
-        elif isinstance(context.error, Timeout):
-            raise context.error
         else:
             log.error(context.error)
             self.admins_broadcast(str(context.error))
