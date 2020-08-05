@@ -1,7 +1,7 @@
-import asyncio
 import re
 from time import sleep
 
+import pytest
 from click.testing import CliRunner
 from telethon import TelegramClient
 from telethon.sessions import StringSession
@@ -10,54 +10,49 @@ from restapi import __commands__ as cli
 from restapi.confs import PRODUCTION
 from restapi.env import Env
 from restapi.utilities.logs import log
-from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
+
+api_id = Env.get_int("TELEGRAM_APP_ID")
+api_hash = Env.get("TELEGRAM_APP_HASH")
+session_str = Env.get("TELETHON_SESSION")
+botname = Env.get("TELEGRAM_BOTNAME")
 
 
-def test_bot():
+async def send_command(client, command):
+    await client.send_message(botname, command)
+    sleep(1)
+    messages = await client.get_messages(botname)
+    return messages[0].message
+
+
+@pytest.mark.asyncio
+async def test_bot():
 
     if not Env.get_bool("TELEGRAM_ENABLE"):
         log.warning("Skipping BOT tests: service not available")
         return False
 
     runner = CliRunner()
+    runner.invoke(cli.bot, [])
 
-    # Your API ID, hash and session string here
-    api_id = Env.get_int("TELEGRAM_APP_ID")
-    api_hash = Env.get("TELEGRAM_APP_HASH")
-    session_str = Env.get("TELETHON_SESSION")
-    botname = Env.get("TELEGRAM_BOTNAME")
+    client = TelegramClient(StringSession(session_str), api_id, api_hash)
+    await client.start()
 
-    from restapi.services.telegram import bot
+    # ############################# #
+    #           TEST ADMIN          #
+    # ############################# #
 
-    async def send_command(client, command):
-        await client.send_message(botname, command)
-        sleep(1)
-        messages = await client.get_messages(botname)
-        return messages[0].message
+    message = await send_command(client, "/me")
+    assert re.match(r"^Hello .*, your Telegram ID is [0-9]+", message)
 
-    async def test_commands():
-        client = TelegramClient(StringSession(session_str), api_id, api_hash)
-        await client.start()
+    message = await send_command(client, "/help")
+    assert "Available Commands:" in message
+    assert "- /help print this help" in message
+    assert "- /me info about yourself" in message
+    assert "- /status get server status" in message
+    assert "- /monitor get server monitoring stats" in message
 
-        # ############################# #
-        #           TEST ADMIN          #
-        # ############################# #
-
-        message = await send_command(client, "/me")
-        assert re.match(r"^Hello .*, your Telegram ID is [0-9]+", message)
-
-        message = await send_command(client, "/help")
-        assert "Available Commands:" in message
-        assert "- /help print this help" in message
-        assert "- /me info about yourself" in message
-        assert "- /status get server status" in message
-        assert "- /monitor get server monitoring stats" in message
-
-        # commands requiring APIs can only be tested in PRODUCTION MODE
-        if not PRODUCTION:
-            log.warning("Skipping tests on BOT commands requiring APIs in DEV mode")
-            return False
-
+    # commands requiring APIs can only be tested in PRODUCTION MODE
+    if PRODUCTION:
         message = await send_command(client, "/status")
         assert message == "Server is alive"
 
@@ -71,31 +66,22 @@ def test_bot():
         error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
         assert message == error
 
-        # ############################# #
-        #          TEST USER            #
-        # ############################# #
-        bot.users = bot.admins
-        bot.admins = ["1234"]
-        # message = await send_command(client, "/me")
+    from restapi.services.telegram import bot
 
-        # ############################# #
-        #        TEST UNAUTHORIZED      #
-        # ############################# #
-        bot.admins = ["1234"]
-        bot.users = ["1234"]
-        message = await send_command(client, "/help")
-        error = "Permission denied, you are not authorized to execute this command"
-        assert message == error
+    # ############################# #
+    #          TEST USER            #
+    # ############################# #
+    bot.users = bot.admins
+    bot.admins = ["1234"]
+    # message = await send_command(client, "/me")
 
-    # Test as admin
-    start_timeout(3)
-    try:
-        runner.invoke(cli.bot, [])
-        log.warning("timeout is not required?")
-    except Timeout:
-        pass
-    stop_timeout()
-
-    asyncio.run(test_commands())
+    # ############################# #
+    #        TEST UNAUTHORIZED      #
+    # ############################# #
+    bot.admins = ["1234"]
+    bot.users = ["1234"]
+    message = await send_command(client, "/help")
+    error = "Permission denied, you are not authorized to execute this command"
+    assert message == error
 
     bot.shutdown()
