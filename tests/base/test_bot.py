@@ -12,6 +12,8 @@ from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
 
+PERMISSION_DENIED = "Permission denied, you are not authorized to execute this command"
+
 
 def test_bot():
 
@@ -50,6 +52,9 @@ def test_bot():
         message = await send_command(client, "/me")
         assert re.match(r"^Hello .*, your Telegram ID is [0-9]+", message)
 
+        message = await send_command(client, "/invalid")
+        assert message == "Invalid command, ask for /help"
+
         message = await send_command(client, "/help")
         assert "Available Commands:" in message
         assert "- /help print this help" in message
@@ -79,15 +84,47 @@ def test_bot():
         bot.users = bot.admins
         bot.admins = []
         message = await send_command(client, "/me")
+        assert message == PERMISSION_DENIED
+
+        message = await send_command(client, "/invalid")
+        assert message == "Invalid command, ask for /help"
+
+        message = await send_command(client, "/help")
+        assert "Available Commands:" in message
+        assert "- /help print this help" in message
+        assert "- /me info about yourself" in message
+        assert "- /status get server status" in message
+        assert "- /monitor get server monitoring stats" in message
+
+        # commands requiring APIs can only be tested in PRODUCTION MODE
+        if PRODUCTION:
+
+            message = await send_command(client, "/status")
+            assert message == "Server is alive"
+
+            message = await send_command(client, "/monitor")
+            assert message == PERMISSION_DENIED
 
         # # ############################# #
         # #        TEST UNAUTHORIZED      #
         # # ############################# #
         bot.admins = []
         bot.users = []
+
+        message = await send_command(client, "/me")
+        assert message == PERMISSION_DENIED
+
+        message = await send_command(client, "/invalid")
+        assert message == PERMISSION_DENIED
+
         message = await send_command(client, "/help")
-        error = "Permission denied, you are not authorized to execute this command"
-        assert message == error
+        assert message == PERMISSION_DENIED
+
+        message = await send_command(client, "/status")
+        assert message == PERMISSION_DENIED
+
+        message = await send_command(client, "/monitor")
+        assert message == PERMISSION_DENIED
 
     asyncio.run(test())
 
