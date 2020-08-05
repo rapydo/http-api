@@ -108,7 +108,7 @@ script:
   - >
     if [[ "$TEMPLATE" == "extraoptions" ]]; then
       rapydo shell backend --default-command --detach;
-      sleep 10;
+      sleep 20;
     fi
   - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
