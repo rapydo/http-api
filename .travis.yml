@@ -107,7 +107,8 @@ script:
   # This is used to test the bot in dev mode
   - >
     if [[ "$TEMPLATE" == "extraoptions" ]]; then
-      rapydo shell backend --default-command --detach
+      rapydo shell backend --default-command --detach;
+      sleep 10;
     fi
   - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
