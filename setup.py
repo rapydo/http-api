@@ -70,6 +70,7 @@ setup(
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.0",
+        "pytest-asyncio==0.14.0",
         "schemathesis==2.1.0",
         "Faker==4.1.1",
         "Telethon==1.16.0",
