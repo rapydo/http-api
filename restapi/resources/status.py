@@ -1,18 +1,5 @@
 from restapi import decorators
-from restapi.models import InputSchema, fields
 from restapi.rest.definition import EndpointResource
-from restapi.utilities.logs import log
-
-
-class Sub(InputSchema):
-    a = fields.Str(required=True)
-
-
-class Test(InputSchema):
-    # class Meta:
-    #     unknown = INCLUDE
-    x = fields.Str(required=True)
-    y = fields.Nested(Sub(), required=True)
 
 
 class Status(EndpointResource):
@@ -29,10 +16,7 @@ class Status(EndpointResource):
         }
     }
 
-    @decorators.use_kwargs(Test)
-    def get(self, service=None, **kwargs):
-
-        log.critical(kwargs)
+    def get(self, service=None):
 
         return self.response("Server is alive")
 
