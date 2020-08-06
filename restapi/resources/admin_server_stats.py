@@ -213,10 +213,8 @@ class AdminStats(EndpointResource):
         statistics["disk"]["occupacy"] = 100 * used / total
 
         # Network latency
-        """
-        Here we will ping google at an interval of five seconds for five times
-        min response time, average response time, and the max response time.
-        """
+        # Here we will ping google at an interval of five seconds for five times
+        # min response time, average response time, and the max response time.
         ping = local["ping"]
         ping_result = ping(["-c", "5", "google.com"]).split("\n")
 

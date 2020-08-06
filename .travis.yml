@@ -10,7 +10,7 @@ env:
   # and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
   # html email templates, extended projects
   # It is executed as first because it is the slowest
-  - TEMPLATE=extraoptions
+  - TEMPLATE=extra
   - TEMPLATE=postgres
   - TEMPLATE=mysql
   - TEMPLATE=neo4j
@@ -66,7 +66,7 @@ script:
       rapydo create prj -s celery -s redis -s mongo --auth ${RANDOM_AUTH} --frontend no;
 
 
-    elif [[ "$TEMPLATE" == "extraoptions" ]]; then
+    elif [[ "$TEMPLATE" == "extra" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
       rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${RANDOM_AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=true -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
@@ -106,7 +106,7 @@ script:
   - rapydo logs
   # This is used to test the bot in dev mode
   # - >
-  #   if [[ "$TEMPLATE" == "extraoptions" ]]; then
+  #   if [[ "$TEMPLATE" == "extra" ]]; then
   #     rapydo shell backend --default-command --detach;
   #     sleep 20;
   #   fi
@@ -129,7 +129,7 @@ script:
   - rapydo logs
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - >
-    if [[ "$TEMPLATE" == "extraoptions" ]]; then
+    if [[ "$TEMPLATE" == "extra" ]]; then
       rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
       rapydo -s bot remove;
     fi

@@ -4,7 +4,6 @@ import pytest
 
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import Role
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log

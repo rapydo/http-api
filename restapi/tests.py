@@ -345,14 +345,16 @@ class BaseTests:
 
         return {"Authorization": f"Bearer {content}"}, content
 
-    def randomString(self, length=16, prefix=""):  # pragma: no cover
+    @staticmethod
+    def randomString(length=16, prefix=""):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated, use fake.password instead")
         return prefix + fake.password(
             length, low=False, up=True, digits=True, symbols=False
         )
 
-    def buildData(self, schema):
+    @staticmethod
+    def buildData(schema):
         """
             Input: a Marshmallow schema
             Output: a dictionary of random data
@@ -464,8 +466,8 @@ class BaseTests:
         os.unlink(fpath)
         return data
 
+    @staticmethod
     def get_crafted_token(
-        self,
         token_type,
         user_id=None,
         expired=False,
