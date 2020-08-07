@@ -4,7 +4,7 @@ from restapi.tests import API_URI, AUTH_URI, BaseTests
 
 
 class TestApp(BaseTests):
-    def test_tokens(self, client):
+    def test_tokens(self, client, fake):
 
         last_token = None
         last_tokens_header = None
@@ -60,6 +60,26 @@ class TestApp(BaseTests):
         content = self.get_content(r)
         assert "total" in content
         assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True, "input_filter": "1"},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True, "input_filter": fake.pystr()},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] == 0
 
         r = client.get(
             f"{API_URI}/admin/tokens",

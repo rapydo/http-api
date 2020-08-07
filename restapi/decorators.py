@@ -128,6 +128,10 @@ class Pagination(InputSchema):
         validate=validate.Range(min=1, max=100),
     )
 
+    sort_order = fields.Str(validate=validate.OneOf(["asc", "desc"]), required=False)
+    sort_by = fields.Str(required=False)
+    input_filter = fields.Str(required=False)
+
     @post_load
     def verify_parameters(self, data, **kwargs):
         if "get_total" in data:

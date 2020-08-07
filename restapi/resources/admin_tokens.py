@@ -1,3 +1,5 @@
+from glom import glom
+
 from restapi import decorators
 from restapi.exceptions import BadRequest, NotFound
 from restapi.models import Schema, fields
@@ -46,9 +48,22 @@ class AdminTokens(EndpointResource):
     @decorators.get_pagination
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.marshal_with(TokenTotalSchema, code=206)
-    def get(self, get_total, page, size):
+    def get(
+        self, get_total, page, size, sort_by=None, sort_order=None, input_filter=None
+    ):
 
         tokens = self.auth.get_tokens(get_all=True)
+
+        if input_filter:
+            filtered_tokens = []
+            for t in tokens:
+                for f in ["token", "IP", "location", "user.email"]:
+                    value = glom(t, f, default="").lower()
+                    if input_filter in value:
+                        filtered_tokens.append(t)
+                        break
+
+            tokens = filtered_tokens
 
         if get_total:
             return self.response({"total": len(tokens)}, code=206)
