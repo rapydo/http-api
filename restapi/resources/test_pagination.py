@@ -25,13 +25,7 @@ if TESTING:
 
         @decorators.get_pagination
         def get(
-            self,
-            get_total,
-            page,
-            size,
-            sort_by=None,
-            sort_order=None,
-            input_filter=None,
+            self, get_total, page, size, sort_by, sort_order, input_filter,
         ):
             if get_total:
                 return len(TestPagination.values)
@@ -41,13 +35,7 @@ if TESTING:
 
         @decorators.get_pagination
         def post(
-            self,
-            get_total,
-            page,
-            size,
-            sort_by=None,
-            sort_order=None,
-            input_filter=None,
+            self, get_total, page, size, sort_by, sort_order, input_filter,
         ):
             if get_total:
                 return len(TestPagination.values)

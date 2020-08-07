@@ -48,9 +48,7 @@ class AdminTokens(EndpointResource):
     @decorators.get_pagination
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.marshal_with(TokenTotalSchema, code=206)
-    def get(
-        self, get_total, page, size, sort_by=None, sort_order=None, input_filter=None
-    ):
+    def get(self, get_total, page, size, sort_by, sort_order, input_filter):
 
         tokens = self.auth.get_tokens(get_all=True)
 
@@ -67,6 +65,13 @@ class AdminTokens(EndpointResource):
 
         if get_total:
             return self.response({"total": len(tokens)}, code=206)
+
+        if sort_by:
+            tokens = sorted(
+                tokens,
+                key=lambda t: glom(t, sort_by, default=""),
+                reverse=sort_order == "desc",
+            )
 
         end = page * size
         start = end - size
