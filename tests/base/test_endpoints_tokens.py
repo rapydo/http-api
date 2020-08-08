@@ -173,8 +173,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         new_content = self.get_content(r)
         assert len(new_content) >= 2
-        new_content[0] == content[0]
-        new_content[-1] == content[-1]
+        assert new_content[0] == content[0]
+        assert new_content[-1] == content[-1]
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -190,8 +190,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         new_content = self.get_content(r)
         assert len(new_content) >= 2
-        new_content[0] == content[-1]
-        new_content[-1] == content[0]
+        assert new_content[0] == content[-1]
+        assert new_content[-1] == content[0]
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
