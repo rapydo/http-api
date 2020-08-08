@@ -149,18 +149,23 @@ class TestApp(BaseTests):
                 "page": 1,
                 "size": 20,
                 "input_filter": "1",
-                "sort_by": "emitted",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
             },
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        assert len(self.get_content(r)) >= 2
+        default_sort = self.get_content(r)
+        assert len(default_sort) >= 2
 
         r = client.get(
             f"{API_URI}/admin/tokens",
             query_string={
                 "page": 1,
                 "size": 20,
+                "input_filter": "1",
                 # Sort_by emitted or other date cannot be done, because mysql truncate
                 # the date, so that sort can't be predicted [several dates are reported]
                 # as the same. Let's use a certainly unique field like uuid
@@ -170,14 +175,17 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        asc_content = self.get_content(r)
-        assert len(asc_content) >= 2
+        asc_sort = self.get_content(r)
+        assert len(asc_sort) >= 2
+        assert default_sort[0] == asc_sort[0]
+        assert default_sort[-1] == asc_sort[-1]
 
         r = client.get(
             f"{API_URI}/admin/tokens",
             query_string={
                 "page": 1,
                 "size": 20,
+                "input_filter": "1",
                 # Sort_by emitted or other date cannot be done, because mysql truncate
                 # the date, so that sort can't be predicted [several dates are reported]
                 # as the same. Let's use a certainly unique field like uuid
@@ -187,10 +195,15 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        desc_content = self.get_content(r)
-        assert len(desc_content) >= 2
-        assert desc_content[0] == asc_content[-1]
-        assert desc_content[-1] == asc_content[0]
+        desc_sort = self.get_content(r)
+        # Results of desc_sort can't be compared with previous contents
+        # It may only be done if we were able to retrieve all tokens, in this case the
+        # first desc will be the last asc... But we cannot ensure to be able to always
+        # retrieve all tokens. The only think that we can ensure is that the content
+        # will be different
+        assert len(desc_sort) >= 2
+        assert asc_sort[0] != desc_sort[0]
+        assert asc_sort[-1] != desc_sort[-1]
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
