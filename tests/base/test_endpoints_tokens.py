@@ -161,8 +161,10 @@ class TestApp(BaseTests):
             query_string={
                 "page": 1,
                 "size": 20,
-                "input_filter": "1",
-                "sort_by": "emitted",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
                 "sort_order": "asc",
             },
             headers=last_tokens_header,
@@ -176,8 +178,10 @@ class TestApp(BaseTests):
             query_string={
                 "page": 1,
                 "size": 20,
-                "input_filter": "1",
-                "sort_by": "emitted",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
                 "sort_order": "desc",
             },
             headers=last_tokens_header,
