@@ -1,7 +1,5 @@
 from restapi.tests import API_URI, AUTH_URI, BaseTests
 
-# from restapi.utilities.logs import log
-
 
 class TestApp(BaseTests):
     def test_tokens(self, client, fake):
@@ -151,13 +149,12 @@ class TestApp(BaseTests):
                 "page": 1,
                 "size": 20,
                 "input_filter": "1",
-                "sort_by": "uuid",
+                "sort_by": "emitted",
             },
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        content = self.get_content(r)
-        assert len(content) >= 2
+        assert len(self.get_content(r)) >= 2
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -165,16 +162,14 @@ class TestApp(BaseTests):
                 "page": 1,
                 "size": 20,
                 "input_filter": "1",
-                "sort_by": "uuid",
+                "sort_by": "emitted",
                 "sort_order": "asc",
             },
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        new_content = self.get_content(r)
-        assert len(new_content) >= 2
-        assert new_content[0] == content[0]
-        assert new_content[-1] == content[-1]
+        asc_content = self.get_content(r)
+        assert len(asc_content) >= 2
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -182,16 +177,16 @@ class TestApp(BaseTests):
                 "page": 1,
                 "size": 20,
                 "input_filter": "1",
-                "sort_by": "uuid",
+                "sort_by": "emitted",
                 "sort_order": "desc",
             },
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        new_content = self.get_content(r)
-        assert len(new_content) >= 2
-        assert new_content[0] == content[-1]
-        assert new_content[-1] == content[0]
+        desc_content = self.get_content(r)
+        assert len(desc_content) >= 2
+        assert desc_content[0] == asc_content[-1]
+        assert desc_content[-1] == asc_content[0]
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
