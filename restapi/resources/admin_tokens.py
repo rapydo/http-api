@@ -50,7 +50,6 @@ class AdminTokens(EndpointResource):
     @decorators.marshal_with(TokenTotalSchema, code=206)
     def get(self, get_total, page, size, sort_by, sort_order, input_filter):
 
-        log.critical(input_filter)
         tokens = self.auth.get_tokens(get_all=True)
 
         if input_filter:
