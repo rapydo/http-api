@@ -4,16 +4,27 @@ from functools import wraps
 
 import requests
 from marshmallow import ValidationError
-from telegram import ParseMode
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.error import Conflict as TelegramConflict
-from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    Filters,
+    MessageHandler,
+    Updater,
+)
 
 from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
 from restapi.exceptions import RestApiException
+from restapi.models import validate
 from restapi.services.detect import Detector
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
+from restapi.utilities.uuid import getUUID
+
+# it is used to passa data to inline button callbacks
+data_cache = {}
 
 
 class TooManyInputs(ValidationError):
@@ -34,6 +45,11 @@ class Bot:
             self.variables.get("api_key"),
             use_context=True,
             workers=Env.to_int(self.variables.get("workers"), default=1),
+        )
+
+        # Inline keyboard callback
+        self.updater.dispatcher.add_handler(
+            CallbackQueryHandler(self.inline_keyboard_button)
         )
 
         # Errors
@@ -115,16 +131,52 @@ class Bot:
             @wraps(func)
             def wrapper(update, context, *args, **kwargs):
                 inputs = context.args
+
                 data = {}
                 keys = list(schema.declared_fields.keys())
+                # Verify if the number of inputs exceed the number of defined parameters
                 if len(inputs) > len(keys):
                     raise TooManyInputs("")
 
+                # Map allgiven inputs to the correspoding parameter, based on definition
+                # order. 1st input = 1st parameter, 2nd input = 2nd parameter up to Nth
                 for idx, k in enumerate(keys):
                     if idx < len(inputs):
                         data[k] = inputs[idx]
 
-                val = schema.load(data)
+                # Now inputs list is converted in a dictionary of parameters that can be
+                # validated against the Marshamallow schema
+                try:
+                    val = schema.load(data)
+                except ValidationError as e:
+                    # One or more parameters raised a validation error.
+                    # Get the first error based on parameter definition order. e.g.
+                    # param 1 = ok
+                    # param 2 = error2
+                    # param 3 = error3
+                    # => raise error2
+                    # Please note that e.messages is not ordered and error3 could be
+                    # listed before error2, a match against schema.declared_fields is
+                    # Needed to guarantee the right order
+                    for param, definition in schema.declared_fields.items():
+                        if param not in e.messages:
+                            continue
+                        # This is the first parameter raising validation errors. In case
+                        # of enums a InlineKeyboardButton will be shown and the result
+                        # will be passed to the wrapper to re-validate the schema with
+                        # an additional parameter
+                        self.manage_missing_parameter(
+                            wrapper,
+                            param,
+                            definition,
+                            update,
+                            context,
+                            e.messages[param],
+                        )
+                        break
+
+                    return None
+
                 return func(update, context, *args, **val, **kwargs)
 
             return wrapper
@@ -186,6 +238,70 @@ class Bot:
             self.updater.bot.send_message(
                 chat_id=update.message.chat_id, text="Invalid command, ask for /help"
             )
+
+    def manage_missing_parameter(self, func, param, definition, update, context, error):
+
+        # Parameters without description should raise some kind of errors/warnings?
+        if "description" in definition.metadata:
+            description = definition.metadata["description"]
+        else:
+            description = "???"
+
+        # Enum -> InlineKeyboardButton
+        if definition.validate and isinstance(definition.validate, validate.OneOf):
+
+            choices = definition.validate.choices
+            labels = definition.validate.labels
+            if len(labels) != len(choices):
+                labels = choices
+
+            keyboard = []
+            for k, val in dict(zip(choices, labels)).items():
+                data_key = getUUID()
+                # Because func, update and context are not (easily) serializable are
+                # saved in a data_cache and the callback will access them by using the
+                # unique data_key assigned to such data.
+                data_cache[data_key] = {
+                    "func": func,
+                    "update": update,
+                    "context": context,
+                    "parameter": k,
+                }
+
+                # All InlineKeyboardButton are registered with one single callback
+                # function (SIGH and SOB!!). The data_key passed as callback_data will
+                # be used to access the specific data and call again the command func
+                # by augmenting the parameters list with the choice from the button
+                keyboard.append([InlineKeyboardButton(val, callback_data=data_key)])
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            update.message.reply_text(description, reply_markup=reply_markup)
+        # Other errors
+        else:
+            update.message.reply_text(f"{description}\n{param}: {error[0]}")
+
+    # Callback used by ALL inline keyboard button. It will received a data_key
+    # as callback_data to access to data from the specific commands
+    def inline_keyboard_button(self, update, context):
+        query = update.callback_query
+
+        # Callback queries need to be answered, even if no notification to the user
+        # is needed. Some clients may have trouble otherwise.
+        # See https://core.telegram.org/bots/api#callbackquery
+        query.answer()
+
+        # The data cache contains the parameters wrapper of the command function. This
+        # wrapper will be invoked by augmenting the original list of parameters with
+        # the choice obtained from the inline keyboard argument
+        data = data_cache.pop(query.data)
+        query.edit_message_text(text=f"Selected option: {data['parameter']}")
+        # func is the parameters wrapper of the command function
+        func = data["func"]
+        # original context args are augmented with the new choice
+        data["context"].args.append(data["parameter"])
+
+        # Let's invoke the parameters wrapper with the new additional parameter
+        func(data["update"], data["context"])
 
     def is_authorized(self, user_id, required_admin):
 

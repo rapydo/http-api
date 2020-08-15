@@ -4,8 +4,7 @@ from webargs import fields, validate
 
 from restapi.exceptions import RestApiException
 from restapi.services.telegram import bot
-
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 
 @bot.command("help", help="print this help")
@@ -41,7 +40,12 @@ def status(update, context):
 
 
 class Stats(Schema):
-    param = fields.Str(required=True, validate=validate.OneOf(["disk", "cpu", "ram"]))
+
+    param = fields.Str(
+        required=True,
+        validate=validate.OneOf(["disk", "cpu", "ram"]),
+        description="Please select the type for monitor",
+    )
 
 
 @bot.command("monitor", help="get server monitoring stats")
@@ -49,6 +53,8 @@ class Stats(Schema):
 @bot.parameters(Stats())
 @run_async
 def monitor(update, context, param):
+
+    bot.send_markdown(f"You asked: {param}", update)
     try:
         out = bot.api.get("admin/stats")
         bot.send_markdown(out, update)
