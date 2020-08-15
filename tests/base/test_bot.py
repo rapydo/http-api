@@ -69,10 +69,10 @@ def test_bot():
             assert message == "Server is alive"
 
             message = await send_command(client, "/monitor")
-            assert message == '{"param": "Missing data for required field."}'
+            assert message == "Please select the type of monitor"
 
             message = await send_command(client, "/monitor x")
-            assert message == '{"x": "Must be one of: disk, cpu, ram."}'
+            assert message == "Please select the type of monitor"
 
             message = await send_command(client, "/monitor disk")
             error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"

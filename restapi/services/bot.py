@@ -44,7 +44,7 @@ class Stats(Schema):
     param = fields.Str(
         required=True,
         validate=validate.OneOf(["disk", "cpu", "ram"]),
-        description="Please select the type for monitor",
+        description="Please select the type of monitor",
     )
 
 
