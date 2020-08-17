@@ -1,20 +1,16 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
-from marshmallow import fields, validate
-
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import InputSchema, OutputSchema
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
-from restapi.services.mail import send_mail, send_mail_is_active
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 from restapi.utilities.templates import get_html_template
 
 
-def send_notification(user, unhashed_password, is_update=False):
+def send_notification(smtp, user, unhashed_password, is_update=False):
 
     title = get_project_configuration("project.title", default="Unkown title")
 
@@ -35,9 +31,9 @@ Password: {unhashed_password}
     """
 
     if html is None:
-        send_mail(body, subject, user.email)
+        smtp.send(body, subject, user.email)
     else:
-        send_mail(html, subject, user.email, plain_body=body)
+        smtp.send(html, subject, user.email, plain_body=body)
 
 
 def get_roles(auth):
@@ -101,13 +97,13 @@ def get_groups():
     log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
 
-class Role(OutputSchema):
+class Roles(Schema):
 
     name = fields.Str()
     description = fields.Str()
 
 
-class Group(OutputSchema):
+class Group(Schema):
     uuid = fields.Str()
     fullname = fields.Str()
     shortname = fields.Str()
@@ -125,36 +121,33 @@ def get_output_schema():
     attributes["last_password_change"] = fields.DateTime(allow_none=True)
     attributes["is_active"] = fields.Boolean()
     attributes["privacy_accepted"] = fields.Boolean()
-    attributes["roles"] = fields.List(fields.Nested(Role))
+    attributes["roles"] = fields.List(fields.Nested(Roles))
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(False):
+        if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
-    schema = OutputSchema.from_dict(attributes)
+    schema = Schema.from_dict(attributes)
     return schema(many=True)
 
 
 # Note that these are callables returning a model, not models!
-# They will be excuted a runtime
-def getPOSTSchema(request):
-    return getInputSchema(is_put_method=False)
+# They will be executed a runtime
+def getInputSchema(request):
 
+    if not request:
+        return {}
 
-def getPUTSchema(request):
-    return getInputSchema(is_put_method=True)
-
-
-def getInputSchema(is_put_method):
     auth = EndpointResource.load_authentication()
 
-    set_required = not is_put_method
+    set_required = request.method == "POST"
 
     attributes = {}
-    if not is_put_method:
+    if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
+
     attributes["password"] = fields.Str(
         required=set_required,
         password=True,
@@ -178,10 +171,10 @@ def getInputSchema(is_put_method):
         )
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(is_put_method):
+        if custom_fields := customizer.get_custom_fields(request):
             attributes.update(custom_fields)
 
-    if send_mail_is_active():
+    if detector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(
@@ -191,7 +184,7 @@ def getInputSchema(is_put_method):
     return InputSchema.from_dict(attributes)
 
 
-class AdminUsers(MethodResource, EndpointResource):
+class AdminUsers(EndpointResource):
 
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == "neo4j"
@@ -242,9 +235,8 @@ class AdminUsers(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required(roles=["admin_root"])
-    @marshal_with(get_output_schema(), code=200)
+    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.marshal_with(get_output_schema(), code=200)
     def get(self, user_id=None):
 
         users = self.auth.get_users(user_id)
@@ -255,9 +247,8 @@ class AdminUsers(MethodResource, EndpointResource):
 
         return self.response(users)
 
-    @decorators.catch_errors()
-    @decorators.auth.required(roles=["admin_root"])
-    @use_kwargs(getPOSTSchema)
+    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.use_kwargs(getInputSchema)
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -287,13 +278,13 @@ class AdminUsers(MethodResource, EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            send_notification(user, unhashed_password, is_update=False)
+            smtp = self.get_service_instance("smtp")
+            send_notification(smtp, user, unhashed_password, is_update=False)
 
         return self.response(user.uuid)
 
-    @decorators.catch_errors()
-    @decorators.auth.required(roles=["admin_root"])
-    @use_kwargs(getPUTSchema)
+    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.use_kwargs(getInputSchema)
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
@@ -322,7 +313,7 @@ class AdminUsers(MethodResource, EndpointResource):
         if self.neo4j_enabled:
             self.graph = db
 
-        db.update_properties(user, kwargs, kwargs)
+        db.update_properties(user, kwargs)
 
         self.auth.save_user(user)
 
@@ -342,12 +333,12 @@ class AdminUsers(MethodResource, EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            send_notification(user, unhashed_password, is_update=True)
+            smtp = self.get_service_instance("smtp")
+            send_notification(smtp, user, unhashed_password, is_update=True)
 
         return self.empty_response()
 
-    @decorators.catch_errors()
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all(Role.ADMIN)
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

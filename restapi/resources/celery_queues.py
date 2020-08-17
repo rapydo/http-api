@@ -1,4 +1,3 @@
-# from flask_apispec import MethodResource
 # from restapi.rest.definition import EndpointResource
 # from restapi import decorators
 # from restapi.services.detect import detector
@@ -9,7 +8,7 @@
 # you get a queue endpoint for free
 # if detector.check_availability('celery'):
 
-#     class Queue(MethodResource, EndpointResource):
+#     class Queue(EndpointResource):
 
 #         depends_on = ["CELERY_ENABLE"]
 #         labels = ["tasks"]
@@ -35,16 +34,14 @@
 #                 "summary": "Delete a task",
 #                 "responses": {
 #                     "204": {
-#                         "description": "The task with specified id was succesfully deleted"
+#                         "description": "The task was succesfully deleted"
 #                     }
 #                 },
 #             }
 #         }
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(
-#             roles=['admin_root', 'staff_user'], required_roles='any'
-#         )
+#         @decorators.auth.require_any('admin_root', 'staff_user')
 #         def get(self, task_id=None):
 
 #             data = []
@@ -52,7 +49,7 @@
 #             celery = self.get_service_instance('celery')
 
 #             if task_id is not None:
-#                 task_result = celery.AsyncResult(task_id)
+#                 task_result = celery.celery_app.AsyncResult(task_id)
 #                 res = task_result.result
 #                 if not isinstance(res, dict):
 #                     res = str(res)
@@ -64,7 +61,7 @@
 
 #             #############################
 #             # FAST WAY
-#             stats = celery.control.inspect().stats()
+#             stats = celery.celery_app.control.inspect().stats()
 #             workers = list(stats.keys())
 
 #             active_tasks = {}
@@ -73,7 +70,7 @@
 #             reserved_tasks = {}
 
 #             for worker in workers:
-#                 i = celery.control.inspect([worker])
+#                 i = celery.celery_app.control.inspect([worker])
 #                 log.debug('checked worker: {}', worker)
 #                 for key, value in i.active().items():
 #                     active_tasks[key] = value
@@ -85,7 +82,7 @@
 #                     scheduled_tasks[key] = value
 
 #             #############################
-#             # workers = celery.control.inspect()
+#             # workers = celery.celery_app.control.inspect()
 #             # SLOW WAY
 #             # active_tasks = workers.active()
 #             # revoked_tasks = workers.revoked()
@@ -116,7 +113,7 @@
 #                     row['args'] = task["args"]
 
 #                     if task_id is not None:
-#                         task_result = celery.AsyncResult(task_id)
+#                         task_result = celery.celery_app.AsyncResult(task_id)
 #                         row['task_status'] = task_result.status
 #                         row['info'] = task_result.info
 #                     data.append(row)
@@ -169,15 +166,15 @@
 #             return self.response(data)
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(roles=['admin_root'])
+#         @decorators.auth.require_all('admin_root')
 #         def put(self, task_id):
 #             celery = self.get_service_instance('celery')
-#             celery.control.revoke(task_id)
+#             celery.celery_app.control.revoke(task_id)
 #             return self.empty_response()
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.required(roles=['admin_root'])
+#         @decorators.auth.require_all('admin_root')
 #         def delete(self, task_id):
 #             celery = self.get_service_instance('celery')
-#             celery.control.revoke(task_id, terminate=True)
+#             celery.celery_app.control.revoke(task_id, terminate=True)
 #             return self.empty_response()

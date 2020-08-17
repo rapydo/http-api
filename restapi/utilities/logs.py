@@ -9,7 +9,7 @@ from loguru import logger as log
 from restapi.confs import PRODUCTION
 from restapi.env import Env
 
-log_level = os.getenv("DEBUG_LEVEL", "DEBUG")
+log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
 LOGS_FOLDER = "/logs"
 HOSTNAME = os.getenv("HOSTNAME", "backend")
 CONTAINER_ID = os.getenv("CONTAINER_ID", "")

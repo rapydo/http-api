@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import re
 from datetime import datetime, timedelta
+from enum import Enum
 from io import BytesIO
 
 import jwt
@@ -45,9 +46,13 @@ NULL_IP = "0.0.0.0"
 ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
-ADMIN_ROLE = "admin_root"
-LOCAL_ADMIN_ROLE = "local_admin"
-USER_ROLE = "normal_user"
+
+
+class Role(Enum):
+    ADMIN = "admin_root"
+    LOCAL_ADMIN = "local_admin"
+    STAFF = "staff_user"
+    USER = "normal_user"
 
 
 class InvalidToken(BaseException):
@@ -83,8 +88,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.db = backend_database
         self.load_default_user()
         self.load_roles()
-        # Create variables to be fulfilled by the authentication decorator
-        self._user = None
 
         variables = Detector.load_variables(prefix="auth")
 
@@ -288,17 +291,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Retrieve information #
     # ########################
 
-    # Deprecated since 0.7.4
-    def get_user(self):  # pragma: no cover
-        """
-            Current user, obtained by the authentication decorator
-            inside the same Request (which is the same object instance)
-        """
-        log.warning(
-            "Deprecated use of auth.get_user, use get_user from endpoint instead"
-        )
-        return self._user
-
     @abc.abstractmethod
     def get_user_object(self, username=None, payload=None):  # pragma: no cover
         """
@@ -326,10 +318,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def get_remote_ip():  # pragma: no cover
         try:
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-                return forwarded_ips[-1]
+                # it can be something like: ['IP1, IP2']
+                return forwarded_ips[-1].split(",")[0].strip()
 
             if PRODUCTION and not TESTING:
-                log.warning("Server in production X-Forwarded-For header is missing")
+                log.warning(
+                    "Production mode is enabled, but X-Forwarded-For header is missing"
+                )
 
             return request.remote_addr
         except RuntimeError as e:
@@ -368,22 +363,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     log.error("Missing continent.names.en in {}", data)
                     return None
             return None  # pragma: no cover
-        except BaseException as e:  # pragma: no cover
+        except BaseException as e:
             log.error("{}. Input was {}", e, ip)
 
-        return None  # pragma: no cover
+        return None
 
     # ###################
     # # Tokens handling #
     # ###################
     def create_token(self, payload):
         """ Generate a byte token with JWT library to encrypt the payload """
-        self._user = self.get_user_object(payload=payload)
-        encode = jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
+        return jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
             "ascii"
         )
-
-        return encode
 
     def create_temporary_token(self, user, token_type, duration=86400):
         # invalidate previous tokens with same token_type
@@ -446,9 +438,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_token(self, token, raiseErrors=False, token_type=None):
 
-        # Force cleaning
-        self._user = None
-
         if token is None:
             if raiseErrors:
                 raise InvalidToken("Missing token")
@@ -487,7 +476,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         log.verbose("User authorized")
 
-        self._user = user
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
     @abc.abstractmethod  # pragma: no cover
@@ -561,6 +549,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if required_roles == ALL_ROLES:
             for role in roles:
+                if isinstance(role, Role):
+                    role = role.value
+
                 if role not in current_roles:
                     if warnings:
                         log.warning("Auth role '{}' missing for request", role)
@@ -569,28 +560,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if required_roles == ANY_ROLE:
             for role in roles:
+                if isinstance(role, Role):
+                    role = role.value
+
                 if role in current_roles:
                     return True
             return False
 
         log.critical("Unknown role authorization requirement: {}", required_roles)
         return False
-
-    # Deprecated since 0.7.4
-    def verify_admin(self):  # pragma: no cover
-        log.warning(
-            "Deprecated use of auth.verify_admin, use verify_admin from endpoint"
-        )
-        """ Check if current user has administration role """
-        return self.verify_roles(self._user, [ADMIN_ROLE], warnings=False)
-
-    # Deprecated since 0.7.4
-    def verify_local_admin(self):  # pragma: no cover
-        log.warning(
-            "Deprecated use of auth.verify_local_admin, "
-            "use verify_local_admin from endpoint"
-        )
-        return self.verify_roles(self._user, [LOCAL_ADMIN_ROLE], warnings=False)
 
     @abc.abstractmethod
     def get_roles(self):  # pragma: no cover
@@ -624,7 +602,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ):
             try:
                 userdata = customizer.custom_user_properties(userdata)
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Unable to customize user properties: {}", e)
 
         if "email" in userdata:
@@ -638,7 +616,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ):
             try:
                 customizer.custom_post_handle_user_input(self, user_node, input_data)
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Unable to customize user properties: {}", e)
 
     # ################

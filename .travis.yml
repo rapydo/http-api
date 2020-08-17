@@ -6,11 +6,11 @@ python:
 services:
   - docker
 env:
-  # this enabled extra services like irods, ftp and pushin
+  # this enabled extra services like ftp and pushin
   # and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
   # html email templates, extended projects
   # It is executed as first because it is the slowest
-  - TEMPLATE=extraoptions
+  - TEMPLATE=extra
   - TEMPLATE=postgres
   - TEMPLATE=mysql
   - TEMPLATE=neo4j
@@ -31,45 +31,44 @@ script:
   - RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
   - echo "Selected random authentication service = ${RANDOM_AUTH}"
 
-  - export TESTING=1
   - CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
   - pip3 install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
 
   - mkdir $TEMPLATE
   - cd $TEMPLATE
-  # Note that  --env REGISTER_FAILED_LOGIN=True is set only for certain templates,
+  # Note that  -e REGISTER_FAILED_LOGIN=True is set only for certain templates,
   # to have different use cases during tests
 
   - >
     if [[ "$TEMPLATE" == "postgres" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth postgres --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth postgres --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mysql" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth mysql --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth mysql --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "neo4j" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth neo4j --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth neo4j --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
     elif [[ "$TEMPLATE" == "mongo" ]]; then
       # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is False;
-      rapydo create prj --auth mongo --frontend no --env AUTH_REGISTER_FAILED_LOGIN=True,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --auth mongo --frontend no -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
-      rapydo create prj --services celery,rabbit --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
-      rapydo create prj --services celery,rabbit,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit -s redis --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
-      rapydo create prj --services celery,rabbit,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s rabbit -s mongo --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
-      rapydo create prj --services celery,redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s redis --auth ${RANDOM_AUTH} --frontend no;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
-      rapydo create prj --services celery,redis,mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo create prj -s celery -s redis -s mongo --auth ${RANDOM_AUTH} --frontend no;
 
 
-    elif [[ "$TEMPLATE" == "extraoptions" ]]; then
+    elif [[ "$TEMPLATE" == "extra" ]]; then
       rapydo create prjbase --auth ${RANDOM_AUTH} --frontend no;
-      rapydo create prj --current --extend prjbase --services irods,ftp,pushpin --auth ${RANDOM_AUTH} --frontend no --add-optionals --env AUTH_FORCE_FIRST_PASSWORD_CHANGE=true,AUTH_MAX_PASSWORD_VALIDITY=10,AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30,AUTH_REGISTER_FAILED_LOGIN=True,AUTH_MAX_LOGIN_ATTEMPTS=5,AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+      rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${RANDOM_AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=true -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_REGISTER_FAILED_LOGIN=True -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
     else
@@ -86,8 +85,8 @@ script:
   - wget https://codecov.io/bash -O codecov_report
 
   # Tests in dev mode
-  - rapydo -p prj init
-  # - if [[ $TRAVIS_PULL_REQUEST == "false" ]] && [[ $TRAVIS_EVENT_TYPE != "cron" ]]; then rapydo pull; fi
+  - rapydo --testing --project prj init
+  - rapydo pull
 
   - >
     if [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
@@ -105,6 +104,12 @@ script:
   - rapydo start
   - sleep 2
   - rapydo logs
+  # This is used to test the bot in dev mode
+  # - >
+  #   if [[ "$TEMPLATE" == "extra" ]]; then
+  #     rapydo shell backend --default-command --detach;
+  #     sleep 20;
+  #   fi
   - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
   # Send coverage
@@ -115,7 +120,7 @@ script:
 
   # Basic production test
   - rapydo remove --all
-  - rapydo --production init --force
+  - rapydo --production --testing init --force
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
@@ -123,6 +128,11 @@ script:
   - sleep 25
   - rapydo logs
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+  - >
+    if [[ "$TEMPLATE" == "extra" ]]; then
+      rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+      rapydo -s bot remove;
+    fi
   - rapydo -s proxy,backend logs --tail 20
 
   # Tests in production mode

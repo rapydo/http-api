@@ -1,11 +1,9 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
-from marshmallow import fields, validate
-
 from restapi import decorators
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
-from restapi.models import InputSchema, OutputSchema
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -34,13 +32,13 @@ if detector.check_availability("neo4j"):
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
-    class Coordinator(OutputSchema):
+    class Coordinator(Schema):
         uuid = fields.Str()
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
 
-    class Group(OutputSchema):
+    class Group(Schema):
         uuid = fields.Str()
         fullname = fields.Str()
         shortname = fields.Str()
@@ -60,13 +58,15 @@ if detector.check_availability("neo4j"):
             validate=validate.OneOf(choices=users.keys(), labels=users.values()),
         )
 
-    def get_POST_input(request):
-        return InputGroup(strip_required=False)
+    def get_input_group(request):
+        # if not request:
+        #     return {}
 
-    def get_PUT_input(request):
-        return InputGroup(strip_required=True)
+        # return InputGroup(strip_required=request.method == "PUT")
 
-    class AdminGroups(MethodResource, EndpointResource):
+        return InputGroup()
+
+    class AdminGroups(EndpointResource):
 
         labels = ["admin"]
         _GET = {
@@ -104,10 +104,9 @@ if detector.check_availability("neo4j"):
             }
         }
 
-        @decorators.catch_errors()
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @decorators.auth.required(roles=["admin_root"])
-        @marshal_with(Group(many=True), code=200)
+        @decorators.marshal_with(Group(many=True), code=200)
         def get(self):
 
             self.graph = self.get_service_instance("neo4j")
@@ -116,11 +115,10 @@ if detector.check_availability("neo4j"):
                 g.coordinator = g.coordinator.single()
             return self.response(groups)
 
-        @decorators.catch_errors()
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
-        @use_kwargs(get_POST_input)
+        @decorators.use_kwargs(get_input_group)
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
@@ -140,23 +138,22 @@ if detector.check_availability("neo4j"):
 
             return self.response(group.uuid)
 
-        @decorators.catch_errors()
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
-        @use_kwargs(get_PUT_input)
+        @decorators.use_kwargs(get_input_group)
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
 
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
-            if group is None:
+            if not group:
                 raise NotFound("Group not found")
 
             coordinator_uuid = kwargs.pop("coordinator", None)
 
             db = self.get_service_instance(detector.authentication_service)
-            db.update_properties(group, kwargs, kwargs)
+            db.update_properties(group, kwargs)
 
             group.save()
 
@@ -179,17 +176,16 @@ if detector.check_availability("neo4j"):
 
             return self.empty_response()
 
-        @decorators.catch_errors()
+        @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @graph_transactions
-        @decorators.auth.required(roles=["admin_root"])
         def delete(self, group_id):
 
             self.graph = self.get_service_instance("neo4j")
 
             group = self.graph.Group.nodes.get_or_none(uuid=group_id)
 
-            if group is None:
+            if not group:
                 raise NotFound("Group not found")
 
             group.delete()

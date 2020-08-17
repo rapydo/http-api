@@ -167,6 +167,9 @@ def mywait():
             host, port = get_service_address(service_vars, "host", "port", backend)
 
             wait_socket(host, port, backend)
+        elif name == "smtp":
+            pass
+
         else:
             host, port = get_service_address(myclass.variables, "host", "port", name)
 
@@ -251,3 +254,12 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
     except Exception as e:
         log.error(e)
         sys.exit(1)
+
+
+@cli.command()
+def bot():
+    from restapi.services.telegram import bot
+
+    bot.load_commands()
+    # This return is used by tests to verify output messages
+    return bot.start()

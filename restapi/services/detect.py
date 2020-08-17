@@ -202,8 +202,12 @@ class Detector:
             # save
             variables[key] = value
 
-            suffix = ".dockerized.io"
-            if key == "host" and not value.endswith(suffix):  # pragma: no cover
+        if "host" in variables:
+            value = variables.get("host")
+            if not value:
+                variables["enable"] = 0
+
+            elif not value.endswith(".dockerized.io"):  # pragma: no cover
                 variables["external"] = True
                 log.verbose("Service {} detected as external: {}", prefix, value)
 
@@ -234,7 +238,10 @@ class Detector:
 
             self.services[connector_name]["connector"] = connector_instance
 
-            instances[connector_name] = connector_instance.get_instance()
+            try:
+                instances[connector_name] = connector_instance.get_instance()
+            except ServiceUnavailable:
+                log.exit("Service unavailable: {}", connector_name)
 
         if self.authentication_service is None:
             log.warning("No authentication service configured")

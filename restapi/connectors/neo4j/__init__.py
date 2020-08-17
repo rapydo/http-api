@@ -156,11 +156,14 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, schema, properties):
+    def update_properties(instance, properties, schema=None):
 
-        for field in schema:
-            if field in properties:
-                instance.__dict__[field] = properties[field]
+        # Deprecated since 0.7.5
+        if schema:  # pragma: no cover
+            log.warning("Deprecated schema parameter in update_properties")
+
+        for field, value in properties.items():
+            instance.__dict__[field] = value
 
     @catch_db_exceptions
     def cypher(self, query):
@@ -174,8 +177,13 @@ class NeoModel(Connector):
             raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
 
+    # Deprecated since 0.7.5
     @staticmethod
     def getSingleLinkedNode(relation):
+
+        log.warning(
+            "Deprecated use of getSingleLinkedNode, use {}.single() instead", relation
+        )
 
         nodes = relation.all()
         if len(nodes) <= 0:
@@ -423,7 +431,7 @@ class Authentication(BaseAuthentication):
                 t["IP"] = token.IP
                 t["location"] = token.location
                 if get_all:
-                    t["user"] = self.db.getSingleLinkedNode(token.emitted_for)
+                    t["user"] = token.emitted_for.single()
 
                 tokens_list.append(t)
 

@@ -50,8 +50,11 @@ class TestApp(BaseTests):
         data = {"reset_email": BaseAuthentication.default_user}
         r = client.post(f"{AUTH_URI}/reset", data=data)
         assert r.status_code == 200
-        resetmsg = "You will shortly receive an email with a link to a page where "
-        resetmsg += "you can create a new password, please check your spam/junk folder."
+
+        resetmsg = "We'll send instructions to the email provided "
+        resetmsg += "if it's associated with an account. "
+        resetmsg += "Please check your spam/junk folder."
+
         assert self.get_content(r) == resetmsg
 
         mail = self.read_mock_email()

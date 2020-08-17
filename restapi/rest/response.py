@@ -1,12 +1,11 @@
 from urllib import parse as urllib_parse
 
-from flask import Response, jsonify, render_template, request
-from marshmallow import fields, validate
+from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
-from restapi.models import GET_SCHEMA_KEY
+from restapi.models import GET_SCHEMA_KEY, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
@@ -25,13 +24,9 @@ def handle_marshmallow_errors(error):
         log.error(e)
 
     for k, msg in error.data.get("messages").items():
-        msg_len = len(msg)
-        if msg_len == 0:  # pragma: no cover
+        if not msg:  # pragma: no cover
             continue
-        elif len(msg) == 1:
-            log.info("{}: {}", k, msg[0])
-        else:  # pragma: no cover
-            log.info("{}: {}", k, msg)
+        log.info("{}: {}", k, msg)
 
     return (error.data.get("messages"), 400, {})
 
@@ -91,9 +86,19 @@ def log_response(response):
 
 
 class ResponseMaker:
+
+    # Have a look here: (from flask import request)
+    # request.user_agent.browser
     @staticmethod
     def get_accepted_formats():
-
+        """
+        Possible outputs:
+        '*/*'
+        'application/json'
+        'text/html'
+        'application/xml'
+        'text/csv'
+        """
         for val in request.headers:
             if val[0] == "Accept":
                 return [x.strip() for x in val[1].split(",")]
@@ -113,46 +118,11 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
-    def respond_to_browser(content, code, headers):
-        log.debug("Request from a browser: reply with HTML.")
-
-        is_error = code >= 400
-        if isinstance(content, list):
-            content = content.pop()
-        html_data = {"body_content": content, "is_error": is_error}
-        html_page = render_template("index.html", **html_data)
-        return Response(html_page, mimetype="text/html", status=code, headers=headers)
-
-    @staticmethod
-    def generate_response(content, code, headers, head_method):
-        """
-        Generating from our user/custom/internal response
-        the data necessary for a Flask response (make_response() method):
-        a tuple (content, status, headers)
-        """
-
-        # Possible outputs:
-        # '*/*'
-        # 'application/json'
-        # 'text/html'
-        # 'application/xml'
-        # 'text/csv'
-        accepted_formats = ResponseMaker.get_accepted_formats()
-
-        if "text/html" in accepted_formats:
-            return ResponseMaker.respond_to_browser(content, code, headers)
-
-        content = jsonify(content)
-
-        # return a standard flask response tuple(content, code, headers)
-        return (content, code, headers)
-
-    @staticmethod
     def respond_with_schema(schema):
 
         fields = []
         try:
-            for field, field_def in schema._declared_fields.items():
+            for field, field_def in schema.declared_fields.items():
                 if field == GET_SCHEMA_KEY:
                     continue
 
@@ -225,17 +195,11 @@ class ResponseMaker:
                         )
 
                 fields.append(f)
-            return ResponseMaker.generate_response(
-                content=fields, code=200, headers={}, head_method=False
-            )
+            return (jsonify(fields), 200, {})
         except BaseException as e:  # pragma: no cover
             log.error(e)
-            return ResponseMaker.generate_response(
-                content={"Server internal error": "Failed to retrieve input schema"},
-                code=500,
-                headers={},
-                head_method=False,
-            )
+            content = {"Server internal error": "Failed to retrieve input schema"}
+            return (jsonify(content), 500, {})
 
     @staticmethod
     def get_schema_type(schema):

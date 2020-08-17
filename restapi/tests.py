@@ -177,25 +177,17 @@ class BaseTests:
         return content
 
     @staticmethod
-    def getDynamicInputSchema(client, endpoint, headers, html=False):
+    def getDynamicInputSchema(client, endpoint, headers):
         """
             Retrieve a dynamic data schema associated with a endpoint
         """
 
-        data = {"get_schema": 1}
-
-        h = headers.copy()
-        if html:
-            h["Accept"] = "text/html"
-
-        r = client.post(f"{API_URI}/{endpoint}", data=data, headers=h)
+        r = client.post(
+            f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+        )
         assert r.status_code == 200
 
-        content = r.data.decode("utf-8")
-        if html:
-            return content
-
-        return json.loads(content)
+        return json.loads(r.data.decode("utf-8"))
 
     @staticmethod
     def get_content(http_out):
@@ -353,16 +345,18 @@ class BaseTests:
 
         return {"Authorization": f"Bearer {content}"}, content
 
-    def randomString(self, length=16, prefix=""):  # pragma: no cover
+    @staticmethod
+    def randomString(length=16, prefix=""):  # pragma: no cover
         # Deprecated since 0.7.4
         log.warning("Deprecated, use fake.password instead")
         return prefix + fake.password(
             length, low=False, up=True, digits=True, symbols=False
         )
 
-    def buildData(self, schema):
+    @staticmethod
+    def buildData(schema):
         """
-            Input: a webargs schema
+            Input: a Marshmallow schema
             Output: a dictionary of random data
         """
         data = {}
@@ -472,8 +466,8 @@ class BaseTests:
         os.unlink(fpath)
         return data
 
+    @staticmethod
     def get_crafted_token(
-        self,
         token_type,
         user_id=None,
         expired=False,

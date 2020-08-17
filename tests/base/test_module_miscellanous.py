@@ -1,18 +1,16 @@
 import os
 import tempfile
 import time
-from datetime import datetime
 
 import psutil
 import pytest
-import pytz
-from marshmallow import fields
+from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.models import AdvancedList, InputSchema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
-from restapi.services.mail import send as _send_mail
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -27,7 +25,6 @@ from restapi.utilities.processes import (
     wait_socket,
 )
 from restapi.utilities.templates import get_html_template
-from restapi.utilities.time import date_from_string
 
 
 class TestApp(BaseTests):
@@ -135,7 +132,7 @@ class TestApp(BaseTests):
         assert len(s) == 0
 
         # This is a valid package containing other packages... but no task will be found
-        s = Meta.get_celery_tasks("restapi")
+        s = Meta.get_celery_tasks("restapi.utilities")
         assert isinstance(s, dict)
         assert len(s) == 0
 
@@ -153,23 +150,6 @@ class TestApp(BaseTests):
         try:
             Meta.get_module_from_string(
                 "this-should-not-exist", exit_on_fail=True,
-            )
-            pytest.fail("ModuleNotFoundError not raised")
-        except ModuleNotFoundError:
-            pass
-
-        try:
-            Meta.get_module_from_string(
-                "this-should-not-exist", exit_if_not_found=True,
-            )
-            pytest.fail("SystemExit not raised")
-        except SystemExit:
-            pass
-
-        # Check flag precedence
-        try:
-            Meta.get_module_from_string(
-                "this-should-not-exist", exit_if_not_found=True, exit_on_fail=True,
             )
             pytest.fail("ModuleNotFoundError not raised")
         except ModuleNotFoundError:
@@ -276,140 +256,6 @@ class TestApp(BaseTests):
         assert hcodes.HTTP_NOT_IMPLEMENTED == 501
         assert hcodes.HTTP_SERVICE_UNAVAILABLE == 503
         assert hcodes.HTTP_INTERNAL_TIMEOUT == 504
-
-        today = datetime.today()
-        fmt = "%Y-%m-%d"
-        assert date_from_string(None) == ""
-        assert date_from_string("") == ""
-
-        d = date_from_string(today.strftime("%Y/%m/%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y-%m-%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y/%m/%d"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo == pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%sZ"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        # Uhmm
-        assert d.tzinfo != pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        today = datetime.now(pytz.timezone("Europe/Rome"))
-        d = date_from_string(today.strftime("%Y-%m-%dT%H:%M:%S.%s%z"))
-        assert isinstance(d, datetime)
-        assert d.tzinfo is not None
-        assert d.tzinfo != pytz.utc
-        assert today.strftime(fmt) == d.strftime(fmt)
-
-        assert not _send_mail("body", "subject", "to_addr", "from_addr", None)
-        assert not _send_mail("body", "subject", "to_addr", None, "myhost")
-        assert not _send_mail("body", "subject", None, "from_addr", "myhost")
-
-        assert not _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="x"
-        )
-
-        # standard port
-        assert _send_mail("body", "subject", "to_addr", "from_addr", "myhost")
-        # local server (no port)
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=None
-        )
-        # TLS port
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port=465
-        )
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", smtp_port="465"
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        assert mail.get("cc") == ["to_addr"]
-        assert mail.get("bcc") is None
-
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", cc="test1", bcc="test2"
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr", ["test1"], ["test2"]]
-
-        assert _send_mail(
-            "body",
-            "subject",
-            "to_addr",
-            "from_addr",
-            "myhost",
-            cc=["test1", "test2"],
-            bcc=["test3", "test4"],
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
-
-        assert _send_mail(
-            "body", "subject", "to_addr", "from_addr", "myhost", cc=10, bcc=20
-        )
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        headers = mail.get("headers")
-        assert body is not None
-        assert headers is not None
-        # Subject: is a key in the MIMEText
-        assert "Subject: subject" in headers
-        # cc and bcc with wrong type (int in this case!) are ignored
-        assert mail.get("from") == "from_addr"
-        # format is [to, [cc...], [bcc...]]
-        assert mail.get("cc") == ["to_addr"]
-
-        # HTML emails require a plain body, if not provided it default with the html
-        # body -> no errors
-        assert _send_mail(
-            "body",
-            "subject",
-            "to_addr",
-            "from_addr",
-            "myhost",
-            html=True,
-            plain_body=None,
-        )
 
         data = {"a": 1}
         assert mix(None, data) == data
@@ -525,3 +371,113 @@ class TestApp(BaseTests):
             pytest.fail("No exception raised")
         except ServiceUnavailable:
             pass
+
+    def test_marshmallow_schemas(self):
+        class Input1(InputSchema):
+            unique_delimited_list = UniqueDelimitedList(
+                fields.Str(), delimiter=",", required=True
+            )
+            advanced_list = AdvancedList(
+                fields.Str(), unique=True, min_items=2, required=True
+            )
+
+        schema = Input1(strip_required=False)
+        try:
+            schema.load({})
+        except ValidationError as e:
+            err = "Missing data for required field."
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == err
+            assert "unique_delimited_list" in e.messages
+            assert e.messages["unique_delimited_list"][0] == err
+
+        schema = Input1(strip_required=True)
+        # ValidationError error is not raised because required is stripped of
+        assert len(schema.load({})) == 0
+
+        try:
+            schema.load({"advanced_list": None})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Field may not be null."
+
+        try:
+            schema.load({"advanced_list": ""})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Not a valid list."
+
+        try:
+            schema.load({"advanced_list": [10]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert 0 in e.messages["advanced_list"]
+            assert e.messages["advanced_list"][0][0] == "Not a valid string."
+
+        min_items_error = "Expected at least 2 items, received 1"
+        try:
+            schema.load({"advanced_list": ["a"]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == min_items_error
+
+        try:
+            schema.load({"advanced_list": ["a", "a"]})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == min_items_error
+
+        r = schema.load({"advanced_list": ["a", "a", "b"]})
+        assert "advanced_list" in r
+        assert len(r["advanced_list"]) == 2
+
+        try:
+            schema.load({"advanced_list": {"a": "b"}})
+        except ValidationError as e:
+            assert "advanced_list" in e.messages
+            assert e.messages["advanced_list"][0] == "Not a valid list."
+
+        r = schema.load({"unique_delimited_list": ""})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 1
+        assert r["unique_delimited_list"][0] == ""
+
+        r = schema.load({"unique_delimited_list": "xyz"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 1
+        assert r["unique_delimited_list"][0] == "xyz"
+
+        r = schema.load({"unique_delimited_list": "a,b"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 2
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+
+        r = schema.load({"unique_delimited_list": "a,b,c"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][2] == "c"
+
+        try:
+            schema.load({"unique_delimited_list": "a,b,b"})
+        except ValidationError as e:
+            assert "unique_delimited_list" in e.messages
+            err = "Provided list contains duplicates"
+            assert e.messages["unique_delimited_list"][0] == err
+
+        # No strips on elements
+        r = schema.load({"unique_delimited_list": "a,b, c"})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][2] == " c"
+
+        r = schema.load({"unique_delimited_list": "a,b,c "})
+        assert "unique_delimited_list" in r
+        assert len(r["unique_delimited_list"]) == 3
+        assert r["unique_delimited_list"][0] == "a"
+        assert r["unique_delimited_list"][1] == "b"
+        assert r["unique_delimited_list"][2] == "c "

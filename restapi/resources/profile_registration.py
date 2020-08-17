@@ -1,17 +1,14 @@
-from flask_apispec import MethodResource, use_kwargs
-from marshmallow import fields, validate
-
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.resources.profile_activation import send_activation_link
 from restapi.rest.definition import EndpointResource
-from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.detect import detector
 
 # This endpoint require the server to send the activation oken via email
-if send_mail_is_active():
+if detector.check_availability("smtp"):
 
     auth = EndpointResource.load_authentication()
 
@@ -30,7 +27,7 @@ if send_mail_is_active():
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
 
-    class ProfileRegistration(MethodResource, EndpointResource):
+    class ProfileRegistration(EndpointResource):
         """ Current user informations """
 
         baseuri = "/auth"
@@ -47,8 +44,7 @@ if send_mail_is_active():
             }
         }
 
-        @decorators.catch_errors()
-        @use_kwargs(User)
+        @decorators.use_kwargs(User)
         def post(self, **kwargs):
             """ Register new user """
 
@@ -76,6 +72,7 @@ if send_mail_is_active():
             try:
                 self.auth.custom_post_handle_user_input(user, kwargs)
 
+                smtp = self.get_service_instance("smtp")
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
@@ -84,9 +81,9 @@ if send_mail_is_active():
                     subject = f"{title} New credentials requested"
                     body = f"New credentials request from {user.email}"
 
-                    send_mail(body, subject)
+                    smtp.send(body, subject)
 
-                send_activation_link(self.auth, user)
+                send_activation_link(smtp, self.auth, user)
 
             except BaseException as e:
                 user.delete()

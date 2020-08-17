@@ -1,23 +1,20 @@
-from flask_apispec import MethodResource, marshal_with
-from marshmallow import fields
-
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
-from restapi.models import Neo4jChoice, Neo4jSchema, OutputSchema
+from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 if TESTING and detector.check_availability("neo4j"):
 
-    from restapi.connectors.neo4j.models import User, Group
+    from restapi.connectors.neo4j.models import Group, User
 
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
 
-    class Output(OutputSchema):
+    class Output(Schema):
         val = fields.Integer()
         created = fields.DateTime()
         modified1 = fields.DateTime()
@@ -44,7 +41,7 @@ if TESTING and detector.check_availability("neo4j"):
         choices1 = Neo4jChoice(CHOICES_tuple)
         choices2 = Neo4jChoice(CHOICES_dict)
 
-    class TestNeo4j(MethodResource, EndpointResource):
+    class TestNeo4j(EndpointResource):
 
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
@@ -57,9 +54,8 @@ if TESTING and detector.check_availability("neo4j"):
             },
         }
 
-        @decorators.catch_errors()
         @graph_transactions
-        @marshal_with(Output, code=200)
+        @decorators.marshal_with(Output, code=200)
         def get(self, test):
             self.neo4j = self.get_service_instance("neo4j")
             try:

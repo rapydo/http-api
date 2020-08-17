@@ -1,5 +1,4 @@
 from flask import Response, request
-from flask_apispec import MethodResource
 from gripcontrol import (
     WebSocketEvent,
     create_grip_channel_header,
@@ -14,7 +13,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 
-class PushpinWebSocket(MethodResource, EndpointResource):
+class PushpinWebSocket(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
@@ -31,8 +30,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required(allow_access_token_parameter=True)
+    @decorators.auth.require(allow_access_token_parameter=True)
     def put(self, channel, sync):
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
@@ -45,8 +43,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
 
         return self.response(f"Message received: {published} (sync={sync})")
 
-    @decorators.catch_errors()
-    @decorators.auth.required(allow_access_token_parameter=True)
+    @decorators.auth.require(allow_access_token_parameter=True)
     def post(self, channel):
 
         try:
@@ -95,7 +92,7 @@ class PushpinWebSocket(MethodResource, EndpointResource):
         raise RestApiException("Cannot understand websocket request", status_code=400)
 
 
-class PushpinHTTPStream(MethodResource, EndpointResource):
+class PushpinHTTPStream(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
@@ -113,7 +110,6 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     def put(self, channel, sync):
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
@@ -126,8 +122,7 @@ class PushpinHTTPStream(MethodResource, EndpointResource):
 
         return self.response(f"Message received: {published} (sync={sync})")
 
-    @decorators.catch_errors()
-    @decorators.auth.required(allow_access_token_parameter=True)
+    @decorators.auth.require(allow_access_token_parameter=True)
     def post(self, channel):
 
         headers = {}

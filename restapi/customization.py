@@ -12,6 +12,7 @@ from flask.views import MethodViewType
 from flask_apispec.utils import Annotation
 from flask_apispec.views import MethodResourceMeta
 
+from restapi import decorators
 from restapi.confs import (
     ABS_RESTAPI_PATH,
     API_URL,
@@ -20,13 +21,15 @@ from restapi.confs import (
     CUSTOM_PACKAGE,
 )
 from restapi.env import Env
-from restapi.services.detect import detector  # do not remove this unsed import
+from restapi.services.detect import detector  # do not remove this unused import
 from restapi.swagger import Swagger
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 CONF_FOLDERS = Env.load_group(label="project_confs")
+
+log.verbose("Detector loaded: {}", detector)
 
 
 @ClassOfAttributes
@@ -43,9 +46,10 @@ class Customizer:
     def __init__(self):
 
         self._endpoints = []
-        self._definitions = {}
-        self._configurations = {}
-        self._query_params = {}
+        self.swagger_specs = {}
+        self._authenticated_endpoints = {}
+        # This is filled by Swagger
+        self._private_endpoints = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -56,7 +60,7 @@ class Customizer:
         submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
 
         try:
-            self._configurations, self._extended_project, _ = read_configuration(
+            configuration, self._extended_project, _ = read_configuration(
                 default_file_path=defaults_path,
                 base_project_path=base_path,
                 projects_path=projects_path,
@@ -65,7 +69,7 @@ class Customizer:
         except AttributeError as e:  # pragma: no cover
             log.exit(e)
 
-        return self._configurations
+        return configuration
 
     @staticmethod
     def skip_endpoint(depends_on):
@@ -161,7 +165,6 @@ class Customizer:
         )
 
         ERROR_401 = {
-            # 'description': 'Missing or invalid credentials or token'
             "description": "This endpoint requires a valid authorization token"
         }
         ERROR_400 = {
@@ -193,9 +196,7 @@ class Customizer:
                 module_name = f"{apiclass_module}.{module_file}"
                 # Convert module name into a module
                 log.debug("Importing {}", module_name)
-                module = Meta.get_module_from_string(
-                    module_name, exit_if_not_found=True,
-                )
+                module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
 
                 # Extract classes from the module
                 classes = Meta.get_new_classes_from_module(module)
@@ -257,17 +258,29 @@ class Customizer:
 
                         # conf from GET, POST, ... dictionaries
                         conf = getattr(epclss, method_name)
-
                         # endpoint uris /api/bar, /api/food
                         kk = conf.keys()
 
                         # get, post, put, patch, delete functions
                         fn = getattr(epclss, method_fn)
 
+                        # Adding the catch_errors decorator to every endpoint
+                        # I'm using a magic bool variabile to be able to raise warning
+                        # in case of the normal [deprecated] use
+                        decorator = decorators.catch_errors(magic=True)
+                        setattr(epclss, method_fn, decorator(fn))
+
                         # auth.required injected by the required decorator in bearer.py
                         auth_required = fn.__dict__.get("auth.required", False)
                         for u in conf:
                             conf[u].setdefault("responses", {})
+
+                            full_uri = f"/{base}{u}"
+                            self._authenticated_endpoints.setdefault(full_uri, {})
+                            # method_fn is equivalent to m.lower()
+                            self._authenticated_endpoints[full_uri].setdefault(
+                                method_fn, auth_required
+                            )
 
                             conf[u]["responses"].setdefault("400", ERROR_400)
                             if auth_required:
@@ -275,7 +288,6 @@ class Customizer:
                                 conf[u]["responses"].setdefault("404", ERROR_404_AUTH)
                             else:
                                 conf[u]["responses"].setdefault("404", ERROR_404)
-
                             # inject _METHOD dictionaries into __apispec__ attribute
                             # __apispec__ is normally populated by using @docs decorator
                             if isinstance(epclss, MethodResourceMeta):
@@ -369,4 +381,4 @@ class Customizer:
         if not swag.validation(swag_dict):  # pragma: no cover
             log.exit("Current swagger definition is invalid")
 
-        self._definitions = swag_dict
+        self.swagger_specs = swag_dict

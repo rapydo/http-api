@@ -1,5 +1,4 @@
 from flask import jsonify
-from flask_apispec import MethodResource
 from glom import glom
 
 from restapi.confs import get_backend_url
@@ -27,8 +26,7 @@ class SwaggerSpecifications(EndpointResource):
     def get(self):
 
         # NOTE: swagger dictionary is read only once, at server init time
-        specs = mem.customizer._definitions
-
+        specs = mem.customizer.swagger_specs
         api_url = get_backend_url()
         scheme, host = api_url.rstrip("/").split("://")
         specs["host"] = host
@@ -38,7 +36,7 @@ class SwaggerSpecifications(EndpointResource):
         return jsonify(specs)
 
 
-class NewSwaggerSpecifications(MethodResource, EndpointResource):
+class NewSwaggerSpecifications(EndpointResource):
     """
     Specifications output throught Swagger (open API) standards
     """
@@ -114,7 +112,10 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
         scheme, host = api_url.rstrip("/").split("://")
         specs["host"] = host
         specs["schemes"] = [scheme]
-        specs["tags"] = mem.customizer._configurations["cleaned_tags"]
+        specs["tags"] = mem.configuration["cleaned_tags"]
+        specs["securityDefinitions"] = {
+            "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+        }
 
         # Remove get_schema parameters from Definitions
         for schema, definition in specs.get("definitions", {}).items():
@@ -122,6 +123,23 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
 
         user = self.get_user_if_logged(allow_access_token_parameter=True)
         if user:
+            # Set security requirements for endpoint
+            for key, data in specs.items():
+
+                # Find endpoint mapping flagged as private
+                if key == "paths":
+                    for uri, endpoint in data.items():
+                        u = uri.replace("{", "<").replace("}", ">")
+                        for method, definition in endpoint.items():
+                            auth_required = glom(
+                                mem.customizer._authenticated_endpoints,
+                                f"{u}.{method}",
+                                default=False,
+                            )
+
+                            if auth_required:
+                                definition["security"] = [{"Bearer": []}]
+
             return jsonify(specs)
 
         log.info("Unauthenticated request, filtering out private endpoints")
@@ -136,9 +154,9 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
             # Find endpoint mapping flagged as private
             if key == "paths":
                 for uri, endpoint in data.items():
+                    u = uri.replace("{", "<").replace("}", ">")
                     for method, definition in endpoint.items():
 
-                        u = uri.replace("{", "<").replace("}", ">")
                         is_private = glom(
                             mem.customizer._private_endpoints,
                             f"{u}.{method}",
@@ -159,6 +177,15 @@ class NewSwaggerSpecifications(MethodResource, EndpointResource):
                         if is_private:
                             log.debug("Skipping {} {}", method, uri)
                             continue
+
+                        auth_required = glom(
+                            mem.customizer._authenticated_endpoints,
+                            f"{u}.{method}",
+                            default=False,
+                        )
+
+                        if auth_required:
+                            definition["security"] = [{"Bearer": []}]
 
                         filtered_specs.setdefault(key, {})
                         filtered_specs[key].setdefault(uri, {})

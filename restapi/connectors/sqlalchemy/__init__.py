@@ -38,10 +38,7 @@ def catch_db_exceptions(func):
 
         try:
             return func(*args, **kwargs)
-        except DatabaseDuplicatedEntry:
-            # already catched and parser, raise up
-            raise
-        except BadRequest:
+        except (DatabaseDuplicatedEntry, BadRequest):
             # already catched and parser, raise up
             raise
         except IntegrityError as e:
@@ -65,7 +62,7 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
-        except InternalError as e:
+        except InternalError as e:  # pragma: no cover
 
             message = str(e)
 
@@ -182,11 +179,14 @@ class SQLAlchemy(Connector):
             db.drop_all()
 
     @staticmethod
-    def update_properties(instance, schema, properties):
+    def update_properties(instance, properties, schema=None):
 
-        for field in schema:
-            if field in properties:
-                set_attribute(instance, field, properties[field])
+        # Deprecated since 0.7.5
+        if schema:  # pragma: no cover
+            log.warning("Deprecated schema parameter in update_properties")
+
+        for field, value in properties.items():
+            set_attribute(instance, field, value)
 
 
 class Authentication(BaseAuthentication):

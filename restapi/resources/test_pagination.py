@@ -1,14 +1,10 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.confs import TESTING
 from restapi.rest.definition import EndpointResource
 
-# from restapi.utilities.logs import log
-
 if TESTING:
 
-    class TestPagination(MethodResource, EndpointResource):
+    class TestPagination(EndpointResource):
 
         # 150 integers from 1 to 150
         values = list(range(1, 151))
@@ -27,20 +23,20 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
         @decorators.get_pagination
-        def get(self, get_total=None, page=None, size=None):
-
+        def get(
+            self, get_total, page, size, sort_by, sort_order, input_filter,
+        ):
             if get_total:
                 return len(TestPagination.values)
 
             offset = (page - 1) * size
             return TestPagination.values[offset : offset + size]
 
-        @decorators.catch_errors()
         @decorators.get_pagination
-        def post(self, get_total=None, page=None, size=None):
-
+        def post(
+            self, get_total, page, size, sort_by, sort_order, input_filter,
+        ):
             if get_total:
                 return len(TestPagination.values)
 

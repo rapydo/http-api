@@ -1,12 +1,10 @@
 from datetime import datetime
 
 import pytz
-from flask_apispec import MethodResource, use_kwargs
-from marshmallow import fields, validate
 
 from restapi import decorators
 from restapi.exceptions import Forbidden
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.time import EPOCH, get_now
 
@@ -34,7 +32,7 @@ class Credentials(InputSchema):
     totp_code = fields.Str(required=False)
 
 
-class Login(MethodResource, EndpointResource):
+class Login(EndpointResource):
     """ Let a user login by using the configured method """
 
     baseuri = "/auth"
@@ -52,8 +50,7 @@ class Login(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @use_kwargs(Credentials)
+    @decorators.use_kwargs(Credentials)
     def post(
         self,
         username,

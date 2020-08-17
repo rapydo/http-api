@@ -1,15 +1,12 @@
-from flask_apispec import MethodResource, marshal_with
-from marshmallow import fields
-
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
-from restapi.models import OutputSchema
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 
 # from restapi.utilities.logs import log
 
 
-class TokenSchema(OutputSchema):
+class TokenSchema(Schema):
     id = fields.Str()
     IP = fields.Str()
     location = fields.Str()
@@ -19,7 +16,7 @@ class TokenSchema(OutputSchema):
     last_access = fields.DateTime()
 
 
-class Tokens(MethodResource, EndpointResource):
+class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
     baseuri = "/auth"
@@ -38,9 +35,8 @@ class Tokens(MethodResource, EndpointResource):
         },
     }
 
-    @marshal_with(TokenSchema(many=True), code=200)
-    @decorators.catch_errors()
-    @decorators.auth.required()
+    @decorators.auth.require()
+    @decorators.marshal_with(TokenSchema(many=True), code=200)
     def get(self):
 
         user = self.get_user()
@@ -50,8 +46,7 @@ class Tokens(MethodResource, EndpointResource):
         return self.response(tokens)
 
     # token_id = uuid associated to the token you want to select
-    @decorators.catch_errors()
-    @decorators.auth.required()
+    @decorators.auth.require()
     def delete(self, token_id):
 
         user = self.get_user()

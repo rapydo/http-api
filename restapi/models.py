@@ -1,29 +1,31 @@
 import inspect
 
-import webargs
-from marshmallow import Schema as MarshmallowSchema
-from marshmallow import ValidationError, fields, pre_load
+from marshmallow import Schema  # also used from endpoint for Schemas
+from marshmallow import validate  # used as alias from endpoints
+from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
+from webargs import fields  # also imported from endpoints
 
 from restapi.utilities.logs import log
+
+# Note for SQL-Alchemy, consider to use:
+# https://github.com/marshmallow-code/marshmallow-sqlalchemy
 
 GET_SCHEMA_KEY = "get_schema"
 # ISO 8601 format with Zulu time (default Javascript output)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-
-class OutputSchema(MarshmallowSchema):
-    pass
+log.verbose("{} loaded", validate)
 
 
-class InputSchema(MarshmallowSchema):
+class InputSchema(Schema):
     def __init__(self, strip_required=False, *args, **kwargs):
         super().__init__(**kwargs)
         if strip_required:
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # A fake field user to force return of schemas
+    # A fake field used to force return of schemas
     get_schema = fields.Bool(
         required=False, description="Request schema specifications"
     )
@@ -40,7 +42,7 @@ class InputSchema(MarshmallowSchema):
         return data
 
 
-class Neo4jSchema(OutputSchema):
+class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
         super().__init__(**kwargs)
 
@@ -141,7 +143,7 @@ class Neo4jChoice(fields.Field):
         return value
 
 
-class UniqueDelimitedList(webargs.fields.DelimitedList):
+class UniqueDelimitedList(fields.DelimitedList):
     def _deserialize(self, value, attr, data, **kwargs):
         values = super()._deserialize(value, attr, data, **kwargs)
 
@@ -149,3 +151,26 @@ class UniqueDelimitedList(webargs.fields.DelimitedList):
             raise ValidationError("Provided list contains duplicates")
 
         return values
+
+
+class AdvancedList(fields.List):
+    def __init__(self, *args, unique=False, min_items=0, **kwargs):
+        self.unique = unique
+        self.min_items = min_items
+        super().__init__(*args, **kwargs)
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        value = super()._deserialize(value, attr, data, **kwargs)
+
+        if not isinstance(value, list):
+            raise ValidationError("Invalid type")
+
+        if self.unique:
+            value = list(set(value))
+
+        if len(value) < self.min_items:
+            raise ValidationError(
+                f"Expected at least {self.min_items} items, received {len(value)}"
+            )
+
+        return value

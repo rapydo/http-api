@@ -1,16 +1,13 @@
-# from flask import request
-from flask_apispec import MethodResource, use_kwargs
-from marshmallow import fields
-
 from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
+from restapi.models import fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
 if TESTING:
 
-    class TestUpload(MethodResource, EndpointResource, Uploader):
+    class TestUpload(EndpointResource, Uploader):
 
         labels = ["tests"]
         # Set an invalid baseuri to test the automatic fallback to /api
@@ -39,8 +36,7 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
-        @use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs({"force": fields.Bool()})
         def put(self, chunked=None, force=False):
 
             if chunked:
@@ -57,9 +53,8 @@ if TESTING:
                 response = self.upload(force=force)
             return response
 
-        @decorators.catch_errors()
         @decorators.init_chunk_upload
-        @use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs({"force": fields.Bool()})
         def post(self, force=False, **kwargs):
 
             filename = "fixed.filename"

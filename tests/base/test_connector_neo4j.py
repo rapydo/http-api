@@ -24,8 +24,10 @@ if not detector.check_availability(CONNECTOR):
     except ServiceUnavailable:
         pass
 
-    log.warning("Skipping neo4j test: service not available")
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
 else:
+
+    log.info("Executing {} tests", CONNECTOR)
 
     class TestNeo4j(BaseTests):
         def test_endpoint(self, client):
@@ -42,10 +44,7 @@ else:
             data["modified1"] = dateutil.parser.parse(data["modified1"])
             data["modified2"] = dateutil.parser.parse(data["modified2"])
             assert data["created"] < data["modified1"]
-            assert (data["modified1"] - data["created"]).microseconds < 150
-            assert (data["modified2"] - data["created"]).microseconds > 150
             assert data["modified1"] < data["modified2"]
-            assert (data["modified2"] - data["modified1"]).microseconds > 150
 
         @staticmethod
         def test_connector(app, fake):

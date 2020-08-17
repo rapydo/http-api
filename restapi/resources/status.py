@@ -1,10 +1,8 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 
 
-class Status(MethodResource, EndpointResource):
+class Status(EndpointResource):
     """ Check if APIs are online """
 
     ALLOW_HTML_RESPONSE = True
@@ -18,13 +16,12 @@ class Status(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
     def get(self, service=None):
 
         return self.response("Server is alive")
 
 
-class AuthStatus(MethodResource, EndpointResource):
+class AuthStatus(EndpointResource):
     """ Check if APIs are online """
 
     baseuri = "/auth"
@@ -38,8 +35,7 @@ class AuthStatus(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required()
+    @decorators.auth.require()
     def get(self, service=None):
 
         return self.response(True)

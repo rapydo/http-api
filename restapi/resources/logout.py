@@ -1,10 +1,8 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.rest.definition import EndpointResource
 
 
-class Logout(MethodResource, EndpointResource):
+class Logout(EndpointResource):
     """ Let the logged user escape from here, invalidating current token """
 
     baseuri = "/auth"
@@ -18,8 +16,7 @@ class Logout(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required()
+    @decorators.auth.require()
     def get(self):
         self.auth.invalidate_token(token=self.get_token())
         return self.empty_response()

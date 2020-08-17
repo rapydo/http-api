@@ -2,8 +2,8 @@ from functools import wraps
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
-from flask_apispec import use_kwargs
-from marshmallow import fields, post_load, validate
+from flask_apispec import marshal_with, use_kwargs  # also imported from endpoints
+from marshmallow import post_load
 from sentry_sdk import capture_exception
 
 from restapi.confs import SENTRY_URL
@@ -13,18 +13,25 @@ from restapi.exceptions import (
     DatabaseDuplicatedEntry,
     RestApiException,
 )
-from restapi.models import InputSchema
+from restapi.models import InputSchema, fields, validate
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
+log.verbose("Marshal loaded {}", marshal_with)
 
 
-def catch_errors(**kwargs):
+def catch_errors(magic=False, **kwargs):
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
     """
+
+    # Deprecated since 0.7.5
+    if not magic:  # pragma: no cover
+        log.warning(
+            "Deprecated use of catch_errors, just remove it... now it is automatic"
+        )
 
     def decorator(func):
         @wraps(func)
@@ -120,6 +127,11 @@ class Pagination(InputSchema):
         description="Number of elements to retrieve",
         validate=validate.Range(min=1, max=100),
     )
+    sort_order = fields.Str(
+        validate=validate.OneOf(["asc", "desc"]), required=False, missing="asc"
+    )
+    sort_by = fields.Str(required=False, missing=None)
+    input_filter = fields.Str(required=False, missing=None)
 
     @post_load
     def verify_parameters(self, data, **kwargs):

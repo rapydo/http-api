@@ -1,12 +1,11 @@
-from flask_apispec import MethodResource
-
 from restapi import decorators
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 from restapi.services.detect import detector
 
 
-class Verify(MethodResource, EndpointResource):
+class Verify(EndpointResource):
     """ Service connection testing """
 
     ALLOW_HTML_RESPONSE = True
@@ -21,8 +20,7 @@ class Verify(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required(roles=["admin_root"])
+    @decorators.auth.require_all(Role.ADMIN)
     def get(self, service):
 
         if not detector.check_availability(service):

@@ -10,6 +10,8 @@ class TestApp(BaseTests):
             log.warning("Skipping websockets test: pushpin service not available")
             return False
 
+        log.info("Executing websockets tests")
+
         channel = fake.pystr()
         r = client.post(f"{API_URI}/socket/{channel}")
         assert r.status_code == 401

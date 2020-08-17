@@ -1,11 +1,6 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from flask_apispec import MethodResource
-# from flask_apispec import marshal_with
-# from flask_apispec import use_kwargs
-# from marshmallow import fields, validate
-# from restapi.models import InputSchema, OutputSchema
-
+# from restapi.models import fields, validate, InputSchema, Schema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
@@ -13,9 +8,9 @@
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
 # from restapi.utilities.meta import Meta
-# from restapi.services.mail import send_mail_is_active
 # from restapi.resources.admin_users import send_notification, parse_roles, parse_group
 # from restapi.resources.admin_users import get_output_schema
+# from restapi.services.authentication import Role
 
 # from restapi.utilities.logs import log
 
@@ -132,7 +127,7 @@
 #         if custom_fields := customizer.get_custom_fields(strip_required):
 #             attributes.update(custom_fields)
 
-#     if send_mail_is_active():
+#     if detector.check_availability("smtp"):
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )
@@ -140,7 +135,7 @@
 #     return InputSchema.from_dict(attributes)
 
 
-# class LocalAdminUsers(MethodResource, EndpointResource):
+# class LocalAdminUsers(EndpointResource):
 
 #     auth_service = detector.authentication_service
 #     neo4j_enabled = auth_service == 'neo4j'
@@ -201,7 +196,7 @@
 #             return False
 
 #         # You cannot modify ADMINs
-#         if ADMIN_ROLE in self.auth.get_roles_from_user(user):
+#         if ADMIN in self.auth.get_roles_from_user(user):
 #             return False
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -219,9 +214,8 @@
 
 #         return False
 
-#     @decorators.catch_errors()
-#     @decorators.auth.required(roles=['local_admin'])
-#     @marshal_with(get_output_schema(), code=200)
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.marshal_with(get_output_schema(), code=200)
 #     def get(self, user_id=None):
 
 #         data = []
@@ -246,9 +240,8 @@
 
 #         return self.response(data)
 
-#     @decorators.catch_errors()
-#     @decorators.auth.required(roles=['local_admin'])
-#     @use_kwargs(get_input_schema())
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.use_kwargs(get_input_schema())
 #     def post(self, **kwargs):
 
 #         roles, roles_keys = parse_roles(kwargs)
@@ -301,9 +294,8 @@
 
 #         return self.response(user.uuid)
 
-#     @decorators.catch_errors()
-#     @decorators.auth.required(roles=['local_admin'])
-#     @use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     def put(self, user_id, **kwargs):
 
 #         user = self.auth.get_users(user_id)
@@ -348,7 +340,7 @@
 #         self.auth.link_roles(user, roles)
 
 #         db = self.get_service_instance(detector.authentication_service)
-#         db.update_properties(user, kwargs, kwargs)
+#         db.update_properties(user, kwargs)
 #         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -378,8 +370,7 @@
 
 #         return self.empty_response()
 
-#     @decorators.catch_errors()
-#     @decorators.auth.required(roles=['local_admin'])
+#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     def delete(self, user_id):
 
 #         is_admin = self.verify_admin()

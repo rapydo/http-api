@@ -22,12 +22,6 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
 
-        html_schema = self.getDynamicInputSchema(
-            client, "admin/users", headers, html=True
-        )
-        assert "<!DOCTYPE html>" in html_schema
-        assert "<html" in html_schema
-
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
         data["email_notification"] = True

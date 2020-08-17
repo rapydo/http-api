@@ -1,10 +1,8 @@
 from restapi.tests import API_URI, AUTH_URI, BaseTests
 
-# from restapi.utilities.logs import log
-
 
 class TestApp(BaseTests):
-    def test_tokens(self, client):
+    def test_tokens(self, client, fake):
 
         last_token = None
         last_tokens_header = None
@@ -45,6 +43,167 @@ class TestApp(BaseTests):
         # SINGLE TOKEN IS NOT ALLOWED
         r = client.get(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 405
+
+        # TEST GET ALL TOKENS
+        r = client.get(f"{API_URI}/admin/tokens")
+        assert r.status_code == 401
+
+        # TEST GET ALL TOKENS
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True, "input_filter": "1"},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True, "input_filter": fake.pystr()},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] == 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"get_total": True, "page": 1, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 206
+        content = self.get_content(r)
+        assert "total" in content
+        assert content["total"] > 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 0, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 1, "size": 0},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 1, "size": 101},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 400
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 99999, "size": 20},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        assert len(self.get_content(r)) == 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 1, "size": 2},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        content = self.get_content(r)
+        assert len(content) <= 2
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 1, "size": 20, "input_filter": "1"},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        assert len(self.get_content(r)) >= 1
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={"page": 1, "size": 20, "input_filter": fake.pystr()},
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        assert len(self.get_content(r)) == 0
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={
+                "page": 1,
+                "size": 20,
+                "input_filter": "1",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
+            },
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        default_sort = self.get_content(r)
+        assert len(default_sort) >= 2
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={
+                "page": 1,
+                "size": 20,
+                "input_filter": "1",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
+                "sort_order": "asc",
+            },
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        asc_sort = self.get_content(r)
+        assert len(asc_sort) >= 2
+        assert default_sort[0] == asc_sort[0]
+        assert default_sort[-1] == asc_sort[-1]
+
+        r = client.get(
+            f"{API_URI}/admin/tokens",
+            query_string={
+                "page": 1,
+                "size": 20,
+                "input_filter": "1",
+                # Sort_by emitted or other date cannot be done, because mysql truncate
+                # the date, so that sort can't be predicted [several dates are reported]
+                # as the same. Let's use a certainly unique field like uuid
+                "sort_by": "uuid",
+                "sort_order": "desc",
+            },
+            headers=last_tokens_header,
+        )
+        assert r.status_code == 200
+        desc_sort = self.get_content(r)
+        # Results of desc_sort can't be compared with previous contents
+        # It may only be done if we were able to retrieve all tokens, in this case the
+        # first desc will be the last asc... But we cannot ensure to be able to always
+        # retrieve all tokens.
+        assert len(desc_sort) >= 2
+        # At least they should be different
+        # assert asc_sort[0] != desc_sort[0]
+        # assert asc_sort[-1] != desc_sort[-1]
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)

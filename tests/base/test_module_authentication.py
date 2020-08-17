@@ -124,8 +124,7 @@ class TestApp(BaseTests):
             pytest.fail("Unexpected exception raised")
 
         # import here to prevent loading before initializing things...
-        from restapi.services.authentication import BaseAuthentication
-        from restapi.services.authentication import InvalidToken
+        from restapi.services.authentication import BaseAuthentication, InvalidToken
 
         auth = detector.get_service_instance("authentication")
 
@@ -168,9 +167,12 @@ class TestApp(BaseTests):
         assert not auth.verify_password(None, None)
 
         ip_data = auth.localize_ip("8.8.8.8")
+
         assert ip_data is not None
         # I don't know if this tests will be stable...
         assert ip_data == "United States"
+
+        assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
         def verify_token_is_valid(token, ttype=None):
             unpacked_token = auth.verify_token(token, token_type=ttype)
@@ -188,6 +190,12 @@ class TestApp(BaseTests):
 
         user = auth.get_user_object(username=BaseAuthentication.default_user)
         assert user is not None
+
+        # None user has no roles ... verify_roles will always be False
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="invalid")
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="ALL")
+        assert not auth.verify_roles(None, ["A", "B"], required_roles="ANY")
+
         # Just to verify that the function works
         verify_token_is_not_valid(fake.pystr())
         verify_token_is_not_valid(fake.pystr(), auth.PWD_RESET)

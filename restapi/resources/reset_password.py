@@ -1,20 +1,19 @@
 import jwt
-from flask_apispec import MethodResource, use_kwargs
-from marshmallow import fields, validate
 
 from restapi import decorators
 from restapi.confs import get_frontend_url, get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
+from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.mail import send_mail, send_mail_is_active
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
 auth = EndpointResource.load_authentication()
 
 
-def send_password_reset_link(uri, title, reset_email):
+def send_password_reset_link(smtp, uri, title, reset_email):
     # Internal templating
     body = f"Follow this link to reset your password: {uri}"
     html_body = get_html_template("reset_password.html", {"url": uri})
@@ -25,16 +24,16 @@ def send_password_reset_link(uri, title, reset_email):
     subject = f"{title} Password Reset"
 
     # Internal email sending
-    c = send_mail(html_body, subject, reset_email, plain_body=body)
+    c = smtp.send(html_body, subject, reset_email, plain_body=body)
     # it cannot fail during tests, because the email sending is mocked
     if not c:  # pragma: no cover
         raise RestApiException("Error sending email, please retry")
 
 
 # This endpoint require the server to send the reset token via email
-if send_mail_is_active():
+if detector.check_availability("smtp"):
 
-    class RecoverPassword(MethodResource, EndpointResource):
+    class RecoverPassword(EndpointResource):
 
         baseuri = "/auth"
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
@@ -62,8 +61,7 @@ if send_mail_is_active():
             }
         }
 
-        @decorators.catch_errors()
-        @use_kwargs({"reset_email": fields.Email(required=True)})
+        @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
         def post(self, reset_email):
 
             reset_email = reset_email.lower()
@@ -93,7 +91,8 @@ if send_mail_is_active():
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            send_password_reset_link(complete_uri, title, reset_email)
+            smtp = self.get_service_instance("smtp")
+            send_password_reset_link(smtp, complete_uri, title, reset_email)
 
             ##################
             # Completing the reset task
@@ -101,13 +100,11 @@ if send_mail_is_active():
                 user, reset_token, payload, token_type=self.auth.PWD_RESET
             )
 
-            msg = "You will shortly receive an email with a link to a page where "
-            msg += "you can create a new password, please check your spam/junk folder."
-
+            msg = "We'll send instructions to the email provided if it's associated "
+            msg += "with an account. Please check your spam/junk folder."
             return self.response(msg)
 
-        @decorators.catch_errors()
-        @use_kwargs(
+        @decorators.use_kwargs(
             {
                 "new_password": fields.Str(
                     required=False,

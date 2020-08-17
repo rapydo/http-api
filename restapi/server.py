@@ -10,7 +10,7 @@ import sentry_sdk
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
-from flask_apispec import FlaskApiSpec, MethodResource
+from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
@@ -26,7 +26,6 @@ from restapi.confs import (
 from restapi.customization import Customizer
 from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
-from restapi.services.mail import send_mail_is_active, test_smtp_client
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -70,10 +69,6 @@ def create_app(
         init_mode = True
     elif worker_mode:
         skip_endpoint_mapping = True
-
-    # Fix proxy wsgi for production calls
-    # from werkzeug.middleware.proxy_fix import ProxyFix
-    # microservice.wsgi_app = ProxyFix(microservice.wsgi_app)
 
     # CORS
     if not PRODUCTION:
@@ -149,6 +144,8 @@ def create_app(
                     version=get_project_configuration(
                         "project.version", default="0.0.1"
                     ),
+                    # OpenAPI 3 changed the definition of the security level
+                    # change securityDefinitions/security in swagger_spec.py accordingly
                     openapi_version="2.0",
                     # OpenApi 3 not working with FlaskApiSpec
                     # -> Duplicate parameter with name body and location body
@@ -197,31 +194,14 @@ def create_app(
                 try:
                     mem.docs.register(endpoint.cls)
                 except TypeError as e:
-                    # log.warning("{} on {}", type(e), endpoint.cls)
-                    # Enable this warning to start conversion to FlaskFastApi
-                    # Find other warning like this by searching:
-                    # **FASTAPI**
-                    # for m, v in endpoint.custom['params'].items():
-                    #     log.critical("{} = {}", m, v)
-                    if MethodResource in endpoint.cls.__bases__:
-                        log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
-                    elif endpoint.iscore:
-                        if endpoint.cls.__name__ != "SwaggerSpecifications":
-                            log.warning("Core endpoint: {}", endpoint.cls.__name__)
-                    else:
-                        log.verbose("{} on {}", type(e), endpoint.cls)
+                    print(e)
+                    log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
     # Logging responses
     microservice.after_request(log_response)
-
-    if send_mail_is_active():
-        if not test_smtp_client():
-            log.critical("Bad SMTP configuration, unable to create a client")
-        else:
-            log.info("SMTP configuration verified")
 
     if SENTRY_URL is not None:  # pragma: no cover
 

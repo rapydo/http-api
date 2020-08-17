@@ -1,16 +1,13 @@
-from flask_apispec import MethodResource, use_kwargs
-from marshmallow import fields
-
-# from restapi.exceptions import RestApiException
 from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
+from restapi.models import fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.download import Downloader
 from restapi.services.uploader import Uploader
 
 if TESTING:
 
-    class TestDownload(MethodResource, EndpointResource):
+    class TestDownload(EndpointResource):
 
         labels = ["tests"]
         # Set an invalid baseuri to test the automatic fallback to /api
@@ -33,8 +30,7 @@ if TESTING:
             },
         }
 
-        @decorators.catch_errors()
-        @use_kwargs({"stream": fields.Bool()}, locations=["query"])
+        @decorators.use_kwargs({"stream": fields.Bool()}, locations=["query"])
         def get(self, fname=None, stream=False):
 
             if stream:

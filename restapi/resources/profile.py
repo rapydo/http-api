@@ -1,8 +1,5 @@
-from flask_apispec import MethodResource, marshal_with, use_kwargs
-from marshmallow import fields, validate
-
 from restapi import decorators
-from restapi.models import InputSchema, OutputSchema
+from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -36,7 +33,7 @@ class UserProfile(InputSchema):
     privacy_accepted = fields.Boolean()
 
 
-class Group(OutputSchema):
+class Group(Schema):
     uuid = fields.Str()
     shortname = fields.Str()
     fullname = fields.Str()
@@ -59,14 +56,14 @@ def getProfileData():
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
     if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(False):
+        if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
-    schema = OutputSchema.from_dict(attributes)
+    schema = Schema.from_dict(attributes)
     return schema()
 
 
-class Profile(MethodResource, EndpointResource):
+class Profile(EndpointResource):
     """ Current user informations """
 
     baseuri = "/auth"
@@ -97,9 +94,8 @@ class Profile(MethodResource, EndpointResource):
         }
     }
 
-    @decorators.catch_errors()
-    @decorators.auth.required()
-    @marshal_with(getProfileData(), code=200)
+    @decorators.auth.require()
+    @decorators.marshal_with(getProfileData(), code=200)
     def get(self):
 
         current_user = self.get_user()
@@ -125,9 +121,8 @@ class Profile(MethodResource, EndpointResource):
 
         return self.response(data)
 
-    @decorators.catch_errors()
-    @decorators.auth.required()
-    @use_kwargs(NewPassword)
+    @decorators.auth.require()
+    @decorators.use_kwargs(NewPassword)
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
@@ -145,16 +140,15 @@ class Profile(MethodResource, EndpointResource):
 
         return self.empty_response()
 
-    @decorators.catch_errors()
-    @decorators.auth.required()
-    @use_kwargs(UserProfile)
+    @decorators.auth.require()
+    @decorators.use_kwargs(UserProfile)
     def patch(self, **kwargs):
         """ Update profile for current user """
 
         user = self.get_user()
 
         db = self.get_service_instance(detector.authentication_service)
-        db.update_properties(user, kwargs, kwargs)
+        db.update_properties(user, kwargs)
 
         log.info("Profile updated")
 
