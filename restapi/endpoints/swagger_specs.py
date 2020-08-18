@@ -7,35 +7,6 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 
-class SwaggerSpecifications(EndpointResource):
-    """
-    Specifications output throught Swagger (open API) standards
-    """
-
-    labels = ["specifications"]
-
-    _GET = {
-        "/specs": {
-            "summary": "Specifications output throught Swagger (open API) standards",
-            "responses": {
-                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
-            },
-        }
-    }
-
-    def get(self):
-
-        # NOTE: swagger dictionary is read only once, at server init time
-        specs = mem.customizer.swagger_specs
-        api_url = get_backend_url()
-        scheme, host = api_url.rstrip("/").split("://")
-        specs["host"] = host
-        specs["schemes"] = [scheme]
-
-        # Jsonify, so we skip custom response building
-        return jsonify(specs)
-
-
 class NewSwaggerSpecifications(EndpointResource):
     """
     Specifications output throught Swagger (open API) standards
@@ -49,7 +20,13 @@ class NewSwaggerSpecifications(EndpointResource):
             "responses": {
                 "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
             },
-        }
+        },
+        "/specs": {
+            "summary": "Endpoints specifications based on OpenAPI format",
+            "responses": {
+                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
+            },
+        },
     }
 
     def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):

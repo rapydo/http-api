@@ -117,8 +117,7 @@ def create_app(
             "ignore", message="Multiple schemas resolved to the name "
         )
 
-        mem.customizer.find_endpoints()
-        mem.customizer.do_swagger()
+        mem.customizer.load_endpoints()
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 

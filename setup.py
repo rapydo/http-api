@@ -53,9 +53,6 @@ setup(
         # TOTP
         "pyotp==2.3.0",
         "segno==1.0.0",
-        # Swagger
-        "bravado-core",
-        "swagger-spec-validator",
         # Utilities
         "PyYAML==5.3.1",
         "loguru",

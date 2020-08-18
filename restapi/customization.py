@@ -45,7 +45,6 @@ class Customizer:
     def __init__(self):
 
         self._endpoints = []
-        self.swagger_specs = {}
         self._authenticated_endpoints = {}
         # This is filled by Swagger
         self._private_endpoints = {}
@@ -139,20 +138,20 @@ class Customizer:
         )
         fn.__apispec__["docs"].insert(0, annotation)
 
-    def find_endpoints(self):
+    def load_endpoints(self):
 
         ##################
         # Walk folders looking for endpoints
 
         endpoints_folders = []
-        # base swagger dir (rapydo/http-ap)
+        # core endpoints folder (rapydo/http-api)
         endpoints_folders.append(ABS_RESTAPI_PATH)
 
-        # swagger dir from extended project, if any
+        # endpoints folder from extended project, if any
         if self._extended_project is not None:
             endpoints_folders.append(os.path.join(os.curdir, self._extended_project))
 
-        # custom swagger dir
+        # custom endpoints folder
         endpoints_folders.append(os.path.join(os.curdir, CUSTOM_PACKAGE))
 
         ERROR_401 = {
@@ -354,17 +353,9 @@ class Customizer:
                             m=method.upper(),
                         )
 
-    def do_swagger(self):
-
         # SWAGGER read endpoints definition
         swag = Swagger(self._endpoints, self)
-        swag_dict = swag.swaggerish()
+        swag.swaggerish()
 
         # TODO: update internal endpoints from swagger
         self._endpoints = swag._endpoints[:]
-
-        # SWAGGER validation
-        if not swag.validation(swag_dict):  # pragma: no cover
-            log.exit("Current swagger definition is invalid")
-
-        self.swagger_specs = swag_dict
