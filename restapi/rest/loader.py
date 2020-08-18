@@ -356,6 +356,7 @@ class EndpointsLoader:
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({"name": tag, "description": desc})
+        return tags
 
     def detect_endpoints_shadowing(self):
         # Verify mapping duplication or shadowing
