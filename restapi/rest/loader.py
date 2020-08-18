@@ -9,9 +9,7 @@ import re
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
-from flask.views import MethodViewType
 from flask_apispec.utils import Annotation
-from flask_apispec.views import MethodResourceMeta
 
 from restapi import decorators
 from restapi.confs import (
@@ -298,12 +296,7 @@ class EndpointsLoader:
                         specs["responses"].setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute
                     # __apispec__ is normally populated by using @docs decorator
-                    if isinstance(epclss, MethodResourceMeta):
-                        self.inject_apispec_docs(fn, specs, epclss.labels)
-                    elif not isinstance(epclss, MethodViewType):
-                        log.warning(  # pragma: no cover
-                            "Unknown class type: {}", type(epclss)
-                        )
+                    self.inject_apispec_docs(fn, specs, epclss.labels)
 
                     # This will be used by server.py.add
                     endpoint.uris.append(full_uri)
