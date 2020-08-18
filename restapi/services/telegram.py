@@ -210,16 +210,6 @@ class Bot:
         # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
         if isinstance(context.error, TooManyInputs):
             update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
-        elif isinstance(context.error, ValidationError):
-            errors = {}
-            for k in context.error.messages:
-                if k in context.error.data:
-                    errors[context.error.data[k]] = context.error.messages[k]
-                else:
-                    errors[k] = context.error.messages[k]
-
-            update.message.reply_text(errors, parse_mode=ParseMode.MARKDOWN)
-
         elif isinstance(context.error, TelegramConflict):
             self.admins_broadcast(str(context.error))
             log.warning("Stopping bot...")
