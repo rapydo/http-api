@@ -8,8 +8,8 @@
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
 # from restapi.utilities.meta import Meta
-# from restapi.resources.admin_users import send_notification, parse_roles, parse_group
-# from restapi.resources.admin_users import get_output_schema
+# from restapi.endpoints.admin_users import send_notification, parse_roles, parse_group
+# from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
 
 # from restapi.utilities.logs import log

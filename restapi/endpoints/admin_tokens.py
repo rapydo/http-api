@@ -1,9 +1,9 @@
 from glom import glom
 
 from restapi import decorators
+from restapi.endpoints.tokens import TokenSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.models import Schema, fields
-from restapi.resources.tokens import TokenSchema
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log

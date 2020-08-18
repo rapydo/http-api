@@ -34,7 +34,6 @@ log.verbose("Detector loaded: {}", detector)
 
 @ClassOfAttributes
 class EndpointElements:
-    iscore = attribute(default=False)
     cls = attribute(default=None)
     uris = attribute(default={})
     methods = attribute(default={})
@@ -147,22 +146,14 @@ class Customizer:
 
         endpoints_folders = []
         # base swagger dir (rapydo/http-ap)
-        endpoints_folders.append({"path": ABS_RESTAPI_PATH, "iscore": True})
+        endpoints_folders.append(ABS_RESTAPI_PATH)
 
         # swagger dir from extended project, if any
         if self._extended_project is not None:
-
-            endpoints_folders.append(
-                {
-                    "path": os.path.join(os.curdir, self._extended_project),
-                    "iscore": False,
-                }
-            )
+            endpoints_folders.append(os.path.join(os.curdir, self._extended_project))
 
         # custom swagger dir
-        endpoints_folders.append(
-            {"path": os.path.join(os.curdir, CUSTOM_PACKAGE), "iscore": False}
-        )
+        endpoints_folders.append(os.path.join(os.curdir, CUSTOM_PACKAGE))
 
         ERROR_401 = {
             "description": "This endpoint requires a valid authorization token"
@@ -175,18 +166,14 @@ class Customizer:
             "description": "The resource cannot be found or you are not authorized"
         }
 
-        for folder in endpoints_folders:
+        for base_dir in endpoints_folders:
 
-            base_dir = folder.get("path")
             # get last item of the path
             # normapath is required to strip final / is any
             base_module = os.path.basename(os.path.normpath(base_dir))
 
-            iscore = folder.get("iscore")
-            resources_dir = "resources" if iscore else "apis"
-
-            apis_dir = os.path.join(base_dir, resources_dir)
-            apiclass_module = f"{base_module}.{resources_dir}"
+            apis_dir = os.path.join(base_dir, "endpoints")
+            apiclass_module = f"{base_module}.endpoints"
 
             # Looking for all file in apis folder
             for epfiles in glob.glob(f"{apis_dir}/*.py"):
@@ -232,7 +219,6 @@ class Customizer:
                         uris={},
                         methods={},
                         cls=epclss,
-                        iscore=iscore,
                         tags=epclss.labels,
                         base_uri=base,
                     )
