@@ -66,13 +66,19 @@ class EndpointElements:
     private = attribute(default=False)
 
 
-class Customizer:
+class EndpointsLoader:
     def __init__(self):
 
-        self._endpoints = []
-        self._authenticated_endpoints = {}
-        self._private_endpoints = {}
-        self._original_paths = {}
+        # Used by server.py to load endpoints definitions
+        self.endpoints = []
+        # Used by server.py to remove unmapped methods
+        self.uri2methods = {}
+
+        # Used by swagger specs endpoints to show authentication info
+        self.authenticated_endpoints = {}
+        # Used by swagger spec endpoint to remove private endpoints from public requests
+        self.private_endpoints = {}
+
         self._used_tags = set()
 
     def load_configuration(self):
@@ -278,9 +284,9 @@ class Customizer:
                     specs.setdefault("responses", {})
 
                     full_uri = f"/{endpoint.base_uri}{uri}"
-                    self._authenticated_endpoints.setdefault(full_uri, {})
+                    self.authenticated_endpoints.setdefault(full_uri, {})
                     # method_fn is equivalent to m.lower()
-                    self._authenticated_endpoints[full_uri].setdefault(
+                    self.authenticated_endpoints[full_uri].setdefault(
                         method_fn, auth_required
                     )
 
@@ -302,8 +308,8 @@ class Customizer:
                     # This will be used by server.py.add
                     endpoint.uris.append(full_uri)
 
-                    self._private_endpoints.setdefault(full_uri, {})
-                    self._private_endpoints[full_uri].setdefault(
+                    self.private_endpoints.setdefault(full_uri, {})
+                    self.private_endpoints[full_uri].setdefault(
                         method_fn, endpoint.private
                     )
 
@@ -329,9 +335,9 @@ class Customizer:
                             }
                         )
 
-                    # Save definition for checking
-                    self._original_paths.setdefault(full_uri, {})
-                    self._original_paths[full_uri][method_fn] = specs
+                    # Used by server.py to remove unmapped methods
+                    self.uri2methods.setdefault(full_uri, [])
+                    self.uri2methods[full_uri].append(method_fn)
 
                     # Handle global tags
                     if endpoint.tags:
@@ -341,7 +347,7 @@ class Customizer:
                     log.verbose("Built definition '{}:{}'", m, full_uri)
 
                     self._used_tags.update(endpoint.tags)
-            self._endpoints.append(endpoint)
+            self.endpoints.append(endpoint)
 
     def remove_unused_tags(self, all_tags, used_tags):
         tags = []
@@ -360,7 +366,7 @@ class Customizer:
         mappings = {}
         classes = {}
         # duplicates are found while filling the dictionaries
-        for endpoint in self._endpoints:
+        for endpoint in self.endpoints:
             for method, uris in endpoint.methods.items():
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})

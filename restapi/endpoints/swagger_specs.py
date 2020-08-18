@@ -109,7 +109,7 @@ class NewSwaggerSpecifications(EndpointResource):
                         u = uri.replace("{", "<").replace("}", ">")
                         for method, definition in endpoint.items():
                             auth_required = glom(
-                                mem.customizer._authenticated_endpoints,
+                                mem.authenticated_endpoints,
                                 f"{u}.{method}",
                                 default=False,
                             )
@@ -135,9 +135,7 @@ class NewSwaggerSpecifications(EndpointResource):
                     for method, definition in endpoint.items():
 
                         is_private = glom(
-                            mem.customizer._private_endpoints,
-                            f"{u}.{method}",
-                            default=False,
+                            mem.private_endpoints, f"{u}.{method}", default=False,
                         )
                         for p in definition.get("parameters", []):
                             if "schema" not in p:
@@ -156,9 +154,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             continue
 
                         auth_required = glom(
-                            mem.customizer._authenticated_endpoints,
-                            f"{u}.{method}",
-                            default=False,
+                            mem.authenticated_endpoints, f"{u}.{method}", default=False,
                         )
 
                         if auth_required:
