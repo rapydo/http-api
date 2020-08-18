@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import copy
 import glob
 import os
+import re
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -22,12 +23,29 @@ from restapi.confs import (
 )
 from restapi.env import Env
 from restapi.services.detect import detector  # do not remove this unused import
-from restapi.swagger import Swagger
 from restapi.utilities.configuration import read_configuration
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 CONF_FOLDERS = Env.load_group(label="project_confs")
+
+# Flask accepts the following types:
+# https://exploreflask.com/en/latest/views.html
+#   string  Accepts any text without a slash (the default).
+#   int Accepts integers.
+#   float   Like int but for floating point values.
+#   path    Like string but accepts slashes.
+# Swagger accepts the following types:
+# https://swagger.io/specification/#data-types-12
+FLASK_TO_SWAGGER_TYPES = {
+    "string": "string",
+    "path": "string",
+    "int": "integer",
+    "float": "number",
+}
+
+uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 log.verbose("Detector loaded: {}", detector)
 
@@ -39,6 +57,7 @@ class EndpointElements:
     methods = attribute(default={})
     tags = attribute(default=[])
     base_uri = attribute(default="")
+    private = attribute(default=False)
 
 
 class Customizer:
@@ -46,8 +65,8 @@ class Customizer:
 
         self._endpoints = []
         self._authenticated_endpoints = {}
-        # This is filled by Swagger
         self._private_endpoints = {}
+        self._original_paths = {}
 
     def load_configuration(self):
         # Reading configuration
@@ -165,6 +184,7 @@ class Customizer:
             "description": "The resource cannot be found or you are not authorized"
         }
 
+        used_tags = set()
         for base_dir in endpoints_folders:
 
             # get last item of the path
@@ -220,6 +240,7 @@ class Customizer:
                         cls=epclss,
                         tags=epclss.labels,
                         base_uri=base,
+                        private=epclss.private,
                     )
 
                     mapping_lists = []
@@ -283,9 +304,69 @@ class Customizer:
                                 )
 
                             mapping_lists.extend(kk)
-                            endpoint.methods[method_fn] = copy.deepcopy(conf)
+                            mapping = copy.deepcopy(conf)
+                            endpoint.methods[method_fn] = mapping
 
+                            for label, specs in mapping.items():
+
+                                uri = f"/{endpoint.base_uri}{label}"
+                                # This will be used by server.py.add
+                                endpoint.uris.setdefault(uri, uri)
+
+                                self._private_endpoints.setdefault(uri, {})
+                                self._private_endpoints[uri].setdefault(
+                                    method_fn, endpoint.private
+                                )
+
+                                # Read URL parameters
+                                for parameter in uri_pattern.findall(uri):
+
+                                    # No type specified, default to string
+                                    if ":" not in parameter:
+                                        ptype = "string"
+                                        pname = parameter
+                                    else:
+                                        ptokens = parameter.split(":")
+                                        ptype = FLASK_TO_SWAGGER_TYPES.get(
+                                            ptokens[0], "string"
+                                        )
+                                        pname = ptokens[1]
+
+                                    specs.setdefault("parameters", [])
+                                    specs["parameters"].append(
+                                        {
+                                            "name": pname,
+                                            "type": ptype,
+                                            "in": "path",
+                                            "required": True,
+                                        }
+                                    )
+
+                                # Save definition for checking
+                                self._original_paths.setdefault(uri, {})
+                                self._original_paths[uri][method_fn] = specs
+
+                                # Handle global tags
+                                if endpoint.tags:
+                                    specs.setdefault("tags", list())
+                                    specs["tags"] = list(
+                                        set(specs["tags"] + endpoint.tags)
+                                    )
+
+                                log.verbose("Built definition '{}:{}'", m, uri)
+
+                            used_tags.update(endpoint.tags)
                     self._endpoints.append(endpoint)
+
+        tags = []
+        for tag, desc in mem.configuration["tags"].items():
+            if tag not in used_tags:
+                log.debug("Skipping unsed tag: {}", tag)
+                continue
+            tags.append({"name": tag, "description": desc})
+
+        # Used in swagger specs endpoint
+        mem.configuration["cleaned_tags"] = tags
 
         # Verify for mapping duplication or shadowing
         # Example of shadowing:
@@ -313,6 +394,8 @@ class Customizer:
                     else:
                         mappings[method].add(uri)
                         classes[method][uri] = endpoint.cls
+
+        # Detect endpoints swadowing
         for method, uris in mappings.items():
             for idx1, u1 in enumerate(uris):
                 for idx2, u2 in enumerate(uris):
@@ -352,10 +435,3 @@ class Customizer:
                             u2,
                             m=method.upper(),
                         )
-
-        # SWAGGER read endpoints definition
-        swag = Swagger(self._endpoints, self)
-        swag.swaggerish()
-
-        # TODO: update internal endpoints from swagger
-        self._endpoints = swag._endpoints[:]

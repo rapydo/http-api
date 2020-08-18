@@ -28,17 +28,16 @@ class AdminTokens(EndpointResource):
     """ List all tokens for all users """
 
     labels = ["authentication"]
+    private = True
 
     _GET = {
         "/admin/tokens": {
-            "private": True,
             "summary": "Retrieve all tokens emitted for logged user",
             "responses": {"200": {"description": "List of tokens"}},
         },
     }
     _DELETE = {
         "/admin/tokens/<token_id>": {
-            "private": True,
             "summary": "Remove specified token and make it invalid from now on",
             "responses": {"200": {"description": "Token has been invalidated"}},
         },

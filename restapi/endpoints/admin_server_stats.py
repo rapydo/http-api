@@ -73,10 +73,10 @@ class StatsSchema(Schema):
 class AdminStats(EndpointResource):
 
     labels = ["helpers"]
+    private = True
 
     _GET = {
         "/admin/stats": {
-            "private": True,
             "summary": "Retrieve stats from the server",
             "responses": {"200": {"description": "Stats retrieved"}},
         },
