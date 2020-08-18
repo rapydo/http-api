@@ -45,6 +45,12 @@ FLASK_TO_SWAGGER_TYPES = {
     "float": "number",
 }
 
+
+ERR401 = {"description": "This endpoint requires a valid authorization token"}
+ERR400 = {"description": "The request cannot be satisfied due to malformed syntax"}
+ERR404 = {"description": "The requested resource cannot be found"}
+ERR404_AUTH = {"description": "The resource cannot be found or you are not authorized"}
+
 uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 log.verbose("Detector loaded: {}", detector)
@@ -53,7 +59,7 @@ log.verbose("Detector loaded: {}", detector)
 @ClassOfAttributes
 class EndpointElements:
     cls = attribute(default=None)
-    uris = attribute(default={})
+    uris = attribute(default=[])
     methods = attribute(default={})
     tags = attribute(default=[])
     base_uri = attribute(default="")
@@ -67,6 +73,7 @@ class Customizer:
         self._authenticated_endpoints = {}
         self._private_endpoints = {}
         self._original_paths = {}
+        self._used_tags = set()
 
     def load_configuration(self):
         # Reading configuration
@@ -87,6 +94,25 @@ class Customizer:
             log.exit(e)
 
         return configuration
+
+    def load_endpoints(self):
+
+        # core endpoints folder (rapydo/http-api)
+        self.load_endpoints_folder(ABS_RESTAPI_PATH)
+
+        # endpoints folder from extended project, if any
+        if self._extended_project is not None:
+            self.load_endpoints_folder(os.path.join(os.curdir, self._extended_project))
+
+        # custom endpoints folder
+        self.load_endpoints_folder(os.path.join(os.curdir, CUSTOM_PACKAGE))
+
+        # Used in swagger specs endpoint
+        mem.configuration["cleaned_tags"] = self.remove_unused_tags(
+            mem.configuration["tags"], self._used_tags
+        )
+
+        self.detect_endpoints_shadowing()
 
     @staticmethod
     def skip_endpoint(depends_on):
@@ -125,10 +151,12 @@ class Customizer:
             summary = conf.get("summary")
             if summary is not None:
                 missing["summary"] = summary
+
         if "description" not in docs:
             description = conf.get("description")
             if description is not None:
                 missing["description"] = description
+
         if "tags" not in docs:
             if labels:
                 missing["tags"] = labels
@@ -157,218 +185,174 @@ class Customizer:
         )
         fn.__apispec__["docs"].insert(0, annotation)
 
-    def load_endpoints(self):
+    def extract_endpoints(self, base_dir):
 
-        ##################
+        endpoints_classes = []
+        # get last item of the path
+        # normpath is required to strip final / if any
+        base_module = os.path.basename(os.path.normpath(base_dir))
+
+        apis_dir = os.path.join(base_dir, "endpoints")
+        apiclass_module = f"{base_module}.endpoints"
+        for epfiles in glob.glob(f"{apis_dir}/*.py"):
+
+            # get module name (es: apis.filename)
+            module_file = os.path.basename(os.path.splitext(epfiles)[0])
+            module_name = f"{apiclass_module}.{module_file}"
+            # Convert module name into a module
+            log.debug("Importing {}", module_name)
+            module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
+
+            # Extract classes from the module
+            classes = Meta.get_new_classes_from_module(module)
+            for class_name, epclss in classes.items():
+                # Filtering out classes without expected data
+                if not hasattr(epclss, "methods") or epclss.methods is None:
+                    continue
+
+                log.debug("Importing {} from {}.{}", class_name, apis_dir, module_file)
+
+                skip, dependency = self.skip_endpoint(epclss.depends_on)
+
+                if skip:
+                    log.debug(
+                        "Skipping '{} {}' due to unmet dependency: {}",
+                        module_name,
+                        class_name,
+                        dependency,
+                    )
+                    continue
+
+                endpoints_classes.append(epclss)
+
+        return endpoints_classes
+
+    def load_endpoints_folder(self, base_dir):
         # Walk folders looking for endpoints
 
-        endpoints_folders = []
-        # core endpoints folder (rapydo/http-api)
-        endpoints_folders.append(ABS_RESTAPI_PATH)
+        for epclss in self.extract_endpoints(base_dir):
 
-        # endpoints folder from extended project, if any
-        if self._extended_project is not None:
-            endpoints_folders.append(os.path.join(os.curdir, self._extended_project))
+            if epclss.baseuri in BASE_URLS:
+                base = epclss.baseuri
+            else:
+                log.warning("Invalid base {}", epclss.baseuri)
+                base = API_URL
+            base = base.strip("/")
 
-        # custom endpoints folder
-        endpoints_folders.append(os.path.join(os.curdir, CUSTOM_PACKAGE))
+            # Building endpoint
+            endpoint = EndpointElements(
+                uris=[],
+                methods={},
+                cls=epclss,
+                tags=epclss.labels,
+                base_uri=base,
+                private=epclss.private,
+            )
 
-        ERROR_401 = {
-            "description": "This endpoint requires a valid authorization token"
-        }
-        ERROR_400 = {
-            "description": "The request cannot be satisfied due to malformed syntax"
-        }
-        ERROR_404 = {"description": "The requested resource cannot be found"}
-        ERROR_404_AUTH = {
-            "description": "The resource cannot be found or you are not authorized"
-        }
+            # m = GET|PUT|POST|DELETE|PATCH|...
+            for m in epclss.methods:
 
-        used_tags = set()
-        for base_dir in endpoints_folders:
+                # This should be converted with a new decorator
+                method_name = f"_{m}"
+                if not hasattr(epclss, method_name):
+                    log.warning("{} configuration not found in {}", m, epclss.__name__)
+                    continue
 
-            # get last item of the path
-            # normapath is required to strip final / is any
-            base_module = os.path.basename(os.path.normpath(base_dir))
+                # method_fn = get|post|put|delete|patch|...
+                method_fn = m.lower()
 
-            apis_dir = os.path.join(base_dir, "endpoints")
-            apiclass_module = f"{base_module}.endpoints"
+                # get, post, put, patch, delete functions
+                fn = getattr(epclss, method_fn)
 
-            # Looking for all file in apis folder
-            for epfiles in glob.glob(f"{apis_dir}/*.py"):
+                # Adding the catch_exceptions decorator to every endpoint
+                decorator = decorators.catch_exceptions()
+                setattr(epclss, method_fn, decorator(fn))
 
-                # get module name (es: apis.filename)
-                module_file = os.path.basename(os.path.splitext(epfiles)[0])
-                module_name = f"{apiclass_module}.{module_file}"
-                # Convert module name into a module
-                log.debug("Importing {}", module_name)
-                module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
+                # auth.required injected by the required decorator in bearer.py
+                auth_required = fn.__dict__.get("auth.required", False)
 
-                # Extract classes from the module
-                classes = Meta.get_new_classes_from_module(module)
-                for class_name, epclss in classes.items():
-                    # Filtering out classes without expected data
-                    if not hasattr(epclss, "methods") or epclss.methods is None:
-                        continue
+                # conf from _GET, _POST, ... dictionaries
+                method_conf = getattr(epclss, method_name)
+                endpoint.methods[method_fn] = copy.deepcopy(method_conf)
+                for uri, specs in method_conf.items():
+                    specs.setdefault("responses", {})
 
-                    log.debug(
-                        "Importing {} from {}.{}", class_name, apis_dir, module_file
+                    full_uri = f"/{endpoint.base_uri}{uri}"
+                    self._authenticated_endpoints.setdefault(full_uri, {})
+                    # method_fn is equivalent to m.lower()
+                    self._authenticated_endpoints[full_uri].setdefault(
+                        method_fn, auth_required
                     )
 
-                    skip, dependency = self.skip_endpoint(epclss.depends_on)
-
-                    if skip:
-                        log.debug(
-                            "Skipping '{} {}' due to unmet dependency: {}",
-                            module_name,
-                            class_name,
-                            dependency,
-                        )
-                        continue
-
-                    if epclss.baseuri in BASE_URLS:
-                        base = epclss.baseuri
+                    specs["responses"].setdefault("400", ERR400)
+                    if auth_required:
+                        specs["responses"].setdefault("401", ERR401)
+                        specs["responses"].setdefault("404", ERR404_AUTH)
                     else:
-                        log.warning("Invalid base {}", epclss.baseuri)
-                        base = API_URL
-                    base = base.strip("/")
+                        specs["responses"].setdefault("404", ERR404)
+                    # inject _METHOD dictionaries into __apispec__ attribute
+                    # __apispec__ is normally populated by using @docs decorator
+                    if isinstance(epclss, MethodResourceMeta):
+                        self.inject_apispec_docs(fn, specs, epclss.labels)
+                    elif not isinstance(epclss, MethodViewType):
+                        log.warning(  # pragma: no cover
+                            "Unknown class type: {}", type(epclss)
+                        )
 
-                    # Building endpoint
-                    endpoint = EndpointElements(
-                        uris={},
-                        methods={},
-                        cls=epclss,
-                        tags=epclss.labels,
-                        base_uri=base,
-                        private=epclss.private,
+                    # This will be used by server.py.add
+                    endpoint.uris.append(full_uri)
+
+                    self._private_endpoints.setdefault(full_uri, {})
+                    self._private_endpoints[full_uri].setdefault(
+                        method_fn, endpoint.private
                     )
 
-                    mapping_lists = []
-                    for m in epclss.methods:
-                        method_name = f"_{m}"
-                        if not hasattr(epclss, method_name):
+                    # Read URL parameters
+                    for parameter in uri_pattern.findall(full_uri):
 
-                            method_name = m
-                            if not hasattr(epclss, method_name):
-                                log.warning(
-                                    "{} configuration not found in {}", m, class_name
-                                )
-                                continue
-                            # convert GET -> _GET
-                            # Deprecated since 0.7.4
-                            else:  # pragma: no cover
-                                log.warning("Obsolete dict {} in {}", m, class_name)
+                        # No type specified, default to string
+                        if ":" not in parameter:
+                            ptype = "string"
+                            pname = parameter
+                        else:
+                            ptokens = parameter.split(":")
+                            ptype = FLASK_TO_SWAGGER_TYPES.get(ptokens[0], "string")
+                            pname = ptokens[1]
 
-                        # get, post, put, patch, delete
-                        method_fn = m.lower()
+                        specs.setdefault("parameters", [])
+                        specs["parameters"].append(
+                            {
+                                "name": pname,
+                                "type": ptype,
+                                "in": "path",
+                                "required": True,
+                            }
+                        )
 
-                        # conf from GET, POST, ... dictionaries
-                        conf = getattr(epclss, method_name)
-                        # endpoint uris /api/bar, /api/food
-                        kk = conf.keys()
+                    # Save definition for checking
+                    self._original_paths.setdefault(full_uri, {})
+                    self._original_paths[full_uri][method_fn] = specs
 
-                        # get, post, put, patch, delete functions
-                        fn = getattr(epclss, method_fn)
+                    # Handle global tags
+                    if endpoint.tags:
+                        specs.setdefault("tags", list())
+                        specs["tags"] = list(set(specs["tags"] + endpoint.tags))
 
-                        # Adding the catch_errors decorator to every endpoint
-                        # I'm using a magic bool variabile to be able to raise warning
-                        # in case of the normal [deprecated] use
-                        decorator = decorators.catch_errors(magic=True)
-                        setattr(epclss, method_fn, decorator(fn))
+                    log.verbose("Built definition '{}:{}'", m, full_uri)
 
-                        # auth.required injected by the required decorator in bearer.py
-                        auth_required = fn.__dict__.get("auth.required", False)
-                        for u in conf:
-                            conf[u].setdefault("responses", {})
+                    self._used_tags.update(endpoint.tags)
+            self._endpoints.append(endpoint)
 
-                            full_uri = f"/{base}{u}"
-                            self._authenticated_endpoints.setdefault(full_uri, {})
-                            # method_fn is equivalent to m.lower()
-                            self._authenticated_endpoints[full_uri].setdefault(
-                                method_fn, auth_required
-                            )
-
-                            conf[u]["responses"].setdefault("400", ERROR_400)
-                            if auth_required:
-                                conf[u]["responses"].setdefault("401", ERROR_401)
-                                conf[u]["responses"].setdefault("404", ERROR_404_AUTH)
-                            else:
-                                conf[u]["responses"].setdefault("404", ERROR_404)
-                            # inject _METHOD dictionaries into __apispec__ attribute
-                            # __apispec__ is normally populated by using @docs decorator
-                            if isinstance(epclss, MethodResourceMeta):
-                                self.inject_apispec_docs(fn, conf[u], epclss.labels)
-                            elif not isinstance(epclss, MethodViewType):
-                                log.warning(  # pragma: no cover
-                                    "Unknown class type: {}", type(epclss)
-                                )
-
-                            mapping_lists.extend(kk)
-                            mapping = copy.deepcopy(conf)
-                            endpoint.methods[method_fn] = mapping
-
-                            for label, specs in mapping.items():
-
-                                uri = f"/{endpoint.base_uri}{label}"
-                                # This will be used by server.py.add
-                                endpoint.uris.setdefault(uri, uri)
-
-                                self._private_endpoints.setdefault(uri, {})
-                                self._private_endpoints[uri].setdefault(
-                                    method_fn, endpoint.private
-                                )
-
-                                # Read URL parameters
-                                for parameter in uri_pattern.findall(uri):
-
-                                    # No type specified, default to string
-                                    if ":" not in parameter:
-                                        ptype = "string"
-                                        pname = parameter
-                                    else:
-                                        ptokens = parameter.split(":")
-                                        ptype = FLASK_TO_SWAGGER_TYPES.get(
-                                            ptokens[0], "string"
-                                        )
-                                        pname = ptokens[1]
-
-                                    specs.setdefault("parameters", [])
-                                    specs["parameters"].append(
-                                        {
-                                            "name": pname,
-                                            "type": ptype,
-                                            "in": "path",
-                                            "required": True,
-                                        }
-                                    )
-
-                                # Save definition for checking
-                                self._original_paths.setdefault(uri, {})
-                                self._original_paths[uri][method_fn] = specs
-
-                                # Handle global tags
-                                if endpoint.tags:
-                                    specs.setdefault("tags", list())
-                                    specs["tags"] = list(
-                                        set(specs["tags"] + endpoint.tags)
-                                    )
-
-                                log.verbose("Built definition '{}:{}'", m, uri)
-
-                            used_tags.update(endpoint.tags)
-                    self._endpoints.append(endpoint)
-
+    def remove_unused_tags(self, all_tags, used_tags):
         tags = []
-        for tag, desc in mem.configuration["tags"].items():
+        for tag, desc in all_tags.items():
             if tag not in used_tags:
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({"name": tag, "description": desc})
 
-        # Used in swagger specs endpoint
-        mem.configuration["cleaned_tags"] = tags
-
-        # Verify for mapping duplication or shadowing
+    def detect_endpoints_shadowing(self):
+        # Verify mapping duplication or shadowing
         # Example of shadowing:
         # /xyz/<variable>
         # /xyz/abc

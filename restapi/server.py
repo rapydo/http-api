@@ -122,14 +122,11 @@ def create_app(
         rest_api = Api(catch_all_404s=True)
 
         for endpoint in mem.customizer._endpoints:
-            # urls = [uri for _, uri in resource.uris.items()]
-            urls = list(endpoint.uris.values())
-
             # Create the restful resource with it;
             # this method is from RESTful plugin
-            rest_api.add_resource(endpoint.cls, *urls)
+            rest_api.add_resource(endpoint.cls, *endpoint.uris)
 
-            log.verbose("Map '{}' to {}", endpoint.cls.__name__, urls)
+            log.verbose("Map '{}' to {}", endpoint.cls.__name__, endpoint.uris)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
@@ -189,7 +186,6 @@ def create_app(
         # Register swagger. Note: after method mapping cleaning
         with microservice.app_context():
             for endpoint in mem.customizer._endpoints:
-                urls = list(endpoint.uris.values())
                 try:
                     mem.docs.register(endpoint.cls)
                 except TypeError as e:

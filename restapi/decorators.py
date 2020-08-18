@@ -21,78 +21,6 @@ log.verbose("Auth loaded {}", auth)
 log.verbose("Marshal loaded {}", marshal_with)
 
 
-def catch_errors(magic=False, **kwargs):
-    """
-    A decorator to preprocess an API class method,
-    and catch a specific error.
-    """
-
-    # Deprecated since 0.7.5
-    if not magic:  # pragma: no cover
-        log.warning(
-            "Deprecated use of catch_errors, just remove it... now it is automatic"
-        )
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            out = None
-
-            try:
-                out = func(self, *args, **kwargs)
-            # Catch the exception requested by the user
-            except RestApiException as e:
-
-                if e.is_warning:
-                    log.warning(e)
-                else:
-                    log.exception(e)
-                    log.error(e)
-
-                return self.response(e.args[0], code=e.status_code)
-
-            except werkzeug.exceptions.BadRequest:  # pragma: no cover
-                # do not stop werkzeug BadRequest
-                raise
-
-            except werkzeug.exceptions.UnprocessableEntity:
-                # do not stop werkzeug UnprocessableEntity, it will be
-                # catched by handle_marshmallow_errors
-                raise
-
-            # raised in case of malformed Range header
-            except werkzeug.exceptions.RequestedRangeNotSatisfiable:
-                raise
-            # Catch any other exception
-
-            # errors with RabbitMQ credentials raised when sending Celery tasks
-            except AccessRefused as e:  # pragma: no cover
-                log.critical(e)
-                return self.response("Unexpected Server Error", code=500)
-            except Exception as e:
-
-                if SENTRY_URL is not None:  # pragma: no cover
-                    capture_exception(e)
-
-                excname = e.__class__.__name__
-                message = str(e)
-                if not message:  # pragma: no cover
-                    message = "Unknown error"
-                log.exception(message)
-                log.error("Catched {} exception: {}", excname, message)
-                if excname in ["AttributeError", "ValueError", "KeyError"]:
-                    error = "Server failure; please contact admin."
-                else:
-                    error = {excname: message}
-                return self.response(error, code=400)
-
-            return out
-
-        return wrapper
-
-    return decorator
-
-
 def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -185,3 +113,70 @@ def init_chunk_upload(func):
         return func(self, *args, **kwargs)
 
     return wrapper
+
+
+# This decorator is automatically added to every endpoints... do not use it explicitly!
+def catch_exceptions(**kwargs):
+    """
+    A decorator to preprocess an API class method,
+    and catch a specific error.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            out = None
+
+            try:
+                out = func(self, *args, **kwargs)
+            # Catch the exception requested by the user
+            except RestApiException as e:
+
+                if e.is_warning:
+                    log.warning(e)
+                else:
+                    log.exception(e)
+                    log.error(e)
+
+                return self.response(e.args[0], code=e.status_code)
+
+            except werkzeug.exceptions.BadRequest:  # pragma: no cover
+                # do not stop werkzeug BadRequest
+                raise
+
+            except werkzeug.exceptions.UnprocessableEntity:
+                # do not stop werkzeug UnprocessableEntity, it will be
+                # catched by handle_marshmallow_errors
+                raise
+
+            # raised in case of malformed Range header
+            except werkzeug.exceptions.RequestedRangeNotSatisfiable:
+                raise
+            # Catch any other exception
+
+            # errors with RabbitMQ credentials raised when sending Celery tasks
+            except AccessRefused as e:  # pragma: no cover
+                log.critical(e)
+                return self.response("Unexpected Server Error", code=500)
+            except Exception as e:
+
+                if SENTRY_URL is not None:  # pragma: no cover
+                    capture_exception(e)
+
+                excname = e.__class__.__name__
+                message = str(e)
+                if not message:  # pragma: no cover
+                    message = "Unknown error"
+                log.exception(message)
+                log.error("Catched {} exception: {}", excname, message)
+                if excname in ["AttributeError", "ValueError", "KeyError"]:
+                    error = "Server failure; please contact admin."
+                else:
+                    error = {excname: message}
+                return self.response(error, code=400)
+
+            return out
+
+        return wrapper
+
+    return decorator
