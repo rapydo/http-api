@@ -75,15 +75,13 @@ class AdminStats(EndpointResource):
     labels = ["helpers"]
     private = True
 
-    _GET = {
-        "/admin/stats": {
-            "summary": "Retrieve stats from the server",
-            "responses": {"200": {"description": "Stats retrieved"}},
-        },
-    }
-
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(StatsSchema(), code=200)
+    @decorators.endpoint(
+        path="/admin/stats",
+        summary="Retrieve stats from the server",
+        responses={"200": "Stats retrieved"},
+    )
     def get(self):
         statistics = {
             "cpu": {},
@@ -226,4 +224,4 @@ class AdminStats(EndpointResource):
                 "max": ping_result[2].strip(),
             }
         )
-        return statistics
+        return self.response(statistics)
