@@ -21,9 +21,10 @@ from neomodel import (
 from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
 from neomodel.match import NodeSet
 
+from restapi.confs import NULL_IP
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
 
 

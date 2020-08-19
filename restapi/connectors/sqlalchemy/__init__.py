@@ -21,9 +21,10 @@ from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
+from restapi.confs import NULL_IP
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
