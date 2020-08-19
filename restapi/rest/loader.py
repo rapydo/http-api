@@ -19,7 +19,7 @@ from restapi.confs import (
     CUSTOM_PACKAGE,
 )
 from restapi.env import Env
-from restapi.rest.definition import EndpointResource
+from restapi.rest.annotations import inject_apispec_docs
 from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -269,7 +269,7 @@ class EndpointsLoader:
                         specs["responses"].setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute
                     # __apispec__ is normally populated by using @docs decorator
-                    EndpointResource.inject_apispec_docs(fn, specs, epclss.labels)
+                    inject_apispec_docs(fn, specs, epclss.labels)
 
                     # This will be used by server.py.add
                     endpoint.uris.append(full_uri)

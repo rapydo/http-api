@@ -26,7 +26,6 @@ DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
 UPLOAD_PATH = os.getenv("UPLOAD_PATH")
 SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
-NULL_IP = "0.0.0.0"
 
 #################
 

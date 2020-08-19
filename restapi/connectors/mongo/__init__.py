@@ -7,11 +7,10 @@ from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
-from restapi.confs import NULL_IP
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
 

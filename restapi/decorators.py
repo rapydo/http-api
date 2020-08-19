@@ -14,8 +14,8 @@ from restapi.exceptions import (
     RestApiException,
 )
 from restapi.models import InputSchema, fields, validate
+from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
-from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
@@ -29,12 +29,15 @@ def endpoint(path, summary=None, description=None, responses=None, **kwargs):
 
         specs["summary"] = summary
         specs["description"] = description
+        if responses:
+            for code in responses:
+                responses[code] = {"description": responses[code]}
         specs["responses"] = responses
 
         if not hasattr(func, "uris"):
             func.uris = []
         func.uris.append(path)
-        EndpointResource.inject_apispec_docs(func, specs, None)
+        inject_apispec_docs(func, specs, None)
 
         @wraps(func)
         def wrapper(self, *args, **kwargs):
