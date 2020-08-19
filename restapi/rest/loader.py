@@ -232,8 +232,9 @@ class EndpointsLoader:
                 method_conf = None
                 if hasattr(epclss, method_name):
                     log.warning(
-                        "Deprecated use of {}, use @decorators.endpoint instead",
+                        "Deprecated use of {} in {}, use @decorators.endpoint instead",
                         method_name,
+                        epclss.__name__,
                     )
                     method_conf = getattr(epclss, method_name)
                 elif hasattr(fn, "uris"):
