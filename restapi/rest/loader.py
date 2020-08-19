@@ -9,7 +9,6 @@ import re
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
-from flask_apispec.utils import Annotation
 
 from restapi import decorators
 from restapi.confs import (
@@ -20,6 +19,7 @@ from restapi.confs import (
     CUSTOM_PACKAGE,
 )
 from restapi.env import Env
+from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -142,53 +142,6 @@ class EndpointsLoader:
 
         return False, None
 
-    @staticmethod
-    def inject_apispec_docs(fn, conf, labels):
-        # retrieve attributes already set with @docs decorator
-        fn.__apispec__ = fn.__dict__.get("__apispec__", {})
-        docs = {}
-        for doc in fn.__apispec__["docs"]:
-            docs.update(doc.options[0])
-
-        missing = {}
-        if "summary" not in docs:
-            summary = conf.get("summary")
-            if summary is not None:
-                missing["summary"] = summary
-
-        if "description" not in docs:
-            description = conf.get("description")
-            if description is not None:
-                missing["description"] = description
-
-        if "tags" not in docs:
-            if labels:
-                missing["tags"] = labels
-
-        if "responses" not in docs:
-            responses = conf.get("responses")
-            if responses is not None:
-                missing["responses"] = responses
-
-        if "responses" in docs:
-            responses = conf.get("responses")
-            if responses is not None:
-                for code, resp in responses.items():
-                    if code not in docs["responses"]:
-                        missing.setdefault("responses", {})
-                        missing["responses"][code] = resp
-
-        # mimic the behaviour of @docs decorator
-        # https://github.com/jmcarp/flask-apispec/...
-        #                         .../flask_apispec/annotations.py
-        annotation = Annotation(
-            options=[missing],
-            # Inherit Swagger documentation from parent classes
-            # None is the default value
-            inherit=None,
-        )
-        fn.__apispec__["docs"].insert(0, annotation)
-
     def extract_endpoints(self, base_dir):
 
         endpoints_classes = []
@@ -256,11 +209,11 @@ class EndpointsLoader:
             # m = GET|PUT|POST|DELETE|PATCH|...
             for m in epclss.methods:
 
-                # This should be converted with a new decorator
+                # # This should be converted with a new decorator
                 method_name = f"_{m}"
-                if not hasattr(epclss, method_name):
-                    log.warning("{} configuration not found in {}", m, epclss.__name__)
-                    continue
+                # if not hasattr(epclss, method_name):
+                #     log.warning("{} configuration not found in {}", m, epclss.__name__)
+                #     continue
 
                 # method_fn = get|post|put|delete|patch|...
                 method_fn = m.lower()
@@ -276,7 +229,27 @@ class EndpointsLoader:
                 auth_required = fn.__dict__.get("auth.required", False)
 
                 # conf from _GET, _POST, ... dictionaries
-                method_conf = getattr(epclss, method_name)
+                method_conf = None
+                if hasattr(epclss, method_name):
+                    log.warning(
+                        "Deprecated use of {}, use @decorators.endpoint instead",
+                        method_name,
+                    )
+                    method_conf = getattr(epclss, method_name)
+                elif hasattr(fn, "uris"):
+                    # This is a temporary conversion, please remove it
+                    # once dropped the support for _METHOD dictionaries
+                    method_conf = {}
+                    for u in fn.uris:
+                        method_conf[u] = {}
+                else:  # pragma: no cover
+                    log.exit(
+                        "Invalid {} endpoint, both {} or @decorators.endpoint "
+                        "definitions are missing",
+                        epclss.__name__,
+                        method_name,
+                    )
+
                 endpoint.methods[method_fn] = copy.deepcopy(method_conf)
                 for uri, specs in method_conf.items():
                     specs.setdefault("responses", {})
@@ -296,7 +269,7 @@ class EndpointsLoader:
                         specs["responses"].setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute
                     # __apispec__ is normally populated by using @docs decorator
-                    self.inject_apispec_docs(fn, specs, epclss.labels)
+                    EndpointResource.inject_apispec_docs(fn, specs, epclss.labels)
 
                     # This will be used by server.py.add
                     endpoint.uris.append(full_uri)

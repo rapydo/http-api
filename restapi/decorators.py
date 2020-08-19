@@ -15,10 +15,35 @@ from restapi.exceptions import (
 )
 from restapi.models import InputSchema, fields, validate
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
+from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
 log.verbose("Marshal loaded {}", marshal_with)
+
+
+def endpoint(path, summary=None, description=None, responses=None, **kwargs):
+    def decorator(func):
+
+        specs = {}
+
+        specs["summary"] = summary
+        specs["description"] = description
+        specs["responses"] = responses
+
+        if not hasattr(func, "uris"):
+            func.uris = []
+        func.uris.append(path)
+        EndpointResource.inject_apispec_docs(func, specs, None)
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def catch_graph_exceptions(func):

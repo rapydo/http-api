@@ -1,6 +1,7 @@
 from flask import jsonify
 from glom import glom
 
+from restapi import decorators
 from restapi.confs import get_backend_url
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.globals import mem
@@ -13,21 +14,6 @@ class NewSwaggerSpecifications(EndpointResource):
     """
 
     labels = ["specifications"]
-
-    _GET = {
-        "/swagger": {
-            "summary": "Endpoints specifications based on OpenAPI format",
-            "responses": {
-                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
-            },
-        },
-        "/specs": {
-            "summary": "Endpoints specifications based on OpenAPI format",
-            "responses": {
-                "200": {"description": "Endpoints JSON based on OpenAPI Specifications"}
-            },
-        },
-    }
 
     def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):
 
@@ -81,6 +67,12 @@ class NewSwaggerSpecifications(EndpointResource):
 
         return is_private
 
+    @decorators.endpoint(
+        path="/swagger",
+        summary="Endpoints specifications based on OpenAPI format",
+        responses={"200": "Endpoints JSON based on OpenAPI Specifications"},
+    )
+    @decorators.endpoint(path="/specs")
     def get(self):
 
         specs = mem.docs.spec.to_dict()
