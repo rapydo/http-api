@@ -9,7 +9,6 @@ from restapi import decorators
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
-from restapi.utilities.logs import log
 
 
 class StatsSchema(Schema):
@@ -225,5 +224,4 @@ class AdminStats(EndpointResource):
                 "max": ping_result[2].strip(),
             }
         )
-        log.warning(statistics)
         return self.response(statistics)
