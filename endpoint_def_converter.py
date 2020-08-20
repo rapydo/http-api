@@ -1,27 +1,19 @@
-_PUT = {
-    "/tests/upload": {
-        "summary": "Execute tests with the uploader",
-        "description": "Only enabled in testing mode",
-        "responses": {"200": {"description": "Tests executed"}},
-    },
-    "/tests/upload/<chunked>": {
-        "summary": "Execute tests with the chunked uploader",
-        "description": "Only enabled in testing mode",
-        "responses": {"200": {"description": "Tests executed"}},
-    },
+_POST = {
+    "/profile": {
+        "summary": "Register new user",
+        "responses": {
+            "200": {"description": "ID of new user"},
+            "409": {"description": "This user already exists"},
+        },
+    }
 }
 
 v = vars()
-if "_GET" in v:
-    conf = v["_GET"]
-elif "_POST" in v:
-    conf = v["_POST"]
-elif "_PUT" in v:
-    conf = v["_PUT"]
-elif "_PATCH" in v:
-    conf = v["_PATCH"]
-elif "_DELETE" in v:
-    conf = v["_DELETE"]
+for k in ("_GET", "_POST", "_PUT", "_PATCH", "_DELETE"):
+    if k in v:
+        conf = v[k]
+        print(f"Converting {k} dictionary")
+        break
 
 for uri, c in conf.items():
     print(
@@ -47,7 +39,7 @@ for uri, c in conf.items():
     if "responses" in c:
         print(
             """
-    responses={{""",
+    responses={""",
             end="",
         )
         for code, resp in c["responses"].items():
@@ -61,4 +53,5 @@ for uri, c in conf.items():
     }},"""
         )
 
-    print(")")
+    print(")", end="")
+print("")
