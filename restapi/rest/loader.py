@@ -71,6 +71,8 @@ class EndpointsLoader:
         self.endpoints = []
         # Used by server.py to remove unmapped methods
         self.uri2methods = {}
+        # Used by server.py to configure ApiSpec
+        self.tags = []
 
         # Used by swagger specs endpoints to show authentication info
         self.authenticated_endpoints = {}
@@ -112,9 +114,7 @@ class EndpointsLoader:
         self.load_endpoints_folder(os.path.join(os.curdir, CUSTOM_PACKAGE))
 
         # Used in swagger specs endpoint
-        mem.configuration["cleaned_tags"] = self.remove_unused_tags(
-            mem.configuration["tags"], self._used_tags
-        )
+        self.tags = self.remove_unused_tags(mem.configuration["tags"], self._used_tags)
 
         self.detect_endpoints_shadowing()
 

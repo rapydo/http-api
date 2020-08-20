@@ -2,7 +2,6 @@ from flask import jsonify
 from glom import glom
 
 from restapi import decorators
-from restapi.confs import get_backend_url
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -15,76 +14,19 @@ class NewSwaggerSpecifications(EndpointResource):
 
     labels = ["specifications"]
 
-    def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):
-
-        # can be True|False|None
-        from_private_endpoint = privatedefs.get(schema_name, None)
-
-        # Can be None|empty list|list
-        parents = parentdefs.get(schema_name, None)
-
-        # This definition is not used by any endpoint or other definitions
-        # Probably it is used with a marshal_with to serialize a response...
-        # Response Schemas are not reported in the spec by FlaskApiSpec
-        # so for now let's consider it as private and filter out
-        if from_private_endpoint is None and parents is None:
-            return True
-
-        # This definition is not used by other definitions => the visibility
-        # is only given by endpoints visibility if any
-        if not parents and from_private_endpoint is not None:
-            return from_private_endpoint
-
-        # parents is not expected to be a non-empty list,
-        # otherwise something is going wrong
-        # This if should always fail
-        if not parents:  # pragma: no cover
-            log.warning(
-                "Invalid {} definition, unable to determine the visibility {} {}",
-                schema_name,
-                from_private_endpoint,
-                parents,
-            )
-            # Let's consider it as private and filter it out
-            return True
-
-        # Are we in a loop due to a cyclic dependency? Let's stop it
-        if recursion > 10:  # pragma: no cover
-            # Let's consider it as private and filter it out
-            return True
-
-        is_private = True
-        for parent in parents:
-            priv = self.is_definition_private(
-                parent,
-                privatedefs,
-                parentdefs,
-                recursion + 1,  # prevent infinite recursion
-            )
-            # The definition is private if only included in private definitions
-            # If used in at least one public definition, let's consider it as public
-            is_private = is_private and priv
-
-        return is_private
-
     @decorators.endpoint(
         path="/swagger",
         summary="Endpoints specifications based on OpenAPI format",
         responses={"200": "Endpoints JSON based on OpenAPI Specifications"},
     )
-    @decorators.endpoint(path="/specs")
+    @decorators.endpoint(
+        path="/specs",
+        summary="Endpoints specifications based on OpenAPI format",
+        responses={"200": "Endpoints JSON based on OpenAPI Specifications"},
+    )
     def get(self):
 
         specs = mem.docs.spec.to_dict()
-
-        api_url = get_backend_url()
-        scheme, host = api_url.rstrip("/").split("://")
-        specs["host"] = host
-        specs["schemes"] = [scheme]
-        specs["tags"] = mem.configuration["cleaned_tags"]
-        specs["securityDefinitions"] = {
-            "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-        }
 
         # Remove get_schema parameters from Definitions
         for schema, definition in specs.get("definitions", {}).items():
@@ -190,3 +132,55 @@ class NewSwaggerSpecifications(EndpointResource):
                 filtered_specs["definitions"].setdefault(schema, definition)
 
         return jsonify(filtered_specs)
+
+    def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):
+
+        # can be True|False|None
+        from_private_endpoint = privatedefs.get(schema_name, None)
+
+        # Can be None|empty list|list
+        parents = parentdefs.get(schema_name, None)
+
+        # This definition is not used by any endpoint or other definitions
+        # Probably it is used with a marshal_with to serialize a response...
+        # Response Schemas are not reported in the spec by FlaskApiSpec
+        # so for now let's consider it as private and filter out
+        if from_private_endpoint is None and parents is None:
+            return True
+
+        # This definition is not used by other definitions => the visibility
+        # is only given by endpoints visibility if any
+        if not parents and from_private_endpoint is not None:
+            return from_private_endpoint
+
+        # parents is not expected to be a non-empty list,
+        # otherwise something is going wrong
+        # This if should always fail
+        if not parents:  # pragma: no cover
+            log.warning(
+                "Invalid {} definition, unable to determine the visibility {} {}",
+                schema_name,
+                from_private_endpoint,
+                parents,
+            )
+            # Let's consider it as private and filter it out
+            return True
+
+        # Are we in a loop due to a cyclic dependency? Let's stop it
+        if recursion > 10:  # pragma: no cover
+            # Let's consider it as private and filter it out
+            return True
+
+        is_private = True
+        for parent in parents:
+            priv = self.is_definition_private(
+                parent,
+                privatedefs,
+                parentdefs,
+                recursion + 1,  # prevent infinite recursion
+            )
+            # The definition is private if only included in private definitions
+            # If used in at least one public definition, let's consider it as public
+            is_private = is_private and priv
+
+        return is_private
