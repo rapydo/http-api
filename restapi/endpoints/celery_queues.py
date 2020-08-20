@@ -21,14 +21,14 @@
 #             description="Base implementation of a CELERY queue.",
 #             responses={
 #                 200: "A list of tasks",
-#             }},
+#             },
 #         )
 #         @decorators.endpoint(
 #             path="/queue/<task_id>",
 #             summary="Information about a single task",
 #             responses={
 #                 200: "task information",
-#             }},
+#             },
 #         )
 #         def get(self, task_id=None):
 
@@ -160,7 +160,7 @@
 #             summary="Revoke a task from its id",
 #             responses={
 #                 204: "The task was revoked",
-#             }},
+#             },
 #         )
 #         def put(self, task_id):
 #             celery = self.get_service_instance('celery')
@@ -174,7 +174,7 @@
 #             summary="Delete a task",
 #             responses={
 #                 204: "The task was succesfully deleted",
-#             }},
+#             },
 #         )
 #         def delete(self, task_id):
 #             celery = self.get_service_instance('celery')

@@ -185,14 +185,14 @@
 #         summary="List of users",
 #         responses={
 #             200: "List of users successfully retrieved",
-#         }},
+#         },
 #     )
 #     @decorators.endpoint(
 #         path="/localadmin/users/<user_id>",
 #         summary="Obtain information on a single user",
 #         responses={
 #             200: "User information successfully retrieved",
-#         }},
+#         },
 #     )
 #     def get(self, user_id=None):
 
@@ -226,7 +226,7 @@
 #         responses={
 #             200: "The uuid of the new user is returned",
 #             409: "This user already exists",
-#         }},
+#         },
 #     )
 
 #     def post(self, **kwargs):
@@ -288,7 +288,7 @@
 #         summary="Modify a user",
 #         responses={
 #             200: "User successfully modified",
-#         }},
+#         },
 #     )
 #     def put(self, user_id, **kwargs):
 
@@ -370,7 +370,7 @@
 #         summary="Delete a user",
 #         responses={
 #             200: "User successfully deleted",
-#         }},
+#         },
 #     )
 #     def delete(self, user_id):
 

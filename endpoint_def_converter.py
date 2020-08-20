@@ -1,10 +1,8 @@
-_POST = {
-    "/profile": {
-        "summary": "Register new user",
-        "responses": {
-            "200": {"description": "ID of new user"},
-            "409": {"description": "This user already exists"},
-        },
+_GET = {
+    "/logout": {
+        "summary": "Logout from current credentials",
+        "description": "Invalidate current registered token",
+        "responses": {"204": {"description": "Token correctly removed"}},
     }
 }
 
@@ -50,7 +48,7 @@ for uri, c in conf.items():
             )
         print(
             """
-    }},"""
+    },"""
         )
 
     print(")", end="")
