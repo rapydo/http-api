@@ -13,24 +13,23 @@ if TESTING:
         # Set an invalid baseuri to test the automatic fallback to /api
         baseuri = "/invalid"
 
-        _GET = {
-            "/tests/download": {
-                "summary": "Test missing filename",
-                "description": "Only enabled in testing mode",
-                "responses": {"200": {"description": "Tests executed"}},
-            },
-            "/tests/download/<fname>": {
-                "summary": "Execute tests with the downloader",
-                "description": "Only enabled in testing mode",
-                "responses": {
-                    "200": {"description": "Tests executed"},
-                    "206": {"description": "Sent partial content"},
-                    "416": {"description": "Range Not Satisfiable"},
-                },
-            },
-        }
-
         @decorators.use_kwargs({"stream": fields.Bool()}, locations=["query"])
+        @decorators.endpoint(
+            path="/tests/download",
+            summary="Test missing filename",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        @decorators.endpoint(
+            path="/tests/download/<fname>",
+            summary="Execute tests with the downloader",
+            description="Only enabled in testing mode",
+            responses={
+                200: "Tests executed",
+                206: "Sent partial content",
+                416: "Range Not Satisfiable",
+            },
+        )
         def get(self, fname=None, stream=False):
 
             if stream:

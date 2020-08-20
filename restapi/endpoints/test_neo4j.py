@@ -52,7 +52,7 @@ if TESTING and detector.check_availability("neo4j"):
             path="/tests/neo4j/<test>",
             summary="Execute tests against the neo4j connector",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed,"},
+            responses={200: "Tests executed"},
         )
         def get(self, test):
             self.neo4j = self.get_service_instance("neo4j")
