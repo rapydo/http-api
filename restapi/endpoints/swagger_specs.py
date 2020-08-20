@@ -17,12 +17,12 @@ class NewSwaggerSpecifications(EndpointResource):
     @decorators.endpoint(
         path="/swagger",
         summary="Endpoints specifications based on OpenAPI format",
-        responses={"200": "Endpoints JSON based on OpenAPI Specifications"},
+        responses={200: "Endpoints JSON based on OpenAPI Specifications"},
     )
     @decorators.endpoint(
         path="/specs",
         summary="Endpoints specifications based on OpenAPI format",
-        responses={"200": "Endpoints JSON based on OpenAPI Specifications"},
+        responses={200: "Endpoints JSON based on OpenAPI Specifications"},
     )
     def get(self):
 

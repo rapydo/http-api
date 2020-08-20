@@ -29,6 +29,7 @@ def endpoint(path, summary=None, description=None, responses=None, **kwargs):
 
         specs["summary"] = summary
         specs["description"] = description
+
         if responses:
             for code in responses:
                 responses[code] = {"description": responses[code]}

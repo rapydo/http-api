@@ -209,12 +209,6 @@ class EndpointsLoader:
             # m = GET|PUT|POST|DELETE|PATCH|...
             for m in epclss.methods:
 
-                # # This should be converted with a new decorator
-                method_name = f"_{m}"
-                # if not hasattr(epclss, method_name):
-                #     log.warning("{} configuration not found in {}", m, epclss.__name__)
-                #     continue
-
                 # method_fn = get|post|put|delete|patch|...
                 method_fn = m.lower()
 
@@ -230,6 +224,7 @@ class EndpointsLoader:
 
                 # conf from _GET, _POST, ... dictionaries
                 method_conf = None
+                method_name = f"_{m}"
                 if hasattr(epclss, method_name):
                     log.warning(
                         "Deprecated use of {} in {}, use @decorators.endpoint instead",

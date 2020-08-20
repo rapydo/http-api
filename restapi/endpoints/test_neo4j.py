@@ -46,16 +46,14 @@ if TESTING and detector.check_availability("neo4j"):
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
-        _GET = {
-            "/tests/neo4j/<test>": {
-                "summary": "Execute tests against the neo4j connector",
-                "description": "Only enabled in testing mode",
-                "responses": {"200": {"description": "Tests executed"}},
-            },
-        }
-
         @graph_transactions
         @decorators.marshal_with(Output, code=200)
+        @decorators.endpoint(
+            path="/tests/neo4j/<test>",
+            summary="Execute tests against the neo4j connector",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed,"},
+        )
         def get(self, test):
             self.neo4j = self.get_service_instance("neo4j")
             try:
