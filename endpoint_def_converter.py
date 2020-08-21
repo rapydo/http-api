@@ -1,11 +1,9 @@
-_GET = {
-    "/logout": {
-        "summary": "Logout from current credentials",
-        "description": "Invalidate current registered token",
-        "responses": {"204": {"description": "Token correctly removed"}},
-    }
+_DELETE = {
+    "/tokens/<token_id>": {
+        "summary": "Remove specified token and make it invalid from now on",
+        "responses": {"204": {"description": "Token has been invalidated"}},
+    },
 }
-
 v = vars()
 for k in ("_GET", "_POST", "_PUT", "_PATCH", "_DELETE"):
     if k in v:

@@ -73,29 +73,13 @@ class Profile(EndpointResource):
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == "neo4j"
 
-    _GET = {
-        "/profile": {
-            "summary": "List profile attributes",
-            "responses": {
-                "200": {"description": "Dictionary with all profile attributes"}
-            },
-        }
-    }
-    _PUT = {
-        "/profile": {
-            "summary": "Update user password",
-            "responses": {"204": {"description": "Password updated"}},
-        }
-    }
-    _PATCH = {
-        "/profile": {
-            "summary": "Update profile information",
-            "responses": {"204": {"description": "Profile updated"}},
-        }
-    }
-
     @decorators.auth.require()
     @decorators.marshal_with(getProfileData(), code=200)
+    @decorators.endpoint(
+        path="/profile",
+        summary="List profile attributes",
+        responses={200: "Dictionary with all profile attributes"},
+    )
     def get(self):
 
         current_user = self.get_user()
@@ -123,6 +107,11 @@ class Profile(EndpointResource):
 
     @decorators.auth.require()
     @decorators.use_kwargs(NewPassword)
+    @decorators.endpoint(
+        path="/profile",
+        summary="Update user password",
+        responses={204: "Password updated"},
+    )
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
@@ -142,6 +131,11 @@ class Profile(EndpointResource):
 
     @decorators.auth.require()
     @decorators.use_kwargs(UserProfile)
+    @decorators.endpoint(
+        path="/profile",
+        summary="Update profile information",
+        responses={204: "Profile updated"},
+    )
     def patch(self, **kwargs):
         """ Update profile for current user """
 

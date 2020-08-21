@@ -8,14 +8,12 @@ class Status(EndpointResource):
     ALLOW_HTML_RESPONSE = True
     labels = ["helpers"]
 
-    _GET = {
-        "/status": {
-            "summary": "Check if the API server is currently reachable",
-            "description": "Use this endpoint to monitor network or server problems",
-            "responses": {"200": {"description": "Server is alive"}},
-        }
-    }
-
+    @decorators.endpoint(
+        path="/status",
+        summary="Check if the API server is currently reachable",
+        description="Use this endpoint to monitor network or server problems",
+        responses={200: "Server is alive"},
+    )
     def get(self, service=None):
 
         return self.response("Server is alive")

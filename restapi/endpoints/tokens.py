@@ -22,21 +22,13 @@ class Tokens(EndpointResource):
     baseuri = "/auth"
     labels = ["authentication"]
 
-    _GET = {
-        "/tokens": {
-            "summary": "Retrieve all tokens emitted for logged user",
-            "responses": {"200": {"description": "List of tokens"}},
-        }
-    }
-    _DELETE = {
-        "/tokens/<token_id>": {
-            "summary": "Remove specified token and make it invalid from now on",
-            "responses": {"204": {"description": "Token has been invalidated"}},
-        },
-    }
-
     @decorators.auth.require()
     @decorators.marshal_with(TokenSchema(many=True), code=200)
+    @decorators.endpoint(
+        path="/tokens",
+        summary="Retrieve all tokens emitted for logged user",
+        responses={200: "List of tokens"},
+    )
     def get(self):
 
         user = self.get_user()
@@ -47,6 +39,11 @@ class Tokens(EndpointResource):
 
     # token_id = uuid associated to the token you want to select
     @decorators.auth.require()
+    @decorators.endpoint(
+        path="/tokens/<token_id>",
+        summary="Remove specified token and make it invalid from now on",
+        responses={204: "Token has been invalidated"},
+    )
     def delete(self, token_id):
 
         user = self.get_user()
