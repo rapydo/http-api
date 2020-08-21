@@ -1,9 +1,12 @@
-_DELETE = {
-    "/tokens/<token_id>": {
-        "summary": "Remove specified token and make it invalid from now on",
-        "responses": {"204": {"description": "Token has been invalidated"}},
-    },
+from restapi.utilities.logs import log
+
+_PUT = {
+    "/stream/<channel>/<sync>": {
+        "description": "Push to stream",
+        "responses": {"200": {"description": "Message sent"}},
+    }
 }
+
 v = vars()
 for k in ("_GET", "_POST", "_PUT", "_PATCH", "_DELETE"):
     if k in v:
@@ -51,3 +54,15 @@ for uri, c in conf.items():
 
     print(")", end="")
 print("")
+
+for uri, c in conf.items():
+    if "responses" in c:
+        for code, resp in c["responses"].items():
+            resp.pop("description", None)
+            if resp:
+                log.warning("Unknown key in response with code {}: {}", code, resp)
+    c.pop("responses", None)
+    c.pop("summary", None)
+    c.pop("description", None)
+    if c:
+        log.warning("Unknown key in {} spec: {}", uri, c)

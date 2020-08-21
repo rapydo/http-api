@@ -195,44 +195,18 @@ class AdminUsers(EndpointResource):
     labels = ["admin"]
     private = True
 
-    _GET = {
-        "/admin/users": {
-            "summary": "List of users",
-            "responses": {
-                "200": {"description": "List of users successfully retrieved"}
-            },
-        },
-        "/admin/users/<user_id>": {
-            "summary": "Obtain information on a single user",
-            "responses": {
-                "200": {"description": "User information successfully retrieved"}
-            },
-        },
-    }
-    _POST = {
-        "/admin/users": {
-            "summary": "Create a new user",
-            "responses": {
-                "200": {"description": "The uuid of the new user is returned"},
-                "409": {"description": "This user already exists"},
-            },
-        }
-    }
-    _PUT = {
-        "/admin/users/<user_id>": {
-            "summary": "Modify a user",
-            "responses": {"200": {"description": "User successfully modified"}},
-        }
-    }
-    _DELETE = {
-        "/admin/users/<user_id>": {
-            "summary": "Delete a user",
-            "responses": {"200": {"description": "User successfully deleted"}},
-        }
-    }
-
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(get_output_schema(), code=200)
+    @decorators.endpoint(
+        path="/admin/users",
+        summary="List of users",
+        responses={200: "List of users successfully retrieved"},
+    )
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Obtain information on a single user",
+        responses={200: "User information successfully retrieved"},
+    )
     def get(self, user_id=None):
 
         users = self.auth.get_users(user_id)
@@ -245,6 +219,14 @@ class AdminUsers(EndpointResource):
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getInputSchema)
+    @decorators.endpoint(
+        path="/admin/users",
+        summary="Create a new user",
+        responses={
+            200: "The uuid of the new user is returned",
+            409: "This user already exists",
+        },
+    )
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -281,6 +263,11 @@ class AdminUsers(EndpointResource):
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getInputSchema)
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Modify a user",
+        responses={200: "User successfully modified"},
+    )
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
@@ -335,6 +322,11 @@ class AdminUsers(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Delete a user",
+        responses={200: "User successfully deleted"},
+    )
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

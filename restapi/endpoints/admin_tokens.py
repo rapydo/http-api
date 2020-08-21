@@ -30,23 +30,15 @@ class AdminTokens(EndpointResource):
     labels = ["authentication"]
     private = True
 
-    _GET = {
-        "/admin/tokens": {
-            "summary": "Retrieve all tokens emitted for logged user",
-            "responses": {"200": {"description": "List of tokens"}},
-        },
-    }
-    _DELETE = {
-        "/admin/tokens/<token_id>": {
-            "summary": "Remove specified token and make it invalid from now on",
-            "responses": {"200": {"description": "Token has been invalidated"}},
-        },
-    }
-
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.get_pagination
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
     @decorators.marshal_with(TokenTotalSchema, code=206)
+    @decorators.endpoint(
+        path="/admin/tokens",
+        summary="Retrieve all tokens emitted for logged user",
+        responses={200: "The list of tokens is returned"},
+    )
     def get(self, get_total, page, size, sort_by, sort_order, input_filter):
 
         tokens = self.auth.get_tokens(get_all=True)
@@ -84,6 +76,15 @@ class AdminTokens(EndpointResource):
         return self.response(response)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.endpoint(
+        path="/admin/tokens/<token_id>",
+        summary="Remove specified token and make it invalid from now on",
+        responses={
+            204: "Token has been invalidated",
+            404: "Specified token cannot be found",
+            400: "Token invalidation is failed",
+        },
+    )
     def delete(self, token_id):
 
         tokens = self.auth.get_tokens(token_jti=token_id)
