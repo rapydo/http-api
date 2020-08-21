@@ -11,12 +11,18 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 
 
+# A note abount Decimals:
+# This field serializes to a `decimal.Decimal` object by default. If you need
+# to render your data as JSON, keep in mind that the `json` module from the
+# standard library does not encode `decimal.Decimal`. Therefore, you must use
+# a JSON library that can handle decimals, such as `simplejson`, or serialize
+# to a string by passing ``as_string=True``.
 class StatsSchema(Schema):
     boot_time = fields.DateTime()
     cpu = fields.Nested(
         {
             "count": fields.Int(),
-            "load": fields.Decimal(places=2),
+            "load": fields.Decimal(places=2, as_string=True),
             "user": fields.Int(),
             "system": fields.Int(),
             "idle": fields.Int(),
@@ -48,10 +54,10 @@ class StatsSchema(Schema):
 
     disk = fields.Nested(
         {
-            "total_disk_space": fields.Decimal(places=2),
-            "used_disk_space": fields.Decimal(places=2),
-            "free_disk_space": fields.Decimal(places=2),
-            "occupacy": fields.Decimal(places=2),
+            "total_disk_space": fields.Decimal(places=2, as_string=True),
+            "used_disk_space": fields.Decimal(places=2, as_string=True),
+            "free_disk_space": fields.Decimal(places=2, as_string=True),
+            "occupacy": fields.Decimal(places=2, as_string=True),
         }
     )
 
@@ -63,9 +69,9 @@ class StatsSchema(Schema):
 
     network_latency = fields.Nested(
         {
-            "min": fields.Decimal(places=2),
-            "max": fields.Decimal(places=2),
-            "avg": fields.Decimal(places=2),
+            "min": fields.Decimal(places=2, as_string=True),
+            "max": fields.Decimal(places=2, as_string=True),
+            "avg": fields.Decimal(places=2, as_string=True),
         }
     )
 
