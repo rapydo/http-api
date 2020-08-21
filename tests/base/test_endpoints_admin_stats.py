@@ -31,8 +31,8 @@ class TestApp(BaseTests):
         assert stats["cpu"]["idle"] <= 100
 
         assert "load" in stats["cpu"]
-        assert stats["cpu"]["load"] >= 0
-        assert stats["cpu"]["load"] <= 100
+        assert float(stats["cpu"]["load"]) >= 0
+        assert float(stats["cpu"]["load"]) <= 100
 
         assert "stolen" in stats["cpu"]
         assert stats["cpu"]["stolen"] >= 0
@@ -54,20 +54,26 @@ class TestApp(BaseTests):
         assert "disk" in stats
 
         assert "total_disk_space" in stats["disk"]
+        assert "free_disk_space" in stats["disk"]
+        assert "used_disk_space" in stats["disk"]
+        assert "occupacy" in stats["disk"]
+
+        stats["disk"]["total_disk_space"] = float(stats["disk"]["total_disk_space"])
+        stats["disk"]["free_disk_space"] = float(stats["disk"]["free_disk_space"])
+        stats["disk"]["used_disk_space"] = float(stats["disk"]["used_disk_space"])
+        stats["disk"]["occupacy"] = float(stats["disk"]["occupacy"])
+
         assert stats["disk"]["total_disk_space"] > 0
 
-        assert "free_disk_space" in stats["disk"]
         assert stats["disk"]["free_disk_space"] >= 0
         assert stats["disk"]["free_disk_space"] < stats["disk"]["total_disk_space"]
 
-        assert "used_disk_space" in stats["disk"]
         assert stats["disk"]["used_disk_space"] >= 0
         assert stats["disk"]["used_disk_space"] < stats["disk"]["total_disk_space"]
 
         s = stats["disk"]["free_disk_space"] + stats["disk"]["used_disk_space"]
         assert abs(stats["disk"]["total_disk_space"] - s) < 0.5
 
-        assert "occupacy" in stats["disk"]
         assert stats["disk"]["occupacy"] >= 0
         assert stats["disk"]["occupacy"] <= 100
 
@@ -87,16 +93,21 @@ class TestApp(BaseTests):
         assert "network_latency" in stats
 
         assert "min" in stats["network_latency"]
+        assert "avg" in stats["network_latency"]
+        assert "max" in stats["network_latency"]
+
+        stats["network_latency"]["min"] = float(stats["network_latency"]["min"])
+        stats["network_latency"]["avg"] = float(stats["network_latency"]["avg"])
+        stats["network_latency"]["max"] = float(stats["network_latency"]["max"])
+
         assert stats["network_latency"]["min"] >= 0
         assert stats["network_latency"]["min"] <= stats["network_latency"]["avg"]
         assert stats["network_latency"]["min"] <= stats["network_latency"]["max"]
 
-        assert "avg" in stats["network_latency"]
         assert stats["network_latency"]["avg"] >= 0
         assert stats["network_latency"]["avg"] >= stats["network_latency"]["min"]
         assert stats["network_latency"]["avg"] <= stats["network_latency"]["max"]
 
-        assert "max" in stats["network_latency"]
         assert stats["network_latency"]["max"] >= 0
         assert stats["network_latency"]["max"] >= stats["network_latency"]["min"]
         assert stats["network_latency"]["max"] >= stats["network_latency"]["avg"]
