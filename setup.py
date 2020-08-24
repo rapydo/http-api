@@ -72,7 +72,7 @@ setup(
         "swagger-spec-validator",
 
         # Utilities
-        "attrs",
+        "attrs==19.3.0",
         "loguru",
         "glom",
         "psutil",
