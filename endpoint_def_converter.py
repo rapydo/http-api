@@ -3,7 +3,7 @@ from restapi.utilities.logs import log
 _GET = {}
 
 v = vars()
-for k in ("_GET", "_POST", "_PUT", "_PATCH", "_DELETE"):
+for k in ("_GET", "_POST", "_PUT", "_PATCH", "_DELETE", "_HEAD"):
     if k not in v:
         continue
     conf = v[k]
