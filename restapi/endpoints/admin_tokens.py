@@ -47,8 +47,8 @@ class AdminTokens(EndpointResource):
             filtered_tokens = []
             for t in tokens:
                 for f in ["token", "IP", "location", "user.email"]:
-                    value = glom(t, f, default="").lower()
-                    if input_filter in value:
+                    value = glom(t, f, default="")
+                    if value and input_filter in value.lower():
                         filtered_tokens.append(t)
                         break
 
