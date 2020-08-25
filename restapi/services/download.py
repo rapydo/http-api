@@ -24,7 +24,7 @@ class Downloader:
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
-        log.info("Provide '{}' from '{}'", filename, path)
+        log.info("Starting transfer of '{}' from '{}'", filename, path)
 
         return send_from_directory(path, filename, mimetype=mime)
 
