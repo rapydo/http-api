@@ -1,5 +1,4 @@
 from restapi import decorators
-from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
 from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
@@ -92,7 +91,7 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.use_kwargs(get_input_group)
         @decorators.endpoint(
             path="/admin/groups",
@@ -123,7 +122,7 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.use_kwargs(get_input_group)
         @decorators.endpoint(
             path="/admin/groups/<group_id>",
@@ -166,7 +165,7 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.endpoint(
             path="/admin/groups/<group_id>",
             summary="Delete a group",

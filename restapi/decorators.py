@@ -70,6 +70,34 @@ def catch_graph_exceptions(func):
     return wrapper
 
 
+def graph_transactions(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        from neomodel import db
+
+        try:
+
+            db.begin()
+            log.verbose("Neomodel transaction BEGIN")
+
+            out = func(self, *args, **kwargs)
+
+            db.commit()
+            log.verbose("Neomodel transaction COMMIT")
+
+            return out
+        except Exception as e:
+            log.verbose("Neomodel transaction ROLLBACK")
+            try:
+                db.rollback()
+            except Exception as sub_ex:
+                log.warning("Exception raised during rollback: {}", sub_ex)
+            raise e
+
+    return wrapper
+
+
 class Pagination(InputSchema):
     get_total = fields.Boolean(
         required=False, description="Request the total number of elements"
