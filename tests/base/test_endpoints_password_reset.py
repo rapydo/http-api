@@ -93,8 +93,10 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         # Request with old password
-        data["new_password"] = BaseAuthentication.default_password
-        data["password_confirm"] = BaseAuthentication.default_password
+        data = {
+            "new_password": BaseAuthentication.default_password,
+            "password_confirm": BaseAuthentication.default_password,
+        }
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 409
         error = "The new password cannot match the previous password"
@@ -102,8 +104,7 @@ class TestApp(BaseTests):
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
-        data = {}
-        # Passoword too short
+        # Password too short
         data["new_password"] = fake.password(min_pwd_len - 1)
         data["password_confirm"] = fake.password(min_pwd_len - 1)
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
