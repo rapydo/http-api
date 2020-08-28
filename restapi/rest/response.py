@@ -28,6 +28,7 @@ def handle_marshmallow_errors(error):
             continue
         log.info("{}: {}", k, msg)
 
+    log.error(error.data.get("messages"))
     return (error.data.get("messages"), 400, {})
 
 
