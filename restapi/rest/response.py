@@ -23,12 +23,12 @@ def handle_marshmallow_errors(error):
     except BaseException as e:  # pragma: no cover
         log.error(e)
 
-    for k, msg in error.data.get("messages").items():
-        if not msg:  # pragma: no cover
-            continue
-        log.info("{}: {}", k, msg)
+    for key, errors in error.data.get("messages").items():
+        for k, msg in errors.items():
+            if not msg:  # pragma: no cover
+                continue
+            log.error("[{}] {}: {}", key, k, msg)
 
-    log.error(error.data.get("messages"))
     return (error.data.get("messages"), 400, {})
 
 

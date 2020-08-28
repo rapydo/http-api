@@ -82,7 +82,10 @@ class TestApp(BaseTests):
         # email cannot be modified
         new_data = {"email": data.get("email")}
         r = client.put(f"{API_URI}/admin/users/{uuid2}", data=new_data, headers=headers)
-        assert r.status_code == 204
+        # from webargs >= 6 this endpoint no longer return a 204 but a 400
+        # because email is an unknown field
+        # assert r.status_code == 204
+        assert r.status_code == 400
 
         r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 200
