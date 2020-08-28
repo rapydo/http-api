@@ -1,11 +1,14 @@
 from restapi import decorators
 from restapi.confs import TESTING, UPLOAD_PATH
-from restapi.models import fields
+from restapi.models import PartialInputSchema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
 if TESTING:
+
+    class Force(PartialInputSchema):
+        force = fields.Bool()
 
     class TestUpload(EndpointResource, Uploader):
 

@@ -2,7 +2,7 @@ import inspect
 
 from marshmallow import Schema  # also used from endpoint for Schemas
 from marshmallow import validate  # used as alias from endpoints
-from marshmallow import ValidationError, pre_load
+from marshmallow import EXCLUDE, ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
 from webargs.flaskparser import parser
@@ -48,6 +48,12 @@ class InputSchema(Schema):
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
         return data
+
+
+class PartialInputSchema(InputSchema):
+    class Meta:
+        ordered = True
+        unknown = EXCLUDE
 
 
 class Neo4jSchema(Schema):

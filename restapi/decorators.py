@@ -4,7 +4,7 @@ import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
 from flask_apispec import marshal_with  # also imported from endpoints
 from flask_apispec import use_kwargs as original_use_kwargs
-from marshmallow import EXCLUDE, post_load
+from marshmallow import post_load
 from sentry_sdk import capture_exception
 
 from restapi.confs import SENTRY_URL
@@ -14,7 +14,7 @@ from restapi.exceptions import (
     DatabaseDuplicatedEntry,
     RestApiException,
 )
-from restapi.models import InputSchema, fields, validate
+from restapi.models import PartialInputSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
@@ -115,7 +115,7 @@ def graph_transactions(func):
     return wrapper
 
 
-class Pagination(InputSchema):
+class Pagination(PartialInputSchema):
     get_total = fields.Boolean(
         required=False, description="Request the total number of elements"
     )
@@ -134,9 +134,6 @@ class Pagination(InputSchema):
     )
     sort_by = fields.Str(required=False, missing=None)
     input_filter = fields.Str(required=False, missing=None)
-
-    class Meta:
-        unknown = EXCLUDE
 
     @post_load
     def verify_parameters(self, data, **kwargs):
@@ -173,14 +170,11 @@ def get_pagination(func):
     return wrapper
 
 
-class ChunkUpload(InputSchema):
+class ChunkUpload(PartialInputSchema):
     name = fields.Str(required=True)
     mimeType = fields.Str(required=True)
     size = fields.Int(required=True, validate=validate.Range(min=1))
     lastModified = fields.Int(required=True, validate=validate.Range(min=1))
-
-    class Meta:
-        unknown = EXCLUDE
 
 
 def init_chunk_upload(func):
