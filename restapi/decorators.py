@@ -2,7 +2,8 @@ from functools import wraps
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
-from flask_apispec import marshal_with, use_kwargs  # also imported from endpoints
+from flask_apispec import marshal_with  # also imported from endpoints
+from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
@@ -20,6 +21,19 @@ from restapi.utilities.logs import log
 
 log.verbose("Auth loaded {}", auth)
 log.verbose("Marshal loaded {}", marshal_with)
+
+
+# same definition as in:
+# https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
+def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
+    # this use_kwargs is used override the default location (json)
+    # with a more extensive default location (json_or_form)
+    # This trick will prevent to add location='json_or_form' to mostly all models
+    if location is None:
+        location = "json_or_form"
+    return original_use_kwargs(
+        args=args, location=location, inherit=inherit, apply=apply, **kwargs
+    )
 
 
 def endpoint(path, summary=None, description=None, responses=None, **kwargs):
