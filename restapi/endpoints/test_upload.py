@@ -16,7 +16,7 @@ if TESTING:
         # Set an invalid baseuri to test the automatic fallback to /api
         baseuri = "/invalid"
 
-        @decorators.use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs(Force)
         @decorators.endpoint(
             path="/tests/upload",
             summary="Execute tests with the uploader",
@@ -46,7 +46,7 @@ if TESTING:
             return response
 
         @decorators.init_chunk_upload
-        @decorators.use_kwargs({"force": fields.Bool()})
+        @decorators.use_kwargs(Force)
         @decorators.endpoint(
             path="/tests/upload",
             summary="Initialize tests on chunked upload",
