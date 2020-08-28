@@ -125,7 +125,7 @@ def get_output_schema():
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
@@ -170,7 +170,7 @@ def getInputSchema(request):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(request):
             attributes.update(custom_fields)
 

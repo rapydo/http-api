@@ -153,7 +153,7 @@ class EndpointsLoader:
         apiclass_module = f"{base_module}.endpoints"
         for epfiles in glob.glob(f"{apis_dir}/*.py"):
 
-            # get module name (es: apis.filename)
+            # get module name (es: endpoints.filename)
             module_file = os.path.basename(os.path.splitext(epfiles)[0])
             module_name = f"{apiclass_module}.{module_file}"
             # Convert module name into a module

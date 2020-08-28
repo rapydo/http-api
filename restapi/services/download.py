@@ -1,5 +1,5 @@
 """
-Download data from APIs.
+Download data from APIs
 """
 
 from mimetypes import MimeTypes

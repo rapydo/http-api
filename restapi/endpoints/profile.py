@@ -55,7 +55,7 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
@@ -100,7 +100,8 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+        customizer = Meta.get_customizer_instance("endpoints.profile", "CustomProfile")
+        if customizer:
             data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
