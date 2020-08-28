@@ -4,7 +4,7 @@ import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
 from flask_apispec import marshal_with  # also imported from endpoints
 from flask_apispec import use_kwargs as original_use_kwargs
-from marshmallow import post_load
+from marshmallow import EXCLUDE, post_load
 from sentry_sdk import capture_exception
 
 from restapi.confs import SENTRY_URL
@@ -135,6 +135,9 @@ class Pagination(InputSchema):
     sort_by = fields.Str(required=False, missing=None)
     input_filter = fields.Str(required=False, missing=None)
 
+    class Meta:
+        unknown = EXCLUDE
+
     @post_load
     def verify_parameters(self, data, **kwargs):
         if "get_total" in data:
@@ -175,6 +178,9 @@ class ChunkUpload(InputSchema):
     mimeType = fields.Str(required=True)
     size = fields.Int(required=True, validate=validate.Range(min=1))
     lastModified = fields.Int(required=True, validate=validate.Range(min=1))
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 def init_chunk_upload(func):
