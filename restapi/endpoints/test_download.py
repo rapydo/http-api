@@ -13,7 +13,7 @@ if TESTING:
         # Set an invalid baseuri to test the automatic fallback to /api
         baseuri = "/invalid"
 
-        @decorators.use_kwargs({"stream": fields.Bool()}, locations=["query"])
+        @decorators.use_kwargs({"stream": fields.Bool()}, location="query")
         @decorators.endpoint(
             path="/tests/download",
             summary="Test missing filename",

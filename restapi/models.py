@@ -5,6 +5,7 @@ from marshmallow import validate  # used as alias from endpoints
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
+from webargs.flaskparser import parser
 
 from restapi.utilities.logs import log
 
@@ -16,6 +17,11 @@ GET_SCHEMA_KEY = "get_schema"
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.verbose("{} loaded", validate)
+
+
+@parser.location_loader("data")
+def load_data(request, schema):
+    return request.data
 
 
 class InputSchema(Schema):
