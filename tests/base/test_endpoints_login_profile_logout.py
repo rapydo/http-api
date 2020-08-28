@@ -187,6 +187,10 @@ class TestApp(BaseTests):
         # update profile
         data = {"name": newname, "uuid": newuuid}
         r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
+        # uuid cannot be modified and will raise an unknown field
+        assert r.status_code == 400
+        data = {"name": newname}
+        r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
