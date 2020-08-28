@@ -231,6 +231,10 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         # TEST TOKEN DELETION VIA ADMIN ENDPOINT
+        # This will be used to authenticate the requests. A new last_tokens is required
+        # because the login could invalidate previous tokens due to password expiration
+        last_tokens_header, last_token = self.do_login(client, None, None)
+        # This will be used as target for deletion
         header, token = self.do_login(client, None, None)
 
         # TEST GET ALL TOKENS

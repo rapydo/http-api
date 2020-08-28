@@ -78,7 +78,7 @@ class Profile(EndpointResource):
     @decorators.endpoint(
         path="/profile",
         summary="List profile attributes",
-        responses={200: "Dictionary with all profile attributes"},
+        responses={200: "User profile is returned"},
     )
     def get(self):
 
