@@ -152,7 +152,7 @@ def get_pagination(func):
     @wraps(func)
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
-    @use_kwargs(Pagination, locations="query")
+    @use_kwargs(Pagination, location="query")
     def get_wrapper(self, *args, **kwargs):
 
         return func(self, *args, **kwargs)
@@ -160,7 +160,7 @@ def get_pagination(func):
     @wraps(func)
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
-    @use_kwargs(Pagination, locations="data")
+    @use_kwargs(Pagination, location="data")
     def wrapper(self, *args, **kwargs):
 
         return func(self, *args, **kwargs)
