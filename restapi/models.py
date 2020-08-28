@@ -19,9 +19,11 @@ ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 log.verbose("{} loaded", validate)
 
 
-@parser.location_loader("data")
+@parser.location_loader("body")
 def load_data(request, schema):
-    return request.data
+    # Return json if it is not None, otherwise it will send form
+    # No merge is allowed here
+    return request.json or request.form
 
 
 class InputSchema(Schema):

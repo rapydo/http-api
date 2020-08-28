@@ -27,10 +27,13 @@ log.verbose("Marshal loaded {}", marshal_with)
 # https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
 def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
     # this use_kwargs is used override the default location (json)
-    # with a more extensive default location (json_or_form)
-    # This trick will prevent to add location='json_or_form' to mostly all models
+    # with a more extensive default location (body)
+    # This trick will prevent to add location='body' to mostly all models
+    # Please note that body is also used as "in" parameter in swagger specs and well
+    # accepted by schemathesis
     if location is None:
-        location = "json_or_form"
+        location = "body"
+
     return original_use_kwargs(
         args=args, location=location, inherit=inherit, apply=apply, **kwargs
     )
