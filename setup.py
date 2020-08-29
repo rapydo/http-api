@@ -15,13 +15,7 @@ setup(
     author="Paolo D'Onorio De Meo",
     author_email="p.donorio.de.meo@gmail.com",
     packages=find_packages(where=".", exclude=["tests*"]),
-    package_data={
-        main_package: [
-            "confs/connectors.yaml",
-            "models/swagger.yaml",
-            "templates/index.html",
-        ],
-    },
+    package_data={main_package: ["models/swagger.yaml", "templates/index.html"]},
     python_requires=">=3.6.0",
     entry_points=f"""
         [console_scripts]
