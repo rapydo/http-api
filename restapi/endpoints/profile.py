@@ -33,9 +33,9 @@ def patchUserProfile():
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
 
-    # if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
-    #     if custom_fields := customizer.get_user_editable_fields(None):
-    #         attributes.update(custom_fields)
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
+        if custom_fields := customizer.get_user_editable_fields(None):
+            attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
     return schema()
