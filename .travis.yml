@@ -7,15 +7,15 @@ services:
 - docker
 env:
 
-- TEMPLATE=postgres
-- TEMPLATE=mysql
-- TEMPLATE=neo4j
-- TEMPLATE=mongo
-- TEMPLATE=celery-rabbit-rabbit
-- TEMPLATE=celery-rabbit-redis
-- TEMPLATE=celery-rabbit-mongo
-- TEMPLATE=celery-redis-redis
-- TEMPLATE=celery-redis-mongo
+# - TEMPLATE=postgres
+# - TEMPLATE=mysql
+# - TEMPLATE=neo4j
+# - TEMPLATE=mongo
+# - TEMPLATE=celery-rabbit-rabbit
+# - TEMPLATE=celery-rabbit-redis
+# - TEMPLATE=celery-rabbit-mongo
+# - TEMPLATE=celery-redis-redis
+# - TEMPLATE=celery-redis-mongo
 # this enabled extra services like irods, ftp and pushin
 # and extra options likes FORCE_FIRST_PASSWORD_CHANGE, MAX_PASSWORD_VALIDITY,
 # html email templates and more in the future
@@ -23,7 +23,7 @@ env:
 # Temporary disabled, some issues with DB models...
 # - TEMPLATE=extended
 # to be deprecated
-- TEMPLATE=wrapped
+# - TEMPLATE=wrapped
 
 script:
   # Randomize auth service to test some services
