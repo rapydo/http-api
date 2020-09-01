@@ -27,10 +27,18 @@ class NewPassword(InputSchema):
     totp_code = fields.Str(required=False)
 
 
-class UserProfile(InputSchema):
-    name = fields.Str()
-    surname = fields.Str()
-    privacy_accepted = fields.Boolean()
+def patchUserProfile():
+    attributes = {}
+    attributes["name"] = fields.Str()
+    attributes["surname"] = fields.Str()
+    attributes["privacy_accepted"] = fields.Boolean()
+
+    # if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
+    #     if custom_fields := customizer.get_user_editable_fields(None):
+    #         attributes.update(custom_fields)
+
+    schema = Schema.from_dict(attributes)
+    return schema()
 
 
 class Group(Schema):
@@ -131,7 +139,7 @@ class Profile(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require()
-    @decorators.use_kwargs(UserProfile)
+    @decorators.use_kwargs(patchUserProfile())
     @decorators.endpoint(
         path="/profile",
         summary="Update profile information",
