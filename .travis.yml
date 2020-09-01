@@ -93,18 +93,18 @@ script:
   - rapydo start
   - sleep 2
   - rapydo logs
-  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  # - ################ rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
 
   # Send coverage
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
-  - docker cp ${backend_container}:/code/coverage.xml coverage.xml
+  # - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   # this is the recommended command from codecov. But when curl fails due to a network
   # timeout the whole command exits with 0. As a results some jobs are all passed but
   # the coverage stats are degraded, because one of the stages is missing!
-  # - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+  # - ################ bash <(curl -s https://codecov.io/bash) -R submodules/http-api
   - wget https://codecov.io/bash -O codecov_report
-  - bash codecov_report -R submodules/http-api
+  # - ################ bash codecov_report -R submodules/http-api
 
   # Test production
   - rapydo remove --all
@@ -119,7 +119,7 @@ script:
   # but often nginx does not respond and log:
   # "GET /api/status HTTP/2.0" 499 0 "-" "curl/7.58.0" "-"
   # So... just skip this test with mongo...
-  - if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
+  # - ################ if [[ "$TEMPLATE" != "mongo" ]] && [[ "$RANDOM_AUTH" != "mongo" ]]; then curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"; fi
 
   - rapydo -s proxy,backend logs --tail 20
 
