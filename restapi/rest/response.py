@@ -145,7 +145,7 @@ class ResponseMaker:
                 f["description"] = f["label"]
             f["required"] = "true" if field_def.required else "false"
 
-            f["type"] = ResponseMaker.get_schema_type(field_def, f["key"])
+            f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
             if not isinstance(field_def.missing, _Missing):
                 f["default"] = field_def.missing
@@ -209,7 +209,7 @@ class ResponseMaker:
             return (jsonify(content), 500, {})
 
     @staticmethod
-    def get_schema_type(schema, key, default=None):
+    def get_schema_type(field, schema, default=None):
 
         if schema.metadata.get("password", False):
             return "password"
@@ -239,8 +239,9 @@ class ResponseMaker:
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         if isinstance(schema, fields.List):
-
-            inner_type = ResponseMaker.get_schema_type(schema.inner, key, default=key)
+            log.critical(dir(schema))
+            key = schema.data_key or field
+            inner_type = ResponseMaker.get_schema_type(field, schema.inner, default=key)
             return f"{inner_type}[]"
         # if isinstance(schema, fields.Mapping):
         #     return 'any'
