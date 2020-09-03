@@ -23,7 +23,7 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 from restapi.utilities.uuid import getUUID
 
-# it is used to passa data to inline button callbacks
+# it is used to pass data to inline button callbacks
 data_cache = {}
 
 

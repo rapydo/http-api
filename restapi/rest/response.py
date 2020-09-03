@@ -122,83 +122,86 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
+    def convert_model_to_schema(schema):
+        fields = []
+        for field, field_def in schema.declared_fields.items():
+            if field == GET_SCHEMA_KEY:
+                continue
+
+            f = {}
+
+            f["key"] = field_def.data_key or field
+
+            if "label" in field_def.metadata:
+                f["label"] = field_def.metadata["label"]
+            elif f["key"] == f["key"].lower():
+                f["label"] = f["key"].title()
+            else:
+                f["label"] = f["key"]
+
+            if "description" in field_def.metadata:
+                f["description"] = field_def.metadata["description"]
+            else:
+                f["description"] = f["label"]
+            f["required"] = "true" if field_def.required else "false"
+
+            f["type"] = ResponseMaker.get_schema_type(field_def, f["key"])
+
+            if not isinstance(field_def.missing, _Missing):
+                f["default"] = field_def.missing
+            elif not isinstance(field_def.default, _Missing):
+                f["default"] = field_def.default
+
+            if field_def.validate is not None:
+                if isinstance(field_def.validate, validate.Length):
+
+                    if field_def.validate.min is not None:
+                        f["min"] = field_def.validate.min
+                    if field_def.validate.max is not None:
+                        f["max"] = field_def.validate.max
+                    if field_def.validate.equal is not None:
+                        f["min"] = field_def.validate.equal
+                        f["max"] = field_def.validate.equal
+
+                elif isinstance(field_def.validate, validate.Range):
+
+                    if field_def.validate.min is not None:
+                        f["min"] = field_def.validate.min
+                        if not field_def.validate.min_inclusive:
+                            f["min"] += 1
+
+                    if field_def.validate.max is not None:
+                        f["max"] = field_def.validate.max
+                        if not field_def.validate.max_inclusive:
+                            f["max"] += 1
+
+                elif isinstance(field_def.validate, validate.OneOf):
+
+                    choices = field_def.validate.choices
+                    labels = field_def.validate.labels
+                    if len(labels) != len(choices):
+                        labels = choices
+                    f["enum"] = dict(zip(choices, labels))
+
+                else:
+
+                    log.warning(
+                        "Unsupported validation schema: {}.{}",
+                        type(field_def.validate).__module__,
+                        type(field_def.validate).__name__,
+                    )
+
+            if f["type"] == "nested":
+                f["schema"] = ResponseMaker.convert_model_to_schema(field_def.schema)
+
+            fields.append(f)
+        return fields
+
+    @staticmethod
     def respond_with_schema(schema):
 
-        fields = []
         try:
-            for field, field_def in schema.declared_fields.items():
-                if field == GET_SCHEMA_KEY:
-                    continue
-
-                f = {}
-
-                if field_def.data_key is None:
-                    key = field
-                else:
-                    key = field_def.data_key
-
-                f["key"] = key
-
-                if "label" in field_def.metadata:
-                    f["label"] = field_def.metadata["label"]
-                elif key == key.lower():
-                    f["label"] = key.title()
-                else:
-                    f["label"] = key
-
-                if "description" in field_def.metadata:
-                    f["description"] = field_def.metadata["description"]
-                else:
-                    f["description"] = f["label"]
-                f["required"] = "true" if field_def.required else "false"
-
-                f["type"] = ResponseMaker.get_schema_type(field_def)
-
-                if not isinstance(field_def.missing, _Missing):
-                    f["default"] = field_def.missing
-                elif not isinstance(field_def.default, _Missing):
-                    f["default"] = field_def.default
-
-                if field_def.validate is not None:
-                    if isinstance(field_def.validate, validate.Length):
-
-                        if field_def.validate.min is not None:
-                            f["min"] = field_def.validate.min
-                        if field_def.validate.max is not None:
-                            f["max"] = field_def.validate.max
-                        if field_def.validate.equal is not None:
-                            f["min"] = field_def.validate.equal
-                            f["max"] = field_def.validate.equal
-
-                    elif isinstance(field_def.validate, validate.Range):
-
-                        if field_def.validate.min is not None:
-                            f["min"] = field_def.validate.min
-                            if not field_def.validate.min_inclusive:
-                                f["min"] += 1
-
-                        if field_def.validate.max is not None:
-                            f["max"] = field_def.validate.max
-                            if not field_def.validate.max_inclusive:
-                                f["max"] += 1
-
-                    elif isinstance(field_def.validate, validate.OneOf):
-
-                        choices = field_def.validate.choices
-                        labels = field_def.validate.labels
-                        if len(labels) != len(choices):
-                            labels = choices
-                        f["enum"] = dict(zip(choices, labels))
-
-                    else:
-
-                        log.warning(
-                            "Unsupported validation schema: {}.{}",
-                            type(field_def.validate).__module__,
-                            type(field_def.validate).__name__,
-                        )
-
-                fields.append(f)
+            fields = ResponseMaker.convert_model_to_schema(schema)
             return (jsonify(fields), 200, {})
         except BaseException as e:  # pragma: no cover
             log.error(e)
@@ -206,7 +209,7 @@ class ResponseMaker:
             return (jsonify(content), 500, {})
 
     @staticmethod
-    def get_schema_type(schema):
+    def get_schema_type(schema, key, default=None):
 
         if schema.metadata.get("password", False):
             return "password"
@@ -223,8 +226,8 @@ class ResponseMaker:
             return "date"
         if isinstance(schema, fields.Decimal):
             return "number"
-        # if isinstance(schema, fields.Dict):
-        #     return 'object'
+        if isinstance(schema, fields.Dict):
+            return "dictionary"
         if isinstance(schema, fields.Email):
             return "email"
         # if isinstance(schema, fields.Field):
@@ -235,14 +238,16 @@ class ResponseMaker:
         #     return 'any'
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
-        # if isinstance(schema, fields.List):
-        #     return 'any[]'
+        if isinstance(schema, fields.List):
+
+            inner_type = ResponseMaker.get_schema_type(schema.inner, key, default=key)
+            return f"{inner_type}[]"
         # if isinstance(schema, fields.Mapping):
         #     return 'any'
         # if isinstance(schema, fields.Method):
         #     return 'any'
-        # if isinstance(schema, fields.Nested):
-        #     return 'any'
+        if isinstance(schema, fields.Nested):
+            return "nested"
         if isinstance(schema, fields.Number):
             return "number"
         # if isinstance(schema, fields.Raw):
@@ -251,6 +256,9 @@ class ResponseMaker:
             return "string"
         # if isinstance(schema, fields.TimeDelta):
         #     return 'any'
+
+        if default:
+            return default
 
         log.error("Unknown schema type: {}", type(schema))
 
