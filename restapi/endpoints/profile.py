@@ -41,8 +41,9 @@ def patchUserProfile():
     return schema()
 
 
+# Duplicated in admin_users.py
 class Group(Schema):
-    uuid = fields.Str()
+    uuid = fields.UUID()
     shortname = fields.Str()
     fullname = fields.Str()
 
@@ -50,7 +51,7 @@ class Group(Schema):
 def getProfileData():
     attributes = {}
 
-    attributes["uuid"] = fields.Str(required=True)
+    attributes["uuid"] = fields.UUID(required=True)
     attributes["email"] = fields.Email(required=True)
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)

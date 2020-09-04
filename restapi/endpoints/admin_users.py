@@ -103,8 +103,9 @@ class Roles(Schema):
     description = fields.Str()
 
 
+# Duplicated in profile.py
 class Group(Schema):
-    uuid = fields.Str()
+    uuid = fields.UUID()
     fullname = fields.Str()
     shortname = fields.Str()
 
@@ -112,7 +113,7 @@ class Group(Schema):
 def get_output_schema():
     attributes = {}
 
-    attributes["uuid"] = fields.Str()
+    attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()

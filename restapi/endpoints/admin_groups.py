@@ -32,13 +32,14 @@ if detector.check_availability("neo4j"):
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
     class Coordinator(Schema):
-        uuid = fields.Str()
+        uuid = fields.UUID()
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
 
+    # This is also defined in profile.py and admin_users.py but without coordinator
     class Group(Schema):
-        uuid = fields.Str()
+        uuid = fields.UUID()
         fullname = fields.Str()
         shortname = fields.Str()
 
@@ -57,6 +58,7 @@ if detector.check_availability("neo4j"):
             validate=validate.OneOf(choices=users.keys(), labels=users.values()),
         )
 
+    # Function required here to reload the model at runtime and fill the groups list
     def get_input_group(request):
         # if not request:
         #     return {}
