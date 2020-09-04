@@ -21,9 +21,10 @@ from restapi.confs import (
     ABS_RESTAPI_PATH,
     PRODUCTION,
     SENTRY_URL,
+    get_backend_url,
     get_project_configuration,
 )
-from restapi.customization import Customizer
+from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
@@ -95,8 +96,8 @@ def create_app(
     if PRODUCTION:
         log.info("Production server mode is ON")
 
-    mem.customizer = Customizer()
-    mem.configuration = mem.customizer.load_configuration()
+    endpoints_loader = EndpointsLoader()
+    mem.configuration = endpoints_loader.load_configuration()
 
     # Find services and try to connect to the ones available
     detector.init_services(
@@ -117,44 +118,52 @@ def create_app(
             "ignore", message="Multiple schemas resolved to the name "
         )
 
-        mem.customizer.find_endpoints()
-        mem.customizer.do_swagger()
+        endpoints_loader.load_endpoints()
+        mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
+        mem.private_endpoints = endpoints_loader.private_endpoints
+
         # Triggering automatic mapping of REST endpoints
         rest_api = Api(catch_all_404s=True)
 
-        for endpoint in mem.customizer._endpoints:
-            # urls = [uri for _, uri in resource.uris.items()]
-            urls = list(endpoint.uris.values())
-
+        for endpoint in endpoints_loader.endpoints:
             # Create the restful resource with it;
             # this method is from RESTful plugin
-            rest_api.add_resource(endpoint.cls, *urls)
+            rest_api.add_resource(endpoint.cls, *endpoint.uris)
 
-            log.verbose("Map '{}' to {}", endpoint.cls.__name__, urls)
+            log.verbose("Map '{}' to {}", endpoint.cls.__name__, endpoint.uris)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
 
+        # APISpec configuration
+        api_url = get_backend_url()
+        scheme, host = api_url.rstrip("/").split("://")
+
+        spec = APISpec(
+            title=get_project_configuration(
+                "project.title", default="Your application name"
+            ),
+            version=get_project_configuration("project.version", default="0.0.1"),
+            openapi_version="2.0",
+            # OpenApi 3 not working with FlaskApiSpec
+            # -> Duplicate parameter with name body and location body
+            # https://github.com/jmcarp/flask-apispec/issues/170
+            # Find other warning like this by searching:
+            # **FASTAPI**
+            # openapi_version="3.0.2",
+            plugins=[MarshmallowPlugin()],
+            host=host,
+            schemes=[scheme],
+            tags=endpoints_loader.tags,
+        )
+        # OpenAPI 3 changed the definition of the security level.
+        # Some changes needed here?
+        api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
+        spec.components.security_scheme("Bearer", api_key_scheme)
+
         microservice.config.update(
             {
-                "APISPEC_SPEC": APISpec(
-                    title=get_project_configuration(
-                        "project.title", default="Your application name"
-                    ),
-                    version=get_project_configuration(
-                        "project.version", default="0.0.1"
-                    ),
-                    # OpenAPI 3 changed the definition of the security level
-                    # change securityDefinitions/security in swagger_spec.py accordingly
-                    openapi_version="2.0",
-                    # OpenApi 3 not working with FlaskApiSpec
-                    # -> Duplicate parameter with name body and location body
-                    # https://github.com/jmcarp/flask-apispec/issues/170
-                    # Find other warning like this by searching:
-                    # **FASTAPI**
-                    # openapi_version="3.0.2",
-                    plugins=[MarshmallowPlugin()],
-                ),
+                "APISPEC_SPEC": spec,
                 # 'APISPEC_SWAGGER_URL': '/api/swagger',
                 "APISPEC_SWAGGER_URL": None,
                 # 'APISPEC_SWAGGER_UI_URL': '/api/swagger-ui',
@@ -162,6 +171,7 @@ def create_app(
                 "APISPEC_SWAGGER_UI_URL": None,
             }
         )
+
         mem.docs = FlaskApiSpec(microservice)
 
         # Clean app routes
@@ -178,7 +188,7 @@ def create_app(
 
             for verb in rule.methods - ignore_verbs:
                 method = verb.lower()
-                if method in mem.customizer._original_paths[rulename]:
+                if method in endpoints_loader.uri2methods[rulename]:
                     # remove from flask mapping
                     # to allow 405 response
                     newmethods.add(verb)
@@ -189,8 +199,7 @@ def create_app(
 
         # Register swagger. Note: after method mapping cleaning
         with microservice.app_context():
-            for endpoint in mem.customizer._endpoints:
-                urls = list(endpoint.uris.values())
+            for endpoint in endpoints_loader.endpoints:
                 try:
                     mem.docs.register(endpoint.cls)
                 except TypeError as e:

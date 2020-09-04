@@ -103,8 +103,9 @@ class Roles(Schema):
     description = fields.Str()
 
 
+# Duplicated in profile.py
 class Group(Schema):
-    uuid = fields.Str()
+    uuid = fields.UUID()
     fullname = fields.Str()
     shortname = fields.Str()
 
@@ -112,7 +113,7 @@ class Group(Schema):
 def get_output_schema():
     attributes = {}
 
-    attributes["uuid"] = fields.Str()
+    attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
@@ -125,7 +126,7 @@ def get_output_schema():
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
@@ -170,7 +171,7 @@ def getInputSchema(request):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(request):
             attributes.update(custom_fields)
 
@@ -193,50 +194,20 @@ class AdminUsers(EndpointResource):
 
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
-
-    _GET = {
-        "/admin/users": {
-            "private": True,
-            "summary": "List of users",
-            "responses": {
-                "200": {"description": "List of users successfully retrieved"}
-            },
-        },
-        "/admin/users/<user_id>": {
-            "private": True,
-            "summary": "Obtain information on a single user",
-            "responses": {
-                "200": {"description": "User information successfully retrieved"}
-            },
-        },
-    }
-    _POST = {
-        "/admin/users": {
-            "private": True,
-            "summary": "Create a new user",
-            "responses": {
-                "200": {"description": "The uuid of the new user is returned"},
-                "409": {"description": "This user already exists"},
-            },
-        }
-    }
-    _PUT = {
-        "/admin/users/<user_id>": {
-            "private": True,
-            "summary": "Modify a user",
-            "responses": {"200": {"description": "User successfully modified"}},
-        }
-    }
-    _DELETE = {
-        "/admin/users/<user_id>": {
-            "private": True,
-            "summary": "Delete a user",
-            "responses": {"200": {"description": "User successfully deleted"}},
-        }
-    }
+    private = True
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.marshal_with(get_output_schema(), code=200)
+    @decorators.endpoint(
+        path="/admin/users",
+        summary="List of users",
+        responses={200: "List of users successfully retrieved"},
+    )
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Obtain information on a single user",
+        responses={200: "User information successfully retrieved"},
+    )
     def get(self, user_id=None):
 
         users = self.auth.get_users(user_id)
@@ -249,6 +220,14 @@ class AdminUsers(EndpointResource):
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getInputSchema)
+    @decorators.endpoint(
+        path="/admin/users",
+        summary="Create a new user",
+        responses={
+            200: "The uuid of the new user is returned",
+            409: "This user already exists",
+        },
+    )
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
@@ -285,6 +264,11 @@ class AdminUsers(EndpointResource):
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(getInputSchema)
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Modify a user",
+        responses={200: "User successfully modified"},
+    )
     def put(self, user_id, **kwargs):
 
         user = self.auth.get_users(user_id)
@@ -339,6 +323,11 @@ class AdminUsers(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Delete a user",
+        responses={200: "User successfully deleted"},
+    )
     def delete(self, user_id):
 
         user = self.auth.get_users(user_id)

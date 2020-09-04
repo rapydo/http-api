@@ -4,12 +4,11 @@ from webargs import fields, validate
 
 from restapi.exceptions import RestApiException
 from restapi.services.telegram import bot
-from restapi.utilities.logs import log
 
 
 @bot.command("help", help="print this help")
 @bot.restricted_to_users
-def help(update, context):
+def usage(update, context):
     msg = "Available Commands:\n\n"
 
     for cmd, descr in bot.commands.items():

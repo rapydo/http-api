@@ -9,19 +9,11 @@ setup(
     name="rapydo_http",
     version=current_version,
     description="HTTP API server working on top of the RAPyDo framework",
-    url="https://rapydo.github.io/http-api",
+    url="https://rapydo.github.io/docs",
     license="MIT",
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
-    author="Paolo D'Onorio De Meo",
-    author_email="p.donorio.de.meo@gmail.com",
     packages=find_packages(where=".", exclude=["tests*"]),
-    package_data={
-        main_package: [
-            "confs/connectors.yaml",
-            "models/swagger.yaml",
-            "templates/index.html",
-        ],
-    },
+    package_data={main_package: ["models/swagger.yaml", "templates/index.html"]},
     python_requires=">=3.6.0",
     entry_points=f"""
         [console_scripts]
@@ -31,8 +23,8 @@ setup(
         # Flask and plugins
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.9.0",
-        "Flask-Cors==3.0.8",
+        "flask-apispec==0.10.0",
+        "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
         "PyJWT",
@@ -51,11 +43,8 @@ setup(
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==12.8",
         # TOTP
-        "pyotp==2.3.0",
-        "segno==1.0.0",
-        # Swagger
-        "bravado-core",
-        "swagger-spec-validator",
+        "pyotp==2.4.0",
+        "segno==1.2.0",
         # Utilities
         "PyYAML==5.3.1",
         "loguru",
@@ -66,13 +55,13 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.16.1",
+        "sentry-sdk[flask]==0.16.5",
         # Tests
         "pytest-flask==1.0.0",
-        "pytest-cov==2.10.0",
-        "schemathesis==2.1.0",
-        "Faker==4.1.1",
-        "Telethon==1.16.0",
+        "pytest-cov==2.10.1",
+        "schemathesis==2.3.3",
+        "Faker==4.1.2",
+        "Telethon==1.16.2",
     ],
     classifiers=[
         "Programming Language :: Python",

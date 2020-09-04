@@ -77,11 +77,6 @@ script:
     fi || travis_terminate 1;
 
   - git remote add origin https://your_remote_git/your_project.git
-
-  # this is the recommended command from codecov. But when curl fails due to a network
-  # timeout the whole command exits with 0. As a results some jobs are all passed but
-  # the coverage stats are degraded, because one of the stages is missing!
-  # - bash <(curl -s https://codecov.io/bash) -R submodules/http-api
   - wget https://codecov.io/bash -O codecov_report
 
   # Tests in dev mode
@@ -116,7 +111,7 @@ script:
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
-  - bash codecov_report -R submodules/http-api
+  - travis_retry bash codecov_report -R submodules/http-api
 
   # Basic production test
   - rapydo remove --all
@@ -141,7 +136,7 @@ script:
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
-  - bash codecov_report -R submodules/http-api
+  - travis_retry bash codecov_report -R submodules/http-api
 
   # - rapydo remove --all
 

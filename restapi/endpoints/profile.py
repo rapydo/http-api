@@ -27,14 +27,23 @@ class NewPassword(InputSchema):
     totp_code = fields.Str(required=False)
 
 
-class UserProfile(InputSchema):
-    name = fields.Str()
-    surname = fields.Str()
-    privacy_accepted = fields.Boolean()
+def patchUserProfile():
+    attributes = {}
+    attributes["name"] = fields.Str()
+    attributes["surname"] = fields.Str()
+    attributes["privacy_accepted"] = fields.Boolean()
+
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
+        if custom_fields := customizer.get_user_editable_fields(None):
+            attributes.update(custom_fields)
+
+    schema = Schema.from_dict(attributes)
+    return schema()
 
 
+# Duplicated in admin_users.py
 class Group(Schema):
-    uuid = fields.Str()
+    uuid = fields.UUID()
     shortname = fields.Str()
     fullname = fields.Str()
 
@@ -42,7 +51,7 @@ class Group(Schema):
 def getProfileData():
     attributes = {}
 
-    attributes["uuid"] = fields.Str(required=True)
+    attributes["uuid"] = fields.UUID(required=True)
     attributes["email"] = fields.Email(required=True)
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
@@ -55,7 +64,7 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
@@ -73,29 +82,13 @@ class Profile(EndpointResource):
     auth_service = detector.authentication_service
     neo4j_enabled = auth_service == "neo4j"
 
-    _GET = {
-        "/profile": {
-            "summary": "List profile attributes",
-            "responses": {
-                "200": {"description": "Dictionary with all profile attributes"}
-            },
-        }
-    }
-    _PUT = {
-        "/profile": {
-            "summary": "Update user password",
-            "responses": {"204": {"description": "Password updated"}},
-        }
-    }
-    _PATCH = {
-        "/profile": {
-            "summary": "Update profile information",
-            "responses": {"204": {"description": "Profile updated"}},
-        }
-    }
-
     @decorators.auth.require()
     @decorators.marshal_with(getProfileData(), code=200)
+    @decorators.endpoint(
+        path="/profile",
+        summary="List profile attributes",
+        responses={200: "User profile is returned"},
+    )
     def get(self):
 
         current_user = self.get_user()
@@ -116,13 +109,19 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        if customizer := Meta.get_customizer_instance("apis.profile", "CustomProfile"):
+        customizer = Meta.get_customizer_instance("endpoints.profile", "CustomProfile")
+        if customizer:
             data = customizer.manipulate(ref=self, user=current_user, data=data)
 
         return self.response(data)
 
     @decorators.auth.require()
     @decorators.use_kwargs(NewPassword)
+    @decorators.endpoint(
+        path="/profile",
+        summary="Update user password",
+        responses={204: "Password updated"},
+    )
     def put(self, password, new_password, password_confirm, totp_code=None):
         """ Update password for current user """
 
@@ -141,7 +140,12 @@ class Profile(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require()
-    @decorators.use_kwargs(UserProfile)
+    @decorators.use_kwargs(patchUserProfile())
+    @decorators.endpoint(
+        path="/profile",
+        summary="Update profile information",
+        responses={204: "Profile updated"},
+    )
     def patch(self, **kwargs):
         """ Update profile for current user """
 

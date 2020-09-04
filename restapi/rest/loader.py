@@ -1,0 +1,390 @@
+"""
+Customization based on configuration 'blueprint' files
+"""
+
+import copy
+import glob
+import os
+import re
+
+from attr import ib as attribute
+from attr import s as ClassOfAttributes
+
+from restapi import decorators
+from restapi.confs import (
+    ABS_RESTAPI_PATH,
+    API_URL,
+    BASE_URLS,
+    CONF_PATH,
+    CUSTOM_PACKAGE,
+)
+from restapi.env import Env
+from restapi.rest.annotations import inject_apispec_docs
+from restapi.services.detect import detector  # do not remove this unused import
+from restapi.utilities.configuration import read_configuration
+from restapi.utilities.globals import mem
+from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
+
+CONF_FOLDERS = Env.load_group(label="project_confs")
+
+# Flask accepts the following types:
+# https://exploreflask.com/en/latest/views.html
+#   string  Accepts any text without a slash (the default).
+#   int Accepts integers.
+#   float   Like int but for floating point values.
+#   path    Like string but accepts slashes.
+# Swagger accepts the following types:
+# https://swagger.io/specification/#data-types-12
+FLASK_TO_SWAGGER_TYPES = {
+    "string": "string",
+    "path": "string",
+    "int": "integer",
+    "float": "number",
+}
+
+
+ERR401 = {"description": "This endpoint requires a valid authorization token"}
+ERR400 = {"description": "The request cannot be satisfied due to malformed syntax"}
+ERR404 = {"description": "The requested resource cannot be found"}
+ERR404_AUTH = {"description": "The resource cannot be found or you are not authorized"}
+
+uri_pattern = re.compile(r"\<([^\>]+)\>")
+
+log.verbose("Detector loaded: {}", detector)
+
+
+@ClassOfAttributes
+class EndpointElements:
+    cls = attribute(default=None)
+    uris = attribute(default=[])
+    methods = attribute(default={})
+    tags = attribute(default=[])
+    base_uri = attribute(default="")
+    private = attribute(default=False)
+
+
+class EndpointsLoader:
+    def __init__(self):
+
+        # Used by server.py to load endpoints definitions
+        self.endpoints = []
+        # Used by server.py to remove unmapped methods
+        self.uri2methods = {}
+        # Used by server.py to configure ApiSpec
+        self.tags = []
+
+        # Used by swagger specs endpoints to show authentication info
+        self.authenticated_endpoints = {}
+        # Used by swagger spec endpoint to remove private endpoints from public requests
+        self.private_endpoints = {}
+
+        self._used_tags = set()
+
+    def load_configuration(self):
+        # Reading configuration
+        confs_path = os.path.join(os.curdir, CONF_PATH)
+        defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)
+        base_path = CONF_FOLDERS.get("base_path", confs_path)
+        projects_path = CONF_FOLDERS.get("projects_path", confs_path)
+        submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
+
+        try:
+            configuration, self._extended_project, _ = read_configuration(
+                default_file_path=defaults_path,
+                base_project_path=base_path,
+                projects_path=projects_path,
+                submodules_path=submodules_path,
+            )
+        except AttributeError as e:  # pragma: no cover
+            log.exit(e)
+
+        return configuration
+
+    def load_endpoints(self):
+
+        # core endpoints folder (rapydo/http-api)
+        self.load_endpoints_folder(ABS_RESTAPI_PATH)
+
+        # endpoints folder from extended project, if any
+        if self._extended_project is not None:
+            self.load_endpoints_folder(os.path.join(os.curdir, self._extended_project))
+
+        # custom endpoints folder
+        self.load_endpoints_folder(os.path.join(os.curdir, CUSTOM_PACKAGE))
+
+        # Used in swagger specs endpoint
+        self.tags = self.remove_unused_tags(mem.configuration["tags"], self._used_tags)
+
+        self.detect_endpoints_shadowing()
+
+    @staticmethod
+    def skip_endpoint(depends_on):
+        for var in depends_on:
+            pieces = var.strip().split(" ")
+            pieces_num = len(pieces)
+            if pieces_num == 1:
+                dependency = pieces.pop()
+                negate = False
+            elif pieces_num == 2:
+                negate, dependency = pieces
+                negate = negate.lower() == "not"
+            else:  # pragma: no cover
+                log.exit("Wrong depends_on parameter: {}", var)
+
+            check = Env.get_bool(dependency)
+            if negate:
+                check = not check
+
+            # Skip if not meeting the requirements of the dependency
+            if not check:
+                return True, dependency
+
+        return False, None
+
+    def extract_endpoints(self, base_dir):
+
+        endpoints_classes = []
+        # get last item of the path
+        # normpath is required to strip final / if any
+        base_module = os.path.basename(os.path.normpath(base_dir))
+
+        apis_dir = os.path.join(base_dir, "endpoints")
+        apiclass_module = f"{base_module}.endpoints"
+        for epfiles in glob.glob(f"{apis_dir}/*.py"):
+
+            # get module name (es: endpoints.filename)
+            module_file = os.path.basename(os.path.splitext(epfiles)[0])
+            module_name = f"{apiclass_module}.{module_file}"
+            # Convert module name into a module
+            log.debug("Importing {}", module_name)
+            module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
+
+            # Extract classes from the module
+            classes = Meta.get_new_classes_from_module(module)
+            for class_name, epclss in classes.items():
+                # Filtering out classes without expected data
+                if not hasattr(epclss, "methods") or epclss.methods is None:
+                    continue
+
+                log.debug("Importing {} from {}.{}", class_name, apis_dir, module_file)
+
+                skip, dependency = self.skip_endpoint(epclss.depends_on)
+
+                if skip:
+                    log.debug(
+                        "Skipping '{} {}' due to unmet dependency: {}",
+                        module_name,
+                        class_name,
+                        dependency,
+                    )
+                    continue
+
+                endpoints_classes.append(epclss)
+
+        return endpoints_classes
+
+    def load_endpoints_folder(self, base_dir):
+        # Walk folders looking for endpoints
+
+        for epclss in self.extract_endpoints(base_dir):
+
+            if epclss.baseuri in BASE_URLS:
+                base = epclss.baseuri
+            else:
+                log.warning("Invalid base {}", epclss.baseuri)
+                base = API_URL
+            base = base.strip("/")
+
+            # Building endpoint
+            endpoint = EndpointElements(
+                uris=[],
+                methods={},
+                cls=epclss,
+                tags=epclss.labels,
+                base_uri=base,
+                private=epclss.private,
+            )
+
+            # m = GET|PUT|POST|DELETE|PATCH|...
+            for m in epclss.methods:
+
+                # method_fn = get|post|put|delete|patch|...
+                method_fn = m.lower()
+
+                # get, post, put, patch, delete functions
+                fn = getattr(epclss, method_fn)
+
+                # Adding the catch_exceptions decorator to every endpoint
+                decorator = decorators.catch_exceptions()
+                setattr(epclss, method_fn, decorator(fn))
+
+                # auth.required injected by the required decorator in bearer.py
+                auth_required = fn.__dict__.get("auth.required", False)
+
+                # conf from _GET, _POST, ... dictionaries
+                method_conf = None
+                method_name = f"_{m}"
+                if hasattr(epclss, method_name):
+                    log.warning(
+                        "Deprecated use of {} in {}, use @decorators.endpoint instead",
+                        method_name,
+                        epclss.__name__,
+                    )
+                    method_conf = getattr(epclss, method_name)
+                elif hasattr(fn, "uris"):
+                    # This is a temporary conversion, please remove it
+                    # once dropped the support for _METHOD dictionaries
+                    method_conf = {}
+                    for u in fn.uris:
+                        method_conf[u] = {}
+                else:  # pragma: no cover
+                    log.exit(
+                        "Invalid {} endpoint, both {} or @decorators.endpoint "
+                        "definitions are missing",
+                        epclss.__name__,
+                        method_name,
+                    )
+
+                endpoint.methods[method_fn] = copy.deepcopy(method_conf)
+                for uri, specs in method_conf.items():
+                    specs.setdefault("responses", {})
+
+                    full_uri = f"/{endpoint.base_uri}{uri}"
+                    self.authenticated_endpoints.setdefault(full_uri, {})
+                    # method_fn is equivalent to m.lower()
+                    self.authenticated_endpoints[full_uri].setdefault(
+                        method_fn, auth_required
+                    )
+
+                    specs["responses"].setdefault("400", ERR400)
+                    if auth_required:
+                        specs["responses"].setdefault("401", ERR401)
+                        specs["responses"].setdefault("404", ERR404_AUTH)
+                    else:
+                        specs["responses"].setdefault("404", ERR404)
+                    # inject _METHOD dictionaries into __apispec__ attribute
+                    # __apispec__ is normally populated by using @docs decorator
+                    inject_apispec_docs(fn, specs, epclss.labels)
+
+                    # This will be used by server.py.add
+                    endpoint.uris.append(full_uri)
+
+                    self.private_endpoints.setdefault(full_uri, {})
+                    self.private_endpoints[full_uri].setdefault(
+                        method_fn, endpoint.private
+                    )
+
+                    # Read URL parameters
+                    for parameter in uri_pattern.findall(full_uri):
+
+                        # No type specified, default to string
+                        if ":" not in parameter:
+                            ptype = "string"
+                            pname = parameter
+                        else:
+                            ptokens = parameter.split(":")
+                            ptype = FLASK_TO_SWAGGER_TYPES.get(ptokens[0], "string")
+                            pname = ptokens[1]
+
+                        specs.setdefault("parameters", [])
+                        specs["parameters"].append(
+                            {
+                                "name": pname,
+                                "type": ptype,
+                                "in": "path",
+                                "required": True,
+                            }
+                        )
+
+                    # Used by server.py to remove unmapped methods
+                    self.uri2methods.setdefault(full_uri, [])
+                    self.uri2methods[full_uri].append(method_fn)
+
+                    # Handle global tags
+                    if endpoint.tags:
+                        specs.setdefault("tags", list())
+                        specs["tags"] = list(set(specs["tags"] + endpoint.tags))
+
+                    log.verbose("Built definition '{}:{}'", m, full_uri)
+
+                    self._used_tags.update(endpoint.tags)
+            self.endpoints.append(endpoint)
+
+    def remove_unused_tags(self, all_tags, used_tags):
+        tags = []
+        for tag, desc in all_tags.items():
+            if tag not in used_tags:
+                log.debug("Skipping unsed tag: {}", tag)
+                continue
+            tags.append({"name": tag, "description": desc})
+        return tags
+
+    def detect_endpoints_shadowing(self):
+        # Verify mapping duplication or shadowing
+        # Example of shadowing:
+        # /xyz/<variable>
+        # /xyz/abc
+        # The second endpoint is shadowed by the first one
+        mappings = {}
+        classes = {}
+        # duplicates are found while filling the dictionaries
+        for endpoint in self.endpoints:
+            for method, uris in endpoint.methods.items():
+                mappings.setdefault(method, set())
+                classes.setdefault(method, {})
+
+                for uri in uris.keys():
+                    uri = f"/{endpoint.base_uri}{uri}"
+                    if uri in mappings[method]:
+                        log.warning(
+                            "Endpoint redefinition: {} {} used from both {} and {}",
+                            method.upper(),
+                            uri,
+                            endpoint.cls.__name__,
+                            classes[method][uri].__name__,
+                        )
+                    else:
+                        mappings[method].add(uri)
+                        classes[method][uri] = endpoint.cls
+
+        # Detect endpoints swadowing
+        for method, uris in mappings.items():
+            for idx1, u1 in enumerate(uris):
+                for idx2, u2 in enumerate(uris):
+                    # Just skip checks of an element with it-self (same index)
+                    # or elements already verified (idx2 < idx1)
+                    if idx2 <= idx1:
+                        continue
+
+                    # split url tokens and remove the first (always empty) token
+                    u1_tokens = u1.split("/")[1:]
+                    u2_tokens = u2.split("/")[1:]
+                    # If number of tokens differens, there cannot be any collision
+                    if len(u1_tokens) != len(u2_tokens):
+                        continue
+                    # verify is base uri is the same or not
+                    if u1_tokens[0] != u2_tokens[0]:
+                        continue
+                    # strip off base uri
+                    u1_tokens = u1_tokens[1:]
+                    u2_tokens = u2_tokens[1:]
+
+                    is_safe = False
+                    for index, t1 in enumerate(u1_tokens):
+                        t2 = u2_tokens[index]
+                        fixed_token1 = not t1.startswith("<")
+                        fixed_token2 = not t2.startswith("<")
+                        # the safe if tokens are different and not variable
+                        if t1 != t2 and fixed_token1 and fixed_token2:
+                            is_safe = True
+                            break
+                    if not is_safe:
+                        log.warning(
+                            "Endpoint shadowing detected: {}({m} {}) and {}({m} {})",
+                            classes[method][u1].__name__,
+                            u1,
+                            classes[method][u2].__name__,
+                            u2,
+                            m=method.upper(),
+                        )

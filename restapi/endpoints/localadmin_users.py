@@ -8,8 +8,8 @@
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
 # from restapi.utilities.meta import Meta
-# from restapi.resources.admin_users import send_notification, parse_roles, parse_group
-# from restapi.resources.admin_users import get_output_schema
+# from restapi.endpoints.admin_users import send_notification, parse_roles, parse_group
+# from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
 
 # from restapi.utilities.logs import log
@@ -122,8 +122,8 @@
 #                 labels=groups.values()
 #             )
 #         )
-
-#     if customizer := Meta.get_customizer_instance('apis.profile', 'CustomProfile'):
+#     customizer = Meta.get_customizer_instance('endpoints.profile', 'CustomProfile')
+#     if customizer:
 #         if custom_fields := customizer.get_custom_fields(strip_required):
 #             attributes.update(custom_fields)
 
@@ -144,42 +144,6 @@
 
 #     depends_on = ["not ADMINER_DISABLED"]
 #     labels = ["admin"]
-
-#     _GET = {
-#         "/localadmin/users": {
-#             "summary": "List of users",
-#             "responses": {
-#                 "200": {"description": "List of users successfully retrieved"}
-#             },
-#         },
-#         "/localadmin/users/<user_id>": {
-#             "summary": "Obtain information on a single user",
-#             "responses": {
-#                 "200": {"description": "User information successfully retrieved"}
-#             },
-#         },
-#     }
-#     _POST = {
-#         "/localadmin/users": {
-#             "summary": "Create a new user",
-#             "responses": {
-#                 "200": {"description": "The uuid of the new user is returned"},
-#                 "409": {"description": "This user already exists"},
-#             },
-#         }
-#     }
-#     _PUT = {
-#         "/localadmin/users/<user_id>": {
-#             "summary": "Modify a user",
-#             "responses": {"200": {"description": "User successfully modified"}},
-#         }
-#     }
-#     _DELETE = {
-#         "/localadmin/users/<user_id>": {
-#             "summary": "Delete a user",
-#             "responses": {"200": {"description": "User successfully deleted"}},
-#         }
-#     }
 
 #     def is_authorized(self, current_user, user, is_admin):
 
@@ -216,6 +180,20 @@
 
 #     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.marshal_with(get_output_schema(), code=200)
+#     @decorators.endpoint(
+#         path="/localadmin/users",
+#         summary="List of users",
+#         responses={
+#             200: "List of users successfully retrieved",
+#         },
+#     )
+#     @decorators.endpoint(
+#         path="/localadmin/users/<user_id>",
+#         summary="Obtain information on a single user",
+#         responses={
+#             200: "User information successfully retrieved",
+#         },
+#     )
 #     def get(self, user_id=None):
 
 #         data = []
@@ -242,6 +220,15 @@
 
 #     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.use_kwargs(get_input_schema())
+#     @decorators.endpoint(
+#         path="/localadmin/users",
+#         summary="Create a new user",
+#         responses={
+#             200: "The uuid of the new user is returned",
+#             409: "This user already exists",
+#         },
+#     )
+
 #     def post(self, **kwargs):
 
 #         roles, roles_keys = parse_roles(kwargs)
@@ -296,6 +283,13 @@
 
 #     @decorators.auth.require_all(Role.LOCAL_ADMIN)
 #     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
+#     @decorators.endpoint(
+#         path="/localadmin/users/<user_id>",
+#         summary="Modify a user",
+#         responses={
+#             200: "User successfully modified",
+#         },
+#     )
 #     def put(self, user_id, **kwargs):
 
 #         user = self.auth.get_users(user_id)
@@ -371,6 +365,13 @@
 #         return self.empty_response()
 
 #     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.endpoint(
+#         path="/localadmin/users/<user_id>",
+#         summary="Delete a user",
+#         responses={
+#             200: "User successfully deleted",
+#         },
+#     )
 #     def delete(self, user_id):
 
 #         is_admin = self.verify_admin()

@@ -17,20 +17,12 @@ class PushpinWebSocket(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
-    _POST = {
-        "/socket/<channel>": {
-            "description": "Open a websocket",
-            "responses": {"200": {"description": "Websocket connection accepted"}},
-        }
-    }
-    _PUT = {
-        "/socket/<channel>/<sync>": {
-            "description": "Push to socket",
-            "responses": {"200": {"description": "Message sent"}},
-        }
-    }
-
     @decorators.auth.require(allow_access_token_parameter=True)
+    @decorators.endpoint(
+        path="/socket/<channel>/<sync>",
+        description="Push to socket",
+        responses={200: "Message sent"},
+    )
     def put(self, channel, sync):
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
@@ -44,6 +36,11 @@ class PushpinWebSocket(EndpointResource):
         return self.response(f"Message received: {published} (sync={sync})")
 
     @decorators.auth.require(allow_access_token_parameter=True)
+    @decorators.endpoint(
+        path="/socket/<channel>",
+        description="Open a websocket",
+        responses={200: "Websocket connection accepted"},
+    )
     def post(self, channel):
 
         try:
@@ -96,20 +93,11 @@ class PushpinHTTPStream(EndpointResource):
 
     depends_on = ["PUSHPIN_ENABLE"]
 
-    _POST = {
-        "/stream/<channel>": {
-            "description": "Open a HTTP Stream for Long polling",
-            "produces": ["application/json", "text/plain"],
-            "responses": {"200": {"description": "HTTP Stream connection accepted"}},
-        }
-    }
-    _PUT = {
-        "/stream/<channel>/<sync>": {
-            "description": "Push to stream",
-            "responses": {"200": {"description": "Message sent"}},
-        }
-    }
-
+    @decorators.endpoint(
+        path="/stream/<channel>/<sync>",
+        description="Push to stream",
+        responses={200: "Message sent"},
+    )
     def put(self, channel, sync):
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
@@ -123,6 +111,11 @@ class PushpinHTTPStream(EndpointResource):
         return self.response(f"Message received: {published} (sync={sync})")
 
     @decorators.auth.require(allow_access_token_parameter=True)
+    @decorators.endpoint(
+        path="/stream/<channel>",
+        description="Open a HTTP Stream for Long polling",
+        responses={200: "HTTP Stream connection accepted"},
+    )
     def post(self, channel):
 
         headers = {}

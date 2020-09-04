@@ -1,5 +1,5 @@
 """
-Upload data to APIs.
+Upload data to APIs
 
 Interesting reading:
 http://flask.pocoo.org/docs/0.11/patterns/fileuploads/

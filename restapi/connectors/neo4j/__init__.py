@@ -72,7 +72,13 @@ def catch_db_exceptions(func):
     return wrapper
 
 
-def graph_transactions(func):
+# Deprecated since 0.7.6
+def graph_transactions(func):  # pragma: no cover
+
+    log.warning(
+        "Deprecated use of graph_transactions from neo4j, use from @decorators instead"
+    )
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 

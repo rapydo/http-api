@@ -1,6 +1,5 @@
 from restapi import decorators
 from restapi.confs import TESTING
-from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import RestApiException
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource
@@ -46,16 +45,14 @@ if TESTING and detector.check_availability("neo4j"):
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
-        _GET = {
-            "/tests/neo4j/<test>": {
-                "summary": "Execute tests against the neo4j connector",
-                "description": "Only enabled in testing mode",
-                "responses": {"200": {"description": "Tests executed"}},
-            },
-        }
-
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.marshal_with(Output, code=200)
+        @decorators.endpoint(
+            path="/tests/neo4j/<test>",
+            summary="Execute tests against the neo4j connector",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
         def get(self, test):
             self.neo4j = self.get_service_instance("neo4j")
             try:

@@ -1,5 +1,4 @@
 from restapi import decorators
-from restapi.connectors.neo4j import graph_transactions
 from restapi.exceptions import NotFound, Unauthorized
 from restapi.models import InputSchema, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
@@ -33,13 +32,14 @@ if detector.check_availability("neo4j"):
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
     class Coordinator(Schema):
-        uuid = fields.Str()
+        uuid = fields.UUID()
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
 
+    # This is also defined in profile.py and admin_users.py but without coordinator
     class Group(Schema):
-        uuid = fields.Str()
+        uuid = fields.UUID()
         fullname = fields.Str()
         shortname = fields.Str()
 
@@ -58,6 +58,7 @@ if detector.check_availability("neo4j"):
             validate=validate.OneOf(choices=users.keys(), labels=users.values()),
         )
 
+    # Function required here to reload the model at runtime and fill the groups list
     def get_input_group(request):
         # if not request:
         #     return {}
@@ -69,44 +70,19 @@ if detector.check_availability("neo4j"):
     class AdminGroups(EndpointResource):
 
         labels = ["admin"]
-        _GET = {
-            "/admin/groups": {
-                "private": True,
-                "summary": "List of groups",
-                "responses": {
-                    "200": {"description": "List of groups successfully retrieved"},
-                    "409": {"description": "Request is invalid due to conflicts"},
-                },
-            }
-        }
-        _POST = {
-            "/admin/groups": {
-                "private": True,
-                "summary": "Create a new group",
-                "responses": {
-                    "200": {"description": "The uuid of the new group is returned"},
-                    "409": {"description": "Request is invalid due to conflicts"},
-                },
-            }
-        }
-        _PUT = {
-            "/admin/groups/<group_id>": {
-                "private": True,
-                "summary": "Modify a group",
-                "responses": {"200": {"description": "Group successfully modified"}},
-            }
-        }
-        _DELETE = {
-            "/admin/groups/<group_id>": {
-                "private": True,
-                "summary": "Delete a group",
-                "responses": {"200": {"description": "Group successfully deleted"}},
-            }
-        }
+        private = True
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
         @decorators.marshal_with(Group(many=True), code=200)
+        @decorators.endpoint(
+            path="/admin/groups",
+            summary="List of groups",
+            responses={
+                200: "List of groups successfully retrieved",
+                409: "Request is invalid due to conflicts",
+            },
+        )
         def get(self):
 
             self.graph = self.get_service_instance("neo4j")
@@ -117,8 +93,16 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.use_kwargs(get_input_group)
+        @decorators.endpoint(
+            path="/admin/groups",
+            summary="Create a new group",
+            responses={
+                200: "The uuid of the new group is returned",
+                409: "Request is invalid due to conflicts",
+            },
+        )
         def post(self, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
@@ -140,8 +124,13 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
         @decorators.use_kwargs(get_input_group)
+        @decorators.endpoint(
+            path="/admin/groups/<group_id>",
+            summary="Modify a group",
+            responses={204: "Group successfully modified", 404: "Group not found"},
+        )
         def put(self, group_id, **kwargs):
 
             self.graph = self.get_service_instance("neo4j")
@@ -178,7 +167,12 @@ if detector.check_availability("neo4j"):
 
         @decorators.auth.require_all(Role.ADMIN)
         @decorators.catch_graph_exceptions
-        @graph_transactions
+        @decorators.graph_transactions
+        @decorators.endpoint(
+            path="/admin/groups/<group_id>",
+            summary="Delete a group",
+            responses={204: "Group successfully deleted", 404: "Group not found"},
+        )
         def delete(self, group_id):
 
             self.graph = self.get_service_instance("neo4j")

@@ -6,15 +6,12 @@ we could provide back then
 from flask import Response
 from flask_apispec import MethodResource
 from flask_restful import Resource, request
-from jsonschema.exceptions import ValidationError
 
 from restapi.confs import API_URL
-from restapi.exceptions import RestApiException
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
 from restapi.services.detect import AUTH_NAME, detector
-from restapi.swagger import input_validation
 from restapi.utilities.logs import log, obfuscate_dict
 
 ###################
@@ -32,6 +29,7 @@ class EndpointResource(MethodResource, Resource):
     baseuri = API_URL
     depends_on = []
     labels = ["undefined"]
+    private = False
     """
     Implements a generic Resource for our Restful APIs model
     """
@@ -186,13 +184,11 @@ class EndpointResource(MethodResource, Resource):
 
         return unpacked_token[3]
 
-    # to be deprecated
     # Only used in mistral
-    # this is a simple wrapper of restapi.swagger.input_validation
+    # Deprecated since 0.7.6
     @staticmethod
     def validate_input(json_parameters, definitionName):  # pragma: no cover
 
-        try:
-            return input_validation(json_parameters, definitionName)
-        except ValidationError as e:
-            raise RestApiException(e.message, status_code=400)
+        log.warning("Deprecated use of validate_input, use webargs instead")
+
+        return True

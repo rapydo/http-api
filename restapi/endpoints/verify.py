@@ -10,17 +10,14 @@ class Verify(EndpointResource):
 
     ALLOW_HTML_RESPONSE = True
     labels = ["helpers"]
-    _GET = {
-        "/status/<service>": {
-            "summary": "Check if the API server is able to reach a given service",
-            "description": "Use this URI to check the connection between APIs and services",
-            "responses": {
-                "200": {"description": "Server is able to reach the service"}
-            },
-        }
-    }
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.endpoint(
+        path="/status/<service>",
+        summary="Check if the API server is able to reach a given service",
+        description="Use this URI to check the connection between APIs and services",
+        responses={200: "Server is able to reach the service"},
+    )
     def get(self, service):
 
         if not detector.check_availability(service):

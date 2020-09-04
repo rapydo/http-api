@@ -39,18 +39,13 @@ class Login(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
-    _POST = {
-        "/login": {
-            "summary": "Login with basic credentials",
-            "description": "Normal credentials (username and password) login endpoint",
-            "responses": {
-                "200": {"description": "Credentials are valid"},
-                "401": {"description": "Invalid username or password"},
-            },
-        }
-    }
-
     @decorators.use_kwargs(Credentials)
+    @decorators.endpoint(
+        path="/login",
+        summary="Login with basic credentials",
+        description="Login with normal credentials (username and password)",
+        responses={200: "Credentials are valid", 401: "Invalid username or password"},
+    )
     def post(
         self,
         username,

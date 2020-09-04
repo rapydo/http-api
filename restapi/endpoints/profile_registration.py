@@ -1,9 +1,9 @@
 from restapi import decorators
 from restapi.confs import get_project_configuration
+from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
 from restapi.models import InputSchema, fields, validate
-from restapi.resources.profile_activation import send_activation_link
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
@@ -34,17 +34,15 @@ if detector.check_availability("smtp"):
         depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
-        _POST = {
-            "/profile": {
-                "summary": "Register new user",
-                "responses": {
-                    "200": {"description": "ID of new user"},
-                    "409": {"description": "This user already exists"},
-                },
-            }
-        }
-
         @decorators.use_kwargs(User)
+        @decorators.endpoint(
+            path="/profile",
+            summary="Register new user",
+            responses={
+                200: "The uuid of the new user is returned",
+                409: "This user already exists",
+            },
+        )
         def post(self, **kwargs):
             """ Register new user """
 

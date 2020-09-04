@@ -46,21 +46,11 @@ class ProfileActivation(EndpointResource):
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
-    _POST = {
-        "/profile/activate": {
-            "summary": "Ask a new activation link",
-            "responses": {
-                "200": {"description": "A new activation link has been sent"}
-            },
-        }
-    }
-    _PUT = {
-        "/profile/activate/<token>": {
-            "summary": "Activate your account by providing the activation token",
-            "responses": {"200": {"description": "Account successfully activated"}},
-        }
-    }
-
+    @decorators.endpoint(
+        path="/profile/activate/<token>",
+        summary="Activate your account by providing the activation token",
+        responses={200: "Account successfully activated"},
+    )
     def put(self, token):
 
         token = token.replace("%2B", ".")
@@ -114,6 +104,11 @@ class ProfileActivation(EndpointResource):
         return self.response("Account activated")
 
     @decorators.use_kwargs({"username": fields.Email(required=True)})
+    @decorators.endpoint(
+        path="/profile/activate",
+        summary="Ask a new activation link",
+        responses={200: "A new activation link has been sent"},
+    )
     def post(self, username):
 
         user = self.auth.get_user_object(username=username)

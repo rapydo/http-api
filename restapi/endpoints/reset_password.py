@@ -39,29 +39,17 @@ if detector.check_availability("smtp"):
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
         labels = ["authentication"]
 
-        _POST = {
-            "/reset": {
-                "summary": "Request password reset via email",
-                "description": "Request password reset via email",
-                "responses": {
-                    "200": {"description": "Reset email is valid"},
-                    "401": {"description": "Invalid reset email"},
-                    "403": {"description": "Account not found or already active"},
-                },
-            }
-        }
-        _PUT = {
-            "/reset/<token>": {
-                "summary": "Change password as conseguence of a reset request",
-                "description": "Change password as conseguence of a reset request",
-                "responses": {
-                    "200": {"description": "Reset token is valid, password changed"},
-                    "401": {"description": "Invalid reset token"},
-                },
-            }
-        }
-
         @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
+        @decorators.endpoint(
+            path="/reset",
+            summary="Request password reset via email",
+            description="Request password reset via email",
+            responses={
+                200: "Reset email is valid",
+                401: "Invalid reset email",
+                403: "Account not found or already active",
+            },
+        )
         def post(self, reset_email):
 
             reset_email = reset_email.lower()
@@ -117,6 +105,15 @@ if detector.check_availability("smtp"):
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
                 ),
             }
+        )
+        @decorators.endpoint(
+            path="/reset/<token>",
+            summary="Change password as conseguence of a reset request",
+            description="Change password as conseguence of a reset request",
+            responses={
+                200: "Reset token is valid, password changed",
+                401: "Invalid reset token",
+            },
         )
         def put(self, token, new_password=None, password_confirm=None):
 

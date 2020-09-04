@@ -12,36 +12,24 @@
 
 #         depends_on = ["CELERY_ENABLE"]
 #         labels = ["tasks"]
-#         _GET = {
-#             "/queue": {
-#                 "summary": "List tasks in the queue",
-#                 "description": "Base implementation of a CELERY queue.",
-#                 "responses": {"200": {"description": "A list of tasks"}},
-#             },
-#             "/queue/<task_id>": {
-#                 "summary": "Information about a single task",
-#                 "responses": {"200": {"description": "task information"}},
-#             },
-#         }
-#         _PUT = {
-#             "/queue/<task_id>": {
-#                 "summary": "Revoke a task from its id",
-#                 "responses": {"204": {"description": "The task was revoked"}},
-#             }
-#         }
-#         _DELETE = {
-#             "/queue/<task_id>": {
-#                 "summary": "Delete a task",
-#                 "responses": {
-#                     "204": {
-#                         "description": "The task was succesfully deleted"
-#                     }
-#                 },
-#             }
-#         }
 
 #         # task_id = uuid referring to the task you are selecting
 #         @decorators.auth.require_any('admin_root', 'staff_user')
+#         @decorators.endpoint(
+#             path="/queue",
+#             summary="List tasks in the queue",
+#             description="Base implementation of a CELERY queue.",
+#             responses={
+#                 200: "A list of tasks",
+#             },
+#         )
+#         @decorators.endpoint(
+#             path="/queue/<task_id>",
+#             summary="Information about a single task",
+#             responses={
+#                 200: "task information",
+#             },
+#         )
 #         def get(self, task_id=None):
 
 #             data = []
@@ -167,6 +155,13 @@
 
 #         # task_id = uuid referring to the task you are selecting
 #         @decorators.auth.require_all('admin_root')
+#         @decorators.endpoint(
+#             path="/queue/<task_id>",
+#             summary="Revoke a task from its id",
+#             responses={
+#                 204: "The task was revoked",
+#             },
+#         )
 #         def put(self, task_id):
 #             celery = self.get_service_instance('celery')
 #             celery.celery_app.control.revoke(task_id)
@@ -174,6 +169,13 @@
 
 #         # task_id = uuid referring to the task you are selecting
 #         @decorators.auth.require_all('admin_root')
+#         @decorators.endpoint(
+#             path="/queue/<task_id>",
+#             summary="Delete a task",
+#             responses={
+#                 204: "The task was succesfully deleted",
+#             },
+#         )
 #         def delete(self, task_id):
 #             celery = self.get_service_instance('celery')
 #             celery.celery_app.control.revoke(task_id, terminate=True)

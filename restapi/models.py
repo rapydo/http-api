@@ -2,9 +2,10 @@ import inspect
 
 from marshmallow import Schema  # also used from endpoint for Schemas
 from marshmallow import validate  # used as alias from endpoints
-from marshmallow import ValidationError, pre_load
+from marshmallow import EXCLUDE, ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
+from webargs.flaskparser import parser
 
 from restapi.utilities.logs import log
 
@@ -16,6 +17,13 @@ GET_SCHEMA_KEY = "get_schema"
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.verbose("{} loaded", validate)
+
+
+@parser.location_loader("body")
+def load_data(request, schema):
+    # Return json if it is not None, otherwise it will send form
+    # No merge is allowed here
+    return request.json or request.form
 
 
 class InputSchema(Schema):
@@ -40,6 +48,12 @@ class InputSchema(Schema):
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
         return data
+
+
+class PartialInputSchema(InputSchema):
+    class Meta:
+        ordered = True
+        unknown = EXCLUDE
 
 
 class Neo4jSchema(Schema):
