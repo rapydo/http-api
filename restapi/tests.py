@@ -346,14 +346,6 @@ class BaseTests:
         return {"Authorization": f"Bearer {content}"}, content
 
     @staticmethod
-    def randomString(length=16, prefix=""):  # pragma: no cover
-        # Deprecated since 0.7.4
-        log.warning("Deprecated, use fake.password instead")
-        return prefix + fake.password(
-            length, low=False, up=True, digits=True, symbols=False
-        )
-
-    @staticmethod
     def buildData(schema):
         """
             Input: a Marshmallow schema
