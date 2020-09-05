@@ -180,12 +180,6 @@ class NeoModel(Connector):
         return results
 
     @staticmethod
-    def createUniqueIndex(*var):
-
-        separator = "#_#"
-        return separator.join(var)
-
-    @staticmethod
     def sanitize_input(term):
         """
         Strip and clean up term from special characters.

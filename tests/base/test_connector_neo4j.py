@@ -94,8 +94,6 @@ else:
             except CypherSyntaxError as e:
                 assert str(e) == "Failed to execute Cypher Query"
 
-            assert obj.createUniqueIndex("a", "b") == "a#_#b"
-
             assert obj.sanitize_input("x") == "x"
             assert obj.sanitize_input("x ") == "x"
             assert obj.sanitize_input(" x") == "x"
