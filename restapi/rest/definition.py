@@ -39,7 +39,6 @@ class EndpointResource(MethodResource, Resource):
 
         self.auth = self.load_authentication()
         self.get_service_instance = detector.get_service_instance
-        self._json_args = {}
 
     @staticmethod
     def load_authentication():
@@ -48,35 +47,6 @@ class EndpointResource(MethodResource, Resource):
         auth.db = detector.get_service_instance(detector.authentication_service)
 
         return auth
-
-    # Deprecated since 0.7.5
-    def get_input(self):  # pragma: no cover
-
-        log.warning(
-            "Deprecated use of self.get_input(), use webargs-defined parameters instead"
-        )
-        # if is an upload in streaming, I must not consume
-        # request.data or request.json, otherwise it get lost
-        if not self._json_args and request.mimetype != "application/octet-stream":
-            try:
-                self._json_args = request.get_json(force=True)
-            except Exception as e:
-                log.verbose("Error retrieving input parameters, {}", e)
-
-            # json payload and formData cannot co-exist
-            if not self._json_args:
-                self._json_args = request.form
-
-        if self._json_args:
-            log.verbose("Parameters {}", obfuscate_dict(self._json_args))
-
-        # Convert a Flask object to a normal dict... prevent uncatchable errors like:
-        # werkzeug.exceptions.BadRequestKeyError
-        # When accessing this object
-        parameters = {}
-        for k, v in self._json_args.items():
-            parameters[k] = v
-        return parameters
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):
