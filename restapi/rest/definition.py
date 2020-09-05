@@ -122,12 +122,3 @@ class EndpointResource(MethodResource, Resource):
             return None
 
         return unpacked_token[3]
-
-    # Only used in mistral
-    # Deprecated since 0.7.6
-    @staticmethod
-    def validate_input(json_parameters, definitionName):  # pragma: no cover
-
-        log.warning("Deprecated use of validate_input, use webargs instead")
-
-        return True
