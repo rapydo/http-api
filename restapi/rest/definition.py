@@ -67,24 +67,6 @@ class EndpointResource(MethodResource, Resource):
             self.get_user(), [Role.LOCAL_ADMIN], warnings=False
         )
 
-    # Deprecated since 0.7.4
-    def get_current_user(self):  # pragma: no cover
-        """
-        Return the associated User OBJECT if:
-        - the endpoint requires authentication
-        - a valid token was provided
-        in the current endpoint call.
-
-        Note: this method works because of actions inside
-        authentication/__init__.py@verify_token method
-        """
-
-        log.warning(
-            "self.get_current_user() is deprecated, replace with self.get_user()"
-        )
-
-        return self.get_user()
-
     def response(self, content=None, code=None, headers=None, head_method=False):
 
         if headers is None:
