@@ -130,15 +130,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             )
             self.SECOND_FACTOR_AUTHENTICATION = None
 
-    # Deprecated since 0.7.4
-    @classmethod
-    def myinit(cls):  # pragma: no cover
-        log.warning(
-            "Deprecated use of BaseAuthentication.myinit use load_default_user instead"
-        )
-        cls.load_default_user()
-        cls.load_roles()
-
     @staticmethod
     def load_default_user():
 
