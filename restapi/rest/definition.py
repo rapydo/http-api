@@ -85,26 +85,13 @@ class EndpointResource(MethodResource, Resource):
 
         return self.get_user()
 
-    def response(
-        self, content=None, errors=None, code=None, headers=None, head_method=False
-    ):
+    def response(self, content=None, code=None, headers=None, head_method=False):
 
         if headers is None:
             headers = {}
 
         if code is None:
             code = 200
-
-        # Deprecated since 0.7.4
-        if errors is not None:  # pragma: no cover
-            log.warning(
-                "Deprecated use of errors in response, use raise RestApiException or "
-                "response(content, code>=400)"
-            )
-            content = errors
-            if code < 400:
-                log.warning("Forcing 500 SERVER ERROR because errors are returned")
-                code = 500
 
         if content is None and code != 204 and not head_method:
             log.warning("RESPONSE: Warning, no data and no errors")
