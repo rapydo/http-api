@@ -2,7 +2,6 @@
 Customization based on configuration 'blueprint' files
 """
 
-import copy
 import glob
 import os
 import re
@@ -27,22 +26,6 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 CONF_FOLDERS = Env.load_group(label="project_confs")
-
-# Flask accepts the following types:
-# https://exploreflask.com/en/latest/views.html
-#   string  Accepts any text without a slash (the default).
-#   int Accepts integers.
-#   float   Like int but for floating point values.
-#   path    Like string but accepts slashes.
-# Swagger accepts the following types:
-# https://swagger.io/specification/#data-types-12
-FLASK_TO_SWAGGER_TYPES = {
-    "string": "string",
-    "path": "string",
-    "int": "integer",
-    "float": "number",
-}
-
 
 ERR401 = {"description": "This endpoint requires a valid authorization token"}
 ERR400 = {"description": "The request cannot be satisfied due to malformed syntax"}
@@ -222,33 +205,16 @@ class EndpointsLoader:
                 # auth.required injected by the required decorator in bearer.py
                 auth_required = fn.__dict__.get("auth.required", False)
 
-                # conf from _GET, _POST, ... dictionaries
-                method_conf = None
-                method_name = f"_{m}"
-                if hasattr(epclss, method_name):
-                    log.warning(
-                        "Deprecated use of {} in {}, use @decorators.endpoint instead",
-                        method_name,
-                        epclss.__name__,
-                    )
-                    method_conf = getattr(epclss, method_name)
-                elif hasattr(fn, "uris"):
-                    # This is a temporary conversion, please remove it
-                    # once dropped the support for _METHOD dictionaries
-                    method_conf = {}
-                    for u in fn.uris:
-                        method_conf[u] = {}
-                else:  # pragma: no cover
+                if not hasattr(fn, "uris"):  # pragma: no cover
                     log.exit(
-                        "Invalid {} endpoint, both {} or @decorators.endpoint "
-                        "definitions are missing",
+                        "Invalid {} endpoint in {}: missing endpoint decorator",
+                        method_fn,
                         epclss.__name__,
-                        method_name,
                     )
+                    continue
 
-                endpoint.methods[method_fn] = copy.deepcopy(method_conf)
-                for uri, specs in method_conf.items():
-                    specs.setdefault("responses", {})
+                endpoint.methods[method_fn] = fn.uris
+                for uri in fn.uris:
 
                     full_uri = f"/{endpoint.base_uri}{uri}"
                     self.authenticated_endpoints.setdefault(full_uri, {})
@@ -257,15 +223,18 @@ class EndpointsLoader:
                         method_fn, auth_required
                     )
 
-                    specs["responses"].setdefault("400", ERR400)
+                    # Set default responses
+                    responses = {}
+
+                    responses.setdefault("400", ERR400)
                     if auth_required:
-                        specs["responses"].setdefault("401", ERR401)
-                        specs["responses"].setdefault("404", ERR404_AUTH)
+                        responses.setdefault("401", ERR401)
+                        responses.setdefault("404", ERR404_AUTH)
                     else:
-                        specs["responses"].setdefault("404", ERR404)
+                        responses.setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute
                     # __apispec__ is normally populated by using @docs decorator
-                    inject_apispec_docs(fn, specs, epclss.labels)
+                    inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                     # This will be used by server.py.add
                     endpoint.uris.append(full_uri)
@@ -275,36 +244,9 @@ class EndpointsLoader:
                         method_fn, endpoint.private
                     )
 
-                    # Read URL parameters
-                    for parameter in uri_pattern.findall(full_uri):
-
-                        # No type specified, default to string
-                        if ":" not in parameter:
-                            ptype = "string"
-                            pname = parameter
-                        else:
-                            ptokens = parameter.split(":")
-                            ptype = FLASK_TO_SWAGGER_TYPES.get(ptokens[0], "string")
-                            pname = ptokens[1]
-
-                        specs.setdefault("parameters", [])
-                        specs["parameters"].append(
-                            {
-                                "name": pname,
-                                "type": ptype,
-                                "in": "path",
-                                "required": True,
-                            }
-                        )
-
                     # Used by server.py to remove unmapped methods
                     self.uri2methods.setdefault(full_uri, [])
                     self.uri2methods[full_uri].append(method_fn)
-
-                    # Handle global tags
-                    if endpoint.tags:
-                        specs.setdefault("tags", list())
-                        specs["tags"] = list(set(specs["tags"] + endpoint.tags))
 
                     log.verbose("Built definition '{}:{}'", m, full_uri)
 
@@ -334,7 +276,7 @@ class EndpointsLoader:
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})
 
-                for uri in uris.keys():
+                for uri in uris:
                     uri = f"/{endpoint.base_uri}{uri}"
                     if uri in mappings[method]:
                         log.warning(
