@@ -162,11 +162,7 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, properties, schema=None):
-
-        # Deprecated since 0.7.5
-        if schema:  # pragma: no cover
-            log.warning("Deprecated schema parameter in update_properties")
+    def update_properties(instance, properties):
 
         for field, value in properties.items():
             instance.__dict__[field] = value
