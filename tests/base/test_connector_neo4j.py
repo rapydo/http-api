@@ -85,7 +85,7 @@ else:
             v = fake.random_letters(24)
             # Create a fake token and verify that is linked to nobody
             t = obj.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
-            assert obj.getSingleLinkedNode(t.emitted_for) is None
+            assert t.emitted_for.single() is None
             t.delete()
 
             try:
