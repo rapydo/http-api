@@ -133,9 +133,7 @@ class Connector(metaclass=abc.ABCMeta):
             setattr(obj, name, model)
         obj.models = self.models
 
-    def get_instance(
-        self, cache_expiration=None, global_instance=None, isauth=None, **kwargs
-    ):
+    def get_instance(self, cache_expiration=None, **kwargs):
 
         # When context is empty this is a connection at loading time
         # Do not save it
@@ -145,14 +143,6 @@ class Connector(metaclass=abc.ABCMeta):
             obj = self.initialize_connection()
             self.set_models_to_service(obj)
             return obj
-
-        # Deprecated since 0.7.4
-        if global_instance is not None:  # pragma: no cover
-            log.warning("Deprecated use of global_instance flag")
-
-        # Deprecated since 0.7.4
-        if isauth is not None:  # pragma: no cover
-            log.warning("Deprecated use of isauth flag")
 
         unique_hash = str(sorted(kwargs.items()))
 
