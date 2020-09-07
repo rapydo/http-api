@@ -52,6 +52,8 @@ setup(
         "psutil",
         "plumbum",
         "maxminddb-geolite2",
+        # Used by Marshmallow to serialize Decimals
+        "simplejson",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
