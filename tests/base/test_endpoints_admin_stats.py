@@ -17,7 +17,7 @@ class TestApp(BaseTests):
 
         # ### BOOT TIME ###
         assert "boot_time" in stats
-        d = datetime.strptime(stats["boot_time"], "%Y-%m-%dT%H:%M:%S")
+        d = datetime.strptime(stats["boot_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
         assert d < datetime.now()
 
         # ### CPU ###
