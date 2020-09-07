@@ -6,13 +6,13 @@ from datetime import datetime
 from plumbum import local
 
 from restapi import decorators
-from restapi.models import Schema, fields
+from restapi.models import ISO8601UTC, Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 
 
 class StatsSchema(Schema):
-    boot_time = fields.DateTime()
+    boot_time = fields.DateTime(format=ISO8601UTC)
     cpu = fields.Nested(
         {
             "count": fields.Int(),
