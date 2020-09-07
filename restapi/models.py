@@ -1,8 +1,10 @@
 import inspect
 
-from marshmallow import Schema  # also used from endpoint for Schemas
+import simplejson
 from marshmallow import validate  # used as alias from endpoints
-from marshmallow import EXCLUDE, ValidationError, pre_load
+from marshmallow import EXCLUDE
+from marshmallow import Schema as MarshmallowSchema
+from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
 from webargs.flaskparser import parser
@@ -24,6 +26,11 @@ def load_data(request, schema):
     # Return json if it is not None, otherwise it will send form
     # No merge is allowed here
     return request.json or request.form
+
+
+class Schema(MarshmallowSchema):
+    class Meta:
+        json_module = simplejson
 
 
 class InputSchema(Schema):
