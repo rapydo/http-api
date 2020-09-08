@@ -2,7 +2,6 @@ from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
-from marshmallow_jsonschema import JSONSchema
 
 from restapi import __version__ as version
 from restapi.confs import get_project_configuration
@@ -17,15 +16,9 @@ def handle_marshmallow_errors(error):
 
         params = request.get_json() or request.form or {}
 
-        get_schema = params.get(GET_SCHEMA_KEY, False)
-
-        if get_schema == "json-schema":
-            json_schema = JSONSchema()
-            fields = json_schema.dump(error.data.get("schema"))
-            return (jsonify(fields), 200, {})
-
-        if get_schema:
+        if params.get(GET_SCHEMA_KEY, False):
             return ResponseMaker.respond_with_schema(error.data.get("schema"))
+
     except BaseException as e:  # pragma: no cover
         log.error(e)
 

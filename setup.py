@@ -30,7 +30,6 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
-        "marshmallow-jsonschema==0.10.0",
         # DB and services drivers
         "neomodel==3.3.2",
         "psycopg2-binary",
