@@ -1,6 +1,6 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from restapi.models import fields, validate, InputSchema, Schema
+# from restapi.models import fields, validate, Schema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
@@ -132,7 +132,7 @@
 #             label="Notify password by email"
 #         )
 
-#     return InputSchema.from_dict(attributes)
+#     return Schema.from_dict(attributes)
 
 
 # class LocalAdminUsers(EndpointResource):

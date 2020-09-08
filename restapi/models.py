@@ -15,7 +15,7 @@ from restapi.utilities.logs import log
 # https://github.com/marshmallow-code/marshmallow-sqlalchemy
 
 GET_SCHEMA_KEY = "get_schema"
-# ISO 8601 format with Zulu time (default Javascript output)
+# ISO 8601 format with Zulu time (default format for Javascript Date)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.verbose("{} loaded", validate)
@@ -29,11 +29,6 @@ def load_data(request, schema):
 
 
 class Schema(MarshmallowSchema):
-    class Meta:
-        json_module = simplejson
-
-
-class InputSchema(Schema):
     def __init__(self, strip_required=False, *args, **kwargs):
         super().__init__(**kwargs)
         if strip_required:
@@ -48,6 +43,7 @@ class InputSchema(Schema):
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
         ordered = True
+        json_module = simplejson
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
@@ -57,7 +53,7 @@ class InputSchema(Schema):
         return data
 
 
-class PartialInputSchema(InputSchema):
+class PartialSchema(Schema):
     class Meta:
         ordered = True
         unknown = EXCLUDE

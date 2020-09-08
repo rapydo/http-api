@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.models import InputSchema, Schema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -8,7 +8,7 @@ from restapi.utilities.meta import Meta
 auth = EndpointResource.load_authentication()
 
 
-class NewPassword(InputSchema):
+class NewPassword(Schema):
     password = fields.Str(
         required=True,
         password=True,

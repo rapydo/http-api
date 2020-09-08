@@ -14,7 +14,7 @@ from restapi.exceptions import (
     DatabaseDuplicatedEntry,
     RestApiException,
 )
-from restapi.models import PartialInputSchema, fields, validate
+from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
@@ -115,7 +115,7 @@ def graph_transactions(func):
     return wrapper
 
 
-class Pagination(PartialInputSchema):
+class Pagination(PartialSchema):
     get_total = fields.Boolean(
         required=False, description="Request the total number of elements"
     )
@@ -170,7 +170,7 @@ def get_pagination(func):
     return wrapper
 
 
-class ChunkUpload(PartialInputSchema):
+class ChunkUpload(PartialSchema):
     name = fields.Str(required=True)
     mimeType = fields.Str(required=True)
     size = fields.Int(required=True, validate=validate.Range(min=1))

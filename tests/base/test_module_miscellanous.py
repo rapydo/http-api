@@ -8,7 +8,7 @@ from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.models import AdvancedList, InputSchema, UniqueDelimitedList, fields
+from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
@@ -374,7 +374,7 @@ class TestApp(BaseTests):
             pass
 
     def test_marshmallow_schemas(self):
-        class Input1(InputSchema):
+        class Input1(Schema):
             unique_delimited_list = UniqueDelimitedList(
                 fields.Str(), delimiter=",", required=True
             )

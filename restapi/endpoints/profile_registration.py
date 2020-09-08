@@ -3,7 +3,7 @@ from restapi.confs import get_project_configuration
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
-from restapi.models import InputSchema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
@@ -12,7 +12,7 @@ if detector.check_availability("smtp"):
 
     auth = EndpointResource.load_authentication()
 
-    class User(InputSchema):
+    class User(Schema):
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)

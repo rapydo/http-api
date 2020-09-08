@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import InputSchema, Schema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
@@ -182,7 +182,7 @@ def getInputSchema(request):
         label="Activate user", default=True, required=False
     )
 
-    return InputSchema.from_dict(attributes)
+    return Schema.from_dict(attributes)
 
 
 class AdminUsers(EndpointResource):
