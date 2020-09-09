@@ -44,7 +44,7 @@ setup(
         "python-telegram-bot==12.8",
         # TOTP
         "pyotp==2.4.0",
-        "segno==1.2.0",
+        "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
         "loguru",
@@ -57,14 +57,14 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.16.5",
+        "sentry-sdk[flask]==0.17.3",
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
         "schemathesis==2.3.3",
         "Faker==4.1.2",
-        "Telethon==1.16.2",
+        "Telethon==1.16.4",
     ],
     classifiers=[
         "Programming Language :: Python",
