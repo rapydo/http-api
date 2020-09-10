@@ -5,14 +5,14 @@ we could provide back then
 
 from flask import Response
 from flask_apispec import MethodResource
-from flask_restful import Resource, request
+from flask_restful import Resource
 
 from restapi.confs import API_URL
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
 from restapi.services.detect import AUTH_NAME, detector
-from restapi.utilities.logs import log, obfuscate_dict
+from restapi.utilities.logs import log
 
 ###################
 # Paging costants
@@ -26,6 +26,7 @@ DEFAULT_PERPAGE = 10
 # Extending the concept of rest generic resource
 class EndpointResource(MethodResource, Resource):
 
+    ALLOW_HTML_RESPONSE = False
     baseuri = API_URL
     depends_on = []
     labels = ["undefined"]
@@ -86,10 +87,9 @@ class EndpointResource(MethodResource, Resource):
         #    return self.response(all_information)
         # If you bypass the marshalling you will expose the all_information by
         # retrieving it from a browser (or by forcing the Accept header)
-        # i.e. html responses will only work on non-MethodResource endpoints
-        # If you accept the risk or you do not use marshalling add to endpoint class
-        # ALLOW_HTML_RESPONSE = True
-        if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
+        # If you accept the risk or you do not use marshalling unlock html responses
+        # by adding `ALLOW_HTML_RESPONSE = True` to the endpoint class
+        if self.ALLOW_HTML_RESPONSE:
             accepted_formats = ResponseMaker.get_accepted_formats()
             if "text/html" in accepted_formats:
                 content, headers = ResponseMaker.get_html(content, code, headers)
