@@ -97,7 +97,9 @@ class EndpointsLoader:
         self.load_endpoints_folder(os.path.join(os.curdir, CUSTOM_PACKAGE))
 
         # Used in swagger specs endpoint
-        self.tags = self.remove_unused_tags(mem.configuration["tags"], self._used_tags)
+        self.tags = EndpointsLoader.remove_unused_tags(
+            mem.configuration["tags"], self._used_tags
+        )
 
         self.detect_endpoints_shadowing()
 
@@ -141,7 +143,10 @@ class EndpointsLoader:
             module_name = f"{apiclass_module}.{module_file}"
             # Convert module name into a module
             log.debug("Importing {}", module_name)
-            module = Meta.get_module_from_string(module_name, exit_on_fail=True,)
+            module = Meta.get_module_from_string(
+                module_name,
+                exit_on_fail=True,
+            )
 
             # Extract classes from the module
             classes = Meta.get_new_classes_from_module(module)
@@ -253,7 +258,8 @@ class EndpointsLoader:
                     self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
 
-    def remove_unused_tags(self, all_tags, used_tags):
+    @staticmethod
+    def remove_unused_tags(all_tags, used_tags):
         tags = []
         for tag, desc in all_tags.items():
             if tag not in used_tags:
