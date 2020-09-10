@@ -145,8 +145,8 @@ class Mail(Connector):
                 )
                 return True
             # Cannot be tested because smtplib is mocked!
-            except SMTPException:  # pragma: no cover
-                log.error("Unable to send email to {}", to_address)
+            except SMTPException as e:  # pragma: no cover
+                log.error("Unable to send email to {} ({})", to_address, e)
                 return False
 
         # Cannot be tested because smtplib is mocked
