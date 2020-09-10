@@ -101,7 +101,9 @@ def create_app(
 
     # Find services and try to connect to the ones available
     detector.init_services(
-        app=microservice, project_init=init_mode, project_clean=destroy_mode,
+        app=microservice,
+        project_init=init_mode,
+        project_clean=destroy_mode,
     )
 
     # Initialize reading of all files
@@ -214,12 +216,13 @@ def create_app(
 
     if SENTRY_URL is not None:  # pragma: no cover
 
-        if not PRODUCTION:
-            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
-        else:
-
+        if PRODUCTION:
             sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
             log.info("Enabled Sentry {}", SENTRY_URL)
+        else:
+            # Could be enabled in print mode
+            # sentry_sdk.init(transport=print)
+            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     # and the flask App is ready now:
     log.info("Boot completed")
