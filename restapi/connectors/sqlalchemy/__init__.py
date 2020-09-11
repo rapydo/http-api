@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
+from restapi.confs import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
@@ -30,8 +31,6 @@ from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
 db = OriginalAlchemy()
-# My own custom flag to prevent double initializations
-db.APP_INITIALIZED = False
 
 
 def catch_db_exceptions(func):
@@ -142,9 +141,14 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        if not db.APP_INITIALIZED:
+        try:
             db.init_app(self.app)
-            db.APP_INITIALIZED = True
+        # It is required by test script executing destroy tests (test_zzz_destroy.py)
+        # to prevent errors due to double initializations
+        except AssertionError as e:  # pragma: no cover
+            if TESTING:
+                log.warning(e)
+            raise e
 
         if test_connection:
             sql = text("SELECT 1")
