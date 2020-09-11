@@ -18,16 +18,16 @@ def test_destroy():
         log.warning("Skipping authentication test: service not available")
         return False
 
-    auth = detector.get_service_instance("authentication")
-
-    user = auth.get_user_object(username=BaseAuthentication.default_user)
-    assert user is not None
-
     if detector.check_availability("sqlalchemy"):
         sql = detector.get_service_instance("sqlalchemy")
         # Close previous connections, otherwise the new create_app will hang
         sql.session.remove()
         sql.session.close_all()
+
+    auth = detector.get_service_instance("authentication")
+
+    user = auth.get_user_object(username=BaseAuthentication.default_user)
+    assert user is not None
 
     create_app(destroy_mode=True)
 
