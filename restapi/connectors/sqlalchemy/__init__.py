@@ -30,6 +30,8 @@ from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
 db = OriginalAlchemy()
+# My own custom flag to prevent double initializations
+db.APP_INITIALIZED = False
 
 
 def catch_db_exceptions(func):
@@ -140,7 +142,9 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        db.init_app(self.app)
+        if not db.APP_INITIALIZED:
+            db.init_app(self.app)
+            db.APP_INITIALIZED = True
 
         if test_connection:
             sql = text("SELECT 1")
