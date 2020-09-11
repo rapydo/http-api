@@ -238,7 +238,6 @@ class ResponseMaker:
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         if isinstance(schema, fields.List):
-            log.critical(dir(schema))
             key = schema.data_key or field
             inner_type = ResponseMaker.get_schema_type(field, schema.inner, default=key)
             return f"{inner_type}[]"
