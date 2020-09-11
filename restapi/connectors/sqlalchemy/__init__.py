@@ -148,7 +148,8 @@ class SQLAlchemy(Connector):
         except AssertionError as e:  # pragma: no cover
             if TESTING:
                 log.warning(e)
-            raise e
+            else:
+                raise e
 
         if test_connection:
             sql = text("SELECT 1")
