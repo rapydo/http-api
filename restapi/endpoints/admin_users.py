@@ -125,6 +125,7 @@ def get_output_schema():
     attributes["roles"] = fields.List(fields.Nested(Roles))
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
+    attributes["coordinator"] = fields.List(fields.Nested(Group))
 
     if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
