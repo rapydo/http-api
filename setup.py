@@ -57,13 +57,13 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.17.4",
+        "sentry-sdk[flask]==0.17.5",
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
         "schemathesis==2.3.4",
-        "Faker==4.1.2",
+        "Faker==4.1.3",
         "Telethon==1.16.4",
     ],
     classifiers=[
