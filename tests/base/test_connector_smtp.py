@@ -103,14 +103,14 @@ def test_smtp(app, faker):
     # format is [to, [cc...], [bcc...]]
     assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
 
-    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)
-
     # This is a special from_address, used to raise SMTPException
     assert not obj.send("body", "subject", "to_addr", "invalid1")
     # This is a special from_address, used to raise BaseException
     assert not obj.send("body", "subject", "to_addr", "invalid2")
     # This is NOT a special from_address
     assert obj.send("body", "subject", "to_addr", "invalid3")
+
+    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
