@@ -1,5 +1,6 @@
 import email
 import json
+from smtplib import SMTPException
 
 from restapi.utilities.logs import log
 
@@ -40,6 +41,13 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address, dest_addresses, msg):
+
+        if from_address == "invalid1":
+            raise SMTPException("SMTP Error")
+
+        if from_address == "invalid2":
+            raise BaseException("Generic Error")
+
         fpath = "/logs/mock.mail.lastsent.json"
         data = {"from": from_address, "cc": dest_addresses, "msg": msg}
         log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)

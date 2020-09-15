@@ -30,7 +30,9 @@ def test_smtp(app, faker):
     assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     # try:
@@ -102,6 +104,13 @@ def test_smtp(app, faker):
     assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
 
     assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)
+
+    # This is a special to_addres, used to raise SMTPException
+    assert not obj.send("body", "subject", "invalid1")
+    # This is a special to_addres, used to raise BaseException
+    assert not obj.send("body", "subject", "invalid2")
+    # This is NOT a special to_addres
+    assert obj.send("body", "subject", "invalid3")
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
