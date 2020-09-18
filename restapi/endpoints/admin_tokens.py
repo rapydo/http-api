@@ -33,7 +33,10 @@ class AdminTokens(EndpointResource):
     @decorators.endpoint(
         path="/admin/tokens",
         summary="Retrieve all tokens emitted for logged user",
-        responses={200: "The list of tokens is returned"},
+        responses={
+            200: "The list of tokens is returned",
+            206: "Total number of elements is returned",
+        },
     )
     def get(self, get_total, page, size, sort_by, sort_order, input_filter):
 
@@ -51,7 +54,7 @@ class AdminTokens(EndpointResource):
             tokens = filtered_tokens
 
         if get_total:
-            return self.response({"total": len(tokens)}, code=206)
+            return self.pagination_total(len(tokens))
 
         if sort_by:
             tokens = sorted(
