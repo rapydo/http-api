@@ -59,6 +59,10 @@ class PartialSchema(Schema):
         unknown = EXCLUDE
 
 
+class TotalSchema(Schema):
+    total = fields.Int()
+
+
 class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
         super().__init__(**kwargs)
@@ -135,8 +139,7 @@ class Neo4jSchema(Schema):
 
 
 class Neo4jChoice(fields.Field):
-    """Field that serializes from a neo4j choice
-    """
+    """Field that serializes from a neo4j choice"""
 
     # choice_model is the same used in neo4j model as choices=
     def __init__(self, choices_model, **kwargs):
