@@ -31,7 +31,7 @@ setup(
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
         # DB and services drivers
-        "neomodel==3.3.2",
+        "neomodel==4.0.0",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
