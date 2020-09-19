@@ -95,7 +95,7 @@ else:
                 obj.cypher("MATCH (n) RETURN n with a syntax error")
             # Query informtaion are removed from the CypherSyntaxError exception
             except CypherSyntaxError as e:
-                assert str(e) == "Failed to execute Cypher Query"
+                assert str(e) == "{code: None} {message: None}"
 
             assert obj.sanitize_input("x") == "x"
             assert obj.sanitize_input("x ") == "x"
