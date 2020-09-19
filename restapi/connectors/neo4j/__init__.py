@@ -1,6 +1,7 @@
 """ Neo4j GraphDB flask connector """
 
 import re
+import socket
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -107,7 +108,12 @@ class NeoModel(Connector):
     def get_connection_exception(self):
 
         # from neomodel 3.3.2
-        return (neobolt_ServiceUnavailable, neobolt_AddressError, neobolt_AuthError)
+        return (
+            neobolt_ServiceUnavailable,
+            neobolt_AddressError,
+            neobolt_AuthError,
+            socket.gaierror,
+        )
 
     def connect(self, **kwargs):
 
