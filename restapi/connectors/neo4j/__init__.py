@@ -107,12 +107,15 @@ def graph_transactions(func):  # pragma: no cover
 class NeoModel(Connector):
     def get_connection_exception(self):
 
-        # from neomodel 3.3.2
         return (
             neobolt_ServiceUnavailable,
             neobolt_AddressError,
             neobolt_AuthError,
             socket.gaierror,
+            # REALLY?? A ValueError!? :-(
+            # Raised here:
+            # https://github.com/neo4j/neo4j-python-driver/blob/d36334e80a66d57b32621d319032751d2204ef67/neo4j/addressing.py#L112
+            ValueError,
         )
 
     def connect(self, **kwargs):
