@@ -259,14 +259,17 @@ class Detector:
 
     @classmethod
     def project_initialization(self, instances, app=None):
-        """ Custom initialization of your project
+        """Custom initialization of your project
 
         Please define your class Initializer in
         project/YOURPROJECT/backend/initialization/initialization.py
         """
 
-        initializer = Meta.get_customizer_instance(
-            "initialization.initialization", "Initializer", services=instances, app=app,
+        initializer = Meta.get_instance(
+            "initialization.initialization",
+            "Initializer",
+            services=instances,
+            app=app,
         )
         if initializer:
             log.info("Vanilla project has been initialized")

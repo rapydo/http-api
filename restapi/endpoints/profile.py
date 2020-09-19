@@ -33,7 +33,7 @@ def patchUserProfile():
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
 
-    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
+    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_user_editable_fields(None):
             attributes.update(custom_fields)
 
@@ -64,7 +64,7 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
+    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
         if custom_fields := customizer.get_custom_fields(None):
             attributes.update(custom_fields)
 
@@ -109,7 +109,7 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        customizer = Meta.get_customizer_instance("endpoints.profile", "CustomProfile")
+        customizer = Meta.get_instance("endpoints.profile", "CustomProfile")
         if customizer:
             data = customizer.manipulate(ref=self, user=current_user, data=data)
 

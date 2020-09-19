@@ -122,7 +122,7 @@
 #                 labels=groups.values()
 #             )
 #         )
-#     customizer = Meta.get_customizer_instance('endpoints.profile', 'CustomProfile')
+#     customizer = Meta.get_instance('endpoints.profile', 'CustomProfile')
 #     if customizer:
 #         if custom_fields := customizer.get_custom_fields(strip_required):
 #             attributes.update(custom_fields)

@@ -14,9 +14,12 @@ from neomodel import (
 )
 
 from restapi.connectors.neo4j.types import IdentifiedNode
+from restapi.utilities.meta import Meta
+
+UserCustomClass = Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
 
 
-class User(IdentifiedNode):
+class User(UserCustomClass):
     email = EmailProperty(required=True, unique_index=True)
     name = StringProperty(required=True)
     surname = StringProperty(required=True)

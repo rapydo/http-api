@@ -246,7 +246,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # Old hashing. Deprecated since 0.7.2
     @staticmethod
     def hash_password(password, salt="Unknown"):
-        """ Original source:
+        """Original source:
         # https://github.com/mattupstate/flask-security
         #    /blob/develop/flask_security/utils.py#L110
         """
@@ -301,7 +301,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
-            Return the list of tokens
+        Return the list of tokens
         """
         return
 
@@ -392,8 +392,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def verify_token_validity(self, jti, user):  # pragma: no cover
         """
-            This method MUST be implemented by specific Authentication Methods
-            to add more specific validation contraints
+        This method MUST be implemented by specific Authentication Methods
+        to add more specific validation contraints
         """
         return
 
@@ -480,13 +480,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def invalidate_token(self, token):  # pragma: no cover
         """
-            With this method the specified token must be invalidated
-            as expected after a user logout
+        With this method the specified token must be invalidated
+        as expected after a user logout
         """
         return
 
     def fill_payload(self, userobj, expiration=None, token_type=None):
-        """ Informations to store inside the JWT token,
+        """Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
         Claim attributes listed here:
@@ -588,7 +588,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def custom_user_properties(userdata):
-        if customizer := Meta.get_customizer_instance(
+        if customizer := Meta.get_instance(
             "initialization.initialization", "Customizer"
         ):
             try:
@@ -602,7 +602,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return userdata
 
     def custom_post_handle_user_input(self, user_node, input_data):
-        if customizer := Meta.get_customizer_instance(
+        if customizer := Meta.get_instance(
             "initialization.initialization", "Customizer"
         ):
             try:
