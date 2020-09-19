@@ -1,5 +1,5 @@
 os: linux
-dist: bionic
+dist: focal
 language: python
 python:
   - 3.8
@@ -137,6 +137,7 @@ script:
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   - travis_retry bash codecov_report -R submodules/http-api
+
 
   # - rapydo remove --all
 
