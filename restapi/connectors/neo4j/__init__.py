@@ -6,9 +6,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 import pytz
-from neo4j.exceptions import CypherSyntaxError, ServiceUnavailable
+from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
-from neobolt.exceptions import AuthError as neobolt_AuthError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neomodel import (
     StructuredNode,
@@ -110,7 +109,7 @@ class NeoModel(Connector):
         return (
             neobolt_ServiceUnavailable,
             neobolt_AddressError,
-            neobolt_AuthError,
+            AuthError,
             socket.gaierror,
             # REALLY?? A ValueError!? :-(
             # Raised here:
