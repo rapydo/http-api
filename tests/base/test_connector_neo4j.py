@@ -4,7 +4,7 @@ from datetime import datetime
 import dateutil.parser
 import pytest
 import pytz
-from neobolt.exceptions import CypherSyntaxError
+from neo4j.exceptions import CypherSyntaxError
 
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -55,7 +55,9 @@ else:
             assert obj is not None
 
             detector.init_services(
-                app=app, project_init=False, project_clean=False,
+                app=app,
+                project_init=False,
+                project_clean=False,
             )
 
             try:
@@ -68,7 +70,8 @@ else:
 
             try:
                 detector.get_service_instance(
-                    CONNECTOR, user="invaliduser",
+                    CONNECTOR,
+                    user="invaliduser",
                 )
                 pytest.fail("No exception raised on unavailable service")
             except ServiceUnavailable:

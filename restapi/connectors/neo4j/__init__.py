@@ -5,10 +5,9 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 import pytz
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import AuthError as neobolt_AuthError
-from neobolt.exceptions import CypherSyntaxError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neomodel import (
     StructuredNode,
