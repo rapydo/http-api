@@ -56,7 +56,7 @@ setup(
         "PyMySQL",
         "redis",
         "pika",
-        "celery",
+        "celery==4.4.7",
         "flower==0.9.3",
         "celery-redbeat==0.13.0",
         # "celerybeat-mongo @ git+https://github.com/zmap/celerybeat-mongo.git@master",
