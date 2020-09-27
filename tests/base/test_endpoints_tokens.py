@@ -177,8 +177,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         asc_sort = self.get_content(r)
         assert len(asc_sort) >= 2
-        assert default_sort[0] == asc_sort[0]
-        assert default_sort[-1] == asc_sort[-1]
+        assert default_sort[0]["token"] == asc_sort[0]["token"]
+        assert default_sort[-1]["token"] == asc_sort[-1]["token"]
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -202,8 +202,8 @@ class TestApp(BaseTests):
         # retrieve all tokens.
         assert len(desc_sort) >= 2
         # At least they should be different
-        # assert asc_sort[0] != desc_sort[0]
-        # assert asc_sort[-1] != desc_sort[-1]
+        assert asc_sort[0]["token"] != desc_sort[0]["token"]
+        assert asc_sort[-1]["token"] != desc_sort[-1]["token"]
 
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
