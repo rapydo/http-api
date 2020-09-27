@@ -17,6 +17,7 @@ from restapi.connectors.neo4j.types import IdentifiedNode
 from restapi.utilities.meta import Meta
 
 UserCustomClass = Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
+GroupCustomClass = Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
 
 
 class User(UserCustomClass):
@@ -36,7 +37,7 @@ class User(UserCustomClass):
     coordinator = RelationshipTo("Group", "PI_FOR", cardinality=ZeroOrMore)
 
 
-class Group(IdentifiedNode):
+class Group(GroupCustomClass):
     fullname = StringProperty(required=True, unique_index=False)
     shortname = StringProperty(required=True, unique_index=True)
 
