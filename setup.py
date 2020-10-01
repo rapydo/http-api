@@ -32,6 +32,7 @@ setup(
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.8.8",
+        "apispec==3.3.2",
         "Flask-Cors==3.0.8",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
