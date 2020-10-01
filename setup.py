@@ -27,6 +27,8 @@ setup(
         "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
+        # Removed me after flask-apispec will have fixed the requirements
+        "apispec==3.3.2",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
