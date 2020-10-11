@@ -9,12 +9,12 @@ import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
-from neomodel import (
+from neomodel import (  # install_all_labels,
     StructuredNode,
     clear_neo4j_database,
     config,
     db,
-    install_all_labels,
+    install_labels,
     remove_all_labels,
 )
 from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
@@ -148,7 +148,17 @@ class NeoModel(Connector):
 
         with self.app.app_context():
             remove_all_labels()
-            install_all_labels()
+            # install_all_labels()
+
+            # install_all_labels can fail when models are cross-referenced between
+            # core and custom. For example:
+            # neo4j.exceptions.ClientError:
+            #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
+            #     {message: An equivalent constraint already exists,
+            #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
+            # This loop with install_labels prevent errors
+            for name, model in self.models.items():
+                install_labels(model, quiet=False)
 
     def destroy(self):
 

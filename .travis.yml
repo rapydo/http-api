@@ -119,8 +119,8 @@ script:
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  # wait for all services to start (25 failed 1 time, let's add one additional second)
-  - sleep 26
+  # wait for all services to start (25 failed sometimes)
+  - sleep 30
   - rapydo logs
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - >
