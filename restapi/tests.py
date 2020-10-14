@@ -151,7 +151,7 @@ class BaseTests:
     @classmethod
     def save(cls, variable, value):
         """
-            Save a variable in the class, to be re-used in further tests
+        Save a variable in the class, to be re-used in further tests
         """
 
         setattr(cls, variable, value)
@@ -159,7 +159,7 @@ class BaseTests:
     @classmethod
     def get(cls, variable):
         """
-            Retrieve a previously stored variable using the .save method
+        Retrieve a previously stored variable using the .save method
         """
         if hasattr(cls, variable):
             return getattr(cls, variable)
@@ -169,7 +169,7 @@ class BaseTests:
     @staticmethod
     def get_specs(client):
         """
-            Retrieve Swagger definition by calling API/specs endpoint
+        Retrieve Swagger definition by calling API/specs endpoint
         """
         r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
@@ -179,7 +179,7 @@ class BaseTests:
     @staticmethod
     def getDynamicInputSchema(client, endpoint, headers):
         """
-            Retrieve a dynamic data schema associated with a endpoint
+        Retrieve a dynamic data schema associated with a endpoint
         """
 
         r = client.post(
@@ -220,7 +220,7 @@ class BaseTests:
     @staticmethod
     def do_login(client, USER, PWD, status_code=200, error=None, data=None):
         """
-            Make login and return both token and authorization header
+        Make login and return both token and authorization header
         """
 
         if USER is None or PWD is None:
@@ -283,7 +283,11 @@ class BaseTests:
                         data["totp_code"] = BaseTests.generate_totp(USER)
 
                     BaseTests.do_login(
-                        client, USER, PWD, data=data, status_code=409,
+                        client,
+                        USER,
+                        PWD,
+                        data=data,
+                        status_code=409,
                     )
 
                     # Test failure of password change if TOTP is wrong or not provided
@@ -293,14 +297,22 @@ class BaseTests:
                         data.pop("totp_code", None)
 
                         BaseTests.do_login(
-                            client, USER, PWD, data=data, status_code=403,
+                            client,
+                            USER,
+                            PWD,
+                            data=data,
+                            status_code=403,
                         )
 
                         data["new_password"] = newpwd
                         data["password_confirm"] = newpwd
                         data["totp_code"] = fake.pyint()
                         BaseTests.do_login(
-                            client, USER, PWD, data=data, status_code=401,
+                            client,
+                            USER,
+                            PWD,
+                            data=data,
+                            status_code=401,
                         )
 
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
@@ -309,7 +321,10 @@ class BaseTests:
                     if BaseTests.TOTP:
                         data["totp_code"] = BaseTests.generate_totp(USER)
                     BaseTests.do_login(
-                        client, USER, PWD, data=data,
+                        client,
+                        USER,
+                        PWD,
+                        data=data,
                     )
                     # Change again to restore the default password
                     # and keep all other tests fully working
@@ -317,18 +332,32 @@ class BaseTests:
                     data["password_confirm"] = PWD
                     if BaseTests.TOTP:
                         data["totp_code"] = BaseTests.generate_totp(USER)
-                    return BaseTests.do_login(client, USER, newpwd, data=data,)
+                    return BaseTests.do_login(
+                        client,
+                        USER,
+                        newpwd,
+                        data=data,
+                    )
 
                 # in this case FIRST LOGIN has not been executed
                 # => login by sending the TOTP code
                 if "TOTP" in actions:
                     data["totp_code"] = fake.pyint()
                     BaseTests.do_login(
-                        client, USER, PWD, data=data, status_code=401,
+                        client,
+                        USER,
+                        PWD,
+                        data=data,
+                        status_code=401,
                     )
 
                     data["totp_code"] = BaseTests.generate_totp(USER)
-                    return BaseTests.do_login(client, USER, PWD, data=data,)
+                    return BaseTests.do_login(
+                        client,
+                        USER,
+                        PWD,
+                        data=data,
+                    )
 
         if r.status_code != 200:
             # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
@@ -348,8 +377,8 @@ class BaseTests:
     @staticmethod
     def buildData(schema):
         """
-            Input: a Marshmallow schema
-            Output: a dictionary of random data
+        Input: a Marshmallow schema
+        Output: a dictionary of random data
         """
         data = {}
         for d in schema:
@@ -363,7 +392,9 @@ class BaseTests:
                 else:
                     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
-                data[key] = fake.pyint()
+                min_value = d.get("min", 0)
+                max_value = d.get("max", 9999)
+                data[key] = fake.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
                 data[key] = fake.date(pattern="%Y-%m-%d")
             elif field_type == "email":
