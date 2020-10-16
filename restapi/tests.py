@@ -390,9 +390,8 @@ class BaseTests:
                 if len(d["enum"]) > 0:
                     keys = list(d["enum"].keys())
                     if d.get("multiple", False):
-                        data[key] = []
-                        data[key].append(fake.random_element(keys))
-                        data[key].append(fake.random_element(keys))
+                        # requests is unable to send lists, if not json-dumped
+                        data[key] = json.dumps([fake.random_element(keys)])
                     else:
                         data[key] = fake.random_element(keys)
                 # else:

@@ -1,5 +1,3 @@
-import json
-
 from restapi.confs import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
@@ -35,10 +33,7 @@ class TestApp(BaseTests):
         data["email_notification"] = True
         data["is_active"] = True
 
-        log.critical(data)
-        r = client.post(
-            f"{API_URI}/admin/users", data=json.dumps(data), headers=headers
-        )
+        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
 

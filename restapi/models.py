@@ -1,4 +1,5 @@
 import inspect
+import json
 
 import simplejson
 from marshmallow import validate  # used as alias from endpoints
@@ -190,6 +191,15 @@ class AdvancedList(fields.List):
         super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):
+
+        # this is the case when requests (or pytest) send some json-dumped lists
+        # for example for a multi-value select
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except BaseException as e:
+                log.warning(e)
+
         value = super()._deserialize(value, attr, data, **kwargs)
 
         if not isinstance(value, list):
