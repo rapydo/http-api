@@ -16,7 +16,13 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
         self._test_endpoint(
-            client, "admin/users", headers, 200, 400, 405, 405,
+            client,
+            "admin/users",
+            headers,
+            200,
+            400,
+            405,
+            405,
         )
 
         r = client.get(f"{API_URI}/admin/users", headers=headers)
@@ -24,11 +30,13 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
+        log.critical(data)
         data["email_notification"] = True
         data["is_active"] = True
 
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
+        log.critical("sent")
         uuid = self.get_content(r)
 
         mail = self.read_mock_email()
