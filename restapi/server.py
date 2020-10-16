@@ -7,6 +7,7 @@ import os
 import warnings
 
 import sentry_sdk
+import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
@@ -217,7 +218,12 @@ def create_app(
     if SENTRY_URL is not None:  # pragma: no cover
 
         if PRODUCTION:
-            sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
+            sentry_sdk.init(
+                dsn=SENTRY_URL,
+                # already catched by handle_marshmallow_errors
+                ignore_errors=(werkzeug.exceptions.UnprocessableEntity,),
+                integrations=[FlaskIntegration()],
+            )
             log.info("Enabled Sentry {}", SENTRY_URL)
         else:
             # Could be enabled in print mode
