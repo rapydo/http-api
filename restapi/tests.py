@@ -388,7 +388,12 @@ class BaseTests:
 
             if "enum" in d:
                 if len(d["enum"]) > 0:
-                    data[key] = fake.random_element(list(d["enum"].keys()))
+
+                    value = fake.random_element(list(d["enum"].keys()))
+                    if "multiple" in d:
+                        data[key] = [value]
+                    else:
+                        data[key] = value
                 # else:
                 #     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
             elif field_type == "number" or field_type == "int":
