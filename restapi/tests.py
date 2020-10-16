@@ -390,7 +390,7 @@ class BaseTests:
                 if len(d["enum"]) > 0:
                     value = fake.random_element(list(d["enum"].keys()))
                     if d.get("multiple", False):
-                        data[key] = [value]
+                        data[key] = json.dumps([value])
                     else:
                         data[key] = value
                 # else:
