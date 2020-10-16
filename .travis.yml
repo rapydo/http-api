@@ -97,7 +97,7 @@ script:
     fi || travis_terminate 1;
 
   - rapydo start
-  - sleep 2
+  - sleep 5
   - rapydo logs
   # This is used to test the bot in dev mode
   # - >
