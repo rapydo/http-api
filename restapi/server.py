@@ -108,6 +108,10 @@ def create_app(
         project_clean=destroy_mode,
     )
 
+    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    if not mem.customizer:
+        log.exit("Invalid Customizer class")
+
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
     # when to close??
@@ -231,9 +235,6 @@ def create_app(
             # sentry_sdk.init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
-    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
-    if not mem.customizer:
-        log.exit("Invalid Customizer class")
     # and the flask App is ready now:
     log.info("Boot completed")
 

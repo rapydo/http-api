@@ -2,8 +2,8 @@ from restapi import decorators
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 
 auth = EndpointResource.load_authentication()
 
@@ -33,9 +33,8 @@ def patchUserProfile():
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
 
-    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_user_editable_fields(None):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_user_editable_fields(None):
+        attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
     return schema()
@@ -64,9 +63,8 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(None):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_custom_fields(None):
+        attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
     return schema()
@@ -109,9 +107,7 @@ class Profile(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
-        customizer = Meta.get_instance("endpoints.profile", "CustomProfile")
-        if customizer:
-            data = customizer.manipulate(ref=self, user=current_user, data=data)
+        data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
 
         return self.response(data)
 

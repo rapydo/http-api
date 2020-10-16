@@ -5,8 +5,8 @@ from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 from restapi.utilities.templates import get_html_template
 
 
@@ -127,9 +127,8 @@ def get_output_schema():
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
     attributes["coordinator"] = fields.List(fields.Nested(Group))
 
-    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(None):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_custom_fields(None):
+        attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
     return schema(many=True)
@@ -172,9 +171,8 @@ def getInputSchema(request):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    if customizer := Meta.get_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(request):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_custom_fields(request):
+        attributes.update(custom_fields)
 
     if detector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
