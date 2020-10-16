@@ -277,14 +277,16 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
 
-        userdata = self.custom_user_properties(userdata)
+        userdata, extra_userdata = self.custom_user_properties_pre(userdata)
 
-        user_node = self.db.User(**userdata)
-        user_node.save()
+        user = self.db.User(**userdata)
+        user.save()
 
-        self.link_roles(user_node, roles)
+        self.link_roles(user, roles)
 
-        return user_node
+        self.custom_user_properties_post(user, userdata, extra_userdata, self.db)
+
+        return user
 
     # Also used by PUT user
     def link_roles(self, user, roles):

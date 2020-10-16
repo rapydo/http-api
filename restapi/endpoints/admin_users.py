@@ -298,7 +298,11 @@ class AdminUsers(EndpointResource):
         if self.neo4j_enabled:
             self.graph = db
 
-        db.update_properties(user, kwargs)
+        userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+
+        db.update_properties(user, userdata)
+
+        self.auth.custom_user_properties_post(user, userdata, extra_userdata, db)
 
         self.auth.save_user(user)
 
