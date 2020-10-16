@@ -588,13 +588,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def custom_user_properties_pre(userdata):
-        if customizer := Meta.get_instance(
-            "initialization.initialization", "Customizer"
-        ):
-            try:
-                userdata = customizer.custom_user_properties_pre(userdata)
-            except BaseException as e:  # pragma: no cover
-                log.error("Unable to customize user properties: {}", e)
+        try:
+            userdata = mem.customizer.custom_user_properties_pre(userdata)
+        except BaseException as e:  # pragma: no cover
+            log.error("Unable to customize user properties: {}", e)
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
@@ -603,26 +600,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def custom_user_properties_post(user, userdata, extra_userdata, db):
-        if customizer := Meta.get_instance(
-            "initialization.initialization", "Customizer"
-        ):
-            try:
-                customizer.custom_user_properties_post(
-                    user, userdata, extra_userdata, db
-                )
-            except BaseException as e:  # pragma: no cover
-                log.error("Unable to customize user properties: {}", e)
+        try:
+            mem.customizer.custom_user_properties_post(
+                user, userdata, extra_userdata, db
+            )
+        except BaseException as e:  # pragma: no cover
+            log.error("Unable to customize user properties: {}", e)
 
         return userdata
-
-    def custom_post_handle_user_input(self, user_node, input_data):
-        if customizer := Meta.get_instance(
-            "initialization.initialization", "Customizer"
-        ):
-            try:
-                customizer.custom_post_handle_user_input(self, user_node, input_data)
-            except BaseException as e:  # pragma: no cover
-                log.error("Unable to customize user properties: {}", e)
 
     # ################
     # # Create Users #

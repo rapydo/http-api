@@ -64,11 +64,15 @@ if detector.check_availability("smtp"):
                 if not check:
                     raise Conflict(msg)
 
-            kwargs["is_active"] = False
-            user = self.auth.create_user(kwargs, [self.auth.default_role])
+            userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+
+            userdata["is_active"] = False
+            user = self.auth.create_user(userdata, [self.auth.default_role])
 
             try:
-                self.auth.custom_post_handle_user_input(user, kwargs)
+                self.auth.custom_user_properties_post(
+                    user, userdata, extra_userdata, self.auth.db
+                )
 
                 smtp = self.get_service_instance("smtp")
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):

@@ -30,6 +30,7 @@ from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 
 def create_app(
@@ -230,6 +231,9 @@ def create_app(
             # sentry_sdk.init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
+    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    if not mem.customizer:
+        log.exit("Invalid Customizer class")
     # and the flask App is ready now:
     log.info("Boot completed")
 
