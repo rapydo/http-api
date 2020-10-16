@@ -12,6 +12,7 @@ from restapi.confs import (
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -265,12 +266,7 @@ class Detector:
         project/YOURPROJECT/backend/initialization/initialization.py
         """
 
-        initializer = Meta.get_instance(
-            "initialization.initialization",
-            "Initializer",
-            services=instances,
-            app=app,
-        )
+        initializer = mem.initializer(services=instances, app=app)
         if initializer:
             log.info("Vanilla project has been initialized")
         else:

@@ -24,10 +24,10 @@ if detector.check_availability("neo4j"):
             return users
 
         if auth_service == "sqlalchemy":
-            return None
+            return {}
 
         if auth_service == "mongo":
-            return None
+            return {}
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 

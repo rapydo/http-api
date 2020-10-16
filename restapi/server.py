@@ -25,6 +25,7 @@ from restapi.confs import (
     get_backend_url,
     get_project_configuration,
 )
+from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
@@ -101,16 +102,23 @@ def create_app(
     endpoints_loader = EndpointsLoader()
     mem.configuration = endpoints_loader.load_configuration()
 
+    mem.initializer = Meta.get_class("initialization.initialization", "Initializer")
+    if not mem.initializer:
+        log.exit("Invalid Initializer class")
+
+    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    if not mem.customizer:
+        log.exit("Invalid Customizer class")
+
+    if not isinstance(mem.customizer, BaseCustomizer):
+        log.exit("Invalid Customizer class, it should inherit BaseCustomizer")
+
     # Find services and try to connect to the ones available
     detector.init_services(
         app=microservice,
         project_init=init_mode,
         project_clean=destroy_mode,
     )
-
-    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
-    if not mem.customizer:
-        log.exit("Invalid Customizer class")
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
