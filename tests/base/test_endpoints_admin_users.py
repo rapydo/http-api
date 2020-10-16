@@ -33,6 +33,7 @@ class TestApp(BaseTests):
         data["email_notification"] = True
         data["is_active"] = True
 
+        log.critical(data)
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
