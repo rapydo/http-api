@@ -122,7 +122,7 @@
 #                 labels=groups.values()
 #             )
 #         )
-#     if custom_fields := mem.customizer.get_custom_fields(strip_required):
+#     if custom_fields := mem.customizer.get_custom_input_fields(strip_required):
 #         attributes.update(custom_fields)
 
 #     if detector.check_availability("smtp"):

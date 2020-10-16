@@ -591,7 +591,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         try:
             userdata = mem.customizer.custom_user_properties_pre(userdata)
         except BaseException as e:  # pragma: no cover
-            log.error("Unable to customize user properties: {}", e)
+            raise BadRequest(f"Unable to customize user properties: {e}")
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
@@ -605,7 +605,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 user, userdata, extra_userdata, db
             )
         except BaseException as e:  # pragma: no cover
-            log.error("Unable to customize user properties: {}", e)
+            raise BadRequest(f"Unable to customize user properties: {e}")
 
         return userdata
 

@@ -29,7 +29,24 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         return {}
 
     @abc.abstractmethod
-    def get_custom_fields(request):  # pragma: no cover
+    def get_custom_input_fields(request):  # pragma: no cover
+
+        # required = request and request.method == "POST"
+        """
+        return {
+            'custom_field': fields.Int(
+                required=required,
+                # validate=validate.Range(min=0, max=???),
+                validate=validate.Range(min=0),
+                label="CustomField",
+                description="This is a custom field"
+            )
+        }
+        """
+        return {}
+
+    @abc.abstractmethod
+    def get_custom_output_fields(request):  # pragma: no cover
 
         # required = request and request.method == "POST"
         """

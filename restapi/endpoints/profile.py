@@ -63,7 +63,7 @@ def getProfileData():
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
-    if custom_fields := mem.customizer.get_custom_fields(None):
+    if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)

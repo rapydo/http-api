@@ -127,7 +127,7 @@ def get_output_schema():
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
     attributes["coordinator"] = fields.List(fields.Nested(Group))
 
-    if custom_fields := mem.customizer.get_custom_fields(None):
+    if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
@@ -171,7 +171,7 @@ def getInputSchema(request):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    if custom_fields := mem.customizer.get_custom_fields(request):
+    if custom_fields := mem.customizer.get_custom_input_fields(request):
         attributes.update(custom_fields)
 
     if detector.check_availability("smtp"):
