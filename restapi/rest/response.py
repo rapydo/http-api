@@ -14,7 +14,7 @@ def handle_marshmallow_errors(error):
 
     try:
 
-        params = request.get_json() or request.form or {}
+        params = request.args or request.get_json() or request.form or {}
 
         if params.get(GET_SCHEMA_KEY, False):
             return ResponseMaker.respond_with_schema(error.data.get("schema"))
