@@ -230,7 +230,6 @@ class AdminUsers(EndpointResource):
     def post(self, **kwargs):
 
         roles = parse_roles(kwargs)
-        log.critical(roles)
 
         email_notification = kwargs.pop("email_notification", False)
 

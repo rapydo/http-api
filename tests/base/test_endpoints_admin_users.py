@@ -29,6 +29,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
+        log.critical(schema)
         data = self.buildData(schema)
         data["email_notification"] = True
         data["is_active"] = True
