@@ -29,14 +29,15 @@ from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
     Conflict,
+    DatabaseDuplicatedEntry,
     Forbidden,
+    RestApiException,
     ServiceUnavailable,
     Unauthorized,
 )
 from restapi.services.detect import Detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -590,8 +591,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def custom_user_properties_pre(userdata):
         try:
             userdata = mem.customizer.custom_user_properties_pre(userdata)
+        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+            raise
         except BaseException as e:  # pragma: no cover
-            raise BadRequest(f"Unable to customize user properties: {e}")
+            raise BadRequest(f"Unable to pre-customize user properties: {e}")
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
@@ -604,8 +607,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             mem.customizer.custom_user_properties_post(
                 user, userdata, extra_userdata, db
             )
+        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+            raise
         except BaseException as e:  # pragma: no cover
-            raise BadRequest(f"Unable to customize user properties: {e}")
+            log.critical(type(e))
+            raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata
 
