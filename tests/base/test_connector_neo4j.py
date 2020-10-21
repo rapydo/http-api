@@ -6,6 +6,7 @@ import pytest
 import pytz
 from neo4j.exceptions import CypherSyntaxError
 
+from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.tests import API_URI, BaseTests
@@ -25,6 +26,8 @@ if not detector.check_availability(CONNECTOR):
         pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
+elif not Env.get_bool("TEST_CORE_ENABLED"):
+    log.warning("Skipping {} tests: only avaiable on core", CONNECTOR)
 else:
 
     log.info("Executing {} tests", CONNECTOR)
