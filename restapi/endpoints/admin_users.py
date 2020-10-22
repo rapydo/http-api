@@ -161,6 +161,10 @@ def getInputSchema(request):
         required=set_required, validate=validate.Length(min=1)
     )
 
+    attributes["is_active"] = fields.Bool(
+        label="Activate user", default=True, required=False
+    )
+
     for key, label in get_roles(auth).items():
         attributes[key] = fields.Bool(label=label)
 
@@ -176,10 +180,6 @@ def getInputSchema(request):
 
     if detector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
-
-    attributes["is_active"] = fields.Bool(
-        label="Activate user", default=True, required=False
-    )
 
     return Schema.from_dict(attributes)
 
