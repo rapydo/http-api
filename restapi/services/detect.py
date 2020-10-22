@@ -191,7 +191,9 @@ class Detector:
 
         return variables
 
-    def init_services(self, app, project_init=False, project_clean=False):
+    def init_services(
+        self, app, project_init=False, project_clean=False, worker_mode=False
+    ):
 
         instances = {}
         for connector_name, service in self.services.items():
@@ -222,7 +224,8 @@ class Detector:
                 log.exit("Service unavailable: {}", connector_name)
 
         if self.authentication_service is None:
-            log.warning("No authentication service configured")
+            if not worker_mode:
+                log.warning("No authentication service configured")
         elif self.authentication_service not in self.services:
             log.exit("Auth service '{}' is unreachable", self.authentication_service)
         elif not self.services[self.authentication_service].get("available", False):

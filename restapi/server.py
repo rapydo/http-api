@@ -118,6 +118,7 @@ def create_app(
         app=microservice,
         project_init=init_mode,
         project_clean=destroy_mode,
+        worker_mode=worker_mode,
     )
 
     # Initialize reading of all files

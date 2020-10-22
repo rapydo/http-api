@@ -1,1 +1,4 @@
-* linguist-language=Python
+* text=auto
+
+*.py text eol=lf diff=python
+
