@@ -538,6 +538,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             required_roles = ALL_ROLES
 
         current_roles = self.get_roles_from_user(user)
+        log.critical(current_roles)
 
         if required_roles == ALL_ROLES:
             for role in roles:
