@@ -149,17 +149,21 @@ def getInputSchema(request):
     if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 
-    attributes["password"] = fields.Str(
-        required=set_required,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
     attributes["name"] = fields.Str(
         required=set_required, validate=validate.Length(min=1)
     )
     attributes["surname"] = fields.Str(
         required=set_required, validate=validate.Length(min=1)
     )
+
+    attributes["password"] = fields.Str(
+        required=set_required,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+    )
+
+    if detector.check_availability("smtp"):
+        attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(
         label="Activate user", default=True, required=False
@@ -177,9 +181,6 @@ def getInputSchema(request):
 
     if custom_fields := mem.customizer.get_custom_input_fields(request):
         attributes.update(custom_fields)
-
-    if detector.check_availability("smtp"):
-        attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     return Schema.from_dict(attributes)
 
