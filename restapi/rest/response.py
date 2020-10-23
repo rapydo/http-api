@@ -14,12 +14,11 @@ def handle_marshmallow_errors(error):
 
     try:
 
-        params = request.get_json() or request.form or {}
+        params = request.args or request.get_json() or request.form or {}
 
-        get_schema = params.get(GET_SCHEMA_KEY, False)
-        if get_schema or str(get_schema) == "1":
-
+        if params.get(GET_SCHEMA_KEY, False):
             return ResponseMaker.respond_with_schema(error.data.get("schema"))
+
     except BaseException as e:  # pragma: no cover
         log.error(e)
 
@@ -123,7 +122,7 @@ class ResponseMaker:
 
     @staticmethod
     def convert_model_to_schema(schema):
-        fields = []
+        schema_fields = []
         for field, field_def in schema.declared_fields.items():
             if field == GET_SCHEMA_KEY:
                 continue
@@ -147,38 +146,49 @@ class ResponseMaker:
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
+            if field_def.metadata.get("multiple"):
+                f["multiple"] = True
+
             if not isinstance(field_def.missing, _Missing):
                 f["default"] = field_def.missing
             elif not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default
 
-            if field_def.validate is not None:
-                if isinstance(field_def.validate, validate.Length):
+            validators = []
+            if field_def.validate:
+                validators.append(field_def.validate)
 
-                    if field_def.validate.min is not None:
-                        f["min"] = field_def.validate.min
-                    if field_def.validate.max is not None:
-                        f["max"] = field_def.validate.max
-                    if field_def.validate.equal is not None:
-                        f["min"] = field_def.validate.equal
-                        f["max"] = field_def.validate.equal
+            # activated in case of fields.List(fields.SomeThing) with an inner validator
+            if isinstance(field_def, fields.List) and field_def.inner.validate:
+                validators.append(field_def.inner.validate)
 
-                elif isinstance(field_def.validate, validate.Range):
+            for validator in validators:
+                if isinstance(validator, validate.Length):
 
-                    if field_def.validate.min is not None:
-                        f["min"] = field_def.validate.min
-                        if not field_def.validate.min_inclusive:
+                    if validator.min is not None:
+                        f["min"] = validator.min
+                    if validator.max is not None:
+                        f["max"] = validator.max
+                    if validator.equal is not None:
+                        f["min"] = validator.equal
+                        f["max"] = validator.equal
+
+                elif isinstance(validator, validate.Range):
+
+                    if validator.min is not None:
+                        f["min"] = validator.min
+                        if not validator.min_inclusive:
                             f["min"] += 1
 
-                    if field_def.validate.max is not None:
-                        f["max"] = field_def.validate.max
-                        if not field_def.validate.max_inclusive:
+                    if validator.max is not None:
+                        f["max"] = validator.max
+                        if not validator.max_inclusive:
                             f["max"] += 1
 
-                elif isinstance(field_def.validate, validate.OneOf):
+                elif isinstance(validator, validate.OneOf):
 
-                    choices = field_def.validate.choices
-                    labels = field_def.validate.labels
+                    choices = validator.choices
+                    labels = validator.labels
                     if len(labels) != len(choices):
                         labels = choices
                     f["enum"] = dict(zip(choices, labels))
@@ -187,15 +197,15 @@ class ResponseMaker:
 
                     log.warning(
                         "Unsupported validation schema: {}.{}",
-                        type(field_def.validate).__module__,
-                        type(field_def.validate).__name__,
+                        type(validator).__module__,
+                        type(validator).__name__,
                     )
 
             if f["type"] == "nested":
                 f["schema"] = ResponseMaker.convert_model_to_schema(field_def.schema)
 
-            fields.append(f)
-        return fields
+            schema_fields.append(f)
+        return schema_fields
 
     @staticmethod
     def respond_with_schema(schema):
@@ -239,7 +249,6 @@ class ResponseMaker:
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         if isinstance(schema, fields.List):
-            log.critical(dir(schema))
             key = schema.data_key or field
             inner_type = ResponseMaker.get_schema_type(field, schema.inner, default=key)
             return f"{inner_type}[]"

@@ -1,7 +1,3 @@
-# default values:
-# 'admin': '', 'noreply': '', 'host': '', 'port': '', 'username': '', 'password': ''}
-
-
 import datetime
 import socket
 from email.mime.multipart import MIMEMultipart
@@ -132,24 +128,21 @@ class Mail(Connector):
                 msg.attach(part1)
                 msg.attach(part2)
 
-            try:
-                log.verbose("Sending email to {}", to_address)
+            log.verbose("Sending email to {}", to_address)
 
-                self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
+            self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
 
-                log.info(
-                    "Successfully sent email to {} [cc={}], [bcc={}]",
-                    to_address,
-                    cc,
-                    bcc,
-                )
-                return True
-            # Cannot be tested because smtplib is mocked!
-            except SMTPException:  # pragma: no cover
-                log.error("Unable to send email to {}", to_address)
-                return False
-
-        # Cannot be tested because smtplib is mocked
-        except BaseException as e:  # pragma: no cover
+            log.info(
+                "Successfully sent email to {} [cc={}], [bcc={}]",
+                to_address,
+                cc,
+                bcc,
+            )
+            return True
+        # Cannot be tested because smtplib is mocked!
+        except SMTPException as e:
+            log.error("Unable to send email to {} ({})", to_address, e)
+            return False
+        except BaseException as e:
             log.error(str(e))
             return False

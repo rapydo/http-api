@@ -1,6 +1,6 @@
 from restapi import decorators
 from restapi.exceptions import NotFound, Unauthorized
-from restapi.models import InputSchema, Schema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
@@ -24,10 +24,10 @@ if detector.check_availability("neo4j"):
             return users
 
         if auth_service == "sqlalchemy":
-            return None
+            return {}
 
         if auth_service == "mongo":
-            return None
+            return {}
 
         log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
 
@@ -46,7 +46,7 @@ if detector.check_availability("neo4j"):
         coordinator = fields.Nested(Coordinator)
         # prefix = fields.Str()
 
-    class InputGroup(InputSchema):
+    class InputGroup(Schema):
         shortname = fields.Str(required=True, description="Short name")
         fullname = fields.Str(required=True, description="Full name")
         # prefix = fields.Str(required=True)

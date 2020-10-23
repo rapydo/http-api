@@ -16,13 +16,20 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
         self._test_endpoint(
-            client, "admin/users", headers, 200, 400, 405, 405,
+            client,
+            "admin/users",
+            headers,
+            200,
+            400,
+            405,
+            405,
         )
 
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
+        log.critical(schema)
         data = self.buildData(schema)
         data["email_notification"] = True
         data["is_active"] = True

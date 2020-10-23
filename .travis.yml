@@ -1,5 +1,5 @@
 os: linux
-dist: bionic
+dist: focal
 language: python
 python:
   - 3.8
@@ -97,7 +97,7 @@ script:
     fi || travis_terminate 1;
 
   - rapydo start
-  - sleep 2
+  - sleep 5
   - rapydo logs
   # This is used to test the bot in dev mode
   # - >
@@ -105,7 +105,7 @@ script:
   #     rapydo shell backend --default-command --detach;
   #     sleep 20;
   #   fi
-  - rapydo shell backend --command 'restapi tests --core --wait --destroy' || travis_terminate 1;
+  - rapydo shell backend 'restapi tests --core --wait --destroy' || travis_terminate 1;
 
   # Send coverage
   - rapydo dump
@@ -119,8 +119,8 @@ script:
   - rapydo pull
   - rapydo ssl --volatile
   - rapydo start
-  # wait for all services to start (tried with 20... not always enough!)
-  - sleep 25
+  # wait for all services to start (25 failed sometimes)
+  - sleep 30
   - rapydo logs
   - curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
   - >
@@ -131,12 +131,13 @@ script:
   - rapydo -s proxy,backend logs --tail 20
 
   # Tests in production mode
-  - rapydo shell backend --command 'restapi tests --core --wait' || travis_terminate 1;
+  - rapydo shell backend 'restapi tests --core --wait' || travis_terminate 1;
   # Send coverage
   - rapydo dump
   - backend_container=$(docker-compose ps -q backend)
   - docker cp ${backend_container}:/code/coverage.xml coverage.xml
   - travis_retry bash codecov_report -R submodules/http-api
+
 
   # - rapydo remove --all
 

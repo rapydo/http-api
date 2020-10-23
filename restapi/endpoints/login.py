@@ -4,14 +4,14 @@ import pytz
 
 from restapi import decorators
 from restapi.exceptions import Forbidden
-from restapi.models import InputSchema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.time import EPOCH, get_now
 
 auth = EndpointResource.load_authentication()
 
 
-class Credentials(InputSchema):
+class Credentials(Schema):
     username = fields.Email(required=True)
     password = fields.Str(
         required=True,

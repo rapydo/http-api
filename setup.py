@@ -13,7 +13,7 @@ setup(
     license="MIT",
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
     packages=find_packages(where=".", exclude=["tests*"]),
-    package_data={main_package: ["models/swagger.yaml", "templates/index.html"]},
+    package_data={main_package: ["templates/index.html"]},
     python_requires=">=3.6.0",
     entry_points=f"""
         [console_scripts]
@@ -27,24 +27,26 @@ setup(
         "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
+        # Removed me after flask-apispec will have fixed the requirements
+        "apispec==3.3.2",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
         # DB and services drivers
-        "neomodel==3.3.2",
+        "neomodel==4.0.0",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
         "redis",
         "pika",
-        "celery",
+        "celery==4.4.7",
         "flower==0.9.5",
         "celery-redbeat==1.0.0",
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==12.8",
         # TOTP
         "pyotp==2.4.0",
-        "segno==1.2.0",
+        "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
         "loguru",
@@ -52,16 +54,19 @@ setup(
         "psutil",
         "plumbum",
         "maxminddb-geolite2",
+        # Used by Marshmallow to serialize Decimals
+        "simplejson",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.16.5",
+        "sentry-sdk[flask]==0.17.6",
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.1",
-        "schemathesis==2.3.3",
-        "Faker==4.1.2",
-        "Telethon==1.16.2",
+        "pytest-timeout==1.4.2",
+        "schemathesis==2.4.1",
+        "Faker==4.1.3",
+        "Telethon==1.16.4",
     ],
     classifiers=[
         "Programming Language :: Python",

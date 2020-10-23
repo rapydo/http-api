@@ -7,6 +7,7 @@ import os
 import warnings
 
 import sentry_sdk
+import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
@@ -24,11 +25,13 @@ from restapi.confs import (
     get_backend_url,
     get_project_configuration,
 )
+from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 
 def create_app(
@@ -99,9 +102,23 @@ def create_app(
     endpoints_loader = EndpointsLoader()
     mem.configuration = endpoints_loader.load_configuration()
 
+    mem.initializer = Meta.get_class("initialization.initialization", "Initializer")
+    if not mem.initializer:
+        log.exit("Invalid Initializer class")
+
+    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    if not mem.customizer:
+        log.exit("Invalid Customizer class")
+
+    if not isinstance(mem.customizer, BaseCustomizer):
+        log.exit("Invalid Customizer class, it should inherit BaseCustomizer")
+
     # Find services and try to connect to the ones available
     detector.init_services(
-        app=microservice, project_init=init_mode, project_clean=destroy_mode,
+        app=microservice,
+        project_init=init_mode,
+        project_clean=destroy_mode,
+        worker_mode=worker_mode,
     )
 
     # Initialize reading of all files
@@ -214,12 +231,18 @@ def create_app(
 
     if SENTRY_URL is not None:  # pragma: no cover
 
-        if not PRODUCTION:
-            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
-        else:
-
-            sentry_sdk.init(dsn=SENTRY_URL, integrations=[FlaskIntegration()])
+        if PRODUCTION:
+            sentry_sdk.init(
+                dsn=SENTRY_URL,
+                # already catched by handle_marshmallow_errors
+                ignore_errors=(werkzeug.exceptions.UnprocessableEntity,),
+                integrations=[FlaskIntegration()],
+            )
             log.info("Enabled Sentry {}", SENTRY_URL)
+        else:
+            # Could be enabled in print mode
+            # sentry_sdk.init(transport=print)
+            log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     # and the flask App is ready now:
     log.info("Boot completed")

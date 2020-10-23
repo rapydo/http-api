@@ -3,7 +3,7 @@ from restapi.confs import get_project_configuration
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
-from restapi.models import InputSchema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
@@ -12,7 +12,7 @@ if detector.check_availability("smtp"):
 
     auth = EndpointResource.load_authentication()
 
-    class User(InputSchema):
+    class User(Schema):
         email = fields.Email(required=True)
         name = fields.Str(required=True)
         surname = fields.Str(required=True)
@@ -64,11 +64,15 @@ if detector.check_availability("smtp"):
                 if not check:
                     raise Conflict(msg)
 
-            kwargs["is_active"] = False
-            user = self.auth.create_user(kwargs, [self.auth.default_role])
+            userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+
+            userdata["is_active"] = False
+            user = self.auth.create_user(userdata, [self.auth.default_role])
 
             try:
-                self.auth.custom_post_handle_user_input(user, kwargs)
+                self.auth.custom_user_properties_post(
+                    user, userdata, extra_userdata, self.auth.db
+                )
 
                 smtp = self.get_service_instance("smtp")
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):

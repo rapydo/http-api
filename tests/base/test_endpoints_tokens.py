@@ -177,8 +177,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         asc_sort = self.get_content(r)
         assert len(asc_sort) >= 2
-        assert default_sort[0] == asc_sort[0]
-        assert default_sort[-1] == asc_sort[-1]
+        assert default_sort[0]["token"] == asc_sort[0]["token"]
+        assert default_sort[-1]["token"] == asc_sort[-1]["token"]
 
         r = client.get(
             f"{API_URI}/admin/tokens",

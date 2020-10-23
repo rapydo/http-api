@@ -17,7 +17,10 @@ echo "Package: $CURRENT_PACKAGE"
 sleep 1
 
 if [ -z "$2" ]; then
-	py.test --confcutdir=tests -x -s --cov-report=xml $COV tests
+    folder=tests
 else
-	py.test --confcutdir=tests -x -s --cov-report=xml $COV tests/$2
+    folder=tests/$2
 fi
+
+# --timeout is powered by pytest-timeout
+py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml $COV $folder

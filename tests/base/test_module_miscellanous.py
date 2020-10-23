@@ -8,7 +8,7 @@ from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.models import AdvancedList, InputSchema, UniqueDelimitedList, fields
+from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
@@ -150,7 +150,8 @@ class TestApp(BaseTests):
 
         try:
             Meta.get_module_from_string(
-                "this-should-not-exist", exit_on_fail=True,
+                "this-should-not-exist",
+                exit_on_fail=True,
             )
             pytest.fail("ModuleNotFoundError not raised")
         except ModuleNotFoundError:
@@ -180,16 +181,12 @@ class TestApp(BaseTests):
         except SystemExit:
             pass
 
-        assert Meta.get_customizer_instance("invalid.path", "InvalidClass") is None
+        assert Meta.get_instance("invalid.path", "InvalidClass") is None
         assert (
-            Meta.get_customizer_instance(
-                "initialization.initialization", "InvalidClass"
-            )
-            is None
+            Meta.get_instance("initialization.initialization", "InvalidClass") is None
         )
         assert (
-            Meta.get_customizer_instance("initialization.initialization", "Customizer")
-            is not None
+            Meta.get_instance("initialization.initialization", "Customizer") is not None
         )
 
         assert get_html_template("this-should-not-exist", {}) is None
@@ -374,7 +371,7 @@ class TestApp(BaseTests):
             pass
 
     def test_marshmallow_schemas(self):
-        class Input1(InputSchema):
+        class Input1(Schema):
             unique_delimited_list = UniqueDelimitedList(
                 fields.Str(), delimiter=",", required=True
             )

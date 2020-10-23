@@ -1,13 +1,13 @@
 # TO BE ENABLED WHEN REQUIRED
 
-# from restapi.models import fields, validate, InputSchema, Schema
+# from restapi.models import fields, validate, Schema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
 # from restapi.confs import get_project_configuration
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
-# from restapi.utilities.meta import Meta
+# from restapi.utilities.globals import mem
 # from restapi.endpoints.admin_users import send_notification, parse_roles, parse_group
 # from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
@@ -122,17 +122,15 @@
 #                 labels=groups.values()
 #             )
 #         )
-#     customizer = Meta.get_customizer_instance('endpoints.profile', 'CustomProfile')
-#     if customizer:
-#         if custom_fields := customizer.get_custom_fields(strip_required):
-#             attributes.update(custom_fields)
+#     if custom_fields := mem.customizer.get_custom_input_fields(strip_required):
+#         attributes.update(custom_fields)
 
 #     if detector.check_availability("smtp"):
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )
 
-#     return InputSchema.from_dict(attributes)
+#     return Schema.from_dict(attributes)
 
 
 # class LocalAdminUsers(EndpointResource):

@@ -1,21 +1,20 @@
 """ Neo4j GraphDB flask connector """
 
 import re
+import socket
 from datetime import datetime, timedelta
 from functools import wraps
 
 import pytz
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
-from neobolt.exceptions import AuthError as neobolt_AuthError
-from neobolt.exceptions import CypherSyntaxError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
-from neomodel import (
+from neomodel import (  # install_all_labels,
     StructuredNode,
     clear_neo4j_database,
     config,
     db,
-    install_all_labels,
+    install_labels,
     remove_all_labels,
 )
 from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
@@ -107,8 +106,16 @@ def graph_transactions(func):  # pragma: no cover
 class NeoModel(Connector):
     def get_connection_exception(self):
 
-        # from neomodel 3.3.2
-        return (neobolt_ServiceUnavailable, neobolt_AddressError, neobolt_AuthError)
+        return (
+            neobolt_ServiceUnavailable,
+            neobolt_AddressError,
+            AuthError,
+            socket.gaierror,
+            # REALLY?? A ValueError!? :-(
+            # Raised here:
+            # https://github.com/neo4j/neo4j-python-driver/blob/d36334e80a66d57b32621d319032751d2204ef67/neo4j/addressing.py#L112
+            ValueError,
+        )
 
     def connect(self, **kwargs):
 
@@ -141,7 +148,17 @@ class NeoModel(Connector):
 
         with self.app.app_context():
             remove_all_labels()
-            install_all_labels()
+            # install_all_labels()
+
+            # install_all_labels can fail when models are cross-referenced between
+            # core and custom. For example:
+            # neo4j.exceptions.ClientError:
+            #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
+            #     {message: An equivalent constraint already exists,
+            #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
+            # This loop with install_labels prevent errors
+            for model in self.models.values():
+                install_labels(model, quiet=False)
 
     def destroy(self):
 
@@ -162,11 +179,7 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, properties, schema=None):
-
-        # Deprecated since 0.7.5
-        if schema:  # pragma: no cover
-            log.warning("Deprecated schema parameter in update_properties")
+    def update_properties(instance, properties):
 
         for field, value in properties.items():
             instance.__dict__[field] = value
@@ -182,25 +195,6 @@ class NeoModel(Connector):
             log.error(f"Failed to execute Cypher Query\n{e}")
             raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
-
-    # Deprecated since 0.7.5
-    @staticmethod
-    def getSingleLinkedNode(relation):
-
-        log.warning(
-            "Deprecated use of getSingleLinkedNode, use {}.single() instead", relation
-        )
-
-        nodes = relation.all()
-        if len(nodes) <= 0:
-            return None
-        return nodes[0]
-
-    @staticmethod
-    def createUniqueIndex(*var):
-
-        separator = "#_#"
-        return separator.join(var)
 
     @staticmethod
     def sanitize_input(term):
@@ -283,14 +277,16 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
 
-        userdata = self.custom_user_properties(userdata)
+        userdata, extra_userdata = self.custom_user_properties_pre(userdata)
 
-        user_node = self.db.User(**userdata)
-        user_node.save()
+        user = self.db.User(**userdata)
+        user.save()
 
-        self.link_roles(user_node, roles)
+        self.link_roles(user, roles)
 
-        return user_node
+        self.custom_user_properties_post(user, userdata, extra_userdata, self.db)
+
+        return user
 
     # Also used by PUT user
     def link_roles(self, user, roles):

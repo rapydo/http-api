@@ -1,12 +1,12 @@
 from restapi import decorators
 from restapi.confs import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import InputSchema, Schema, fields, validate
+from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 from restapi.utilities.templates import get_html_template
 
 
@@ -125,10 +125,10 @@ def get_output_schema():
     attributes["roles"] = fields.List(fields.Nested(Roles))
 
     attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
+    attributes["coordinator"] = fields.List(fields.Nested(Group))
 
-    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(None):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_custom_output_fields(None):
+        attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
     return schema(many=True)
@@ -149,16 +149,24 @@ def getInputSchema(request):
     if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 
-    attributes["password"] = fields.Str(
-        required=set_required,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
     attributes["name"] = fields.Str(
         required=set_required, validate=validate.Length(min=1)
     )
     attributes["surname"] = fields.Str(
         required=set_required, validate=validate.Length(min=1)
+    )
+
+    attributes["password"] = fields.Str(
+        required=set_required,
+        password=True,
+        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+    )
+
+    if detector.check_availability("smtp"):
+        attributes["email_notification"] = fields.Bool(label="Notify password by email")
+
+    attributes["is_active"] = fields.Bool(
+        label="Activate user", default=True, required=False
     )
 
     for key, label in get_roles(auth).items():
@@ -171,18 +179,10 @@ def getInputSchema(request):
             validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
         )
 
-    if customizer := Meta.get_customizer_instance("endpoints.profile", "CustomProfile"):
-        if custom_fields := customizer.get_custom_fields(request):
-            attributes.update(custom_fields)
+    if custom_fields := mem.customizer.get_custom_input_fields(request):
+        attributes.update(custom_fields)
 
-    if detector.check_availability("smtp"):
-        attributes["email_notification"] = fields.Bool(label="Notify password by email")
-
-    attributes["is_active"] = fields.Bool(
-        label="Activate user", default=True, required=False
-    )
-
-    return InputSchema.from_dict(attributes)
+    return Schema.from_dict(attributes)
 
 
 class AdminUsers(EndpointResource):
@@ -297,7 +297,11 @@ class AdminUsers(EndpointResource):
         if self.neo4j_enabled:
             self.graph = db
 
-        db.update_properties(user, kwargs)
+        userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+
+        db.update_properties(user, userdata)
+
+        self.auth.custom_user_properties_post(user, userdata, extra_userdata, db)
 
         self.auth.save_user(user)
 

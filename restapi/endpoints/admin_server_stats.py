@@ -6,23 +6,17 @@ from datetime import datetime
 from plumbum import local
 
 from restapi import decorators
-from restapi.models import Schema, fields
+from restapi.models import ISO8601UTC, Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 
 
-# A note abount Decimals:
-# This field serializes to a `decimal.Decimal` object by default. If you need
-# to render your data as JSON, keep in mind that the `json` module from the
-# standard library does not encode `decimal.Decimal`. Therefore, you must use
-# a JSON library that can handle decimals, such as `simplejson`, or serialize
-# to a string by passing ``as_string=True``.
 class StatsSchema(Schema):
-    boot_time = fields.DateTime()
+    boot_time = fields.DateTime(format=ISO8601UTC)
     cpu = fields.Nested(
         {
             "count": fields.Int(),
-            "load": fields.Decimal(places=2, as_string=True),
+            "load": fields.Decimal(places=2),
             "user": fields.Int(),
             "system": fields.Int(),
             "idle": fields.Int(),
@@ -54,10 +48,10 @@ class StatsSchema(Schema):
 
     disk = fields.Nested(
         {
-            "total_disk_space": fields.Decimal(places=2, as_string=True),
-            "used_disk_space": fields.Decimal(places=2, as_string=True),
-            "free_disk_space": fields.Decimal(places=2, as_string=True),
-            "occupacy": fields.Decimal(places=2, as_string=True),
+            "total_disk_space": fields.Decimal(places=2),
+            "used_disk_space": fields.Decimal(places=2),
+            "free_disk_space": fields.Decimal(places=2),
+            "occupacy": fields.Decimal(places=2),
         }
     )
 
@@ -69,9 +63,9 @@ class StatsSchema(Schema):
 
     network_latency = fields.Nested(
         {
-            "min": fields.Decimal(places=2, as_string=True),
-            "max": fields.Decimal(places=2, as_string=True),
-            "avg": fields.Decimal(places=2, as_string=True),
+            "min": fields.Decimal(places=2),
+            "max": fields.Decimal(places=2),
+            "avg": fields.Decimal(places=2),
         }
     )
 
@@ -123,28 +117,31 @@ class AdminStats(EndpointResource):
         vm = vmstat().split("\n")
         vm = re.split(r"\s+", vm[2])
 
+        # convert list in dict
+        vm = {k: v for k, v in enumerate(vm)}
+
         # Procs
         # r: The number of processes waiting for run time.
         # b: The number of processes in uninterruptible sleep.
-        statistics["procs"]["waiting_for_run"] = vm[1]
-        statistics["procs"]["uninterruptible_sleep"] = vm[2]
+        statistics["procs"]["waiting_for_run"] = vm.get(1, "N/A")
+        statistics["procs"]["uninterruptible_sleep"] = vm.get(2, "N/A")
 
         # Swap
         #     si: Amount of memory swapped in from disk (/s).
         #     so: Amount of memory swapped to disk (/s).
-        statistics["swap"]["from_disk"] = vm[7]
-        statistics["swap"]["to_disk"] = vm[8]
+        statistics["swap"]["from_disk"] = vm.get(7, "N/A")
+        statistics["swap"]["to_disk"] = vm.get(8, "N/A")
 
         # IO
         #     bi: Blocks received from a block device (blocks/s).
         #     bo: Blocks sent to a block device (blocks/s).
-        statistics["io"]["blocks_received"] = vm[9]
-        statistics["io"]["blocks_sent"] = vm[10]
+        statistics["io"]["blocks_received"] = vm.get(9, "N/A")
+        statistics["io"]["blocks_sent"] = vm.get(10, "N/A")
         # System
         #     in: The number of interrupts per second, including the clock.
         #     cs: The number of context switches per second.
-        # in = vm[11]
-        # cs = vm[12]
+        # in = vm.get(11, "N/A")
+        # cs = vm.get(12, "N/A")
 
         # CPU
         #     These are percentages of total CPU time.
@@ -154,11 +151,11 @@ class AdminStats(EndpointResource):
         #     wa: Time spent waiting for IO.
         #     st: Time stolen from a virtual machine.
 
-        statistics["cpu"]["user"] = vm[13]
-        statistics["cpu"]["system"] = vm[14]
-        statistics["cpu"]["idle"] = vm[15]
-        statistics["cpu"]["wait"] = vm[16]
-        statistics["cpu"]["stolen"] = vm[17]
+        statistics["cpu"]["user"] = vm.get(13, "N/A")
+        statistics["cpu"]["system"] = vm.get(14, "N/A")
+        statistics["cpu"]["idle"] = vm.get(15, "N/A")
+        statistics["cpu"]["wait"] = vm.get(16, "N/A")
+        statistics["cpu"]["stolen"] = vm.get(17, "N/A")
 
         # summarize disk statistics
         # vm = vmstat(["-D"]).split('\n')

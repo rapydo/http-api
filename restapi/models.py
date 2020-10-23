@@ -1,8 +1,11 @@
 import inspect
+import json
 
-from marshmallow import Schema  # also used from endpoint for Schemas
+import simplejson
 from marshmallow import validate  # used as alias from endpoints
-from marshmallow import EXCLUDE, ValidationError, pre_load
+from marshmallow import EXCLUDE
+from marshmallow import Schema as MarshmallowSchema
+from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
 from webargs.flaskparser import parser
@@ -13,7 +16,7 @@ from restapi.utilities.logs import log
 # https://github.com/marshmallow-code/marshmallow-sqlalchemy
 
 GET_SCHEMA_KEY = "get_schema"
-# ISO 8601 format with Zulu time (default Javascript output)
+# ISO 8601 format with Zulu time (default format for Javascript Date)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.verbose("{} loaded", validate)
@@ -26,7 +29,7 @@ def load_data(request, schema):
     return request.json or request.form
 
 
-class InputSchema(Schema):
+class Schema(MarshmallowSchema):
     def __init__(self, strip_required=False, *args, **kwargs):
         super().__init__(**kwargs)
         if strip_required:
@@ -41,19 +44,30 @@ class InputSchema(Schema):
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
         ordered = True
+        json_module = simplejson
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
     def raise_get_schema(self, data, **kwargs):
+
+        if "access_token" in data:
+            # valid for ImmutableMultiDict:
+            data = data.to_dict()
+            data.pop("access_token")
+
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
         return data
 
 
-class PartialInputSchema(InputSchema):
+class PartialSchema(Schema):
     class Meta:
         ordered = True
         unknown = EXCLUDE
+
+
+class TotalSchema(Schema):
+    total = fields.Int()
 
 
 class Neo4jSchema(Schema):
@@ -132,8 +146,7 @@ class Neo4jSchema(Schema):
 
 
 class Neo4jChoice(fields.Field):
-    """Field that serializes from a neo4j choice
-    """
+    """Field that serializes from a neo4j choice"""
 
     # choice_model is the same used in neo4j model as choices=
     def __init__(self, choices_model, **kwargs):
@@ -168,12 +181,25 @@ class UniqueDelimitedList(fields.DelimitedList):
 
 
 class AdvancedList(fields.List):
-    def __init__(self, *args, unique=False, min_items=0, **kwargs):
+    def __init__(self, *args, unique=False, multiple=False, min_items=0, **kwargs):
         self.unique = unique
         self.min_items = min_items
+        self.multiple = multiple
+        # this is to include multiple in the metadata dict
+        # (used by convert_model_to_schema in response.py)
+        kwargs["multiple"] = multiple
         super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):
+
+        # this is the case when requests (or pytest) send some json-dumped lists
+        # for example for a multi-value select
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except BaseException as e:
+                log.warning(e)
+
         value = super()._deserialize(value, attr, data, **kwargs)
 
         if not isinstance(value, list):

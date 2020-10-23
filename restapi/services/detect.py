@@ -1,5 +1,4 @@
 import os
-from functools import lru_cache
 
 from glom import glom
 
@@ -13,6 +12,7 @@ from restapi.confs import (
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -39,28 +39,6 @@ class Detector:
             )
 
         self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
-
-    @staticmethod
-    def get_global_var(key, default=None):  # pragma: no cover
-        # Deprecated since 0.7.4
-        log.warning("Deprecated use of get_global_var, use os.getenv or Env.get")
-        return os.getenv(key, default)
-
-    @staticmethod
-    @lru_cache
-    def get_bool_envvar(bool_var):  # pragma: no cover
-        # Deprecated since 0.7.4
-        log.warning("Deprecated use of get_bool_envvar, use Env.to_bool")
-
-        return Env.to_bool(bool_var)
-
-    @staticmethod
-    @lru_cache(maxsize=None)  # avoid calling it twice for the same var
-    def get_bool_from_os(name):  # pragma: no cover
-        # Deprecated since 0.7.4
-        log.warning("Deprecated use of get_bool_from_os, use Env.get_bool")
-
-        return Env.get_bool(name)
 
     def get_connector(self, name):
 
@@ -213,7 +191,9 @@ class Detector:
 
         return variables
 
-    def init_services(self, app, project_init=False, project_clean=False):
+    def init_services(
+        self, app, project_init=False, project_clean=False, worker_mode=False
+    ):
 
         instances = {}
         for connector_name, service in self.services.items():
@@ -244,7 +224,8 @@ class Detector:
                 log.exit("Service unavailable: {}", connector_name)
 
         if self.authentication_service is None:
-            log.warning("No authentication service configured")
+            if not worker_mode:
+                log.warning("No authentication service configured")
         elif self.authentication_service not in self.services:
             log.exit("Auth service '{}' is unreachable", self.authentication_service)
         elif not self.services[self.authentication_service].get("available", False):
@@ -282,15 +263,13 @@ class Detector:
 
     @classmethod
     def project_initialization(self, instances, app=None):
-        """ Custom initialization of your project
+        """Custom initialization of your project
 
         Please define your class Initializer in
         project/YOURPROJECT/backend/initialization/initialization.py
         """
 
-        initializer = Meta.get_customizer_instance(
-            "initialization.initialization", "Initializer", services=instances, app=app,
-        )
+        initializer = mem.initializer(services=instances, app=app)
         if initializer:
             log.info("Vanilla project has been initialized")
         else:

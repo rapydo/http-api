@@ -42,6 +42,14 @@ class NewSwaggerSpecifications(EndpointResource):
                     for uri, endpoint in data.items():
                         u = uri.replace("{", "<").replace("}", ">")
                         for method, definition in endpoint.items():
+
+                            # Removed get_schema parameters from GET endpoints
+                            defs = definition.get("parameters", [])[:]
+                            for idx, p in enumerate(defs):
+                                if p["name"] == "get_schema":
+                                    definition["parameters"].pop(idx)
+                                    break
+
                             auth_required = glom(
                                 mem.authenticated_endpoints,
                                 f"{u}.{method}",
@@ -69,9 +77,17 @@ class NewSwaggerSpecifications(EndpointResource):
                     for method, definition in endpoint.items():
 
                         is_private = glom(
-                            mem.private_endpoints, f"{u}.{method}", default=False,
+                            mem.private_endpoints,
+                            f"{u}.{method}",
+                            default=False,
                         )
-                        for p in definition.get("parameters", []):
+                        defs = definition.get("parameters", [])[:]
+                        for idx, p in enumerate(defs):
+                            # Remove get_schema parameters from GET endpoints
+                            if p["name"] == "get_schema":
+                                definition["parameters"].pop(idx)
+                                continue
+
                             if "schema" not in p:
                                 continue
                             if "$ref" not in p["schema"]:
@@ -88,7 +104,9 @@ class NewSwaggerSpecifications(EndpointResource):
                             continue
 
                         auth_required = glom(
-                            mem.authenticated_endpoints, f"{u}.{method}", default=False,
+                            mem.authenticated_endpoints,
+                            f"{u}.{method}",
+                            default=False,
                         )
 
                         if auth_required:

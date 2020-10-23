@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
+from restapi.confs import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
@@ -140,7 +141,15 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        db.init_app(self.app)
+        try:
+            db.init_app(self.app)
+        # It is required by test script executing destroy tests (test_zzz_destroy.py)
+        # to prevent errors due to double initializations
+        except AssertionError as e:  # pragma: no cover
+            if TESTING:
+                log.warning(e)
+            else:
+                raise e
 
         if test_connection:
             sql = text("SELECT 1")
@@ -179,11 +188,7 @@ class SQLAlchemy(Connector):
             db.drop_all()
 
     @staticmethod
-    def update_properties(instance, properties, schema=None):
-
-        # Deprecated since 0.7.5
-        if schema:  # pragma: no cover
-            log.warning("Deprecated schema parameter in update_properties")
+    def update_properties(instance, properties):
 
         for field, value in properties.items():
             set_attribute(instance, field, value)
@@ -200,10 +205,12 @@ class Authentication(BaseAuthentication):
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
 
-        userdata = self.custom_user_properties(userdata)
+        userdata, extra_userdata = self.custom_user_properties_pre(userdata)
 
         user = self.db.User(**userdata)
         self.link_roles(user, roles)
+
+        self.custom_user_properties_post(user, userdata, extra_userdata, self.db)
 
         self.db.session.add(user)
 

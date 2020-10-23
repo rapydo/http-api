@@ -118,10 +118,10 @@ class Meta:
     @staticmethod
     def get_celery_tasks(package_name):
         """
-            Extract all celery tasks from a module.
-            Celery tasks are functions decorated by @celery_app.task(...)
-            This decorator transform the function into a class child of
-            celery.local.PromiseProxy
+        Extract all celery tasks from a module.
+        Celery tasks are functions decorated by @celery_app.task(...)
+        This decorator transform the function into a class child of
+        celery.local.PromiseProxy
         """
         tasks = {}
         # package = tasks folder
@@ -140,7 +140,10 @@ class Meta:
 
             # convert file name in submodule, i.e.
             # tasks.filename
-            submodule = Meta.get_module_from_string(module_path, exit_on_fail=True,)
+            submodule = Meta.get_module_from_string(
+                module_path,
+                exit_on_fail=True,
+            )
 
             # get all functions in py file
             functions = inspect.getmembers(submodule)
@@ -155,7 +158,7 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_customizer_instance(module_relpath, class_name, **kwargs):
+    def get_class(module_relpath, class_name):
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
@@ -169,10 +172,18 @@ class Meta:
             log.verbose("{} not found in {}", class_name, abspath)
             return None
 
-        MyClass = getattr(module, class_name)
+        return getattr(module, class_name)
+
+    @staticmethod
+    def get_instance(module_relpath, class_name, **kwargs):
+
+        MyClass = Meta.get_class(module_relpath, class_name)
+
+        if MyClass is None:
+            return None
 
         try:
             return MyClass(**kwargs)
         except BaseException as e:  # pragma: no cover
-            log.error("Errors loading {}.{}: {}", abspath, class_name, e)
+            log.error("Errors loading {}.{}: {}", module_relpath, class_name, e)
             return None

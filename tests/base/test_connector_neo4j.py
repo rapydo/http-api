@@ -4,8 +4,9 @@ from datetime import datetime
 import dateutil.parser
 import pytest
 import pytz
-from neobolt.exceptions import CypherSyntaxError
+from neo4j.exceptions import CypherSyntaxError
 
+from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.tests import API_URI, BaseTests
@@ -25,6 +26,8 @@ if not detector.check_availability(CONNECTOR):
         pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
+elif not Env.get_bool("TEST_CORE_ENABLED"):
+    log.warning("Skipping {} tests: only avaiable on core", CONNECTOR)
 else:
 
     log.info("Executing {} tests", CONNECTOR)
@@ -55,7 +58,9 @@ else:
             assert obj is not None
 
             detector.init_services(
-                app=app, project_init=False, project_clean=False,
+                app=app,
+                project_init=False,
+                project_clean=False,
             )
 
             try:
@@ -68,7 +73,8 @@ else:
 
             try:
                 detector.get_service_instance(
-                    CONNECTOR, user="invaliduser",
+                    CONNECTOR,
+                    user="invaliduser",
                 )
                 pytest.fail("No exception raised on unavailable service")
             except ServiceUnavailable:
@@ -85,16 +91,14 @@ else:
             v = fake.random_letters(24)
             # Create a fake token and verify that is linked to nobody
             t = obj.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
-            assert obj.getSingleLinkedNode(t.emitted_for) is None
+            assert t.emitted_for.single() is None
             t.delete()
 
             try:
                 obj.cypher("MATCH (n) RETURN n with a syntax error")
             # Query informtaion are removed from the CypherSyntaxError exception
             except CypherSyntaxError as e:
-                assert str(e) == "Failed to execute Cypher Query"
-
-            assert obj.createUniqueIndex("a", "b") == "a#_#b"
+                assert str(e) == "{code: None} {message: None}"
 
             assert obj.sanitize_input("x") == "x"
             assert obj.sanitize_input("x ") == "x"

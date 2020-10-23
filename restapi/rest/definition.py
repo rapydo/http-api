@@ -5,14 +5,14 @@ we could provide back then
 
 from flask import Response
 from flask_apispec import MethodResource
-from flask_restful import Resource, request
+from flask_restful import Resource
 
 from restapi.confs import API_URL
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
 from restapi.services.detect import AUTH_NAME, detector
-from restapi.utilities.logs import log, obfuscate_dict
+from restapi.utilities.logs import log
 
 ###################
 # Paging costants
@@ -26,6 +26,7 @@ DEFAULT_PERPAGE = 10
 # Extending the concept of rest generic resource
 class EndpointResource(MethodResource, Resource):
 
+    ALLOW_HTML_RESPONSE = False
     baseuri = API_URL
     depends_on = []
     labels = ["undefined"]
@@ -39,7 +40,6 @@ class EndpointResource(MethodResource, Resource):
 
         self.auth = self.load_authentication()
         self.get_service_instance = detector.get_service_instance
-        self._json_args = {}
 
     @staticmethod
     def load_authentication():
@@ -48,35 +48,6 @@ class EndpointResource(MethodResource, Resource):
         auth.db = detector.get_service_instance(detector.authentication_service)
 
         return auth
-
-    # Deprecated since 0.7.5
-    def get_input(self):  # pragma: no cover
-
-        log.warning(
-            "Deprecated use of self.get_input(), use webargs-defined parameters instead"
-        )
-        # if is an upload in streaming, I must not consume
-        # request.data or request.json, otherwise it get lost
-        if not self._json_args and request.mimetype != "application/octet-stream":
-            try:
-                self._json_args = request.get_json(force=True)
-            except Exception as e:
-                log.verbose("Error retrieving input parameters, {}", e)
-
-            # json payload and formData cannot co-exist
-            if not self._json_args:
-                self._json_args = request.form
-
-        if self._json_args:
-            log.verbose("Parameters {}", obfuscate_dict(self._json_args))
-
-        # Convert a Flask object to a normal dict... prevent uncatchable errors like:
-        # werkzeug.exceptions.BadRequestKeyError
-        # When accessing this object
-        parameters = {}
-        for k, v in self._json_args.items():
-            parameters[k] = v
-        return parameters
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):
@@ -97,44 +68,13 @@ class EndpointResource(MethodResource, Resource):
             self.get_user(), [Role.LOCAL_ADMIN], warnings=False
         )
 
-    # Deprecated since 0.7.4
-    def get_current_user(self):  # pragma: no cover
-        """
-        Return the associated User OBJECT if:
-        - the endpoint requires authentication
-        - a valid token was provided
-        in the current endpoint call.
-
-        Note: this method works because of actions inside
-        authentication/__init__.py@verify_token method
-        """
-
-        log.warning(
-            "self.get_current_user() is deprecated, replace with self.get_user()"
-        )
-
-        return self.get_user()
-
-    def response(
-        self, content=None, errors=None, code=None, headers=None, head_method=False
-    ):
+    def response(self, content=None, code=None, headers=None, head_method=False):
 
         if headers is None:
             headers = {}
 
         if code is None:
             code = 200
-
-        # Deprecated since 0.7.4
-        if errors is not None:  # pragma: no cover
-            log.warning(
-                "Deprecated use of errors in response, use raise RestApiException or "
-                "response(content, code>=400)"
-            )
-            content = errors
-            if code < 400:
-                log.warning("Forcing 500 SERVER ERROR because errors are returned")
-                code = 500
 
         if content is None and code != 204 and not head_method:
             log.warning("RESPONSE: Warning, no data and no errors")
@@ -147,10 +87,9 @@ class EndpointResource(MethodResource, Resource):
         #    return self.response(all_information)
         # If you bypass the marshalling you will expose the all_information by
         # retrieving it from a browser (or by forcing the Accept header)
-        # i.e. html responses will only work on non-MethodResource endpoints
-        # If you accept the risk or you do not use marshalling add to endpoint class
-        # ALLOW_HTML_RESPONSE = True
-        if hasattr(self, "ALLOW_HTML_RESPONSE") and self.ALLOW_HTML_RESPONSE:
+        # If you accept the risk or you do not use marshalling unlock html responses
+        # by adding `ALLOW_HTML_RESPONSE = True` to the endpoint class
+        if self.ALLOW_HTML_RESPONSE:
             accepted_formats = ResponseMaker.get_accepted_formats()
             if "text/html" in accepted_formats:
                 content, headers = ResponseMaker.get_html(content, code, headers)
@@ -163,6 +102,10 @@ class EndpointResource(MethodResource, Resource):
     def empty_response(self):
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
+
+    # This function has to be coupled with a marshal_with(TotalSchema, code=206)
+    def pagination_total(self, total):
+        return self.response({"total": total}, code=206)
 
     def get_user_if_logged(self, allow_access_token_parameter=False):
         """
@@ -183,12 +126,3 @@ class EndpointResource(MethodResource, Resource):
             return None
 
         return unpacked_token[3]
-
-    # Only used in mistral
-    # Deprecated since 0.7.6
-    @staticmethod
-    def validate_input(json_parameters, definitionName):  # pragma: no cover
-
-        log.warning("Deprecated use of validate_input, use webargs instead")
-
-        return True

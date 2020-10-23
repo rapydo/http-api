@@ -29,14 +29,15 @@ from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
     Conflict,
+    DatabaseDuplicatedEntry,
     Forbidden,
+    RestApiException,
     ServiceUnavailable,
     Unauthorized,
 )
 from restapi.services.detect import Detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-from restapi.utilities.meta import Meta
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -129,15 +130,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 self.SECOND_FACTOR_AUTHENTICATION,
             )
             self.SECOND_FACTOR_AUTHENTICATION = None
-
-    # Deprecated since 0.7.4
-    @classmethod
-    def myinit(cls):  # pragma: no cover
-        log.warning(
-            "Deprecated use of BaseAuthentication.myinit use load_default_user instead"
-        )
-        cls.load_default_user()
-        cls.load_roles()
 
     @staticmethod
     def load_default_user():
@@ -255,7 +247,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # Old hashing. Deprecated since 0.7.2
     @staticmethod
     def hash_password(password, salt="Unknown"):
-        """ Original source:
+        """Original source:
         # https://github.com/mattupstate/flask-security
         #    /blob/develop/flask_security/utils.py#L110
         """
@@ -310,7 +302,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
-            Return the list of tokens
+        Return the list of tokens
         """
         return
 
@@ -401,8 +393,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def verify_token_validity(self, jti, user):  # pragma: no cover
         """
-            This method MUST be implemented by specific Authentication Methods
-            to add more specific validation contraints
+        This method MUST be implemented by specific Authentication Methods
+        to add more specific validation contraints
         """
         return
 
@@ -489,13 +481,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def invalidate_token(self, token):  # pragma: no cover
         """
-            With this method the specified token must be invalidated
-            as expected after a user logout
+        With this method the specified token must be invalidated
+        as expected after a user logout
         """
         return
 
     def fill_payload(self, userobj, expiration=None, token_type=None):
-        """ Informations to store inside the JWT token,
+        """Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
         Claim attributes listed here:
@@ -596,28 +588,32 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @staticmethod
-    def custom_user_properties(userdata):
-        if customizer := Meta.get_customizer_instance(
-            "initialization.initialization", "Customizer"
-        ):
-            try:
-                userdata = customizer.custom_user_properties(userdata)
-            except BaseException as e:  # pragma: no cover
-                log.error("Unable to customize user properties: {}", e)
+    def custom_user_properties_pre(userdata):
+        try:
+            userdata = mem.customizer.custom_user_properties_pre(userdata)
+        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+            raise
+        except BaseException as e:  # pragma: no cover
+            raise BadRequest(f"Unable to pre-customize user properties: {e}")
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
 
         return userdata
 
-    def custom_post_handle_user_input(self, user_node, input_data):
-        if customizer := Meta.get_customizer_instance(
-            "initialization.initialization", "Customizer"
-        ):
-            try:
-                customizer.custom_post_handle_user_input(self, user_node, input_data)
-            except BaseException as e:  # pragma: no cover
-                log.error("Unable to customize user properties: {}", e)
+    @staticmethod
+    def custom_user_properties_post(user, userdata, extra_userdata, db):
+        try:
+            mem.customizer.custom_user_properties_post(
+                user, userdata, extra_userdata, db
+            )
+        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+            raise
+        except BaseException as e:  # pragma: no cover
+            log.critical(type(e))
+            raise BadRequest(f"Unable to post-customize user properties: {e}")
+
+        return userdata
 
     # ################
     # # Create Users #

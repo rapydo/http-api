@@ -3,7 +3,7 @@ from glom import glom
 from restapi import decorators
 from restapi.endpoints.tokens import TokenSchema
 from restapi.exceptions import BadRequest, NotFound
-from restapi.models import Schema, fields
+from restapi.models import Schema, TotalSchema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log
@@ -13,10 +13,6 @@ class User(Schema):
     email = fields.Email()
     name = fields.Str()
     surname = fields.Str()
-
-
-class TokenTotalSchema(Schema):
-    total = fields.Int()
 
 
 class TokenAdminSchema(TokenSchema):
@@ -33,11 +29,14 @@ class AdminTokens(EndpointResource):
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.get_pagination
     @decorators.marshal_with(TokenAdminSchema(many=True), code=200)
-    @decorators.marshal_with(TokenTotalSchema, code=206)
+    @decorators.marshal_with(TotalSchema, code=206)
     @decorators.endpoint(
         path="/admin/tokens",
         summary="Retrieve all tokens emitted for logged user",
-        responses={200: "The list of tokens is returned"},
+        responses={
+            200: "The list of tokens is returned",
+            206: "Total number of elements is returned",
+        },
     )
     def get(self, get_total, page, size, sort_by, sort_order, input_filter):
 
@@ -55,7 +54,7 @@ class AdminTokens(EndpointResource):
             tokens = filtered_tokens
 
         if get_total:
-            return self.response({"total": len(tokens)}, code=206)
+            return self.pagination_total(len(tokens))
 
         if sort_by:
             tokens = sorted(
