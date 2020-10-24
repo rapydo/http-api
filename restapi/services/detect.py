@@ -256,14 +256,8 @@ class Detector:
 
     @classmethod
     def project_initialization(self, instances, app=None):
-        """Custom initialization of your project
 
-        Please define your class Initializer in
-        project/YOURPROJECT/backend/initialization/initialization.py
-        """
-
-        initializer = mem.initializer(services=instances, app=app)
-        if initializer:
+        if mem.initializer(services=instances, app=app):
             log.info("Vanilla project has been initialized")
         else:
             log.error("Errors during custom initialization")

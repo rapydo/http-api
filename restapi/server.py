@@ -96,11 +96,11 @@ def create_app(
     endpoints_loader = EndpointsLoader()
     mem.configuration = endpoints_loader.load_configuration()
 
-    mem.initializer = Meta.get_class("initialization.initialization", "Initializer")
+    mem.initializer = Meta.get_class("initialization", "Initializer")
     if not mem.initializer:
         log.exit("Invalid Initializer class")
 
-    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    mem.customizer = Meta.get_instance("customization", "Customizer")
     if not mem.customizer:
         log.exit("Invalid Customizer class")
 
