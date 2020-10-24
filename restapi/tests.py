@@ -386,16 +386,16 @@ class BaseTests:
             key = d.get("key")
             field_type = d.get("type")
 
-            if "enum" in d:
-                if len(d["enum"]) > 0:
-                    keys = list(d["enum"].keys())
+            if "options" in d:
+                if len(d["options"]) > 0:
+                    keys = list(d["options"].keys())
                     if d.get("multiple", False):
                         # requests is unable to send lists, if not json-dumped
                         data[key] = json.dumps([fake.random_element(keys)])
                     else:
                         data[key] = fake.random_element(keys)
                 # else:
-                #     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
+                #     pytest.fail(f"BuildData for {key}: invalid options (empty?)")
             elif field_type == "number" or field_type == "int":
                 min_value = d.get("min", 0)
                 max_value = d.get("max", 9999)
