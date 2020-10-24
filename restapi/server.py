@@ -39,20 +39,13 @@ def create_app(
     init_mode=False,
     destroy_mode=False,
     worker_mode=False,
-    testing_mode=False,
     skip_endpoint_mapping=False,
     **kwargs,
 ):
     """ Create the server istance for Flask application """
 
-    if testing_mode and not config.TESTING:  # pragma: no cover
-        # Deprecated since 0.7.3
-        log.exit(
-            "Deprecated use of testing_mode, please export env variable APP_MODE=test"
-        )
-
     if (
-        PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
+        PRODUCTION and config.TESTING and not config.FORCE_PRODUCTION_TESTS
     ):  # pragma: no cover
         log.exit("Unable to execute tests in production")
 
@@ -69,8 +62,8 @@ def create_app(
     elif destroy_mode:
         # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-    elif testing_mode:
-        # microservice.config['TESTING'] = testing_mode
+    elif config.TESTING:
+        # microservice.config['TESTING'] = config.TESTING
         init_mode = True
     elif worker_mode:
         skip_endpoint_mapping = True

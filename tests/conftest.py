@@ -6,9 +6,7 @@ from restapi.tests import get_faker
 
 @pytest.fixture
 def app():
-
-    app = create_app(testing_mode=True)
-    return app
+    return create_app()
 
 
 @pytest.fixture
