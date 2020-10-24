@@ -2,7 +2,8 @@ import pytest
 
 from restapi.services.detect import detector
 from restapi.tests import API_URI, AUTH_URI, BaseTests
-from restapi.utilities.logs import log
+
+# from restapi.utilities.logs import log
 
 if detector.check_availability("neo4j"):
 
@@ -24,9 +25,7 @@ if detector.check_availability("neo4j"):
             assert r.status_code == 200
 
             schema = self.getDynamicInputSchema(client, "admin/groups", headers)
-            log.critical(schema)
             data = self.buildData(schema)
-            log.critical(data)
             r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
@@ -113,7 +112,7 @@ if detector.check_availability("neo4j"):
             data = {
                 "group": uuid,
                 # very important, otherwise the default user will lose its admin role
-                "roles_admin_root": True,
+                "roles": ["admin_root"],
             }
             r = client.put(
                 f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers

@@ -168,7 +168,7 @@ class TestApp(BaseTests):
         data = {
             "password": BaseAuthentication.default_password,
             # very important, otherwise the default user will lose its admin role
-            "roles_admin_root": True,
+            "roles": ["admin_root"],
         }
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
         assert r.status_code == 204
