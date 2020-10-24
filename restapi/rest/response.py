@@ -142,7 +142,7 @@ class ResponseMaker:
                 f["description"] = field_def.metadata["description"]
             else:
                 f["description"] = f["label"]
-            f["required"] = "true" if field_def.required else "false"
+            f["required"] = field_def.required
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
