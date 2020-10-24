@@ -14,7 +14,6 @@ from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.meta import Meta
 from restapi.utilities.processes import (
@@ -225,31 +224,6 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"filename": "y"}) == {"filename": "****"}
         assert obfuscate_dict({"new_password": "y"}) == {"new_password": "****"}
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
-
-        assert hcodes.HTTP_CONTINUE == 100
-        assert hcodes.HTTP_SWITCHING_PROTOCOLS == 101
-        assert hcodes.HTTP_OK_BASIC == 200
-        assert hcodes.HTTP_OK_CREATED == 201
-        assert hcodes.HTTP_OK_ACCEPTED == 202
-        assert hcodes.HTTP_OK_NORESPONSE == 204
-        assert hcodes.HTTP_PARTIAL_CONTENT == 206
-        assert hcodes.HTTP_MULTIPLE_CHOICES == 300
-        assert hcodes.HTTP_FOUND == 302
-        assert hcodes.HTTP_NOT_MODIFIED == 304
-        assert hcodes.HTTP_TEMPORARY_REDIRECT == 307
-        assert hcodes.HTTP_BAD_REQUEST == 400
-        assert hcodes.HTTP_BAD_UNAUTHORIZED == 401
-        assert hcodes.HTTP_BAD_FORBIDDEN == 403
-        assert hcodes.HTTP_BAD_NOTFOUND == 404
-        assert hcodes.HTTP_BAD_METHOD_NOT_ALLOWED == 405
-        assert hcodes.HTTP_BAD_CONFLICT == 409
-        assert hcodes.HTTP_BAD_RESOURCE == 410
-        assert hcodes.HTTP_BAD_PAYLOAD_TOO_LARGE == 413
-        assert hcodes.HTTP_BAD_RANGE_NOT_SATISFIABLE == 416
-        assert hcodes.HTTP_SERVER_ERROR == 500
-        assert hcodes.HTTP_NOT_IMPLEMENTED == 501
-        assert hcodes.HTTP_SERVICE_UNAVAILABLE == 503
-        assert hcodes.HTTP_INTERNAL_TIMEOUT == 504
 
         data = {"a": 1}
         assert mix(None, data) == data
