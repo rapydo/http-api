@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.models import Schema, fields, validate
+from restapi.models import AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
 from restapi.services.detect import detector
@@ -34,32 +34,6 @@ Password: {unhashed_password}
         smtp.send(body, subject, user.email)
     else:
         smtp.send(html, subject, user.email, plain_body=body)
-
-
-def get_roles(auth):
-
-    roles = {}
-    for r in auth.get_roles():
-
-        if r.description == ROLE_DISABLED:
-            continue
-
-        roles[f"roles_{r.name}"] = r.description
-
-    return roles
-
-
-def parse_roles(properties):
-
-    roles = []
-    for p in properties.copy():
-        if not p.startswith("roles_"):
-            continue
-        if properties.get(p):
-            roles.append(p[6:])
-        properties.pop(p)
-
-    return roles
 
 
 def parse_group(v, neo4j):
@@ -169,8 +143,21 @@ def getInputSchema(request):
         label="Activate user", default=True, required=False
     )
 
-    for key, label in get_roles(auth).items():
-        attributes[key] = fields.Bool(label=label)
+    roles = {r.name: r.description for r in auth.get_roles()}
+
+    attributes["roles"] = AdvancedList(
+        fields.Str(
+            validate=validate.OneOf(
+                choices=[r for r in roles.keys()],
+                labels=[r for r in roles.values()],
+            )
+        ),
+        required=False,
+        label="Roles",
+        description="",
+        unique=True,
+        multiple=True,
+    )
 
     groups = get_groups()
     if groups:
@@ -230,7 +217,7 @@ class AdminUsers(EndpointResource):
     )
     def post(self, **kwargs):
 
-        roles = parse_roles(kwargs)
+        roles = kwargs.pop("roles")
 
         email_notification = kwargs.pop("email_notification", False)
 
@@ -288,7 +275,7 @@ class AdminUsers(EndpointResource):
         else:
             unhashed_password = None
 
-        roles = parse_roles(kwargs)
+        roles = kwargs.pop("roles")
 
         email_notification = kwargs.pop("email_notification", False)
 
