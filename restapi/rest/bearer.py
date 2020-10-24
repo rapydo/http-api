@@ -64,22 +64,6 @@ class HTTPTokenAuth:
 
         return None, None
 
-    # Deprecated since 0.7.5
-    @staticmethod
-    def required(
-        roles=None, required_roles=None, allow_access_token_parameter=False
-    ):  # pragma: no cover
-        log.warning(
-            "Deprecated use of auth.required decorator, "
-            "use require/require_all/require_any"
-        )
-
-        return HTTPTokenAuth.require(
-            roles=roles,
-            required_roles=required_roles,
-            allow_access_token_parameter=allow_access_token_parameter,
-        )
-
     @staticmethod
     def require_all(*arg, allow_access_token_parameter=False):
         return HTTPTokenAuth.require(
@@ -148,7 +132,8 @@ class HTTPTokenAuth:
                 ):
                     log.info("Unauthorized request: missing privileges")
                     return caller.response(
-                        "You are not authorized: missing privileges", code=401,
+                        "You are not authorized: missing privileges",
+                        code=401,
                     )
 
                 return func(*args, **kwargs)
