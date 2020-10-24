@@ -191,7 +191,7 @@ class ResponseMaker:
                     labels = validator.labels
                     if len(labels) != len(choices):
                         labels = choices
-                    f["enum"] = dict(zip(choices, labels))
+                    f["options"] = dict(zip(choices, labels))
 
                 else:
 
