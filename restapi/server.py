@@ -17,7 +17,7 @@ from flask_restful import Api
 from geolite2 import geolite2
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from restapi import confs as config
+from restapi import config
 from restapi.confs import (
     ABS_RESTAPI_PATH,
     PRODUCTION,
@@ -45,15 +45,16 @@ def create_app(
 ):
     """ Create the server istance for Flask application """
 
-    if (
-        PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
-    ):  # pragma: no cover
-        log.exit("Unable to execute tests in production")
     if testing_mode and not config.TESTING:  # pragma: no cover
         # Deprecated since 0.7.3
         log.exit(
             "Deprecated use of testing_mode, please export env variable APP_MODE=test"
         )
+
+    if (
+        PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
+    ):  # pragma: no cover
+        log.exit("Unable to execute tests in production")
 
     # Add template dir for output in HTML
     kwargs["template_folder"] = os.path.join(ABS_RESTAPI_PATH, "templates")
