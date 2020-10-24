@@ -1,3 +1,5 @@
+import json
+
 from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
@@ -167,7 +169,7 @@ class TestApp(BaseTests):
         data = {
             "password": BaseAuthentication.default_password,
             # very important, otherwise the default user will lose its admin role
-            "roles": ["admin_root"],
+            "roles": json.dumps(["admin_root"]),
         }
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
         assert r.status_code == 204

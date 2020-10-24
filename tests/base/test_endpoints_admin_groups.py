@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from restapi.services.detect import detector
@@ -112,7 +114,7 @@ if detector.check_availability("neo4j"):
             data = {
                 "group": uuid,
                 # very important, otherwise the default user will lose its admin role
-                "roles": ["admin_root"],
+                "roles": json.dumps(["admin_root"]),
             }
             r = client.put(
                 f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers
