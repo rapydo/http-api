@@ -152,13 +152,6 @@ class Detector:
 
         return True
 
-    # Deprecated since 0.7.4
-    @staticmethod
-    def load_group(label):  # pragma: no cover
-
-        log.warning("Deprecated use of detector.load_group, use Env.load_group instead")
-        return Env.load_group(label)
-
     @staticmethod
     def load_variables(prefix):
 
