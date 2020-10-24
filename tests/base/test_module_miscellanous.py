@@ -182,12 +182,8 @@ class TestApp(BaseTests):
             pass
 
         assert Meta.get_instance("invalid.path", "InvalidClass") is None
-        assert (
-            Meta.get_instance("initialization.initialization", "InvalidClass") is None
-        )
-        assert (
-            Meta.get_instance("initialization.initialization", "Customizer") is not None
-        )
+        assert Meta.get_instance("customization", "InvalidClass") is None
+        assert Meta.get_instance("customization", "Customizer") is not None
 
         assert get_html_template("this-should-not-exist", {}) is None
 
