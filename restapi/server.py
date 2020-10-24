@@ -20,8 +20,10 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from restapi import config
 from restapi.config import (
     ABS_RESTAPI_PATH,
+    FORCE_PRODUCTION_TESTS,
     PRODUCTION,
     SENTRY_URL,
+    TESTING,
     get_backend_url,
     get_project_configuration,
 )
@@ -44,9 +46,7 @@ def create_app(
 ):
     """ Create the server istance for Flask application """
 
-    if (
-        PRODUCTION and config.TESTING and not config.FORCE_PRODUCTION_TESTS
-    ):  # pragma: no cover
+    if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         log.exit("Unable to execute tests in production")
 
     # Add template dir for output in HTML
@@ -62,7 +62,7 @@ def create_app(
     elif destroy_mode:
         # microservice.config['DESTROY_MODE'] = destroy_mode
         skip_endpoint_mapping = True
-    elif config.TESTING:
+    elif TESTING:
         # microservice.config['TESTING'] = config.TESTING
         init_mode = True
     elif worker_mode:
