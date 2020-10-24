@@ -18,7 +18,7 @@ from geolite2 import geolite2
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from restapi import config
-from restapi.confs import (
+from restapi.config import (
     ABS_RESTAPI_PATH,
     PRODUCTION,
     SENTRY_URL,

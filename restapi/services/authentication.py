@@ -19,7 +19,7 @@ import segno  # QR Code generation
 from flask import request
 from passlib.context import CryptContext
 
-from restapi.confs import (
+from restapi.config import (
     PRODUCTION,
     SECRET_KEY_FILE,
     TESTING,

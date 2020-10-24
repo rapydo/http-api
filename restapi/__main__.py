@@ -8,7 +8,7 @@ RESTful API Python 3 Flask server
 
 import os
 
-from restapi.confs import PRODUCTION
+from restapi.config import PRODUCTION
 from restapi.server import create_app
 
 # Connection internal to containers, proxy handle all HTTPS calls

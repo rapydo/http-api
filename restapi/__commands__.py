@@ -7,7 +7,7 @@ from flask.cli import FlaskGroup
 from glom import glom
 
 from restapi import __package__ as current_package
-from restapi.confs import PRODUCTION
+from restapi.config import PRODUCTION
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 

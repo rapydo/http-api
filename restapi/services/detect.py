@@ -2,7 +2,7 @@ import os
 
 from glom import glom
 
-from restapi.confs import (
+from restapi.config import (
     ABS_RESTAPI_PATH,
     BACKEND_PACKAGE,
     CUSTOM_PACKAGE,

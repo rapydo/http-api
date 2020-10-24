@@ -14,7 +14,7 @@ from telegram.ext import (
     Updater,
 )
 
-from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.models import validate

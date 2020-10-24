@@ -4,7 +4,7 @@ from functools import wraps
 
 from celery import Celery
 
-from restapi.confs import CUSTOM_PACKAGE, get_project_configuration
+from restapi.config import CUSTOM_PACKAGE, get_project_configuration
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities.logs import log, obfuscate_url
@@ -383,7 +383,8 @@ Error: {traceback.format_exc()}
 """
 
                 project = get_project_configuration(
-                    "project.title", default="Unkown title",
+                    "project.title",
+                    default="Unkown title",
                 )
                 subject = f"{project}: task {task_name} failed"
                 smtp = detector.get_service_instance("smtp")

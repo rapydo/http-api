@@ -6,7 +6,7 @@ from smtplib import SMTPAuthenticationError, SMTPException
 
 import pytz
 
-from restapi.confs import TESTING
+from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.env import Env
 

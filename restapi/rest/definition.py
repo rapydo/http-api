@@ -7,7 +7,7 @@ from flask import Response
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
-from restapi.confs import API_URL
+from restapi.config import API_URL
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role

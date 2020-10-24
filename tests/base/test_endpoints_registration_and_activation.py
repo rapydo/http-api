@@ -1,7 +1,7 @@
 import re
 import urllib.parse
 
-from restapi.confs import PRODUCTION, get_project_configuration
+from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
 from restapi.utilities.logs import log

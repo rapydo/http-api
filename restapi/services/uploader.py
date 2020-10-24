@@ -17,7 +17,7 @@ from plumbum.cmd import file
 from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
-from restapi.confs import UPLOAD_PATH, get_backend_url
+from restapi.config import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.utilities.logs import log
 
@@ -107,7 +107,8 @@ class Uploader:
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
         return self.response(
-            {"filename": fname, "meta": self.get_file_metadata(abs_file)}, code=200,
+            {"filename": fname, "meta": self.get_file_metadata(abs_file)},
+            code=200,
         )
 
     # Compatible with
@@ -128,7 +129,10 @@ class Uploader:
                 os.remove(file_path)
                 log.debug("Forced removal")
             else:
-                return self.response(f"File '{filename}' already exists", code=400,)
+                return self.response(
+                    f"File '{filename}' already exists",
+                    code=400,
+                )
 
         host = get_backend_url()
         url = f"{host}{request.path}/{filename}"

@@ -4,7 +4,7 @@ from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
-from restapi.confs import get_project_configuration
+from restapi.config import get_project_configuration
 from restapi.models import GET_SCHEMA_KEY, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict

@@ -10,7 +10,7 @@ from attr import ib as attribute
 from attr import s as ClassOfAttributes
 
 from restapi import decorators
-from restapi.confs import (
+from restapi.config import (
     ABS_RESTAPI_PATH,
     API_URL,
     BASE_URLS,

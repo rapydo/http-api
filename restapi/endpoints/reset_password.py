@@ -1,7 +1,7 @@
 import jwt
 
 from restapi import decorators
-from restapi.confs import get_frontend_url, get_project_configuration
+from restapi.config import get_frontend_url, get_project_configuration
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate

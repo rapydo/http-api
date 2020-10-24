@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.confs import TESTING
+from restapi.config import TESTING
 from restapi.exceptions import RestApiException
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource

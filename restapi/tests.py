@@ -12,7 +12,7 @@ import pytz
 from faker import Faker
 from faker.providers import BaseProvider
 
-from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
+from restapi.config import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log

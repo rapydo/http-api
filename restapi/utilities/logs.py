@@ -6,7 +6,7 @@ import urllib
 
 from loguru import logger as log
 
-from restapi.confs import PRODUCTION
+from restapi.config import PRODUCTION
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")

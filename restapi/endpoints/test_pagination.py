@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.confs import TESTING
+from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource
 
 if TESTING:
@@ -17,7 +17,13 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(
-            self, get_total, page, size, sort_by, sort_order, input_filter,
+            self,
+            get_total,
+            page,
+            size,
+            sort_by,
+            sort_order,
+            input_filter,
         ):
             if get_total:
                 return len(TestPagination.values)
@@ -33,7 +39,13 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def post(
-            self, get_total, page, size, sort_by, sort_order, input_filter,
+            self,
+            get_total,
+            page,
+            size,
+            sort_by,
+            sort_order,
+            input_filter,
         ):
             if get_total:
                 return len(TestPagination.values)

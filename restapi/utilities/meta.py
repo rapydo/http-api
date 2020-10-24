@@ -9,7 +9,7 @@ import inspect
 import pkgutil
 from importlib import import_module
 
-from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities.logs import log
 
 

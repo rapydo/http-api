@@ -1,4 +1,4 @@
-from restapi.confs import get_project_configuration
+from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests

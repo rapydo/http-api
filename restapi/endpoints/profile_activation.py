@@ -3,7 +3,7 @@ import os
 import jwt
 
 from restapi import decorators
-from restapi.confs import get_frontend_url, get_project_configuration
+from restapi.config import get_frontend_url, get_project_configuration
 from restapi.exceptions import RestApiException
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource
@@ -63,7 +63,8 @@ class ProfileActivation(EndpointResource):
         # If token is expired
         except jwt.exceptions.ExpiredSignatureError:
             raise RestApiException(
-                "Invalid activation token: this request is expired", status_code=400,
+                "Invalid activation token: this request is expired",
+                status_code=400,
             )
 
         # if token is not yet active

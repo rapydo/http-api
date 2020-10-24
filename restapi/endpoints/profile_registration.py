@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.confs import get_project_configuration
+from restapi.config import get_project_configuration
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException

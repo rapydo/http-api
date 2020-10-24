@@ -4,7 +4,7 @@
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
 # from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
-# from restapi.confs import get_project_configuration
+# from restapi.config import get_project_configuration
 # from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
 # from restapi.utilities.globals import mem

@@ -7,7 +7,7 @@ from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
-from restapi.confs import SENTRY_URL
+from restapi.config import SENTRY_URL
 from restapi.exceptions import (
     BadRequest,
     Conflict,
