@@ -2,8 +2,7 @@ import pytest
 
 from restapi.services.detect import detector
 from restapi.tests import API_URI, AUTH_URI, BaseTests
-
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 if detector.check_availability("neo4j"):
 
@@ -12,14 +11,22 @@ if detector.check_availability("neo4j"):
 
             headers, _ = self.do_login(client, None, None)
             self._test_endpoint(
-                client, "admin/groups", headers, 200, 400, 405, 405,
+                client,
+                "admin/groups",
+                headers,
+                200,
+                400,
+                405,
+                405,
             )
 
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
 
             schema = self.getDynamicInputSchema(client, "admin/groups", headers)
+            log.critical(schema)
             data = self.buildData(schema)
+            log.critical(data)
             r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
