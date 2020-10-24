@@ -217,7 +217,7 @@ class AdminUsers(EndpointResource):
     )
     def post(self, **kwargs):
 
-        roles = kwargs.pop("roles")
+        roles = kwargs.pop("roles", [])
 
         email_notification = kwargs.pop("email_notification", False)
 
@@ -275,7 +275,7 @@ class AdminUsers(EndpointResource):
         else:
             unhashed_password = None
 
-        roles = kwargs.pop("roles")
+        roles = kwargs.pop("roles", [])
 
         email_notification = kwargs.pop("email_notification", False)
 
