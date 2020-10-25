@@ -43,6 +43,9 @@ class User(db.Model):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
+    # + has `belongs_to` backref from Group
+    # + has `coordinator_for` backref from Group
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,3 +62,17 @@ class Token(db.Model):
     location = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     emitted_for = db.relationship("User", backref=db.backref("tokens", lazy="dynamic"))
+
+
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(36), unique=True)
+    shortname = db.Column(db.String(64), unique=True)
+    fullname = db.Column(db.String(256))
+
+    members = db.relationship("User", backref="belongs_to")
+
+    coordinator_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    coordinator = db.relationship(
+        "User", backref=db.backref("coordinator_for", uselist=False)
+    )

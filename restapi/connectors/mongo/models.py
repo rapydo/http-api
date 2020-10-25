@@ -32,7 +32,7 @@ class User(MongoModel):
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     # uuid = fields.UUIDField()
     id = fields.CharField(primary_key=True)
-    uuid = fields.CharField()
+    uuid = fields.CharField(unique=True)
     email = fields.EmailField()
     name = fields.CharField()
     surname = fields.CharField()
@@ -44,6 +44,7 @@ class User(MongoModel):
     is_active = fields.BooleanField(default=True)
     privacy_accepted = fields.BooleanField(default=True)
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
+    belong_to = fields.EmbeddedDocumentField("Group", blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
@@ -69,4 +70,24 @@ class Token(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [IndexModel("token", unique=True)]
+        indexes = [IndexModel("jti", unique=True), IndexModel("token", unique=True)]
+
+
+class Group(MongoModel):
+    # To be enabled after completed the output serialization,
+    # otherwise will raise this error: Object of type UUID is not JSON serializable
+    id = fields.CharField(primary_key=True)
+    uuid = fields.UUIDField(unique=True)
+    shortname = fields.CharField(unique=True)
+    fullname = fields.CharField()
+
+    coordinator_id = fields.ReferenceField(User, blank=True)
+
+    class Meta:
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
+
+        indexes = [
+            IndexModel("uuid", unique=True),
+            IndexModel("shortname", unique=True),
+        ]

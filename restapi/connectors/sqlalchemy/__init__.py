@@ -228,9 +228,24 @@ class Authentication(BaseAuthentication):
             user.roles.append(sqlrole)
 
     def create_group(self, groupdata, coordinator):
-        return None
+
+        groupdata.setdefault("uuid", getUUID())
+
+        group = self.db.Group(**groupdata)
+        group.coordinator = coordinator
+
+        self.db.session.commit()
+        self.db.session.add(group)
+
+        return group
 
     def update_group(self, group, groupdata, coordinator):
+
+        self.db.update_properties(group, groupdata)
+        group.coordinator = coordinator
+
+        self.db.session.add(group)
+        self.db.session.commit()
 
         return group
 
@@ -267,10 +282,16 @@ class Authentication(BaseAuthentication):
 
     def get_groups(self, group_id=None):
 
+        # Retrieve all
         if group_id is None:
-            return []
+            return self.db.Group.query.all()
 
-        return None
+        # Retrieve one
+        group = self.db.Group.query.filter_by(uuid=group_id).first()
+        if group is None:
+            return None
+
+        return [group]
 
     def get_roles(self):
         roles = []
