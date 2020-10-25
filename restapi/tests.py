@@ -167,16 +167,6 @@ class BaseTests:
         raise AttributeError(f"Class variable {variable} not found")
 
     @staticmethod
-    def get_specs(client):
-        """
-        Retrieve Swagger definition by calling API/specs endpoint
-        """
-        r = client.get(f"{API_URI}/specs")
-        assert r.status_code == 200
-        content = json.loads(r.data.decode("utf-8"))
-        return content
-
-    @staticmethod
     def getDynamicInputSchema(client, endpoint, headers):
         """
         Retrieve a dynamic data schema associated with a endpoint
@@ -206,16 +196,13 @@ class BaseTests:
         if secret:
             return pyotp.TOTP(secret).now()
 
-        try:
-            auth = detector.get_service_instance("authentication")
+        auth = detector.get_service_instance("authentication")
 
-            user = auth.get_user_object(username=user)
+        user = auth.get_user_object(username=user)
 
-            secret = BaseAuthentication.get_secret(user)
+        secret = BaseAuthentication.get_secret(user)
 
-            return pyotp.TOTP(secret).now()
-        except BaseException as e:
-            log.error(e)
+        return pyotp.TOTP(secret).now()
 
     @staticmethod
     def do_login(client, USER, PWD, status_code=200, error=None, data=None):
@@ -257,7 +244,6 @@ class BaseTests:
                         continue
                     if action == "PASSWORD EXPIRED":
                         continue
-                    pytest.fail(f"Unknown post log action requested: {action}")
 
                 data = {}
                 # Will read and store qr_code + init totp_code required for next action
@@ -410,73 +396,10 @@ class BaseTests:
                 data[key] = fake.password(strong=True)
             elif field_type == "string":
                 data[key] = fake.pystr(min_chars=16, max_chars=32)
-            else:
+            else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
         return data
-
-    @staticmethod
-    def method_exists(status):
-        if status is None:
-            return False
-        if status == 404:
-            return False
-        if status == 405:
-            return False
-
-        return True
-
-    def _test_endpoint(
-        self,
-        client,
-        endpoint,
-        headers=None,
-        get_status=None,
-        post_status=None,
-        put_status=None,
-        del_status=None,
-        post_data=None,
-    ):
-
-        if headers is not None:
-
-            if self.method_exists(get_status):
-                r = client.get(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-            if self.method_exists(post_status):
-                r = client.post(f"{API_URI}/{endpoint}", data=post_data)
-                assert r.status_code == 401
-
-            if self.method_exists(put_status):
-                r = client.put(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-            if self.method_exists(del_status):
-                r = client.delete(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-        get_r = post_r = put_r = delete_r = None
-
-        if get_status is not None:
-            get_r = client.get(f"{API_URI}/{endpoint}", headers=headers)
-            assert get_r.status_code == get_status
-
-        if post_status is not None:
-            post_r = client.post(
-                f"{API_URI}/{endpoint}", headers=headers, data=post_data
-            )
-            assert post_r.status_code == post_status
-
-        if put_status is not None:
-            put_r = client.put(f"{API_URI}/{endpoint}", headers=headers)
-            assert put_r.status_code == put_status
-
-        if del_status is not None:
-            delete_r = client.delete(f"{API_URI}/{endpoint}", headers=headers)
-            assert delete_r.status_code == del_status
-
-        return get_r, post_r, put_r, delete_r
 
     @staticmethod
     def read_mock_email():

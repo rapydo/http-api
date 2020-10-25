@@ -11,15 +11,6 @@ class TestApp(BaseTests):
     def test_admin_groups(self, client, fake):
 
         headers, _ = self.do_login(client, None, None)
-        self._test_endpoint(
-            client,
-            "admin/groups",
-            headers,
-            200,
-            400,
-            405,
-            405,
-        )
 
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
         assert r.status_code == 200

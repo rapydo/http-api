@@ -17,16 +17,6 @@ class TestApp(BaseTests):
         project_tile = get_project_configuration("project.title", default="YourProject")
 
         headers, _ = self.do_login(client, None, None)
-        self._test_endpoint(
-            client,
-            "admin/users",
-            headers,
-            200,
-            400,
-            405,
-            405,
-        )
-
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
 
