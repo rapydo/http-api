@@ -56,7 +56,9 @@ def getProfileData():
     attributes["surname"] = fields.Str(required=True)
     attributes["isAdmin"] = fields.Boolean(required=True)
     attributes["isLocalAdmin"] = fields.Boolean(required=True)
+    attributes["isCoordinator"] = fields.Boolean(required=True)
     attributes["privacy_accepted"] = fields.Boolean(required=True)
+    attributes["is_active"] = fields.Boolean(required=True)
     attributes["roles"] = fields.Dict(required=True)
 
     attributes["group"] = fields.Nested(Group)
@@ -97,7 +99,9 @@ class Profile(EndpointResource):
             "surname": current_user.surname,
             "isAdmin": self.verify_admin(),
             "isLocalAdmin": self.verify_local_admin(),
+            "isCoordinator": self.verify_coordinator(),
             "privacy_accepted": current_user.privacy_accepted,
+            "is_active": current_user.is_active,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
         }

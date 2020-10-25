@@ -68,6 +68,11 @@ class EndpointResource(MethodResource, Resource):
             self.get_user(), [Role.LOCAL_ADMIN], warnings=False
         )
 
+    def verify_coordinator(self):
+        return self.auth.verify_roles(
+            self.get_user(), [Role.COORDINATOR], warnings=False
+        )
+
     def response(self, content=None, code=None, headers=None, head_method=False):
 
         if headers is None:
