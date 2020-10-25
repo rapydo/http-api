@@ -253,7 +253,7 @@ class AdminUsers(EndpointResource):
 
         roles = kwargs.pop("roles", [])
 
-        group_id = kwargs.pop("group")
+        group_id = kwargs.pop("group", None)
 
         email_notification = kwargs.pop("email_notification", False)
 
@@ -269,11 +269,12 @@ class AdminUsers(EndpointResource):
 
         self.auth.save_user(user)
 
-        group = self.auth.get_groups(group_id=group_id)
-        if not group:
-            raise NotFound("This group cannot be found")
+        if group_id is not None:
+            group = self.auth.get_groups(group_id=group_id)
+            if not group:
+                raise NotFound("This group cannot be found")
 
-        self.auth.add_user_to_group(user, group[0])
+            self.auth.add_user_to_group(user, group[0])
 
         if email_notification and unhashed_password is not None:
             smtp = self.get_service_instance("smtp")
