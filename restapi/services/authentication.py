@@ -300,6 +300,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
+    def get_groups(self, group_id=None):  # pragma: no cover
+        """
+        How to retrieve groups list from the current service,
+        Optionally filter by the unique uuid given
+        """
+        return
+
+    @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
         """
         Return the list of tokens
@@ -454,7 +462,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return self.unpacked_token(False)
 
         # Get the user from payload
-        user = self.get_user_object(payload=payload)
+        user = self.get_user_object(user_id=payload.get("user_id"))
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
@@ -621,9 +629,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def create_user(self, userdata, roles):  # pragma: no cover
         """
-        A method to create a new user following some standards.
-        - The user should be at least associated to the default (basic) role
-        - More to come
+        A method to create a new user
         """
         return
 
@@ -631,6 +637,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def link_roles(self, user, roles):  # pragma: no cover
         """
         A method to assign roles to a user
+        """
+        return
+
+    @abc.abstractmethod
+    def create_group(self, groupdata, coordinator):  # pragma: no cover
+        """
+        A method to create a new group
+        """
+        return
+
+    @abc.abstractmethod
+    def update_group(self, group, groupdata, coordinator):  # pragma: no cover
+        """
+        A method to update an existing group
         """
         return
 

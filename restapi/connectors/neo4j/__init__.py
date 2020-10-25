@@ -226,20 +226,21 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def get_user_object(self, username=None, payload=None):
+    def get_user_object(self, username=None, user_id=None):
 
         try:
             if username:
                 return self.db.User.nodes.get(email=username)
 
-            if payload and "user_id" in payload:
-                return self.db.User.nodes.get(uuid=payload["user_id"])
+            if user_id:
+                return self.db.User.nodes.get(uuid=user_id)
 
         except self.db.User.DoesNotExist:
             log.warning(
-                "Could not find user for username={}, payload={}", username, payload
+                "Could not find user for username={}, user_id={}", username, user_id
             )
-            return None
+
+        return None
 
     def get_users(self, user_id=None):
 
@@ -253,6 +254,21 @@ class Authentication(BaseAuthentication):
             return None
 
         return [user]
+
+    def get_groups(self, group_id=None):
+
+        if group_id is None:
+            groups = self.db.Group.nodes.all().copy()
+        else:
+            group = self.db.Group.nodes.get_or_none(uuid=group_id)
+            if not group:
+                return None
+            groups = [group]
+
+        # for g in groups:
+        #     g.coordinator = g.coordinator.single()
+
+        return groups
 
     def get_roles(self):
         roles = []
@@ -304,6 +320,23 @@ class Authentication(BaseAuthentication):
             except self.db.Role.DoesNotExist:
                 raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
+
+    def create_group(self, groupdata, coordinator):
+        group = self.db.Group(**groupdata).save()
+        group.coordinator.connect(coordinator)
+
+        return group
+
+    def update_group(self, group, groupdata, coordinator):
+        self.db.update_properties(group, groupdata)
+
+        group.save()
+
+        prev_coordinator = group.coordinator.single()
+
+        group.coordinator.reconnect(prev_coordinator, coordinator)
+
+        return group
 
     def init_users_and_roles(self):
 

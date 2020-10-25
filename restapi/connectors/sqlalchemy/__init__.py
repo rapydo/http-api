@@ -227,20 +227,30 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def get_user_object(self, username=None, payload=None):
+    def create_group(self, groupdata, coordinator):
+        return None
+
+    def update_group(self, group, groupdata, coordinator):
+
+        return group
+
+    def get_user_object(self, username=None, user_id=None):
 
         try:
             if username:
                 return self.db.User.query.filter_by(email=username).first()
 
-            if payload and "user_id" in payload:
-                return self.db.User.query.filter_by(uuid=payload["user_id"]).first()
+            if user_id:
+                return self.db.User.query.filter_by(uuid=user_id).first()
 
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
             log.error(e)
             raise ServiceUnavailable("Backend database is unavailable")
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             raise e
+
+        # only reached if both username and user_id are None
+        return None
 
     def get_users(self, user_id=None):
 
@@ -254,6 +264,13 @@ class Authentication(BaseAuthentication):
             return None
 
         return [user]
+
+    def get_groups(self, group_id=None):
+
+        if group_id is None:
+            return []
+
+        return None
 
     def get_roles(self):
         roles = []

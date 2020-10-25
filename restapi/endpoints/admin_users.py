@@ -1,9 +1,15 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
+from restapi.exceptions import (
+    BadRequest,
+    Conflict,
+    DatabaseDuplicatedEntry,
+    NotFound,
+    ServiceUnavailable,
+)
 from restapi.models import AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.authentication import ROLE_DISABLED, BaseAuthentication, Role
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -39,11 +45,11 @@ Password: {unhashed_password}
 def parse_group(v, neo4j):
     group_id = v.pop("group", None)
     if group_id is None:
-        raise RestApiException("Group not found", status_code=400)
+        raise BadRequest("Group not found")
     group = neo4j.Group.nodes.get_or_none(uuid=group_id)
 
     if group is None:
-        raise RestApiException("Group not found", status_code=400)
+        raise BadRequest("Group not found")
 
     return group
 
@@ -199,9 +205,7 @@ class AdminUsers(EndpointResource):
 
         users = self.auth.get_users(user_id)
         if users is None:
-            raise RestApiException(
-                "This user cannot be found or you are not authorized"
-            )
+            raise NotFound("This user cannot be found or you are not authorized")
 
         return self.response(users)
 
@@ -233,7 +237,7 @@ class AdminUsers(EndpointResource):
         except DatabaseDuplicatedEntry as e:
             if self.sql_enabled:
                 self.auth.db.session.rollback()
-            raise RestApiException(str(e), status_code=409)
+            raise Conflict(str(e))
 
         # FIXME: groups management is only implemented for neo4j
         if "group" in kwargs and self.neo4j_enabled:
@@ -261,9 +265,7 @@ class AdminUsers(EndpointResource):
         user = self.auth.get_users(user_id)
 
         if user is None:
-            raise RestApiException(
-                "This user cannot be found or you are not authorized"
-            )
+            raise NotFound("This user cannot be found or you are not authorized")
 
         user = user[0]
 
@@ -324,9 +326,7 @@ class AdminUsers(EndpointResource):
         user = self.auth.get_users(user_id)
 
         if user is None:
-            raise RestApiException(
-                "This user cannot be found or you are not authorized"
-            )
+            raise NotFound("This user cannot be found or you are not authorized")
 
         user = user[0]
 
@@ -336,7 +336,7 @@ class AdminUsers(EndpointResource):
             self.auth.db.session.delete(user)
             self.auth.db.session.commit()
         else:
-            raise RestApiException(  # pragma: no cover
+            raise ServiceUnavailable(  # pragma: no cover
                 "Invalid auth backend, all known db are disabled"
             )
 

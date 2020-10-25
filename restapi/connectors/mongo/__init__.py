@@ -152,20 +152,28 @@ class Authentication(BaseAuthentication):
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
-    def get_user_object(self, username=None, payload=None):
+    def create_group(self, groupdata, coordinator):
+        return None
+
+    def update_group(self, group, groupdata, coordinator):
+
+        return group
+
+    def get_user_object(self, username=None, user_id=None):
 
         try:
             if username:
                 return self.db.User.objects.raw({"email": username}).first()
 
-            if payload and "user_id" in payload:
-                return self.db.User.objects.get({"uuid": payload["user_id"]})
+            if user_id:
+                return self.db.User.objects.get({"uuid": user_id})
 
         except self.db.User.DoesNotExist:
             log.warning(
-                "Could not find user for username={}, payload={}", username, payload
+                "Could not find user for username={}, user_id={}", username, user_id
             )
-            return None
+
+        return None
 
     def get_users(self, user_id=None):
 
@@ -178,6 +186,13 @@ class Authentication(BaseAuthentication):
             return [self.db.User.objects.get({"uuid": user_id})]
         except self.db.User.DoesNotExist:
             return None
+
+    def get_groups(self, group_id=None):
+
+        if group_id is None:
+            return []
+
+        return None
 
     def get_roles(self):
         roles = []
