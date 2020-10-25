@@ -142,7 +142,7 @@ def getInputSchema(request):
         default_group = None
 
     attributes["group"] = fields.Str(
-        required=True,
+        required=set_required,
         default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
     )
