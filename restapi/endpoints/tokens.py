@@ -1,6 +1,6 @@
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
-from restapi.models import Schema, fields
+from restapi.models import ISO8601UTC, Schema, fields
 from restapi.rest.definition import EndpointResource
 
 # from restapi.utilities.logs import log
@@ -11,9 +11,9 @@ class TokenSchema(Schema):
     IP = fields.Str()
     location = fields.Str()
     token = fields.Str()
-    emitted = fields.DateTime()
-    expiration = fields.DateTime()
-    last_access = fields.DateTime()
+    emitted = fields.DateTime(format=ISO8601UTC)
+    expiration = fields.DateTime(format=ISO8601UTC)
+    last_access = fields.DateTime(format=ISO8601UTC)
 
 
 class Tokens(EndpointResource):
