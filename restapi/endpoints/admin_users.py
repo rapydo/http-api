@@ -13,6 +13,8 @@ from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.templates import get_html_template
 
+# from restapi.utilities.logs import log
+
 
 def send_notification(smtp, user, unhashed_password, is_update=False):
 
@@ -68,7 +70,6 @@ def get_output_schema():
     attributes["roles"] = fields.List(fields.Nested(Roles))
 
     attributes["belongs_to"] = fields.Nested(Group, data_key="group")
-    attributes["coordinator_for"] = fields.Nested(Group, data_key="coordinator")
 
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)

@@ -52,6 +52,7 @@ ROLE_DISABLED = "disabled"
 class Role(Enum):
     ADMIN = "admin_root"
     LOCAL_ADMIN = "local_admin"
+    COORDINATOR = "group_coordinator"
     STAFF = "staff_user"
     USER = "normal_user"
 
@@ -589,9 +590,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
 
     @abc.abstractmethod
-    def init_users_and_roles(self):  # pragma: no cover
+    def init_auth_db(self):  # pragma: no cover
         """
-        Create roles and a user if no one exists.
+        Create default roles, default user and default group
         """
         return
 
@@ -641,14 +642,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def create_group(self, groupdata, coordinator):  # pragma: no cover
+    def create_group(self, groupdata):  # pragma: no cover
         """
         A method to create a new group
         """
         return
 
     @abc.abstractmethod
-    def update_group(self, group, groupdata, coordinator):  # pragma: no cover
+    def update_group(self, group, groupdata):  # pragma: no cover
         """
         A method to update an existing group
         """

@@ -50,9 +50,6 @@ class TestApp(BaseTests):
         newdata = {
             "shortname": fake.company(),
             "fullname": fake.company(),
-            # we should change the coordinator...
-            # But set again the same coordinator is enough for now
-            "coordinator": data.get("coordinator"),
         }
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
@@ -83,13 +80,6 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/groups/xyz", headers=headers)
         assert r.status_code == 404
 
-        data = self.buildData(schema)
-        data["coordinator"] = fake.ascii_email()
-        r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
-        assert r.status_code == 400
-        # Now error is: 'coordinator': ['Must be one of: ...
-        # assert self.get_content(r) == 'User not found'
-
         # Create a group and assign it to the main user
         # Profile and AdminUsers will react to this change
         # Very important: admin_groups must be tested before admin_users and profile
@@ -101,7 +91,6 @@ class TestApp(BaseTests):
         data = {
             "fullname": "Default group",
             "shortname": fake.company(),
-            "coordinator": user_uuid,
         }
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200

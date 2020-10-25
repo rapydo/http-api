@@ -34,7 +34,6 @@ class User(UserCustomClass):
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")
-    coordinator_for = RelationshipTo("Group", "PI_FOR", cardinality=ZeroOrMore)
 
 
 class Group(GroupCustomClass):
@@ -42,7 +41,6 @@ class Group(GroupCustomClass):
     fullname = StringProperty(required=True, unique_index=False)
 
     members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
-    coordinator = RelationshipFrom("User", "PI_FOR", cardinality=ZeroOrOne)
 
 
 class Token(StructuredNode):

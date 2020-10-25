@@ -271,7 +271,8 @@ class Authentication(BaseAuthentication):
     def get_roles(self):
         roles = []
         for role in self.db.Role.nodes.all():
-            roles.append(role)
+            if role:
+                roles.append(role)
 
         return roles
 
@@ -319,25 +320,15 @@ class Authentication(BaseAuthentication):
                 raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
 
-    def create_group(self, groupdata, coordinator):
+    def create_group(self, groupdata):
         group = self.db.Group(**groupdata).save()
-        group.coordinator.connect(coordinator)
 
         return group
 
-    def update_group(self, group, groupdata, coordinator):
+    def update_group(self, group, groupdata):
         self.db.update_properties(group, groupdata)
 
         group.save()
-
-        prev_coordinator = group.coordinator.single()
-
-        if prev_coordinator is None:
-            group.coordinator.connect(coordinator)
-        elif prev_coordinator == coordinator:
-            pass
-        else:
-            group.coordinator.reconnect(prev_coordinator, coordinator)
 
         return group
 
@@ -352,7 +343,7 @@ class Authentication(BaseAuthentication):
         else:
             user.belongs_to.connect(group)
 
-    def init_users_and_roles(self):
+    def init_auth_db(self):
 
         # Handle system roles
         current_roles = []

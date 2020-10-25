@@ -152,10 +152,10 @@ class Authentication(BaseAuthentication):
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
-    def create_group(self, groupdata, coordinator):
+    def create_group(self, groupdata):
         return None
 
-    def update_group(self, group, groupdata, coordinator):
+    def update_group(self, group, groupdata):
 
         return group
 
@@ -203,7 +203,8 @@ class Authentication(BaseAuthentication):
         for role_name in self.roles:
             try:
                 role = self.db.Role.objects.get({"name": role_name})
-                roles.append(role)
+                if role:
+                    roles.append(role)
             except self.db.Role.DoesNotExist:
                 log.warning("Role not found: {}", role_name)
 
@@ -217,7 +218,7 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    def init_users_and_roles(self):
+    def init_auth_db(self):
 
         roles = []
 

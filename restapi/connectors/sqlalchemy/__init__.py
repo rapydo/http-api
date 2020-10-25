@@ -227,23 +227,20 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def create_group(self, groupdata, coordinator):
+    def create_group(self, groupdata):
 
         groupdata.setdefault("uuid", getUUID())
 
         group = self.db.Group(**groupdata)
-        group.coordinator = coordinator
 
         self.db.session.commit()
         self.db.session.add(group)
 
         return group
 
-    def update_group(self, group, groupdata, coordinator):
+    def update_group(self, group, groupdata):
 
         self.db.update_properties(group, groupdata)
-
-        group.coordinator = coordinator
 
         self.db.session.add(group)
         self.db.session.commit()
@@ -305,7 +302,8 @@ class Authentication(BaseAuthentication):
         roles = []
         for role_name in self.roles:
             role = self.db.Role.query.filter_by(name=role_name).first()
-            roles.append(role)
+            if role:
+                roles.append(role)
 
         return roles
 
@@ -317,11 +315,9 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    # TODO: (IMPORTANT) developer should be able to specify a custom init
-    # which would replace this function below
-    def init_users_and_roles(self):
+    def init_auth_db(self):
 
-        missing_role = missing_user = False
+        missing_role = missing_user = missing_group = False
 
         try:
             # if no roles
@@ -334,9 +330,10 @@ class Authentication(BaseAuthentication):
                 log.info("Injected default roles")
 
             # if no users
-            missing_user = not self.db.User.query.first()
+            default_user = self.db.User.query.first()
+            missing_user = not default_user
             if missing_user:
-                self.create_user(
+                default_user = self.create_user(
                     {
                         "email": self.default_user,
                         # 'authmethod': 'credentials',
@@ -348,8 +345,24 @@ class Authentication(BaseAuthentication):
                 )
                 log.info("Injected default user")
 
-            if missing_user or missing_role:
+            # if not groups
+            default_group = self.db.Group.query.first()
+            missing_group = not default_group
+
+            if missing_group:
+                default_group = self.create_group(
+                    {
+                        "shortname": "Default",
+                        "fullname": "Default group",
+                    }
+                )
+                log.info("Injected default group")
+
+            if missing_user or missing_role or missing_group:
                 self.db.session.commit()
+
+            self.add_user_to_group(default_user, default_group)
+
         except sqlalchemy.exc.OperationalError:  # pragma: no cover
             self.db.session.rollback()
             # A migration / rebuild is required?

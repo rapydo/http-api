@@ -239,7 +239,7 @@ class Detector:
                 connector.initialize()
 
                 with app.app_context():
-                    self.authentication_instance.init_users_and_roles()
+                    self.authentication_instance.init_auth_db()
                     log.info("Initialized authentication module")
 
                 self.project_initialization(instances, app=app)

@@ -47,7 +47,6 @@ class User(db.Model):
     belongs_to = db.relationship(
         "Group", backref=db.backref("members"), foreign_keys=[group_id]
     )
-    # + has `coordinator_for` backref from Group
 
 
 class Token(db.Model):
@@ -74,10 +73,3 @@ class Group(db.Model):
     fullname = db.Column(db.String(256))
 
     # + has `members` backref from User
-
-    coordinator_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    coordinator = db.relationship(
-        "User",
-        backref=db.backref("coordinator_for", uselist=False),
-        foreign_keys=[coordinator_id],
-    )

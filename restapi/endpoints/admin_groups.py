@@ -4,36 +4,15 @@ from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
-from restapi.utilities.logs import log
+
+# from restapi.utilities.logs import log
 
 
-# Used to serialize through the CoordinatorField
-class Coordinator(Schema):
-    uuid = fields.UUID()
-    email = fields.Email(required=True)
-    name = fields.Str(required=True)
-    surname = fields.Str(required=True)
-
-
-# This is required to convert neo4j relationship in a single element...
-class CoordinatorField(fields.Field):
-    """Field that serializes from a coordinator list into one element"""
-
-    def _serialize(self, value, attr, obj, **kwargs):
-
-        if AdminGroups.neo4j_enabled:
-            return Coordinator().dump(value.single())
-        return Coordinator().dump(value)
-
-
-# This is also defined in profile.py and admin_users.py but without coordinator
 # Output Schema
 class Group(Schema):
     uuid = fields.UUID()
     fullname = fields.Str()
     shortname = fields.Str()
-
-    coordinator = CoordinatorField()
 
 
 # Function required here to reload the model at runtime and fill the groups list
@@ -56,11 +35,6 @@ def getInputSchema(request):
 
     attributes["shortname"] = fields.Str(required=True, description="Short name")
     attributes["fullname"] = fields.Str(required=True, description="Full name")
-    attributes["coordinator"] = fields.Str(
-        required=True,
-        description="Select a coordinator",
-        validate=validate.OneOf(choices=users.keys(), labels=users.values()),
-    )
 
     return Schema.from_dict(attributes)
 
@@ -103,16 +77,7 @@ class AdminGroups(EndpointResource):
     )
     def post(self, **kwargs):
 
-        coordinator_uuid = kwargs.pop("coordinator")
-        coordinator = self.auth.get_user_object(user_id=coordinator_uuid)
-
-        # Can not be tested because coordinator values are filtered by webargs
-        # Only valid uuid will be provided here.
-        # This is an extra-security check
-        if not coordinator:  # pragma: no cover
-            raise Unauthorized("Coordinator not found")
-
-        group = self.auth.create_group(kwargs, coordinator)
+        group = self.auth.create_group(kwargs)
 
         if self.sql_enabled:
             self.auth.db.session.commit()
@@ -134,10 +99,7 @@ class AdminGroups(EndpointResource):
 
         group = group[0]
 
-        coordinator_uuid = kwargs.pop("coordinator", None)
-        coordinator = self.auth.get_user_object(user_id=coordinator_uuid)
-
-        self.auth.update_group(group, kwargs, coordinator)
+        self.auth.update_group(group, kwargs)
 
         return self.empty_response()
 

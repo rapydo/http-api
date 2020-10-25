@@ -81,8 +81,6 @@ class Group(MongoModel):
     shortname = fields.CharField()
     fullname = fields.CharField()
 
-    coordinator_id = fields.ReferenceField(User, blank=True)
-
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
