@@ -339,11 +339,7 @@ class Authentication(BaseAuthentication):
     def init_auth_db(self):
 
         # Handle system roles
-        current_roles = []
-        current_roles_objs = self.db.Role.nodes.all()
-        for role in current_roles_objs:
-            current_roles.append(role.name)
-
+        current_roles = [role.name for role in self.db.Role.nodes.all()]
         log.info("Current roles: {}", current_roles)
 
         for role_name in self.roles:
@@ -353,9 +349,8 @@ class Authentication(BaseAuthentication):
                 role = self.db.Role(name=role_name, description=role_description)
                 role.save()
 
-        # Default user (if no users yet available)
-        if not len(self.db.User.nodes) > 0:
-            self.create_user(
+        if len(self.db.User.nodes) == 0:
+            default_user = self.create_user(
                 {
                     "email": self.default_user,
                     # 'authmethod': 'credentials',
@@ -365,9 +360,29 @@ class Authentication(BaseAuthentication):
                 },
                 roles=self.roles,
             )
-            log.warning("Injected default user")
+            log.info("Injected default user")
         else:
             log.debug("Users already created")
+            default_user = self.get_user_object(username=self.default_user)
+
+        if len(self.db.Group.nodes) == 0:
+            default_group = self.create_group(
+                {
+                    "shortname": "Default",
+                    "fullname": "Default group",
+                }
+            )
+            log.info("Injected default group")
+        else:
+            log.debug("Groups already created")
+            default_group = None
+            for g in self.get_groups():
+                if g.shortname == "Default":
+                    default_group = g
+                    break
+
+        if default_group:
+            self.add_user_to_group(default_user, default_group)
 
     def save_user(self, user):
         if user:

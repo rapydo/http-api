@@ -1,6 +1,6 @@
 from restapi import decorators
-from restapi.exceptions import NotFound, ServiceUnavailable, Unauthorized
-from restapi.models import Schema, fields, validate
+from restapi.exceptions import NotFound, ServiceUnavailable
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
@@ -8,11 +8,19 @@ from restapi.services.detect import detector
 # from restapi.utilities.logs import log
 
 
+class User(Schema):
+    email = fields.Email()
+    name = fields.String()
+    surname = fields.String()
+
+
 # Output Schema
 class Group(Schema):
     uuid = fields.UUID()
     fullname = fields.Str()
     shortname = fields.Str()
+
+    members = fields.Nested(User(many=True))
 
 
 # Function required here to reload the model at runtime and fill the groups list

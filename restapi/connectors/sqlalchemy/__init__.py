@@ -308,22 +308,16 @@ class Authentication(BaseAuthentication):
 
     def init_auth_db(self):
 
-        missing_role = missing_user = missing_group = False
-
         try:
-            # if no roles
-            missing_role = not self.db.Role.query.first()
-            if missing_role:
+            if not self.db.Role.query.first():
                 for role_name in self.roles:
                     role_description = self.roles_data.get(role_name, ROLE_DISABLED)
                     role = self.db.Role(name=role_name, description=role_description)
                     self.db.session.add(role)
+                self.db.session.commit()
                 log.info("Injected default roles")
 
-            # if no users
-            default_user = self.db.User.query.first()
-            missing_user = not default_user
-            if missing_user:
+            if not self.db.User.query.first():
                 default_user = self.create_user(
                     {
                         "email": self.default_user,
@@ -334,13 +328,13 @@ class Authentication(BaseAuthentication):
                     },
                     roles=self.roles,
                 )
+                self.db.session.commit()
                 log.info("Injected default user")
+            else:
+                log.debug("Users already created")
+                default_user = self.get_user_object(username=self.default_user)
 
-            # if not groups
-            default_group = self.db.Group.query.first()
-            missing_group = not default_group
-
-            if missing_group:
+            if not self.db.Group.query.first():
                 default_group = self.create_group(
                     {
                         "shortname": "Default",
@@ -348,11 +342,16 @@ class Authentication(BaseAuthentication):
                     }
                 )
                 log.info("Injected default group")
+            else:
+                log.debug("Groups already created")
+                default_group = None
+                for g in self.get_groups():
+                    if g.shortname == "Default":
+                        default_group = g
+                        break
 
-            if missing_user or missing_role or missing_group:
-                self.db.session.commit()
-
-            self.add_user_to_group(default_user, default_group)
+            if default_group:
+                self.add_user_to_group(default_user, default_group)
 
         except sqlalchemy.exc.OperationalError:  # pragma: no cover
             self.db.session.rollback()

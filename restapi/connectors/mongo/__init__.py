@@ -165,7 +165,8 @@ class Authentication(BaseAuthentication):
 
     def add_user_to_group(self, user, group):
 
-        pass
+        user.belongs_to = group
+        user.save()
 
     def get_user_object(self, username=None, user_id=None):
 
@@ -241,17 +242,15 @@ class Authentication(BaseAuthentication):
                 role = self.db.Role(name=role_name, description=role_description)
                 role.save()
                 roles.append(role.name)
-                log.warning("Injected default role: {}", role.name)
+                log.info("Injected default role: {}", role.name)
 
         try:
 
             # if no users
             cursor = self.db.User.objects.all()
-            if len(list(cursor)) > 0:
-                log.info("No user injected")
-            else:
+            if len(list(cursor)) == 0:
 
-                self.create_user(
+                default_user = self.create_user(
                     {
                         "email": self.default_user,
                         "name": "Default",
@@ -262,7 +261,31 @@ class Authentication(BaseAuthentication):
                     roles=roles,
                 )
 
-                log.warning("Injected default user")
+                log.info("Injected default user")
+            else:
+                log.debug("Users already created")
+                default_user = self.get_user_object(username=self.default_user)
+
+            cursor = self.db.Group.objects.all()
+            if len(list(cursor)) == 0:
+
+                default_group = self.create_group(
+                    {
+                        "shortname": "Default",
+                        "fullname": "Default group",
+                    }
+                )
+                log.info("Injected default group")
+            else:
+                log.debug("Groups already created")
+                default_group = None
+                for g in self.get_groups():
+                    if g.shortname == "Default":
+                        default_group = g
+                        break
+
+            if default_group:
+                self.add_user_to_group(default_user, default_group)
 
         except BaseException as e:
             raise AttributeError(f"Models for auth are wrong:\n{e}")

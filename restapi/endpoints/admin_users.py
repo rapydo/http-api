@@ -6,7 +6,7 @@ from restapi.exceptions import (
     NotFound,
     ServiceUnavailable,
 )
-from restapi.models import AdvancedList, Schema, fields, validate
+from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.detect import detector
@@ -62,9 +62,11 @@ def get_output_schema():
     attributes["email"] = fields.Email()
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
-    attributes["first_login"] = fields.DateTime(allow_none=True)
-    attributes["last_login"] = fields.DateTime(allow_none=True)
-    attributes["last_password_change"] = fields.DateTime(allow_none=True)
+    attributes["first_login"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
+    attributes["last_login"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
+    attributes["last_password_change"] = fields.DateTime(
+        allow_none=True, format=ISO8601UTC
+    )
     attributes["is_active"] = fields.Boolean()
     attributes["privacy_accepted"] = fields.Boolean()
     attributes["roles"] = fields.List(fields.Nested(Roles))
