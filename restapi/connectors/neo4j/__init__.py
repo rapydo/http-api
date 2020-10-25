@@ -325,13 +325,6 @@ class Authentication(BaseAuthentication):
 
         return group
 
-    def update_group(self, group, groupdata):
-        self.db.update_properties(group, groupdata)
-
-        group.save()
-
-        return group
-
     def add_user_to_group(self, user, group):
 
         prev_group = user.belongs_to.single()

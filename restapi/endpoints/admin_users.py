@@ -258,15 +258,14 @@ class AdminUsers(EndpointResource):
         email_notification = kwargs.pop("email_notification", False)
 
         self.auth.link_roles(user, roles)
-        db = self.get_service_instance(detector.authentication_service)
-        # if self.neo4j_enabled:
-        #     self.graph = db
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-        db.update_properties(user, userdata)
+        self.auth.db.update_properties(user, userdata)
 
-        self.auth.custom_user_properties_post(user, userdata, extra_userdata, db)
+        self.auth.custom_user_properties_post(
+            user, userdata, extra_userdata, self.auth.db
+        )
 
         self.auth.save_user(user)
 

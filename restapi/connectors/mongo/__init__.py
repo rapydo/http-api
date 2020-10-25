@@ -153,9 +153,13 @@ class Authentication(BaseAuthentication):
         user.roles = roles_obj
 
     def create_group(self, groupdata):
-        return None
 
-    def update_group(self, group, groupdata):
+        groupdata.setdefault("uuid", getUUID())
+        groupdata.setdefault("id", groupdata["uuid"])
+
+        group = self.db.Group(**groupdata)
+
+        group.save()
 
         return group
 
@@ -193,10 +197,15 @@ class Authentication(BaseAuthentication):
 
     def get_groups(self, group_id=None):
 
+        # Retrieve all
         if group_id is None:
-            return []
+            return self.db.Group.objects.all()
 
-        return None
+        # Retrieve one
+        try:
+            return [self.db.Group.objects.get({"uuid": group_id})]
+        except self.db.Group.DoesNotExist:
+            return None
 
     def get_roles(self):
         roles = []

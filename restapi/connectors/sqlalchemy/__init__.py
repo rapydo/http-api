@@ -238,15 +238,6 @@ class Authentication(BaseAuthentication):
 
         return group
 
-    def update_group(self, group, groupdata):
-
-        self.db.update_properties(group, groupdata)
-
-        self.db.session.add(group)
-        self.db.session.commit()
-
-        return group
-
     def add_user_to_group(self, user, group):
 
         user.belongs_to = group

@@ -99,7 +99,17 @@ class AdminGroups(EndpointResource):
 
         group = group[0]
 
-        self.auth.update_group(group, kwargs)
+        self.auth.db.update_properties(group, kwargs)
+
+        if self.neo4j_enabled or self.mongo_enabled:
+            group.save()
+        elif self.sql_enabled:
+            self.auth.db.session.add(group)
+            self.auth.db.session.commit()
+        else:
+            raise ServiceUnavailable(  # pragma: no cover
+                "Invalid auth backend, all known db are disabled"
+            )
 
         return self.empty_response()
 

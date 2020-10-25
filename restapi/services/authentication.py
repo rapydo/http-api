@@ -649,13 +649,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def update_group(self, group, groupdata):  # pragma: no cover
-        """
-        A method to update an existing group
-        """
-        return
-
-    @abc.abstractmethod
     def add_user_to_group(self, user, group):  # pragma: no cover
         """
         Expand the group.members -> user relationship
