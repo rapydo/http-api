@@ -77,8 +77,8 @@ class Group(MongoModel):
     # To be enabled after completed the output serialization,
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     id = fields.CharField(primary_key=True)
-    uuid = fields.UUIDField(unique=True)
-    shortname = fields.CharField(unique=True)
+    uuid = fields.UUIDField()
+    shortname = fields.CharField()
     fullname = fields.CharField()
 
     coordinator_id = fields.ReferenceField(User, blank=True)
