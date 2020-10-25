@@ -9,6 +9,7 @@ from restapi.services.detect import detector
 
 
 class User(Schema):
+    uuid = fields.UUID()
     email = fields.Email()
     name = fields.String()
     surname = fields.String()
