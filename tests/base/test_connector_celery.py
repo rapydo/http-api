@@ -6,7 +6,7 @@ import pytest
 
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
 from restapi.exceptions import ServiceUnavailable
-from restapi.server import create_app
+from restapi.server import ServerModes, create_app
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
@@ -36,7 +36,9 @@ def test_celery(app, faker):
     assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     obj = detector.get_service_instance(CONNECTOR)
@@ -136,12 +138,16 @@ def test_celery(app, faker):
                 assert str(e) == "Unsupported period minutes for redis beat"
 
             obj.create_periodic_task(
-                name="task3", task="task.does.not.exists", every=60,
+                name="task3",
+                task="task.does.not.exists",
+                every=60,
             )
             assert obj.delete_periodic_task("task3")
 
             obj.create_periodic_task(
-                name="task4", task="task.does.not.exists", every=timedelta(seconds=60),
+                name="task4",
+                task="task.does.not.exists",
+                every=timedelta(seconds=60),
             )
             assert obj.delete_periodic_task("task4")
 
@@ -187,7 +193,7 @@ def test_celery(app, faker):
     obj = detector.get_debug_instance("invalid")
     assert obj is None
 
-    app = create_app(worker_mode=True)
+    app = create_app(mode=ServerModes.WORKER)
     assert app is not None
     from restapi.utilities.logs import LOGS_FILE
 

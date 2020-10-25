@@ -5,6 +5,7 @@ We create all the internal flask components here.
 import logging
 import os
 import warnings
+from enum import Enum
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -36,37 +37,24 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 
-def create_app(
-    name=__name__,
-    init_mode=False,
-    destroy_mode=False,
-    worker_mode=False,
-    skip_endpoint_mapping=False,
-    **kwargs,
-):
+class ServerModes(int, Enum):
+    NORMAL = 0
+    INIT = 1
+    DESTROY = 2
+    WORKER = 3
+
+
+def create_app(name=__name__, mode=ServerModes.NORMAL):
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         log.exit("Unable to execute tests in production")
 
-    # Add template dir for output in HTML
-    kwargs["template_folder"] = os.path.join(ABS_RESTAPI_PATH, "templates")
-
     # Flask app instance
-    microservice = Flask(name, **kwargs)
-
-    # Add commands to 'flask' binary
-    if init_mode:
-        # microservice.config['INIT_MODE'] = init_mode
-        skip_endpoint_mapping = True
-    elif destroy_mode:
-        # microservice.config['DESTROY_MODE'] = destroy_mode
-        skip_endpoint_mapping = True
-    elif TESTING:
-        # microservice.config['TESTING'] = config.TESTING
-        init_mode = True
-    elif worker_mode:
-        skip_endpoint_mapping = True
+    # template_folder = template dir for output in HTML
+    microservice = Flask(
+        name, template_folder=os.path.join(ABS_RESTAPI_PATH, "templates")
+    )
 
     # CORS
     if not PRODUCTION:
@@ -110,9 +98,9 @@ def create_app(
     # Find services and try to connect to the ones available
     detector.init_services(
         app=microservice,
-        project_init=init_mode,
-        project_clean=destroy_mode,
-        worker_mode=worker_mode,
+        project_init=(mode == ServerModes.INIT),
+        project_clean=(mode == ServerModes.DESTROY),
+        worker_mode=(mode == ServerModes.WORKER),
     )
 
     # Initialize reading of all files
@@ -120,8 +108,8 @@ def create_app(
     # when to close??
     # geolite2.close()
 
-    # Restful plugin
-    if not skip_endpoint_mapping:
+    # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
+    if mode == ServerModes.NORMAL:
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
         # ignore warning messages from apispec

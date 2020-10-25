@@ -33,14 +33,6 @@ def main(args):  # pragma: no cover
     fg_cli.main(**options)
 
 
-def flask_cli(options):
-    log.info("Launching the app")
-    from restapi.server import create_app
-
-    create_app(**options)
-    log.debug("cli execution completed")
-
-
 def initializing():
 
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
@@ -101,8 +93,13 @@ def init(wait):
     if wait:
         mywait()
 
+    from restapi.server import ServerModes, create_app
+
+    log.info("Launching initialization app")
+
+    create_app(name="Initializing services", mode=ServerModes.INIT)
+
     log.info("Initialization requested")
-    flask_cli({"name": "Initializing services", "init_mode": True})
 
 
 @cli.command()
@@ -181,13 +178,27 @@ def mywait():
 @click.confirmation_option(help="Are you sure you want to drop data?")
 def clean():  # pragma: no cover
     """Destroy current services data"""
-    flask_cli({"name": "Removing data", "destroy_mode": True})
+
+    from restapi.server import ServerModes, create_app
+
+    log.info("Launching destruction app")
+
+    create_app(name="Removing data", mode=ServerModes.DESTROY)
+
+    log.info("Destruction completed")
 
 
 @cli.command()
 def forced_clean():  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
-    flask_cli({"name": "Removing data", "destroy_mode": True})
+
+    from restapi.server import ServerModes, create_app
+
+    log.info("Launching destruction app")
+
+    create_app(name="Removing data", mode=ServerModes.DESTROY)
+
+    log.info("Destruction completed")
 
 
 @cli.command()

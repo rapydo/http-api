@@ -1,7 +1,7 @@
 import os
 
 from restapi.exceptions import ServiceUnavailable
-from restapi.server import create_app
+from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -29,7 +29,7 @@ def test_destroy():
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
 
-    create_app(destroy_mode=True)
+    create_app(mode=ServerModes.DESTROY)
 
     try:
         user = auth.get_user_object(username=BaseAuthentication.default_user)
@@ -37,7 +37,7 @@ def test_destroy():
     except ServiceUnavailable:
         pass
 
-    create_app(init_mode=True)
+    create_app(mode=ServerModes.INIT)
 
     user = auth.get_user_object(username=BaseAuthentication.default_user)
     assert user is not None
