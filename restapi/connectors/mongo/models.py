@@ -32,7 +32,7 @@ class User(MongoModel):
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     # uuid = fields.UUIDField()
     id = fields.CharField(primary_key=True)
-    uuid = fields.CharField(unique=True)
+    uuid = fields.CharField()
     email = fields.EmailField()
     name = fields.CharField()
     surname = fields.CharField()
