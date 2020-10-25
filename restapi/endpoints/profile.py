@@ -59,7 +59,7 @@ def getProfileData():
     attributes["privacy_accepted"] = fields.Boolean(required=True)
     attributes["roles"] = fields.Dict(required=True)
 
-    attributes["group"] = fields.Nested(Group, required=False)
+    attributes["group"] = fields.Nested(Group)
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
@@ -101,8 +101,7 @@ class Profile(EndpointResource):
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
         }
-        if self.neo4j_enabled:
-            data["group"] = current_user.belongs_to.single()
+        data["group"] = current_user.belongs_to
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
