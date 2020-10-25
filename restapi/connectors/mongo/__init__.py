@@ -159,6 +159,10 @@ class Authentication(BaseAuthentication):
 
         return group
 
+    def add_user_to_group(self, user, group):
+
+        pass
+
     def get_user_object(self, username=None, user_id=None):
 
         try:

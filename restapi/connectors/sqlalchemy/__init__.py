@@ -242,12 +242,20 @@ class Authentication(BaseAuthentication):
     def update_group(self, group, groupdata, coordinator):
 
         self.db.update_properties(group, groupdata)
+
         group.coordinator = coordinator
 
         self.db.session.add(group)
         self.db.session.commit()
 
         return group
+
+    def add_user_to_group(self, user, group):
+
+        user.belongs_to = group
+
+        self.db.session.add(user)
+        self.db.session.commit()
 
     def get_user_object(self, username=None, user_id=None):
 

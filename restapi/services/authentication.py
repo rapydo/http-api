@@ -654,6 +654,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
+    @abc.abstractmethod
+    def add_user_to_group(self, user, group):  # pragma: no cover
+        """
+        Expand the group.members -> user relationship
+        """
+        return
+
     # ###########################
     # # Login attempts handling #
     # ###########################

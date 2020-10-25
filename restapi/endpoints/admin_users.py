@@ -1,7 +1,6 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.exceptions import (
-    BadRequest,
     Conflict,
     DatabaseDuplicatedEntry,
     NotFound,
@@ -12,7 +11,6 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
 
@@ -42,41 +40,6 @@ Password: {unhashed_password}
         smtp.send(html, subject, user.email, plain_body=body)
 
 
-def parse_group(v, neo4j):
-    group_id = v.pop("group", None)
-    if group_id is None:
-        raise BadRequest("Group not found")
-    group = neo4j.Group.nodes.get_or_none(uuid=group_id)
-
-    if group is None:
-        raise BadRequest("Group not found")
-
-    return group
-
-
-def get_groups():
-    auth_service = detector.authentication_service
-
-    if auth_service == "neo4j":
-
-        neo4j = detector.get_service_instance("neo4j")
-
-        groups = {}
-        for g in neo4j.Group.nodes.all():
-            group_name = f"{g.shortname} - {g.fullname}"
-            groups[g.uuid] = group_name
-
-        return groups
-
-    if auth_service == "sqlalchemy":
-        return None
-
-    if auth_service == "mongo":
-        return None
-
-    log.error("Unknown auth service: {}", auth_service)  # pragma: no cover
-
-
 class Roles(Schema):
 
     name = fields.Str()
@@ -104,8 +67,8 @@ def get_output_schema():
     attributes["privacy_accepted"] = fields.Boolean()
     attributes["roles"] = fields.List(fields.Nested(Roles))
 
-    attributes["belongs_to"] = fields.List(fields.Nested(Group), data_key="group")
-    attributes["coordinator"] = fields.List(fields.Nested(Group))
+    attributes["belongs_to"] = fields.Nested(Group, data_key="group")
+    attributes["coordinator_for"] = fields.Nested(Group, data_key="coordinator")
 
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
@@ -165,12 +128,23 @@ def getInputSchema(request):
         multiple=True,
     )
 
-    groups = get_groups()
-    if groups:
-        attributes["group"] = fields.Str(
-            required=set_required,
-            validate=validate.OneOf(choices=groups.keys(), labels=groups.values()),
-        )
+    group_keys = []
+    group_labels = []
+
+    for g in auth.get_groups():
+        group_keys.append(g.uuid)
+        group_labels.append(f"{g.shortname} - {g.fullname}")
+
+    if len(group_keys) == 1:
+        default_group = group_keys[0]
+    else:
+        default_group = None
+
+    attributes["group"] = fields.Str(
+        required=True,
+        default=default_group,
+        validate=validate.OneOf(choices=group_keys, labels=group_labels),
+    )
 
     if custom_fields := mem.customizer.get_custom_input_fields(request):
         attributes.update(custom_fields)
@@ -222,6 +196,7 @@ class AdminUsers(EndpointResource):
     def post(self, **kwargs):
 
         roles = kwargs.pop("roles", [])
+        group_id = kwargs.pop("group")
 
         email_notification = kwargs.pop("email_notification", False)
 
@@ -239,13 +214,11 @@ class AdminUsers(EndpointResource):
                 self.auth.db.session.rollback()
             raise Conflict(str(e))
 
-        # FIXME: groups management is only implemented for neo4j
-        if "group" in kwargs and self.neo4j_enabled:
-            self.graph = self.get_service_instance("neo4j")
-            group = parse_group(kwargs, self.graph)
+        group = self.auth.get_groups(group_id=group_id)
+        if not group:
+            raise NotFound("This group cannot be found")
 
-            if group is not None:
-                user.belongs_to.connect(group)
+        self.auth.add_user_to_group(user, group[0])
 
         if email_notification and unhashed_password is not None:
             smtp = self.get_service_instance("smtp")
@@ -279,12 +252,14 @@ class AdminUsers(EndpointResource):
 
         roles = kwargs.pop("roles", [])
 
+        group_id = kwargs.pop("group")
+
         email_notification = kwargs.pop("email_notification", False)
 
         self.auth.link_roles(user, roles)
         db = self.get_service_instance(detector.authentication_service)
-        if self.neo4j_enabled:
-            self.graph = db
+        # if self.neo4j_enabled:
+        #     self.graph = db
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
@@ -294,20 +269,11 @@ class AdminUsers(EndpointResource):
 
         self.auth.save_user(user)
 
-        # FIXME: groups management is only implemented for neo4j
-        if "group" in kwargs and self.neo4j_enabled:
+        group = self.auth.get_groups(group_id=group_id)
+        if not group:
+            raise NotFound("This group cannot be found")
 
-            group = parse_group(kwargs, self.graph)
-
-            p = None
-            for p in user.belongs_to.all():
-                if p == group:
-                    continue
-
-            if p is not None:
-                user.belongs_to.reconnect(p, group)
-            else:
-                user.belongs_to.connect(group)
+        self.auth.add_user_to_group(user, group[0])
 
         if email_notification and unhashed_password is not None:
             smtp = self.get_service_instance("smtp")

@@ -257,18 +257,16 @@ class Authentication(BaseAuthentication):
 
     def get_groups(self, group_id=None):
 
+        # Retrieve all
         if group_id is None:
-            groups = self.db.Group.nodes.all().copy()
-        else:
-            group = self.db.Group.nodes.get_or_none(uuid=group_id)
-            if not group:
-                return None
-            groups = [group]
+            return self.db.Group.nodes.all()
 
-        # for g in groups:
-        #     g.coordinator = g.coordinator.single()
+        # Retrieve one
+        group = self.db.Group.nodes.get_or_none(uuid=group_id)
+        if not group:
+            return None
 
-        return groups
+        return [group]
 
     def get_roles(self):
         roles = []
@@ -334,9 +332,25 @@ class Authentication(BaseAuthentication):
 
         prev_coordinator = group.coordinator.single()
 
-        group.coordinator.reconnect(prev_coordinator, coordinator)
+        if prev_coordinator is None:
+            group.coordinator.connect(coordinator)
+        elif prev_coordinator == coordinator:
+            pass
+        else:
+            group.coordinator.reconnect(prev_coordinator, coordinator)
 
         return group
+
+    def add_user_to_group(self, user, group):
+
+        prev_group = user.belongs_to.single()
+
+        if prev_group is not None:
+            user.belongs_to.reconnect(prev_group, group)
+        elif prev_group == group:
+            pass
+        else:
+            user.belongs_to.connect(group)
 
     def init_users_and_roles(self):
 

@@ -43,7 +43,10 @@ class User(db.Model):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
-    # + has `belongs_to` backref from Group
+    group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
+    belongs_to = db.relationship(
+        "Group", backref=db.backref("members"), foreign_keys=[group_id]
+    )
     # + has `coordinator_for` backref from Group
 
 
@@ -70,9 +73,11 @@ class Group(db.Model):
     shortname = db.Column(db.String(64), unique=True)
     fullname = db.Column(db.String(256))
 
-    members = db.relationship("User", backref="belongs_to")
+    # + has `members` backref from User
 
     coordinator_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     coordinator = db.relationship(
-        "User", backref=db.backref("coordinator_for", uselist=False)
+        "User",
+        backref=db.backref("coordinator_for", uselist=False),
+        foreign_keys=[coordinator_id],
     )
