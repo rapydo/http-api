@@ -50,7 +50,7 @@ def catch_db_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = f"A {node} already exists with {prop} = {val}"
+                error = f"A {node} already exists with {prop}: {val}"
                 raise DatabaseDuplicatedEntry(error)
 
             # Can't be tested, should never happen except in case of new neo4j version

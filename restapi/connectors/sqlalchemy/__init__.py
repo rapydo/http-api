@@ -43,20 +43,24 @@ def catch_db_exceptions(func):
             # already catched and parser, raise up
             raise
         except IntegrityError as e:
-
             message = str(e).split("\n")
-            if not re.search(
-                r".*duplicate key value violates unique constraint .*", message[0]
-            ):
+            m0 = re.search(
+                r".*duplicate key value violates unique constraint \"(.*)\"", message[0]
+            )
+            if not m0:
                 log.error("Unrecognized error message: {}", e)
                 raise DatabaseDuplicatedEntry("Duplicated entry")
 
+            # duplicate key value violates unique constraint "user_email_key"
+            # => m0.group(1) === user_email_key
+            # => table = user
+            table = m0.group(1).split("_")[0]
             m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", message[1])
 
             if m:
                 prop = m.group(1)
                 val = m.group(2)
-                error = f"{prop.title()} already exists with value: {val}"
+                error = f"A {table} already exists with {prop}: {val}"
                 raise DatabaseDuplicatedEntry(error)
 
             # Can't be tested, should never happen except in case of new alchemy version
