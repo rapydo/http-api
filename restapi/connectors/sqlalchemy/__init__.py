@@ -65,7 +65,7 @@ def parse_mysql_error(excpt):
 
         if m:
             table = m.group(1)
-            return f"A {table} already exists with {prop}: {val}"
+            return f"A {table.title()} already exists with {prop}: {val}"
 
     return None  # pragma: no cover
 
