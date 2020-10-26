@@ -33,6 +33,46 @@ from restapi.utilities.uuid import getUUID
 db = OriginalAlchemy()
 
 
+def parse_postgres_error(excpt):
+    m0 = re.search(
+        r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
+    )
+
+    if not m0:
+        return None
+
+    # duplicate key value violates unique constraint "user_email_key"
+    # => m0.group(1) === user_email_key
+    # => table = user
+    table = m0.group(1).split("_")[0]
+    m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", excpt[1])
+
+    if m:
+        prop = m.group(1)
+        val = m.group(2)
+        return f"A {table} already exists with {prop}: {val}"
+
+    return None
+
+
+def parse_mysql_error(excpt):
+    m0 = re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0])
+
+    if not m0:
+        return None
+
+    val = m0.group(1)
+    prop = m0.group(2)
+
+    m = re.search(r".*INSERT INTO `(.*)` .*", excpt[1])
+
+    if m:
+        table = m.group(1)
+        return f"A {table} already exists with {prop}: {val}"
+
+    return None
+
+
 def catch_db_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -44,28 +84,17 @@ def catch_db_exceptions(func):
             raise
         except IntegrityError as e:
             message = str(e).split("\n")
-            m0 = re.search(
-                r".*duplicate key value violates unique constraint \"(.*)\"", message[0]
-            )
-            if not m0:
+
+            error = parse_postgres_error(message)
+            if not error:
+                error = parse_mysql_error(message)
+
+            # Should never happen except in case of new alchemy version
+            if not error:
                 log.error("Unrecognized error message: {}", e)
                 raise DatabaseDuplicatedEntry("Duplicated entry")
 
-            # duplicate key value violates unique constraint "user_email_key"
-            # => m0.group(1) === user_email_key
-            # => table = user
-            table = m0.group(1).split("_")[0]
-            m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", message[1])
-
-            if m:
-                prop = m.group(1)
-                val = m.group(2)
-                error = f"A {table} already exists with {prop}: {val}"
-                raise DatabaseDuplicatedEntry(error)
-
-            # Can't be tested, should never happen except in case of new alchemy version
-            log.error("Unrecognized error message: {}", e)  # pragma: no cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+            raise DatabaseDuplicatedEntry(error)
 
         except InternalError as e:  # pragma: no cover
 
