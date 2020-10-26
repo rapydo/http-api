@@ -34,45 +34,40 @@ db = OriginalAlchemy()
 
 
 def parse_postgres_error(excpt):
-    m0 = re.search(
+
+    if m0 := re.search(
         r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
-    )
+    ):
+        # duplicate key value violates unique constraint "user_email_key"
+        # => m0.group(1) === user_email_key
+        # => table = user
+        table = m0.group(1).split("_")[0]
+        m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", excpt[1])
 
-    if not m0:
-        return None
-
-    # duplicate key value violates unique constraint "user_email_key"
-    # => m0.group(1) === user_email_key
-    # => table = user
-    table = m0.group(1).split("_")[0]
-    m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", excpt[1])
-
-    if m:
-        prop = m.group(1)
-        val = m.group(2)
-        return f"A {table} already exists with {prop}: {val}"
+        if m:
+            prop = m.group(1)
+            val = m.group(2)
+            return f"A {table} already exists with {prop}: {val}"
 
     return None
 
 
 def parse_mysql_error(excpt):
-    m0 = re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0])
 
-    if not m0:
-        return None
+    if m0 := re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0]):
 
-    val = m0.group(1)
-    prop = m0.group(2)
+        val = m0.group(1)
+        prop = m0.group(2)
 
-    # table name can be "tablename" or "`tablename`"
-    # => match all non-space and non-backticks characters optioanlly wrapped among `
-    m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
+        # table name can be "tablename" or "`tablename`"
+        # => match all non-space and non-backticks characters optioanlly wrapped among `
+        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
 
-    if m:
-        table = m.group(1)
-        return f"A {table} already exists with {prop}: {val}"
+        if m:
+            table = m.group(1)
+            return f"A {table} already exists with {prop}: {val}"
 
-    return None
+    return None  # pragma: no cover
 
 
 def catch_db_exceptions(func):
@@ -92,7 +87,7 @@ def catch_db_exceptions(func):
                 error = parse_mysql_error(message)
 
             # Should never happen except in case of new alchemy version
-            if not error:
+            if not error:  # pragma: no cover
                 log.error("Unrecognized error message: {}", e)
                 raise DatabaseDuplicatedEntry("Duplicated entry")
 
@@ -388,6 +383,7 @@ class Authentication(BaseAuthentication):
             if default_group:
                 self.add_user_to_group(default_user, default_group)
 
+        # Can't be tested
         except sqlalchemy.exc.OperationalError:  # pragma: no cover
             self.db.session.rollback()
             # A migration / rebuild is required?

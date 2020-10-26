@@ -51,7 +51,7 @@ def catch_db_exceptions(func):
             # but the cause is still unknown...
             raise RestApiException(str(e), status_code=400)
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 
@@ -215,7 +215,8 @@ class Authentication(BaseAuthentication):
                 role = self.db.Role.objects.get({"name": role_name})
                 if role:
                     roles.append(role)
-            except self.db.Role.DoesNotExist:
+            # Can't be tested, since roles are injected at init time
+            except self.db.Role.DoesNotExist:  # pragma: no cover
                 log.warning("Role not found: {}", role_name)
 
         return roles
@@ -287,7 +288,8 @@ class Authentication(BaseAuthentication):
             if default_group:
                 self.add_user_to_group(default_user, default_group)
 
-        except BaseException as e:
+        # Can't be tested
+        except BaseException as e:  # pragma: no cover
             raise AttributeError(f"Models for auth are wrong:\n{e}")
 
     def save_user(self, user):
