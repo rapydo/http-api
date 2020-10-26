@@ -64,7 +64,9 @@ def parse_mysql_error(excpt):
     val = m0.group(1)
     prop = m0.group(2)
 
-    m = re.search(r".*INSERT INTO `(.*)` .*", excpt[1])
+    # table name can be "tablename" or "`tablename`"
+    # => match all non-space and non-backticks characters optioanlly wrapped among `
+    m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
 
     if m:
         table = m.group(1)
