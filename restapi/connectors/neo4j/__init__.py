@@ -244,16 +244,24 @@ class Authentication(BaseAuthentication):
 
     def get_users(self, user_id=None):
 
+        users = None
+
         # Retrieve all
         if user_id is None:
-            return self.db.User.nodes.all()
+            users = self.db.User.nodes.all()
 
-        # Retrieve one
-        user = self.db.User.nodes.get_or_none(uuid=user_id)
-        if user is None:
-            return None
+        else:
+            # Retrieve one
+            user = self.db.User.nodes.get_or_none(uuid=user_id)
+            if user is None:
+                return None
 
-        return [user]
+            users = [user]
+
+        for u in users:
+            u.belongs_to = u.belongs_to.single()
+
+        return users
 
     def get_groups(self, group_id=None):
 
@@ -362,7 +370,7 @@ class Authentication(BaseAuthentication):
             )
             log.info("Injected default user")
         else:
-            log.debug("Users already created")
+            log.info("Users already created")
             default_user = self.get_user_object(username=self.default_user)
 
         if len(self.db.Group.nodes) == 0:
@@ -374,7 +382,7 @@ class Authentication(BaseAuthentication):
             )
             log.info("Injected default group")
         else:
-            log.debug("Groups already created")
+            log.info("Groups already created")
             default_group = None
             for g in self.get_groups():
                 if g.shortname == "Default":
