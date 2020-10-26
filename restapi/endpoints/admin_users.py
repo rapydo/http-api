@@ -184,6 +184,10 @@ class AdminUsers(EndpointResource):
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
+        if self.neo4j_enabled:
+            for u in users:
+                u.belongs_to = u.belongs_to.single()
+
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)

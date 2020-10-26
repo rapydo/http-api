@@ -258,9 +258,6 @@ class Authentication(BaseAuthentication):
 
             users = [user]
 
-        for u in users:
-            u.belongs_to = u.belongs_to.single()
-
         return users
 
     def get_groups(self, group_id=None):
