@@ -47,7 +47,7 @@ def parse_postgres_error(excpt):
         if m:
             prop = m.group(1)
             val = m.group(2)
-            return f"A {table} already exists with {prop}: {val}"
+            return f"A {table.title()} already exists with {prop}: {val}"
 
     return None
 
