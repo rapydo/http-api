@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.models import Schema, fields, validate
+from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
@@ -60,6 +60,11 @@ def getProfileData():
     attributes["privacy_accepted"] = fields.Boolean(required=True)
     attributes["is_active"] = fields.Boolean(required=True)
     attributes["roles"] = fields.Dict(required=True)
+    attributes["last_password_change"] = fields.DateTime(
+        required=True, format=ISO8601UTC
+    )
+    attributes["first_login"] = fields.DateTime(required=True, format=ISO8601UTC)
+    attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
 
     attributes["group"] = fields.Nested(Group)
 
@@ -98,6 +103,9 @@ class Profile(EndpointResource):
             "isLocalAdmin": self.verify_local_admin(),
             "isCoordinator": self.verify_coordinator(),
             "privacy_accepted": current_user.privacy_accepted,
+            "last_password_change": current_user.last_password_change,
+            "first_login": current_user.first_login,
+            "last_login": current_user.last_login,
             "is_active": current_user.is_active,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
