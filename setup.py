@@ -39,7 +39,7 @@ setup(
         "pika",
         "celery==5.0.1",
         "flower==0.9.5",
-        "celery-redbeat==1.0.0",
+        "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==12.8",
         # TOTP
