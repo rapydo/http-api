@@ -23,12 +23,10 @@ setup(
         # Flask and plugins
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.10.0",
+        "flask-apispec==0.11.0",
         "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
-        # Removed me after flask-apispec will have fixed the requirements
-        "apispec==3.3.2",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.2",
