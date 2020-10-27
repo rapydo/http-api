@@ -113,9 +113,9 @@ def create_app(name=__name__, mode=ServerModes.NORMAL):
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
         # ignore warning messages from apispec
-        # warnings.filterwarnings(
-        #     "ignore", message="Multiple schemas resolved to the name "
-        # )
+        warnings.filterwarnings(
+            "ignore", message="Multiple schemas resolved to the name "
+        )
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
