@@ -8,6 +8,11 @@ http://racksburg.com/choosing-an-http-status-code/
 
 """
 
+from restapi.utilities.logs import log
+
+# Deprecated since 0.9
+log.warning("Deprecated use of hcodes")
+
 
 class hcodes:
 
