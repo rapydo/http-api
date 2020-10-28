@@ -834,10 +834,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         for role_name in self.roles:
             if role_name in current_roles:
-                log.critical("Role {} already exists", role_name)
+                log.info("Role {} already exists", role_name)
             else:
 
-                log.critical("Creating role: {}", role_name)
+                log.info("Creating role: {}", role_name)
                 self.create_role(
                     name=role_name,
                     description=self.roles_data.get(role_name, ROLE_DISABLED),
@@ -871,16 +871,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     "fullname": DEFAULT_GROUP_DESCR,
                 }
             )
-            log.critical("Injected default group")
+            log.info("Injected default group")
         elif update:
-            log.critical("Default group already exists, updating")
+            log.info("Default group already exists, updating")
             default_group.shortname = DEFAULT_GROUP_NAME
             default_group.fullname = DEFAULT_GROUP_DESCR
             self.save_group(default_group)
         elif default_group:
-            log.critical("Default group already exists")
+            log.info("Default group already exists")
         else:
-            log.critical("Default group does not exist but other groups do")
+            log.info("Default group does not exist but other groups do")
 
         return default_group
 
@@ -914,10 +914,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.add_user_to_group(default_user, default_group)
             # This is required to execute the commit on sqlalchemy...
             self.save_user(default_user)
-            log.critical("Injected default user")
+            log.info("Injected default user")
 
         elif update:
-            log.critical("Default user already exists, updating")
+            log.info("Default user already exists, updating")
             default_user.email = self.default_user
             default_user.name = "Default"
             default_user.surname = "User"
@@ -927,9 +927,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.add_user_to_group(default_user, default_group)
             self.save_user(default_user)
         elif default_user:
-            log.critical("Default user already exists")
+            log.info("Default user already exists")
         else:
-            log.critical("Default user does not exist but other users do")
+            log.info("Default user does not exist but other users do")
 
         # Assign all users without a group to the default group
         for user in self.get_users():
