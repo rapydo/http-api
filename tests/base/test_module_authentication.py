@@ -345,7 +345,7 @@ class TestApp(BaseTests):
 
         # Let's save the current password to be checked later
         user = auth.get_user(username=BaseAuthentication.default_user)
-        expected_pwd = user.password
+        # expected_pwd = user.password
         # Let's verify that the user now is ADMIN
         roles = auth.get_roles_from_user(user)
         assert Role.ADMIN.value in roles
@@ -353,7 +353,7 @@ class TestApp(BaseTests):
         # Modify default user and group
         # # Change name, password and roles
         user.name = "Changed"
-        user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
+        # user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
         auth.link_roles(user, [Role.USER.value])
         auth.save_user(user)
 
@@ -365,7 +365,7 @@ class TestApp(BaseTests):
         # Verify that user and group are changed
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name == "Changed"
-        assert user.password != expected_pwd
+        # assert user.password != expected_pwd
         assert Role.ADMIN.value not in auth.get_roles_from_user(user)
         assert Role.USER.value in auth.get_roles_from_user(user)
 
@@ -377,7 +377,7 @@ class TestApp(BaseTests):
 
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name == "Changed"
-        assert user.password != expected_pwd
+        # assert user.password != expected_pwd
         assert Role.ADMIN.value not in auth.get_roles_from_user(user)
         assert Role.USER.value in auth.get_roles_from_user(user)
 
@@ -389,7 +389,7 @@ class TestApp(BaseTests):
 
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name != "Changed"
-        assert user.password == expected_pwd
+        # assert user.password == expected_pwd
         assert Role.ADMIN.value in auth.get_roles_from_user(user)
         assert Role.USER.value in auth.get_roles_from_user(user)
 
