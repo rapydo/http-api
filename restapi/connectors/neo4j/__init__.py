@@ -226,52 +226,25 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def get_user_object(self, username=None, user_id=None):
+    def get_user(self, username=None, user_id=None):
 
-        try:
-            if username:
-                return self.db.User.nodes.get(email=username)
+        if username:
+            return self.db.User.nodes.get_or_none(email=username)
 
-            if user_id:
-                return self.db.User.nodes.get(uuid=user_id)
+        if user_id:
+            return self.db.User.nodes.get_or_none(uuid=user_id)
 
-        except self.db.User.DoesNotExist:
-            log.warning(
-                "Could not find user for username={}, user_id={}", username, user_id
-            )
-
+        # only reached if both username and user_id are None
         return None
 
-    def get_users(self, user_id=None):
+    def get_users(self):
+        return self.db.User.nodes.all()
 
-        users = None
+    def get_group(self, group_id):
+        return self.db.Group.nodes.get_or_none(uuid=group_id)
 
-        # Retrieve all
-        if user_id is None:
-            users = self.db.User.nodes.all()
-
-        else:
-            # Retrieve one
-            user = self.db.User.nodes.get_or_none(uuid=user_id)
-            if user is None:
-                return None
-
-            users = [user]
-
-        return users
-
-    def get_groups(self, group_id=None):
-
-        # Retrieve all
-        if group_id is None:
-            return self.db.Group.nodes.all()
-
-        # Retrieve one
-        group = self.db.Group.nodes.get_or_none(uuid=group_id)
-        if not group:
-            return None
-
-        return [group]
+    def get_groups(self):
+        return self.db.Group.nodes.all()
 
     def get_roles(self):
         roles = []

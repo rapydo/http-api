@@ -180,7 +180,14 @@ class AdminUsers(EndpointResource):
     )
     def get(self, user_id=None):
 
-        users = self.auth.get_users(user_id)
+        users = None
+
+        if user_id:
+            if user := self.auth.get_user(user_id):
+                users = [user]
+        else:
+            users = self.auth.get_users()
+
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
@@ -221,11 +228,11 @@ class AdminUsers(EndpointResource):
                 self.auth.db.session.rollback()
             raise Conflict(str(e))
 
-        group = self.auth.get_groups(group_id=group_id)
+        group = self.auth.get_group(group_id=group_id)
         if not group:
             raise NotFound("This group cannot be found")
 
-        self.auth.add_user_to_group(user, group[0])
+        self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
             smtp = self.get_service_instance("smtp")
@@ -242,12 +249,10 @@ class AdminUsers(EndpointResource):
     )
     def put(self, user_id, **kwargs):
 
-        user = self.auth.get_users(user_id)
+        user = self.auth.get_user()
 
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
-
-        user = user[0]
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -276,11 +281,11 @@ class AdminUsers(EndpointResource):
         self.auth.save_user(user)
 
         if group_id is not None:
-            group = self.auth.get_groups(group_id=group_id)
+            group = self.auth.get_group(group_id=group_id)
             if not group:
                 raise NotFound("This group cannot be found")
 
-            self.auth.add_user_to_group(user, group[0])
+            self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
             smtp = self.get_service_instance("smtp")
@@ -296,12 +301,10 @@ class AdminUsers(EndpointResource):
     )
     def delete(self, user_id):
 
-        user = self.auth.get_users(user_id)
+        user = self.auth.get_user()
 
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
-
-        user = user[0]
 
         if self.neo4j_enabled or self.mongo_enabled:
             user.delete()

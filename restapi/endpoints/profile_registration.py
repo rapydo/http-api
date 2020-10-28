@@ -47,7 +47,7 @@ if detector.check_availability("smtp"):
             """ Register new user """
 
             email = kwargs.get("email")
-            user = self.auth.get_user_object(username=email)
+            user = self.auth.get_user(username=email)
             if user is not None:
                 raise Conflict(f"This user already exists: {email}")
 

@@ -167,7 +167,7 @@ class Authentication(BaseAuthentication):
         user.belongs_to = group
         user.save()
 
-    def get_user_object(self, username=None, user_id=None):
+    def get_user(self, username=None, user_id=None):
 
         try:
             if username:
@@ -183,29 +183,17 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_users(self, user_id=None):
+    def get_users(self):
+        return self.db.User.objects.all()
 
-        # Retrieve all
-        if user_id is None:
-            return self.db.User.objects.all()
-
-        # Retrieve one
+    def get_group(self, group_id):
         try:
-            return [self.db.User.objects.get({"uuid": user_id})]
-        except self.db.User.DoesNotExist:
-            return None
-
-    def get_groups(self, group_id=None):
-
-        # Retrieve all
-        if group_id is None:
-            return self.db.Group.objects.all()
-
-        # Retrieve one
-        try:
-            return [self.db.Group.objects.get({"uuid": group_id})]
+            return self.db.Group.objects.get({"uuid": group_id})
         except self.db.Group.DoesNotExist:
             return None
+
+    def get_groups(self):
+        return self.db.Group.objects.all()
 
     def get_roles(self):
         roles = []

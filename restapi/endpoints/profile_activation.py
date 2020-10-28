@@ -112,7 +112,7 @@ class ProfileActivation(EndpointResource):
     )
     def post(self, username):
 
-        user = self.auth.get_user_object(username=username)
+        user = self.auth.get_user(username=username)
 
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing

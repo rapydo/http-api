@@ -102,11 +102,9 @@ class AdminGroups(EndpointResource):
     )
     def put(self, group_id, **kwargs):
 
-        group = self.auth.get_groups(group_id=group_id)
+        group = self.auth.get_group(group_id=group_id)
         if not group:
             raise NotFound("This group cannot be found")
-
-        group = group[0]
 
         self.auth.db.update_properties(group, kwargs)
 
@@ -130,11 +128,9 @@ class AdminGroups(EndpointResource):
     )
     def delete(self, group_id):
 
-        group = self.auth.get_groups(group_id=group_id)
+        group = self.auth.get_group(group_id=group_id)
         if not group:
             raise NotFound("This group cannot be found")
-
-        group = group[0]
 
         if self.neo4j_enabled or self.mongo_enabled:
             group.delete()

@@ -275,7 +275,7 @@ class Authentication(BaseAuthentication):
         self.db.session.add(user)
         self.db.session.commit()
 
-    def get_user_object(self, username=None, user_id=None):
+    def get_user(self, username=None, user_id=None):
 
         try:
             if username:
@@ -293,31 +293,14 @@ class Authentication(BaseAuthentication):
         # only reached if both username and user_id are None
         return None
 
-    def get_users(self, user_id=None):
+    def get_users(self):
+        return self.db.User.query.all()
 
-        # Retrieve all
-        if user_id is None:
-            return self.db.User.query.all()
+    def get_group(self, group_id):
+        return self.db.Group.query.filter_by(uuid=group_id).first()
 
-        # Retrieve one
-        user = self.db.User.query.filter_by(uuid=user_id).first()
-        if user is None:
-            return None
-
-        return [user]
-
-    def get_groups(self, group_id=None):
-
-        # Retrieve all
-        if group_id is None:
-            return self.db.Group.query.all()
-
-        # Retrieve one
-        group = self.db.Group.query.filter_by(uuid=group_id).first()
-        if group is None:
-            return None
-
-        return [group]
+    def get_groups(self):
+        return self.db.Group.query.all()
 
     def get_roles(self):
         roles = []

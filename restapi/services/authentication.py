@@ -174,7 +174,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """ The method which will check if credentials are good to go """
 
         try:
-            user = self.get_user_object(username=username)
+            user = self.get_user(username=username)
         except ValueError as e:  # pragma: no cover
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
@@ -285,26 +285,32 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
 
     @abc.abstractmethod
-    def get_user_object(self, username=None, payload=None):  # pragma: no cover
+    def get_user(self, username=None, user_id=None):  # pragma: no cover
         """
-        How to retrieve the user from the current service,
-        based on the unique username given, or from the content of the token
-        """
-        return
-
-    @abc.abstractmethod
-    def get_users(self, user_id=None):  # pragma: no cover
-        """
-        How to retrieve users list from the current service,
-        Optionally filter by the unique uuid given
+        How to retrieve a single user from the current authentication db,
+        based on the unique username or the user_id
+        return None if no filter parameter is given
         """
         return
 
     @abc.abstractmethod
-    def get_groups(self, group_id=None):  # pragma: no cover
+    def get_users(self):  # pragma: no cover
         """
-        How to retrieve groups list from the current service,
-        Optionally filter by the unique uuid given
+        How to retrieve a list of all users from the current authentication db,
+        """
+        return
+
+    @abc.abstractmethod
+    def get_group(self, group_id):  # pragma: no cover
+        """
+        How to retrieve a single group from the current authentication db,
+        """
+        return
+
+    @abc.abstractmethod
+    def get_groups(self):  # pragma: no cover
+        """
+        How to retrieve groups list from the current authentication db,
         """
         return
 
@@ -463,7 +469,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return self.unpacked_token(False)
 
         # Get the user from payload
-        user = self.get_user_object(user_id=payload.get("user_id"))
+        user = self.get_user(user_id=payload.get("user_id"))
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
@@ -829,7 +835,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.info("Injected default user")
         else:
             log.debug("Users already created")
-            default_user = self.get_user_object(username=self.default_user)
+            default_user = self.get_user(username=self.default_user)
 
         current_groups = self.get_groups()
         default_group = None

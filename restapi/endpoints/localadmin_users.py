@@ -197,7 +197,7 @@
 #         data = []
 
 #         is_admin = self.verify_admin()
-
+#         # This is wrong!! get_users does not accept a user_id param anymore
 #         users = self.auth.get_users(user_id)
 #         if users is None:
 #             raise RestApiException(
@@ -290,14 +290,12 @@
 #     )
 #     def put(self, user_id, **kwargs):
 
-#         user = self.auth.get_users(user_id)
+#         user = self.auth.get_user()
 
 #         if user is None:
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
 #             )
-
-#         user = user[0]
 
 #         current_user = self.get_user()
 #         is_admin = self.verify_admin()
@@ -376,14 +374,12 @@
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 
-#         user = self.auth.get_users(user_id)
+#         user = self.auth.get_user()
 
 #         if user is None:
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
 #             )
-
-#         user = user[0]
 
 #         current_user = self.get_user()
 #         if not self.is_authorized(current_user, user, is_admin):

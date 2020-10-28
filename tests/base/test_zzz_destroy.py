@@ -26,18 +26,18 @@ def test_destroy():
 
     auth = detector.get_service_instance("authentication")
 
-    user = auth.get_user_object(username=BaseAuthentication.default_user)
+    user = auth.get_user(username=BaseAuthentication.default_user)
     assert user is not None
 
     create_app(mode=ServerModes.DESTROY)
 
     try:
-        user = auth.get_user_object(username=BaseAuthentication.default_user)
+        user = auth.get_user(username=BaseAuthentication.default_user)
         assert user is None
     except ServiceUnavailable:
         pass
 
     create_app(mode=ServerModes.INIT)
 
-    user = auth.get_user_object(username=BaseAuthentication.default_user)
+    user = auth.get_user(username=BaseAuthentication.default_user)
     assert user is not None

@@ -54,7 +54,7 @@ if detector.check_availability("smtp"):
 
             reset_email = reset_email.lower()
 
-            user = self.auth.get_user_object(username=reset_email)
+            user = self.auth.get_user(username=reset_email)
 
             if user is None:
                 raise Forbidden(

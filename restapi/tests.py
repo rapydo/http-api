@@ -198,7 +198,7 @@ class BaseTests:
 
         auth = detector.get_service_instance("authentication")
 
-        user = auth.get_user_object(username=user)
+        user = auth.get_user(username=user)
 
         secret = BaseAuthentication.get_secret(user)
 

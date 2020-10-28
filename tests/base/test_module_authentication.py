@@ -188,8 +188,30 @@ class TestApp(BaseTests):
             assert unpacked_token[2] is None
             assert unpacked_token[3] is None
 
-        user = auth.get_user_object(username=BaseAuthentication.default_user)
+        user = auth.get_user(username=BaseAuthentication.default_user)
         assert user is not None
+
+        user = auth.get_user(user_id=user.uuid)
+        assert user is not None
+
+        user = auth.get_user(username="invalid")
+        assert user is None
+
+        user = auth.get_user(user_id="invalid")
+        assert user is None
+
+        user = auth.get_user(username=None, user_id=None)
+        assert user is None
+
+        # Test the precedence, username valid  and user invalid => user
+        user = auth.get_user(
+            username=BaseAuthentication.default_user, user_id="invalid"
+        )
+        assert user is not None
+
+        # Test the precedence, username invalid  and user valid => None
+        user = auth.get_user(username="invalid", user_id=user.uuid)
+        assert user is None
 
         # None user has no roles ... verify_roles will always be False
         assert not auth.verify_roles(None, ["A", "B"], required_roles="invalid")
