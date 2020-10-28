@@ -240,11 +240,25 @@ class Authentication(BaseAuthentication):
     def get_users(self):
         return self.db.User.nodes.all()
 
-    def get_group(self, group_id):
-        return self.db.Group.nodes.get_or_none(uuid=group_id)
+    def save_user(self, user):
+        if user:
+            user.save()
+
+    def get_group(self, group_id=None, name=None):
+        if group_id:
+            return self.db.Group.nodes.get_or_none(uuid=group_id)
+
+        if name:
+            return self.db.Group.nodes.get_or_none(shortname=name)
+
+        return None
 
     def get_groups(self):
         return self.db.Group.nodes.all()
+
+    def save_group(self, group):
+        if group:
+            group.save()
 
     def get_roles(self):
         roles = []
@@ -309,18 +323,15 @@ class Authentication(BaseAuthentication):
 
     def add_user_to_group(self, user, group):
 
-        prev_group = user.belongs_to.single()
+        if user and group:
+            prev_group = user.belongs_to.single()
 
-        if prev_group is not None:
-            user.belongs_to.reconnect(prev_group, group)
-        elif prev_group == group:
-            pass
-        else:
-            user.belongs_to.connect(group)
-
-    def save_user(self, user):
-        if user:
-            user.save()
+            if prev_group is not None:
+                user.belongs_to.reconnect(prev_group, group)
+            elif prev_group == group:
+                pass
+            else:
+                user.belongs_to.connect(group)
 
     def save_token(self, user, token, payload, token_type=None):
 

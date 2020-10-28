@@ -164,8 +164,9 @@ class Authentication(BaseAuthentication):
 
     def add_user_to_group(self, user, group):
 
-        user.belongs_to = group
-        user.save()
+        if user and group:
+            user.belongs_to = group
+            user.save()
 
     def get_user(self, username=None, user_id=None):
 
@@ -186,14 +187,30 @@ class Authentication(BaseAuthentication):
     def get_users(self):
         return self.db.User.objects.all()
 
-    def get_group(self, group_id):
+    def save_user(self, user):
+        if user:
+            user.save()
+
+    def get_group(self, group_id=None, name=None):
         try:
-            return self.db.Group.objects.get({"uuid": group_id})
+
+            if group_id:
+                return self.db.Group.objects.get({"uuid": group_id})
+
+            if name:
+                return self.db.Group.objects.raw({"shortname": name}).first()
+
         except self.db.Group.DoesNotExist:
-            return None
+            log.warning("Could not find group for name={}, group_id={}", name, group_id)
+
+        return None
 
     def get_groups(self):
         return self.db.Group.objects.all()
+
+    def save_group(self, group):
+        if group:
+            group.save()
 
     def get_roles(self):
         roles = []
@@ -219,10 +236,6 @@ class Authentication(BaseAuthentication):
     def create_role(self, name, description):
         role = self.db.Role(name=name, description=description)
         role.save()
-
-    def save_user(self, user):
-        if user:
-            user.save()
 
     def save_token(self, user, token, payload, token_type=None):
 

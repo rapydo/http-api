@@ -301,7 +301,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def get_group(self, group_id):  # pragma: no cover
+    def save_user(self, user):  # pragma: no cover
+        log.error("User is not saved in base authentication")
+
+    @abc.abstractmethod
+    def get_group(self, group_id=None, name=None):  # pragma: no cover
         """
         How to retrieve a single group from the current authentication db,
         """
@@ -313,6 +317,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         How to retrieve groups list from the current authentication db,
         """
         return
+
+    @abc.abstractmethod
+    def save_group(self, group):  # pragma: no cover
+        log.error("Group is not saved in base authentication")
 
     @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
@@ -488,10 +496,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
         log.debug("Token is not saved in base authentication")
-
-    @abc.abstractmethod
-    def save_user(self, user):  # pragma: no cover
-        log.debug("User is not saved in base authentication")
 
     @abc.abstractmethod
     def invalidate_token(self, token):  # pragma: no cover
@@ -806,6 +810,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def init_auth_db(self, options):
 
+        self.init_roles()
+
+        default_group = self.init_groups(force=options.get("force_group", False))
+
+        self.init_users(
+            default_group, self.roles, force=options.get("force_user", False)
+        )
+
+    def init_roles(self):
         current_roles = [role.name for role in self.get_roles()]
 
         for role_name in self.roles:
@@ -819,28 +832,64 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     description=self.roles_data.get(role_name, ROLE_DISABLED),
                 )
 
-        current_groups = self.get_groups()
-        # force_group = options.get("force_group", False)
-        default_group = None
-        if not current_groups:
+        return self.roles
+
+    def init_groups(self, force):
+
+        DEFAULT_GROUP_NAME = "Default"
+        DEFAULT_GROUP_DESCR = "Default group"
+
+        create = False
+        update = False
+
+        default_group = self.get_group(name=DEFAULT_GROUP_NAME)
+
+        # If there are not groups, let's create the default group
+        if not self.get_groups():
+            create = True
+        # If there are some groups skip group creation in absence of a force flag
+        elif force:
+            # If force flag is enable, create the default group if missing or update it
+            create = default_group is None
+            update = default_group is not None
+
+        if create:
             default_group = self.create_group(
                 {
-                    "shortname": "Default",
-                    "fullname": "Default group",
+                    "shortname": DEFAULT_GROUP_NAME,
+                    "fullname": DEFAULT_GROUP_DESCR,
                 }
             )
             log.info("Injected default group")
+        elif update:
+            log.info("Default group already exists, updating")
+            default_group.shortname = DEFAULT_GROUP_NAME
+            default_group.fullname = DEFAULT_GROUP_DESCR
+            self.save_group(default_group)
+        elif default_group:
+            log.info("Default group already exists")
         else:
-            log.debug("Groups already created")
-            # Search default group to link it to users
-            for g in current_groups:
-                if g.shortname == "Default":
-                    default_group = g
-                    break
+            log.info("Default group does not exist but other groups do")
 
-        current_users = self.get_users()
-        # force_user = options.get("force_user", False)
-        if not current_users:
+        return default_group
+
+    def init_users(self, default_group, roles, force):
+
+        create = False
+        update = False
+
+        default_user = self.get_user(username=self.default_user)
+
+        # If there are no users, let's create the default user
+        if not self.get_users():
+            create = True
+        # If there are some users skip user creation in absence of a force flag
+        elif force:
+            # If force flag is enable, create the default user if missing or update it
+            create = default_user is None
+            update = default_user is not None
+
+        if create:
             default_user = self.create_user(
                 {
                     "email": self.default_user,
@@ -849,14 +898,31 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     "password": self.default_password,
                     "last_password_change": datetime.now(pytz.utc),
                 },
-                roles=self.roles,
+                roles=roles,
             )
+            self.add_user_to_group(default_user, default_group)
             # This is required to execute the commit on sqlalchemy...
             self.save_user(default_user)
             log.info("Injected default user")
-        else:
-            log.debug("Users already created")
-            default_user = self.get_user(username=self.default_user)
 
-        if default_group:
+        elif update:
+            log.info("Default user already exists, updating")
+            default_user.email = self.default_user
+            default_user.name = "Default"
+            default_user.surname = "User"
+            default_user.password = self.get_password_hash(self.default_password)
+            default_user.last_password_change = datetime.now(pytz.utc)
+            self.link_roles(default_user, roles)
             self.add_user_to_group(default_user, default_group)
+            self.save_user(default_user)
+        elif default_user:
+            log.info("Default user already exists")
+        else:
+            log.info("Default user does not exist but other users do")
+
+        # Assign all users without a group to the default group
+        for user in self.get_users():
+            if not user.belongs_to:
+                self.add_user_to_group(user, default_group)
+
+        return default_user

@@ -270,10 +270,11 @@ class Authentication(BaseAuthentication):
 
     def add_user_to_group(self, user, group):
 
-        user.belongs_to = group
+        if user and group:
+            user.belongs_to = group
 
-        self.db.session.add(user)
-        self.db.session.commit()
+            self.db.session.add(user)
+            self.db.session.commit()
 
     def get_user(self, username=None, user_id=None):
 
@@ -296,11 +297,27 @@ class Authentication(BaseAuthentication):
     def get_users(self):
         return self.db.User.query.all()
 
-    def get_group(self, group_id):
-        return self.db.Group.query.filter_by(uuid=group_id).first()
+    def save_user(self, user):
+        if user:
+            self.db.session.add(user)
+            self.db.session.commit()
+
+    def get_group(self, group_id=None, name=None):
+        if group_id:
+            return self.db.Group.query.filter_by(uuid=group_id).first()
+
+        if name:
+            return self.db.Group.query.filter_by(shortname=name).first()
+
+        return None
 
     def get_groups(self):
         return self.db.Group.query.all()
+
+    def save_group(self, group):
+        if group:
+            self.db.session.add(group)
+            self.db.session.commit()
 
     def get_roles(self):
         roles = []
@@ -323,11 +340,6 @@ class Authentication(BaseAuthentication):
         role = self.db.Role(name=name, description=description)
         self.db.session.add(role)
         self.db.session.commit()
-
-    def save_user(self, user):
-        if user:
-            self.db.session.add(user)
-            self.db.session.commit()
 
     def save_token(self, user, token, payload, token_type=None):
 
