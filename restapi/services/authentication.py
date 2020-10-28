@@ -808,3 +808,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
+
+    # Used by init_auth_db methods to get the list of roles to be created
+    def get_missing_roles(self):
+
+        # Handle system roles
+        current_roles = [role.name for role in self.get_roles()]
+        missing_roles = []
+
+        for role_name in self.roles:
+            if role_name in current_roles:
+                log.info("Role {} already exists", role_name)
+            else:
+                missing_roles.append(role_name)
+
+        return missing_roles

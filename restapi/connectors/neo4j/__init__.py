@@ -343,16 +343,11 @@ class Authentication(BaseAuthentication):
 
     def init_auth_db(self, options):
 
-        # Handle system roles
-        current_roles = [role.name for role in self.db.Role.nodes.all()]
-        log.info("Current roles: {}", current_roles)
-
-        for role_name in self.roles:
-            if role_name not in current_roles:
-                log.info("Creating role: {}", role_name)
-                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(name=role_name, description=role_description)
-                role.save()
+        for role_name in self.get_missing_roles():
+            log.info("Creating role: {}", role_name)
+            role_description = self.roles_data.get(role_name, ROLE_DISABLED)
+            role = self.db.Role(name=role_name, description=role_description)
+            role.save()
 
         if len(self.db.User.nodes) == 0:
             default_user = self.create_user(

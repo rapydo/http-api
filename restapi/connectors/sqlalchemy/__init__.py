@@ -339,13 +339,12 @@ class Authentication(BaseAuthentication):
     def init_auth_db(self, options):
 
         try:
-            if not self.db.Role.query.first():
-                for role_name in self.roles:
-                    role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                    role = self.db.Role(name=role_name, description=role_description)
-                    self.db.session.add(role)
-                self.db.session.commit()
-                log.info("Injected default roles")
+            for role_name in self.get_missing_roles():
+                log.info("Creating role: {}", role_name)
+                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
+                role = self.db.Role(name=role_name, description=role_description)
+                self.db.session.add(role)
+            self.db.session.commit()
 
             if not self.db.User.query.first():
                 default_user = self.create_user(

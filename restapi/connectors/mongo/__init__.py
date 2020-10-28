@@ -231,19 +231,11 @@ class Authentication(BaseAuthentication):
 
     def init_auth_db(self, options):
 
-        roles = []
-
-        for role_name in self.roles:
-            try:
-                role = self.db.Role.objects.get({"name": role_name})
-                roles.append(role.name)
-                log.info("Role already exists: {}", role.name)
-            except self.db.Role.DoesNotExist:
-                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(name=role_name, description=role_description)
-                role.save()
-                roles.append(role.name)
-                log.info("Injected default role: {}", role.name)
+        for role_name in self.get_missing_roles():
+            log.info("Creating role: {}", role_name)
+            role_description = self.roles_data.get(role_name, ROLE_DISABLED)
+            role = self.db.Role(name=role_name, description=role_description)
+            role.save()
 
         try:
 
@@ -259,7 +251,7 @@ class Authentication(BaseAuthentication):
                         "password": self.default_password,
                         "last_password_change": datetime.now(pytz.utc),
                     },
-                    roles=roles,
+                    roles=self.roles,
                 )
 
                 log.info("Injected default user")

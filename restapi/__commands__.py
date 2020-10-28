@@ -102,12 +102,7 @@ def verify(services):
     default=False,
     help="Force the creation of default group",
 )
-@click.option(
-    "--force-roles/--no-force-roles",
-    default=False,
-    help="Force the creation of default roles",
-)
-def init(wait, force_user, force_group, force_roles):
+def init(wait, force_user, force_group):
     """Initialize data for connected services"""
     if wait:
         mywait()
