@@ -223,7 +223,7 @@ class Authentication(BaseAuthentication):
             return True
         return False
 
-    def save_delete(self, delete):
+    def delete_group(self, delete):
         if delete:
             delete.save()
             return True
