@@ -88,7 +88,22 @@ def verify(services):
 
 @cli.command()
 @click.option("--wait/--no-wait", default=False, help="Wait for DBs to be up")
-def init(wait):
+@click.option(
+    "--force-user/--no-force-user",
+    default=False,
+    help="Force the creation of default user",
+)
+@click.option(
+    "--force-group/--no-force-group",
+    default=False,
+    help="Force the creation of default group",
+)
+@click.option(
+    "--force-roles/--no-force-roles",
+    default=False,
+    help="Force the creation of default roles",
+)
+def init(wait, force_user, force_group, force_roles):
     """Initialize data for connected services"""
     if wait:
         mywait()
