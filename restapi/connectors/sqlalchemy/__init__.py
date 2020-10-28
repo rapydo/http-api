@@ -306,8 +306,8 @@ class Authentication(BaseAuthentication):
 
     def delete_user(self, user):
         if user:
-            self.auth.db.session.delete(user)
-            self.auth.db.session.commit()
+            self.db.session.delete(user)
+            self.db.session.commit()
             return True
         return False
 
