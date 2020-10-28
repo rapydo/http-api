@@ -124,7 +124,11 @@ class TestApp(BaseTests):
             pytest.fail("Unexpected exception raised")
 
         # import here to prevent loading before initializing things...
-        from restapi.services.authentication import BaseAuthentication, InvalidToken
+        from restapi.services.authentication import (
+            BaseAuthentication,
+            InvalidToken,
+            Role,
+        )
 
         auth = detector.get_service_instance("authentication")
 
@@ -189,6 +193,7 @@ class TestApp(BaseTests):
             assert unpacked_token[3] is None
 
         user = auth.get_user(username=BaseAuthentication.default_user)
+        group = auth.get_group(name="Default")
         assert user is not None
 
         user = auth.get_user(user_id=user.uuid)
@@ -310,3 +315,76 @@ class TestApp(BaseTests):
         assert user is not None
 
         assert auth.verify_token_validity(jti, user)
+
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user is not None
+        group = auth.get_group(name="Default")
+        assert group is not None
+
+        assert not auth.delete_user(None)
+        assert not auth.delete_group(None)
+
+        assert auth.delete_user(user)
+        assert auth.delete_group(group)
+
+        # Verify that user/group are not deleted
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user is None
+        group = auth.get_group(name="Default")
+        assert group is None
+
+        # Verify that init_auth_db will restore default user and group
+        auth.init_auth_db({})
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user is not None
+        group = auth.get_group(name="Default")
+        assert group is not None
+
+        # Modify default user and group
+        expected_pwd = BaseAuthentication.get_password_hash(
+            BaseAuthentication.default_password
+        )
+        assert user.password == expected_pwd
+        roles = auth.get_roles_from_user(user)
+        assert Role.ADMIN in roles
+
+        # Change name, password and roles
+        user.name = "Changed"
+        user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
+        auth.link_roles(user, [Role.USER])
+        auth.save_user(user)
+
+        # Change fullname (not the shortname, since it is the primary key)
+        group.fullname = "Changed"
+        auth.save_group(group)
+
+        # Verify that user and group are changed
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user.name == "Changed"
+        assert user.password != expected_pwd
+        assert Role.ADMIN not in auth.get_roles_from_user(user)
+
+        group = auth.get_group(name="Default")
+        assert group.fullname == "Changed"
+
+        # Verify that init without force flag will not restore the default user and group
+        auth.init_auth_db({})
+
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user.name == "Changed"
+        assert user.password != expected_pwd
+        assert Role.ADMIN not in auth.get_roles_from_user(user)
+
+        group = auth.get_group(name="Default")
+        assert group.fullname == "Changed"
+
+        # Verify that init with force flag will not restore the default user and group
+        auth.init_auth_db({"force_user": True, "force_group": True})
+
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user.name != "Changed"
+        assert user.password == expected_pwd
+        assert Role.ADMIN in auth.get_roles_from_user(user)
+
+        group = auth.get_group(name="Default")
+        assert group.fullname != "Changed"

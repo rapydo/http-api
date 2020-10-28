@@ -243,6 +243,14 @@ class Authentication(BaseAuthentication):
     def save_user(self, user):
         if user:
             user.save()
+            return True
+        return False
+
+    def delete_user(self, user):
+        if user:
+            user.delete()
+            return True
+        return False
 
     def get_group(self, group_id=None, name=None):
         if group_id:
@@ -259,6 +267,14 @@ class Authentication(BaseAuthentication):
     def save_group(self, group):
         if group:
             group.save()
+            return True
+        return False
+
+    def save_delete(self, delete):
+        if delete:
+            delete.save()
+            return True
+        return False
 
     def get_roles(self):
         roles = []

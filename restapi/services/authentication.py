@@ -302,7 +302,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def save_user(self, user):  # pragma: no cover
-        log.error("User is not saved in base authentication")
+        log.error("Users are not saved in base authentication")
+        return False
+
+    @abc.abstractmethod
+    def delete_user(self, user):  # pragma: no cover
+        log.error("Users are not deleted in base authentication")
+        return False
 
     @abc.abstractmethod
     def get_group(self, group_id=None, name=None):  # pragma: no cover
@@ -320,7 +326,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def save_group(self, group):  # pragma: no cover
-        log.error("Group is not saved in base authentication")
+        log.error("Groups are not saved in base authentication")
+        return False
+
+    @abc.abstractmethod
+    def delete_group(self, group):  # pragma: no cover
+        log.error("Groups are not deleted in base authentication")
+        return False
 
     @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
@@ -495,7 +507,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
-        log.debug("Token is not saved in base authentication")
+        log.debug("Tokens is not saved in base authentication")
 
     @abc.abstractmethod
     def invalidate_token(self, token):  # pragma: no cover

@@ -301,6 +301,15 @@ class Authentication(BaseAuthentication):
         if user:
             self.db.session.add(user)
             self.db.session.commit()
+            return True
+        return False
+
+    def delete_user(self, user):
+        if user:
+            self.auth.db.session.delete(user)
+            self.auth.db.session.commit()
+            return True
+        return False
 
     def get_group(self, group_id=None, name=None):
         if group_id:
@@ -318,6 +327,15 @@ class Authentication(BaseAuthentication):
         if group:
             self.db.session.add(group)
             self.db.session.commit()
+            return True
+        return False
+
+    def delete_group(self, group):
+        if group:
+            self.db.session.delete(group)
+            self.db.session.commit()
+            return True
+        return False
 
     def get_roles(self):
         roles = []

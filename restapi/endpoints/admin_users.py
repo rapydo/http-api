@@ -157,11 +157,6 @@ def getInputSchema(request):
 
 class AdminUsers(EndpointResource):
 
-    auth_service = detector.authentication_service
-    neo4j_enabled = auth_service == "neo4j"
-    sql_enabled = auth_service == "sqlalchemy"
-    mongo_enabled = auth_service == "mongo"
-
     depends_on = ["not ADMINER_DISABLED"]
     labels = ["admin"]
     private = True
@@ -191,7 +186,7 @@ class AdminUsers(EndpointResource):
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
-        if self.neo4j_enabled:
+        if detector.authentication_service == "neo4j":
             for u in users:
                 u.belongs_to = u.belongs_to.single()
 
@@ -221,10 +216,9 @@ class AdminUsers(EndpointResource):
 
         try:
             user = self.auth.create_user(kwargs, roles)
-            if self.sql_enabled:
-                self.auth.db.session.commit()
+            self.auth.save_user(user)
         except DatabaseDuplicatedEntry as e:
-            if self.sql_enabled:
+            if detector.authentication_service == "sqlalchemy":
                 self.auth.db.session.rollback()
             raise Conflict(str(e))
 
@@ -306,14 +300,6 @@ class AdminUsers(EndpointResource):
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
-        if self.neo4j_enabled or self.mongo_enabled:
-            user.delete()
-        elif self.sql_enabled:
-            self.auth.db.session.delete(user)
-            self.auth.db.session.commit()
-        else:
-            raise ServiceUnavailable(  # pragma: no cover
-                "Invalid auth backend, all known db are disabled"
-            )
+        self.auth.delete_user(user)
 
         return self.empty_response()

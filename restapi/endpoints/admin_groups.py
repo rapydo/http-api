@@ -50,11 +50,6 @@ def getInputSchema(request):
 
 class AdminGroups(EndpointResource):
 
-    auth_service = detector.authentication_service
-    neo4j_enabled = auth_service == "neo4j"
-    sql_enabled = auth_service == "sqlalchemy"
-    mongo_enabled = auth_service == "mongo"
-
     labels = ["admin"]
     private = True
 
@@ -108,15 +103,7 @@ class AdminGroups(EndpointResource):
 
         self.auth.db.update_properties(group, kwargs)
 
-        if self.neo4j_enabled or self.mongo_enabled:
-            group.save()
-        elif self.sql_enabled:
-            self.auth.db.session.add(group)
-            self.auth.db.session.commit()
-        else:
-            raise ServiceUnavailable(  # pragma: no cover
-                "Invalid auth backend, all known db are disabled"
-            )
+        self.auth.save_group(group)
 
         return self.empty_response()
 
@@ -132,14 +119,6 @@ class AdminGroups(EndpointResource):
         if not group:
             raise NotFound("This group cannot be found")
 
-        if self.neo4j_enabled or self.mongo_enabled:
-            group.delete()
-        elif self.sql_enabled:
-            self.auth.db.session.delete(group)
-            self.auth.db.session.commit()
-        else:
-            raise ServiceUnavailable(  # pragma: no cover
-                "Invalid auth backend, all known db are disabled"
-            )
+        self.auth.delete_group(group)
 
         return self.empty_response()
