@@ -22,7 +22,7 @@ from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 
 
@@ -289,6 +289,10 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles.all()]
 
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        role.save()
+
     # Also used by POST user
     def create_user(self, userdata, roles):
 
@@ -340,49 +344,6 @@ class Authentication(BaseAuthentication):
             pass
         else:
             user.belongs_to.connect(group)
-
-    def init_auth_db(self, options):
-
-        for role_name in self.get_missing_roles():
-            log.info("Creating role: {}", role_name)
-            role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-            role = self.db.Role(name=role_name, description=role_description)
-            role.save()
-
-        if len(self.db.User.nodes) == 0:
-            default_user = self.create_user(
-                {
-                    "email": self.default_user,
-                    # 'authmethod': 'credentials',
-                    "name": "Default",
-                    "surname": "User",
-                    "password": self.default_password,
-                },
-                roles=self.roles,
-            )
-            log.info("Injected default user")
-        else:
-            log.info("Users already created")
-            default_user = self.get_user_object(username=self.default_user)
-
-        if len(self.db.Group.nodes) == 0:
-            default_group = self.create_group(
-                {
-                    "shortname": "Default",
-                    "fullname": "Default group",
-                }
-            )
-            log.info("Injected default group")
-        else:
-            log.info("Groups already created")
-            default_group = None
-            for g in self.get_groups():
-                if g.shortname == "Default":
-                    default_group = g
-                    break
-
-        if default_group:
-            self.add_user_to_group(default_user, default_group)
 
     def save_user(self, user):
         if user:

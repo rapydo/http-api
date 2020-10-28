@@ -2,7 +2,6 @@ import re
 from datetime import datetime, timedelta
 from functools import wraps
 
-import pytz
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
@@ -10,7 +9,7 @@ from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
 
@@ -229,60 +228,9 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    def init_auth_db(self, options):
-
-        for role_name in self.get_missing_roles():
-            log.info("Creating role: {}", role_name)
-            role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-            role = self.db.Role(name=role_name, description=role_description)
-            role.save()
-
-        try:
-
-            # if no users
-            cursor = self.db.User.objects.all()
-            if len(list(cursor)) == 0:
-
-                default_user = self.create_user(
-                    {
-                        "email": self.default_user,
-                        "name": "Default",
-                        "surname": "User",
-                        "password": self.default_password,
-                        "last_password_change": datetime.now(pytz.utc),
-                    },
-                    roles=self.roles,
-                )
-
-                log.info("Injected default user")
-            else:
-                log.debug("Users already created")
-                default_user = self.get_user_object(username=self.default_user)
-
-            cursor = self.db.Group.objects.all()
-            if len(list(cursor)) == 0:
-
-                default_group = self.create_group(
-                    {
-                        "shortname": "Default",
-                        "fullname": "Default group",
-                    }
-                )
-                log.info("Injected default group")
-            else:
-                log.debug("Groups already created")
-                default_group = None
-                for g in self.get_groups():
-                    if g.shortname == "Default":
-                        default_group = g
-                        break
-
-            if default_group:
-                self.add_user_to_group(default_user, default_group)
-
-        # Can't be tested
-        except BaseException as e:  # pragma: no cover
-            raise AttributeError(f"Models for auth are wrong:\n{e}")
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        role.save()
 
     def save_user(self, user):
         if user:

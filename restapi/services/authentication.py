@@ -585,17 +585,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    # #################
-    # # Database init #
-    # #################
-
-    @abc.abstractmethod
-    def init_auth_db(self, options):  # pragma: no cover
-        """
-        Create default roles, default user and default group
-        """
-        return
-
     @staticmethod
     def custom_user_properties_pre(userdata):
         try:
@@ -809,17 +798,56 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
 
-    # Used by init_auth_db methods to get the list of roles to be created
-    def get_missing_roles(self):
+    def init_auth_db(self, options):
 
-        # Handle system roles
         current_roles = [role.name for role in self.get_roles()]
-        missing_roles = []
 
         for role_name in self.roles:
             if role_name in current_roles:
                 log.info("Role {} already exists", role_name)
             else:
-                missing_roles.append(role_name)
 
-        return missing_roles
+                log.info("Creating role: {}", role_name)
+                self.create_role(
+                    name=role_name,
+                    description=self.roles_data.get(role_name, ROLE_DISABLED),
+                )
+
+        if not self.get_users():
+            default_user = self.create_user(
+                {
+                    "email": self.default_user,
+                    "name": "Default",
+                    "surname": "User",
+                    "password": self.default_password,
+                    "last_password_change": datetime.now(pytz.utc),
+                },
+                roles=self.roles,
+            )
+            # This is required to execute the commit on sqlalchemy...
+            self.save_user()
+            log.info("Injected default user")
+        else:
+            log.debug("Users already created")
+            default_user = self.get_user_object(username=self.default_user)
+
+        current_groups = self.get_groups()
+        default_group = None
+        if not current_groups:
+            default_group = self.create_group(
+                {
+                    "shortname": "Default",
+                    "fullname": "Default group",
+                }
+            )
+            log.info("Injected default group")
+        else:
+            log.debug("Groups already created")
+            # Search default group to link it to users
+            for g in current_groups:
+                if g.shortname == "Default":
+                    default_group = g
+                    break
+
+        if default_group:
+            self.add_user_to_group(default_user, default_group)

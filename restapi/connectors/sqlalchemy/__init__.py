@@ -24,7 +24,7 @@ from sqlalchemy.orm.attributes import set_attribute
 from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
@@ -336,57 +336,10 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    def init_auth_db(self, options):
-
-        try:
-            for role_name in self.get_missing_roles():
-                log.info("Creating role: {}", role_name)
-                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(name=role_name, description=role_description)
-                self.db.session.add(role)
-            self.db.session.commit()
-
-            if not self.db.User.query.first():
-                default_user = self.create_user(
-                    {
-                        "email": self.default_user,
-                        # 'authmethod': 'credentials',
-                        "name": "Default",
-                        "surname": "User",
-                        "password": self.default_password,
-                    },
-                    roles=self.roles,
-                )
-                self.db.session.commit()
-                log.info("Injected default user")
-            else:
-                log.debug("Users already created")
-                default_user = self.get_user_object(username=self.default_user)
-
-            if not self.db.Group.query.first():
-                default_group = self.create_group(
-                    {
-                        "shortname": "Default",
-                        "fullname": "Default group",
-                    }
-                )
-                log.info("Injected default group")
-            else:
-                log.debug("Groups already created")
-                default_group = None
-                for g in self.get_groups():
-                    if g.shortname == "Default":
-                        default_group = g
-                        break
-
-            if default_group:
-                self.add_user_to_group(default_user, default_group)
-
-        # Can't be tested
-        except sqlalchemy.exc.OperationalError:  # pragma: no cover
-            self.db.session.rollback()
-            # A migration / rebuild is required?
-            raise AttributeError("Inconsistences between DB schema and data models")
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        self.db.session.add(role)
+        self.db.session.commit()
 
     def save_user(self, user):
         if user:
