@@ -111,7 +111,11 @@ def init(wait, force_user, force_group):
 
     log.info("Launching initialization app")
 
-    create_app(name="Initializing services", mode=ServerModes.INIT)
+    options = {
+        "force_user": force_user,
+        "force_group": force_group,
+    }
+    create_app(name="Initializing services", mode=ServerModes.INIT, options=options)
 
     log.info("Initialization requested")
 

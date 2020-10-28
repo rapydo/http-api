@@ -819,25 +819,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                     description=self.roles_data.get(role_name, ROLE_DISABLED),
                 )
 
-        if not self.get_users():
-            default_user = self.create_user(
-                {
-                    "email": self.default_user,
-                    "name": "Default",
-                    "surname": "User",
-                    "password": self.default_password,
-                    "last_password_change": datetime.now(pytz.utc),
-                },
-                roles=self.roles,
-            )
-            # This is required to execute the commit on sqlalchemy...
-            self.save_user(default_user)
-            log.info("Injected default user")
-        else:
-            log.debug("Users already created")
-            default_user = self.get_user(username=self.default_user)
-
         current_groups = self.get_groups()
+        # force_group = options.get("force_group", False)
         default_group = None
         if not current_groups:
             default_group = self.create_group(
@@ -854,6 +837,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 if g.shortname == "Default":
                     default_group = g
                     break
+
+        current_users = self.get_users()
+        # force_user = options.get("force_user", False)
+        if not current_users:
+            default_user = self.create_user(
+                {
+                    "email": self.default_user,
+                    "name": "Default",
+                    "surname": "User",
+                    "password": self.default_password,
+                    "last_password_change": datetime.now(pytz.utc),
+                },
+                roles=self.roles,
+            )
+            # This is required to execute the commit on sqlalchemy...
+            self.save_user(default_user)
+            log.info("Injected default user")
+        else:
+            log.debug("Users already created")
+            default_user = self.get_user(username=self.default_user)
 
         if default_group:
             self.add_user_to_group(default_user, default_group)

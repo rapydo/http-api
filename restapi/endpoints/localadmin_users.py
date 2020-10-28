@@ -290,7 +290,7 @@
 #     )
 #     def put(self, user_id, **kwargs):
 
-#         user = self.auth.get_user()
+#         user = self.auth.get_user(user_id=user_id)
 
 #         if user is None:
 #             raise RestApiException(
@@ -374,7 +374,7 @@
 #         if self.neo4j_enabled:
 #             self.graph = self.get_service_instance('neo4j')
 
-#         user = self.auth.get_user()
+#         user = self.auth.get_user(user_id=user_id
 
 #         if user is None:
 #             raise RestApiException(

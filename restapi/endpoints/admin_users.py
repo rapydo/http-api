@@ -249,7 +249,7 @@ class AdminUsers(EndpointResource):
     )
     def put(self, user_id, **kwargs):
 
-        user = self.auth.get_user()
+        user = self.auth.get_user(user_id=user_id)
 
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
@@ -301,7 +301,7 @@ class AdminUsers(EndpointResource):
     )
     def delete(self, user_id):
 
-        user = self.auth.get_user()
+        user = self.auth.get_user(user_id=user_id)
 
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
