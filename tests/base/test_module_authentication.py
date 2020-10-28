@@ -332,15 +332,16 @@ class TestApp(BaseTests):
         assert auth.get_group(name="Default") is None
 
         # init_auth_db should restore missing default user and group. But previous tests
-        # create additional users and groups, so that the init auth db without
+        # created additional users and groups, so that the init auth db without
         # force flags is not able to re-add the missing and user and group
         auth.init_auth_db({})
-        assert auth.get_user(username=BaseAuthentication.default_user) is not None
-        assert auth.get_group(name="Default") is not None
-
-        # auth.init_auth_db({"force_user": True, "force_group": True})
         assert auth.get_user(username=BaseAuthentication.default_user) is None
         assert auth.get_group(name="Default") is None
+
+        # Let's add the force flags to re-create the default user and group
+        auth.init_auth_db({"force_user": True, "force_group": True})
+        assert auth.get_user(username=BaseAuthentication.default_user) is not None
+        assert auth.get_group(name="Default") is not None
 
         # Modify default user and group
         expected_pwd = BaseAuthentication.get_password_hash(
