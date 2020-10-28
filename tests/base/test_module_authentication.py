@@ -344,6 +344,7 @@ class TestApp(BaseTests):
         assert auth.get_group(name="Default") is not None
 
         # Let's save the current password to be checked later
+        user = auth.get_user(username=BaseAuthentication.default_user)
         expected_pwd = user.password
         # Let's verify that the user now is ADMIN
         roles = auth.get_roles_from_user(user)
@@ -351,7 +352,6 @@ class TestApp(BaseTests):
 
         # Modify default user and group
         # # Change name, password and roles
-        user = auth.get_user(username=BaseAuthentication.default_user)
         user.name = "Changed"
         user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
         auth.link_roles(user, [Role.USER.value])
