@@ -618,7 +618,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
-            log.critical(type(e))
             raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata

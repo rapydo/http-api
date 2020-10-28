@@ -178,14 +178,14 @@ class Authentication(BaseAuthentication):
                 return self.db.User.objects.get({"uuid": user_id})
 
         except self.db.User.DoesNotExist:
-            log.warning(
+            log.debug(
                 "Could not find user for username={}, user_id={}", username, user_id
             )
 
         return None
 
     def get_users(self):
-        return self.db.User.objects.all()
+        return list(self.db.User.objects.all())
 
     def save_user(self, user):
         if user:
@@ -201,12 +201,12 @@ class Authentication(BaseAuthentication):
                 return self.db.Group.objects.raw({"shortname": name}).first()
 
         except self.db.Group.DoesNotExist:
-            log.warning("Could not find group for name={}, group_id={}", name, group_id)
+            log.debug("Could not find group for name={}, group_id={}", name, group_id)
 
         return None
 
     def get_groups(self):
-        return self.db.Group.objects.all()
+        return list(self.db.Group.objects.all())
 
     def save_group(self, group):
         if group:
