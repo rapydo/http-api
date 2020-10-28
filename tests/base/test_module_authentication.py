@@ -223,6 +223,7 @@ class TestApp(BaseTests):
         verify_token_is_not_valid(fake.pystr(), auth.PWD_RESET)
         verify_token_is_not_valid(fake.pystr(), auth.ACTIVATE_ACCOUNT)
 
+        user = auth.get_user(username=BaseAuthentication.default_user)
         t1, payload1 = auth.create_temporary_token(user, auth.PWD_RESET)
         assert isinstance(t1, str)
         # not valid if not saved
