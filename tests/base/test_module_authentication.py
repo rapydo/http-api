@@ -324,21 +324,17 @@ class TestApp(BaseTests):
         assert not auth.delete_user(None)
         assert not auth.delete_group(None)
 
-        # assert auth.delete_user(user)
-        # assert auth.delete_group(group)
+        assert auth.delete_user(user)
+        assert auth.delete_group(group)
 
-        # # Verify that user/group are now deleted
-        # user = auth.get_user(username=BaseAuthentication.default_user)
-        # assert user is None
-        # group = auth.get_group(name="Default")
-        # assert group is None
+        # Verify that user/group are now deleted
+        assert auth.get_user(username=BaseAuthentication.default_user) is None
+        assert auth.get_group(name="Default") is None
 
-        # # Verify that init_auth_db will restore default user and group
-        # auth.init_auth_db({})
-        # user = auth.get_user(username=BaseAuthentication.default_user)
-        # assert user is not None
-        # group = auth.get_group(name="Default")
-        # assert group is not None
+        # Verify that init_auth_db will restore default user and group
+        auth.init_auth_db({})
+        assert auth.get_user(username=BaseAuthentication.default_user) is not None
+        assert auth.get_group(name="Default") is not None
 
         # Modify default user and group
         # expected_pwd = BaseAuthentication.get_password_hash(
