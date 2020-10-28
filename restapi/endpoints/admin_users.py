@@ -1,11 +1,6 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.exceptions import (
-    Conflict,
-    DatabaseDuplicatedEntry,
-    NotFound,
-    ServiceUnavailable,
-)
+from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import BaseAuthentication, Role
