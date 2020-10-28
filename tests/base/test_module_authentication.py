@@ -343,14 +343,13 @@ class TestApp(BaseTests):
         assert auth.get_user(username=BaseAuthentication.default_user) is not None
         assert auth.get_group(name="Default") is not None
 
-        # Modify default user and group
-        expected_pwd = BaseAuthentication.get_password_hash(
-            BaseAuthentication.default_password
-        )
-        assert user.password == expected_pwd
+        # Let's save the current password to be checked later
+        expected_pwd = user.password
+        # Let's verify that the user now is ADMIN
         roles = auth.get_roles_from_user(user)
         assert Role.ADMIN in roles
 
+        # Modify default user and group
         # # Change name, password and roles
         user.name = "Changed"
         user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
