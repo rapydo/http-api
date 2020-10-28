@@ -183,7 +183,7 @@ class AdminUsers(EndpointResource):
         users = None
 
         if user_id:
-            if user := self.auth.get_user(user_id):
+            if user := self.auth.get_user(user_id=user_id):
                 users = [user]
         else:
             users = self.auth.get_users()
