@@ -347,13 +347,13 @@ class TestApp(BaseTests):
         expected_pwd = user.password
         # Let's verify that the user now is ADMIN
         roles = auth.get_roles_from_user(user)
-        assert Role.ADMIN in roles
+        assert Role.ADMIN.value in roles
 
         # Modify default user and group
         # # Change name, password and roles
         user.name = "Changed"
         user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
-        auth.link_roles(user, [Role.USER])
+        auth.link_roles(user, [Role.USER.value])
         auth.save_user(user)
 
         # Change fullname (not the shortname, since it is the primary key)
@@ -364,7 +364,8 @@ class TestApp(BaseTests):
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name == "Changed"
         assert user.password != expected_pwd
-        assert Role.ADMIN not in auth.get_roles_from_user(user)
+        assert Role.ADMIN.value not in auth.get_roles_from_user(user)
+        assert Role.USER.value in auth.get_roles_from_user(user)
 
         group = auth.get_group(name="Default")
         assert group.fullname == "Changed"
@@ -375,7 +376,8 @@ class TestApp(BaseTests):
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name == "Changed"
         assert user.password != expected_pwd
-        assert Role.ADMIN not in auth.get_roles_from_user(user)
+        assert Role.ADMIN.value not in auth.get_roles_from_user(user)
+        assert Role.USER.value in auth.get_roles_from_user(user)
 
         group = auth.get_group(name="Default")
         assert group.fullname == "Changed"
@@ -386,7 +388,8 @@ class TestApp(BaseTests):
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user.name != "Changed"
         assert user.password == expected_pwd
-        assert Role.ADMIN in auth.get_roles_from_user(user)
+        assert Role.ADMIN.value in auth.get_roles_from_user(user)
+        assert Role.USER.value in auth.get_roles_from_user(user)
 
         group = auth.get_group(name="Default")
         assert group.fullname != "Changed"
