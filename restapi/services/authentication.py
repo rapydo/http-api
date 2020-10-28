@@ -831,7 +831,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 roles=self.roles,
             )
             # This is required to execute the commit on sqlalchemy...
-            self.save_user()
+            self.save_user(default_user)
             log.info("Injected default user")
         else:
             log.debug("Users already created")
