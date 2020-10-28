@@ -351,12 +351,14 @@ class TestApp(BaseTests):
 
         # Modify default user and group
         # # Change name, password and roles
+        user = auth.get_user(username=BaseAuthentication.default_user)
         user.name = "Changed"
         user.password = BaseAuthentication.get_password_hash("new-pwd#2!")
         auth.link_roles(user, [Role.USER.value])
         auth.save_user(user)
 
         # Change fullname (not the shortname, since it is the primary key)
+        group = auth.get_group(name="Default")
         group.fullname = "Changed"
         auth.save_group(group)
 
