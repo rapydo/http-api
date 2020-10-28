@@ -44,7 +44,7 @@ class ServerModes(int, Enum):
     WORKER = 3
 
 
-def create_app(name=__name__, mode=ServerModes.NORMAL):
+def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
@@ -101,6 +101,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL):
         project_init=(mode == ServerModes.INIT),
         project_clean=(mode == ServerModes.DESTROY),
         worker_mode=(mode == ServerModes.WORKER),
+        options=options,
     )
 
     # Initialize reading of all files

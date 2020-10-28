@@ -341,7 +341,7 @@ class Authentication(BaseAuthentication):
         else:
             user.belongs_to.connect(group)
 
-    def init_auth_db(self):
+    def init_auth_db(self, options):
 
         # Handle system roles
         current_roles = [role.name for role in self.db.Role.nodes.all()]

@@ -185,8 +185,16 @@ class Detector:
         return variables
 
     def init_services(
-        self, app, project_init=False, project_clean=False, worker_mode=False
+        self,
+        app,
+        project_init=False,
+        project_clean=False,
+        worker_mode=False,
+        options=None,
     ):
+
+        if options is None:
+            options = {}
 
         instances = {}
         for connector_name, service in self.services.items():
@@ -239,7 +247,7 @@ class Detector:
                 connector.initialize()
 
                 with app.app_context():
-                    self.authentication_instance.init_auth_db()
+                    self.authentication_instance.init_auth_db(options)
                     log.info("Initialized authentication module")
 
                 self.project_initialization(instances, app=app)

@@ -590,7 +590,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #################
 
     @abc.abstractmethod
-    def init_auth_db(self):  # pragma: no cover
+    def init_auth_db(self, options):  # pragma: no cover
         """
         Create default roles, default user and default group
         """

@@ -336,7 +336,7 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    def init_auth_db(self):
+    def init_auth_db(self, options):
 
         try:
             if not self.db.Role.query.first():

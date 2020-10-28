@@ -87,7 +87,11 @@ def verify(services):
 
 
 @cli.command()
-@click.option("--wait/--no-wait", default=False, help="Wait for DBs to be up")
+@click.option(
+    "--wait/--no-wait",
+    default=False,
+    help="Wait for services availability before starting the initialization",
+)
 @click.option(
     "--force-user/--no-force-user",
     default=False,
