@@ -80,7 +80,7 @@ def get_output_schema():
 def getInputSchema(request):
 
     if not request:
-        return {}
+        return Schema.from_dict({})
 
     auth = EndpointResource.load_authentication()
 

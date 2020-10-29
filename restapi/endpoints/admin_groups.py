@@ -29,7 +29,7 @@ class Group(Schema):
 def getInputSchema(request):
 
     if not request:
-        return {}
+        return Schema.from_dict({})
 
     auth = EndpointResource.load_authentication()
 
