@@ -133,7 +133,11 @@ class Connector(metaclass=abc.ABCMeta):
             setattr(obj, name, model)
         obj.models = self.models
 
-    def get_instance(self, cache_expiration=None, **kwargs):
+    # To be implemented on every connector
+    def is_connected(instance):
+        return True
+
+    def get_instance(self, cache_expiration=None, verify=False, **kwargs):
 
         # When context is empty this is a connection at loading time
         # Do not save it
@@ -158,7 +162,8 @@ class Connector(metaclass=abc.ABCMeta):
                 obj = None
 
         if obj and not obj.disconnected:
-            return obj
+            if not verify or obj.is_connected():
+                return obj
 
         # can raise ServiceUnavailable exception
         obj = self.initialize_connection(**kwargs)

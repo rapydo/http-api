@@ -57,13 +57,15 @@ class Detector:
 
         return connector
 
-    def get_service_instance(self, service_name, **kwargs):
+    def get_service_instance(self, service_name, verify=False, **kwargs):
         if service_name == AUTH_NAME:
             return self.authentication_instance
 
         connector = self.get_connector(service_name)
 
-        return connector.get_instance(**kwargs)
+        instance = connector.get_instance(verify=verify, **kwargs)
+
+        return instance
 
     def load_services(self, path, module):
 
