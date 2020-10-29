@@ -155,9 +155,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
-            if description == ROLE_DISABLED:
-                continue
-            BaseAuthentication.roles.append(role)
+            if description != ROLE_DISABLED:
+                BaseAuthentication.roles.append(role)
 
         if (
             BaseAuthentication.default_role is None or None in BaseAuthentication.roles

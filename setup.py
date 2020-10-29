@@ -29,9 +29,9 @@ setup(
         "Flask-Migrate==2.5.3",
         "PyJWT",
         "pyOpenSSL",
-        "passlib[bcrypt]==1.7.2",
+        "passlib[bcrypt]==1.7.4",
         # DB and services drivers
-        "neomodel==4.0.0",
+        "neomodel==4.0.1",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
@@ -43,7 +43,7 @@ setup(
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==12.8",
         # TOTP
-        "pyotp==2.4.0",
+        "pyotp==2.4.1",
         "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
@@ -57,13 +57,13 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.17.6",
+        "sentry-sdk[flask]==0.19.1",
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==2.4.1",
-        "Faker==4.1.3",
+        "schemathesis==2.7.1",
+        "Faker==4.14.0",
         "Telethon==1.16.4",
     ],
     classifiers=[
