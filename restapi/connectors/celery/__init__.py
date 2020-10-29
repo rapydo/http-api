@@ -387,7 +387,7 @@ Error: {traceback.format_exc()}
                     default="Unkown title",
                 )
                 subject = f"{project}: task {task_name} failed"
-                smtp = detector.get_service_instance("smtp")
+                smtp = detector.get_service_instance("smtp", verify=True)
                 smtp.send(body, subject)
 
     return wrapper

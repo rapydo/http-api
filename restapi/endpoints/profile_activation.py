@@ -117,7 +117,7 @@ class ProfileActivation(EndpointResource):
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-            smtp = self.get_service_instance("smtp")
+            smtp = self.get_service_instance("smtp", verify=True)
             send_activation_link(smtp, self.auth, user)
         msg = (
             "We are sending an email to your email address where "
