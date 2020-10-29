@@ -133,7 +133,7 @@ class Connector(metaclass=abc.ABCMeta):
             setattr(obj, name, model)
         obj.models = self.models
 
-    def get_instance(self, cache_expiration=None, **kwargs):
+    def get_instance(self, cache_expiration=None, verify=False, **kwargs):
 
         # When context is empty this is a connection at loading time
         # Do not save it
@@ -158,7 +158,13 @@ class Connector(metaclass=abc.ABCMeta):
                 obj = None
 
         if obj and not obj.disconnected:
-            return obj
+
+            # Verify flag will be implemented in the next version
+            # Now simply re-create the instance by considering verify always failed
+            if verify:
+                obj = None
+            else:
+                return obj
 
         # can raise ServiceUnavailable exception
         obj = self.initialize_connection(**kwargs)

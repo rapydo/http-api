@@ -257,7 +257,7 @@ class AdminUsers(EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            smtp = self.get_service_instance("smtp")
+            smtp = self.get_service_instance("smtp", verify=True)
             send_notification(smtp, user, unhashed_password, is_update=False)
 
         return self.response(user.uuid)
@@ -321,7 +321,7 @@ class AdminUsers(EndpointResource):
                 user.belongs_to.connect(group)
 
         if email_notification and unhashed_password is not None:
-            smtp = self.get_service_instance("smtp")
+            smtp = self.get_service_instance("smtp", verify=True)
             send_notification(smtp, user, unhashed_password, is_update=True)
 
         return self.empty_response()

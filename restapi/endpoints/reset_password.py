@@ -79,7 +79,7 @@ if detector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            smtp = self.get_service_instance("smtp")
+            smtp = self.get_service_instance("smtp", verify=True)
             send_password_reset_link(smtp, complete_uri, title, reset_email)
 
             ##################
