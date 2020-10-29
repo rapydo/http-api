@@ -41,7 +41,7 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==12.8",
+        "python-telegram-bot==13.0",
         # TOTP
         "pyotp==2.4.1",
         "segno==1.3.1",
@@ -64,7 +64,7 @@ setup(
         "pytest-timeout==1.4.2",
         "schemathesis==2.7.1",
         "Faker==4.14.0",
-        "Telethon==1.16.4",
+        "Telethon==1.17.5",
     ],
     classifiers=[
         "Programming Language :: Python",
