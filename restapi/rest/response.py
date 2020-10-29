@@ -124,8 +124,6 @@ class ResponseMaker:
     def convert_model_to_schema(schema):
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
-            if field == GET_SCHEMA_KEY:
-                continue
 
             f = {}
 

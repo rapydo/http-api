@@ -28,10 +28,6 @@ class NewSwaggerSpecifications(EndpointResource):
 
         specs = mem.docs.spec.to_dict()
 
-        # Remove get_schema parameters from Definitions
-        for schema, definition in specs.get("definitions", {}).items():
-            definition.get("properties", {}).pop("get_schema", None)
-
         user = self.get_user_if_logged(allow_access_token_parameter=True)
         if user:
             # Set security requirements for endpoint
@@ -42,13 +38,6 @@ class NewSwaggerSpecifications(EndpointResource):
                     for uri, endpoint in data.items():
                         u = uri.replace("{", "<").replace("}", ">")
                         for method, definition in endpoint.items():
-
-                            # Removed get_schema parameters from GET endpoints
-                            defs = definition.get("parameters", [])[:]
-                            for idx, p in enumerate(defs):
-                                if p["name"] == "get_schema":
-                                    definition["parameters"].pop(idx)
-                                    break
 
                             auth_required = glom(
                                 mem.authenticated_endpoints,
@@ -83,10 +72,6 @@ class NewSwaggerSpecifications(EndpointResource):
                         )
                         defs = definition.get("parameters", [])[:]
                         for idx, p in enumerate(defs):
-                            # Remove get_schema parameters from GET endpoints
-                            if p["name"] == "get_schema":
-                                definition["parameters"].pop(idx)
-                                continue
 
                             if "schema" not in p:
                                 continue
