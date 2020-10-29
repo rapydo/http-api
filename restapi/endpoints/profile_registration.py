@@ -7,6 +7,8 @@ from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
+# from restapi.utilities.logs import log
+
 # This endpoint require the server to send the activation oken via email
 if detector.check_availability("smtp"):
 
@@ -25,6 +27,21 @@ if detector.check_availability("smtp"):
             required=True,
             password=True,
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        )
+
+        # Temporary fix for IMC
+        declared_institution = fields.Str(
+            required=False,
+            default="none",
+            validate=validate.OneOf(
+                choices=["archive", "university", "research_institution", "none"],
+                labels=[
+                    "Archive",
+                    "University",
+                    "Research Institution",
+                    "None of the above",
+                ],
+            ),
         )
 
     class ProfileRegistration(EndpointResource):
