@@ -23,7 +23,6 @@ class Mail(Connector):
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):
-        log.warning("Debug SMTP: connect")
         self.variables = self.variables.copy()
         self.variables.update(kwargs)
 
@@ -54,7 +53,6 @@ class Mail(Connector):
         return self
 
     def disconnect(self):
-        log.warning("Debug SMTP: disconnect")
         self.disconnected = True
         self.smtp.quit()
         self.smtp = None
@@ -69,7 +67,6 @@ class Mail(Connector):
         bcc=None,
         plain_body=None,
     ):
-        log.warning("Debug SMTP: send")
 
         if not to_address:
             to_address = self.variables.get("admin")
