@@ -161,9 +161,11 @@ class Connector(metaclass=abc.ABCMeta):
                 obj.disconnect()
                 obj = None
 
+        if obj and verify and not obj.is_connected():
+            obj.disconnected = True
+
         if obj and not obj.disconnected:
-            if not verify or obj.is_connected():
-                return obj
+            return obj
 
         # can raise ServiceUnavailable exception
         obj = self.initialize_connection(**kwargs)
