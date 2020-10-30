@@ -52,7 +52,7 @@ def test_celery(app, faker):
     assert task_result.status == "PENDING"
 
     tries = 0
-    while tries < 5:
+    while tries < 12:
         time.sleep(10)
         tries += 1
         res = obj.celery_app.AsyncResult(task_id)
