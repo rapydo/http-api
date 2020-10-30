@@ -178,7 +178,7 @@
 
 #         return False
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.marshal_with(get_output_schema(), code=200)
 #     @decorators.endpoint(
 #         path="/localadmin/users",
@@ -218,7 +218,7 @@
 
 #         return self.response(data)
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.use_kwargs(get_input_schema())
 #     @decorators.endpoint(
 #         path="/localadmin/users",
@@ -281,7 +281,7 @@
 
 #         return self.response(user.uuid)
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     @decorators.endpoint(
 #         path="/localadmin/users/<user_id>",
@@ -362,7 +362,7 @@
 
 #         return self.empty_response()
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.endpoint(
 #         path="/localadmin/users/<user_id>",
 #         summary="Delete a user",

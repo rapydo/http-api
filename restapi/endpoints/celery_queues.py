@@ -154,7 +154,7 @@
 #             return self.response(data)
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.require_all('admin_root')
+#         @decorators.auth.require_all(Role.ADMIN)
 #         @decorators.endpoint(
 #             path="/queue/<task_id>",
 #             summary="Revoke a task from its id",
@@ -168,7 +168,7 @@
 #             return self.empty_response()
 
 #         # task_id = uuid referring to the task you are selecting
-#         @decorators.auth.require_all('admin_root')
+#         @decorators.auth.require_all(Role.ADMIN)
 #         @decorators.endpoint(
 #             path="/queue/<task_id>",
 #             summary="Delete a task",

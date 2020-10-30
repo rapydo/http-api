@@ -51,7 +51,6 @@ ROLE_DISABLED = "disabled"
 
 class Role(Enum):
     ADMIN = "admin_root"
-    LOCAL_ADMIN = "local_admin"
     COORDINATOR = "group_coordinator"
     STAFF = "staff_user"
     USER = "normal_user"
@@ -606,6 +605,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
+    @abc.abstractmethod
+    def create_role(self, name, description):  # pragma: no cover
+        """
+        A method to create a new role
+        """
+        return
+
+    @abc.abstractmethod
+    def save_role(self, role):  # pragma: no cover
+        log.error("Roles are not saved in base authentication")
+        return False
+
     @staticmethod
     def custom_user_properties_pre(userdata):
         try:
@@ -829,18 +840,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
 
     def init_roles(self):
-        current_roles = [role.name for role in self.get_roles()]
+        current_roles = {role.name: role for role in self.get_roles()}
 
         for role_name in self.roles:
+            description = self.roles_data.get(role_name, ROLE_DISABLED)
             if role_name in current_roles:
-                log.info("Role {} already exists", role_name)
-            else:
+                r = current_roles.get(role_name)
 
+                if r.description == description:
+                    log.info("Role {} already exists", role_name)
+                else:
+                    log.info("Role {} already exists, updating description", role_name)
+
+                    r.description = description
+                    self.save_role(r)
+
+            else:
                 log.info("Creating role: {}", role_name)
-                self.create_role(
-                    name=role_name,
-                    description=self.roles_data.get(role_name, ROLE_DISABLED),
-                )
+                self.create_role(name=role_name, description=description)
+
+        for r in current_roles:
+            if r not in self.roles:
+                log.warning("Unknown role found: {}", r)
 
         return self.roles
 

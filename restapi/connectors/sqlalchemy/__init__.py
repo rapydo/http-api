@@ -359,6 +359,13 @@ class Authentication(BaseAuthentication):
         self.db.session.add(role)
         self.db.session.commit()
 
+    def save_role(self, role):
+        if role:
+            self.db.session.add(role)
+            self.db.session.commit()
+            return True
+        return False
+
     def save_token(self, user, token, payload, token_type=None):
 
         ip = self.get_remote_ip()

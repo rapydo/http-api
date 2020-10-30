@@ -296,6 +296,12 @@ class Authentication(BaseAuthentication):
         role = self.db.Role(name=name, description=description)
         role.save()
 
+    def save_role(self, role):
+        if role:
+            role.save()
+            return True
+        return False
+
     # Also used by POST user
     def create_user(self, userdata, roles):
 
