@@ -6,6 +6,7 @@ from restapi.exceptions import Conflict, RestApiException
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.utilities.globals import mem
 
 # This endpoint require the server to send the activation token via email
 # if detector.check_availability("smtp"):
@@ -21,9 +22,11 @@ if True:
             return Schema.from_dict({})
 
         attributes = {}
-        attributes["email"] = fields.Email(required=True)
         attributes["name"] = fields.Str(required=True)
         attributes["surname"] = fields.Str(required=True)
+        attributes["email"] = fields.Email(
+            required=True, label="Username (email address)"
+        )
         attributes["password"] = fields.Str(
             required=True,
             password=True,
@@ -32,8 +35,14 @@ if True:
         attributes["password_confirm"] = fields.Str(
             required=True,
             password=True,
+            label="Password confirmation",
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
+
+        if custom_fields := mem.customizer.get_custom_input_fields(
+            request=None, scope=mem.customizer.REGISTRATION
+        ):
+            attributes.update(custom_fields)
 
         return Schema.from_dict(attributes)
 
