@@ -112,6 +112,10 @@ class CeleryExt(Connector):
             BACKENDCRED = ""
 
         if backend == "RABBIT":
+            log.warning(
+                "RABBIT backend is quite limited and not fully supported. "
+                "Consider to enable Redis or MongoDB as a backend database"
+            )
             BACKEND_URL = f"rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
             log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == "REDIS":

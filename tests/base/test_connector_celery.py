@@ -52,13 +52,18 @@ def test_celery(app, faker):
     assert task.status == "PENDING"
     assert task.result is None
 
-    try:
-        r = task.get(timeout=60)
-        assert task.status == "SUCCESS"
-        assert task.result == "Task executed!"
-        assert r == "Task executed!"
-    except celery.exceptions.TimeoutError:
-        pytest.fail(f"Task not finished, result={task.result}, status={task.status}")
+    if obj.variables.get("backend") == "RABBIT-DEBUG":
+        log.warning(
+            "Due to limitations on RABBIT backend task results will not be tested"
+        )
+    else:
+        try:
+            r = task.get(timeout=60)
+            assert task.status == "SUCCESS"
+            assert task.result == "Task executed!"
+            assert r == "Task executed!"
+        except celery.exceptions.TimeoutError:
+            pytest.fail(f"Task timeout, result={task.result}, status={task.status}")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
