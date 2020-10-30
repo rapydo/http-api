@@ -56,14 +56,19 @@ script:
 
     elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
       rapydo create prj -s celery -s rabbit --auth ${RANDOM_AUTH} --frontend no;
+      rapydo add task test_task;
     elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
       rapydo create prj -s celery -s rabbit -s redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo add task test_task;
     elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
       rapydo create prj -s celery -s rabbit -s mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo add task test_task;
     elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
       rapydo create prj -s celery -s redis --auth ${RANDOM_AUTH} --frontend no;
+      rapydo add task test_task;
     elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
       rapydo create prj -s celery -s redis -s mongo --auth ${RANDOM_AUTH} --frontend no;
+      rapydo add task test_task;
 
 
     elif [[ "$TEMPLATE" == "extra" ]]; then

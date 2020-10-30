@@ -44,6 +44,18 @@ def test_celery(app, faker):
     obj = detector.get_service_instance(CONNECTOR)
     assert obj is not None
 
+    task_id = obj.test_task.apply_async()
+
+    assert task_id is not None
+    task_result = obj.celery_app.AsyncResult(task_id)
+    assert task_result.result == "Task executed!"
+    assert task_result.status == "???"
+
+    # Sleep a while (few seconds?) and then try again
+    task_result = obj.celery_app.AsyncResult(task_id)
+    assert task_result.result == "Task executed!"
+    assert task_result.status == "???"
+
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
         try:
