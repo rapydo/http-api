@@ -97,12 +97,13 @@ script:
     fi || travis_terminate 1;
 
   - rapydo start
-  - sleep 5
+  # A long sleep to be able to read logs about services startup
+  - sleep 20
   - rapydo logs
   # This is used to test the bot in dev mode
   # - >
   #   if [[ "$TEMPLATE" == "extra" ]]; then
-  #     rapydo shell backend --default-command --detach;
+  #     rapydo shell backend --default --detach;
   #     sleep 20;
   #   fi
   - rapydo shell backend 'restapi tests --core --wait --destroy' || travis_terminate 1;
