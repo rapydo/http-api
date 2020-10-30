@@ -11,15 +11,15 @@ env:
   # html email templates, extended projects
   # It is executed as first because it is the slowest
   - TEMPLATE=extra
-  - TEMPLATE=postgres
-  - TEMPLATE=mysql
   - TEMPLATE=neo4j
-  - TEMPLATE=mongo
-  - TEMPLATE=celery-rabbit-rabbit
+  - TEMPLATE=postgres
   - TEMPLATE=celery-rabbit-redis
   - TEMPLATE=celery-rabbit-mongo
   - TEMPLATE=celery-redis-redis
   - TEMPLATE=celery-redis-mongo
+  - TEMPLATE=celery-rabbit-rabbit
+  - TEMPLATE=mongo
+  - TEMPLATE=mysql
 
 script:
   # Randomize auth service to test some services

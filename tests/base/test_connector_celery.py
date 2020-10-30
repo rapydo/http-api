@@ -52,7 +52,7 @@ def test_celery(app, faker):
     assert task.status == "PENDING"
     assert task.result is None
 
-    if obj.variables.get("backend") == "RABBIT-DEBUG":
+    if obj.variables.get("backend") == "RABBIT":
         log.warning(
             "Due to limitations on RABBIT backend task results will not be tested"
         )
