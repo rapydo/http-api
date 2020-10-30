@@ -44,7 +44,7 @@ def test_celery(app, faker):
     obj = detector.get_service_instance(CONNECTOR)
     assert obj is not None
 
-    task_id = obj.test_task.apply_async()
+    task_id = obj.test_task.apply_async().id
 
     assert task_id is not None
     task_result = obj.celery_app.AsyncResult(task_id)
