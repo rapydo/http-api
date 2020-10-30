@@ -8,24 +8,34 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 
 # This endpoint require the server to send the activation token via email
-if detector.check_availability("smtp"):
+# if detector.check_availability("smtp"):
+if True:
 
     auth = EndpointResource.load_authentication()
 
-    class User(Schema):
-        email = fields.Email(required=True)
-        name = fields.Str(required=True)
-        surname = fields.Str(required=True)
-        password = fields.Str(
+    # Note that these are callables returning a model, not models!
+    # They will be executed a runtime
+    def getInputSchema(request):
+
+        if not request:
+            return Schema.from_dict({})
+
+        attributes = {}
+        attributes["email"] = fields.Email(required=True)
+        attributes["name"] = fields.Str(required=True)
+        attributes["surname"] = fields.Str(required=True)
+        attributes["password"] = fields.Str(
             required=True,
             password=True,
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
-        password_confirm = fields.Str(
+        attributes["password_confirm"] = fields.Str(
             required=True,
             password=True,
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
+
+        return Schema.from_dict(attributes)
 
     class ProfileRegistration(EndpointResource):
         """ Current user informations """
@@ -34,7 +44,7 @@ if detector.check_availability("smtp"):
         depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
-        @decorators.use_kwargs(User)
+        @decorators.use_kwargs(getInputSchema)
         @decorators.endpoint(
             path="/profile",
             summary="Register new user",

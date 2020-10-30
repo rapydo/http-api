@@ -33,7 +33,9 @@ def patchUserProfile():
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
 
-    if custom_fields := mem.customizer.get_user_editable_fields(None):
+    if custom_fields := mem.customizer.get_custom_input_fields(
+        request=None, scope=mem.customizer.PROFILE
+    ):
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)

@@ -144,7 +144,9 @@ def getInputSchema(request):
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
     )
 
-    if custom_fields := mem.customizer.get_custom_input_fields(request):
+    if custom_fields := mem.customizer.get_custom_input_fields(
+        request=request, scope=mem.customizer.ADMIN
+    ):
         attributes.update(custom_fields)
 
     return Schema.from_dict(attributes)
