@@ -51,7 +51,7 @@ def test_celery(app, faker):
     assert task_result.result is None
     assert task_result.status == "PENDING"
 
-    time.sleep(5)
+    time.sleep(15)
 
     task_result = obj.celery_app.AsyncResult(task_id)
     assert task_result.result == "Task executed!"

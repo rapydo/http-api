@@ -98,7 +98,7 @@ script:
 
   - rapydo start
   # A long sleep to be able to read logs about services startup
-  - sleep 20
+  - sleep 25
   - rapydo logs
   # This is used to test the bot in dev mode
   # - >
