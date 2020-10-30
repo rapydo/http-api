@@ -119,7 +119,7 @@ script:
   - rapydo --production --testing init --force
   - rapydo pull
   - rapydo ssl --volatile
-  - rapydo start
+  - rapydo --testing start
   # wait for all services to start (25 failed sometimes)
   - sleep 30
   - rapydo logs
