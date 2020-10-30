@@ -55,7 +55,7 @@ def test_celery(app, faker):
 
     task_result = obj.celery_app.AsyncResult(task_id)
     assert task_result.result == "Task executed!"
-    assert task_result.status == "???"
+    assert task_result.status == "SUCCESS"
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
