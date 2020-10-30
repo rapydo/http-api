@@ -60,13 +60,19 @@ class EndpointResource(MethodResource, Resource):
         return self.unpacked_token[3]
 
     def verify_admin(self):
-        """ Check if current user has administration role """
+        """ Check if current user has Administration role """
         return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
 
+    def verify_staff(self):
+        """ Check if current user has Staff role """
+        return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
+
     def verify_local_admin(self):
-        return self.auth.verify_roles(
-            self.get_user(), [Role.LOCAL_ADMIN], warnings=False
+        # Deprecated since 0.9
+        log.warning(
+            "Deprecated use of verify_local_admin, switch to verify_staff instead"
         )
+        return self.verify_staff()
 
     def verify_coordinator(self):
         return self.auth.verify_roles(

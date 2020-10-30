@@ -57,7 +57,7 @@ def getProfileData():
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
     attributes["isAdmin"] = fields.Boolean(required=True)
-    attributes["isLocalAdmin"] = fields.Boolean(required=True)
+    attributes["isStaff"] = fields.Boolean(required=True)
     attributes["isCoordinator"] = fields.Boolean(required=True)
     attributes["privacy_accepted"] = fields.Boolean(required=True)
     attributes["is_active"] = fields.Boolean(required=True)
@@ -102,7 +102,7 @@ class Profile(EndpointResource):
             "name": current_user.name,
             "surname": current_user.surname,
             "isAdmin": self.verify_admin(),
-            "isLocalAdmin": self.verify_local_admin(),
+            "isStaff": self.verify_staff(),
             "isCoordinator": self.verify_coordinator(),
             "privacy_accepted": current_user.privacy_accepted,
             "last_password_change": current_user.last_password_change,
