@@ -51,11 +51,15 @@ def test_celery(app, faker):
     assert task_result.result is None
     assert task_result.status == "PENDING"
 
-    time.sleep(15)
-
-    task_result = obj.celery_app.AsyncResult(task_id)
-    assert task_result.result == "Task executed!"
-    assert task_result.status == "SUCCESS"
+    tries = 0
+    while tries < 5:
+        time.sleep(10)
+        tries += 1
+        res = obj.celery_app.AsyncResult(task_id)
+        if res.result == "Task executed!" and res.status == "SUCCESS":
+            break
+    else:
+        pytest.fail(f"Task not finished, result={res.result}, status={res.status}")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
