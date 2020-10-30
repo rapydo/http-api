@@ -109,6 +109,9 @@ class Connector(metaclass=abc.ABCMeta):
 
     def initialize_connection(self, **kwargs):
 
+        from restapi.config import TESTING
+
+        log.critical("TESTING = {}", TESTING)
         # Create a new instance of itself
         obj = self.__class__(self.app)
 
