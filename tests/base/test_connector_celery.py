@@ -2,6 +2,7 @@ import os
 import time
 from datetime import timedelta
 
+import celery
 import pytest
 
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
@@ -47,19 +48,17 @@ def test_celery(app, faker):
     task_id = obj.test_task.apply_async().id
 
     assert task_id is not None
-    task_result = obj.celery_app.AsyncResult(task_id)
-    assert task_result.result is None
-    assert task_result.status == "PENDING"
+    task = obj.celery_app.AsyncResult(task_id)
+    assert task.status == "PENDING"
+    assert task.result is None
 
-    tries = 0
-    while tries < 12:
-        time.sleep(10)
-        tries += 1
-        res = obj.celery_app.AsyncResult(task_id)
-        if res.result == "Task executed!" and res.status == "SUCCESS":
-            break
-    else:
-        pytest.fail(f"Task not finished, result={res.result}, status={res.status}")
+    try:
+        r = task.get(timeout=60)
+        assert task.status == "SUCCESS"
+        assert task.result == "Task executed!"
+        assert r == "Task executed!"
+    except celery.exceptions.TimeoutError:
+        pytest.fail(f"Task not finished, result={task.result}, status={task.status}")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
