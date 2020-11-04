@@ -189,11 +189,13 @@ class SQLAlchemy(Connector):
         return db
 
     def disconnect(self):
-        self.db.session.close()
+        # https://docs.sqlalchemy.org/en/13/orm/session_api.html#sqlalchemy.orm.session.Session.invalidate
+        self.db.session.invalidate()
         self.db.disconnected = True
         return
 
     def is_connected(self):
+        log.warning("sqlalchemy.is_connected method is not implemented")
         return self.db.session.closed
 
     def initialize(self):
