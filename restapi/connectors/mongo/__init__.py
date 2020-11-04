@@ -87,6 +87,9 @@ class MongoExt(Connector):
         self.disconnected = True
         return
 
+    def is_connected(self):
+        return True
+
     def initialize(self):
         pass
 

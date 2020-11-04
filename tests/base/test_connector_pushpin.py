@@ -32,7 +32,9 @@ def test_pushpin(app):
     assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     try:
@@ -55,11 +57,9 @@ def test_pushpin(app):
     obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
     assert id(obj) != obj_id
 
-    # Close connection...
+    assert obj.is_connected()
     obj.disconnect()
-
-    # Test connection... should fail!
-    # ??
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()

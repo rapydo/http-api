@@ -34,7 +34,9 @@ def test_sqlalchemy(app):
     assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
@@ -49,14 +51,19 @@ def test_sqlalchemy(app):
 
     try:
         detector.get_service_instance(
-            CONNECTOR, test_connection=True, user="invaliduser",
+            CONNECTOR,
+            test_connection=True,
+            user="invaliduser",
         )
 
         pytest.fail("No exception raised on unavailable service")
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(CONNECTOR, test_connection=True,)
+    obj = detector.get_service_instance(
+        CONNECTOR,
+        test_connection=True,
+    )
     assert obj is not None
 
     obj = detector.get_service_instance(
@@ -78,11 +85,9 @@ def test_sqlalchemy(app):
     assert id(obj) == obj_id
     # assert id(obj) != obj_id
 
-    # Close connection...
+    assert obj.is_connected()
     obj.disconnect()
-
-    # test connection... and should fail
-    # ???
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()

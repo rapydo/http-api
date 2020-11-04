@@ -58,6 +58,10 @@ class Connector(metaclass=abc.ABCMeta):
     def disconnect(self):  # pragma: no cover
         return
 
+    @abc.abstractmethod
+    def is_connected(instance):  # pragma: no cover
+        return True
+
     def destroy(self):  # pragma: no cover
         log.exit("Missing destroy method in {}", self.__class__.__name__)
 
@@ -132,10 +136,6 @@ class Connector(metaclass=abc.ABCMeta):
             log.verbose("Injecting model '{}'", name)
             setattr(obj, name, model)
         obj.models = self.models
-
-    # To be implemented on every connector
-    def is_connected(instance):
-        return True
 
     def get_instance(self, cache_expiration=None, verify=False, **kwargs):
 

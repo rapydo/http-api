@@ -32,7 +32,8 @@ class RabbitExt(Connector):
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
         credentials = pika.PlainCredentials(
-            variables.get("user"), variables.get("password"),
+            variables.get("user"),
+            variables.get("password"),
         )
 
         if ssl_enabled:
@@ -70,6 +71,9 @@ class RabbitExt(Connector):
             self.connection.close()
         self.disconnected = True
 
+    def is_connected(self):
+        return self.connection.is_open
+
     def queue_exists(self, queue):
         channel = self.get_channel()
         try:
@@ -91,7 +95,11 @@ class RabbitExt(Connector):
     def delete_queue(self, queue):
 
         channel = self.get_channel()
-        out = channel.queue_delete(queue, if_unused=False, if_empty=False,)
+        out = channel.queue_delete(
+            queue,
+            if_unused=False,
+            if_empty=False,
+        )
         log.debug(out)
 
     def write_to_queue(self, jmsg, queue, exchange="", headers=None):
@@ -110,7 +118,10 @@ class RabbitExt(Connector):
         """
 
         log.verbose(
-            "Asked to log ({}, {}): {}", exchange, queue, jmsg,
+            "Asked to log ({}, {}): {}",
+            exchange,
+            queue,
+            jmsg,
         )
         body = json.dumps(jmsg)
 

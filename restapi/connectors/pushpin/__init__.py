@@ -34,6 +34,9 @@ class PushpinExt(Connector):
         self.disconnected = True
         return
 
+    def is_connected(self):
+        return True
+
     @staticmethod
     def callback(result, message):
         if result:

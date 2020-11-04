@@ -200,8 +200,7 @@ def test_celery(app, faker):
     # Close connection...
     obj.disconnect()
 
-    # Test connection... should fail!
-    # ??
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()

@@ -191,6 +191,9 @@ class SQLAlchemy(Connector):
         self.db.disconnected = True
         return
 
+    def is_connected(self):
+        return True
+
     def initialize(self):
 
         db = self.get_instance()

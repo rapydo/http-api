@@ -205,6 +205,9 @@ class CeleryExt(Connector):
         self.celery_app.disconnected = True
         return
 
+    def is_connected(self):
+        return True
+
     @classmethod
     def get_periodic_task(cls, name):
 

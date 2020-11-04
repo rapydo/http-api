@@ -57,6 +57,9 @@ class Mail(Connector):
         self.smtp.quit()
         self.smtp = None
 
+    def is_connected(self):
+        return True
+
     def send(
         self,
         body,

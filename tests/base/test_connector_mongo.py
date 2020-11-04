@@ -33,7 +33,9 @@ def test_mongo(app):
     assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     try:
@@ -49,7 +51,10 @@ def test_mongo(app):
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(CONNECTOR, test_connection=True,)
+    obj = detector.get_service_instance(
+        CONNECTOR,
+        test_connection=True,
+    )
     assert obj is not None
 
     obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
@@ -66,8 +71,7 @@ def test_mongo(app):
     # Close connection...
     obj.disconnect()
 
-    # test connection... and should fail
-    # ???
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()

@@ -133,3 +133,8 @@ def test_smtp(app, faker):
         assert not obj.send("body", "subject")
         assert not obj.send("body", "subject", "to_addr")
         assert obj.send("body", "subject", "to_addr", "from_addr")
+
+    obj = detector.get_service_instance(CONNECTOR)
+    assert obj.is_connected()
+    obj.disconnect()
+    assert not obj.is_connected()
