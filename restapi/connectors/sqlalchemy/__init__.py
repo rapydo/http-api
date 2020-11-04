@@ -195,7 +195,7 @@ class SQLAlchemy(Connector):
 
     def is_connected(self):
         log.warning("sqlalchemy.is_connected method is not implemented")
-        return self.db.session.closed
+        return not self.db.disconnected
 
     def initialize(self):
 
