@@ -189,8 +189,7 @@ class SQLAlchemy(Connector):
         return db
 
     def disconnect(self):
-        # https://docs.sqlalchemy.org/en/13/orm/session_api.html#sqlalchemy.orm.session.Session.invalidate
-        self.db.session.invalidate()
+        self.db.session.close()
         self.db.disconnected = True
         return
 
