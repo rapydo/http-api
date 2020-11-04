@@ -81,7 +81,7 @@ def test_sqlalchemy(app):
     obj = detector.get_service_instance(
         CONNECTOR, cache_expiration=1, test_connection=True
     )
-    # With alchemy the connection object remain the same...
+    # With alchemy the connection object remains the same...
     assert id(obj) == obj_id
     # assert id(obj) != obj_id
 
