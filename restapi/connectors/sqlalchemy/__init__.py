@@ -190,9 +190,6 @@ class SQLAlchemy(Connector):
 
     def disconnect(self):
         self.db.session.close()
-        self.db.engine.invalidate()
-        self.db.engine_bis.invalidate()
-        self.db.dispose()
         self.db.disconnected = True
         return
 
