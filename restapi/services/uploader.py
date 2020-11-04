@@ -171,7 +171,6 @@ class Uploader:
 
             return total_length, start, stop
 
-        # log.critical(content_range.units)
         total_length = int(content_range.length)
         # es: 'bytes */35738983'
         if content_range.start is None:
@@ -254,10 +253,6 @@ class Uploader:
                 start = int(content_range.start)
                 stop = int(content_range.stop)
                 total_length = int(content_range.length)
-                # log.critical(content_range.start)
-                # log.critical(content_range.stop)
-                # log.critical(content_range.length)
-                # log.critical(content_range.units)
                 completed = stop >= total_length
         except BaseException as e:
             log.error("Unable to parse Content-Range: {}", range_header)

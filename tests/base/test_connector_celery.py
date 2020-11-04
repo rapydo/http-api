@@ -48,9 +48,6 @@ def test_celery(app, faker):
     task_id = obj.test_task.apply_async().id
 
     assert task_id is not None
-    task = obj.celery_app.AsyncResult(task_id)
-    assert task.status == "PENDING"
-    assert task.result is None
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
@@ -58,10 +55,14 @@ def test_celery(app, faker):
         )
     else:
         try:
+            task = obj.celery_app.AsyncResult(task_id)
+            assert task is not None
             r = task.get(timeout=60)
+            assert r is not None
+            # This is the task output, as defined in task_template.py.j2
+            assert r == "Task executed!"
             assert task.status == "SUCCESS"
             assert task.result == "Task executed!"
-            assert r == "Task executed!"
         except celery.exceptions.TimeoutError:
             pytest.fail(f"Task timeout, result={task.result}, status={task.status}")
 
