@@ -35,7 +35,8 @@ class PushpinExt(Connector):
         return
 
     def is_connected(self):
-        return True
+        log.warning("pushpin.is_connected method is not implemented")
+        return not self.disconnected
 
     @staticmethod
     def callback(result, message):

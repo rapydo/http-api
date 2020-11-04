@@ -206,7 +206,9 @@ class CeleryExt(Connector):
         return
 
     def is_connected(self):
-        return True
+
+        log.warning("celery.is_connected method is not implemented")
+        return not self.disconnected
 
     @classmethod
     def get_periodic_task(cls, name):

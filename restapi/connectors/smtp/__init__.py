@@ -2,7 +2,7 @@ import datetime
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from smtplib import SMTPAuthenticationError, SMTPException
+from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
 
 import pytz
 
@@ -58,7 +58,15 @@ class Mail(Connector):
         self.smtp = None
 
     def is_connected(self):
-        return True
+
+        if not self.smtp:
+            return False
+
+        try:
+            status = self.smtp.noop()[0]
+            return status == 250
+        except SMTPServerDisconnected:
+            return False
 
     def send(
         self,

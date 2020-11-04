@@ -88,7 +88,9 @@ class MongoExt(Connector):
         return
 
     def is_connected(self):
-        return True
+
+        log.warning("mongo.is_connected method is not implemented")
+        return not self.disconnected
 
     def initialize(self):
         pass
