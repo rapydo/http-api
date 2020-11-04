@@ -68,9 +68,8 @@ def test_mongo(app):
     obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
     assert id(obj) != obj_id
 
-    # Close connection...
+    assert obj.is_connected()
     obj.disconnect()
-
     assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
