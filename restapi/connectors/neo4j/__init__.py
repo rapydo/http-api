@@ -146,7 +146,7 @@ class NeoModel(Connector):
 
     def is_connected(self):
         log.warning("neo4j.is_connected method is not implemented")
-        return True
+        return not self.disconnected
 
     def initialize(self):
 
