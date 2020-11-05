@@ -102,28 +102,24 @@ class RabbitExt(Connector):
         )
         log.debug(out)
 
-    def write_to_queue(self, jmsg, queue, exchange="", headers=None):
-        """
-        Send a log message to the RabbitMQ queue, unless
-        the dont-connect parameter is set. In that case,
-        the messages get logged into the normal log files.
-        If the connection is dead, reconnection is attempted,
-        but not eternally.
+    def send_json(self, message, routing_key="", exchange="", headers=None):
+        return self.send(
+            body=json.dumps(message),
+            routing_key=routing_key,
+            exchange=exchange,
+            headers=headers,
+        )
 
-        :param jmsg: JSON log message
-        :param app_name: App name (will be used for the ElasticSearch index name)
-        :param exchange: RabbitMQ exchange where the jmsg should be sent.
+    def send(self, body, routing_key="", exchange="", headers=None):
+        """
+        Send a message to the RabbitMQ queue
+
+        :param body: the data to be send.
+                        If this message should be json-encoded please use .send_json()
+        :param exchange: RabbitMQ exchange where the message should be sent.
                          Empty for default exchange.
         :param queue: RabbitMQ routing key.
         """
-
-        log.verbose(
-            "Asked to log ({}, {}): {}",
-            exchange,
-            queue,
-            jmsg,
-        )
-        body = json.dumps(jmsg)
 
         # Settings for the message:
         permanent_delivery = 2  # make message persistent
@@ -139,7 +135,7 @@ class RabbitExt(Connector):
             channel = self.get_channel()
             channel.basic_publish(
                 exchange=exchange,
-                routing_key=queue,
+                routing_key=routing_key,
                 body=body,
                 properties=props,
                 mandatory=True,

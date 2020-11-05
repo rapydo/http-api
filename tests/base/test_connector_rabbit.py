@@ -51,17 +51,19 @@ def test_rabbit(app, faker):
         obj.delete_queue(queue)
 
     assert not obj.queue_exists(queue)
-    assert not obj.write_to_queue("test", queue)
+    assert not obj.send("test", queue)
+    assert not obj.send_json("test", queue)
     obj.create_queue(queue)
     assert obj.queue_exists(queue)
     obj.create_queue(queue)
 
-    assert obj.write_to_queue("test", queue)
+    assert obj.send("test", queue)
+    assert obj.send_json("test", queue)
 
     obj.channel.close()
 
     # Channel is automatically open, if found closed
-    assert obj.write_to_queue("test", queue)
+    assert obj.send("test", queue)
     obj.delete_queue(queue)
 
     obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
@@ -80,7 +82,8 @@ def test_rabbit(app, faker):
     assert not obj.is_connected()
 
     # Connection is closed, of course
-    assert not obj.write_to_queue("test", queue)
+    assert not obj.send("test", queue)
+    assert not obj.send_json("test", queue)
 
     # ... close connection again ... nothing should happens
     obj.disconnect()
