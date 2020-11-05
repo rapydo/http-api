@@ -186,55 +186,6 @@ class Uploader:
 
         return total_length, start, stop
 
-    # def chunk_upload(self, upload_dir, filename, chunk_size=None):
-    #     filename = secure_filename(filename)
-
-    #     try:
-    #         range_header = request.headers.get("Content-Range")
-
-    #         total_length, start, stop = self.parse_content_range(range_header)
-
-    #         if total_length is None:
-    #             return False, self.response("Invalid request", code=400)
-
-    #         completed = (stop >= total_length)
-
-    #     except BaseException as e:
-    #         log.error("Unable to parse Content-Range: {}", range_header)
-    #         log.error(str(e))
-    #         completed = False
-    #         return completed, self.response("Invalid request", code=400)
-
-    #     # Default chunk size, put this somewhere
-    #     if chunk_size is None:
-    #         chunk_size = 1048576
-
-    #     file_path = os.path.join(upload_dir, filename)
-    #     with open(file_path, "ab") as f:
-    #         while True:
-    #             chunk = request.stream.read(chunk_size)
-    #             if not chunk:
-    #                 break
-    #             f.seek(start)
-    #             f.write(chunk)
-
-    #     if completed:
-
-    #         return completed, self.response(
-    #             {
-    #                 'filename': filename,
-    #                 'meta': self.get_file_metadata(file_path)
-    #             }, code=200)
-
-    #     return completed, self.response(
-    #         "partial",
-    #         headers={
-    #             "Access-Control-Expose-Headers": "Range",
-    #             f"Range": "0-{stop - 1}"
-    #         },
-    #         code=206
-    #     )
-
     def chunk_upload(self, upload_dir, filename, chunk_size=None):
         filename = secure_filename(filename)
 

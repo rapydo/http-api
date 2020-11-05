@@ -8,6 +8,7 @@ http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.h
 import inspect
 import pkgutil
 from importlib import import_module
+from typing import Any, Callable, Dict
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities import print_and_exit
@@ -116,14 +117,14 @@ class Meta:
         return module
 
     @staticmethod
-    def get_celery_tasks(package_name):
+    def get_celery_tasks(package_name: str) -> Dict[str, Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
         Celery tasks are functions decorated by @celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
-        tasks = {}
+        tasks: Dict[str, Callable[..., Any]] = {}
         # package = tasks folder
         package = Meta.get_module_from_string(package_name)
         if package is None:

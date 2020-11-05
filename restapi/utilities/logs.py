@@ -87,7 +87,8 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 def set_logger(level):
 
     if hasattr(set_logger, "log_id"):
-        log.remove(set_logger.log_id)
+        log_id = getattr(set_logger, "log_id")
+        log.remove(log_id)
 
     log_id = log.add(
         sys.stderr,
@@ -104,7 +105,7 @@ def set_logger(level):
         filter=print_message_on_stderr,
     )
 
-    set_logger.log_id = log_id
+    setattr(set_logger, "log_id", log_id)
 
 
 set_logger(log_level)

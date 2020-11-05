@@ -60,12 +60,10 @@ class SMTP:
         log.info("Extracting body")
         fpath = "/logs/mock.mail.lastsent.body"
         b = email.message_from_string(msg)
-        payload = ""
         if b.is_multipart():
-            for payload in b.get_payload():
-                # get the first payload (the non html version)
-                payload = payload.get_payload()
-                break
+            # get the first payload (the non html version)
+            first_payload = b.get_payload()
+            payload = first_payload.get_payload()
         else:
             payload = b.get_payload()
 

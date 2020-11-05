@@ -326,13 +326,13 @@ class TestApp(BaseTests):
             pass
 
         # File is empty
-        f = tempfile.NamedTemporaryFile()
+        tmpf = tempfile.NamedTemporaryFile()
         try:
-            load_yaml_file(f.name, ".")
+            load_yaml_file(tmpf.name, ".")
             pytest.fail("No exception raised")
         except AttributeError:
             pass
-        f.close()
+        tmpf.close()
 
         try:
             detector.get_connector(faker.pystr())
@@ -353,8 +353,9 @@ class TestApp(BaseTests):
         try:
             schema.load({})
         except ValidationError as e:
-            err = "Missing data for required field."
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
+            err = "Missing data for required field."
             assert e.messages["advanced_list"][0] == err
             assert "unique_delimited_list" in e.messages
             assert e.messages["unique_delimited_list"][0] == err
@@ -366,18 +367,21 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": None})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Field may not be null."
 
         try:
             schema.load({"advanced_list": ""})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Not a valid list."
 
         try:
             schema.load({"advanced_list": [10]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert 0 in e.messages["advanced_list"]
             assert e.messages["advanced_list"][0][0] == "Not a valid string."
@@ -386,12 +390,14 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": ["a"]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == min_items_error
 
         try:
             schema.load({"advanced_list": ["a", "a"]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == min_items_error
 
@@ -402,6 +408,7 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": {"a": "b"}})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Not a valid list."
 
@@ -431,6 +438,7 @@ class TestApp(BaseTests):
         try:
             schema.load({"unique_delimited_list": "a,b,b"})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "unique_delimited_list" in e.messages
             err = "Provided list contains duplicates"
             assert e.messages["unique_delimited_list"][0] == err
