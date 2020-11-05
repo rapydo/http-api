@@ -190,7 +190,7 @@ class Uploader:
         filename = secure_filename(filename)
 
         try:
-            range_header = request.headers.get("Content-Range")
+            range_header = request.headers.get("Content-Range", "")
             # content_length = request.headers.get("Content-Length")
             content_range = parse_content_range_header(range_header)
 
