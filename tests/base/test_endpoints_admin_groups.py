@@ -2,13 +2,17 @@ import json
 
 import pytest
 
+from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests
-
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
     def test_admin_groups(self, client, fake):
+
+        if Env.get_bool("ADMINER_DISABLED"):
+            log.warning("Skipping admin/users tests")
+            return
 
         headers, _ = self.do_login(client, None, None)
 
