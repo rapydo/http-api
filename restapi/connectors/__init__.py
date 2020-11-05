@@ -2,6 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 
+# mypy: ignore-errors
 from flask import _app_ctx_stack as stack
 
 from restapi.exceptions import ServiceUnavailable

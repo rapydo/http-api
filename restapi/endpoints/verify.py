@@ -22,7 +22,8 @@ class Verify(EndpointResource):
 
         if not detector.check_availability(service):
             raise RestApiException(
-                f"Unknown service: {service}", status_code=404,
+                f"Unknown service: {service}",
+                status_code=404,
             )
 
         self.get_service_instance(service)

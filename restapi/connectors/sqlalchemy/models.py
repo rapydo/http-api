@@ -3,11 +3,10 @@ import os
 
 from restapi.connectors.sqlalchemy import db
 
+DEFAULT_COLLATION = None
 if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
     # Required by MySQL to accept unicode strings (like chinese)
     DEFAULT_COLLATION = "utf8_unicode_ci"
-else:
-    DEFAULT_COLLATION = None
 
 ####################################
 # Define multi-multi relation

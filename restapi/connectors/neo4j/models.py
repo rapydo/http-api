@@ -1,4 +1,5 @@
 """ Models for graph database """
+from typing import Type
 
 from neomodel import (
     BooleanProperty,
@@ -16,8 +17,14 @@ from neomodel import (
 from restapi.connectors.neo4j.types import IdentifiedNode
 from restapi.utilities.meta import Meta
 
-UserCustomClass = Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
-GroupCustomClass = Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
+# mypy: ignore-errors
+UserCustomClass: Type[IdentifiedNode] = (
+    Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
+)
+# mypy: ignore-errors
+GroupCustomClass: Type[IdentifiedNode] = (
+    Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
+)
 
 
 class User(UserCustomClass):

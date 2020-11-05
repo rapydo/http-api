@@ -10,6 +10,7 @@ from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.env import Env
 
+# mypy: ignore-errors
 if TESTING:
     from restapi.connectors.smtp.mailmock import SMTP, SMTP_SSL
 else:

@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import urllib
+from typing import Optional
 
 from loguru import logger as log
 
@@ -32,7 +33,7 @@ else:  # pragma: no cover
         os.makedirs(LOGS_FOLDER, exist_ok=True)
 
 
-LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
+LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")

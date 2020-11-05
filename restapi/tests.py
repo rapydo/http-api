@@ -4,6 +4,7 @@ import secrets
 import string
 import uuid
 from datetime import datetime, timedelta
+from typing import Dict
 
 import jwt
 import pyotp
@@ -145,7 +146,7 @@ class BaseTests:
 
     # will be used by do_login in case of TOTP
     # This will save correspondances between user email and provided QR Code
-    QRsecrets = {}
+    QRsecrets: Dict[str, str] = {}
     TOTP = False
 
     @classmethod

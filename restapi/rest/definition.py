@@ -3,6 +3,8 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
+from typing import List
+
 from flask import Response
 from flask_apispec import MethodResource
 from flask_restful import Resource
@@ -28,7 +30,7 @@ class EndpointResource(MethodResource, Resource):
 
     ALLOW_HTML_RESPONSE = False
     baseuri = API_URL
-    depends_on = []
+    depends_on: List[str] = []
     labels = ["undefined"]
     private = False
     """

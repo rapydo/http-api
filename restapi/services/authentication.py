@@ -11,6 +11,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
+from typing import Optional
 
 import jwt
 import pyotp  # TOTP generation
@@ -84,6 +85,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
+
+    default_user: Optional[str] = None
+    default_password: Optional[str] = None
 
     def __init__(self, backend_database):
         self.db = backend_database

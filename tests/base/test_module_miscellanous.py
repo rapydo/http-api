@@ -260,50 +260,50 @@ class TestApp(BaseTests):
         # t = total_length
         # s = start
         # e = end
-        t, s, e = Uploader.parse_content_range(None)
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range(None)
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("test")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test/test")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("test/test")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("test/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes test/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes test/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes */1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes */1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes 2-499/1000")
-        assert t == 1000
-        assert s == 2
-        assert e == 500
+        tlen, start, end = Uploader.parse_content_range("bytes 2-499/1000")
+        assert tlen == 1000
+        assert start == 2
+        assert end == 500
 
-        t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes 2-499*/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
         # Invalid file / path
         try:

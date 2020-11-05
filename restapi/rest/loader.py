@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+from typing import Dict, List, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -39,12 +40,12 @@ log.verbose("Detector loaded: {}", detector)
 
 @ClassOfAttributes
 class EndpointElements:
-    cls = attribute(default=None)
-    uris = attribute(default=[])
-    methods = attribute(default={})
-    tags = attribute(default=[])
-    base_uri = attribute(default="")
-    private = attribute(default=False)
+    cls: Type = attribute(default=None)
+    uris: List[str] = attribute(default=[])
+    methods: Dict[str, List[str]] = attribute(default={})
+    tags: List[str] = attribute(default=[])
+    base_uri: str = attribute(default="")
+    private: bool = attribute(default=False)
 
 
 class EndpointsLoader:

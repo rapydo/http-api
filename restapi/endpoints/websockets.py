@@ -76,7 +76,12 @@ class PushpinWebSocket(EndpointResource):
         if event_type == "OPEN":
             ctrl_msg = websocket_control_message("subscribe", {"channel": channel})
             out_events.append(WebSocketEvent("OPEN"))
-            out_events.append(WebSocketEvent("TEXT", f"c:{ctrl_msg}",))
+            out_events.append(
+                WebSocketEvent(
+                    "TEXT",
+                    f"c:{ctrl_msg}",
+                )
+            )
             headers = {"Sec-WebSocket-Extensions": "grip"}
             resp = Response(
                 encode_websocket_events(out_events),

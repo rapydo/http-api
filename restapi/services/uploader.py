@@ -11,6 +11,7 @@ http://stackoverflow.com/a/9533843/2114395
 """
 
 import os
+from typing import List
 
 from flask import request
 from plumbum.cmd import file
@@ -26,7 +27,7 @@ from restapi.utilities.logs import log
 # Save files http://API/upload
 class Uploader:
 
-    allowed_exts = []
+    allowed_exts: List[str] = []
 
     def set_allowed_exts(self, exts):
         self.allowed_exts = exts

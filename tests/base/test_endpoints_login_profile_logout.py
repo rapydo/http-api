@@ -41,14 +41,20 @@ class TestApp(BaseTests):
         log.info("*** VERIFY with a non-email-username")
 
         self.do_login(
-            client, "notanemail", "[A-Za-z0-9]+", status_code=400,
+            client,
+            "notanemail",
+            "[A-Za-z0-9]+",
+            status_code=400,
         )
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
         self.do_login(
-            client, fake.ascii_email(), fake.password(strong=True), status_code=401,
+            client,
+            fake.ascii_email(),
+            fake.password(strong=True),
+            status_code=401,
         )
 
     def test_02_GET_profile(self, client, fake):
