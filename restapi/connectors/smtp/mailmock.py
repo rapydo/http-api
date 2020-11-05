@@ -62,7 +62,7 @@ class SMTP:
         b = email.message_from_string(msg)
         if b.is_multipart():
             # get the first payload (the non html version)
-            first_payload = b.get_payload()
+            first_payload = b.get_payload()[0]
             payload = first_payload.get_payload()
         else:
             payload = b.get_payload()
