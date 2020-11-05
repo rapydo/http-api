@@ -19,8 +19,8 @@ from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.logs import log
 
-log.verbose("Auth loaded {}", auth)
-log.verbose("Marshal loaded {}", marshal_with)
+log.debug("Auth loaded {}", auth)
+log.debug("Marshal loaded {}", marshal_with)
 
 
 # same definition as in:

@@ -19,7 +19,7 @@ GET_SCHEMA_KEY = "get_schema"
 # ISO 8601 format with Zulu time (default format for Javascript Date)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-log.verbose("{} loaded", validate)
+log.debug("{} loaded", validate)
 
 
 @parser.location_loader("body")

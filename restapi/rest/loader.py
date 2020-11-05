@@ -20,6 +20,7 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -35,12 +36,12 @@ ERR404_AUTH = {"description": "The resource cannot be found or you are not autho
 
 uri_pattern = re.compile(r"\<([^\>]+)\>")
 
-log.verbose("Detector loaded: {}", detector)
+log.debug("Detector loaded: {}", detector)
 
 
 @ClassOfAttributes
 class EndpointElements:
-    cls: Type = attribute(default=None)
+    cls: Type[EndpointResource] = attribute(default=None)
     uris: List[str] = attribute(default=[])
     methods: Dict[str, List[str]] = attribute(default={})
     tags: List[str] = attribute(default=[])

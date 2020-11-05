@@ -21,7 +21,7 @@ if not detector.check_availability(CONNECTOR):
 
     try:
         obj = detector.get_service_instance(CONNECTOR)
-        pytest("No exception raised")
+        pytest.fail("No exception raised")
     except ServiceUnavailable:
         pass
 

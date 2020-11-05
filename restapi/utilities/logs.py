@@ -48,7 +48,10 @@ def critical_exit(message="", *args, **kwargs):
     sys.exit(1)
 
 
+# mypy: ignore-errors
 log.verbose = verbose
+
+# mypy: ignore-errors
 log.exit = critical_exit
 
 log.remove()

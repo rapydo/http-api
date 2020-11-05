@@ -19,6 +19,7 @@ setup(
         [console_scripts]
         {main_package}={app}:cli
     """,
+    # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask and plugins
         "Flask==1.1.2",
