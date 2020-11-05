@@ -8,6 +8,7 @@ from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.config import PRODUCTION
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 
@@ -58,7 +59,9 @@ def launch():  # pragma: no cover
     ]
 
     if initializing():
-        log.exit("Please wait few more seconds: initialization is still in progress")
+        print_and_exit(
+            "Please wait few more seconds: initialization is still in progress"
+        )
     else:
         main(args)
         log.warning("Server shutdown")
@@ -78,7 +81,7 @@ def verify(services):
 
         myclass = glom(detector.services, f"{service}.class", default=None)
         if myclass is None:
-            log.exit("Service {} not detected", service)
+            print_and_exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
         host, port = get_service_address(myclass.variables, "host", "port", service)
         wait_socket(host, port, service)
@@ -130,11 +133,11 @@ def get_service_address(variables, host_var, port_var, service):
 
     host = variables.get(host_var)
     if host is None:
-        log.exit("Cannot find any variable matching {} for {}", host_var, service)
+        print_and_exit("Cannot find any variable matching {} for {}", host_var, service)
 
     port = variables.get(port_var)
     if port is None:
-        log.exit("Cannot find any variable matching {} for {}", port_var, service)
+        print_and_exit("Cannot find any variable matching {} for {}", port_var, service)
 
     log.info("Connecting to {} ({}:{})...", service, host, port)
 
@@ -163,7 +166,7 @@ def mywait():
             elif broker == "REDIS":
                 service_vars = detector.load_variables(prefix="redis")
             else:
-                log.exit("Invalid celery broker: {}", broker)  # pragma: no cover
+                print_and_exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
             host, port = get_service_address(service_vars, "host", "port", broker)
 
@@ -177,7 +180,9 @@ def mywait():
             elif backend == "MONGODB":
                 service_vars = detector.load_variables(prefix="mongo")
             else:
-                log.exit("Invalid celery backend: {}", backend)  # pragma: no cover
+                print_and_exit(
+                    "Invalid celery backend: {}", backend
+                )  # pragma: no cover
 
             host, port = get_service_address(service_vars, "host", "port", backend)
 
@@ -247,7 +252,9 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
         num_opt += 1
 
     if num_opt > 1:
-        log.exit("Please specify only one option between --core, --file and --folder")
+        print_and_exit(
+            "Please specify only one option between --core, --file and --folder"
+        )
 
     parameters = ["tests/tests.sh"]
     if core:
@@ -257,12 +264,12 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
             file = file[6:]
 
         if not os.path.isfile(os.path.join("tests", file)):
-            log.exit("File not found: {}", file)
+            print_and_exit("File not found: {}", file)
         parameters.append("default")
         parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
-            log.exit("Folder not found: {}", folder)
+            print_and_exit("Folder not found: {}", folder)
         parameters.append("default")
         parameters.append(folder)
 

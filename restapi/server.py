@@ -32,6 +32,7 @@ from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, log_response
 from restapi.services.detect import detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
@@ -48,7 +49,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
-        log.exit("Unable to execute tests in production")
+        print_and_exit("Unable to execute tests in production")
 
     # Flask app instance
     # template_folder = template dir for output in HTML
@@ -72,7 +73,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         )
 
         cors.init_app(microservice)
-        log.verbose("FLASKING! Injected CORS")
+        log.debug("CORS Injected")
 
     # Flask configuration from config file
     microservice.config.from_object(config)
@@ -86,14 +87,14 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
 
     mem.initializer = Meta.get_class("initialization", "Initializer")
     if not mem.initializer:
-        log.exit("Invalid Initializer class")
+        print_and_exit("Invalid Initializer class")
 
     mem.customizer = Meta.get_instance("customization", "Customizer")
     if not mem.customizer:
-        log.exit("Invalid Customizer class")
+        print_and_exit("Invalid Customizer class")
 
     if not isinstance(mem.customizer, BaseCustomizer):
-        log.exit("Invalid Customizer class, it should inherit BaseCustomizer")
+        print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
     # Find services and try to connect to the ones available
     detector.init_services(
@@ -129,8 +130,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
             # Create the restful resource with it;
             # this method is from RESTful plugin
             rest_api.add_resource(endpoint.cls, *endpoint.uris)
-
-            log.verbose("Map '{}' to {}", endpoint.cls.__name__, endpoint.uris)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
@@ -192,8 +191,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
                     # remove from flask mapping
                     # to allow 405 response
                     newmethods.add(verb)
-                else:
-                    log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
             rule.methods = newmethods
 

@@ -38,22 +38,6 @@ LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
 
-
-def verbose(*args, **kwargs):
-    log.log("VERBOSE", *args, **kwargs)
-
-
-def critical_exit(message="", *args, **kwargs):
-    log.critical(message, *args, **kwargs)
-    sys.exit(1)
-
-
-# mypy: ignore-errors
-log.verbose = verbose
-
-# mypy: ignore-errors
-log.exit = critical_exit
-
 log.remove()
 
 

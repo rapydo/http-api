@@ -12,6 +12,7 @@ from restapi.config import (
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
@@ -104,7 +105,6 @@ class Detector:
             if not self.services[connector]["available"]:
                 continue
 
-            log.verbose("Looking for connector class in {}", connector_path)
             connector_module = Meta.get_module_from_string(
                 ".".join((module, CONNECTORS_FOLDER, connector))
             )
@@ -113,7 +113,6 @@ class Detector:
                 if not issubclass(connector_class, Connector):
                     continue
 
-                log.verbose("Found connector class: {}", class_name)
                 break
             else:
                 log.error("No connector class found in {}/{}", path, connector)
@@ -128,9 +127,7 @@ class Detector:
             # if you need project connectors with models please review this part
             models_file = os.path.join(connector_path, "models.py")
 
-            if not os.path.isfile(models_file):
-                log.verbose("No model found in {}", connector_path)
-            else:
+            if os.path.isfile(models_file):
                 log.debug("Loading models from {}", connector_path)
 
                 base_models = Meta.import_models(
@@ -182,7 +179,7 @@ class Detector:
 
             elif not value.endswith(".dockerized.io"):  # pragma: no cover
                 variables["external"] = True
-                log.verbose("Service {} detected as external: {}", prefix, value)
+                # log.debug("Service {} detected as external: {}", prefix, value)
 
         return variables
 
@@ -209,7 +206,7 @@ class Detector:
 
             if ConnectorClass is None:
                 if connector_name != AUTH_NAME:  # pragma: no cover
-                    log.exit(
+                    print_and_exit(
                         "Connector misconfiguration {} {}", connector_name, service
                     )
                 continue
@@ -217,22 +214,26 @@ class Detector:
             try:
                 connector_instance = ConnectorClass(app)
             except TypeError as e:  # pragma: no cover
-                log.exit("Your class {} is not compliant:\n{}", connector_name, e)
+                print_and_exit("Your class {} is not compliant:\n{}", connector_name, e)
 
             self.services[connector_name]["connector"] = connector_instance
 
             try:
                 instances[connector_name] = connector_instance.get_instance()
             except ServiceUnavailable:
-                log.exit("Service unavailable: {}", connector_name)
+                print_and_exit("Service unavailable: {}", connector_name)
 
         if self.authentication_service is None:
             if not worker_mode:
                 log.warning("No authentication service configured")
         elif self.authentication_service not in self.services:
-            log.exit("Auth service '{}' is unreachable", self.authentication_service)
+            print_and_exit(
+                "Auth service '{}' is unreachable", self.authentication_service
+            )
         elif not self.services[self.authentication_service].get("available", False):
-            log.exit("Auth service '{}' is not available", self.authentication_service)
+            print_and_exit(
+                "Auth service '{}' is not available", self.authentication_service
+            )
 
         if self.authentication_service is not None:
             auth_module = Meta.get_authentication_module(self.authentication_service)

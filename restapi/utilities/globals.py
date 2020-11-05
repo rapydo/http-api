@@ -1,12 +1,13 @@
 """
 If you need things globally, come here and take.
 
-Used to save:
-- customizer
 """
+from restapi.customizer import BaseCustomizer
 
 
 class mem:
+
+    customizer: BaseCustomizer
     """
     Source:
     https://pythonconquerstheuniverse.wordpress.com/

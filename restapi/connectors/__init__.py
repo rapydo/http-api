@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from flask import _app_ctx_stack as stack
 
 from restapi.exceptions import ServiceUnavailable
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 
 
@@ -64,10 +65,10 @@ class Connector(metaclass=abc.ABCMeta):
         return True
 
     def destroy(self):  # pragma: no cover
-        log.exit("Missing destroy method in {}", self.__class__.__name__)
+        print_and_exit("Missing destroy method in {}", self.__class__.__name__)
 
     def initialize(self):  # pragma: no cover
-        log.exit("Missing initialize method in {}", self.__class__.__name__)
+        print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
@@ -82,7 +83,7 @@ class Connector(metaclass=abc.ABCMeta):
                     original_model = base_models[key]
                     # Override
                     if issubclass(model, original_model):
-                        log.verbose("Overriding model {}", key)
+                        log.debug("Overriding model {}", key)
                         cls.models[key] = model
                         continue
 
@@ -90,7 +91,7 @@ class Connector(metaclass=abc.ABCMeta):
                 cls.models[key] = model
 
         if len(cls.models) > 0:
-            log.verbose("Loaded models")
+            log.debug("Models loaded")
 
     @classmethod
     def set_variables(cls, envvars):
@@ -134,7 +135,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         for name, model in self.models.items():
             # Save attribute inside class with the same name
-            log.verbose("Injecting model '{}'", name)
+            log.debug("Injecting model '{}'", name)
             setattr(obj, name, model)
         obj.models = self.models
 
@@ -143,7 +144,7 @@ class Connector(metaclass=abc.ABCMeta):
         # When context is empty this is a connection at loading time
         # Do not save it
         if stack.top is None:
-            log.verbose("First connection for {}", self.name)
+            log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
             obj = self.initialize_connection()
             self.set_models_to_service(obj)

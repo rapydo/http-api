@@ -96,16 +96,14 @@ def graph_transactions(func):
         try:
 
             db.begin()
-            log.verbose("Neomodel transaction BEGIN")
 
             out = func(self, *args, **kwargs)
 
             db.commit()
-            log.verbose("Neomodel transaction COMMIT")
 
             return out
         except Exception as e:
-            log.verbose("Neomodel transaction ROLLBACK")
+            log.debug("Neomodel transaction ROLLBACK")
             try:
                 db.rollback()
             except Exception as sub_ex:

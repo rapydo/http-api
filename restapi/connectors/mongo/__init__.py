@@ -74,7 +74,6 @@ class MongoExt(Connector):
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
         self.connection = mongodb._get_connection(alias=MongoExt.DATABASE)
-        log.verbose("Connected to db {}", MongoExt.DATABASE)
 
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
 

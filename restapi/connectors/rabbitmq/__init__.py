@@ -128,8 +128,6 @@ class RabbitExt(Connector):
 
         props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
 
-        log.verbose("Sending message to RabbitMQ")
-
         try:
 
             channel = self.get_channel()
@@ -140,7 +138,7 @@ class RabbitExt(Connector):
                 properties=props,
                 mandatory=True,
             )
-            log.verbose("Message sent to RabbitMQ")
+            log.debug("Message sent to RabbitMQ")
             return True
         except pika.exceptions.UnroutableError as e:
             log.error(e)
@@ -170,12 +168,12 @@ class RabbitExt(Connector):
         :raises: AttributeError if the connection is None.
         """
         if self.channel is None:
-            log.verbose("Creating new channel.")
+            log.debug("Creating new channel.")
             self.channel = self.connection.channel()
             self.channel.confirm_delivery()
 
         elif self.channel.is_closed:
-            log.verbose("Recreating channel.")
+            log.debug("Recreating channel.")
             self.channel = self.connection.channel()
             self.channel.confirm_delivery()
 

@@ -19,6 +19,7 @@ from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.models import validate
 from restapi.services.detect import Detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 from restapi.utilities.uuid import getUUID
@@ -57,7 +58,7 @@ class Bot:
 
         self.admins = Bot.get_ids(self.variables.get("admins"))
         if not self.admins:  # pragma: no cover
-            log.exit("No admin list")
+            print_and_exit("No admin list")
 
         self.users = Bot.get_ids(self.variables.get("users"))
 
@@ -92,7 +93,7 @@ class Bot:
         self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
         self.updater.idle()
-        log.exit("Bot closed")
+        print_and_exit("Bot closed")
 
     ##################
     #    DECORATORS

@@ -22,6 +22,7 @@ from restapi.config import (
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.services.detect import detector  # do not remove this unused import
+from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -83,7 +84,7 @@ class EndpointsLoader:
                 submodules_path=submodules_path,
             )
         except AttributeError as e:  # pragma: no cover
-            log.exit(e)
+            print_and_exit(e)
 
         return configuration
 
@@ -118,7 +119,7 @@ class EndpointsLoader:
                 negate, dependency = pieces
                 negate = negate.lower() == "not"
             else:  # pragma: no cover
-                log.exit("Wrong depends_on parameter: {}", var)
+                print_and_exit("Wrong depends_on parameter: {}", var)
 
             check = Env.get_bool(dependency)
             if negate:
@@ -214,7 +215,7 @@ class EndpointsLoader:
                 auth_required = fn.__dict__.get("auth.required", False)
 
                 if not hasattr(fn, "uris"):  # pragma: no cover
-                    log.exit(
+                    print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
                         method_fn,
                         epclss.__name__,
@@ -256,7 +257,7 @@ class EndpointsLoader:
                     self.uri2methods.setdefault(full_uri, [])
                     self.uri2methods[full_uri].append(method_fn)
 
-                    log.verbose("Built definition '{}:{}'", m, full_uri)
+                    # log.debug("Built definition '{}:{}'", m, full_uri)
 
                     self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)

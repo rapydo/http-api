@@ -86,7 +86,6 @@
 #             # if reserved_tasks is None:
 #             #     reserved_tasks = []
 
-#             log.verbose('listing items')
 #             for worker, tasks in active_tasks.items():
 #                 for task in tasks:
 #                     if task_id is not None and task["id"] != task_id:
@@ -149,7 +148,6 @@
 
 #             # from celery.task.control import inspect
 #             # tasks = inspect()
-#             log.verbose('listing completed')
 
 #             return self.response(data)
 

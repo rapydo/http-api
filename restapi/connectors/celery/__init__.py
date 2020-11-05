@@ -7,6 +7,7 @@ from celery import Celery
 from restapi.config import CUSTOM_PACKAGE, get_project_configuration
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
@@ -30,7 +31,7 @@ class CeleryExt(Connector):
         broker = variables.get("broker")
 
         if broker is None:  # pragma: no cover
-            log.exit("Unable to start Celery, missing broker service")
+            print_and_exit("Unable to start Celery, missing broker service")
 
         # Do not import before loading the ext!
         from restapi.services.detect import Detector
@@ -53,7 +54,7 @@ class CeleryExt(Connector):
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
         else:  # pragma: no cover
-            log.exit("Invalid celery broker: {}", broker)
+            print_and_exit("Invalid celery broker: {}", broker)
 
         if BROKER_USER == "":  # pragma: no cover
             BROKER_USER = None
@@ -99,7 +100,7 @@ class CeleryExt(Connector):
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
         else:  # pragma: no cover
-            log.exit("Invalid celery backend: {}", backend)
+            print_and_exit("Invalid celery backend: {}", backend)
 
         if BACKEND_USER == EMPTY:
             BACKEND_USER = None
@@ -125,7 +126,9 @@ class CeleryExt(Connector):
             BACKEND_URL = f"mongodb://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}"
             log.info("Configured MongoDB as backend {}", obfuscate_url(BACKEND_URL))
         else:  # pragma: no cover
-            log.exit("Unable to start Celery unknown backend service: {}", backend)
+            print_and_exit(
+                "Unable to start Celery unknown backend service: {}", backend
+            )
 
         celery_app = Celery("RestApiQueue", broker=BROKER_URL, backend=BACKEND_URL)
         celery_app.conf["broker_use_ssl"] = BROKER_USE_SSL

@@ -34,7 +34,7 @@ class Mail(Connector):
 
         if not port:
             smtp = SMTP(host)
-            log.verbose("Connecting to {}", host)
+            log.debug("Connecting to {}", host)
         elif port == 465:
             smtp = SMTP_SSL(host)
         else:
@@ -42,12 +42,11 @@ class Mail(Connector):
 
         smtp.set_debuglevel(0)
         if port:
-            log.verbose("Connecting to {}:{}", host, port)
+            log.debug("Connecting to {}:{}", host, port)
             smtp.connect(host, port)
             smtp.ehlo()
 
         if self.variables.get("username") and self.variables.get("password"):
-            log.verbose("Authenticating SMTP")
             smtp.login(self.variables.get("username"), self.variables.get("password"))
 
         self.smtp = smtp
@@ -140,7 +139,7 @@ class Mail(Connector):
                 msg.attach(part1)
                 msg.attach(part2)
 
-            log.verbose("Sending email to {}", to_address)
+            log.debug("Sending email to {}", to_address)
 
             self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
 

@@ -10,6 +10,7 @@ import pkgutil
 from importlib import import_module
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 
 
@@ -97,7 +98,7 @@ class Meta:
         except BaseException as e:
             log.error("Cannot load {} models from {}", name, module_name)
             if exit_on_fail:
-                log.exit(e)
+                print_and_exit(e)
 
             log.warning(e)
             return {}
@@ -108,7 +109,6 @@ class Meta:
     def get_authentication_module(auth_service):
 
         module_name = f"connectors.{auth_service}"
-        log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )
@@ -169,7 +169,6 @@ class Meta:
             return None
 
         if not hasattr(module, class_name):
-            log.verbose("{} not found in {}", class_name, abspath)
             return None
 
         return getattr(module, class_name)

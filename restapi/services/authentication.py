@@ -37,6 +37,7 @@ from restapi.exceptions import (
     Unauthorized,
 )
 from restapi.services.detect import Detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
@@ -144,7 +145,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             BaseAuthentication.default_user is None
             or BaseAuthentication.default_password is None
         ):  # pragma: no cover
-            log.exit("Default credentials are unavailable!")
+            print_and_exit("Default credentials are unavailable!")
 
     @staticmethod
     def load_roles():
@@ -152,7 +153,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             "variables.roles"
         ).copy()
         if not BaseAuthentication.roles_data:  # pragma: no cover
-            log.exit("No roles configured")
+            print_and_exit("No roles configured")
 
         BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
 
@@ -164,7 +165,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if (
             BaseAuthentication.default_role is None or None in BaseAuthentication.roles
         ):  # pragma: no cover
-            log.exit("Default role {} not available!", BaseAuthentication.default_role)
+            print_and_exit(
+                "Default role {} not available!", BaseAuthentication.default_role
+            )
 
     def failed_login(self, username):
         # if self.REGISTER_FAILED_LOGIN and username is not None:
@@ -234,7 +237,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.JWT_SECRET = open(abs_filename, "rb").read()
             return self.JWT_SECRET
         except OSError:  # pragma: no cover
-            log.exit("Jwt secret file {} not found", abs_filename)
+            print_and_exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
     # # Password handling #
@@ -503,7 +506,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
 
-        log.verbose("User authorized")
+        log.debug("User {} authorized", user.email)
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 

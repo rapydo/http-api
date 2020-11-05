@@ -66,7 +66,7 @@ def wait_socket(host, port, service_name):
     SLEEP_TIME = 2
     TIMEOUT = 1
 
-    log.verbose("Waiting for {} ({}:{})", service_name, host, port)
+    log.debug("Waiting for {} ({}:{})", service_name, host, port)
 
     counter = 0
     begin = time.time()

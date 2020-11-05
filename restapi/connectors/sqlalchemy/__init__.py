@@ -403,7 +403,6 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-            log.verbose("Token stored inside the DB")
         except BaseException as e:
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()

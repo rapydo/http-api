@@ -115,7 +115,7 @@ class HTTPTokenAuth:
                     # Check authentication
                     if not caller.unpacked_token[0]:
                         # Clear TCP receive buffer of any pending data
-                        log.verbose(request.data)
+                        _ = request.data
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         # log.info("Invalid token received '{}'", token)
