@@ -9,6 +9,7 @@ from typing import Dict, List, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
+from flask_restful import Resource
 
 from restapi import decorators
 from restapi.config import (
@@ -20,7 +21,6 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
-from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -41,7 +41,8 @@ log.debug("Detector loaded: {}", detector)
 
 @ClassOfAttributes
 class EndpointElements:
-    cls: Type[EndpointResource] = attribute(default=None)
+    # type of endpoint from flask_restful
+    cls: Type[Resource] = attribute(default=None)
     uris: List[str] = attribute(default=[])
     methods: Dict[str, List[str]] = attribute(default={})
     tags: List[str] = attribute(default=[])
