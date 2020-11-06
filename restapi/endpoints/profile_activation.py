@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
@@ -22,7 +23,7 @@ def send_activation_link(smtp, auth, user):
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: {}", rt)
     url = f"{server_url}/public/register/{rt}"
-    body = f"Follow this link to activate your account: {url}"
+    body: Optional[str] = f"Follow this link to activate your account: {url}"
 
     # customized template
     template_file = "activate_account.html"

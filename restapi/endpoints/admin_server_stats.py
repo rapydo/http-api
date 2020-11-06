@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 from datetime import datetime
+from typing import Dict, Union
 
 from plumbum import local
 
@@ -12,7 +13,7 @@ from restapi.services.authentication import Role
 
 
 class StatsSchema(Schema):
-    boot_time = fields.DateTime(format=ISO8601UTC)
+    system = fields.Nested({"boot_time": fields.DateTime(format=ISO8601UTC)})
     cpu = fields.Nested(
         {
             "count": fields.Int(),
@@ -83,7 +84,8 @@ class AdminStats(EndpointResource):
         responses={"200": "Stats retrieved"},
     )
     def get(self):
-        statistics = {
+        statistics: Dict[str, Dict[str, Union[str, int, float, datetime]]] = {
+            "system": {},
             "cpu": {},
             "ram": {},
             "swap": {},
@@ -94,7 +96,7 @@ class AdminStats(EndpointResource):
         }
 
         # Get Physical and Logical CPU Count
-        statistics["cpu"]["count"] = os.cpu_count()
+        statistics["cpu"]["count"] = os.cpu_count() or 0
 
         # This is the average system load calculated over a given period of time
         # of 1, 5 and 15 minutes.
@@ -104,7 +106,7 @@ class AdminStats(EndpointResource):
 
         # Here we are converting the load average into percentage.
         # The higher the percentage the higher the load
-        statistics["cpu"]["load"] = (100 * os.getloadavg()[-1]) / os.cpu_count()
+        statistics["cpu"]["load"] = (100 * os.getloadavg()[-1]) / (os.cpu_count() or 1)
 
         # # Total amount of RAM
         # grep = local["grep"]
@@ -200,7 +202,7 @@ class AdminStats(EndpointResource):
         # 100386 pages swapped out
         # 793916005 interrupts
         # 2266434254 CPU context switches
-        statistics["boot_time"] = datetime.fromtimestamp(
+        statistics["system"]["boot_time"] = datetime.fromtimestamp(
             int(vm[24].strip().split(" ")[0])
         )
         # 742942 forks
