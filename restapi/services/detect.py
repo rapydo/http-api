@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Any, Dict
 
 from glom import glom
 
@@ -31,7 +31,9 @@ class Detector:
 
         self.authentication_instance = None
 
-        self.services: Dict[str, Dict[str, bool]] = {AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}}
+        self.services: Dict[str, Dict[str, Any]] = {
+            AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}
+        }
 
         self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
 
@@ -240,8 +242,8 @@ class Detector:
             # Only once in a lifetime
             if project_init:
 
-                connector = self.services.get(self.authentication_service).get(
-                    "connector"
+                connector = glom(
+                    self.services, f"{self.authentication_service}.connector"
                 )
                 log.debug("Initializing {}", self.authentication_service)
                 connector.initialize()
@@ -253,8 +255,8 @@ class Detector:
                 self.project_initialization(instances, app=app)
 
             if project_clean:
-                connector = self.services.get(self.authentication_service).get(
-                    "connector"
+                connector = glom(
+                    self.services, f"{self.authentication_service}.connector"
                 )
                 log.debug("Destroying {}", self.authentication_service)
                 connector.destroy()
@@ -281,7 +283,7 @@ class Detector:
             return None
 
         if "connector" not in self.services[connector]:
-            c = self.services[connector].get("class")
+            c = glom(self.services[connector], "class")
             self.services[connector]["connector"] = c(app=None)
 
         return self.get_service_instance(connector)

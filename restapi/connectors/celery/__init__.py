@@ -23,9 +23,6 @@ class CeleryExt(Connector):
 
     def connect(self, **kwargs):
 
-        # set here to avoid warnings like 'Possible hardcoded password'
-        EMPTY = ""
-
         variables = self.variables.copy()
         variables.update(kwargs)
         broker = variables.get("broker")
@@ -40,34 +37,28 @@ class CeleryExt(Connector):
             service_vars = Detector.load_variables(prefix="rabbitmq")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
-            BROKER_USER = service_vars.get("user", "")
-            BROKER_PASSWORD = service_vars.get("password", "")
             BROKER_VHOST = service_vars.get("vhost", "")
             BROKER_USE_SSL = Env.to_bool(service_vars.get("ssl_enabled"))
+
+            BROKER_USER = service_vars.get("user", "")
+            BROKER_PASSWORD = service_vars.get("password", "")
+            if BROKER_USER and BROKER_PASSWORD:
+                BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
 
         elif broker == "REDIS":
             service_vars = Detector.load_variables(prefix="redis")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
-            BROKER_USER = None
-            BROKER_PASSWORD = None
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
+
+            BROKERCRED = ""
+
         else:  # pragma: no cover
             print_and_exit("Invalid celery broker: {}", broker)
 
-        if BROKER_USER == "":  # pragma: no cover
-            BROKER_USER = None
-        if BROKER_PASSWORD == EMPTY:  # pragma: no cover
-            BROKER_PASSWORD = None
-
         if BROKER_VHOST != "":
             BROKER_VHOST = f"/{BROKER_VHOST}"
-
-        if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
-        else:
-            BROKERCRED = ""
 
         if broker == "RABBIT":
             BROKER_URL = f"amqp://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}{BROKER_VHOST}"
@@ -102,12 +93,7 @@ class CeleryExt(Connector):
         else:  # pragma: no cover
             print_and_exit("Invalid celery backend: {}", backend)
 
-        if BACKEND_USER == EMPTY:
-            BACKEND_USER = None
-        if BACKEND_PASSWORD == EMPTY:
-            BACKEND_PASSWORD = None
-
-        if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
+        if BACKEND_USER and BACKEND_PASSWORD:
             BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         else:
             BACKENDCRED = ""
