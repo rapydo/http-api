@@ -31,7 +31,7 @@ class Detector:
 
         self.authentication_instance = None
 
-        self.services = {AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}}
+        self.services: Dict[str, Dict[str, bool]] = {AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}}
 
         self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
 
@@ -98,11 +98,12 @@ class Detector:
 
             # Was this service enabled from the developer?
             if host := variables.get("host"):
-                enabled = Env.to_bool(variables.get("enable"))
                 external = not host.endswith(".dockerized.io")
             else:
-                enabled = False
+                variables["enabled"] = "0"
                 external = False
+
+            enabled = Env.to_bool(variables.get("enable"))
 
             self.services.setdefault(connector, {})
             self.services[connector]["available"] = enabled or external

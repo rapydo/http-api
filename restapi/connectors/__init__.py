@@ -13,6 +13,7 @@ from restapi.utilities.logs import log
 
 class Connector(metaclass=abc.ABCMeta):
 
+    variables: Dict[str, str]
     models = {}
     # will contain:
     # objs = {
@@ -28,7 +29,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         self.name = self.__class__.__name__.lower()
         self.app = app
-        self.variables: Dict[str, str] = {}
+
         # Will be modified by self.disconnect()
         self.disconnected = False
 
