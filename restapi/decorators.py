@@ -22,6 +22,8 @@ from restapi.utilities.logs import log
 log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
 
+SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
+
 
 # same definition as in:
 # https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
@@ -241,11 +243,12 @@ def catch_exceptions(**kwargs):
                     message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)
-                if excname in ["AttributeError", "ValueError", "KeyError"]:
-                    error = "Server failure; please contact admin."
-                else:
-                    error = {excname: message}
-                return self.response(error, code=400)
+
+                if excname in SYSTEM_EXCEPTIONS:
+                    return self.response(
+                        "Server failure; please contact admin.", code=400
+                    )
+                return self.response({excname: message}, code=400)
 
             return out
 

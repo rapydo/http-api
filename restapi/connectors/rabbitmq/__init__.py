@@ -54,7 +54,7 @@ class RabbitExt(Connector):
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get("host"),
-                port=int(variables.get("port")),
+                port=int(variables.get("port", "0")),
                 virtual_host=variables.get("vhost"),
                 credentials=credentials,
                 ssl_options=ssl_options,

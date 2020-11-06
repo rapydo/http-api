@@ -1,6 +1,7 @@
 import abc
 import os
 from datetime import datetime, timedelta
+from typing import Dict
 
 # mypy: ignore-errors
 from flask import _app_ctx_stack as stack
@@ -27,6 +28,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         self.name = self.__class__.__name__.lower()
         self.app = app
+        self.variables: Dict[str, str] = {}
         # Will be modified by self.disconnect()
         self.disconnected = False
 

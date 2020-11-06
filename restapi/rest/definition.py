@@ -3,7 +3,7 @@ The most basic (and standard) Rest Resource
 we could provide back then
 """
 
-from typing import List
+from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Response
 from flask_apispec import MethodResource
@@ -81,7 +81,13 @@ class EndpointResource(MethodResource, Resource):
             self.get_user(), [Role.COORDINATOR], warnings=False
         )
 
-    def response(self, content=None, code=None, headers=None, head_method=False):
+    def response(
+        self,
+        content: Any = None,
+        code: Optional[int] = None,
+        headers: Optional[Dict[str, str]] = None,
+        head_method: bool = False,
+    ) -> Tuple[Any, int, Dict[str, str]]:
 
         if headers is None:
             headers = {}

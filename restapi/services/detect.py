@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 from glom import glom
 
@@ -96,8 +97,12 @@ class Detector:
                 continue
 
             # Was this service enabled from the developer?
-            enabled = Env.to_bool(variables.get("enable"))
-            external = variables.get("external", False)
+            if host := variables.get("host"):
+                enabled = Env.to_bool(variables.get("enable"))
+                external = not host.endswith(".dockerized.io")
+            else:
+                enabled = False
+                external = False
 
             self.services.setdefault(connector, {})
             self.services[connector]["available"] = enabled or external
@@ -152,11 +157,11 @@ class Detector:
         return True
 
     @staticmethod
-    def load_variables(prefix):
+    def load_variables(prefix: str) -> Dict[str, str]:
 
         prefix += "_"
 
-        variables = {"external": False}
+        variables: Dict[str, str] = {}
 
         for var, value in os.environ.items():
 
@@ -171,15 +176,6 @@ class Detector:
             value = value.strip('"').strip("'")
             # save
             variables[key] = value
-
-        if "host" in variables:
-            value = variables.get("host")
-            if not value:
-                variables["enable"] = 0
-
-            elif not value.endswith(".dockerized.io"):  # pragma: no cover
-                variables["external"] = True
-                # log.debug("Service {} detected as external: {}", prefix, value)
 
         return variables
 

@@ -11,6 +11,7 @@ there is no client id nor is client authentication required.
 """
 
 from functools import wraps
+from typing import Optional, Tuple
 
 from flask import request
 
@@ -34,7 +35,9 @@ class HTTPTokenAuth:
     """
 
     @staticmethod
-    def get_authorization_token(allow_access_token_parameter=False):
+    def get_authorization_token(
+        allow_access_token_parameter: bool = False,
+    ) -> Tuple[Optional[str], Optional[str]]:
         # Basic authenticaton is now allowed
         if request.authorization is not None:
             return None, None
@@ -43,7 +46,7 @@ class HTTPTokenAuth:
             # Flask/Werkzeug do not recognize any authentication types
             # other than Basic or Digest, so here we parse the header by hand
             try:
-                auth_header = request.headers.get(HTTPAUTH_AUTH_FIELD)
+                auth_header: str = request.headers.get(HTTPAUTH_AUTH_FIELD, "")
                 # Do not return directly auth_header.split
                 # Otherwise in case of malformed tokens the exception will be raised
                 # outside this function and probably not properly catched
@@ -56,10 +59,10 @@ class HTTPTokenAuth:
                 return None, None
 
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
-            token = request.args.get("access_token")
 
-            if token is None:
+            if not (token := request.args.get("access_token", "")):
                 return None, None
+
             return HTTPAUTH_SCHEME, token
 
         return None, None

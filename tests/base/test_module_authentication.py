@@ -9,6 +9,22 @@ from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
 
+def verify_token_is_valid(auth, token, ttype=None):
+    unpacked_token = auth.verify_token(token, token_type=ttype)
+    assert unpacked_token[0]
+    assert unpacked_token[1] is not None
+    assert unpacked_token[2] is not None
+    assert unpacked_token[3] is not None
+
+
+def verify_token_is_not_valid(auth, token, ttype=None):
+    unpacked_token = auth.verify_token(token, token_type=ttype)
+    assert not unpacked_token[0]
+    assert unpacked_token[1] is None
+    assert unpacked_token[2] is None
+    assert unpacked_token[3] is None
+
+
 class TestApp(BaseTests):
     def test_authentication_service(self, client, fake):
 
@@ -178,20 +194,6 @@ class TestApp(BaseTests):
 
         assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
-        def verify_token_is_valid(token, ttype=None):
-            unpacked_token = auth.verify_token(token, token_type=ttype)
-            assert unpacked_token[0]
-            assert unpacked_token[1] is not None
-            assert unpacked_token[2] is not None
-            assert unpacked_token[3] is not None
-
-        def verify_token_is_not_valid(token, ttype=None):
-            unpacked_token = auth.verify_token(token, token_type=ttype)
-            assert not unpacked_token[0]
-            assert unpacked_token[1] is None
-            assert unpacked_token[2] is None
-            assert unpacked_token[3] is None
-
         user = auth.get_user(username=BaseAuthentication.default_user)
         group = auth.get_group(name="Default")
         assert user is not None
@@ -224,33 +226,33 @@ class TestApp(BaseTests):
         assert not auth.verify_roles(None, ["A", "B"], required_roles="ANY")
 
         # Just to verify that the function works
-        verify_token_is_not_valid(fake.pystr())
-        verify_token_is_not_valid(fake.pystr(), auth.PWD_RESET)
-        verify_token_is_not_valid(fake.pystr(), auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, fake.pystr())
+        verify_token_is_not_valid(auth, fake.pystr(), auth.PWD_RESET)
+        verify_token_is_not_valid(auth, fake.pystr(), auth.ACTIVATE_ACCOUNT)
 
         user = auth.get_user(username=BaseAuthentication.default_user)
         t1, payload1 = auth.create_temporary_token(user, auth.PWD_RESET)
         assert isinstance(t1, str)
         # not valid if not saved
-        verify_token_is_not_valid(t1, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t1, auth.PWD_RESET)
         auth.save_token(user, t1, payload1, token_type=auth.PWD_RESET)
-        verify_token_is_not_valid(t1)
-        verify_token_is_not_valid(t1, auth.FULL_TOKEN)
-        verify_token_is_valid(t1, auth.PWD_RESET)
-        verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(fake.ascii_email(), t1)
+        verify_token_is_not_valid(auth, t1)
+        verify_token_is_not_valid(auth, t1, auth.FULL_TOKEN)
+        verify_token_is_valid(auth, t1, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t1, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, fake.ascii_email(), t1)
 
         # Create another type of temporary token => t1 is still valid
         t2, payload2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
         assert isinstance(t2, str)
         # not valid if not saved
-        verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, t2, auth.ACTIVATE_ACCOUNT)
         auth.save_token(user, t2, payload2, token_type=auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(t2)
-        verify_token_is_not_valid(t2, auth.FULL_TOKEN)
-        verify_token_is_not_valid(t2, auth.PWD_RESET)
-        verify_token_is_valid(t2, auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(fake.ascii_email(), t2)
+        verify_token_is_not_valid(auth, t2)
+        verify_token_is_not_valid(auth, t2, auth.FULL_TOKEN)
+        verify_token_is_not_valid(auth, t2, auth.PWD_RESET)
+        verify_token_is_valid(auth, t2, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, fake.ascii_email(), t2)
 
         EXPIRATION = 3
         # Create another token PWD_RESET, this will invalidate t1
@@ -259,13 +261,13 @@ class TestApp(BaseTests):
         )
         assert isinstance(t3, str)
         # not valid if not saved
-        verify_token_is_not_valid(t3, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t3, auth.PWD_RESET)
         auth.save_token(user, t3, payload3, token_type=auth.PWD_RESET)
-        verify_token_is_valid(t3, auth.PWD_RESET)
-        verify_token_is_not_valid(t1)
-        verify_token_is_not_valid(t1, auth.FULL_TOKEN)
-        verify_token_is_not_valid(t1, auth.PWD_RESET)
-        verify_token_is_not_valid(t1, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_valid(auth, t3, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t1)
+        verify_token_is_not_valid(auth, t1, auth.FULL_TOKEN)
+        verify_token_is_not_valid(auth, t1, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t1, auth.ACTIVATE_ACCOUNT)
 
         # Create another token ACTIVATE_ACCOUNT, this will invalidate t2
         t4, payload4 = auth.create_temporary_token(
@@ -273,18 +275,18 @@ class TestApp(BaseTests):
         )
         assert isinstance(t4, str)
         # not valid if not saved
-        verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, t4, auth.ACTIVATE_ACCOUNT)
         auth.save_token(user, t4, payload4, token_type=auth.ACTIVATE_ACCOUNT)
-        verify_token_is_valid(t4, auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(t2)
-        verify_token_is_not_valid(t2, auth.FULL_TOKEN)
-        verify_token_is_not_valid(t2, auth.PWD_RESET)
-        verify_token_is_not_valid(t2, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_valid(auth, t4, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, t2)
+        verify_token_is_not_valid(auth, t2, auth.FULL_TOKEN)
+        verify_token_is_not_valid(auth, t2, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t2, auth.ACTIVATE_ACCOUNT)
 
         # token expiration is only 3 seconds... let's test it
         time.sleep(EXPIRATION + 1)
-        verify_token_is_not_valid(t3, auth.PWD_RESET)
-        verify_token_is_not_valid(t4, auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, t3, auth.PWD_RESET)
+        verify_token_is_not_valid(auth, t4, auth.ACTIVATE_ACCOUNT)
 
         unpacked_token = auth.verify_token(None, raiseErrors=False)
         assert not unpacked_token[0]
