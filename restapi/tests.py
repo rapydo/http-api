@@ -259,10 +259,11 @@ class BaseTests:
                         # validate that the QR code is a valid PNG image
                         pass
 
-                    if content.get("qr_url"):
-                        assert content.get("qr_url").startswith("otpauth://totp/")
-                        assert "?secret=" in content.get("qr_url")
-                        secret = content.get("qr_url").split("?secret=")[1]
+                    if qr_url := content.get("qr_url", ""):
+                        assert isinstance(qr_url, str)
+                        assert qr_url.startswith("otpauth://totp/")
+                        assert "?secret=" in qr_url
+                        secret = qr_url.split("?secret=")[1]
                         assert secret is not None
                         assert len(secret) == 16
 

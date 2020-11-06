@@ -1,3 +1,4 @@
+from typing import Dict
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
@@ -14,10 +15,17 @@ def handle_marshmallow_errors(error):
 
     try:
 
-        params = request.args or request.get_json() or request.form or {}
+        if request.args:
+            if request.args.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
-        if params.get(GET_SCHEMA_KEY, False):
-            return ResponseMaker.respond_with_schema(error.data.get("schema"))
+        elif j := request.get_json():
+            if j.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+
+        elif request.form:
+            if request.form.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
     except BaseException as e:  # pragma: no cover
         log.error(e)
@@ -32,6 +40,25 @@ def handle_marshmallow_errors(error):
             errors[k] = msg
 
     return (errors, 400, {})
+
+
+def obfuscate_query_parameters(raw_url):
+    url = urllib_parse.urlparse(raw_url)
+    try:
+        params = urllib_parse.unquote(
+            urllib_parse.urlencode(handle_log_output(url.query))
+        )
+        url = url._replace(query=params)
+        # remove http(s)://
+        url = url._replace(scheme="")
+        # remove hostname:port
+        url = url._replace(netloc="")
+    except TypeError:  # pragma: no cover
+        log.error("Unable to url encode the following parameters:")
+        print(url.query)
+        return url
+
+    return urllib_parse.urlunparse(url)
 
 
 def log_response(response):
@@ -59,22 +86,7 @@ def log_response(response):
         log.debug(e)
         data = ""
 
-    # Obfuscating query parameters
-    url = urllib_parse.urlparse(request.url)
-    try:
-        params = urllib_parse.unquote(
-            urllib_parse.urlencode(handle_log_output(url.query))
-        )
-        url = url._replace(query=params)
-        # remove http(s)://
-        url = url._replace(scheme="")
-        # remove hostname:port
-        url = url._replace(netloc="")
-    except TypeError:  # pragma: no cover
-        log.error("Unable to url encode the following parameters:")
-        print(url.query)
-
-    url = urllib_parse.urlunparse(url)
+    url = obfuscate_query_parameters(request.url)
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
         "{} {} {}{} -> {}",
@@ -187,7 +199,7 @@ class ResponseMaker:
 
                     choices = validator.choices
                     labels = validator.labels
-                    if len(labels) != len(choices):
+                    if len(tuple(labels)) != len(tuple(choices)):
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 

@@ -127,10 +127,6 @@ class TestApp(BaseTests):
         except Timeout:
             pass
 
-        s = Meta.get_celery_tasks(None)
-        assert isinstance(s, dict)
-        assert len(s) == 0
-
         # This is a valid package containing other packages... but no task will be found
         s = Meta.get_celery_tasks("restapi.utilities")
         assert isinstance(s, dict)

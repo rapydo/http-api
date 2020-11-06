@@ -13,8 +13,8 @@ class TestApp(BaseTests):
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
         BaseAuthentication.load_default_user()
         BaseAuthentication.load_roles()
-        USER = BaseAuthentication.default_user
-        PWD = BaseAuthentication.default_password
+        USER = BaseAuthentication.default_user or "just-to-prevent-None"
+        PWD = BaseAuthentication.default_password or "just-to-prevent-None"
         self.do_login(client, USER.upper(), PWD)
 
         # Off course PWD cannot be upper :D

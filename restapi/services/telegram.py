@@ -1,6 +1,7 @@
 import json
 import threading
 from functools import wraps
+from typing import Dict
 
 import requests
 from marshmallow import ValidationError
@@ -243,8 +244,7 @@ class Bot:
 
             choices = definition.validate.choices
             labels = definition.validate.labels
-            # mypy: ignore-errors
-            if len(labels) != len(choices):
+            if len(tuple(labels)) != len(tuple(choices)):
                 labels = choices
 
             keyboard = []
@@ -344,6 +344,9 @@ class Bot:
 
 
 class BotApiClient:
+
+    variables: Dict[str, str] = {}
+
     def __init__(self, variables):
         BotApiClient.variables = variables
 

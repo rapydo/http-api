@@ -69,7 +69,9 @@ class TestApp(BaseTests):
         assert html in body or plain in body
 
         if html in body:
-            token = re.search(r".*https?://.*/reset/(.*)\n", body)[1]
+            tokens = re.search(r".*https?://.*/reset/(.*)\n", body)
+            if tokens:
+                token = tokens[1]
         else:
             token = body[1 + body.rfind("/") :]
         token = urllib.parse.unquote(token)
