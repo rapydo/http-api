@@ -59,6 +59,9 @@ class AdminTokens(EndpointResource):
         if sort_by:
             tokens = sorted(
                 tokens,
+                # Raising error:
+                # Returning Any from function declared to return "_SupportsLessThan"
+                # https://github.com/python/mypy/issues/9656
                 key=lambda t: glom(t, sort_by, default=""),
                 reverse=sort_order == "desc",
             )

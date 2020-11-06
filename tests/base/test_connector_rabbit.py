@@ -18,7 +18,7 @@ def test_rabbit(app, faker):
 
         try:
             obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            pytest.fail("No exception raised")
         except ServiceUnavailable:
             pass
 

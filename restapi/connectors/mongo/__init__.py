@@ -58,6 +58,9 @@ def catch_db_exceptions(func):
 
 
 class MongoExt(Connector):
+
+    DATABASE: str = "rapydo"
+
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError,)
 

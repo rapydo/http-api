@@ -5,7 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
-from typing import Dict, List, Type
+from typing import Dict, List, Set, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -116,8 +116,8 @@ class EndpointsLoader:
                 dependency = pieces.pop()
                 negate = False
             elif pieces_num == 2:
-                negate, dependency = pieces
-                negate = negate.lower() == "not"
+                neg, dependency = pieces
+                negate = neg.lower() == "not"
             else:  # pragma: no cover
                 print_and_exit("Wrong depends_on parameter: {}", var)
 
@@ -233,7 +233,7 @@ class EndpointsLoader:
                     )
 
                     # Set default responses
-                    responses = {}
+                    responses: Dict[str, Dict[str, str]] = {}
 
                     responses.setdefault("400", ERR400)
                     if auth_required:
@@ -278,8 +278,8 @@ class EndpointsLoader:
         # /xyz/<variable>
         # /xyz/abc
         # The second endpoint is shadowed by the first one
-        mappings = {}
-        classes = {}
+        mappings: Dict[str, Set[str]] = {}
+        classes: Dict[str, Dict[str, Type[Resource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
             for method, uris in endpoint.methods.items():

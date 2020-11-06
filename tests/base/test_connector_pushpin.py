@@ -18,7 +18,7 @@ def test_pushpin(app):
 
         try:
             obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            pytest.fail("No exception raised")
         except ServiceUnavailable:
             pass
         log.warning("Skipping {} tests: service not available", CONNECTOR)

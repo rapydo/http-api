@@ -16,7 +16,7 @@ class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"
-    celery_app = None
+    celery_app: Celery = None
 
     def get_connection_exception(self):
         return None
@@ -72,31 +72,30 @@ class CeleryExt(Connector):
 
         backend = variables.get("backend", broker)
 
+        BACKENDCRED = ""
+
         if backend == "RABBIT":
             service_vars = Detector.load_variables(prefix="rabbitmq")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
+            if BACKEND_USER and BACKEND_PASSWORD:
+                BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         elif backend == "REDIS":
             service_vars = Detector.load_variables(prefix="redis")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
-            BACKEND_USER = ""
-            BACKEND_PASSWORD = None
         elif backend == "MONGODB":
             service_vars = Detector.load_variables(prefix="mongo")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
+            if BACKEND_USER and BACKEND_PASSWORD:
+                BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         else:  # pragma: no cover
             print_and_exit("Invalid celery backend: {}", backend)
-
-        if BACKEND_USER and BACKEND_PASSWORD:
-            BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
-        else:
-            BACKENDCRED = ""
 
         if backend == "RABBIT":
             log.warning(
@@ -180,7 +179,7 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         self.celery_app = celery_app
-        self.celery_app.disconnected = False
+        self.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
@@ -192,13 +191,13 @@ class CeleryExt(Connector):
         return self
 
     def disconnect(self):
-        self.celery_app.disconnected = True
+        self.disconnected = True
         return
 
     def is_connected(self):
 
         log.warning("celery.is_connected method is not implemented")
-        return not self.celery_app.disconnected
+        return not self.disconnected
 
     @classmethod
     def get_periodic_task(cls, name):

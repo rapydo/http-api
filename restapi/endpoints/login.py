@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Dict, List
 
 import pytz
 
@@ -110,7 +111,7 @@ class Login(EndpointResource):
         # Check if something is missing in the authentication and ask additional actions
         # raises exceptions in case of errors
 
-        message = {"actions": [], "errors": []}
+        message: Dict[str, List[str]] = {"actions": [], "errors": []}
         last_pwd_change = user.last_password_change
         if last_pwd_change is None or last_pwd_change == 0:
             last_pwd_change = EPOCH
