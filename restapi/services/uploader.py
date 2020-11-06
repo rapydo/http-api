@@ -20,6 +20,7 @@ from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import BadRequest, ServiceUnavailable
+from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
 
 
@@ -107,7 +108,7 @@ class Uploader:
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
 
-        return self.response(
+        return EndpointResource.response(
             {"filename": fname, "meta": self.get_file_metadata(abs_file)},
             code=200,
         )
@@ -130,7 +131,7 @@ class Uploader:
                 os.remove(file_path)
                 log.debug("Forced removal")
             else:
-                return self.response(
+                return EndpointResource.response(
                     f"File '{filename}' already exists",
                     code=400,
                 )
@@ -140,7 +141,7 @@ class Uploader:
 
         log.info("Upload initialized on url: {}", url)
 
-        return self.response(
+        return EndpointResource.response(
             "",
             headers={"Access-Control-Expose-Headers": "Location", "Location": url},
             code=201,
@@ -227,7 +228,7 @@ class Uploader:
         if completed:
             return (
                 completed,
-                self.response(
+                EndpointResource.response(
                     {"filename": filename, "meta": self.get_file_metadata(file_path)},
                     code=200,
                 ),
@@ -235,7 +236,7 @@ class Uploader:
 
         return (
             completed,
-            self.response(
+            EndpointResource.response(
                 "partial",
                 headers={
                     "Access-Control-Expose-Headers": "Range",

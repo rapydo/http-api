@@ -28,7 +28,6 @@ DEFAULT_PERPAGE = 10
 # Extending the concept of rest generic resource
 class EndpointResource(MethodResource, Resource):
 
-    ALLOW_HTML_RESPONSE = False
     baseuri = API_URL
     depends_on: List[str] = []
     labels = ["undefined"]
@@ -81,12 +80,13 @@ class EndpointResource(MethodResource, Resource):
             self.get_user(), [Role.COORDINATOR], warnings=False
         )
 
+    @staticmethod
     def response(
-        self,
         content: Any = None,
         code: Optional[int] = None,
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
+        allow_html: bool = False,
     ) -> Union[Response, Tuple[Any, int, Dict[str, str]]]:
 
         if headers is None:
@@ -107,8 +107,8 @@ class EndpointResource(MethodResource, Resource):
         # If you bypass the marshalling you will expose the all_information by
         # retrieving it from a browser (or by forcing the Accept header)
         # If you accept the risk or you do not use marshalling unlock html responses
-        # by adding `ALLOW_HTML_RESPONSE = True` to the endpoint class
-        if self.ALLOW_HTML_RESPONSE:
+        # by the adding `allow_html=True` flag
+        if allow_html:
             accepted_formats = ResponseMaker.get_accepted_formats()
             if "text/html" in accepted_formats:
                 content, headers = ResponseMaker.get_html(content, code, headers)

@@ -8,7 +8,6 @@ from restapi.services.detect import detector
 class Verify(EndpointResource):
     """ Service connection testing """
 
-    ALLOW_HTML_RESPONSE = True
     labels = ["helpers"]
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -27,4 +26,4 @@ class Verify(EndpointResource):
             )
 
         self.get_service_instance(service)
-        return self.response(f"Service is reachable: {service}")
+        return self.response(f"Service is reachable: {service}", allow_html=True)
