@@ -860,8 +860,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         for role_name in self.roles:
             description = self.roles_data.get(role_name, ROLE_DISABLED)
-            if role_name in current_roles:
-                r = current_roles.get(role_name)
+            if r := current_roles.get(role_name):
 
                 if r.description == description:
                     log.info("Role {} already exists", role_name)
