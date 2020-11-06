@@ -215,7 +215,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
             sentry_sdk.init(
                 dsn=SENTRY_URL,
                 # already catched by handle_marshmallow_errors
-                ignore_errors=(werkzeug.exceptions.UnprocessableEntity,),
+                ignore_errors=[werkzeug.exceptions.UnprocessableEntity],
                 integrations=[FlaskIntegration()],
             )
             log.info("Enabled Sentry {}", SENTRY_URL)

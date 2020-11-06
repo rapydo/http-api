@@ -269,8 +269,8 @@ class Authentication(BaseAuthentication):
 
         group = self.db.Group(**groupdata)
 
-        self.db.session.commit()
         self.db.session.add(group)
+        self.db.session.commit()
 
         return group
 

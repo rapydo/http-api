@@ -187,7 +187,9 @@ class TestApp(BaseTests):
         assert html in body or plain in body
 
         if html in body:
-            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
+            resp = re.search(r".*https?://.*/register/(.*)\n", body)
+            if resp:
+                token = resp[1]
         else:
             token = body[1 + body.rfind("/") :]
         token = urllib.parse.unquote(token)
@@ -278,7 +280,9 @@ class TestApp(BaseTests):
         html = ">click here</a> to activate your account"
 
         if html in body:
-            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
+            resp = re.search(r".*https?://.*/register/(.*)\n", body)
+            if resp:
+                token = resp[1]
         else:
             token = body[1 + body.rfind("/") :]
         token = urllib.parse.unquote(token)

@@ -1,6 +1,7 @@
 import os
 import tempfile
 import time
+from typing import Any, Dict
 
 import psutil
 import pytest
@@ -140,8 +141,7 @@ class TestApp(BaseTests):
         assert isinstance(s, dict)
         assert len(s) == 0
 
-        s = Meta.get_module_from_string("this-should-not-exist")
-        assert s is None
+        assert not Meta.get_module_from_string("this-should-not-exist")
 
         try:
             Meta.get_module_from_string(
@@ -154,8 +154,7 @@ class TestApp(BaseTests):
 
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
-        s = Meta.get_self_reference_from_args()
-        assert s is None
+        assert not Meta.get_self_reference_from_args()
         s = Meta.get_self_reference_from_args("test")
         assert s == "test"
 
@@ -221,12 +220,12 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"new_password": "y"}) == {"new_password": "****"}
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
 
-        data = {"a": 1}
+        data: Dict[str, Any] = {"a": 1}
         assert mix(None, data) == data
 
-        data1 = {"a": {"b": 1}, "c": 1}
-        data2 = {"a": {"b": 2}}
-        expected = {"a": {"b": 2}, "c": 1}
+        data1: Dict[str, Any] = {"a": {"b": 1}, "c": 1}
+        data2: Dict[str, Any] = {"a": {"b": 2}}
+        expected: Dict[str, Any] = {"a": {"b": 2}, "c": 1}
 
         assert mix(data1, data2) == expected
 

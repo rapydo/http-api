@@ -62,13 +62,13 @@ class Meta:
         except ModuleNotFoundError as e:
             if exit_on_fail:
                 raise e
-            # log.warning("Failed to load module:\n{}", e)
+            return None
         except BaseException as e:
             if exit_on_fail:
                 raise e
             log.error("Module {} not found.\nError: {}", modulestring, e)
 
-        return None
+            return None
 
     @staticmethod
     def get_self_reference_from_args(*args):

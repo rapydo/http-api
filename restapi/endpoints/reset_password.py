@@ -1,3 +1,5 @@
+from typing import Optional
+
 import jwt
 
 from restapi import decorators
@@ -15,7 +17,7 @@ auth = EndpointResource.load_authentication()
 
 def send_password_reset_link(smtp, uri, title, reset_email):
     # Internal templating
-    body = f"Follow this link to reset your password: {uri}"
+    body: Optional[str] = f"Follow this link to reset your password: {uri}"
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")
