@@ -36,7 +36,7 @@ EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = "restapi"  # package inside rapydo-http
 
 CUSTOM_PACKAGE = os.getenv("VANILLA_PACKAGE", "custom")
-EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", None)
+EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", EXTENDED_PROJECT_DISABLED)
 #################
 # SQLALCHEMY
 BASE_DB_DIR = "/dbs"
