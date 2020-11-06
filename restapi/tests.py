@@ -13,7 +13,13 @@ import pytz
 from faker import Faker
 from faker.providers import BaseProvider
 
-from restapi.config import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
+from restapi.config import (
+    API_URL,
+    AUTH_URL,
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+    SECRET_KEY_FILE,
+)
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -431,8 +437,7 @@ class BaseTests:
         if wrong_secret:
             secret = fake.password()
         else:
-            f = os.getenv("JWT_APP_SECRETS") + "/secret.key"
-            secret = open(f, "rb").read()
+            secret = open(SECRET_KEY_FILE, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"

@@ -243,6 +243,7 @@ class Bot:
 
             choices = definition.validate.choices
             labels = definition.validate.labels
+            # mypy: ignore-errors
             if len(labels) != len(choices):
                 labels = choices
 

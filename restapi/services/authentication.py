@@ -11,7 +11,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import jwt
 import pyotp  # TOTP generation
@@ -89,7 +89,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     default_user: Optional[str] = None
     default_password: Optional[str] = None
-    roles: List[str] = []
     roles_data: Dict[str, str] = {}
     default_role: Optional[str] = None
 
@@ -120,9 +119,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = timedelta(
-                days=val
-            )
+            self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
         else:
             self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
 
@@ -162,6 +159,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
 
+        BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
