@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from flask import jsonify
 from glom import glom
 
@@ -52,11 +54,11 @@ class NewSwaggerSpecifications(EndpointResource):
 
         log.info("Unauthenticated request, filtering out private endpoints")
         # Remove sensible data
-        filtered_specs = {}
+        filtered_specs: Dict[str, Dict[str, Dict[str, Any]]] = {}
         # schemaName => True|False (private|public)
-        privatedefs = {}
+        privatedefs: Dict[str, bool] = {}
         # schemaName => [list of definitions including this]
-        parentdefs = {}
+        parentdefs: Dict[str, List[Any]] = {}
         for key, data in specs.items():
 
             # Find endpoint mapping flagged as private

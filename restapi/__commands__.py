@@ -295,8 +295,9 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
 
 @cli.command()
 def bot():
-    from restapi.services.telegram import bot
+    # as is required to prevent name collision with the function bot()
+    from restapi.services.telegram import bot as telegram_bot
 
-    bot.load_commands()
+    telegram_bot.load_commands()
     # This return is used by tests to verify output messages
-    return bot.start()
+    return telegram_bot.start()
