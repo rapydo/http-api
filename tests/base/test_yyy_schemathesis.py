@@ -21,7 +21,7 @@ def get_auth_token(client, data):
 
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
-            actions = content.get("actions")
+            actions = content.get("actions", {})
 
             if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                 currentpwd = data["password"]
