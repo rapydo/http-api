@@ -119,10 +119,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         else:  # pragma: no cover
             self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
+        self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
             self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
-        else:
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
 
         self.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
         self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
@@ -165,9 +164,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
 
-        if (
-            BaseAuthentication.default_role is None or None in BaseAuthentication.roles
-        ):  # pragma: no cover
+        if not BaseAuthentication.default_role:  # pragma: no cover
             print_and_exit(
                 "Default role {} not available!", BaseAuthentication.default_role
             )
@@ -408,8 +405,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ###################
     def create_token(self, payload):
         """ Generate a byte token with JWT library to encrypt the payload """
-        return jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
-            "ascii"
+        if self.JWT_SECRET:
+            return jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
+                "ascii"
+            )
+        print_and_exit(  # pragma: no cover
+            "Server misconfiguration, missing jwt configuration"
         )
 
     def create_temporary_token(self, user, token_type, duration=86400):
@@ -445,7 +446,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         payload = None
         try:
-            payload = jwt.decode(token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
+            if self.JWT_SECRET:
+                payload = jwt.decode(token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
+            else:
+                print_and_exit(  # pragma: no cover
+                    "Server misconfiguration, missing jwt configuration"
+                )
         # now > exp
         except jwt.exceptions.ExpiredSignatureError as e:
             # should this token be invalidated into the DB?

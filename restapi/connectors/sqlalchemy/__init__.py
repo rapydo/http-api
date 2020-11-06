@@ -95,11 +95,9 @@ def catch_db_exceptions(func):
 
         except InternalError as e:  # pragma: no cover
 
-            message = str(e)
-
             m = re.search(
                 r"Incorrect string value: '(.*)' for column `.*`.`.*`.`(.*)` at row .*",
-                message,
+                str(e),
             )
 
             if m:
@@ -108,7 +106,7 @@ def catch_db_exceptions(func):
                 error = f"Invalid {column}: {value}"
                 raise BadRequest(error)
 
-            log.error("Unrecognized error message: {}", message)
+            log.error("Unrecognized error message: {}", e)
             raise
 
         except BaseException as e:
@@ -129,19 +127,19 @@ class SQLAlchemy(Connector):
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        db_url = {
-            "database": variables.get("db"),
-            "drivername": variables.get("dbtype", "postgresql"),
-            "username": variables.get("user"),
-            "password": variables.get("password"),
-            "host": variables.get("host"),
-            "port": variables.get("port"),
-        }
-
+        query = None
         if variables.get("dbtype", "postgresql") == "mysql+pymysql":
-            db_url["query"] = {"charset": "utf8mb4"}
+            query = {"charset": "utf8mb4"}
 
-        uri = URL(**db_url)
+        uri = URL(
+            drivername=variables.get("dbtype", "postgresql"),
+            username=variables.get("user"),
+            password=variables.get("password"),
+            host=variables.get("host"),
+            port=variables.get("port"),
+            database=variables.get("db"),
+            query=query,
+        )
         # TODO: in case we need different connection binds
         # (multiple connections with sql) then:
         # SQLALCHEMY_BINDS = {
