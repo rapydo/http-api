@@ -120,7 +120,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
+            self.DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = timedelta(
+                days=val
+            )
         else:
             self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
 
