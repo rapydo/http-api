@@ -108,7 +108,9 @@ class HTTPTokenAuth:
                         f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return caller.response(msg, code=401, headers=HTTPAUTH_ERR_HEADER)
+                    return caller.response(
+                        msg, code=401, headers=HTTPAUTH_ERR_HEADER, allow_html=True
+                    )
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
@@ -127,6 +129,7 @@ class HTTPTokenAuth:
                             "Invalid token received",
                             headers=HTTPAUTH_ERR_HEADER,
                             code=401,
+                            allow_html=True,
                         )
 
                 # Check roles
@@ -137,6 +140,7 @@ class HTTPTokenAuth:
                     return caller.response(
                         "You are not authorized: missing privileges",
                         code=401,
+                        allow_html=True,
                     )
 
                 return func(*args, **kwargs)
