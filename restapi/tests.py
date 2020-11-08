@@ -203,7 +203,7 @@ class BaseTests:
         if secret:
             return pyotp.TOTP(secret).now()
 
-        auth = detector.get_service_instance("authentication")
+        auth = detector.get_authentication_instance()
 
         user = auth.get_user(username=user)
 

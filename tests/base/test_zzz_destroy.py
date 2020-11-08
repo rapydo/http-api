@@ -24,7 +24,7 @@ def test_destroy():
         sql.session.remove()
         sql.session.close_all()
 
-    auth = detector.get_service_instance("authentication")
+    auth = detector.get_authentication_instance()
 
     user = auth.get_user(username=BaseAuthentication.default_user)
     assert user is not None

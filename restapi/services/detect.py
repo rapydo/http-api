@@ -64,19 +64,26 @@ class Detector:
 
         return connector
 
+    def get_authentication_instance(self):
+        return self.authentication_instance
+
     def get_service_instance(
         self: "Detector",
         service_name: str,
         verify: Optional[int] = None,
         expiration: Optional[int] = None,
-        **kwargs: Union[str, int],
-    ) -> T:
+        **kwargs: Union[Optional[str], int],
+    ) -> Connector:
         if service_name == AUTH_NAME:
+            log.warning(
+                "Deprecated use of get_service_instance(AUTH_NAME), "
+                "use get_authentication_instance instead"
+            )
             return self.authentication_instance
 
-        connector: T = self.get_connector(service_name)
+        connector: Connector = self.get_connector(service_name)
 
-        instance = connector.get_instance(
+        instance: Connector = connector.get_instance(
             verify=verify, expiration=expiration, **kwargs
         )
 
