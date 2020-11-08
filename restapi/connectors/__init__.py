@@ -1,7 +1,7 @@
 import abc
 import os
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, TypeVar
 
 # mypy: ignore-errors
 from flask import _app_ctx_stack as stack
@@ -9,6 +9,9 @@ from flask import _app_ctx_stack as stack
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
+
+# https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
+T = TypeVar("T", bound="Connector")
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -142,7 +145,7 @@ class Connector(metaclass=abc.ABCMeta):
             setattr(obj, name, model)
         obj.models = self.models
 
-    def get_instance(self, cache_expiration=None, verify=False, **kwargs):
+    def get_instance(self: T, verify: int, expiration: int, **kwargs) -> T:
 
         # When context is empty this is a connection at loading time
         # Do not save it
@@ -157,21 +160,33 @@ class Connector(metaclass=abc.ABCMeta):
 
         obj = self.get_object(key=unique_hash)
 
-        if obj and cache_expiration:
+        # if an expiration time is set, verify the instance age
+        if obj and expiration > 0:
             now = datetime.now()
-            exp = timedelta(seconds=cache_expiration)
+            exp = timedelta(seconds=expiration)
 
+            # the instance is invalidated if older than the expiration time
             if now >= obj.connection_time + exp:
                 log.info("Cache expired for {}", self.name)
                 obj.disconnect()
                 obj = None
 
-        if obj and verify and not obj.is_connected():
-            log.warning(
-                "{} is no longer connected, creating a new connection", self.name
-            )
-            obj.disconnected = True
+        # If a verification time is set, verify the instance age
+        if obj and verify > 0:
+            now = datetime.now()
+            exp = timedelta(seconds=expiration)
 
+            # the instance is verified if older than the verification time
+            if now >= obj.connection_time + exp:
+                # if the connection is no longer valid, invalidate the instance
+                if not obj.is_connected():
+                    log.warning(
+                        "{} is no longer connected, connector invalidated", self.name
+                    )
+                    obj.disconnected = True
+
+        # return the instance only if still connected
+        # (and not invalidated by the verification check)
         if obj and not obj.disconnected:
             return obj
 

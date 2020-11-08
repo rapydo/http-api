@@ -99,10 +99,12 @@ class MongoExt(Connector):
 
     def destroy(self):
 
-        db = self.get_instance()
+        # This will very probably create a new instance,
+        # because expiration is set a 1 second
+        instance = self.get_instance(verify=0, expiration=1)
 
         # massive destruction
-        client = db.connection.database
+        client = instance.connection.database
 
         from pymongo import MongoClient
 

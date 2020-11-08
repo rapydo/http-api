@@ -164,7 +164,9 @@ class NeoModel(Connector):
 
     def destroy(self):
 
-        graph = self.get_instance()
+        # This will very probably create a new instance,
+        # because expiration is set a 1 second
+        graph = self.get_instance(verify=0, expiration=1)
 
         with self.app.app_context():
             log.critical("Destroy current Neo4j data")

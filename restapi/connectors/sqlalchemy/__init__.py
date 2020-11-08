@@ -163,10 +163,10 @@ class SQLAlchemy(Connector):
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)
         db.session.flush = catch_db_exceptions(db.session.flush)
-        db.update_properties = self.update_properties
-        db.disconnect = self.disconnect
-        db.is_connected = self.is_connected
-        db.disconnected = False
+        # db.update_properties = self.update_properties
+        # db.disconnect = self.disconnect
+        # db.is_connected = self.is_connected
+        self.session = db.session
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
@@ -184,42 +184,46 @@ class SQLAlchemy(Connector):
             sql = text("SELECT 1")
             db.engine.execute(sql)
         self.db = db
-        return db
+        return self
 
     def disconnect(self):
         self.db.session.close()
-        self.db.disconnected = True
+        self.disconnected = True
         return
 
     def is_connected(self):
         log.warning("sqlalchemy.is_connected method is not implemented")
-        return not self.db.disconnected
+        return not self.disconnected
 
     def initialize(self):
 
-        db = self.get_instance()
+        # This will very probably create a new instance,
+        # because expiration is set a 1 second
+        instance = self.get_instance(verify=0, expiration=1)
 
         with self.app.app_context():
 
             sql = text("SELECT 1")
-            db.engine.execute(sql)
+            instance.db.engine.execute(sql)
 
-            db.create_all()
+            instance.db.create_all()
 
     def destroy(self):
 
-        db = self.get_instance()
+        # This will very probably create a new instance,
+        # because expiration is set a 1 second
+        instance = self.get_instance(verify=0, expiration=1)
 
         with self.app.app_context():
 
             sql = text("SELECT 1")
-            db.engine.execute(sql)
+            instance.db.engine.execute(sql)
 
-            db.session.remove()
-            db.session.close_all()
+            instance.db.session.remove()
+            instance.db.session.close_all()
             # massive destruction
             log.critical("Destroy current SQL data")
-            db.drop_all()
+            instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance, properties):

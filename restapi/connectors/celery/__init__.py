@@ -179,7 +179,7 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         self.celery_app = celery_app
-        self.disconnected = False
+        # self.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
