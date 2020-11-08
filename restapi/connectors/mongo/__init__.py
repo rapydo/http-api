@@ -66,7 +66,6 @@ class MongoExt(Connector):
 
     def connect(self, **kwargs):
 
-        test_connection = kwargs.get("test_connection", False)
         variables = self.variables.copy()
         variables.update(kwargs)
 
@@ -79,9 +78,6 @@ class MongoExt(Connector):
         self.connection = mongodb._get_connection(alias=MongoExt.DATABASE)
 
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
-
-        if test_connection:
-            pass
 
         return self
 

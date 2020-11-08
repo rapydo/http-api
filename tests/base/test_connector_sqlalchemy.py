@@ -66,21 +66,15 @@ def test_sqlalchemy(app):
     )
     assert obj is not None
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
+    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
     obj_id = id(obj)
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
+    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
+    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
     # With alchemy the connection object remains the same...
     assert id(obj) == obj_id
     # assert id(obj) != obj_id

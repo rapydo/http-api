@@ -116,15 +116,15 @@ else:
             assert obj.fuzzy_tokenize("x + y") == "x~1 + y~1"
             assert obj.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            obj = detector.get_service_instance(CONNECTOR, expiration=1)
             obj_id = id(obj)
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            obj = detector.get_service_instance(CONNECTOR, expiration=1)
             assert id(obj) == obj_id
 
             time.sleep(1)
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            obj = detector.get_service_instance(CONNECTOR, expiration=1)
             assert id(obj) != obj_id
 
             assert obj.is_connected()

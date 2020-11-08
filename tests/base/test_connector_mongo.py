@@ -39,10 +39,7 @@ def test_mongo(app):
     )
 
     try:
-        obj = detector.get_service_instance(
-            CONNECTOR, test_connection=True, host="invalidhostname", port=123
-        )
-        # test_connection does not work, let's explicitly test it
+        obj = detector.get_service_instance(CONNECTOR, host="invalidhostname", port=123)
         try:
             obj.Token.objects.first()
         except BaseException:
@@ -51,21 +48,18 @@ def test_mongo(app):
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(
-        CONNECTOR,
-        test_connection=True,
-    )
+    obj = detector.get_service_instance(CONNECTOR)
     assert obj is not None
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    obj = detector.get_service_instance(CONNECTOR, expiration=1)
     obj_id = id(obj)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    obj = detector.get_service_instance(CONNECTOR, expiration=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    obj = detector.get_service_instance(CONNECTOR, expiration=1)
     assert id(obj) != obj_id
 
     assert obj.is_connected()

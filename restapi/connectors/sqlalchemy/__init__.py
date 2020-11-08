@@ -122,6 +122,7 @@ class SQLAlchemy(Connector):
 
     def connect(self, **kwargs):
 
+        # should be merged with verify flag
         test_connection = kwargs.get("test_connection", False)
 
         variables = self.variables.copy()
