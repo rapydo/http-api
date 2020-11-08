@@ -167,7 +167,6 @@ class SQLAlchemy(Connector):
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
-        self.session = db.session
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
@@ -186,6 +185,10 @@ class SQLAlchemy(Connector):
             db.engine.execute(sql)
         self.db = db
         return self
+
+    @property
+    def session(self):
+        return self.db.session
 
     def disconnect(self):
         self.db.session.close()

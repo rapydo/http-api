@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional, TypeVar, Union
 
 from glom import glom
 
@@ -20,6 +20,9 @@ from restapi.utilities.meta import Meta
 
 AUTH_NAME = "authentication"
 CONNECTORS_FOLDER = "connectors"
+
+# https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
+T = TypeVar("T", bound="Connector")
 
 
 class Detector:
@@ -61,13 +64,21 @@ class Detector:
 
         return connector
 
-    def get_service_instance(self, service_name, verify=False, **kwargs):
+    def get_service_instance(
+        self: "Detector",
+        service_name: str,
+        verify: Optional[int] = None,
+        expiration: Optional[int] = None,
+        **kwargs: Union[str, int],
+    ) -> T:
         if service_name == AUTH_NAME:
             return self.authentication_instance
 
-        connector = self.get_connector(service_name)
+        connector: T = self.get_connector(service_name)
 
-        instance = connector.get_instance(verify=verify, **kwargs)
+        instance = connector.get_instance(
+            verify=verify, expiration=expiration, **kwargs
+        )
 
         return instance
 
