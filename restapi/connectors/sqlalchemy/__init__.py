@@ -197,9 +197,7 @@ class SQLAlchemy(Connector):
 
     def initialize(self):
 
-        # This will very probably create a new instance,
-        # because expiration is set a 1 second
-        instance = self.get_instance(verify=0, expiration=1)
+        instance = self.get_instance()
 
         with self.app.app_context():
 
@@ -210,9 +208,7 @@ class SQLAlchemy(Connector):
 
     def destroy(self):
 
-        # This will very probably create a new instance,
-        # because expiration is set a 1 second
-        instance = self.get_instance(verify=0, expiration=1)
+        instance = self.get_instance()
 
         with self.app.app_context():
 

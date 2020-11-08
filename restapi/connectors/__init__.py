@@ -1,7 +1,7 @@
 import abc
 import os
 from datetime import datetime, timedelta
-from typing import Dict, TypeVar
+from typing import Dict, Optional, TypeVar
 
 # mypy: ignore-errors
 from flask import _app_ctx_stack as stack
@@ -145,7 +145,20 @@ class Connector(metaclass=abc.ABCMeta):
             setattr(obj, name, model)
         obj.models = self.models
 
-    def get_instance(self: T, verify: int, expiration: int, **kwargs) -> T:
+    def get_instance(
+        self: T,
+        verify: Optional[int] = None,
+        expiration: Optional[int] = None,
+        **kwargs,
+    ) -> T:
+
+        if verify is None:
+            # this should be the default value for this connector
+            verify = 0
+
+        if expiration is None:
+            # this should be the default value for this connector
+            expiration = 0
 
         # When context is empty this is a connection at loading time
         # Do not save it
