@@ -18,6 +18,9 @@ class Connector(metaclass=abc.ABCMeta):
 
     variables: Dict[str, str]
     models = {}
+    # assigned by Detector during init_services
+    app = None
+
     # will contain:
     # objs = {
     #     'thread-id': {
@@ -28,25 +31,24 @@ class Connector(metaclass=abc.ABCMeta):
     # }
     objs = {}
 
-    def __init__(self, app):
+    def __init__(self, app=None):
 
         self.name = self.__class__.__name__.lower()
-        self.app = app
+
+        # Added to convince mypy that sel.app cannot be None
+        if self.app is None:  # pragma: no cover
+            # This should never happen because app is
+            # assigned by Detector during init_services
+            from flask import current_app
+
+            self.app = current_app
+
+        if app:
+            # Deprecated since 0.9
+            log.warning("Deprecated app parameter in {} initialization", self.name)
 
         # Will be modified by self.disconnect()
         self.disconnected = False
-
-        # to implement request-level instances:
-        # 1 . implement a flag or new get_intance to change the key identifier
-        #     i.e. instead of thread.get_native_id set something identifying the request
-        #          probably based on stack.top
-        # 2 . register this teardown for such intances
-        # 3 . call disconnect for such objects
-        # app.teardown_appcontext(self.teardown)
-
-    # def teardown(self, exception):
-    #     if obj := self.get_object('identify the request level object') is not None:
-    #         obj.disconnect()
 
     def __enter__(self):
         return self
@@ -122,7 +124,7 @@ class Connector(metaclass=abc.ABCMeta):
     def initialize_connection(self, **kwargs):
 
         # Create a new instance of itself
-        obj = self.__class__(self.app)
+        obj = self.__class__()
 
         exceptions = obj.get_connection_exception()
         if exceptions is None:

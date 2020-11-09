@@ -8,6 +8,7 @@ from gripcontrol import (
 )
 
 from restapi import decorators
+from restapi.connectors import pushpin
 from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource
 from restapi.utilities.logs import log
@@ -28,10 +29,10 @@ class PushpinWebSocket(EndpointResource):
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
         sync = sync == "1"
 
-        pushpin = self.get_service_instance("pushpin")
+        p = pushpin.get_instance()
 
         message = "Hello, your job is completed!"
-        published = pushpin.publish_on_socket(channel, message, sync=sync)
+        published = p.publish_on_socket(channel, message, sync=sync)
 
         return self.response(f"Message received: {published} (sync={sync})")
 
@@ -108,10 +109,10 @@ class PushpinHTTPStream(EndpointResource):
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
         sync = sync == "1"
 
-        pushpin = self.get_service_instance("pushpin")
+        p = pushpin.get_instance()
 
         message = "Hello, your job is completed!\n"
-        published = pushpin.publish_on_stream(channel, message, sync=sync)
+        published = p.publish_on_stream(channel, message, sync=sync)
 
         return self.response(f"Message received: {published} (sync={sync})")
 

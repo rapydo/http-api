@@ -1,5 +1,6 @@
 import os
 
+from restapi.connectors import sqlalchemy
 from restapi.exceptions import ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
@@ -19,7 +20,7 @@ def test_destroy():
         return False
 
     if detector.check_availability("sqlalchemy"):
-        sql = detector.get_service_instance("sqlalchemy")
+        sql = sqlalchemy.get_instance()
         # Close previous connections, otherwise the new create_app will hang
         sql.session.remove()
         sql.session.close_all()

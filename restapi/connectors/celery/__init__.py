@@ -385,7 +385,9 @@ Error: {traceback.format_exc()}
                     default="Unkown title",
                 )
                 subject = f"{project}: task {task_name} failed"
-                smtp = detector.get_service_instance("smtp", verify=True)
-                smtp.send(body, subject)
+                from restapi.connectors import smtp
+
+                smtp_client = smtp.get_instance(verify=1)
+                smtp_client.send(body, subject)
 
     return wrapper

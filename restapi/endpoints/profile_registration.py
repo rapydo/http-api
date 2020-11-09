@@ -1,5 +1,6 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
+from restapi.connectors import smtp
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
@@ -9,8 +10,7 @@ from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 
 # This endpoint require the server to send the activation token via email
-# if detector.check_availability("smtp"):
-if True:
+if detector.check_availability("smtp"):
 
     auth = EndpointResource.load_authentication()
 
@@ -93,7 +93,7 @@ if True:
                     user, userdata, extra_userdata, self.auth.db
                 )
 
-                smtp = self.get_service_instance("smtp", verify=True)
+                smtp_client = smtp.get_instance(verify=1)
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
@@ -102,9 +102,9 @@ if True:
                     subject = f"{title} New credentials requested"
                     body = f"New credentials request from {user.email}"
 
-                    smtp.send(body, subject)
+                    smtp_client.send(body, subject)
 
-                send_activation_link(smtp, self.auth, user)
+                send_activation_link(smtp_client, self.auth, user)
 
             except BaseException as e:
                 user.delete()

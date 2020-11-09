@@ -4,6 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, Union
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -148,28 +149,30 @@ class NeoModel(Connector):
 
     def initialize(self):
 
-        with self.app.app_context():
-            remove_all_labels()
-            # install_all_labels()
+        if self.app:
+            with self.app.app_context():
+                remove_all_labels()
+                # install_all_labels()
 
-            # install_all_labels can fail when models are cross-referenced between
-            # core and custom. For example:
-            # neo4j.exceptions.ClientError:
-            #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
-            #     {message: An equivalent constraint already exists,
-            #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
-            # This loop with install_labels prevent errors
-            for model in self.models.values():
-                install_labels(model, quiet=False)
+                # install_all_labels can fail when models are cross-referenced between
+                # core and custom. For example:
+                # neo4j.exceptions.ClientError:
+                #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
+                #     {message: An equivalent constraint already exists,
+                #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
+                # This loop with install_labels prevent errors
+                for model in self.models.values():
+                    install_labels(model, quiet=False)
 
     def destroy(self):
 
         graph = self.get_instance()
 
-        with self.app.app_context():
-            log.critical("Destroy current Neo4j data")
+        if self.app:
+            with self.app.app_context():
+                log.critical("Destroy current Neo4j data")
 
-            clear_neo4j_database(graph.db)
+                clear_neo4j_database(graph.db)
 
     # def refresh_connection(self):
     #     if self.db.url is None:
@@ -462,3 +465,15 @@ class Authentication(BaseAuthentication):
             log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
+
+
+instance = NeoModel()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "NeoModel":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)

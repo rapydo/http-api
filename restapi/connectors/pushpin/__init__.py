@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
 
@@ -75,3 +77,15 @@ class PushpinExt(Connector):
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
+
+
+instance = PushpinExt()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "PushpinExt":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)

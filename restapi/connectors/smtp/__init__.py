@@ -3,6 +3,7 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
+from typing import Optional, Union
 
 import pytz
 
@@ -157,3 +158,15 @@ class Mail(Connector):
         except BaseException as e:
             log.error(str(e))
             return False
+
+
+instance = Mail()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "Mail":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)

@@ -13,7 +13,7 @@ from restapi.config import API_URL
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
-from restapi.services.detect import AUTH_NAME, detector
+from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 ###################
@@ -45,7 +45,7 @@ class EndpointResource(MethodResource, Resource):
     @staticmethod
     def load_authentication():
         # Authentication instance is always needed at each request
-        auth = detector.get_service_instance(AUTH_NAME)
+        auth = detector.get_authentication_instance()
         auth.db = detector.get_service_instance(detector.authentication_service)
 
         return auth

@@ -9,6 +9,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, Union
 
 import pytz
 import sqlalchemy
@@ -147,15 +148,15 @@ class SQLAlchemy(Connector):
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
+        if self.app:
+            self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
+            # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+            self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-        # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-        # The Alembic package, which handles the migration work, does not recognize
-        # type changes in columns by default. If you want that fine level of
-        # detection you need to enable the compare_type option
-        Migrate(self.app, db, compare_type=True)
+            # The Alembic package, which handles the migration work, does not recognize
+            # type changes in columns by default. If you want that fine level of
+            # detection you need to enable the compare_type option
+            Migrate(self.app, db, compare_type=True)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
@@ -203,27 +204,29 @@ class SQLAlchemy(Connector):
 
         instance = self.get_instance()
 
-        with self.app.app_context():
+        if self.app:
+            with self.app.app_context():
 
-            sql = text("SELECT 1")
-            instance.db.engine.execute(sql)
+                sql = text("SELECT 1")
+                instance.db.engine.execute(sql)
 
-            instance.db.create_all()
+                instance.db.create_all()
 
     def destroy(self):
 
         instance = self.get_instance()
 
-        with self.app.app_context():
+        if self.app:
+            with self.app.app_context():
 
-            sql = text("SELECT 1")
-            instance.db.engine.execute(sql)
+                sql = text("SELECT 1")
+                instance.db.engine.execute(sql)
 
-            instance.db.session.remove()
-            instance.db.session.close_all()
-            # massive destruction
-            log.critical("Destroy current SQL data")
-            instance.db.drop_all()
+                instance.db.session.remove()
+                instance.db.session.close_all()
+                # massive destruction
+                log.critical("Destroy current SQL data")
+                instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance, properties):
@@ -501,3 +504,15 @@ class Authentication(BaseAuthentication):
 
         log.warning("Could not invalidate token")
         return False
+
+
+instance = SQLAlchemy()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "SQLAlchemy":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)

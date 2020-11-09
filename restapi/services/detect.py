@@ -74,13 +74,12 @@ class Detector:
         expiration: Optional[int] = None,
         **kwargs: Union[Optional[str], int],
     ) -> Connector:
-        if service_name == AUTH_NAME:
-            log.warning(
-                "Deprecated use of get_service_instance(AUTH_NAME), "
-                "use get_authentication_instance instead"
-            )
-            return self.authentication_instance
 
+        # Deprecated since 0.9
+        log.warning(
+            "Deprecated use of detector.get_service_instance, "
+            "use yourconnector.get_instace() instead"
+        )
         connector: Connector = self.get_connector(service_name)
 
         instance: Connector = connector.get_instance(
@@ -144,6 +143,14 @@ class Detector:
                 log.error("No connector class found in {}/{}", path, connector)
                 self.services[connector]["available"] = False
                 continue
+
+            try:
+                # This is to test the Connector compliance,
+                # i.e. to verify instance and get_isntance in the connector module
+                connector_module.instance
+                connector_module.get_instance
+            except AttributeError as e:
+                print_and_exit(e)
 
             self.services[connector]["variables"] = variables
 
@@ -209,6 +216,8 @@ class Detector:
         options=None,
     ):
 
+        Connector.app = app
+
         if options is None:
             options = {}
 
@@ -228,18 +237,23 @@ class Detector:
                     )
                 continue
 
+            # ####### COULD BE REMOVED ??? ###########
             try:
-                connector_instance = ConnectorClass(app)
+                connector_instance = ConnectorClass()
             except TypeError as e:  # pragma: no cover
                 print_and_exit("Your class {} is not compliant:\n{}", connector_name, e)
 
+            # This should be no longer needed...
             self.services[connector_name]["connector"] = connector_instance
 
             try:
                 instances[connector_name] = connector_instance.get_instance()
             except ServiceUnavailable:
                 print_and_exit("Service unavailable: {}", connector_name)
+            ##########################################
 
+            # instances[connector_name] =
+            #             get_instance
         if self.authentication_service is None:
             if not worker_mode:
                 log.warning("No authentication service configured")
