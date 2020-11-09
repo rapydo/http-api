@@ -18,8 +18,11 @@ class Connector(metaclass=abc.ABCMeta):
 
     variables: Dict[str, str] = {}
     models = {}
-    # assigned by Detector during init_services
+    # Assigned by Detector during init_services
     app = None
+
+    # Modified by Detector during init_services
+    available: bool = False
 
     # will contain:
     # objs = {
@@ -153,6 +156,9 @@ class Connector(metaclass=abc.ABCMeta):
         expiration: Optional[int] = None,
         **kwargs,
     ) -> T:
+
+        if not self.available:
+            raise ServiceUnavailable(f"Service {self.name} is not available")
 
         if verify is None:
             # this should be the default value for this connector

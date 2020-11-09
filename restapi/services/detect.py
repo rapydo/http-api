@@ -123,11 +123,13 @@ class Detector:
                 external = False
 
             enabled = Env.to_bool(variables.get("enable"))
+            available = enabled or external
 
             self.services.setdefault(connector, {})
-            self.services[connector]["available"] = enabled or external
+            # To be removed
+            self.services[connector]["available"] = available
 
-            if not self.services[connector]["available"]:
+            if not available:
                 continue
 
             connector_module = Meta.get_module_from_string(
@@ -141,6 +143,7 @@ class Detector:
                 break
             else:
                 log.error("No connector class found in {}/{}", path, connector)
+                # To be removed
                 self.services[connector]["available"] = False
                 continue
 
@@ -154,6 +157,7 @@ class Detector:
 
             self.services[connector]["variables"] = variables
 
+            connector_class.available = True
             connector_class.set_variables(variables)
 
             # NOTE: module loading algoritm is based on core connectors
