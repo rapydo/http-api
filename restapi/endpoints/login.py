@@ -141,7 +141,6 @@ class Login(EndpointResource):
 
             if expired:
 
-                log.critical("Password expired due to MAX_PASSWORD_VALIDITY")
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
 
