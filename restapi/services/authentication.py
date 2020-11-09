@@ -18,6 +18,7 @@ import pyotp  # TOTP generation
 import pytz
 import segno  # QR Code generation
 from flask import request
+from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
@@ -86,6 +87,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
+    TOTP = "TOTP"
+    MIN_PASSWORD_LENGTH = 8
+    FORCE_FIRST_PASSWORD_CHANGE = False
+    VERIFY_PASSWORD_STRENGTH = False
+    MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
+    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
+    REGISTER_FAILED_LOGIN = False
+    MAX_LOGIN_ATTEMPTS = 0
+    SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
 
     default_user: Optional[str] = None
     default_password: Optional[str] = None
@@ -93,50 +103,47 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     roles_data: Dict[str, str] = {}
     default_role: Optional[str] = None
 
-    def __init__(self, backend_database):
-        self.db = backend_database
-        self.load_default_user()
-        self.load_roles()
+    # Executed once by Detector in init_services
+    @classmethod
+    def module_initialization(cls):
+        cls.load_default_user()
+        cls.load_roles()
+        cls.import_secret(SECRET_KEY_FILE)
 
         variables = Detector.load_variables(prefix="auth")
 
-        self.import_secret(SECRET_KEY_FILE)
-
-        self.TOTP = "TOTP"
-
-        self.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
-        self.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
+        cls.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
+        cls.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
             variables.get("force_first_password_change")
         )
-        self.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
+        cls.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
             variables.get("verify_password_strength")
         )
-        if not (val := Env.to_int(variables.get("max_password_validity", 0))):
-            self.MAX_PASSWORD_VALIDITY = None
-        elif TESTING:
-            self.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
-        # Of course cannot be tested
-        else:  # pragma: no cover
-            self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
+        if val := Env.to_int(variables.get("max_password_validity", 0)):
+            if TESTING:
+                cls.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
+            # Of course cannot be tested
+            else:  # pragma: no cover
+                cls.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
-        self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
+            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
 
-        self.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
-        self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
-        self.SECOND_FACTOR_AUTHENTICATION = variables.get(
-            "second_factor_authentication"
-        )
+        cls.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
+        cls.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
+        cls.SECOND_FACTOR_AUTHENTICATION = variables.get("second_factor_authentication")
 
-        if self.SECOND_FACTOR_AUTHENTICATION == "None":
-            self.SECOND_FACTOR_AUTHENTICATION = None
-        elif not self.FORCE_FIRST_PASSWORD_CHANGE:
+        if cls.SECOND_FACTOR_AUTHENTICATION == "None":
+            cls.SECOND_FACTOR_AUTHENTICATION = None
+        elif not cls.FORCE_FIRST_PASSWORD_CHANGE:
             log.error(
                 "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
-                self.SECOND_FACTOR_AUTHENTICATION,
+                cls.SECOND_FACTOR_AUTHENTICATION,
             )
-            self.SECOND_FACTOR_AUTHENTICATION = None
+            cls.SECOND_FACTOR_AUTHENTICATION = None
+
+    def __init__(self, backend_database):
+        self.db = backend_database
 
     @staticmethod
     def load_default_user():
@@ -225,17 +232,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         self.failed_login(username)
 
-    # ########################
-    # # Configure Secret Key #
-    # ########################
-    def import_secret(self, abs_filename):
-        """
-        Load the jwt secret from a file
-        """
-
+    @classmethod
+    def import_secret(cls, abs_filename):
         try:
-            self.JWT_SECRET = open(abs_filename, "rb").read()
-            return self.JWT_SECRET
+            cls.JWT_SECRET = open(abs_filename, "rb").read()
+            return cls.JWT_SECRET
         except OSError:  # pragma: no cover
             print_and_exit("Jwt secret file {} not found", abs_filename)
 
@@ -403,10 +404,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ###################
     # # Tokens handling #
     # ###################
-    def create_token(self, payload):
+    @classmethod
+    def create_token(cls, payload):
         """ Generate a byte token with JWT library to encrypt the payload """
-        if self.JWT_SECRET:
-            return jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
+        if cls.JWT_SECRET:
+            return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
                 "ascii"
             )
         print_and_exit(  # pragma: no cover
@@ -442,25 +444,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    def unpack_token(self, token, raiseErrors=False):
+    @classmethod
+    def unpack_token(cls, token, raiseErrors=False):
 
         payload = None
         try:
-            if self.JWT_SECRET:
-                payload = jwt.decode(token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
+            if cls.JWT_SECRET:
+                payload = jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
             else:
                 print_and_exit(  # pragma: no cover
                     "Server misconfiguration, missing jwt configuration"
                 )
         # now > exp
-        except jwt.exceptions.ExpiredSignatureError as e:
+        except ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
             if raiseErrors:
                 raise e
             else:
                 log.info("Unable to decode JWT token. {}", e)
         # now < nbf
-        except jwt.exceptions.ImmatureSignatureError as e:
+        except ImmatureSignatureError as e:
             if raiseErrors:
                 raise e
             else:
@@ -727,7 +730,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if totp_code is None:
             raise Unauthorized("Invalid verification code")
-        secret = BaseAuthentication.get_secret(user)
+        secret = self.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             # if self.REGISTER_FAILED_LOGIN:
@@ -736,10 +739,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    @staticmethod
-    def get_qrcode(user):
+    @classmethod
+    def get_qrcode(cls, user):
 
-        secret = BaseAuthentication.get_secret(user)
+        secret = cls.get_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration("project.title", "No project name")

@@ -272,8 +272,10 @@ class Detector:
             self.authentication_module = Meta.get_authentication_module(
                 self.authentication_service
             )
+
             # db = instances[self.authentication_service]
             authentication_instance = self.authentication_module.Authentication()
+            authentication_instance.module_initialization()
 
             # Only once in a lifetime
             if project_init:
