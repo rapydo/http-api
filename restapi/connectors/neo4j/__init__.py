@@ -231,6 +231,10 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
+    def __init__(self):
+        db = get_instance()
+        super().__init__(db)
+
     def get_user(self, username=None, user_id=None):
 
         if username:

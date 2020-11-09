@@ -12,7 +12,7 @@ from restapi.utilities.globals import mem
 # This endpoint requires the server to send the activation token via email
 if detector.check_availability("smtp"):
 
-    auth = EndpointResource.load_authentication()
+    auth = detector.get_authentication_instance()
 
     # Note that these are callables returning a model, not models!
     # They will be executed a runtime

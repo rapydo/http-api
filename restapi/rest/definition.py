@@ -39,16 +39,11 @@ class EndpointResource(MethodResource, Resource):
     def __init__(self):
         super().__init__()
 
-        self.auth = self.load_authentication()
-        self.get_service_instance = detector.get_service_instance
-
-    @staticmethod
-    def load_authentication():
         # Authentication instance is always needed at each request
-        auth = detector.get_authentication_instance()
-        auth.db = detector.get_service_instance(detector.authentication_service)
-
-        return auth
+        # Mah... not so true...
+        self.auth = detector.get_authentication_instance()
+        # To be removed
+        self.get_service_instance = detector.get_service_instance
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):

@@ -32,8 +32,6 @@ class Detector:
 
         log.info("Authentication service: {}", self.authentication_service)
 
-        self.authentication_instance = None
-
         self.services: Dict[str, Dict[str, Any]] = {
             AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}
         }
@@ -65,7 +63,7 @@ class Detector:
         return connector
 
     def get_authentication_instance(self):
-        return self.authentication_instance
+        return self.authentication_module.Authentication()
 
     def get_service_instance(
         self: "Detector",
@@ -271,9 +269,11 @@ class Detector:
             )
 
         if self.authentication_service is not None:
-            auth_module = Meta.get_authentication_module(self.authentication_service)
-            db = instances[self.authentication_service]
-            self.authentication_instance = auth_module.Authentication(db)
+            self.authentication_module = Meta.get_authentication_module(
+                self.authentication_service
+            )
+            # db = instances[self.authentication_service]
+            authentication_instance = self.authentication_module.Authentication()
 
             # Only once in a lifetime
             if project_init:
@@ -285,7 +285,7 @@ class Detector:
                 connector.initialize()
 
                 with app.app_context():
-                    self.authentication_instance.init_auth_db(options)
+                    authentication_instance.init_auth_db(options)
                     log.info("Initialized authentication module")
 
                 self.project_initialization(instances, app=app)

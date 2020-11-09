@@ -7,9 +7,10 @@ from restapi import decorators
 from restapi.exceptions import Forbidden
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
+from restapi.services.detect import detector
 from restapi.utilities.time import EPOCH, get_now
 
-auth = EndpointResource.load_authentication()
+auth = detector.get_authentication_instance()
 
 
 class Credentials(Schema):

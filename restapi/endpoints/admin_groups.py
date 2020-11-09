@@ -3,6 +3,7 @@ from restapi.exceptions import NotFound
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
+from restapi.services.detect import detector
 
 # from restapi.utilities.logs import log
 
@@ -31,7 +32,7 @@ def getInputSchema(request):
     if not request:
         return Schema.from_dict({})
 
-    auth = EndpointResource.load_authentication()
+    auth = detector.get_authentication_instance()
 
     users = {}
     for u in auth.get_users():

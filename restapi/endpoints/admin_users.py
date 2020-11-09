@@ -83,7 +83,7 @@ def getInputSchema(request):
     if not request:
         return Schema.from_dict({})
 
-    auth = EndpointResource.load_authentication()
+    auth = detector.get_authentication_instance()
 
     set_required = request.method == "POST"
 

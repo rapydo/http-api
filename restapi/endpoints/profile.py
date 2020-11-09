@@ -5,7 +5,7 @@ from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-auth = EndpointResource.load_authentication()
+auth = detector.get_authentication_instance()
 
 
 class NewPassword(Schema):

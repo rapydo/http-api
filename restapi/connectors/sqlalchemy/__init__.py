@@ -236,6 +236,9 @@ class SQLAlchemy(Connector):
 
 
 class Authentication(BaseAuthentication):
+    def __init__(self):
+        db = get_instance()
+        super().__init__(db)
 
     # Also used by POST user
     def create_user(self, userdata, roles):

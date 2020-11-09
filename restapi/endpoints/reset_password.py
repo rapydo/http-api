@@ -13,7 +13,7 @@ from restapi.services.detect import detector
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
-auth = EndpointResource.load_authentication()
+auth = detector.get_authentication_instance()
 
 
 def send_password_reset_link(smtp, uri, title, reset_email):

@@ -135,7 +135,7 @@
 # def get_input_schema(strip_required=false, exclude_email=False):
 
 #     set_required = not strip_required
-#     auth = EndpointResource.load_authentication()
+#     auth = detector.get_authentication_instance()
 
 #     attributes = {}
 #     if not exclude_email:
