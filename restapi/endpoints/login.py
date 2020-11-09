@@ -8,6 +8,7 @@ from restapi.exceptions import Forbidden
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.utilities.logs import log
 from restapi.utilities.time import EPOCH, get_now
 
 auth = detector.get_authentication_instance()
@@ -140,6 +141,7 @@ class Login(EndpointResource):
 
             if expired:
 
+                log.critical("Password expired due to MAX_PASSWORD_VALIDITY")
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
 
