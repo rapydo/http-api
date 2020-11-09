@@ -15,9 +15,6 @@ def test_sqlalchemy(app):
 
     if not detector.check_availability(CONNECTOR):
 
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
-
         try:
             obj = connector.get_instance()
             pytest.fail("No exception raised")
@@ -29,11 +26,6 @@ def test_sqlalchemy(app):
 
     log.info("Executing {} tests", CONNECTOR)
 
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
     detector.init_services(
         app=app,
         project_init=False,
@@ -42,8 +34,8 @@ def test_sqlalchemy(app):
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
         try:
-            detector.get_service_instance(
-                CONNECTOR, test_connection=True, host="invalidhostname", port=123
+            connector.get_instance(
+                test_connection=True, host="invalidhostname", port=123
             )
 
             pytest.fail("No exception raised on unavailable service")
@@ -51,8 +43,7 @@ def test_sqlalchemy(app):
             pass
 
     try:
-        detector.get_service_instance(
-            CONNECTOR,
+        connector.get_instance(
             test_connection=True,
             user="invaliduser",
         )
@@ -61,8 +52,7 @@ def test_sqlalchemy(app):
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(
-        CONNECTOR,
+    obj = connector.get_instance(
         test_connection=True,
     )
     assert obj is not None
@@ -91,9 +81,3 @@ def test_sqlalchemy(app):
     # sqlalchemy connector does not support with context
     # with connector.get_instance() as obj:
     #     assert obj is not None
-
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None

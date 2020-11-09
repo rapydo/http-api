@@ -13,9 +13,6 @@ def test_smtp(app, faker):
 
     if not detector.check_availability(CONNECTOR):
 
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
-
         try:
             obj = connector.get_instance()
             pytest.fail("No exception raised")
@@ -24,11 +21,6 @@ def test_smtp(app, faker):
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return False
-
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
 
     detector.init_services(
         app=app,

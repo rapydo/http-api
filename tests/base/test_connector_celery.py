@@ -19,8 +19,7 @@ CONNECTOR = "celery"
 def test_celery(app, faker):
 
     if not detector.check_availability(CONNECTOR):
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
+
         try:
             obj = connector.get_instance()
             pytest.fail("No exception raised")
@@ -31,11 +30,6 @@ def test_celery(app, faker):
         return False
 
     log.info("Executing {} tests", CONNECTOR)
-
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
 
     detector.init_services(
         app=app,
@@ -207,12 +201,6 @@ def test_celery(app, faker):
 
     with connector.get_instance() as obj:
         assert obj is not None
-
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None
 
     app = create_app(mode=ServerModes.WORKER)
     assert app is not None

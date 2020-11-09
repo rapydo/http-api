@@ -310,6 +310,11 @@ class Detector:
 
     def get_debug_instance(self, connector):
 
+        # Deprecated since 0.9
+        log.warning(
+            "Deprecated use of get_debug_instance, create a normal instance instead"
+        )
+
         if connector not in self.services:
             log.error("Connector {} not found", connector)
             return None

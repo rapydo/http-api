@@ -14,9 +14,6 @@ def test_mongo(app):
 
     if not detector.check_availability(CONNECTOR):
 
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
-
         try:
             obj = connector.get_instance()
             pytest.fail("No exception raised")
@@ -27,11 +24,6 @@ def test_mongo(app):
         return False
 
     log.info("Executing {} tests", CONNECTOR)
-
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
 
     detector.init_services(
         app=app,
@@ -72,9 +64,3 @@ def test_mongo(app):
 
     with connector.get_instance() as obj:
         assert obj is not None
-
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None

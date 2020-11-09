@@ -17,9 +17,6 @@ CONNECTOR = "neo4j"
 
 if not detector.check_availability(CONNECTOR):
 
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is None
-
     try:
         obj = connector.get_instance()
         pytest.fail("No exception raised")
@@ -53,11 +50,6 @@ else:
         @staticmethod
         def test_connector(app, fake):
 
-            # Run this before the init_services,
-            # get_debug_instance is able to load what is needed
-            obj = detector.get_debug_instance(CONNECTOR)
-            assert obj is not None
-
             detector.init_services(
                 app=app,
                 project_init=False,
@@ -65,16 +57,13 @@ else:
             )
 
             try:
-                detector.get_service_instance(
-                    CONNECTOR, host="invalidhostname", port=123
-                )
+                connector.get_instance(host="invalidhostname", port=123)
                 pytest.fail("No exception raised on unavailable service")
             except ServiceUnavailable:
                 pass
 
             try:
-                detector.get_service_instance(
-                    CONNECTOR,
+                connector.get_instance(
                     user="invaliduser",
                 )
                 pytest.fail("No exception raised on unavailable service")
@@ -137,9 +126,3 @@ else:
 
             with connector.get_instance() as obj:
                 assert obj is not None
-
-            obj = detector.get_debug_instance(CONNECTOR)
-            assert obj is not None
-
-            obj = detector.get_debug_instance("invalid")
-            assert obj is None
