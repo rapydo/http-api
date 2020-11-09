@@ -161,8 +161,7 @@ class Profile(EndpointResource):
 
         user = self.get_user()
 
-        db = self.get_service_instance(detector.authentication_service)
-        db.update_properties(user, kwargs)
+        self.auth.db.update_properties(user, kwargs)
 
         log.info("Profile updated")
 

@@ -320,8 +320,7 @@
 
 #         self.auth.link_roles(user, roles)
 
-#         db = self.get_service_instance(detector.authentication_service)
-#         db.update_properties(user, kwargs)
+#         self.auth.db.update_properties(user, kwargs)
 #         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
