@@ -16,7 +16,7 @@ T = TypeVar("T", bound="Connector")
 
 class Connector(metaclass=abc.ABCMeta):
 
-    variables: Dict[str, str]
+    variables: Dict[str, str] = {}
     models = {}
     # assigned by Detector during init_services
     app = None
