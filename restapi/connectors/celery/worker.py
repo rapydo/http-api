@@ -22,6 +22,8 @@ celery_app.app = app
 
 
 def get_service(service, **kwargs):
+    # Deprecated since 0.9
+    log.critical("Deprecated use of celery_app.get_service, use connector.get_instance")
     return detector.get_service_instance(service, **kwargs)
 
 

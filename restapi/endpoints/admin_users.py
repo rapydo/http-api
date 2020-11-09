@@ -1,5 +1,6 @@
 from restapi import decorators
 from restapi.config import get_project_configuration
+from restapi.connectors import smtp
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
@@ -226,8 +227,8 @@ class AdminUsers(EndpointResource):
         self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            smtp = self.get_service_instance("smtp", verify=True)
-            send_notification(smtp, user, unhashed_password, is_update=False)
+            smtp_client = smtp.get_instance(verify=1)
+            send_notification(smtp_client, user, unhashed_password, is_update=False)
 
         return self.response(user.uuid)
 
@@ -279,8 +280,8 @@ class AdminUsers(EndpointResource):
             self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            smtp = self.get_service_instance("smtp", verify=True)
-            send_notification(smtp, user, unhashed_password, is_update=True)
+            smtp_client = smtp.get_instance(verify=1)
+            send_notification(smtp_client, user, unhashed_password, is_update=True)
 
         return self.empty_response()
 

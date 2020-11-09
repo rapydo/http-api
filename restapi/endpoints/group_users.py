@@ -78,7 +78,7 @@
 #     if auth_service == 'neo4j':
 
 #         groups = []
-#         neo4j = detector.get_service_instance('neo4j')
+#         graph = neo4j.get_instance()
 
 #         # current_user = self.get_user()
 #         # for idx, val in enumerate(new_schema):
@@ -117,7 +117,7 @@
 #         #             #     new_schema[idx]["default"] = g.uuid
 #         #         if (len(new_schema[idx]["enum"])) == 1:
 #         #             new_schema[idx]["default"] = defg
-#         # for g in neo4j.Group.nodes.all():
+#         # for g in graph.Group.nodes.all():
 #         #     group_name = f"{g.shortname} - {g.fullname}"
 #         #     groups.append({g.uuid: group_name})
 
@@ -251,7 +251,7 @@
 
 #         # FIXME: groups management is only implemented for neo4j
 #         if 'group' in kwargs and self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
+#             self.graph = neo4j.get_instance()
 #             group = parse_group(kwargs, self.graph)
 
 #             if group is not None:
@@ -363,7 +363,7 @@
 
 #         is_admin = self.verify_admin()
 #         if self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
+#             self.graph = neo4j.get_instance()
 
 #         user = self.auth.get_user(user_id=user_id
 

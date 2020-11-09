@@ -6,6 +6,7 @@ import pytest
 import pytz
 from neo4j.exceptions import CypherSyntaxError
 
+from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -20,7 +21,7 @@ if not detector.check_availability(CONNECTOR):
     assert obj is None
 
     try:
-        obj = detector.get_service_instance(CONNECTOR)
+        obj = connector.get_instance()
         pytest.fail("No exception raised")
     except ServiceUnavailable:
         pass
@@ -80,7 +81,7 @@ else:
             except ServiceUnavailable:
                 pass
 
-            obj = detector.get_service_instance(CONNECTOR)
+            obj = connector.get_instance()
             assert obj is not None
 
             for row in obj.cypher("MATCH (u: User) RETURN u limit 1"):
@@ -116,15 +117,15 @@ else:
             assert obj.fuzzy_tokenize("x + y") == "x~1 + y~1"
             assert obj.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
 
-            obj = detector.get_service_instance(CONNECTOR, expiration=1)
+            obj = connector.get_instance(expiration=1)
             obj_id = id(obj)
 
-            obj = detector.get_service_instance(CONNECTOR, expiration=1)
+            obj = connector.get_instance(expiration=1)
             assert id(obj) == obj_id
 
             time.sleep(1)
 
-            obj = detector.get_service_instance(CONNECTOR, expiration=1)
+            obj = connector.get_instance(expiration=1)
             assert id(obj) != obj_id
 
             assert obj.is_connected()
@@ -134,7 +135,7 @@ else:
             # ... close connection again ... nothing should happens
             obj.disconnect()
 
-            with detector.get_service_instance(CONNECTOR) as obj:
+            with connector.get_instance() as obj:
                 assert obj is not None
 
             obj = detector.get_debug_instance(CONNECTOR)

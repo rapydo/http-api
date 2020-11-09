@@ -4,6 +4,7 @@ import jwt
 
 from restapi import decorators
 from restapi.config import get_frontend_url, get_project_configuration
+from restapi.connectors import smtp
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
@@ -81,8 +82,8 @@ if detector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            smtp = self.get_service_instance("smtp", verify=True)
-            send_password_reset_link(smtp, complete_uri, title, reset_email)
+            smtp_client = smtp.get_instance(verify=1)
+            send_password_reset_link(smtp_client, complete_uri, title, reset_email)
 
             ##################
             # Completing the reset task

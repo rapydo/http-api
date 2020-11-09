@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -18,7 +19,7 @@ def test_sqlalchemy(app):
         assert obj is None
 
         try:
-            obj = detector.get_service_instance(CONNECTOR)
+            obj = connector.get_instance()
             pytest.fail("No exception raised")
         except ServiceUnavailable:
             pass
@@ -66,16 +67,16 @@ def test_sqlalchemy(app):
     )
     assert obj is not None
 
-    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
+    obj = connector.get_instance(expiration=1, test_connection=True)
     obj_id = id(obj)
     obj_db_id = id(obj.db)
 
-    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
+    obj = connector.get_instance(expiration=1, test_connection=True)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(CONNECTOR, expiration=1, test_connection=True)
+    obj = connector.get_instance(expiration=1, test_connection=True)
     # With alchemy the connection object remains the same...
     assert id(obj) != obj_id
     assert id(obj.db) == obj_db_id
@@ -88,7 +89,7 @@ def test_sqlalchemy(app):
     obj.disconnect()
 
     # sqlalchemy connector does not support with context
-    # with detector.get_service_instance(CONNECTOR) as obj:
+    # with connector.get_instance() as obj:
     #     assert obj is not None
 
     obj = detector.get_debug_instance(CONNECTOR)
