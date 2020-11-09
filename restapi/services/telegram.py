@@ -42,7 +42,7 @@ class Bot:
     # Startup workflow: init -> load_commands -> start
     def __init__(self):
         self.commands = {}
-        self.variables = Detector.load_variables(prefix="telegram")
+        self.variables = Env.load_variables_group(prefix="telegram")
         self.updater = Updater(
             self.variables.get("api_key"),
             use_context=True,

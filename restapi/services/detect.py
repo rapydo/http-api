@@ -32,6 +32,8 @@ class Detector:
 
         log.info("Authentication service: {}", self.authentication_service)
 
+        # It is also used by __command__ to get:
+        #       - detector.services[conn-name]['myclass']['variables']
         self.services: Dict[str, Dict[str, Any]] = {
             AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}
         }
@@ -107,7 +109,7 @@ class Detector:
             else:
                 prefix = connector
 
-            variables = Detector.load_variables(prefix=prefix)
+            variables = Env.load_variables_group(prefix=prefix)
 
             if not Env.to_bool(variables.get("enable_connector", True)):
                 log.info("{} connector is disabled", connector)
@@ -185,29 +187,6 @@ class Detector:
             log.debug("Got class definition for {}", connector_class)
 
         return True
-
-    @staticmethod
-    def load_variables(prefix: str) -> Dict[str, str]:
-
-        prefix += "_"
-
-        variables: Dict[str, str] = {}
-
-        for var, value in os.environ.items():
-
-            var = var.lower()
-
-            if not var.startswith(prefix):
-                continue
-
-            # Fix key and value before saving
-            key = var[len(prefix) :]
-            # One thing that we must avoid is any quote around our value
-            value = value.strip('"').strip("'")
-            # save
-            variables[key] = value
-
-        return variables
 
     def init_services(
         self,

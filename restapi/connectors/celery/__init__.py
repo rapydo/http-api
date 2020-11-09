@@ -31,11 +31,8 @@ class CeleryExt(Connector):
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
 
-        # Do not import before loading the ext!
-        from restapi.services.detect import Detector
-
         if broker == "RABBIT":
-            service_vars = Detector.load_variables(prefix="rabbitmq")
+            service_vars = Env.load_variables_group(prefix="rabbitmq")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
             BROKER_VHOST = service_vars.get("vhost", "")
@@ -47,7 +44,7 @@ class CeleryExt(Connector):
                 BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
 
         elif broker == "REDIS":
-            service_vars = Detector.load_variables(prefix="redis")
+            service_vars = Env.load_variables_group(prefix="redis")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
             BROKER_VHOST = ""
@@ -76,7 +73,7 @@ class CeleryExt(Connector):
         BACKENDCRED = ""
 
         if backend == "RABBIT":
-            service_vars = Detector.load_variables(prefix="rabbitmq")
+            service_vars = Env.load_variables_group(prefix="rabbitmq")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
@@ -84,11 +81,11 @@ class CeleryExt(Connector):
             if BACKEND_USER and BACKEND_PASSWORD:
                 BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         elif backend == "REDIS":
-            service_vars = Detector.load_variables(prefix="redis")
+            service_vars = Env.load_variables_group(prefix="redis")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
         elif backend == "MONGODB":
-            service_vars = Detector.load_variables(prefix="mongo")
+            service_vars = Env.load_variables_group(prefix="mongo")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")

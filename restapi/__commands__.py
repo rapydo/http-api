@@ -8,6 +8,7 @@ from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.config import PRODUCTION
+from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
@@ -162,9 +163,9 @@ def mywait():
             broker = myclass.variables.get("broker")
 
             if broker == "RABBIT":
-                service_vars = detector.load_variables(prefix="rabbitmq")
+                service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif broker == "REDIS":
-                service_vars = detector.load_variables(prefix="redis")
+                service_vars = Env.load_variables_group(prefix="redis")
             else:
                 print_and_exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
@@ -174,11 +175,11 @@ def mywait():
 
             backend = myclass.variables.get("backend")
             if backend == "RABBIT":
-                service_vars = detector.load_variables(prefix="rabbitmq")
+                service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
-                service_vars = detector.load_variables(prefix="redis")
+                service_vars = Env.load_variables_group(prefix="redis")
             elif backend == "MONGODB":
-                service_vars = detector.load_variables(prefix="mongo")
+                service_vars = Env.load_variables_group(prefix="mongo")
             else:
                 print_and_exit(
                     "Invalid celery backend: {}", backend

@@ -110,7 +110,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         cls.load_roles()
         cls.import_secret(SECRET_KEY_FILE)
 
-        variables = Detector.load_variables(prefix="auth")
+        variables = Env.load_variables_group(prefix="auth")
 
         cls.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
         cls.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
