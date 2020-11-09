@@ -1,6 +1,7 @@
 import json
 import socket
 import ssl
+from typing import Optional, Union
 
 import pika
 
@@ -178,3 +179,15 @@ class RabbitExt(Connector):
             self.channel.confirm_delivery()
 
         return self.channel
+
+
+instance = RabbitExt()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "RabbitExt":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)

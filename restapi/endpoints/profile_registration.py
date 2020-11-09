@@ -9,7 +9,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 
-# This endpoint require the server to send the activation token via email
+# This endpoint requires the server to send the activation token via email
 if detector.check_availability("smtp"):
 
     auth = EndpointResource.load_authentication()

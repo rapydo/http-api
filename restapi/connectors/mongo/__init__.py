@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, Union
 
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
@@ -368,3 +369,15 @@ class Authentication(BaseAuthentication):
             log.warning("Could not invalidate non-existing token")
 
         return True
+
+
+instance = MongoExt()
+
+
+def get_instance(
+    verify: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "MongoExt":
+
+    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)
