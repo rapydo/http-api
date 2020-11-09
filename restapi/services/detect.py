@@ -269,7 +269,10 @@ class Detector:
                     authentication_instance.init_auth_db(options)
                     log.info("Initialized authentication module")
 
-                self.project_initialization(instances, app=app)
+                if mem.initializer(services=instances, app=app):
+                    log.info("Vanilla project has been initialized")
+                else:
+                    log.error("Errors during custom initialization")
 
             if project_clean:
                 connector = glom(
@@ -280,14 +283,6 @@ class Detector:
 
     def check_availability(self, name):
         return glom(self.services, f"{name}.available", default=False)
-
-    @classmethod
-    def project_initialization(self, instances, app=None):
-
-        if mem.initializer(services=instances, app=app):
-            log.info("Vanilla project has been initialized")
-        else:
-            log.error("Errors during custom initialization")
 
 
 detector = Detector()
