@@ -47,6 +47,9 @@ class Detector:
 
         self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
 
+    def check_availability(self, name):
+        return glom(self.services, f"{name}.available", default=False)
+
     def get_connector(self, name):
 
         service = self.services.get(name)
@@ -119,7 +122,7 @@ class Detector:
             if host := variables.get("host"):
                 external = not host.endswith(".dockerized.io")
             else:
-                variables["enabled"] = "0"
+                variables["enable"] = "0"
                 external = False
 
             enabled = Env.to_bool(variables.get("enable"))
@@ -280,9 +283,6 @@ class Detector:
                 )
                 log.debug("Destroying {}", self.authentication_service)
                 connector.destroy()
-
-    def check_availability(self, name):
-        return glom(self.services, f"{name}.available", default=False)
 
 
 detector = Detector()
