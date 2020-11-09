@@ -289,26 +289,5 @@ class Detector:
         else:
             log.error("Errors during custom initialization")
 
-    def get_debug_instance(self, connector):
-
-        # Deprecated since 0.9
-        log.warning(
-            "Deprecated use of get_debug_instance, create a normal instance instead"
-        )
-
-        if connector not in self.services:
-            log.error("Connector {} not found", connector)
-            return None
-
-        if not self.services[connector].get("available", False):
-            log.error("Connector {} is not available", connector)
-            return None
-
-        if "connector" not in self.services[connector]:
-            c = glom(self.services[connector], "class")
-            self.services[connector]["connector"] = c(app=None)
-
-        return self.get_service_instance(connector)
-
 
 detector = Detector()
