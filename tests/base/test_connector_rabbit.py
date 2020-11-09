@@ -54,7 +54,8 @@ def test_rabbit(app, faker):
     assert obj.send("test", queue)
     assert obj.send_json("test", queue)
 
-    obj.channel.close()
+    if obj.channel:
+        obj.channel.close()
 
     # Channel is automatically open, if found closed
     assert obj.send("test", queue)

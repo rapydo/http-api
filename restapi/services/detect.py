@@ -65,6 +65,7 @@ class Detector:
     def get_authentication_instance(self):
         return self.authentication_module.Authentication()
 
+    # Deprecated since 0.9
     def get_service_instance(
         self: "Detector",
         service_name: str,
@@ -73,7 +74,6 @@ class Detector:
         **kwargs: Union[Optional[str], int],
     ) -> Connector:
 
-        # Deprecated since 0.9
         log.warning(
             "Deprecated use of detector.get_service_instance, "
             "use yourconnector.get_instace() instead"
