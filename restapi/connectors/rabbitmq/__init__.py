@@ -124,10 +124,15 @@ class RabbitExt(Connector):
 
         # Settings for the message:
         permanent_delivery = 2  # make message persistent
+
         if headers is None:
             headers = {}
 
-        props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
+        props = pika.BasicProperties(
+            delivery_mode=permanent_delivery,
+            headers=headers,
+            user_id=self.variables.get("user"),
+        )
 
         try:
 
