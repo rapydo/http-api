@@ -92,7 +92,7 @@
 #         #         new_schema[idx]["custom"]["label"] = "Group"
 #         #         new_schema[idx]["enum"] = []
 
-#         #         default_group = self.graph.Group.nodes.get_or_none(
+#         #         default_group = graph.Group.nodes.get_or_none(
 #         #             shortname="default"
 #         #         )
 
@@ -200,7 +200,7 @@
 #                     return True
 
 #             # All local admins have rights on general users
-#             g = self.graph.Group.nodes.get_or_none(shortname="default")
+#             g = graph.Group.nodes.get_or_none(shortname="default")
 #             if g is not None:
 #                 if user.belongs_to.is_connected(g):
 #                     return True
@@ -251,8 +251,8 @@
 
 #         # FIXME: groups management is only implemented for neo4j
 #         if 'group' in kwargs and self.neo4j_enabled:
-#             self.graph = neo4j.get_instance()
-#             group = parse_group(kwargs, self.graph)
+#             graph = neo4j.get_instance()
+#             group = parse_group(kwargs, graph)
 
 #             if group is not None:
 #                 if group.shortname != "default":
@@ -362,7 +362,7 @@
 
 #         is_admin = self.verify_admin()
 #         if self.neo4j_enabled:
-#             self.graph = neo4j.get_instance()
+#             graph = neo4j.get_instance()
 
 #         user = self.auth.get_user(user_id=user_id
 

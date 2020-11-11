@@ -38,12 +38,14 @@ class EndpointResource(MethodResource, Resource):
 
     def __init__(self):
         super().__init__()
+        self.__auth = None
 
-        # Authentication instance is always needed at each request
-        # Mah... not so true...
-        self.auth = detector.get_authentication_instance()
-        # To be removed
-        self.get_service_instance = detector.get_service_instance
+    @property
+    def auth(self):
+        if not self.__auth:
+            self.__auth = detector.get_authentication_instance()
+
+        return self.__auth
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):

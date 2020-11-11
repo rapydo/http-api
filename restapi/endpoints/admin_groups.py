@@ -4,8 +4,7 @@ from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
-
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 
 class User(Schema):
