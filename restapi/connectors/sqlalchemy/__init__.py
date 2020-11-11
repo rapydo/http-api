@@ -123,9 +123,6 @@ class SQLAlchemy(Connector):
 
     def connect(self, **kwargs):
 
-        # should be merged with verify flag
-        test_connection = kwargs.get("test_connection", False)
-
         variables = self.variables.copy()
         variables.update(kwargs)
 
@@ -181,9 +178,10 @@ class SQLAlchemy(Connector):
             else:
                 raise e
 
-        if test_connection:
-            sql = text("SELECT 1")
-            db.engine.execute(sql)
+        # This is needed to test the connection?
+        # sql = text("SELECT 1")
+        # db.engine.execute(sql)
+
         self.db = db
         return self
 

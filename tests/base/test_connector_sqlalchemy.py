@@ -34,49 +34,42 @@ def test_sqlalchemy(app):
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
         try:
-            connector.get_instance(
-                test_connection=True, host="invalidhostname", port=123
-            )
+            connector.get_instance(host="invalidhostname", port=123)
 
             pytest.fail("No exception raised on unavailable service")
         except ServiceUnavailable:
             pass
 
     try:
-        connector.get_instance(
-            test_connection=True,
-            user="invaliduser",
-        )
+        connector.get_instance(user="invaliduser")
 
         pytest.fail("No exception raised on unavailable service")
     except ServiceUnavailable:
         pass
 
-    obj = connector.get_instance(
-        test_connection=True,
-    )
+    obj = connector.get_instance()
     assert obj is not None
 
     obj.disconnect()
 
     # Create new connector with short expiration time
-    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
+    obj = connector.get_instance(expiration=2, verification=1)
     obj_id = id(obj)
     obj_db_id = id(obj.db)
 
     # Connector is expected to be still valid
-    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
     # The connection should have been checked and should be still valid
-    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
+    obj = connector.get_instance(expiration=2, verification=1)
     # With alchemy the connection object remains the same...
     assert id(obj) != obj_id
     assert id(obj.db) == obj_db_id
