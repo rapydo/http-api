@@ -38,14 +38,15 @@ class EndpointResource(MethodResource, Resource):
 
     def __init__(self):
         super().__init__()
-        self.__auth = None
+        self.auth = detector.get_authentication_instance()
+        # self.__auth = None
 
-    @property
-    def auth(self):
-        if not self.__auth:
-            self.__auth = detector.get_authentication_instance()
+    # @property
+    # def auth(self):
+    #     if not self.__auth:
+    #         self.__auth = detector.get_authentication_instance()
 
-        return self.__auth
+    #     return self.__auth
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):
