@@ -180,8 +180,9 @@ class SQLAlchemy(Connector):
 
         # This is needed to test the connection
         if self.app:
-            sql = text("SELECT 1")
-            db.engine.execute(sql)
+            with self.app.app_context():
+                sql = text("SELECT 1")
+                db.engine.execute(sql)
 
         self.db = db
         return self
