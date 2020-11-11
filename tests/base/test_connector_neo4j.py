@@ -106,15 +106,26 @@ else:
             assert obj.fuzzy_tokenize("x + y") == "x~1 + y~1"
             assert obj.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
 
-            obj = connector.get_instance(expiration=1)
+            obj.disconnect()
+
+            # Create new connector with short expiration time
+            obj = connector.get_instance(expiration=2, verification=1)
             obj_id = id(obj)
 
-            obj = connector.get_instance(expiration=1)
+            # Connector is expected to be still valid
+            obj = connector.get_instance(expiration=2, verification=1)
             assert id(obj) == obj_id
 
-            time.sleep(2)
+            time.sleep(1)
 
-            obj = connector.get_instance(expiration=1)
+            # The connection should have been checked and should be still valid
+            obj = connector.get_instance(expiration=2, verification=1)
+            assert id(obj) == obj_id
+
+            time.sleep(1)
+
+            # Connection should have been expired and a new connector been created
+            obj = connector.get_instance(expiration=2, verification=1)
             assert id(obj) != obj_id
 
             assert obj.is_connected()

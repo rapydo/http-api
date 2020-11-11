@@ -57,16 +57,26 @@ def test_sqlalchemy(app):
     )
     assert obj is not None
 
-    obj = connector.get_instance(expiration=1, test_connection=True)
+    obj.disconnect()
+
+    # Create new connector with short expiration time
+    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
     obj_id = id(obj)
     obj_db_id = id(obj.db)
 
-    obj = connector.get_instance(expiration=1, test_connection=True)
+    # Connector is expected to be still valid
+    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
     assert id(obj) == obj_id
 
-    time.sleep(2)
+    time.sleep(1)
 
-    obj = connector.get_instance(expiration=1, test_connection=True)
+    # The connection should have been checked and should be still valid
+    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
+    assert id(obj) == obj_id
+
+    time.sleep(1)
+
+    obj = connector.get_instance(expiration=2, verification=1, test_connection=True)
     # With alchemy the connection object remains the same...
     assert id(obj) != obj_id
     assert id(obj.db) == obj_db_id
