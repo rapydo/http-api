@@ -64,7 +64,7 @@ def test_sqlalchemy(app):
     obj = connector.get_instance(expiration=1, test_connection=True)
     assert id(obj) == obj_id
 
-    time.sleep(1)
+    time.sleep(2)
 
     obj = connector.get_instance(expiration=1, test_connection=True)
     # With alchemy the connection object remains the same...

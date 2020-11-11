@@ -50,7 +50,7 @@ def test_mongo(app):
     obj = connector.get_instance(expiration=1)
     assert id(obj) == obj_id
 
-    time.sleep(1)
+    time.sleep(2)
 
     obj = connector.get_instance(expiration=1)
     assert id(obj) != obj_id
