@@ -178,9 +178,9 @@ class SQLAlchemy(Connector):
             else:
                 raise e
 
-        # This is needed to test the connection?
-        # sql = text("SELECT 1")
-        # db.engine.execute(sql)
+        # This is needed to test the connection
+        sql = text("SELECT 1")
+        db.engine.execute(sql)
 
         self.db = db
         return self
