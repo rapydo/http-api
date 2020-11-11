@@ -93,7 +93,7 @@ if detector.check_availability("smtp"):
                     user, userdata, extra_userdata, self.auth.db
                 )
 
-                smtp_client = smtp.get_instance(verify=1)
+                smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(

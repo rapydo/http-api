@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Dict
+from typing import Dict, Optional, Union
 
 
 class Env:
@@ -52,7 +52,7 @@ class Env:
 
     @staticmethod
     @lru_cache
-    def to_int(var, default=0):
+    def to_int(var: Optional[Union[str, int]], default: int = 0) -> int:
 
         if var is None:
             return default

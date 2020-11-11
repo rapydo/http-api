@@ -86,7 +86,7 @@ class Detector:
         connector: Connector = self.get_connector(service_name)
 
         instance: Connector = connector.get_instance(
-            verify=verify, expiration=expiration, **kwargs
+            verification=verify, expiration=expiration, **kwargs
         )
 
         return instance

@@ -378,9 +378,11 @@ instance = MongoExt()
 
 
 def get_instance(
-    verify: Optional[int] = None,
+    verification: Optional[int] = None,
     expiration: Optional[int] = None,
     **kwargs: Union[Optional[str], int],
 ) -> "MongoExt":
 
-    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

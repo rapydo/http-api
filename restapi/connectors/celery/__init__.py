@@ -385,7 +385,7 @@ Error: {traceback.format_exc()}
                 subject = f"{project}: task {task_name} failed"
                 from restapi.connectors import smtp
 
-                smtp_client = smtp.get_instance(verify=1)
+                smtp_client = smtp.get_instance()
                 smtp_client.send(body, subject)
 
     return wrapper
@@ -395,9 +395,11 @@ instance = CeleryExt()
 
 
 def get_instance(
-    verify: Optional[int] = None,
+    verification: Optional[int] = None,
     expiration: Optional[int] = None,
     **kwargs: Union[Optional[str], int],
 ) -> "CeleryExt":
 
-    return instance.get_instance(verify=verify, expiration=expiration, **kwargs)
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

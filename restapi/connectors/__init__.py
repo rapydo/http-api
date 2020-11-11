@@ -6,6 +6,7 @@ from typing import Dict, Optional, TypeVar
 # mypy: ignore-errors
 from flask import _app_ctx_stack as stack
 
+from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -124,7 +125,7 @@ class Connector(metaclass=abc.ABCMeta):
         self.objs[tid].setdefault(self.name, {})
         return self.objs[tid][self.name].get(key, None)
 
-    def initialize_connection(self, **kwargs):
+    def initialize_connection(self, expiration, verification, **kwargs):
 
         # Create a new instance of itself
         obj = self.__class__()
@@ -140,6 +141,19 @@ class Connector(metaclass=abc.ABCMeta):
             raise ServiceUnavailable({"Service Unavailable": "Internal server error"})
 
         obj.connection_time = datetime.now()
+
+        if verification == 0:
+            ver = None
+        else:
+            ver = obj.connection_time + timedelta(seconds=verification)
+        obj.connection_verification_time = ver
+
+        if expiration == 0:
+            exp = None
+        else:
+            exp = obj.connection_time + timedelta(seconds=expiration)
+        obj.connection_expiration_time = exp
+
         return obj
 
     def set_models_to_service(self, obj):
@@ -152,7 +166,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     def get_instance(
         self: T,
-        verify: Optional[int] = None,
+        verification: Optional[int] = None,
         expiration: Optional[int] = None,
         **kwargs,
     ) -> T:
@@ -160,20 +174,20 @@ class Connector(metaclass=abc.ABCMeta):
         if not self.available:
             raise ServiceUnavailable(f"Service {self.name} is not available")
 
-        if verify is None:
+        if verification is None:
             # this should be the default value for this connector
-            verify = 0
+            verification = Env.to_int(self.variables.get("verification_time"))
 
         if expiration is None:
             # this should be the default value for this connector
-            expiration = 0
+            expiration = Env.to_int(self.variables.get("expiration_time"))
 
         # When context is empty this is a connection at loading time
         # Do not save it
         if stack.top is None:
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
-            obj = self.initialize_connection()
+            obj = self.initialize_connection(expiration, verification)
             self.set_models_to_service(obj)
             return obj
 
@@ -182,25 +196,28 @@ class Connector(metaclass=abc.ABCMeta):
         obj = self.get_object(key=unique_hash)
 
         # if an expiration time is set, verify the instance age
-        if obj and expiration > 0:
-            now = datetime.now()
-            exp = timedelta(seconds=expiration)
+        if obj and obj.connection_expiration_time:
 
             # the instance is invalidated if older than the expiration time
-            if now >= obj.connection_time + exp:
-                log.info("Cache expired for {}", self.name)
+            if datetime.now() >= obj.connection_expiration_time:
+
+                log.info("{} connection is expired", self.name)
                 obj.disconnect()
                 obj = None
 
         # If a verification time is set, verify the instance age
-        if obj and verify > 0:
+        if obj and obj.connection_verification_time:
             now = datetime.now()
-            exp = timedelta(seconds=expiration)
 
             # the instance is verified if older than the verification time
-            if now >= obj.connection_time + exp:
+            if now >= obj.connection_verification_time:
+                # if the connection is still valid, set a new verification time
+                if obj.is_connected():
+                    # Set the new verification time
+                    ver = timedelta(seconds=verification)
+                    obj.connection_verification_time = now + ver
                 # if the connection is no longer valid, invalidate the instance
-                if not obj.is_connected():
+                else:
                     log.warning(
                         "{} is no longer connected, connector invalidated", self.name
                     )
@@ -212,7 +229,7 @@ class Connector(metaclass=abc.ABCMeta):
             return obj
 
         # can raise ServiceUnavailable exception
-        obj = self.initialize_connection(**kwargs)
+        obj = self.initialize_connection(expiration, verification, **kwargs)
         self.set_models_to_service(obj)
         self.set_object(obj=obj, key=unique_hash)
         return obj
