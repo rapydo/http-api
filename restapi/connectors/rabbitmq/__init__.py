@@ -26,6 +26,10 @@ class RabbitExt(Connector):
     def connect(self, **kwargs):
 
         variables = self.variables.copy()
+        # Beware, if you specify a user different by the default,
+        # then the send method will fail to to PRECONDITION_FAILED because
+        # the user_id will not pass the verification
+        # Locally save self.variables + kwargs to be used in send()
         variables.update(kwargs)
 
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
@@ -131,6 +135,15 @@ class RabbitExt(Connector):
         props = pika.BasicProperties(
             delivery_mode=permanent_delivery,
             headers=headers,
+            # This should be the same used by the connect method, i.e.:
+            # self.variables + kwargs
+            # Otherwise it will fail with error:
+            # Failed to write message, channel is dead (
+            #     (406, "PRECONDITION_FAILED - user_id property
+            #            set to 'CUSTOM' but authenticated user was 'BASE'
+            #           "
+            #     )
+            # )
             user_id=self.variables.get("user"),
         )
 
