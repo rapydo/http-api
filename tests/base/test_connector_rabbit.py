@@ -71,9 +71,21 @@ def test_rabbit(app, faker):
     assert obj.exchange_exists(exchange)
     obj.create_exchange(exchange)
 
-    # Now that exchange does exists :-)
+    # Now that exchange does exists, but the queue is not bound
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_bind(queue, exchange, queue)
+
     assert obj.send("test", routing_key=queue, exchange=exchange)
     assert obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_unbind(queue, exchange, queue)
+
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_bind(queue, exchange, queue)
 
     if obj.channel:
         obj.channel.close()

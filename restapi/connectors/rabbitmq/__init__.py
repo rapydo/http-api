@@ -69,17 +69,17 @@ class RabbitExt(Connector):
         self.channel = None
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         if self.connection.is_closed:
             log.debug("Connection already closed")
         else:
             self.connection.close()
         self.disconnected = True
 
-    def is_connected(self):
-        return self.connection.is_open
+    def is_connected(self) -> bool:
+        return bool(self.connection.is_open)
 
-    def exchange_exists(self, exchange):
+    def exchange_exists(self, exchange: str) -> bool:
         channel = self.get_channel()
         try:
             out = channel.exchange_declare(exchange=exchange, passive=True)
@@ -89,7 +89,7 @@ class RabbitExt(Connector):
             log.error(e)
             return False
 
-    def create_exchange(self, exchange):
+    def create_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
         out = channel.exchange_declare(
@@ -97,13 +97,13 @@ class RabbitExt(Connector):
         )
         log.debug(out)
 
-    def delete_exchange(self, exchange):
+    def delete_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
         out = channel.exchange_delete(exchange, if_unused=False)
         log.debug(out)
 
-    def queue_exists(self, queue):
+    def queue_exists(self, queue: str) -> bool:
         channel = self.get_channel()
         try:
             out = channel.queue_declare(queue=queue, passive=True)
@@ -113,7 +113,7 @@ class RabbitExt(Connector):
             log.error(e)
             return False
 
-    def create_queue(self, queue):
+    def create_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
         out = channel.queue_declare(
@@ -121,13 +121,29 @@ class RabbitExt(Connector):
         )
         log.debug(out)
 
-    def delete_queue(self, queue):
+    def delete_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
         out = channel.queue_delete(
             queue,
             if_unused=False,
             if_empty=False,
+        )
+        log.debug(out)
+
+    def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.queue_bind(
+            queue=queue, exchange=exchange, routing_key=routing_key
+        )
+        log.debug(out)
+
+    def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.queue_unbind(
+            queue=queue, exchange=exchange, routing_key=routing_key
         )
         log.debug(out)
 
