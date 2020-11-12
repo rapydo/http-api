@@ -130,7 +130,7 @@ class SQLAlchemy(Connector):
         variables.update(kwargs)
 
         query = None
-        if self.is_mysql() and Connector.is_external(variables.get("host", "")):
+        if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
         uri = URL(
