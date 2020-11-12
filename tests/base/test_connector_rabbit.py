@@ -135,10 +135,6 @@ def test_rabbit(app, faker):
     obj.disconnect()
     assert not obj.is_connected()
 
-    # Connection is closed, of course. Please note the 'not'
-    obj.create_queue(queue)
-    assert not obj.queue_exists(queue)
-
     # ... close connection again ... nothing should happens
     obj.disconnect()
 
