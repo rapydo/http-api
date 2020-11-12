@@ -40,26 +40,62 @@ def test_rabbit(app, faker):
     obj = connector.get_instance()
     assert obj is not None
 
+    exchange = faker.pystr()
+    if obj.exchange_exists(exchange):
+        obj.delete_exchange(exchange)
+
     queue = faker.pystr()
     if obj.queue_exists(queue):
         obj.delete_queue(queue)
 
+    assert not obj.exchange_exists(queue)
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
     assert not obj.queue_exists(queue)
-    assert not obj.send("test", queue)
-    assert not obj.send_json("test", queue)
+    assert not obj.send("test", routing_key=queue)
+    assert not obj.send_json("test", routing_key=queue)
     obj.create_queue(queue)
     assert obj.queue_exists(queue)
     obj.create_queue(queue)
 
-    assert obj.send("test", queue)
-    assert obj.send_json("test", queue)
+    # Now send works because queue exists
+    assert obj.send("test", routing_key=queue)
+    assert obj.send_json("test", routing_key=queue)
+
+    # This send does not work because exchange does not exist
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.create_exchange(exchange)
+    assert obj.exchange_exists(exchange)
+    obj.create_exchange(exchange)
+
+    # Now that exchange does exists :-)
+    assert obj.send("test", routing_key=queue, exchange=exchange)
+    assert obj.send_json("test", routing_key=queue, exchange=exchange)
 
     if obj.channel:
         obj.channel.close()
 
-    # Channel is automatically open, if found closed
+    # Channel is automatically opened, if found closed
     assert obj.send("test", queue)
+
+    obj.delete_exchange(exchange)
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    assert obj.send("test", routing_key=queue)
+    assert obj.send_json("test", routing_key=queue)
+
     obj.delete_queue(queue)
+
+    assert not obj.send("test", routing_key=queue)
+    assert not obj.send_json("test", routing_key=queue)
+
+    queue = faker.pystr()
+    if obj.queue_exists(queue):
+        obj.delete_queue(queue)
 
     obj.disconnect()
 
@@ -87,9 +123,9 @@ def test_rabbit(app, faker):
     obj.disconnect()
     assert not obj.is_connected()
 
-    # Connection is closed, of course
-    assert not obj.send("test", queue)
-    assert not obj.send_json("test", queue)
+    # Connection is closed, of course. Please note the 'not'
+    obj.create_queue(queue)
+    assert not obj.queue_exists(queue)
 
     # ... close connection again ... nothing should happens
     obj.disconnect()
