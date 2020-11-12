@@ -118,6 +118,9 @@ def catch_db_exceptions(func):
 
 
 class SQLAlchemy(Connector):
+    def is_mysql(self) -> bool:
+        return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
+
     def get_connection_exception(self):
         return (OperationalError,)
 
@@ -127,7 +130,7 @@ class SQLAlchemy(Connector):
         variables.update(kwargs)
 
         query = None
-        if variables.get("dbtype", "postgresql") == "mysql+pymysql":
+        if self.is_mysql() and Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
         uri = URL(

@@ -121,7 +121,7 @@ class Detector:
             # if host is not in variables (like for Celery) do not consider it
             if "host" in variables:
                 if host := variables.get("host"):
-                    external = not host.endswith(".dockerized.io")
+                    external = Connector.is_external(host)
                 else:
                     variables["enable"] = "0"
                     external = False

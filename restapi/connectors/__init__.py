@@ -117,6 +117,10 @@ class Connector(metaclass=abc.ABCMeta):
         self.objs[tid].setdefault(self.name, {})
         self.objs[tid][self.name][key] = obj
 
+    @staticmethod
+    def is_external(host: str) -> bool:
+        return not host.endswith(".dockerized.io")
+
     def get_object(self, key="[]"):
         """ recover object if any """
 
