@@ -76,4 +76,4 @@ class TestApp(BaseTests):
         content = gzip.GzipFile(fileobj=BytesIO(gzipped_output)).read()
 
         assert len(content) == len(uncompressed_output)
-        assert content == uncompressed_output
+        assert content.decode("utf-8") == uncompressed_output
