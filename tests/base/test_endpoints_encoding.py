@@ -67,7 +67,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/gzip/2000", headers=headers)
         assert r.status_code == 200
         assert r.headers.get("Content-Encoding") == "gzip"
-        gzipped_output = r.data.decode("utf-8")
+        gzipped_output = r.data
 
         assert r.headers.get("Content-Length") == str(len(gzipped_output))
 
