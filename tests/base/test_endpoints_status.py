@@ -21,7 +21,6 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # Check HTML response to status if agent/request is text/html
-        # this is a ApiSpec endpoint
         headers = {"Accept": "text/html"}
         r = client.get(f"{API_URI}/status", headers=headers)
         assert r.status_code == 200

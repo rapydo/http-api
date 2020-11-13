@@ -1,4 +1,5 @@
 import gzip
+import sys
 from io import BytesIO
 from urllib import parse as urllib_parse
 
@@ -147,7 +148,9 @@ class ResponseMaker:
         if code < 200 or code >= 300 or content_encoding is not None:
             return content, {}
 
-        # return content if len < MTU ?
+        # Do not compress small contents
+        if sys.getsizeof(content) < 1500:
+            return content, {}
 
         gzip_buffer = BytesIO()
         gzip_file = gzip.GzipFile(mode="w", fileobj=gzip_buffer)
