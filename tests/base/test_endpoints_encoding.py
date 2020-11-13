@@ -61,7 +61,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert r.headers.get("Content-Encoding") != "gzip"
         uncompressed_output = r.data.decode("utf-8")
-        assert r.headers.get("Content-Length") == len(uncompressed_output)
+        assert r.headers.get("Content-Length") == str(len(uncompressed_output))
 
         # This will return a long gzipped string of 2000 aaaaaaaaaaaaaaa
         r = client.get(f"{API_URI}/tests/gzip/2000", headers=headers)
@@ -69,7 +69,7 @@ class TestApp(BaseTests):
         assert r.headers.get("Content-Encoding") == "gzip"
         gzipped_output = r.data.decode("utf-8")
 
-        assert r.headers.get("Content-Length") == len(gzipped_output)
+        assert r.headers.get("Content-Length") == str(len(gzipped_output))
 
         assert len(gzipped_output) < len(uncompressed_output)
 
