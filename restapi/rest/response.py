@@ -1,5 +1,6 @@
 import gzip
 import sys
+import time
 from io import BytesIO
 from urllib import parse as urllib_parse
 
@@ -153,6 +154,7 @@ class ResponseMaker:
         if sys.getsizeof(content) < 1500:
             return content, {}
 
+        start_time = time.time()
         gzip_buffer = BytesIO()
         gzip_file = gzip.GzipFile(mode="w", fileobj=gzip_buffer)
 
@@ -167,6 +169,8 @@ class ResponseMaker:
             "Content-Length": len(gzipped_content),
         }
 
+        end_time = time.time()
+        log.info("Compression time: {}", 1000 * (end_time - start_time))
         return gzipped_content, headers
 
     @staticmethod
