@@ -119,12 +119,12 @@ class Detector:
                 continue
 
             # if host is not in variables (like for Celery) do not consider it
+            external = False
             if "host" in variables:
                 if host := variables.get("host"):
                     external = Connector.is_external(host)
                 else:
                     variables["enable"] = "0"
-                    external = False
 
             enabled = Env.to_bool(variables.get("enable"))
             available = enabled or external
