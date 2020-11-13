@@ -89,15 +89,6 @@ def handle_response(response):
         data = ""
 
     url = obfuscate_query_parameters(request.url)
-    resp = str(response).replace("<Response ", "").replace(">", "")
-    log.info(
-        "{} {} {}{} -> {}",
-        BaseAuthentication.get_remote_ip(),
-        request.method,
-        url,
-        data,
-        resp,
-    )
 
     if "gzip" in request.headers.get("Accept-Encoding", "").lower():
         content, headers = ResponseMaker.gzip_response(
@@ -107,6 +98,16 @@ def handle_response(response):
         )
         response.data = content
         response.headers.update(headers)
+
+    resp = str(response).replace("<Response ", "").replace(">", "")
+    log.info(
+        "{} {} {}{} -> {}",
+        BaseAuthentication.get_remote_ip(),
+        request.method,
+        url,
+        data,
+        resp,
+    )
 
     return response
 
@@ -148,7 +149,7 @@ class ResponseMaker:
         if code < 200 or code >= 300 or content_encoding is not None:
             return content, {}
 
-        # Do not compress small contents
+        # Do not compress small contents, 1500 is the standard size of MTU
         if sys.getsizeof(content) < 1500:
             return content, {}
 

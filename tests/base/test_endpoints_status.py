@@ -20,16 +20,6 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == 404
 
-        # Check HTML response to status if agent/request is text/html
-        headers = {"Accept": "text/html"}
-        r = client.get(f"{API_URI}/status", headers=headers)
-        assert r.status_code == 200
-        output = r.data.decode("utf-8")
-        assert output != alive_message
-        assert alive_message in output
-        assert "<html" in output
-        assert "<body>" in output
-
         # Check /auth/status with no token or invalid token
         r = client.get(f"{AUTH_URI}/status")
         assert r.status_code == 401
