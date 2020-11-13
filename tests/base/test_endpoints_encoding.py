@@ -1,6 +1,6 @@
 import gzip
 
-import ByteIO
+import BytesIO
 
 from restapi.tests import API_URI, BaseTests
 
@@ -74,7 +74,7 @@ class TestApp(BaseTests):
 
         assert len(gzipped_output) < len(uncompressed_output)
 
-        content = gzip.GzipFile(fileobj=ByteIO(gzipped_output)).read()
+        content = gzip.GzipFile(fileobj=BytesIO(gzipped_output)).read()
 
         assert len(content) == len(uncompressed_output)
         assert content == uncompressed_output
