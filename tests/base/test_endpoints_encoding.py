@@ -1,6 +1,5 @@
 import gzip
-
-import BytesIO
+from io import BytesIO
 
 from restapi.tests import API_URI, BaseTests
 
