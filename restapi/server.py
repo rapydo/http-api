@@ -30,7 +30,7 @@ from restapi.config import (
 )
 from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
-from restapi.rest.response import handle_marshmallow_errors, log_response
+from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.detect import detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -207,7 +207,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
     # Logging responses
-    microservice.after_request(log_response)
+    microservice.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
 

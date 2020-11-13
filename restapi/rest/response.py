@@ -1,4 +1,5 @@
-from typing import Dict
+import gzip
+from io import BytesIO
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
@@ -61,7 +62,7 @@ def obfuscate_query_parameters(raw_url):
     return urllib_parse.urlunparse(url)
 
 
-def log_response(response):
+def handle_response(response):
 
     response.headers["_RV"] = str(version)
 
@@ -97,6 +98,15 @@ def log_response(response):
         resp,
     )
 
+    if "gzip" in request.headers.get("Accept-Encoding", "").lower():
+        content, headers = ResponseMaker.gzip_response(
+            response.data,
+            response.status_code,
+            response.headers.get("Content-Encoding"),
+        )
+        response.data = content
+        response.headers.update(headers)
+
     return response
 
 
@@ -131,6 +141,29 @@ class ResponseMaker:
         html_page = render_template("index.html", **html_data)
 
         return html_page, headers
+
+    @staticmethod
+    def gzip_response(content, code, content_encoding):
+        if code < 200 or code >= 300 or content_encoding is not None:
+            return content, {}
+
+        # return content if len < MTU ?
+
+        gzip_buffer = BytesIO()
+        gzip_file = gzip.GzipFile(mode="w", fileobj=gzip_buffer)
+
+        gzip_file.write(content)
+        gzip_file.close()
+
+        gzipped_content = gzip_buffer.getvalue()
+
+        headers = {
+            "Content-Encoding": "gzip",
+            "Vary": "Accept-Encoding",
+            "Content-Length": len(gzipped_content),
+        }
+
+        return gzipped_content, headers
 
     @staticmethod
     def convert_model_to_schema(schema):

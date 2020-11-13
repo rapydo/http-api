@@ -107,8 +107,7 @@ class EndpointResource(MethodResource, Resource):
         # If you accept the risk or you do not use marshalling unlock html responses
         # by the adding `allow_html=True` flag
         if allow_html:
-            accepted_formats = ResponseMaker.get_accepted_formats()
-            if "text/html" in accepted_formats:
+            if "text/html" in ResponseMaker.get_accepted_formats():
                 content, headers = ResponseMaker.get_html(content, code, headers)
                 return Response(
                     content, mimetype="text/html", status=code, headers=headers
