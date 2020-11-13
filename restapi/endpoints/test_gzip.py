@@ -20,8 +20,10 @@ if TESTING:
         )
         def get(self, size):
 
-            if size <= 0:
+            # No type check... but it is only used from a very specific test...
+            # So... who cares?? :-)
+            if int(size) <= 0:
                 raise RestApiException("Invalid size", status_code=416)
 
             # Just to prevent super giant responses
-            return self.response("a" * min(size, 1_000_000))
+            return self.response("a" * min(int(size), 1_000_000))
