@@ -181,8 +181,13 @@ class ResponseMaker:
         }
 
         end_time = time.time()
+        t = int(1000 * (end_time - start_time))
+        new_size = sys.getsizeof(gzipped_content)
         log.info(
-            "Compression of {} bytes took {} ms", nbytes, 1000 * (end_time - start_time)
+            "[GZIP] {} bytes compressed in {} ms -> {} bytes",
+            nbytes,
+            "< 1" if t < 1 else t,
+            new_size,
         )
         return gzipped_content, headers
 
