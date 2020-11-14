@@ -39,12 +39,14 @@ from restapi.utilities.uuid import getUUID
 #   database models and everything related at a central place before
 #   the application starts serving requests.
 class CustomAlchemy(OriginalAlchemy):
-    app_initialized = False
+    def __init__(self):
+        self.app_initialized = False
+        super().__init__()
 
     def init_app(self, app):
 
-        if not CustomAlchemy.app_initialized:
-            CustomAlchemy.app_initialized = True
+        if not self.app_initialized:
+            self.app_initialized = True
             super().init_app(app)
 
 
