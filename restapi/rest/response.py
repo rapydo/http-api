@@ -8,7 +8,12 @@ from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
-from restapi.config import get_project_configuration
+from restapi.config import (
+    GZIP_ENABLE,
+    GZIP_LEVEL,
+    GZIP_THRESHOLD,
+    get_project_configuration,
+)
 from restapi.models import GET_SCHEMA_KEY, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
@@ -91,7 +96,7 @@ def handle_response(response):
 
     url = obfuscate_query_parameters(request.url)
 
-    if "gzip" in request.headers.get("Accept-Encoding", "").lower():
+    if GZIP_ENABLE and "gzip" in request.headers.get("Accept-Encoding", "").lower():
         content, headers = ResponseMaker.gzip_response(
             response.data,
             response.status_code,
@@ -150,13 +155,19 @@ class ResponseMaker:
         if code < 200 or code >= 300 or content_encoding is not None:
             return content, {}
 
-        # Do not compress small contents, 1500 is the standard size of MTU
-        if sys.getsizeof(content) < 1500:
+        # Do not compress small contents
+        if (nbytes := sys.getsizeof(content)) < GZIP_THRESHOLD:
             return content, {}
 
         start_time = time.time()
         gzip_buffer = BytesIO()
-        gzip_file = gzip.GzipFile(mode="w", fileobj=gzip_buffer)
+        # compresslevel: an integer from 0 to 9 controlling the level of compression;
+        # 1 is fastest and produces the least compression
+        # 9 is slowest and produces the most compression (default)
+        # 0 is no compression
+        gzip_file = gzip.GzipFile(
+            mode="w", fileobj=gzip_buffer, compresslevel=GZIP_LEVEL
+        )
 
         gzip_file.write(content)
         gzip_file.close()
@@ -170,7 +181,9 @@ class ResponseMaker:
         }
 
         end_time = time.time()
-        log.info("Compression time: {}", 1000 * (end_time - start_time))
+        log.info(
+            "Compression of {} bytes took {} ms", nbytes, 1000 * (end_time - start_time)
+        )
         return gzipped_content, headers
 
     @staticmethod

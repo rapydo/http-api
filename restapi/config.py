@@ -50,6 +50,10 @@ if SENTRY_URL is not None and SENTRY_URL.strip() == "":
 
 ABS_RESTAPI_PATH = os.path.dirname(os.path.realpath(__file__))
 
+GZIP_ENABLE = Env.get_bool("GZIP_COMPRESSION_ENABLE")
+GZIP_THRESHOLD = max(0, Env.get_int("GZIP_COMPRESSION_THRESHOLD"))
+GZIP_LEVEL = max(1, min(9, Env.get_int("GZIP_COMPRESSION_LEVEL")))
+
 
 @lru_cache
 def get_project_configuration(key, default=None):
