@@ -1,8 +1,3 @@
-"""
-The most basic (and standard) Rest Resource
-we could provide back then
-"""
-
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from flask import Response
@@ -16,37 +11,40 @@ from restapi.services.authentication import Role
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-###################
-# Paging costants
 CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
 PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
 
 
-###################
-# Extending the concept of rest generic resource
 class EndpointResource(MethodResource, Resource):
 
     baseuri = API_URL
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False
-    """
-    Implements a generic Resource for our Restful APIs model
-    """
 
     def __init__(self):
         super().__init__()
-        self.auth = detector.get_authentication_instance()
-        # self.__auth = None
+        # For sqlalchemy a pre-allocation is needed to prevent the following error:
+        #   A setup function was called after the first request was handled.
+        #   This usually indicates a bug in the application where a module was
+        #   not imported and decorators or other functionality was called too late.
+        #   To fix this make sure to import all your view modules,
+        #   database models and everything related at a central place before
+        #   the application starts serving requests.
+        if detector.authentication_service == "sqlalchemy":
+            self.__auth = detector.get_authentication_instance()
+        # Any other databased will be delayed and instantiated on demand
+        else:
+            self.__auth = None
 
-    # @property
-    # def auth(self):
-    #     if not self.__auth:
-    #         self.__auth = detector.get_authentication_instance()
+    @property
+    def auth(self):
+        if not self.__auth:
+            self.__auth = detector.get_authentication_instance()
 
-    #     return self.__auth
+        return self.__auth
 
     def get_token(self):
         if not hasattr(self, "unpacked_token"):
