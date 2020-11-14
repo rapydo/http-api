@@ -103,7 +103,12 @@ def handle_response(response):
             response.headers.get("Content-Encoding"),
         )
         response.data = content
-        response.headers.update(headers)
+        try:
+            response.headers.update(headers)
+        # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
+        except AttributeError:  # pragma: no cover
+            for k, v in headers.items():
+                response.headers.set(k, v)
 
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
