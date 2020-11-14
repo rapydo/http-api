@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.config import TESTING
+# from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import NULL_IP, BaseAuthentication
@@ -30,8 +30,26 @@ from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
+
+# A simple wrapper to prevent multiple app initialization and avoid the error:
+#   A setup function was called after the first request was handled.
+#   This usually indicates a bug in the application where a module was
+#   not imported and decorators or other functionality was called too late.
+#   To fix this make sure to import all your view modules,
+#   database models and everything related at a central place before
+#   the application starts serving requests.
+class CustomAlchemy(OriginalAlchemy):
+    app_initialized = False
+
+    def init_app(self, app):
+
+        if not CustomAlchemy.app_initialized:
+            CustomAlchemy.app_initialized = True
+            super().init_app(app)
+
+
 # all instances have to use the same alchemy object
-db = OriginalAlchemy()
+db = CustomAlchemy()
 
 
 def parse_postgres_error(excpt):
@@ -171,15 +189,7 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        try:
-            db.init_app(self.app)
-        # It is required by test script executing destroy tests (test_zzz_destroy.py)
-        # to prevent errors due to double initializations
-        except AssertionError as e:  # pragma: no cover
-            if TESTING:
-                log.warning(e)
-            else:
-                raise e
+        db.init_app(self.app)
 
         # This is needed to test the connection
         if self.app:

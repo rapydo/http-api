@@ -26,18 +26,8 @@ class EndpointResource(MethodResource, Resource):
 
     def __init__(self):
         super().__init__()
-        # For sqlalchemy a pre-allocation is needed to prevent the following error:
-        #   A setup function was called after the first request was handled.
-        #   This usually indicates a bug in the application where a module was
-        #   not imported and decorators or other functionality was called too late.
-        #   To fix this make sure to import all your view modules,
-        #   database models and everything related at a central place before
-        #   the application starts serving requests.
-        if detector.authentication_service == "sqlalchemy":
-            self.__auth = detector.get_authentication_instance()
-        # Any other databased will be delayed and instantiated on demand
-        else:
-            self.__auth = None
+
+        self.__auth = None
 
     @property
     def auth(self):
