@@ -30,23 +30,8 @@ from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
-
-# A simple wrapper to prevent multiple app initialization and avoid the error:
-#   A setup function was called after the first request was handled.
-#   This usually indicates a bug in the application where a module was
-#   not imported and decorators or other functionality was called too late.
-#   To fix this make sure to import all your view modules,
-#   database models and everything related at a central place before
-#   the application starts serving requests.
-class CustomAlchemy(OriginalAlchemy):
-    def init_app(self, app):
-
-        if "sqlalchemy" not in app.extensions:
-            super().init_app(app)
-
-
 # all instances have to use the same alchemy object
-db = CustomAlchemy()
+db = OriginalAlchemy()
 
 
 def parse_postgres_error(excpt):
@@ -186,10 +171,18 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        db.init_app(self.app)
-
-        # This is needed to test the connection
         if self.app:
+            # This is to prevent multiple app initialization and avoid the error:
+            #   A setup function was called after the first request was handled.
+            #   This usually indicates a bug in the application where a module was
+            #   not imported and decorators or other functionality was called too late.
+            #   To fix this make sure to import all your view modules,
+            #   database models and everything related at a central place before
+            #   the application starts serving requests.
+            if "sqlalchemy" not in self.app.extensions:
+                db.init_app(self.app)
+
+            # This is needed to test the connection
             with self.app.app_context():
                 sql = text("SELECT 1")
                 db.engine.execute(sql)
