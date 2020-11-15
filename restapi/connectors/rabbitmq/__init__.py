@@ -1,12 +1,16 @@
 import json
 import socket
 import ssl
-from typing import Optional, Union
+import urllib.parse
+from typing import Dict, List, Optional, Union
 
 import pika
+import requests
+from requests.auth import HTTPBasicAuth
 
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
@@ -130,6 +134,56 @@ class RabbitExt(Connector):
             if_empty=False,
         )
         log.debug(out)
+
+    def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
+        if not self.exchange_exists(exchange):
+            log.critical("Does not exist")
+            return None
+
+        host = self.variables.get("host", "")
+        if not host.startswith("http"):
+            host = f"http://{host}"
+
+        port = self.variables.get("management_port")
+        # url-encode unsafe characters by also including / (thanks to safe parameter)
+        # / -> %2F
+        vhost = urllib.parse.quote(self.variables.get("vhost", "/"), safe="")
+        user = self.variables.get("user")
+        password = self.variables.get("password")
+        # API Reference:
+        # A list of all bindings in which a given exchange is the source.
+        r = requests.get(
+            f"{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
+            auth=HTTPBasicAuth(user, password),
+        )
+        response = r.json()
+        if r.status_code != 200:  # pragma: no cover
+            raise RestApiException(
+                {"RabbitMQ": response.get("error", "Unknown error")},
+                status_code=r.status_code,
+            )
+
+        bindings = []
+        for row in response:
+            # row == {
+            #   'source': exchange-name,
+            #   'vhost': probably '/',
+            #   'destination': queue-or-dest-exchange-name,
+            #   'destination_type': 'queue' or 'exchange',
+            #   'routing_key': routing_key,
+            #   'arguments': Dict,
+            #   'properties_key': ?? as routing_key?
+            # }
+
+            bindings.append(
+                {
+                    "exchange": row["source"],
+                    "routing_key": row["routing_key"],
+                    "queue": row["destination"],
+                }
+            )
+
+        return bindings
 
     def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
 

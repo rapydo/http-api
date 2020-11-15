@@ -48,10 +48,6 @@ def test_rabbit(app, faker):
     if obj.queue_exists(queue):
         obj.delete_queue(queue)
 
-    assert not obj.exchange_exists(queue)
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
-    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
-
     assert not obj.queue_exists(queue)
     assert not obj.send("test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
@@ -63,6 +59,8 @@ def test_rabbit(app, faker):
     assert obj.send("test", routing_key=queue)
     assert obj.send_json("test", routing_key=queue)
 
+    assert not obj.exchange_exists(exchange)
+    assert obj.get_bindings(exchange) is None
     # This send does not work because exchange does not exist
     assert not obj.send("test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
@@ -71,21 +69,39 @@ def test_rabbit(app, faker):
     assert obj.exchange_exists(exchange)
     obj.create_exchange(exchange)
 
-    # Now that exchange does exists, but the queue is not bound
+    # Now the exchange exists, but the queue is not bound
+    bindings = obj.get_bindings(exchange)
+    assert isinstance(bindings, list)
+    assert len(bindings) == 0
     assert not obj.send("test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert bindings is not None
+    assert len(bindings) == 1
+    assert bindings[0]["exchange"] == exchange
+    assert bindings[0]["routing_key"] == queue
+    assert bindings[0]["queue"] == queue
 
     assert obj.send("test", routing_key=queue, exchange=exchange)
     assert obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_unbind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert isinstance(bindings, list)
+    assert len(bindings) == 0
 
     assert not obj.send("test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert bindings is not None
+    assert len(bindings) == 1
+    assert bindings[0]["exchange"] == exchange
+    assert bindings[0]["routing_key"] == queue
+    assert bindings[0]["queue"] == queue
 
     if obj.channel:
         obj.channel.close()
