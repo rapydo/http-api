@@ -141,8 +141,12 @@ class RabbitExt(Connector):
             return None
 
         host = self.variables.get("host", "")
+        schema = ""
         if not host.startswith("http"):
-            host = f"http://{host}"
+            if Env.to_bool(self.variables.get("ssl_enabled")):
+                schema = "https://"
+            else:
+                schema = "http://"
 
         port = self.variables.get("management_port")
         # url-encode unsafe characters by also including / (thanks to safe parameter)
@@ -153,8 +157,9 @@ class RabbitExt(Connector):
         # API Reference:
         # A list of all bindings in which a given exchange is the source.
         r = requests.get(
-            f"{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
+            f"{schema}{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
             auth=HTTPBasicAuth(user, password),
+            verify=False,
         )
         response = r.json()
         if r.status_code != 200:  # pragma: no cover
