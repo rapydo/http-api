@@ -102,13 +102,16 @@ def handle_response(response):
             response.status_code,
             response.headers.get("Content-Encoding"),
         )
-        response.data = content
-        try:
-            response.headers.update(headers)
-        # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
-        except AttributeError:  # pragma: no cover
-            for k, v in headers.items():
-                response.headers.set(k, v)
+        if content:
+            response.direct_passthrough = False
+            response.data = content
+
+            try:
+                response.headers.update(headers)
+            # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
+            except AttributeError:  # pragma: no cover
+                for k, v in headers.items():
+                    response.headers.set(k, v)
 
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
@@ -158,13 +161,14 @@ class ResponseMaker:
     @staticmethod
     def gzip_response(content, code, content_encoding):
         if code < 200 or code >= 300 or content_encoding is not None:
-            return content, {}
+            return None, {}
 
         # Do not compress small contents
         if (nbytes := sys.getsizeof(content)) < GZIP_THRESHOLD:
-            return content, {}
+            return None, {}
 
         start_time = time.time()
+
         gzip_buffer = BytesIO()
         # compresslevel: an integer from 0 to 9 controlling the level of compression;
         # 1 is fastest and produces the least compression
