@@ -97,13 +97,13 @@ def handle_response(response):
     url = obfuscate_query_parameters(request.url)
 
     if GZIP_ENABLE and "gzip" in request.headers.get("Accept-Encoding", "").lower():
+        response.direct_passthrough = False
         content, headers = ResponseMaker.gzip_response(
             response.data,
             response.status_code,
             response.headers.get("Content-Encoding"),
         )
         if content:
-            response.direct_passthrough = False
             response.data = content
 
             try:
