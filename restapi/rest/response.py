@@ -102,6 +102,7 @@ def handle_response(response):
             response.data,
             response.status_code,
             response.headers.get("Content-Encoding"),
+            response.headers.get("Content-Type"),
         )
         if content:
             response.data = content
@@ -159,7 +160,7 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
-    def gzip_response(content, code, content_encoding):
+    def gzip_response(content, code, content_encoding, content_type):
         if code < 200 or code >= 300 or content_encoding is not None:
             return None, {}
 
@@ -192,12 +193,21 @@ class ResponseMaker:
         end_time = time.time()
         t = int(1000 * (end_time - start_time))
         new_size = sys.getsizeof(gzipped_content)
+        ratio = 1 - new_size / nbytes
+
         log.info(
-            "[GZIP] {} bytes compressed in {} ms -> {} bytes",
+            "[GZIP] {} bytes compressed in {} ms -> {} bytes ({:.2f} %)",
             nbytes,
             "< 1" if t < 1 else t,
             new_size,
+            100 * ratio,
         )
+        if ratio < 0.1:
+            log.warning(
+                "Small benefit due to gzip compression on Content-Type: {} ({:.2f} %)",
+                content_type,
+                100 * ratio,
+            )
         return gzipped_content, headers
 
     @staticmethod
