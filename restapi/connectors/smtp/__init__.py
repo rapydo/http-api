@@ -55,8 +55,9 @@ class Mail(Connector):
 
     def disconnect(self) -> None:
         self.disconnected = True
-        self.smtp.quit()
-        self.smtp = None
+        if self.smtp:
+            self.smtp.quit()
+            self.smtp = None
 
     def is_connected(self) -> bool:
 
