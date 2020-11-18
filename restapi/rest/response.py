@@ -189,6 +189,7 @@ class ResponseMaker:
 
         # Do not compress binary contents (like images) due to small benefits expected
         if ResponseMaker.is_binary(content_type):
+            log.warning("Skipping gzip compress on {}", content_type)
             return None, {}
 
         # Do not compress small contents
