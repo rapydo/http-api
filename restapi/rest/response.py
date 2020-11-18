@@ -147,6 +147,29 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
+    def is_binary(content_type):
+        if not content_type:
+            return False
+
+        if content_type.startswith("text/"):
+            return False
+
+        if content_type.startswith("image/"):
+            return True
+
+        if content_type.startswith("audio/"):
+            return True
+
+        if content_type.startswith("video/"):
+            return True
+
+        if content_type.startswith("application/"):
+            return True
+
+        log.warning("Unknown Content-Type: {}", content_type)
+        return False
+
+    @staticmethod
     def get_html(content, code, headers):
 
         if isinstance(content, list):
@@ -162,6 +185,10 @@ class ResponseMaker:
     @staticmethod
     def gzip_response(content, code, content_encoding, content_type):
         if code < 200 or code >= 300 or content_encoding is not None:
+            return None, {}
+
+        # Do not compress binary contents (like images) due to small benefits expected
+        if ResponseMaker.is_binary(content_type):
             return None, {}
 
         # Do not compress small contents
