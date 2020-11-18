@@ -151,6 +151,9 @@ class ResponseMaker:
         if not content_type:
             return False
 
+        if content_type == "application/json":
+            return False
+
         if content_type.startswith("text/"):
             return False
 
@@ -189,7 +192,7 @@ class ResponseMaker:
 
         # Do not compress binary contents (like images) due to small benefits expected
         if ResponseMaker.is_binary(content_type):
-            log.warning("Skipping gzip compress on {}", content_type)
+            # log.warning("Skipping gzip compression on {}", content_type)
             return None, {}
 
         # Do not compress small contents
