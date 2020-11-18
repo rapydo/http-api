@@ -183,6 +183,9 @@ def test_celery(app, faker):
 
     obj.disconnect()
 
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
     # Create new connector with short expiration time
     obj = connector.get_instance(expiration=2, verification=1)
     obj_id = id(obj)

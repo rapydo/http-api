@@ -130,4 +130,8 @@ def test_smtp(app, faker):
     obj = connector.get_instance()
     assert obj.is_connected()
     obj.disconnect()
+
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
     assert not obj.is_connected()

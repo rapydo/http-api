@@ -233,7 +233,8 @@ class ResponseMaker:
             new_size,
             100 * ratio,
         )
-        if ratio < 0.1:
+        # This a debug code use to detect content types that should not be compressed
+        if ratio < 0.1:  # pragma: no cover
             log.warning(
                 "Small benefit due to gzip compression on Content-Type: {} ({:.2f} %)",
                 content_type,
