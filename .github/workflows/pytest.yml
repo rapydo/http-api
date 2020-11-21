@@ -38,9 +38,13 @@ jobs:
           pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
           rapydo --version
       - name: Run Tests
-        # env:
-        #   LOGURU_LEVEL: DEBUG
-        #   TESTING: 1
+        env:
+          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
+          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
+          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
+          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
+          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
           # Randomize auth service to test some services
           # double neo4j to balance with sql databases
