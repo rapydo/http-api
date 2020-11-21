@@ -54,7 +54,6 @@ jobs:
           mkdir ${{ matrix.template }}
           cd ${{ matrix.template }}
           bash ../tests/create_template.sh ${{ matrix.template }}
-          # git remote add origin https://your_remote_git/your_project.git
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}

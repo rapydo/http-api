@@ -38,3 +38,5 @@ else
   echo "Unknown template: ${TEMPLATE}";
   exit 1;
 fi
+
+git remote add origin https://your_remote_git/your_project.git
