@@ -218,15 +218,22 @@ class AdminStats(EndpointResource):
         # Network latency
         # Here we will ping google at an interval of five seconds for five times
         # min response time, average response time, and the max response time.
-        ping = local["ping"]
-        ping_result = ping(["-c", "5", "google.com"]).split("\n")
+        # ping = local["ping"]
+        # ping_result = ping(["-c", "5", "google.com"]).split("\n")
 
-        ping_result = ping_result[-2].split("=")[-1].split("/")[:3]
+        # ping_result = ping_result[-2].split("=")[-1].split("/")[:3]
+        # statistics["network_latency"] = dict(
+        #     {
+        #         "min": ping_result[0].strip(),
+        #         "avg": ping_result[1].strip(),
+        #         "max": ping_result[2].strip(),
+        #     }
+        # )
         statistics["network_latency"] = dict(
             {
-                "min": ping_result[0].strip(),
-                "avg": ping_result[1].strip(),
-                "max": ping_result[2].strip(),
+                "min": 0,
+                "avg": 0,
+                "max": 0,
             }
         )
         return self.response(statistics)
