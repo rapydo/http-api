@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir ${{ matrix.template }}
           cd ${{ matrix.template }}
-          bash ../tests/create_template.sh ${{ matrix.template }}
+          bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}
