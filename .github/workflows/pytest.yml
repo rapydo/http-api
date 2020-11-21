@@ -42,7 +42,7 @@ jobs:
           mkdir ${{ matrix.template }}
           cd ${{ matrix.template }}
           # create template...
-          git remote add origin https://your_remote_git/your_project.git
+          # git remote add origin https://your_remote_git/your_project.git
           rapydo --testing --project prj init
           rapydo pull
           # add additional files
