@@ -11,7 +11,19 @@ jobs:
 
     strategy:
       matrix:
-        template: [extra, neo4j, postgres, celery-rabbit-redis, celery-rabbit-mongo, celery-redis-redis, celery-redis-mongo, celery-rabbit-rabbit, mongo, mysql]
+        template:
+          [
+            extra,
+            neo4j,
+            postgres,
+            celery-rabbit-redis,
+            celery-rabbit-mongo,
+            celery-redis-redis,
+            celery-redis-mongo,
+            celery-rabbit-rabbit,
+            mongo,
+            mysql,
+          ]
 
     steps:
       - uses: actions/checkout@v2
@@ -35,19 +47,58 @@ jobs:
           pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
           rapydo --version
       - name: Run Tests
-        env:
-          LOGURU_LEVEL: DEBUG
-          TESTING: 1
+        # env:
+        #   LOGURU_LEVEL: DEBUG
+        #   TESTING: 1
         run: |
           mkdir ${{ matrix.template }}
           cd ${{ matrix.template }}
-          # create template...
+          bash ../tests/create_template.sh ${{ matrix.template }}
           # git remote add origin https://your_remote_git/your_project.git
           rapydo --testing --project prj init
           rapydo pull
-          # add additional files
+          bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo start
-          # .....
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./codecov.yml
+          sleep 25
+          rapydo logs
+          # This is used to test the bot in dev mode
+          # - >
+          #   if [[ "${{ matrix.template }}" == "extra" ]]; then
+          #     rapydo shell backend --default --detach;
+          #     sleep 20;
+          #   fi
+          rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
+
+          # Send coverage
+          rapydo dump
+          backend_container=$(docker-compose ps -q backend)
+          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          # bash codecov_report -R submodules/http-api
+
+          # Basic production test
+          rapydo remove --all
+          rapydo --production --testing init --force
+          rapydo pull
+          rapydo ssl --volatile
+          rapydo start
+          # wait for all services to start (25 failed sometimes)
+          sleep 30
+          rapydo logs
+          curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+          if [[ "${{ matrix.template }}" == "extra" ]]; then
+            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+            rapydo -s bot remove;
+          fi
+          rapydo -s proxy,backend logs --tail 20
+
+          # Tests in production mode
+          rapydo shell --no-tty backend 'restapi tests --core --wait' || travis_terminate 1;
+          # Send coverage
+          rapydo dump
+          backend_container=$(docker-compose ps -q backend)
+          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          # bash codecov_report -R submodules/http-api
+
+      # - uses: codecov/codecov-action@v1
+      #   with:
+      #     file: ./codecov.yml
