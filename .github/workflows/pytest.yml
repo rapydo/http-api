@@ -76,7 +76,7 @@ jobs:
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
-          # bash codecov_report -R submodules/http-api
+          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
           # Basic production test
           rapydo remove --all
@@ -100,7 +100,7 @@ jobs:
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
-          # bash codecov_report -R submodules/http-api
+          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
       # - uses: codecov/codecov-action@v1
       #   with:
