@@ -56,7 +56,7 @@ jobs:
       - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
         run: |
-          cd ${{ matrix.template }}cd ${{ matrix.template }}.${{ matrix.mode }}
+          cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}
