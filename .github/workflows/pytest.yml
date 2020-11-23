@@ -36,7 +36,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
-          pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
+          pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
           rapydo --version
           # Randomize auth service to test some services
           # double neo4j to balance with sql databases
@@ -105,7 +105,7 @@ jobs:
           rapydo -s proxy,backend logs --tail 20
 
           # Tests in production mode
-          rapydo shell --no-tty backend 'restapi tests --core --wait' || travis_terminate 1;
+          rapydo shell --no-tty backend 'restapi tests --core --wait'
           # Send coverage
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
