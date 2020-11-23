@@ -66,7 +66,7 @@ jobs:
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}
-          rapydo start
+          rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
