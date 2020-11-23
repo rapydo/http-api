@@ -48,6 +48,12 @@ jobs:
           echo "Selected random authentication service = ${RANDOM_AUTH}"
           # Make the environment variable available to next steps
           echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
+          echo "TELEGRAM_ADMINS=${{ secrets.TELEGRAM_ADMINS }}" >> $GITHUB_ENV
+          echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> $GITHUB_ENV
+          echo "TELEGRAM_APP_HASH=${{ secrets.TELEGRAM_APP_HASH }}" >> $GITHUB_ENV
+          echo "TELEGRAM_APP_ID=${{ secrets.TELEGRAM_APP_ID }}" >> $GITHUB_ENV
+          echo "TELEGRAM_BOTNAME=${{ secrets.TELEGRAM_BOTNAME }}" >> $GITHUB_ENV
+          echo "TELETHON_SESSION=${{ secrets.TELETHON_SESSION }}" >> $GITHUB_ENV
 
           mkdir ${{ matrix.template }}.${{ matrix.mode }}
           cd ${{ matrix.template }}.${{ matrix.mode }}
@@ -55,13 +61,6 @@ jobs:
 
       - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
-        env:
-          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
-          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
-          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
-          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
@@ -80,22 +79,7 @@ jobs:
 
       - name: PROD Tests
         if: ${{ matrix.mode == 'prod' }}
-        env:
-          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
-          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
-          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
-          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
-          # Without this, envs will not be available to python... uhm... ugly!
-          export TELEGRAM_ADMINS=${TELEGRAM_ADMINS}
-          export TELEGRAM_API_KEY=${TELEGRAM_API_KEY}
-          export TELEGRAM_APP_HASH=${TELEGRAM_APP_HASH}
-          export TELEGRAM_APP_ID=${TELEGRAM_APP_ID}
-          export TELEGRAM_BOTNAME=${TELEGRAM_BOTNAME}
-          export TELETHON_SESSION=${TELETHON_SESSION}
-
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
           rapydo --production --testing --project prj init --force
