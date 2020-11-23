@@ -17,8 +17,7 @@ PERMISSION_DENIED = "Permission denied, you are not authorized to execute this c
 
 def test_bot():
 
-    # if not Env.get_bool("TELEGRAM_ENABLE"):
-    if True:
+    if not Env.get_bool("TELEGRAM_ENABLE"):
         log.warning("Skipping BOT tests: service not available")
         return False
 

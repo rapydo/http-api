@@ -88,6 +88,14 @@ jobs:
           TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
           TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
+          # Without this, envs will not be available to python... uhm... ugly!
+          export TELEGRAM_ADMINS=${TELEGRAM_ADMINS}
+          export TELEGRAM_API_KEY=${TELEGRAM_API_KEY}
+          export TELEGRAM_APP_HASH=${TELEGRAM_APP_HASH}
+          export TELEGRAM_APP_ID=${TELEGRAM_APP_ID}
+          export TELEGRAM_BOTNAME=${TELEGRAM_BOTNAME}
+          export TELETHON_SESSION=${TELETHON_SESSION}
+
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
           rapydo --production --testing --project prj init --force
@@ -99,10 +107,10 @@ jobs:
           sleep 30
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-          # if [[ "${{ matrix.template }}" == "extra" ]]; then
-          #   rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
-          #   rapydo -s bot remove;
-          # fi
+          if [[ "${{ matrix.template }}" == "extra" ]]; then
+            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+            rapydo -s bot remove;
+          fi
           rapydo -s proxy,backend logs --tail 20
 
           # Tests in production mode
