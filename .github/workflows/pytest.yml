@@ -49,14 +49,14 @@ jobs:
           # Make the environment variable available to next steps
           echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
 
-          mkdir ${{ matrix.template }}
-          cd ${{ matrix.template }}
+          mkdir ${{ matrix.template }}.${{ matrix.mode }}
+          cd ${{ matrix.template }}.${{ matrix.mode }}
           bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
 
-      - name: Run DEV Tests
+      - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
         run: |
-          cd ${{ matrix.template }}
+          cd ${{ matrix.template }}cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}
@@ -71,7 +71,7 @@ jobs:
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
-      - name: Run DEV Tests
+      - name: PROD Tests
         if: ${{ matrix.mode == 'prod' }}
         env:
           TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
@@ -81,9 +81,9 @@ jobs:
           TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
           TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
-          cd ${{ matrix.template }}
+          cd ${{ matrix.template }}.${{ matrix.mode }}
 
-          rapydo --production --testing init --force
+          rapydo --production --testing --project prj init --force
           rapydo pull
           rapydo ssl --volatile
           rapydo start
