@@ -92,6 +92,7 @@ jobs:
 
           rapydo --production --testing --project prj init --force
           rapydo pull
+          bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile
           rapydo start
           # wait for all services to start (25 failed sometimes)
