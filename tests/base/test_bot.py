@@ -41,11 +41,6 @@ def test_bot():
     session_str = Env.get("TELETHON_SESSION")
     botname = Env.get("TELEGRAM_BOTNAME")
 
-    assert len(api_id) > 1
-    assert len(api_hash) > 1
-    assert len(session_str) > 1
-    assert len(botname) > 1
-
     async def send_command(client, command):
         await client.send_message(botname, command)
         sleep(1)
