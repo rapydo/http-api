@@ -34,6 +34,8 @@ def test_bot():
     from restapi.services.telegram import bot
 
     # Your API ID, hash and session string here
+    # How to generate StringSessions:
+    # https://docs.telethon.dev/en/latest/concepts/sessions.html#string-sessions
     api_id = Env.get_int("TELEGRAM_APP_ID")
     api_hash = Env.get("TELEGRAM_APP_HASH")
     session_str = Env.get("TELETHON_SESSION")
