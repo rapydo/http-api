@@ -43,6 +43,8 @@ class Bot:
     def __init__(self):
         self.commands = {}
         self.variables = Env.load_variables_group(prefix="telegram")
+        if not self.variables.get("api_key"):
+            raise RestApiException("Missing API KEY", status_code=503)
         self.updater = Updater(
             self.variables.get("api_key"),
             use_context=True,
