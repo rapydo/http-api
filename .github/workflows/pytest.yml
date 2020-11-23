@@ -55,6 +55,13 @@ jobs:
 
       - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
+        env:
+          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
+          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
+          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
+          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
+          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
