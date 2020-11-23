@@ -93,8 +93,6 @@ jobs:
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
-            echo "............. testing bot ................"
-            rapydo logs
             rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
             rapydo -s bot remove;
           fi

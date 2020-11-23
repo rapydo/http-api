@@ -7,7 +7,7 @@ from typing import Optional
 
 from loguru import logger as log
 
-from restapi.config import PRODUCTION
+from restapi.config import PRODUCTION, TESTING
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
@@ -47,10 +47,11 @@ def print_message_on_stderr(record):
 
 
 if LOGS_PATH is not None:
+    FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
     try:
         log.add(
             LOGS_PATH,
-            level="WARNING",
+            level=FILE_LOGLEVEL,
             rotation="1 week",
             retention="4 weeks",
             # If True the exception trace is extended upward, beyond the catching point
