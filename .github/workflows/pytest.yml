@@ -24,6 +24,7 @@ jobs:
             mongo,
             mysql,
           ]
+        mode: [dev, prod]
 
     steps:
       - uses: actions/checkout@v2
@@ -37,15 +38,6 @@ jobs:
           CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
           pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION} || travis_terminate 1;
           rapydo --version
-      - name: Run Tests
-        env:
-          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
-          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
-          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
-          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
-        run: |
           # Randomize auth service to test some services
           # double neo4j to balance with sql databases
           # mongo is only tested on the mongo TEMPLATE for two reasons:
@@ -54,22 +46,23 @@ jobs:
           auth_services=(postgres mysql neo4j neo4j)
           RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
           echo "Selected random authentication service = ${RANDOM_AUTH}"
+          # Make the environment variable available to next steps
+          echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
 
           mkdir ${{ matrix.template }}
           cd ${{ matrix.template }}
           bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
+
+      - name: Run DEV Tests
+        if: ${{ matrix.mode == 'dev' }}
+        run: |
+          cd ${{ matrix.template }}
           rapydo --testing --project prj init
           rapydo pull
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo start
           sleep 25
           rapydo logs
-          # This is used to test the bot in dev mode
-          # - >
-          #   if [[ "${{ matrix.template }}" == "extra" ]]; then
-          #     rapydo shell backend --default --detach;
-          #     sleep 20;
-          #   fi
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
 
           # Send coverage
@@ -78,8 +71,18 @@ jobs:
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
-          # Basic production test
-          rapydo remove --all
+      - name: Run DEV Tests
+        if: ${{ matrix.mode == 'prod' }}
+        env:
+          TELEGRAM_ADMINS: ${{ secrets.TELEGRAM_ADMINS }}
+          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+          TELEGRAM_APP_HASH: ${{ secrets.TELEGRAM_APP_HASH }}
+          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
+          TELEGRAM_BOTNAME: ${{ secrets.TELEGRAM_BOTNAME }}
+          TELETHON_SESSION: ${{ secrets.TELETHON_SESSION }}
+        run: |
+          cd ${{ matrix.template }}
+
           rapydo --production --testing init --force
           rapydo pull
           rapydo ssl --volatile
@@ -101,7 +104,3 @@ jobs:
           backend_container=$(docker-compose ps -q backend)
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
-
-      # - uses: codecov/codecov-action@v1
-      #   with:
-      #     file: ./codecov.yml
