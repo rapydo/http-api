@@ -19,6 +19,7 @@ if [ -z "$3" ]; then
     CURRENT_PACKAGE="restapi"
 else
     CURRENT_PACKAGE=$3
+fi
 
 COV="--cov=$CURRENT_PACKAGE"
 
