@@ -8,17 +8,16 @@ fi
 
 export COVERAGE_FILE="/tmp/.coverage"
 
+if [ -z "$1" ]; then
+    CURRENT_PACKAGE="restapi"
+else
+    CURRENT_PACKAGE=$1
+fi
+
 if [ -z "$2" ]; then
     folder=tests
 else
     folder=tests/$2
-fi
-
-
-if [ -z "$3" ]; then
-    CURRENT_PACKAGE="restapi"
-else
-    CURRENT_PACKAGE=$3
 fi
 
 COV="--cov=$CURRENT_PACKAGE"

@@ -7,7 +7,7 @@ from flask.cli import FlaskGroup
 from glom import glom
 
 from restapi import __package__ as current_package
-from restapi.config import PRODUCTION
+from restapi.config import CUSTOM_PACKAGE, PRODUCTION
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -260,18 +260,19 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
     parameters = ["tests/tests.sh"]
     if core:
         parameters.append(current_package)
-    elif file is not None:
+    else:
+        parameters.append(CUSTOM_PACKAGE)
+
+    if file is not None:
         if file.startswith("tests/"):
             file = file[6:]
 
         if not os.path.isfile(os.path.join("tests", file)):
             print_and_exit("File not found: {}", file)
-        parameters.append("default")
         parameters.append(file)
     elif folder is not None:
         if not os.path.isdir(os.path.join("tests", folder)):
             print_and_exit("Folder not found: {}", folder)
-        parameters.append("default")
         parameters.append(folder)
 
     os.environ["TEST_CORE_ENABLED"] = str(core)
