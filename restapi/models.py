@@ -39,7 +39,7 @@ class Schema(MarshmallowSchema):
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
         ordered = True
-        json_module = simplejson
+        render_module = simplejson
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
