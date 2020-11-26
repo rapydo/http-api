@@ -8,23 +8,27 @@ fi
 
 export COVERAGE_FILE="/tmp/.coverage"
 
-if [ -z "$1" ]; then
+if [[ -z "$1" ]]; then
     CURRENT_PACKAGE="restapi"
 else
     CURRENT_PACKAGE=$1
 fi
 
-if [ -z "$2" ]; then
-    folder=tests
+# if [ -z "$2" ]; then
+#     folder=tests
+# else
+#     folder=tests/$2
+# fi
+
+if [[ "${CURRENT_PACKAGE}" == "restapi" ]]; then
+    test_folder="tests/base"
 else
-    folder=tests/$2
+    test_folder="tests/custom"
 fi
-
-COV="--cov=$CURRENT_PACKAGE"
-
-echo "Launching unittests with coverage"
+echo "Launching unittests with coverage on tests/${2}"
 echo "Package: $CURRENT_PACKAGE"
 sleep 1
 
-# --timeout is powered by pytest-timeout
-py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml $COV $folder
+# --timeout is provided by pytest-timeout
+# --cov is provided by pytest-cov
+py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${test_folder} tests/${2}
