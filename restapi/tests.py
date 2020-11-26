@@ -388,7 +388,7 @@ class BaseTests:
                         data[key] = json.dumps([fake.random_element(keys)])
                     else:
                         data[key] = fake.random_element(keys)
-                # else:
+                # else:  # pragma: no cover
                 #     pytest.fail(f"BuildData for {key}: invalid options (empty?)")
             elif field_type == "number" or field_type == "int":
                 min_value = d.get("min", 0)

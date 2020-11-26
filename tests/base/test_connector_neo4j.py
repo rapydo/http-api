@@ -19,7 +19,7 @@ if not detector.check_availability(CONNECTOR):
 
     try:
         obj = connector.get_instance()
-        pytest.fail("No exception raised")
+        pytest.fail("No exception raised")  # pragma: no cover
     except ServiceUnavailable:
         pass
 
@@ -58,7 +58,9 @@ else:
 
             try:
                 connector.get_instance(host="invalidhostname", port=123)
-                pytest.fail("No exception raised on unavailable service")
+                pytest.fail(
+                    "No exception raised on unavailable service"
+                )  # pragma: no cover
             except ServiceUnavailable:
                 pass
 
@@ -66,7 +68,9 @@ else:
                 connector.get_instance(
                     user="invaliduser",
                 )
-                pytest.fail("No exception raised on unavailable service")
+                pytest.fail(
+                    "No exception raised on unavailable service"
+                )  # pragma: no cover
             except ServiceUnavailable:
                 pass
 

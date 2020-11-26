@@ -61,13 +61,13 @@ def test_cli():
     }
     try:
         cli.get_service_address(variables, "host", "port", "myservice")
-        pytest.fail("No exception raised")
+        pytest.fail("No exception raised")  # pragma: no cover
     except SystemExit:
         pass
 
     try:
         cli.get_service_address(variables, "myhost", "port", "myservice")
-        pytest.fail("No exception raised")
+        pytest.fail("No exception raised")  # pragma: no cover
     except SystemExit:
         pass
 

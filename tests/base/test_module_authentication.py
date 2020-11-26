@@ -79,20 +79,20 @@ class TestApp(BaseTests):
 
         try:
             auth.change_password(user, pwd, None, None)
-            pytest.fail("None password!")
+            pytest.fail("None password!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 400
             assert str(e) == "Missing new password"
         except BaseException:
-            pytest.fail("Unexpected exception raised")
+            pytest.fail("Unexpected exception raised")  # pragma: no cover
 
         try:
             auth.change_password(user, pwd, pwd, None)
-            pytest.fail("None password!")
+            pytest.fail("None password!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 400
             assert str(e) == "Missing password confirmation"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -102,16 +102,16 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 409
             assert str(e) == "Your password doesn't match the confirmation"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             auth.change_password(user, pwd, pwd, pwd)
-            pytest.fail("Password strength not verified")
+            pytest.fail("Password strength not verified")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 409
             assert str(e) == "The new password cannot match the previous password"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -120,23 +120,23 @@ class TestApp(BaseTests):
             # password validity will be checked once completed checks on new password
             # => a random current password is ok here
             auth.change_password(user, fake.password(), pwd, pwd)
-            pytest.fail("Password strength not verified")
+            pytest.fail("Password strength not verified")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 409
             assert (
                 str(e)
                 == f"Password is too short, use at least {min_pwd_len} characters"
             )
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             auth.verify_totp(None, None)
-            pytest.fail("NULL totp accepted!")
+            pytest.fail("NULL totp accepted!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Invalid verification code"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         # import here to prevent loading before initializing things...
@@ -157,29 +157,29 @@ class TestApp(BaseTests):
 
         try:
             auth.get_password_hash("")
-            pytest.fail("Hashed a empty password!")
+            pytest.fail("Hashed a empty password!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Invalid password"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             auth.get_password_hash(None)
-            pytest.fail("Hashed a None password!")
+            pytest.fail("Hashed a None password!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Invalid password"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         assert auth.verify_password(pwd1, hash_1)
         try:
             auth.verify_password(None, hash_1)
-            pytest.fail("Hashed a None password!")
+            pytest.fail("Hashed a None password!")  # pragma: no cover
         except TypeError:
             pass
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         assert not auth.verify_password(pwd1, None)
@@ -292,10 +292,10 @@ class TestApp(BaseTests):
         assert not unpacked_token[0]
         try:
             auth.verify_token(None, raiseErrors=True)
-            pytest.fail("No exception raised!")
+            pytest.fail("No exception raised!")  # pragma: no cover
         except InvalidToken as e:
             assert str(e) == "Missing token"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         # Test GRACE PERIOD for tokens validiy from differt IPs

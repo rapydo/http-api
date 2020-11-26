@@ -124,7 +124,7 @@ class TestApp(BaseTests):
         start_timeout(15)
         try:
             wait_socket("invalid", 123, service_name="test")
-            pytest.fail("wait_socket should be blocking!")
+            pytest.fail("wait_socket should be blocking!")  # pragma: no cover
         except Timeout:
             pass
 
@@ -148,7 +148,7 @@ class TestApp(BaseTests):
                 "this-should-not-exist",
                 exit_on_fail=True,
             )
-            pytest.fail("ModuleNotFoundError not raised")
+            pytest.fail("ModuleNotFoundError not raised")  # pragma: no cover
         except ModuleNotFoundError:
             pass
 
@@ -164,14 +164,14 @@ class TestApp(BaseTests):
 
         try:
             Meta.import_models("this-should", "not-exist", exit_on_fail=True)
-            pytest.fail("SystemExit not raised")
+            pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
         # Check exit_on_fail default value
         try:
             Meta.import_models("this-should", "not-exist")
-            pytest.fail("SystemExit not raised")
+            pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
@@ -185,7 +185,7 @@ class TestApp(BaseTests):
         try:
             # This operation will be interrupted because slower than timeout
             time.sleep(2)
-            pytest.fail("Operation not interrupted")
+            pytest.fail("Operation not interrupted")  # pragma: no cover
         except BaseException as e:
             assert str(e) == "Operation timeout: interrupted"
 
@@ -195,7 +195,7 @@ class TestApp(BaseTests):
             # This operation will not be interrupted
             time.sleep(2)
         except BaseException:
-            pytest.fail("Operation interrupted")
+            pytest.fail("Operation interrupted")  # pragma: no cover
 
         s = handle_log_output(None)
         assert isinstance(s, dict)
@@ -303,20 +303,20 @@ class TestApp(BaseTests):
         # Invalid file / path
         try:
             load_yaml_file("invalid", "path")
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         try:
             load_yaml_file("invalid", "tests")
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         # Valid path, but not in yaml format
         try:
             load_yaml_file("conftest.py", "tests")
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
@@ -324,14 +324,14 @@ class TestApp(BaseTests):
         tmpf = tempfile.NamedTemporaryFile()
         try:
             load_yaml_file(tmpf.name, ".")
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
         tmpf.close()
 
         try:
             detector.get_connector(faker.pystr())
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 

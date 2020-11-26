@@ -22,7 +22,7 @@ def test_celery(app, faker):
 
         try:
             obj = connector.get_instance()
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -58,46 +58,54 @@ def test_celery(app, faker):
             assert r == "Task executed!"
             assert task.status == "SUCCESS"
             assert task.result == "Task executed!"
-        except celery.exceptions.TimeoutError:
+        except celery.exceptions.TimeoutError:  # pragma: no cover
             pytest.fail(f"Task timeout, result={task.result}, status={task.status}")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
         try:
             obj.get_periodic_task("does_not_exist")
-            pytest.fail("get_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "get_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
         except BaseException:
-            pytest.fail("Unexpected exception raised")
+            pytest.fail("Unexpected exception raised")  # pragma: no cover
 
         try:
             obj.delete_periodic_task("does_not_exist")
-            pytest.fail("delete_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "delete_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
         except BaseException:
-            pytest.fail("Unexpected exception raised")
+            pytest.fail("Unexpected exception raised")  # pragma: no cover
 
         try:
             obj.create_periodic_task(
                 name="task1", task="task.does.not.exists", every="60"
             )
-            pytest.fail("create_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "create_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
         except BaseException:
-            pytest.fail("Unexpected exception raised")
+            pytest.fail("Unexpected exception raised")  # pragma: no cover
 
         try:
             obj.create_crontab_task(
                 name="task2", task="task.does.not.exists", minute="0", hour="1"
             )
-            pytest.fail("create_crontab_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "create_crontab_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
         except BaseException:
-            pytest.fail("Unexpected exception raised")
+            pytest.fail("Unexpected exception raised")  # pragma: no cover
 
     else:
         assert obj.get_periodic_task("does_not_exist") is None

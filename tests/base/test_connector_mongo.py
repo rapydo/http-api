@@ -16,7 +16,7 @@ def test_mongo(app):
 
         try:
             obj = connector.get_instance()
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -37,7 +37,7 @@ def test_mongo(app):
             obj.Token.objects.first()
         except BaseException:
             raise ServiceUnavailable("")
-        pytest.fail("No exception raised on unavailable service")
+        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass
 

@@ -37,7 +37,7 @@ class TestApp(BaseTests):
 
                 fullname = g.get("fullname")
                 break
-        else:
+        else:  # pragma: no cover
             pytest.fail("Group not found")
 
         assert fullname is not None
@@ -69,7 +69,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         groups = self.get_content(r)
         for g in groups:
-            if g.get("uuid") == uuid:
+            if g.get("uuid") == uuid:  # pragma: no cover
                 pytest.fail("Group not deleted!")
 
         r = client.delete(f"{API_URI}/admin/groups/xyz", headers=headers)

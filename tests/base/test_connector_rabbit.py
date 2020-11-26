@@ -16,7 +16,7 @@ def test_rabbit(app, faker):
 
         try:
             obj = connector.get_instance()
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -33,7 +33,7 @@ def test_rabbit(app, faker):
 
     try:
         connector.get_instance(host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")
+        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass
 

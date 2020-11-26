@@ -16,7 +16,7 @@ def test_pushpin(app):
 
         try:
             obj = connector.get_instance()
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
         log.warning("Skipping {} tests: service not available", CONNECTOR)
@@ -32,7 +32,7 @@ def test_pushpin(app):
 
     try:
         connector.get_instance(host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")
+        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass
 
