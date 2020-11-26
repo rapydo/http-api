@@ -55,9 +55,17 @@ class Mail(Connector):
 
     def disconnect(self) -> None:
         self.disconnected = True
-        if self.smtp:
+
+        if not self.smtp:
+            return None
+
+        try:
             self.smtp.quit()
             self.smtp = None
+        except SMTPServerDisconnected:
+            log.debug("SMTP is already disconnected")
+
+        return None
 
     def is_connected(self) -> bool:
 
