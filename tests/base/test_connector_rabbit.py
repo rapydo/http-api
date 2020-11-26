@@ -41,11 +41,13 @@ def test_rabbit(app, faker):
     assert obj is not None
 
     exchange = faker.pystr()
-    if obj.exchange_exists(exchange):
+    # This is useful for local tests, on CI the exchange never exists
+    if obj.exchange_exists(exchange):  # pragma: no cover
         obj.delete_exchange(exchange)
 
     queue = faker.pystr()
-    if obj.queue_exists(queue):
+    # This is useful for local tests, on CI the queue never exists
+    if obj.queue_exists(queue):  # pragma: no cover
         obj.delete_queue(queue)
 
     assert not obj.queue_exists(queue)
@@ -120,10 +122,6 @@ def test_rabbit(app, faker):
 
     assert not obj.send("test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
-
-    queue = faker.pystr()
-    if obj.queue_exists(queue):
-        obj.delete_queue(queue)
 
     obj.disconnect()
 

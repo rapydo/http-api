@@ -162,7 +162,8 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client, fake):
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):
+        # Always enable during core tests
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Profile is disabled, skipping tests")
             return True
 

@@ -10,7 +10,8 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_admin_users(self, client, fake):
 
-        if Env.get_bool("ADMINER_DISABLED"):
+        # Adminer is always enabled during tests
+        if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
             return
 

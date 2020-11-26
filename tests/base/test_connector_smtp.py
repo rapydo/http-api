@@ -11,7 +11,8 @@ CONNECTOR = "smtp"
 
 def test_smtp(app, faker):
 
-    if not detector.check_availability(CONNECTOR):
+    # mailmock is always enabled during core tests
+    if not detector.check_availability(CONNECTOR):  # pragma: no cover
 
         try:
             obj = connector.get_instance()

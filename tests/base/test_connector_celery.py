@@ -70,8 +70,8 @@ def test_celery(app, faker):
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
-            pytest.fail("Unexpected exception raised")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
         try:
             obj.delete_periodic_task("does_not_exist")
@@ -80,8 +80,8 @@ def test_celery(app, faker):
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
-            pytest.fail("Unexpected exception raised")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
         try:
             obj.create_periodic_task(
@@ -92,8 +92,8 @@ def test_celery(app, faker):
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
-            pytest.fail("Unexpected exception raised")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
         try:
             obj.create_crontab_task(
@@ -104,8 +104,8 @@ def test_celery(app, faker):
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
-            pytest.fail("Unexpected exception raised")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
     else:
         assert obj.get_periodic_task("does_not_exist") is None

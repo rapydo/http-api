@@ -15,7 +15,8 @@ def test_destroy():
         log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
         return False
 
-    if not detector.check_availability("authentication"):
+    # Always enable during core tests
+    if not detector.check_availability("authentication"):  # pragma: no cover
         log.warning("Skipping authentication test: service not available")
         return False
 

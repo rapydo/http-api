@@ -26,7 +26,7 @@ def test_bot():
     start_timeout(3)
     try:
         runner.invoke(cli.bot, [])
-    except Timeout:
+    except Timeout:  # pragma: no cover
         pass
 
     stop_timeout()

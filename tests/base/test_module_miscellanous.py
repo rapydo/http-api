@@ -194,8 +194,8 @@ class TestApp(BaseTests):
             stop_timeout()
             # This operation will not be interrupted
             time.sleep(2)
-        except BaseException:
-            pytest.fail("Operation interrupted")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Operation interrupted")
 
         s = handle_log_output(None)
         assert isinstance(s, dict)

@@ -28,7 +28,8 @@ def verify_token_is_not_valid(auth, token, ttype=None):
 class TestApp(BaseTests):
     def test_authentication_service(self, client, fake):
 
-        if not detector.check_availability("authentication"):
+        # Always enable during core tests
+        if not detector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return False
 
@@ -83,8 +84,8 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 400
             assert str(e) == "Missing new password"
-        except BaseException:
-            pytest.fail("Unexpected exception raised")  # pragma: no cover
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
         try:
             auth.change_password(user, pwd, pwd, None)
@@ -98,7 +99,7 @@ class TestApp(BaseTests):
         try:
             # wrong confirmation
             auth.change_password(user, pwd, pwd, fake.password(strong=True))
-            pytest.fail("wrong password confirmation!?")
+            pytest.fail("wrong password confirmation!?")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 409
             assert str(e) == "Your password doesn't match the confirmation"

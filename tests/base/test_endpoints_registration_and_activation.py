@@ -1,6 +1,8 @@
 import re
 import urllib.parse
 
+import pytest
+
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
@@ -10,7 +12,8 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_registration(self, client, fake):
 
-        if not Env.get_bool("ALLOW_REGISTRATION"):
+        # Always enabled during core tests
+        if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
             log.warning("User registration is disabled, skipping tests")
             return True
 
@@ -312,10 +315,8 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         content = self.get_content(r)
 
-        uuid = None
         for t in content:
-            if t.get("token") == token:
-                uuid = t.get(id)
-                break
-        # The token is invalidated by the error above => no user correspondance found
-        assert uuid is None
+            if t.get("token") == token:  # pragma: no cover
+                pytest.fail(
+                    "Token not properly invalidated, still bount to user {}", t.get(id)
+                )

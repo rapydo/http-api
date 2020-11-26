@@ -44,7 +44,8 @@ def get_auth_token(client, data):
     return content, {"Authorization": f"Bearer {content}"}
 
 
-if not RUN_SCHEMATHESIS:
+# Schemathesis is always enabled during core tests
+if not RUN_SCHEMATHESIS:  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
     # No need to restore the logger after this test because

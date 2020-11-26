@@ -10,7 +10,8 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_password_reset(self, client, fake):
 
-        if not Env.get_bool("ALLOW_PASSWORD_RESET"):
+        # Always enable during core tests
+        if not Env.get_bool("ALLOW_PASSWORD_RESET"):  # pragma: no cover
             log.warning("Password reset is disabled, skipping tests")
             return True
 
