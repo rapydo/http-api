@@ -70,11 +70,11 @@ class TestApp(BaseTests):
         assert html in body or plain in body
 
         if html in body:
-            tokens = re.search(r".*https?://.*/reset/(.*)\n", body)
-            if tokens:
-                token = tokens[1]
+            token = self.get_token_from_body(body)
         else:
             token = body[1 + body.rfind("/") :]
+
+        assert token is not None
         token = urllib.parse.unquote(token)
 
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)

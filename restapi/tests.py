@@ -1,10 +1,11 @@
 import json
 import os
+import re
 import secrets
 import string
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Optional
 
 import jwt
 import pyotp
@@ -424,6 +425,16 @@ class BaseTests:
 
         os.unlink(fpath)
         return data
+
+    @staticmethod
+    def get_token_from_body(body: str) -> Optional[str]:
+        token = None
+        urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', body)
+        if urls:
+            # token is the last part of the url, extract as a path
+            token = os.path.basename(urls[0])
+
+        return token
 
     @staticmethod
     def get_crafted_token(

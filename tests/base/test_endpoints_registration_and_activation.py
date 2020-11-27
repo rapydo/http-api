@@ -190,11 +190,10 @@ class TestApp(BaseTests):
         assert html in body or plain in body
 
         if html in body:
-            resp = re.search(r".*https?://.*/register/(.*)\n", body)
-            if resp:
-                token = resp[1]
+            token = self.get_token_from_body(body)
         else:
             token = body[1 + body.rfind("/") :]
+        assert token is not None
         token = urllib.parse.unquote(token)
 
         # profile activation
@@ -283,11 +282,11 @@ class TestApp(BaseTests):
         html = ">click here</a> to activate your account"
 
         if html in body:
-            resp = re.search(r".*https?://.*/register/(.*)\n", body)
-            if resp:
-                token = resp[1]
+            token = self.get_token_from_body(body)
         else:
             token = body[1 + body.rfind("/") :]
+
+        assert token is not None
         token = urllib.parse.unquote(token)
 
         headers, _ = self.do_login(client, None, None)
