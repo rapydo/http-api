@@ -399,7 +399,7 @@ class BaseTests:
             elif field_type == "date":
                 # d = fake.date(pattern="%Y-%m-%d")
                 # data[key] = f"{d}T00:00:00.000Z"
-                data[key] = fake.iso8601()
+                data[key] = f"{fake.iso8601()}.000Z"
             elif field_type == "email":
                 data[key] = fake.ascii_email()
             elif field_type == "boolean":
