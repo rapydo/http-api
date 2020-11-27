@@ -8,8 +8,11 @@ from datetime import datetime
 
 import psutil
 
+from restapi.config import TESTING
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
+
+DEFAULT_MAX_RETRIES = 999 if not TESTING else 30
 
 
 class Timeout(Exception):
@@ -62,7 +65,7 @@ def find_process(process_name, keywords=None, prefix=None):
     return False
 
 
-def wait_socket(host, port, service_name, retries=999):
+def wait_socket(host, port, service_name, retries=DEFAULT_MAX_RETRIES):
 
     SLEEP_TIME = 2
     TIMEOUT = 1
