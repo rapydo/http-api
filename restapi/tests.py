@@ -397,8 +397,9 @@ class BaseTests:
                 max_value = d.get("max", 9999)
                 data[key] = fake.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
-                d = fake.date(pattern="%Y-%m-%d")
-                data[key] = f"{d}T00:00:00.000Z"
+                # d = fake.date(pattern="%Y-%m-%d")
+                # data[key] = f"{d}T00:00:00.000Z"
+                data[key] = fake.iso8601()
             elif field_type == "email":
                 data[key] = fake.ascii_email()
             elif field_type == "boolean":
