@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 import string
+import urllib.parse
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Optional
@@ -429,10 +430,19 @@ class BaseTests:
     @staticmethod
     def get_token_from_body(body: str) -> Optional[str]:
         token = None
-        urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', body)
-        if urls:
-            # token is the last part of the url, extract as a path
-            token = os.path.basename(urls[0])
+
+        # if a token is not found the email is considered to be plain text
+        if "</a>" not in body:
+            token = body[1 + body.rfind("/") :]
+        # if a token is found the email is considered to be html
+        else:
+            urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', body)
+            if urls:
+                # token is the last part of the url, extract as a path
+                token = os.path.basename(urls[0])
+
+        if token:
+            token = urllib.parse.unquote(token)
 
         return token
 

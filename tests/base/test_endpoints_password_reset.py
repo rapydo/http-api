@@ -1,6 +1,3 @@
-import re
-import urllib.parse
-
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
@@ -65,17 +62,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} Password Reset" in mail.get("headers")
         assert f"{proto}://localhost/public/reset/" in body
-        plain = "Follow this link to reset your password: "
-        html = ">click here</a> to reset your password"
-        assert html in body or plain in body
 
-        if html in body:
-            token = self.get_token_from_body(body)
-        else:
-            token = body[1 + body.rfind("/") :]
-
+        token = self.get_token_from_body(body)
         assert token is not None
-        token = urllib.parse.unquote(token)
 
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         assert r.status_code == 200

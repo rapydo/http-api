@@ -1,6 +1,3 @@
-import re
-import urllib.parse
-
 import pytest
 
 from restapi.config import PRODUCTION, get_project_configuration
@@ -109,9 +106,6 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
-        plain = "Follow this link to activate your account: "
-        html = ">click here</a> to activate your account"
-        assert html in body or plain in body
 
         # This will fail because the user is not active
         self.do_login(
@@ -185,16 +179,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
-        plain = "Follow this link to activate your account: "
-        html = ">click here</a> to activate your account"
-        assert html in body or plain in body
 
-        if html in body:
-            token = self.get_token_from_body(body)
-        else:
-            token = body[1 + body.rfind("/") :]
+        token = self.get_token_from_body(body)
         assert token is not None
-        token = urllib.parse.unquote(token)
 
         # profile activation
         r = client.put(f"{AUTH_URI}/profile/activate/thisisatoken")
@@ -279,15 +266,9 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         assert f"{proto}://localhost/public/register/" in body
-        html = ">click here</a> to activate your account"
 
-        if html in body:
-            token = self.get_token_from_body(body)
-        else:
-            token = body[1 + body.rfind("/") :]
-
+        token = self.get_token_from_body(body)
         assert token is not None
-        token = urllib.parse.unquote(token)
 
         headers, _ = self.do_login(client, None, None)
 
