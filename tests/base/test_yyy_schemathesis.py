@@ -82,7 +82,7 @@ else:
 
         # I want to allow 503 errors, raised in case of mail sending not enabled
         # Let's convert to 404 errors
-        if response.status_code == 503:
+        if response.status_code == 503:  # pragma: no cover
             response.status_code = 404
 
         # validation checks are defined here:
@@ -107,7 +107,7 @@ else:
 
         # I want to allow 503 errors, raised in case of mail sending not enabled
         # Let's convert to 404 errors
-        if response.status_code == 503:
+        if response.status_code == 503:  # pragma: no cover
             response.status_code = 404
 
         # validation checks are defined here:
@@ -125,7 +125,7 @@ else:
     )
     def test_logout(case):
 
-        if case.headers is None:
+        if case.headers is None:  # pragma: no cover
             case.headers = auth_header
 
         response = case.call_wsgi()

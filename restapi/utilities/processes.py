@@ -8,6 +8,7 @@ from datetime import datetime
 
 import psutil
 
+from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 
@@ -61,7 +62,7 @@ def find_process(process_name, keywords=None, prefix=None):
     return False
 
 
-def wait_socket(host, port, service_name):
+def wait_socket(host, port, service_name, retries=999):
 
     SLEEP_TIME = 2
     TIMEOUT = 1
@@ -86,6 +87,13 @@ def wait_socket(host, port, service_name):
                 break
 
             counter += 1
+
+            if counter >= retries:
+                t = math.ceil(time.time() - begin)
+                raise ServiceUnavailable(
+                    f"{service_name} ({host}:{port}) unavailable after {t} seconds"
+                )
+
             if counter % 15 == 0:
                 log.warning(
                     "{} ({}:{}) is still unavailable after {} seconds",

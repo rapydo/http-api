@@ -128,6 +128,15 @@ class TestApp(BaseTests):
         except Timeout:
             pass
 
+        start_timeout(15)
+        try:
+            wait_socket("invalid", 123, service_name="test", retries=2)
+            pytest.fail("No exception raised")  # pragma: no cover
+        except ServiceUnavailable:
+            pass
+        except Timeout:  # pragma: no cover
+            pytest.fail("Reached Timeout, max retries not worked?")
+
         # This is a valid package containing other packages... but no task will be found
         s = Meta.get_celery_tasks("restapi.utilities")
         assert isinstance(s, dict)
