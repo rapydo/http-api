@@ -4,8 +4,11 @@ We create all the internal flask components here.
 """
 import logging
 import os
+import signal
+import sys
 import warnings
 from enum import Enum
+from threading import Lock
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -37,6 +40,8 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
+lock = Lock()
+
 
 class ServerModes(int, Enum):
     NORMAL = 0
@@ -45,11 +50,23 @@ class ServerModes(int, Enum):
     WORKER = 3
 
 
+def teardown_handler(signal, frame):
+    with lock:
+        print("bye bye")
+        sys.exit(0)
+
+
 def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
+
+    # TERM is not catched by Flask
+    # https://github.com/docker/compose/issues/4199#issuecomment-426109482
+    # signal.signal(signal.SIGTERM, teardown_handler)
+    # SIGINT is registered as STOPSIGNAL in Dockerfile
+    signal.signal(signal.SIGINT, teardown_handler)
 
     # Flask app instance
     # template_folder = template dir for output in HTML
