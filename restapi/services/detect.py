@@ -153,7 +153,7 @@ class Detector:
 
             try:
                 # This is to test the Connector compliance,
-                # i.e. to verify instance and get_isntance in the connector module
+                # i.e. to verify instance and get_instance in the connector module
                 connector_module.instance
                 connector_module.get_instance
             except AttributeError as e:

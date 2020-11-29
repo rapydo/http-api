@@ -1,5 +1,6 @@
 import abc
 import os
+import time
 from datetime import datetime, timedelta
 from typing import Dict, Optional, TypeVar
 
@@ -54,11 +55,16 @@ class Connector(metaclass=abc.ABCMeta):
         # Will be modified by self.disconnect()
         self.disconnected = False
 
+    def __del__(self):
+        if not self.disconnected:
+            self.disconnect()
+
     def __enter__(self):
         return self
 
     def __exit__(self, _type, value, tb):
-        self.disconnect()
+        if not self.disconnected:
+            self.disconnect()
 
     @abc.abstractmethod
     def get_connection_exception(self):  # pragma: no cover
@@ -109,13 +115,14 @@ class Connector(metaclass=abc.ABCMeta):
     def set_variables(cls, envvars):
         cls.variables = envvars
 
-    def set_object(self, obj, key="[]") -> None:
+    @classmethod
+    def set_object(cls, name, obj, key="[]") -> None:
         """ set object into internal array """
 
         tid = os.getpid()
-        self.objs.setdefault(tid, {})
-        self.objs[tid].setdefault(self.name, {})
-        self.objs[tid][self.name][key] = obj
+        cls.objs.setdefault(tid, {})
+        cls.objs[tid].setdefault(name, {})
+        cls.objs[tid][name][key] = obj
 
     @staticmethod
     def is_external(host: str) -> bool:
@@ -128,6 +135,23 @@ class Connector(metaclass=abc.ABCMeta):
         self.objs.setdefault(tid, {})
         self.objs[tid].setdefault(self.name, {})
         return self.objs[tid][self.name].get(key, None)
+
+    @classmethod
+    def disconnect_all(cls):
+        cls.obj = {}
+        for pid, connectors in cls.objs.items():
+            for connector, instances in connectors.items():
+                for key, instance in instances.items():
+                    if not instance.disconnected:
+                        instance.disconnect()
+
+        # This is needed to let connectors to complete the disconnection and prevent
+        # errors like this on rabbitMQ:
+        # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
+        # client unexpectedly closed TCP connection
+
+        time.sleep(1)
+        print("Disconnection completed")
 
     def initialize_connection(self, expiration, verification, **kwargs):
 
@@ -235,5 +259,5 @@ class Connector(metaclass=abc.ABCMeta):
         # can raise ServiceUnavailable exception
         obj = self.initialize_connection(expiration, verification, **kwargs)
         self.set_models_to_service(obj)
-        self.set_object(obj=obj, key=unique_hash)
+        self.set_object(name=self.name, obj=obj, key=unique_hash)
         return obj

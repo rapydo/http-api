@@ -15,6 +15,10 @@ from restapi.utilities.logs import log
 
 
 class RabbitExt(Connector):
+    def __init__(self, app=None):
+        self.connection: pika.BlockingConnection = None
+        super().__init__(app)
+
     def get_connection_exception(self):
         # Includes:
         #   AuthenticationError,
@@ -74,11 +78,12 @@ class RabbitExt(Connector):
         return self
 
     def disconnect(self) -> None:
-        if self.connection.is_closed:
-            log.debug("Connection already closed")
-        else:
-            self.connection.close()
         self.disconnected = True
+        if self.connection:
+            if self.connection.is_closed:
+                log.debug("Connection already closed")
+            else:
+                self.connection.close()
 
     def is_connected(self) -> bool:
         return bool(self.connection.is_open)

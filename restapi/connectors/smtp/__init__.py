@@ -21,6 +21,10 @@ from restapi.utilities.logs import log
 
 
 class Mail(Connector):
+    def __init__(self, app=None):
+        self.smtp = None
+        super().__init__(app)
+
     def get_connection_exception(self):
         return (socket.gaierror, SMTPAuthenticationError)
 
