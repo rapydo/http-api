@@ -118,6 +118,10 @@ def catch_db_exceptions(func):
 
 
 class SQLAlchemy(Connector):
+    def __init__(self, app=None):
+        self.db: OriginalAlchemy = None
+        super().__init__(app)
+
     def is_mysql(self) -> bool:
         return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
