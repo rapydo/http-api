@@ -139,9 +139,9 @@ class Connector(metaclass=abc.ABCMeta):
     @classmethod
     def disconnect_all(cls):
         cls.obj = {}
-        for pid, connectors in cls.objs.items():
-            for connector, instances in connectors.items():
-                for key, instance in instances.items():
+        for connectors in cls.objs.values():
+            for instances in connectors.values():
+                for instance in instances.values():
                     if not instance.disconnected:
                         instance.disconnect()
 
