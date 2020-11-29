@@ -73,7 +73,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             default=False,
                         )
                         defs = definition.get("parameters", [])[:]
-                        for idx, p in enumerate(defs):
+                        for p in defs:
 
                             if "schema" not in p:
                                 continue

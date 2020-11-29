@@ -19,7 +19,6 @@ from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DI
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.models import validate
-from restapi.services.detect import Detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
