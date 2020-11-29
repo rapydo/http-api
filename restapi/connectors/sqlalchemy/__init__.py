@@ -199,7 +199,8 @@ class SQLAlchemy(Connector):
         return self.db.session
 
     def disconnect(self):
-        self.db.session.close()
+        if self.db:
+            self.db.session.close()
         self.disconnected = True
         return
 
