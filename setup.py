@@ -14,7 +14,7 @@ setup(
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
     packages=find_packages(where=".", exclude=["tests*"]),
     package_data={main_package: ["templates/index.html"]},
-    python_requires=">=3.6.0",
+    python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]
         {main_package}={app}:cli
@@ -72,8 +72,6 @@ setup(
         "Intended Audience :: Developers",
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
 )
