@@ -24,8 +24,8 @@ jobs:
             celery-redis-mongo,
             celery-rabbit-rabbit,
             mongo,
-            mysql,
           ]
+          # mysql,
         mode: [dev, prod]
 
     steps:
