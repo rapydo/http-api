@@ -1,22 +1,19 @@
-# if rapydo-core is cloned inside this repo
-core
-tests*/tail.yml
-
-# Instance dependent files
-instance/
-
-# Tests coverage
+# Unit test / coverage reports
 cover/
 htmlcov/
+.tox/
+*.cover
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+index.txt
 
 # sqllite dbs
 *.db
 backup*
 models/*json
-
-# Configurations
-confs/endpoints.ini
-confs/endpoints/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -52,16 +49,6 @@ var/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
 
 # Translations
 *.mo

@@ -65,7 +65,7 @@ repos:
             "Telethon==1.17.5",
 
             # Extra dependencies
-            # "lxml",
+            "lxml",
             "pytest-stub",
           ]
 
@@ -106,4 +106,6 @@ repos:
             # This flag reports an error whenever it encounters a
             # partly annotated function definition.
             "--disallow-incomplete-defs",
+            "--txt-report",
+            ".",
           ]

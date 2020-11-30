@@ -59,7 +59,7 @@ class Connector(metaclass=abc.ABCMeta):
         if not self.disconnected:
             self.disconnect()
 
-    def __enter__(self):
+    def __enter__(self: T) -> T:
         return self
 
     def __exit__(self, _type, value, tb):
@@ -71,21 +71,21 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def connect(self, **kwargs):  # pragma: no cover
+    def connect(self, **kwargs) -> None:  # pragma: no cover
         return
 
     @abc.abstractmethod
-    def disconnect(self):  # pragma: no cover
+    def disconnect(self) -> None:  # pragma: no cover
         return
 
     @abc.abstractmethod
-    def is_connected(instance):  # pragma: no cover
+    def is_connected(instance: T) -> bool:  # pragma: no cover
         return True
 
     def destroy(self):  # pragma: no cover
         print_and_exit("Missing destroy method in {}", self.__class__.__name__)
 
-    def initialize(self):  # pragma: no cover
+    def initialize(self) -> None:  # pragma: no cover
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
