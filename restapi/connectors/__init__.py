@@ -35,7 +35,7 @@ class Connector(metaclass=abc.ABCMeta):
     #         }
     #     }
     # }
-    instances: InstancesCache
+    instances: InstancesCache = {}
 
     def __init__(self, app=None):
 
