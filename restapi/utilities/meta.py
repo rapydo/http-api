@@ -47,6 +47,7 @@ class Meta:
                 classes[key] = value
         return classes
 
+    # Should return `from types import ModuleType` -> Optional[ModuleType]
     @staticmethod
     def get_module_from_string(modulestring, prefix_package=False, exit_on_fail=False):
         """

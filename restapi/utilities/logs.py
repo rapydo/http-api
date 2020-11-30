@@ -2,7 +2,7 @@ import json
 import os
 import re
 import sys
-import urllib
+import urllib.parse
 from typing import Optional
 
 from loguru import logger as log

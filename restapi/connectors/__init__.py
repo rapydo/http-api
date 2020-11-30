@@ -1,7 +1,7 @@
 import abc
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Optional, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 # mypy: ignore-errors
 from flask import _app_ctx_stack as stack
@@ -56,7 +56,7 @@ class Connector(metaclass=abc.ABCMeta):
             # Deprecated since 0.9
             log.warning("Deprecated app parameter in {} initialization", self.name)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if not self.disconnected:
             self.disconnect()
 
@@ -83,7 +83,7 @@ class Connector(metaclass=abc.ABCMeta):
     def is_connected(instance: T) -> bool:  # pragma: no cover
         return True
 
-    def destroy(self):  # pragma: no cover
+    def destroy(self) -> None:  # pragma: no cover
         print_and_exit("Missing destroy method in {}", self.__class__.__name__)
 
     def initialize(self) -> None:  # pragma: no cover
@@ -151,7 +151,9 @@ class Connector(metaclass=abc.ABCMeta):
 
         log.info("[{}] All connectors disconnected", os.getpid())
 
-    def initialize_connection(self, expiration, verification, **kwargs):
+    def initialize_connection(
+        self, expiration: int, verification: int, **kwargs: Dict[str, Any]
+    ) -> T:
 
         # Create a new instance of itself
         obj = self.__class__()
