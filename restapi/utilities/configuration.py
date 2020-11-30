@@ -1,17 +1,25 @@
 import os
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, cast
 
 import yaml
 
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 
-PROJECTS_DEFAULTS_FILE = "projects_defaults.yaml"
-PROJECT_CONF_FILENAME = "project_configuration.yaml"
+PROJECTS_DEFAULTS_FILE = Path("projects_defaults.yaml")
+PROJECT_CONF_FILENAME = Path("project_configuration.yaml")
+
+
+ConfigurationType = Dict[str, Any]
 
 
 def read_configuration(
-    default_file_path, base_project_path, projects_path, submodules_path
-):
+    default_file_path: Path,
+    base_project_path: Path,
+    projects_path: Path,
+    submodules_path: Path,
+) -> Tuple[ConfigurationType, Optional[str], Optional[Path]]:
     """
     Read default configuration
     """
@@ -63,15 +71,13 @@ def read_configuration(
     if not os.path.exists(extend_path):  # pragma: no cover
         print_and_exit("From project not found: {}", extend_path)
 
-    extend_file = f"extended_{PROJECT_CONF_FILENAME}"
+    extend_file = Path(f"extended_{PROJECT_CONF_FILENAME}")
     extended_configuration = load_yaml_file(file=extend_file, path=extend_path)
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
 
-def mix(base, custom):
-    if base is None:
-        base = {}
+def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType:
 
     for key, elements in custom.items():
 
@@ -96,7 +102,7 @@ def mix(base, custom):
     return base
 
 
-def load_yaml_file(file, path):
+def load_yaml_file(file: Path, path: Path) -> ConfigurationType:
 
     filepath = os.path.join(path, file)
 
@@ -110,7 +116,7 @@ def load_yaml_file(file, path):
             if len(docs) == 0:
                 raise AttributeError(f"YAML file is empty: {filepath}")
 
-            return docs[0]
+            return cast(ConfigurationType, docs[0])
 
         except Exception as e:
             # # IF dealing with a strange exception string (escaped)

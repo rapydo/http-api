@@ -6,14 +6,14 @@ https://pythonconquerstheuniverse.wordpress.com/
     2010/10/20/a-globals-class-pattern-for-python/
 
 """
-from typing import Any
+from typing import Any, Dict
 
 
 class mem:
 
     customizer: Any
     initializer: Any
-    configuration: Any
+    configuration: Dict[str, Any]
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any

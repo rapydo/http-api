@@ -5,7 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
-from typing import Dict, List, Set, Type
+from typing import Any, Dict, List, Set, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -68,7 +68,7 @@ class EndpointsLoader:
 
         self._used_tags = set()
 
-    def load_configuration(self):
+    def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
         confs_path = os.path.join(os.curdir, CONF_PATH)
         defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)

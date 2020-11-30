@@ -1,6 +1,7 @@
 import os
 import tempfile
 import time
+from pathlib import Path
 from typing import Any, Dict
 
 import psutil
@@ -230,7 +231,7 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
 
         data: Dict[str, Any] = {"a": 1}
-        assert mix(None, data) == data
+        assert mix({}, data) == data
 
         data1: Dict[str, Any] = {"a": {"b": 1}, "c": 1}
         data2: Dict[str, Any] = {"a": {"b": 2}}
@@ -311,20 +312,20 @@ class TestApp(BaseTests):
 
         # Invalid file / path
         try:
-            load_yaml_file("invalid", "path")
+            load_yaml_file(Path("invalid"), Path("path"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         try:
-            load_yaml_file("invalid", "tests")
+            load_yaml_file(Path("invalid"), Path("tests"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         # Valid path, but not in yaml format
         try:
-            load_yaml_file("conftest.py", "tests")
+            load_yaml_file(Path("conftest.py"), Path("tests"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
@@ -332,7 +333,7 @@ class TestApp(BaseTests):
         # File is empty
         tmpf = tempfile.NamedTemporaryFile()
         try:
-            load_yaml_file(tmpf.name, ".")
+            load_yaml_file(Path(tmpf.name), Path("."))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass

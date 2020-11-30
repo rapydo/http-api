@@ -11,7 +11,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import jwt
 import pyotp  # TOTP generation
@@ -105,7 +105,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     # Executed once by Detector in init_services
     @classmethod
-    def module_initialization(cls):
+    def module_initialization(cls) -> None:
         cls.load_default_user()
         cls.load_roles()
         cls.import_secret(SECRET_KEY_FILE)
@@ -272,9 +272,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return hashed_password == BaseAuthentication.hash_password(password)
 
     @staticmethod
-    def verify_password(plain_password, hashed_password):
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
-            return pwd_context.verify(plain_password, hashed_password)
+            return cast(bool, pwd_context.verify(plain_password, hashed_password))
         except ValueError as e:  # pragma: no cover
             log.error(e)
 
