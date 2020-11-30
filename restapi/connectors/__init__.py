@@ -143,13 +143,17 @@ class Connector(metaclass=abc.ABCMeta):
             for instances in connectors.values():
                 for instance in instances.values():
                     if not instance.disconnected:
+                        log.info(
+                            "Disconnecting {} {}", instance.name, hex(id(instance))
+                        )
                         instance.disconnect()
+
+        log.info("[{}] All connectors disconnected", os.getpid())
 
         # This is needed to let connectors to complete the disconnection and prevent
         # errors like this on rabbitMQ:
         # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
         # client unexpectedly closed TCP connection
-
         time.sleep(1)
         print("Disconnection completed")
 

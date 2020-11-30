@@ -18,7 +18,12 @@ from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
+from sqlalchemy.exc import (
+    IntegrityError,
+    InternalError,
+    OperationalError,
+    ProgrammingError,
+)
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
@@ -110,6 +115,16 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)
             raise
 
+        except ProgrammingError as e:
+            # Ignore ProgrammingError (like Table doesn't exist) during initialization
+            if not SQLAlchemy.DB_INITIALIZING:
+                message = str(e).split("\n")
+                log.error(message[0])
+                if len(message) > 1:
+                    log.info(message[1])
+
+            raise
+
         except BaseException as e:
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
@@ -118,6 +133,9 @@ def catch_db_exceptions(func):
 
 
 class SQLAlchemy(Connector):
+    # Used to suppress ProgrammingError raised by MySQL during DB initialization
+    DB_INITIALIZING = False
+
     def __init__(self, app=None):
         self.db: OriginalAlchemy = None
         super().__init__(app)
@@ -218,7 +236,9 @@ class SQLAlchemy(Connector):
                 sql = text("SELECT 1")
                 instance.db.engine.execute(sql)
 
+                SQLAlchemy.DB_INITIALIZING = True
                 instance.db.create_all()
+                SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self):
 
