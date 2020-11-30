@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import sys
+import time
 import warnings
 from enum import Enum
 from threading import Lock
@@ -55,7 +56,14 @@ def teardown_handler(signal, frame):
         from restapi.connectors import Connector
 
         Connector.disconnect_all()
-        sys.exit(0)
+
+        # This is needed to let connectors to complete the disconnection and prevent
+        # errors like this on rabbitMQ:
+        # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
+        # client unexpectedly closed TCP connection
+    time.sleep(1)
+    print("Disconnection completed")
+    sys.exit(0)
 
 
 def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):

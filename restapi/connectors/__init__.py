@@ -1,6 +1,5 @@
 import abc
 import os
-import time
 from datetime import datetime, timedelta
 from typing import Dict, Optional, TypeVar
 
@@ -15,6 +14,8 @@ from restapi.utilities.logs import log
 # https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
 T = TypeVar("T", bound="Connector")
 
+InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
+
 
 class Connector(metaclass=abc.ABCMeta):
 
@@ -27,20 +28,23 @@ class Connector(metaclass=abc.ABCMeta):
     available: bool = False
 
     # will contain:
-    # objs = {
+    # instances = {
     #     'thread-id': {
     #         'ConnectorName': {
     #             'params-unique-key': instance
     #         }
     #     }
     # }
-    objs = {}
+    instances: InstancesCache
 
     def __init__(self, app=None):
 
         self.name = self.__class__.__name__.lower()
 
-        # Added to convince mypy that sel.app cannot be None
+        # Will be modified by self.disconnect()
+        self.disconnected = False
+
+        # Added to convince mypy that self.app cannot be None
         if self.app is None:  # pragma: no cover
             # This should never happen because app is
             # assigned by Detector during init_services
@@ -51,9 +55,6 @@ class Connector(metaclass=abc.ABCMeta):
         if app:
             # Deprecated since 0.9
             log.warning("Deprecated app parameter in {} initialization", self.name)
-
-        # Will be modified by self.disconnect()
-        self.disconnected = False
 
     def __del__(self):
         if not self.disconnected:
@@ -112,34 +113,34 @@ class Connector(metaclass=abc.ABCMeta):
             log.debug("Models loaded")
 
     @classmethod
-    def set_variables(cls, envvars):
+    def set_variables(cls, envvars: Dict[str, str]) -> None:
         cls.variables = envvars
-
-    @classmethod
-    def set_object(cls, name, obj, key="[]") -> None:
-        """ set object into internal array """
-
-        tid = os.getpid()
-        cls.objs.setdefault(tid, {})
-        cls.objs[tid].setdefault(name, {})
-        cls.objs[tid][name][key] = obj
 
     @staticmethod
     def is_external(host: str) -> bool:
         return not host.endswith(".dockerized.io")
 
-    def get_object(self, key="[]"):
+    @classmethod
+    def set_object(cls, name: str, obj: T, key: str = "[]") -> None:
+        """ set object into internal array """
+
+        tid = os.getpid()
+        cls.instances.setdefault(tid, {})
+        cls.instances[tid].setdefault(name, {})
+        cls.instances[tid][name][key] = obj
+
+    @classmethod
+    def get_object(cls, name: str, key: str = "[]") -> Optional[T]:
         """ recover object if any """
 
         tid = os.getpid()
-        self.objs.setdefault(tid, {})
-        self.objs[tid].setdefault(self.name, {})
-        return self.objs[tid][self.name].get(key, None)
+        cls.instances.setdefault(tid, {})
+        cls.instances[tid].setdefault(name, {})
+        return cls.instances[tid][name].get(key, None)
 
     @classmethod
-    def disconnect_all(cls):
-        cls.obj = {}
-        for connectors in cls.objs.values():
+    def disconnect_all(cls) -> None:
+        for connectors in cls.instances.values():
             for instances in connectors.values():
                 for instance in instances.values():
                     if not instance.disconnected:
@@ -149,13 +150,6 @@ class Connector(metaclass=abc.ABCMeta):
                         instance.disconnect()
 
         log.info("[{}] All connectors disconnected", os.getpid())
-
-        # This is needed to let connectors to complete the disconnection and prevent
-        # errors like this on rabbitMQ:
-        # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
-        # client unexpectedly closed TCP connection
-        time.sleep(1)
-        print("Disconnection completed")
 
     def initialize_connection(self, expiration, verification, **kwargs):
 
@@ -225,7 +219,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         unique_hash = str(sorted(kwargs.items()))
 
-        obj = self.get_object(key=unique_hash)
+        obj = self.get_object(name=self.name, key=unique_hash)
 
         # if an expiration time is set, verify the instance age
         if obj and obj.connection_expiration_time:
