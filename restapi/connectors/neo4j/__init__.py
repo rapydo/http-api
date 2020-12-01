@@ -103,7 +103,6 @@ def graph_transactions(func):  # pragma: no cover
 
 
 class NeoModel(Connector):
-
     def get_connection_exception(self):
 
         return (

@@ -47,7 +47,7 @@ def test_destroy():
     # 2) the init al already tests with any other DB, included postgres
     # 3) MySQL is not used by any project
     # => there is no need to go crazy in debugging this issue!
-    if detector.authentication_service == "sqlalchemy" and auth.is_mysql():
+    if detector.authentication_service == "sqlalchemy" and auth.db.is_mysql():
         return False
 
     create_app(mode=ServerModes.INIT)
