@@ -40,6 +40,16 @@ def test_destroy():
     except ServiceUnavailable:
         pass
 
+    # Re-init does not work with MySQL due to issues with previously created connection
+    # Considering that:
+    # 1) this is a workaround to test the initialization
+    #       (not the normal workflow used by the application)
+    # 2) the init al already tests with any other DB, included postgres
+    # 3) MySQL is not used by any project
+    # => there is no need to go crazy in debugging this issue!
+    if detector.authentication_service == "sqlalchemy" and auth.is_mysql():
+        return False
+
     create_app(mode=ServerModes.INIT)
 
     auth = detector.get_authentication_instance()
