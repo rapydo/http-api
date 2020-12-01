@@ -149,6 +149,8 @@ class Connector(metaclass=abc.ABCMeta):
                         )
                         instance.disconnect()
 
+        cls.instances.clear()
+
         log.info("[{}] All connectors disconnected", os.getpid())
 
     def initialize_connection(

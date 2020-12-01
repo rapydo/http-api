@@ -142,6 +142,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             )
             cls.SECOND_FACTOR_AUTHENTICATION = None
 
+    # This is called by Authentication implementation, i.e.
+    # 1) authentication_modules.Authentication() creates instance of a specific Auth
+    # 2) the auth init create an istance of the specific db service
+    # 3) This init is called with super().__init__(db)
     def __init__(self, backend_database):
         self.db = backend_database
 
