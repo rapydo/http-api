@@ -4,7 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -103,6 +103,7 @@ def graph_transactions(func):  # pragma: no cover
 
 
 class NeoModel(Connector):
+
     def get_connection_exception(self):
 
         return (
@@ -232,8 +233,7 @@ class NeoModel(Connector):
 
 class Authentication(BaseAuthentication):
     def __init__(self):
-        db = get_instance()
-        super().__init__(db)
+        self.db = get_instance()
 
     def get_user(self, username=None, user_id=None):
 
