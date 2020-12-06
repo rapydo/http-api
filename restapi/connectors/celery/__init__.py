@@ -188,9 +188,8 @@ class CeleryExt(Connector):
 
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        return
 
     def is_connected(self):
 

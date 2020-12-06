@@ -216,11 +216,10 @@ class SQLAlchemy(Connector):
     def session(self):
         return self.db.session
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         if self.db:
             self.db.session.close()
         self.disconnected = True
-        return
 
     def is_connected(self):
         log.warning("sqlalchemy.is_connected method is not implemented")

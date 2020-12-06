@@ -32,9 +32,8 @@ class PushpinExt(Connector):
             raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        return
 
     def is_connected(self):
         log.warning("pushpin.is_connected method is not implemented")

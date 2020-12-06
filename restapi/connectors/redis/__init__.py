@@ -31,13 +31,12 @@ class RedisExt(Connector):
         )
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        # if self.r:
-        #     self.r.close()
-        return
+        if self.r:
+            self.r.close()
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         try:
             self.r.get("")
             return True
