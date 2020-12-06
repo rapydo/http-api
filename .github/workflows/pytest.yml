@@ -108,3 +108,8 @@ jobs:
           backend_container=$(docker-compose ps -q backend)
           docker cp ${backend_container}:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+
+      - name: Print Logs
+        if: failure()
+        run: |
+          tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log
