@@ -10,6 +10,7 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
+from typing import Dict, Optional, Union
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -34,6 +35,7 @@ from restapi.config import (
     get_project_configuration,
 )
 from restapi.customizer import BaseCustomizer
+from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.detect import detector
@@ -132,6 +134,27 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         options=options,
     )
 
+    cache_config: Dict[str, Union[Optional[str], int]] = {}
+    if redis := Env.load_variables_group(prefix="redis"):
+        cache_config = {
+            "CACHE_TYPE": "redis",
+            "CACHE_REDIS_HOST": redis.get("host"),
+            "CACHE_REDIS_PORT": redis.get("port"),
+            "CACHE_REDIS_PASSWORD": redis.get("password"),
+            "CACHE_REDIS_DB": redis.get("1"),
+            # "CACHE_REDIS_URL": redis.get(""),
+        }
+
+    else:
+        cache_config = {
+            "CACHE_TYPE": "filesystem",
+            "CACHE_DIR": "/tmp/cache",
+            "CACHE_THRESHOLD": 4096,
+            # 'CACHE_IGNORE_ERRORS': True,
+        }
+    mem.cache = Cache(config=cache_config)
+    mem.cache.init_app(microservice)
+
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
     # when to close??
@@ -145,15 +168,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-
-        cache_config = {
-            "CACHE_TYPE": "filesystem",
-            "CACHE_DIR": "/tmp/cache",
-            "CACHE_THRESHOLD": 1024,
-            # 'CACHE_IGNORE_ERRORS': True,
-        }
-        mem.cache = Cache(config=cache_config)
-        mem.cache.init_app(microservice)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
