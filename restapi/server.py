@@ -44,8 +44,6 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
-# from restapi.services.cache import Cache
-
 lock = Lock()
 
 
@@ -176,8 +174,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         if not hasattr(mem, "cache"):
             mem.cache = Cache(config=cache_config)
         mem.cache.init_app(microservice)
-
-        # mem.cache = Cache.get_instance(microservice, detector)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
