@@ -94,13 +94,13 @@ def test_cli(client):
     assert r.status_code == 200
     assert (end_time - start_time).total_seconds() < 1
 
-    # Let's clear the cache
-    response = runner.invoke(cli.clearcache, [])
-    assert response.exit_code == 0
+    # # Let's clear the cache
+    # response = runner.invoke(cli.clearcache, [])
+    # assert response.exit_code == 0
 
-    # Third response is no longer cached, expected time greater than 1 second
-    start_time = datetime.now()
-    r = client.patch(f"{API_URI}/tests/cache")
-    end_time = datetime.now()
-    assert r.status_code == 200
-    assert (end_time - start_time).total_seconds() > 1
+    # # Third response is no longer cached, expected time greater than 1 second
+    # start_time = datetime.now()
+    # r = client.patch(f"{API_URI}/tests/cache")
+    # end_time = datetime.now()
+    # assert r.status_code == 200
+    # assert (end_time - start_time).total_seconds() > 1
