@@ -148,29 +148,31 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
             "ignore", message="Multiple schemas resolved to the name "
         )
 
-        # Prevent re-initialization of cache (can create errors during tests)
+        cache_config: Dict[str, Union[Optional[str], int]] = {}
+        if redis := Env.load_variables_group(prefix="redis"):
+            cache_config = {
+                "CACHE_TYPE": "redis",
+                "CACHE_REDIS_HOST": redis.get("host"),
+                "CACHE_REDIS_PORT": redis.get("port"),
+                "CACHE_REDIS_PASSWORD": redis.get("password"),
+                "CACHE_REDIS_DB": redis.get("1"),
+                # "CACHE_REDIS_URL": redis.get(""),
+            }
+
+        else:
+            cache_config = {
+                "CACHE_TYPE": "filesystem",
+                "CACHE_DIR": "/tmp/cache",
+                "CACHE_THRESHOLD": 4096,
+                # 'CACHE_IGNORE_ERRORS': True,
+            }
+
+        # This check prevent KeyError raised during tests
+        # Exactly as reported here:
+        # https://github.com/sh4nks/flask-caching/issues/191
         if not hasattr(mem, "cache"):
-            cache_config: Dict[str, Union[Optional[str], int]] = {}
-            if redis := Env.load_variables_group(prefix="redis"):
-                cache_config = {
-                    "CACHE_TYPE": "redis",
-                    "CACHE_REDIS_HOST": redis.get("host"),
-                    "CACHE_REDIS_PORT": redis.get("port"),
-                    "CACHE_REDIS_PASSWORD": redis.get("password"),
-                    "CACHE_REDIS_DB": redis.get("1"),
-                    # "CACHE_REDIS_URL": redis.get(""),
-                }
-
-            else:
-                cache_config = {
-                    "CACHE_TYPE": "filesystem",
-                    "CACHE_DIR": "/tmp/cache",
-                    "CACHE_THRESHOLD": 4096,
-                    # 'CACHE_IGNORE_ERRORS': True,
-                }
-
             mem.cache = Cache(config=cache_config)
-            mem.cache.init_app(microservice)
+        mem.cache.init_app(microservice)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
@@ -277,8 +279,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
             # sentry_sdk.init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
-    # and the flask App is ready now:
     log.info("Boot completed")
 
-    # return our flask app
     return microservice
