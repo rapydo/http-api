@@ -25,6 +25,7 @@ setup(
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
+        "Flask-Caching==1.9.0",
         "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
