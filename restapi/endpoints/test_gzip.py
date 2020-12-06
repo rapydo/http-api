@@ -14,7 +14,7 @@ if TESTING:
             summary="Execute tests gzip encoding",
             description="Only enabled in testing mode",
             responses={
-                200: "Content sent executed",
+                200: "Content sent",
                 416: "Invalid size",
             },
         )

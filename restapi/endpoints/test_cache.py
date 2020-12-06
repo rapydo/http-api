@@ -15,12 +15,11 @@ if TESTING:
             summary="Execute tests on cached responses",
             description="Only enabled in testing mode",
             responses={
-                200: "Content sent executed",
+                200: "Content sent",
             },
         )
         @decorators.cache(timeout=2)
         def get(self):
 
             time.sleep(1)
-            # Just to prevent super giant responses
             return self.response("OK")
