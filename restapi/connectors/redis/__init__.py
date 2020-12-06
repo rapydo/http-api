@@ -10,7 +10,6 @@ from restapi.env import Env
 
 class RedisExt(Connector):
     def __init__(self, app=None):
-        self.r: StrictRedis = None
         super().__init__(app)
 
     def get_connection_exception(self):
@@ -33,8 +32,6 @@ class RedisExt(Connector):
 
     def disconnect(self) -> None:
         self.disconnected = True
-        if self.r:
-            self.r.close()
 
     def is_connected(self) -> bool:
         try:

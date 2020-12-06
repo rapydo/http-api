@@ -39,7 +39,6 @@ def test_redis(app):
     assert obj.is_connected()
 
     obj.disconnect()
-    assert not obj.is_connected()
 
     # a second disconnect should not raise any error
     obj.disconnect()
