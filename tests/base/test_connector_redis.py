@@ -30,16 +30,16 @@ def test_redis(app):
         project_clean=False,
     )
 
-    try:
-        connector.get_instance(host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
+    obj = connector.get_instance(host="invalidhostname", port=123)
+    assert obj is not None
+    assert not obj.is_connected()
 
     obj = connector.get_instance()
     assert obj is not None
+    assert obj.is_connected()
 
     obj.disconnect()
+    assert not obj.is_connected()
 
     # a second disconnect should not raise any error
     obj.disconnect()

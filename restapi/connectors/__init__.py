@@ -217,7 +217,7 @@ class Connector(metaclass=abc.ABCMeta):
         if stack.top is None:
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
-            obj = self.initialize_connection(expiration, verification)
+            obj = self.initialize_connection(expiration, verification, **kwargs)
             self.set_models_to_service(obj)
             return obj
 

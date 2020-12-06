@@ -1,6 +1,7 @@
 from typing import Optional, Union
 
 from redis import StrictRedis
+from redis.exceptions import ConnectionError
 
 from restapi.connectors import Connector
 from restapi.env import Env
@@ -37,8 +38,11 @@ class RedisExt(Connector):
         return
 
     def is_connected(self):
-        log.warning("redis.is_connected method is not implemented")
-        return not self.disconnected
+        try:
+            self.r.get("")
+            return True
+        except ConnectionError:
+            return False
 
 
 instance = RedisExt()
