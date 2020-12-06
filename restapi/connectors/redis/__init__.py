@@ -5,12 +5,12 @@ from redis.exceptions import ConnectionError
 
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.utilities.logs import log
+# from restapi.utilities.logs import log
 
 
 class RedisExt(Connector):
     def __init__(self, app=None):
-        # self.r: StrictRedis = None
+        self.r: StrictRedis = None
         super().__init__(app)
 
     def get_connection_exception(self):
