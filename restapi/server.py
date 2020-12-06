@@ -149,7 +149,8 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         )
 
         cache_config: Dict[str, Union[Optional[str], int]] = {}
-        if redis := Env.load_variables_group(prefix="redis"):
+        if detector.check_availability("redis"):
+            redis = Env.load_variables_group(prefix="redis")
             cache_config = {
                 "CACHE_TYPE": "redis",
                 "CACHE_REDIS_HOST": redis.get("host"),
