@@ -146,7 +146,7 @@ class Detector:
 
                 break
             else:
-                log.error("No connector class found in {}/{}", path, connector)
+                log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
                 self.services[connector]["available"] = False
                 continue

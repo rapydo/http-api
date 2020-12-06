@@ -23,3 +23,17 @@ if TESTING:
 
             time.sleep(1)
             return self.response("OK")
+
+        @decorators.endpoint(
+            path="/tests/cache",
+            summary="Execute tests on cached responses",
+            description="Only enabled in testing mode",
+            responses={
+                200: "Content sent",
+            },
+        )
+        @decorators.cache(timeout=200)
+        def patch(self):
+
+            time.sleep(1)
+            return self.response("OK")

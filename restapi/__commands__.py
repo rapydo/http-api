@@ -303,3 +303,13 @@ def bot():
     telegram_bot.load_commands()
     # This return is used by tests to verify output messages
     return telegram_bot.start()
+
+
+@cli.command()
+def clearcache():
+    from restapi.server import create_app
+    from restapi.services.cache import Cache
+
+    create_app(name="Cache clearing")
+
+    Cache.clear()

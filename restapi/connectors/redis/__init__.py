@@ -1,10 +1,11 @@
 from typing import Optional, Union
 
 from redis import StrictRedis
-from redis.exceptions import ConnectionError
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from restapi.connectors import Connector
 from restapi.env import Env
+
 # from restapi.utilities.logs import log
 
 
@@ -37,7 +38,7 @@ class RedisExt(Connector):
         try:
             self.r.get("")
             return True
-        except ConnectionError:
+        except RedisConnectionError:
             return False
 
 
