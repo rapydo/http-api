@@ -29,6 +29,10 @@ class EndpointResource(MethodResource, Resource):
 
         self.__auth = None
 
+    # Used to set keys with Flask-Caching memoize
+    def __repr__(self):
+        return self.__class__.__module__
+
     @property
     def auth(self):
         if not self.__auth:

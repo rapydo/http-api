@@ -17,6 +17,7 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask_apispec import FlaskApiSpec
+from flask_caching import Cache
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
@@ -123,7 +124,6 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     if not isinstance(mem.customizer, BaseCustomizer):
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    # Find services and try to connect to the ones available
     detector.init_services(
         app=microservice,
         project_init=(mode == ServerModes.INIT),
@@ -145,6 +145,15 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
+
+        cache_config = {
+            "CACHE_TYPE": "filesystem",
+            "CACHE_DIR": "/tmp/cache",
+            "CACHE_THRESHOLD": 1024,
+            # 'CACHE_IGNORE_ERRORS': True,
+        }
+        mem.cache = Cache(config=cache_config)
+        mem.cache.init_app(microservice)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints

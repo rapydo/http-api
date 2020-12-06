@@ -17,6 +17,7 @@ from restapi.exceptions import (
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 log.debug("Auth loaded {}", auth)
@@ -67,6 +68,20 @@ def endpoint(path, summary=None, description=None, responses=None, **kwargs):
         return wrapper
 
     return decorator
+
+
+# Prevent caching of 5xx errors responses
+def cache_response_filter(response):
+    if response[1] >= 500:
+        return False
+    return True
+
+
+# Used to cache endpoint with @decorators.cache(timeout=60)
+def cache(*args, **kwargs):
+    if "response_filter" not in kwargs:
+        kwargs["response_filter"] = cache_response_filter
+    return mem.cache.memoize(*args, **kwargs)
 
 
 def catch_graph_exceptions(func):

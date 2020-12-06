@@ -5,7 +5,7 @@ from restapi.tests import API_URI, BaseTests
 
 
 class TestApp(BaseTests):
-    def test_GET_status(self, client):
+    def test_encoding(self, client):
         """ Test that the flask server is running and reachable """
 
         # Check success

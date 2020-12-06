@@ -8,9 +8,12 @@ https://pythonconquerstheuniverse.wordpress.com/
 """
 from typing import Any, Dict
 
+from flask_caching import Cache
+
 
 class mem:
 
+    cache: Cache
     customizer: Any
     initializer: Any
     configuration: Dict[str, Any]
