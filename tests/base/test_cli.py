@@ -1,14 +1,15 @@
-from datetime import datetime
+# from datetime import datetime
 
 import pytest
 from click.testing import CliRunner
 
 from restapi import __commands__ as cli
 from restapi.services.detect import detector
-from restapi.tests import API_URI
+
+# from restapi.tests import API_URI
 
 
-def test_cli(client):
+def test_cli():
     runner = CliRunner()
 
     response = runner.invoke(cli.verify, [])
@@ -81,18 +82,18 @@ def test_cli(client):
     assert p == 111
 
     # First response is not cached, expected time greater than 1 second
-    start_time = datetime.now()
-    r = client.patch(f"{API_URI}/tests/cache")
-    end_time = datetime.now()
-    assert r.status_code == 200
-    assert (end_time - start_time).total_seconds() > 1
+    # start_time = datetime.now()
+    # r = client.patch(f"{API_URI}/tests/cache")
+    # end_time = datetime.now()
+    # assert r.status_code == 200
+    # assert (end_time - start_time).total_seconds() > 1
 
-    # Second response is cached, expected time lower than 1 second
-    start_time = datetime.now()
-    r = client.get(f"{API_URI}/tests/cache")
-    end_time = datetime.now()
-    assert r.status_code == 200
-    assert (end_time - start_time).total_seconds() < 1
+    # # Second response is cached, expected time lower than 1 second
+    # start_time = datetime.now()
+    # r = client.get(f"{API_URI}/tests/cache")
+    # end_time = datetime.now()
+    # assert r.status_code == 200
+    # assert (end_time - start_time).total_seconds() < 1
 
     # # Let's clear the cache
     # response = runner.invoke(cli.clearcache, [])
