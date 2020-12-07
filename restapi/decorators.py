@@ -72,9 +72,13 @@ def endpoint(path, summary=None, description=None, responses=None, **kwargs):
 
 # Prevent caching of 5xx errors responses
 def cache_response_filter(response):
-    if response[1] >= 500:
-        return False
-    return True
+    if not isinstance(response, tuple):
+        return True
+
+    if len(response) < 3:
+        return True
+
+    return response[1] < 500
 
 
 # Used to cache endpoint with @decorators.cache(timeout=60)
