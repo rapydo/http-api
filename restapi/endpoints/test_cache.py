@@ -19,7 +19,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=2)
-        def get(self):
+        def patch(self):
 
             time.sleep(1)
             return self.response("OK")
@@ -33,7 +33,20 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def patch(self):
+        def get(self):
 
             time.sleep(1)
             return self.response("OK")
+
+        @decorators.endpoint(
+            path="/tests/cache",
+            summary="Clear endpoint cache",
+            description="Only enabled in testing mode",
+            responses={
+                204: "Endpoint cache cleared",
+            },
+        )
+        def delete(self):
+
+            self.clear_endpoint_cache()
+            return self.empty_response()

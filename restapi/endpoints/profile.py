@@ -80,7 +80,6 @@ def getProfileData():
 
 
 class Profile(EndpointResource):
-    """ Current user informations """
 
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]

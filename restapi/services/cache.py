@@ -48,3 +48,7 @@ class Cache:
     @staticmethod
     def clear() -> None:
         mem.cache.clear()
+
+    @staticmethod
+    def invalidate(func, *args, **kwargs):
+        mem.cache.delete_memoized(func, *args, **kwargs)

@@ -8,6 +8,7 @@ from restapi.config import API_URL
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
+from restapi.services.cache import Cache
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -134,3 +135,6 @@ class EndpointResource(MethodResource, Resource):
             return None
 
         return unpacked_token[3]
+
+    def clear_endpoint_cache(self):
+        Cache.invalidate(self.get)

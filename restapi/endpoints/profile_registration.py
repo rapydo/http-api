@@ -47,7 +47,6 @@ if detector.check_availability("smtp"):
         return Schema.from_dict(attributes)
 
     class ProfileRegistration(EndpointResource):
-        """ Current user informations """
 
         baseuri = "/auth"
         depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
