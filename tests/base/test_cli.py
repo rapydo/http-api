@@ -82,6 +82,10 @@ def test_cli():
     assert isinstance(p, int)
     assert p == 111
 
+    from restapi.server import create_app
+
+    create_app(name="Cache clearing")
+
     @decorators.cache(timeout=3600)
     def random_values():
         return random.randrange(0, 1000)
