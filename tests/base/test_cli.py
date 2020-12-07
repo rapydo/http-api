@@ -10,11 +10,6 @@ from restapi import decorators
 from restapi.services.detect import detector
 
 
-@decorators.cache(timeout=3600)
-def random_values():
-    return random.randrange(0, 1000)
-
-
 def test_cli():
     runner = CliRunner()
 
@@ -86,6 +81,10 @@ def test_cli():
     assert h == "myvalue"
     assert isinstance(p, int)
     assert p == 111
+
+    @decorators.cache(timeout=3600)
+    def random_values():
+        return random.randrange(0, 1000)
 
     val = random_values()
     assert random_values() == val
