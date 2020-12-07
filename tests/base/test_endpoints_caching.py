@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 
+from restapi.services.cache import Cache
 from restapi.tests import API_URI, BaseTests
 
 
@@ -50,12 +51,13 @@ class TestApp(BaseTests):
 
         # Second response is cached, expected time is lower than 1 second
         start_time = datetime.now()
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.patch(f"{API_URI}/tests/cache")
         end_time = datetime.now()
         assert r.status_code == 200
         assert (end_time - start_time).total_seconds() < 1
 
-        # Empty cache
+        # Empty the cache
+        Cache.clear()
 
         # Third response is no longer cached, expected time is greater than 1 second
         start_time = datetime.now()

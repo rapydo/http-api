@@ -313,3 +313,5 @@ def clearcache():
     create_app(name="Cache clearing")
 
     Cache.clear()
+
+    log.info("Cache cleared")
