@@ -49,6 +49,15 @@ class Cache:
     def clear() -> None:
         mem.cache.clear()
 
+    # This can be used to invalidate any endpoint, for example:
+    # # 1 - From an endpoint
+    # Cache.invalidate(self.get)
+    # # 2 - import endpoint
+    # from myproject.endpoints.mymodule import MyEndpoint
+    # Cache.invalidate(MyEndpoint.get)
+    # # 3 - With meta
+    # c = Meta.get_class("endpoints.mymodule", "MyEndpoint")
+    # Cache.invalidate(c.get)
     @staticmethod
     def invalidate(func, *args, **kwargs):
         mem.cache.delete_memoized(func, *args, **kwargs)

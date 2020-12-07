@@ -70,14 +70,8 @@ class TestApp(BaseTests):
         assert (end_time - start_time).total_seconds() > 1
 
     def test_caching_endpoint_clearing(self, client):
-        # First response is not cached, expected time is greater than 1 second
-        start_time = datetime.now()
-        r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
-        assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() > 1
 
-        # Second response is cached, expected time is lower than 1 second
+        # First response is still cached, expected time is lower than 1 second
         start_time = datetime.now()
         r = client.get(f"{API_URI}/tests/cache")
         end_time = datetime.now()
@@ -87,7 +81,7 @@ class TestApp(BaseTests):
         # Empty the endpoint cache
         client.delete(f"{API_URI}/tests/cache")
 
-        # Third response is no longer cached, expected time is greater than 1 second
+        # Second response is no longer cached, expected time is greater than 1 second
         start_time = datetime.now()
         r = client.get(f"{API_URI}/tests/cache")
         end_time = datetime.now()
