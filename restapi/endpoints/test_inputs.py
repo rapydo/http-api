@@ -14,7 +14,7 @@ if TESTING:
             path="/tests/inputs",
             summary="Accept input based on a rich model",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={204: "Tests executed"},
         )
         def post(self, **kwargs):
 
