@@ -1,12 +1,13 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.models import Schema, fields
+from restapi.models import ISO8601UTC, Schema, fields
 from restapi.rest.definition import EndpointResource
 
 if TESTING:
 
     class InputSchema(Schema):
-        myfield1 = fields.Str(required=True)
+        mystr = fields.Str(required=True)
+        mydate = fields.DateTime(required=True, format=ISO8601UTC)
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)
