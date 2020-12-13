@@ -88,7 +88,7 @@ def test_cli():
 
     @decorators.cache(timeout=3600)
     def random_values():
-        return random.randrange(0, 1000)
+        return random.randrange(0, 100000)
 
     val = random_values()
     assert random_values() == val
