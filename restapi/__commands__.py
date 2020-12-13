@@ -154,13 +154,11 @@ def mywait():
 
     for name, service in detector.services.items():
 
-        myclass = service.get("class")
-        if myclass is None:
-            continue
+        variables = service.get("variables", {})
 
         if name == "celery":
 
-            broker = myclass.variables.get("broker")
+            broker = variables.get("broker")
 
             if broker == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -173,7 +171,7 @@ def mywait():
 
             wait_socket(host, port, broker)
 
-            backend = myclass.variables.get("backend")
+            backend = variables.get("backend")
             if backend == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
@@ -192,7 +190,7 @@ def mywait():
             pass
 
         else:
-            host, port = get_service_address(myclass.variables, "host", "port", name)
+            host, port = get_service_address(variables, "host", "port", name)
 
             wait_socket(host, port, name)
 

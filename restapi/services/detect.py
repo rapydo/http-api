@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Optional, TypeVar, Union
+from typing import Any, Dict, TypeVar
 
 from glom import glom
 
@@ -12,7 +12,6 @@ from restapi.config import (
 )
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.exceptions import ServiceUnavailable
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -32,8 +31,10 @@ class Detector:
 
         log.info("Authentication service: {}", self.authentication_service)
 
-        # It is also used by __command__ to get:
-        #       - detector.services[conn-name]['myclass']['variables']
+        # Only used to get:
+        # - services[name]['module']
+        # - services[name]['available']
+        # - services[name]['variables']
         self.services: Dict[str, Dict[str, Any]] = {
             AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}
         }
@@ -50,46 +51,8 @@ class Detector:
     def check_availability(self, name):
         return glom(self.services, f"{name}.available", default=False)
 
-    def get_connector(self, name):
-
-        service = self.services.get(name)
-
-        if service is None:
-            raise ServiceUnavailable(f"Service {name} not found")
-
-        if not service.get("available", False):
-            raise ServiceUnavailable(f"Service {name} is not available")
-
-        connector = service.get("connector")
-
-        if connector is None:
-            raise ServiceUnavailable(f"Connector {name} is not available")
-
-        return connector
-
     def get_authentication_instance(self):
         return self.authentication_module.Authentication()
-
-    # Deprecated since 0.9
-    def get_service_instance(
-        self: "Detector",
-        service_name: str,
-        verify: Optional[int] = None,
-        expiration: Optional[int] = None,
-        **kwargs: Union[Optional[str], int],
-    ) -> Connector:
-
-        log.warning(
-            "Deprecated use of detector.get_service_instance, "
-            "use yourconnector.get_instace() instead"
-        )
-        connector: Connector = self.get_connector(service_name)
-
-        instance: Connector = connector.get_instance(
-            verification=verify, expiration=expiration, **kwargs
-        )
-
-        return instance
 
     def load_services(self, path, module):
 
@@ -130,7 +93,6 @@ class Detector:
             available = enabled or external
 
             self.services.setdefault(connector, {})
-            # To be removed
             self.services[connector]["available"] = available
 
             if not available:
@@ -154,12 +116,15 @@ class Detector:
             try:
                 # This is to test the Connector compliance,
                 # i.e. to verify instance and get_instance in the connector module
+                # and verify that the Connector can be instanced
                 connector_module.instance
                 connector_module.get_instance
-            except AttributeError as e:
+                connector_class()
+            except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
             self.services[connector]["variables"] = variables
+            self.services[connector]["module"] = connector_module
 
             connector_class.available = True
             connector_class.set_variables(variables)
@@ -186,8 +151,6 @@ class Detector:
 
                 connector_class.set_models(base_models, extended_models, custom_models)
 
-            self.services[connector]["class"] = connector_class
-
             log.debug("Got class definition for {}", connector_class)
 
         return True
@@ -206,39 +169,11 @@ class Detector:
         if options is None:
             options = {}
 
-        instances = {}
         for connector_name, service in self.services.items():
 
             if not service.get("available", False):
                 continue
 
-            # Get connectors class and build the connector object
-            ConnectorClass = service.get("class")
-
-            if ConnectorClass is None:
-                if connector_name != AUTH_NAME:  # pragma: no cover
-                    print_and_exit(
-                        "Connector misconfiguration {} {}", connector_name, service
-                    )
-                continue
-
-            # ####### COULD BE REMOVED ??? ###########
-            try:
-                connector_instance = ConnectorClass()
-            except TypeError as e:  # pragma: no cover
-                print_and_exit("Your class {} is not compliant:\n{}", connector_name, e)
-
-            # This should be no longer needed...
-            self.services[connector_name]["connector"] = connector_instance
-
-            try:
-                instances[connector_name] = connector_instance.get_instance()
-            except ServiceUnavailable:
-                print_and_exit("Service unavailable: {}", connector_name)
-            ##########################################
-
-            # instances[connector_name] =
-            #             get_instance
         if self.authentication_service is None:
             if not worker_mode:
                 log.warning("No authentication service configured")
@@ -256,16 +191,16 @@ class Detector:
                 self.authentication_service
             )
 
-            # db = instances[self.authentication_service]
             authentication_instance = self.authentication_module.Authentication()
             authentication_instance.module_initialization()
 
             # Only once in a lifetime
             if project_init:
 
+                # Connector instance needed here
                 connector = glom(
-                    self.services, f"{self.authentication_service}.connector"
-                )
+                    self.services, f"{self.authentication_service}.module"
+                ).get_instance()
                 log.debug("Initializing {}", self.authentication_service)
                 connector.initialize()
 
@@ -273,15 +208,15 @@ class Detector:
                     authentication_instance.init_auth_db(options)
                     log.info("Initialized authentication module")
 
-                if mem.initializer(services=instances, app=app):
+                if mem.initializer(app=app):
                     log.info("Vanilla project has been initialized")
                 else:
                     log.error("Errors during custom initialization")
 
             if project_clean:
                 connector = glom(
-                    self.services, f"{self.authentication_service}.connector"
-                )
+                    self.services, f"{self.authentication_service}.module"
+                ).get_instance()
                 log.debug("Destroying {}", self.authentication_service)
                 connector.destroy()
 
