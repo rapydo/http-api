@@ -2,28 +2,30 @@ import os
 from functools import lru_cache
 from typing import Dict, Optional, Union
 
+from restapi.utilities.logs import log
+
 
 class Env:
     @staticmethod
     @lru_cache
-    def get(var, default=None):
-        return os.getenv(var, default)
+    def get(var: str, default: Optional[Union[str, int, bool]] = None) -> Optional[str]:
+        return os.getenv(var, str(default))
 
     @staticmethod
     @lru_cache
-    def get_bool(var, default=False):
+    def get_bool(var: str, default: bool = False) -> bool:
         value = Env.get(var, default)
         return Env.to_bool(value, default)
 
     @staticmethod
     @lru_cache
-    def get_int(var, default=0):
+    def get_int(var: str, default: int = 0) -> int:
         value = Env.get(var, default)
         return Env.to_int(value, default)
 
     @staticmethod
     @lru_cache
-    def to_bool(var, default=False):
+    def to_bool(var: Optional[Union[str, bool]], default: bool = False) -> bool:
 
         if var is None:
             return default
@@ -67,17 +69,14 @@ class Env:
 
         return default
 
+    # Deprecated since 1.0
     @staticmethod
-    def load_group(label):
+    def load_group(label: str) -> Dict[str, str]:
 
-        variables = {}
-        for var, value in os.environ.items():
-            var = var.lower()
-            if var.startswith(label):
-                key = var[len(label) :].strip("_")
-                value = value.strip('"').strip("'")
-                variables[key] = value
-        return variables
+        log.warning(
+            "Deprecated use of Env.load_group, use load_variables_group instead"
+        )
+        return Env.load_variables_group(label)
 
     @staticmethod
     def load_variables_group(prefix: str) -> Dict[str, str]:
@@ -94,8 +93,7 @@ class Env:
                 continue
 
             # Fix key and value before saving
-            # Starting from python 3.9 this can be replaced with .removeprefix
-            key = var[len(prefix) :]
+            key = var.removeprefix(prefix)
             # One thing that we must avoid is any quote around our value
             value = value.strip('"').strip("'")
             # save

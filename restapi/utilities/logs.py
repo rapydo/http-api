@@ -113,6 +113,10 @@ set_logger(log_level)
 
 # Logs utilities
 
+# Can't understand why mypy is unable to understand Env.get_int, since it is annotated
+# with `-> int` .. but mypy raises:
+# Cannot determine type of 'get_int'
+# mypy: ignore-errors
 MAX_CHAR_LEN = Env.get_int("MAX_LOGS_LENGTH", 200)
 OBSCURE_VALUE = "****"
 OBSCURED_FIELDS = [

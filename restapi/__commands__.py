@@ -271,8 +271,7 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
         parameters.append(CUSTOM_PACKAGE)
 
     if file is not None:
-        if file.startswith("tests/"):
-            file = file[6:]
+        file = file.removeprefix("tests/")
 
         if not os.path.isfile(os.path.join("tests", file)):
             print_and_exit("File not found: {}", file)

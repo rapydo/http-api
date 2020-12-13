@@ -1,17 +1,18 @@
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from glom import glom
 
 from restapi.env import Env
 from restapi.utilities.globals import mem
 
-APP_MODE = os.getenv("APP_MODE", "development")
-FORCE_PRODUCTION_TESTS = Env.get_bool("FORCE_PRODUCTION_TESTS")
-TESTING = APP_MODE == "test" or FORCE_PRODUCTION_TESTS
-PRODUCTION = APP_MODE == "production"
-STACKTRACE = False
-REMOVE_DATA_AT_INIT_TIME = False
+APP_MODE: str = os.getenv("APP_MODE", "development")
+FORCE_PRODUCTION_TESTS: bool = Env.get_bool("FORCE_PRODUCTION_TESTS")
+TESTING: bool = APP_MODE == "test" or FORCE_PRODUCTION_TESTS
+PRODUCTION: bool = APP_MODE == "production"
+STACKTRACE: bool = False
+REMOVE_DATA_AT_INIT_TIME: bool = False
 
 # ENDPOINTS bases
 API_URL = "/api"
@@ -30,7 +31,7 @@ SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
 #################
 
 MODELS_DIR = "models"
-CONF_PATH = "confs"
+CONF_PATH = Path("confs")
 # Also configured in controller
 EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = "restapi"  # package inside rapydo-http

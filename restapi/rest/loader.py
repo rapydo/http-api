@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Set, Type
 
 from attr import ib as attribute
@@ -27,8 +28,6 @@ from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
-
-CONF_FOLDERS = Env.load_group(label="project_confs")
 
 ERR401 = {"description": "This endpoint requires a valid authorization token"}
 ERR400 = {"description": "The request cannot be satisfied due to malformed syntax"}
@@ -70,11 +69,13 @@ class EndpointsLoader:
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
-        confs_path = os.path.join(os.curdir, CONF_PATH)
-        defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)
-        base_path = CONF_FOLDERS.get("base_path", confs_path)
-        projects_path = CONF_FOLDERS.get("projects_path", confs_path)
-        submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
+        confs_path = Path(os.curdir).joinpath(CONF_PATH)
+
+        CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
+        defaults_path = Path(CONF_FOLDERS.get("defaults_path", confs_path))
+        base_path = Path(CONF_FOLDERS.get("base_path", confs_path))
+        projects_path = Path(CONF_FOLDERS.get("projects_path", confs_path))
+        submodules_path = Path(CONF_FOLDERS.get("submodules_path", confs_path))
 
         try:
             configuration, self._extended_project, _ = read_configuration(
