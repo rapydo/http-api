@@ -68,7 +68,7 @@ jobs:
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
-          rapydo pull
+          rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
@@ -87,7 +87,7 @@ jobs:
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
           rapydo --production --testing --project prj init --force
-          rapydo pull
+          rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile
           rapydo start
