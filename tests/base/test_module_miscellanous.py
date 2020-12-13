@@ -12,7 +12,6 @@ from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
-from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -338,12 +337,6 @@ class TestApp(BaseTests):
         except AttributeError:
             pass
         tmpf.close()
-
-        try:
-            detector.get_connector(faker.pystr())
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
 
     def test_marshmallow_schemas(self):
         class Input1(Schema):
