@@ -11,7 +11,7 @@ So we made some improvement along the code.
 
 from flask import Flask
 
-from restapi.connectors.celery import CeleryExt
+from restapi.connectors import celery
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
@@ -22,7 +22,7 @@ app = Flask("beat")
 detector.init_services(app=app, project_init=False, project_clean=False)
 
 # Used by Celery to run the instance (-A app)
-celery_app = CeleryExt.celery_app
+celery_app = celery.get_instance().celery_app
 
 # Reload Flask app code for the worker (needed to have the app context available)
 celery_app.app = app
