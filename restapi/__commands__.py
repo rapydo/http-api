@@ -156,6 +156,12 @@ def mywait():
 
         variables = service.get("variables", {})
 
+        if name == "authentication":
+            continue
+
+        if name == "smtp":
+            continue
+
         if name == "celery":
 
             broker = variables.get("broker")
@@ -186,8 +192,6 @@ def mywait():
             host, port = get_service_address(service_vars, "host", "port", backend)
 
             wait_socket(host, port, backend)
-        elif name == "smtp":
-            pass
 
         else:
             host, port = get_service_address(variables, "host", "port", name)

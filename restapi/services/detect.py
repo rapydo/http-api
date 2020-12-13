@@ -17,7 +17,6 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
-AUTH_NAME = "authentication"
 CONNECTORS_FOLDER = "connectors"
 
 # https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
@@ -36,7 +35,7 @@ class Detector:
         # - services[name]['available']
         # - services[name]['variables']
         self.services: Dict[str, Dict[str, Any]] = {
-            AUTH_NAME: {"available": Env.get_bool("AUTH_ENABLE")}
+            "authentication": {"available": Env.get_bool("AUTH_ENABLE")}
         }
 
         self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
