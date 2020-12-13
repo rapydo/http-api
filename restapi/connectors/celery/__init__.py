@@ -84,6 +84,9 @@ class CeleryExt(Connector):
             service_vars = Env.load_variables_group(prefix="redis")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
+            BACKEND_PASSWORD = service_vars.get("password", "")
+            if BACKEND_PASSWORD:
+                BACKENDCRED = f":{BACKEND_PASSWORD}@"
         elif backend == "MONGODB":
             service_vars = Env.load_variables_group(prefix="mongo")
             BACKEND_HOST = service_vars.get("host")
@@ -103,7 +106,7 @@ class CeleryExt(Connector):
             BACKEND_URL = f"rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
             log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == "REDIS":
-            BACKEND_URL = f"redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
+            BACKEND_URL = f"redis://:x@{BACKEND_HOST}:{BACKEND_PORT}/0"
             log.info("Configured Redis as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == "MONGODB":
             BACKEND_URL = f"mongodb://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}"
@@ -167,7 +170,9 @@ class CeleryExt(Connector):
                 BEATBACKENDURL = f"redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/1"
                 celery_app.conf["REDBEAT_REDIS_URL"] = BEATBACKENDURL
                 celery_app.conf["REDBEAT_KEY_PREFIX"] = CeleryExt.REDBEAT_KEY_PREFIX
-                log.info("Celery-beat connected to Redis: {}", BEATBACKENDURL)
+                log.info(
+                    "Celery-beat connected to Redis: {}", obfuscate_url(BEATBACKENDURL)
+                )
             else:
                 log.warning(
                     "Cannot configure celery beat scheduler with backend: {}", backend

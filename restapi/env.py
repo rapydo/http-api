@@ -2,30 +2,28 @@ import os
 from functools import lru_cache
 from typing import Dict, Optional, Union
 
-from restapi.utilities.logs import log
-
 
 class Env:
     @staticmethod
     @lru_cache
-    def get(var: str, default: Optional[Union[str, int, bool]] = None) -> Optional[str]:
-        return os.getenv(var, str(default))
+    def get(var, default=None):
+        return os.getenv(var, default)
 
     @staticmethod
     @lru_cache
-    def get_bool(var: str, default: bool = False) -> bool:
+    def get_bool(var, default=False):
         value = Env.get(var, default)
         return Env.to_bool(value, default)
 
     @staticmethod
     @lru_cache
-    def get_int(var: str, default: int = 0) -> int:
+    def get_int(var, default=0):
         value = Env.get(var, default)
         return Env.to_int(value, default)
 
     @staticmethod
     @lru_cache
-    def to_bool(var: Optional[Union[str, bool]], default: bool = False) -> bool:
+    def to_bool(var, default=False):
 
         if var is None:
             return default
@@ -73,9 +71,7 @@ class Env:
     @staticmethod
     def load_group(label: str) -> Dict[str, str]:
 
-        log.warning(
-            "Deprecated use of Env.load_group, use load_variables_group instead"
-        )
+        print("Deprecated use of Env.load_group, use load_variables_group instead")
         return Env.load_variables_group(label)
 
     @staticmethod

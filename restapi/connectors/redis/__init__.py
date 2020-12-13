@@ -27,6 +27,7 @@ class RedisExt(Connector):
         self.r = StrictRedis(
             host=variables.get("host", "redis.dockerized.io"),
             port=Env.to_int(variables.get("port"), 6379),
+            password=variables.get("password"),
             db=0,
         )
         return self
