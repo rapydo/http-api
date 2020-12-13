@@ -59,13 +59,6 @@ class EndpointResource(MethodResource, Resource):
         """ Check if current user has Staff role """
         return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
 
-    def verify_local_admin(self):
-        # Deprecated since 0.9
-        log.warning(
-            "Deprecated use of verify_local_admin, switch to verify_staff instead"
-        )
-        return self.verify_staff()
-
     def verify_coordinator(self):
         return self.auth.verify_roles(
             self.get_user(), [Role.COORDINATOR], warnings=False
