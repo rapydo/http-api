@@ -5,8 +5,6 @@ Add auth checks called /checklogged and /testadmin
 
 import abc
 import base64
-import hashlib
-import hmac
 import re
 from datetime import datetime, timedelta
 from enum import Enum
@@ -37,7 +35,6 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
-from restapi.services.detect import Detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -213,20 +210,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             return token, full_payload, user
 
-        # old hashing; deprecated since 0.7.2. Removed me in a near future!!
-        # Probably when ALL users will be converted... uhm... never?? :-D
-        if self.check_old_password(user.password, password):  # pragma: no cover
-            log.warning(
-                "Old password encoding for user {}, automatic convertion", user.email
-            )
-
-            now = datetime.now(pytz.utc)
-            user.password = BaseAuthentication.get_password_hash(password)
-            user.last_password_change = now
-            self.save_user(user)
-
-            return self.make_login(username, password)
-
         self.failed_login(username)
 
     @classmethod
@@ -240,34 +223,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #####################
     # # Password handling #
     ####################
-    # Old hashing, deprecated since 0.7.2
-    @staticmethod
-    def encode_string(string):
-        """ Encodes a string to bytes, if it isn't already. """
-        if isinstance(string, str):
-            string = string.encode("utf-8")
-        return string
-
-    # Old hashing. Deprecated since 0.7.2
-    @staticmethod
-    def hash_password(password, salt="Unknown"):
-        """Original source:
-        # https://github.com/mattupstate/flask-security
-        #    /blob/develop/flask_security/utils.py#L110
-        """
-
-        h = hmac.new(
-            BaseAuthentication.encode_string(salt),
-            BaseAuthentication.encode_string(password),
-            hashlib.sha512,
-        )
-        return base64.b64encode(h.digest()).decode("ascii")
-
-    # Old hashing. Deprecated since 0.7.2
-    @staticmethod
-    def check_old_password(hashed_password, password):
-        return hashed_password == BaseAuthentication.hash_password(password)
-
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
