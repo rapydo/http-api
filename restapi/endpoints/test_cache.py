@@ -18,10 +18,10 @@ if TESTING:
                 200: "Content sent",
             },
         )
-        @decorators.cache(timeout=2)
+        @decorators.cache(timeout=4)
         def patch(self):
 
-            time.sleep(1)
+            time.sleep(2)
             return self.response("OK")
 
         @decorators.endpoint(
@@ -35,7 +35,7 @@ if TESTING:
         @decorators.cache(timeout=200)
         def get(self):
 
-            time.sleep(1)
+            time.sleep(2)
             return self.response("OK")
 
         @decorators.endpoint(
