@@ -52,10 +52,6 @@ class Connector(metaclass=abc.ABCMeta):
 
             self.app = current_app
 
-        if app:
-            # Deprecated since 0.9
-            log.warning("Deprecated app parameter in {} initialization", self.name)
-
     def __del__(self) -> None:
         if not self.disconnected:
             self.disconnect()
