@@ -1,5 +1,6 @@
 import pytest
 
+from restapi.connectors import smtp as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
@@ -10,24 +11,17 @@ CONNECTOR = "smtp"
 
 def test_smtp(app, faker):
 
-    if not detector.check_availability(CONNECTOR):
-
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
+    # mailmock is always enabled during core tests
+    if not detector.check_availability(CONNECTOR):  # pragma: no cover
 
         try:
-            obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            obj = connector.get_instance()
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return False
-
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
 
     detector.init_services(
         app=app,
@@ -36,20 +30,20 @@ def test_smtp(app, faker):
     )
 
     # try:
-    #     detector.get_service_instance(CONNECTOR, host="invalidhostname", port=123)
-    #     pytest.fail("No exception raised on unavailable service")
+    #     connector.get_instance(host="invalidhostname", port=123)
+    #     pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     # except ServiceUnavailable:
     #     pass
 
-    obj = detector.get_service_instance(CONNECTOR)
+    obj = connector.get_instance()
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = detector.get_service_instance(CONNECTOR, port=465)
+    obj = connector.get_instance(port=465)
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = detector.get_service_instance(CONNECTOR, port=587)
+    obj = connector.get_instance(port=587)
     assert obj is not None
     assert obj.smtp is not None
 
@@ -57,7 +51,7 @@ def test_smtp(app, faker):
     assert obj.send("body", "subject", "to_addr")
     assert obj.send("body", "subject", "to_addr", "from_addr")
 
-    obj = detector.get_service_instance(CONNECTOR)
+    obj = connector.get_instance()
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
@@ -124,12 +118,21 @@ def test_smtp(app, faker):
     # format is [to, [cc...], [bcc...]]
     assert mail.get("cc") == ["to_addr"]
 
-    with detector.get_service_instance(CONNECTOR) as obj:
+    with connector.get_instance() as obj:
         assert obj is not None
         assert obj.smtp is not None
-    assert obj.smtp is None
+    # assert obj.smtp is None
 
-    with detector.get_service_instance(CONNECTOR, noreply=None, admin=None) as obj:
+    with connector.get_instance(noreply=None, admin=None) as obj:
         assert not obj.send("body", "subject")
         assert not obj.send("body", "subject", "to_addr")
         assert obj.send("body", "subject", "to_addr", "from_addr")
+
+    obj = connector.get_instance()
+    assert obj.is_connected()
+    obj.disconnect()
+
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
+    assert not obj.is_connected()

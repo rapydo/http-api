@@ -1,5 +1,6 @@
 from restapi import decorators
-from restapi.confs import TESTING
+from restapi.config import TESTING
+from restapi.connectors import neo4j
 from restapi.exceptions import RestApiException
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource
@@ -54,7 +55,7 @@ if TESTING and detector.check_availability("neo4j"):
             responses={200: "Tests executed"},
         )
         def get(self, test):
-            self.neo4j = self.get_service_instance("neo4j")
+            self.neo4j = neo4j.get_instance()
             try:
                 if test == "1":
                     log.info("First Test")

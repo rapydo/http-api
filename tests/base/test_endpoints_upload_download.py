@@ -207,9 +207,8 @@ class TestUploadAndDownload(BaseTests):
 
         from werkzeug import __version__ as werkzeug_version
 
-        old_werkzeug = werkzeug_version == "0.16.1"
-
-        if old_werkzeug:
+        # Back-compatibility check for B2STAGE
+        if werkzeug_version == "0.16.1":  # pragma: no cover
             assert r.status_code == 200
         else:
             assert r.status_code == 206
@@ -234,7 +233,8 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
-        if old_werkzeug:
+        # Back-compatibility check for B2STAGE
+        if werkzeug_version == "0.16.1":  # pragma: no cover
             assert r.status_code == 200
         else:
             assert r.status_code == 206

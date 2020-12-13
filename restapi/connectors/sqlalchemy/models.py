@@ -3,11 +3,10 @@ import os
 
 from restapi.connectors.sqlalchemy import db
 
+DEFAULT_COLLATION = None
 if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
     # Required by MySQL to accept unicode strings (like chinese)
     DEFAULT_COLLATION = "utf8_unicode_ci"
-else:
-    DEFAULT_COLLATION = None
 
 ####################################
 # Define multi-multi relation
@@ -43,6 +42,11 @@ class User(db.Model):
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
 
+    group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
+    belongs_to = db.relationship(
+        "Group", backref=db.backref("members"), foreign_keys=[group_id]
+    )
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,3 +63,12 @@ class Token(db.Model):
     location = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     emitted_for = db.relationship("User", backref=db.backref("tokens", lazy="dynamic"))
+
+
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(36), unique=True)
+    shortname = db.Column(db.String(64), unique=True)
+    fullname = db.Column(db.String(256))
+
+    # + has `members` backref from User

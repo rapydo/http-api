@@ -5,7 +5,6 @@ from restapi.rest.definition import EndpointResource
 class Status(EndpointResource):
     """ Check if APIs are online """
 
-    ALLOW_HTML_RESPONSE = True
     labels = ["helpers"]
 
     @decorators.endpoint(
@@ -16,7 +15,7 @@ class Status(EndpointResource):
     )
     def get(self, service=None):
 
-        return self.response("Server is alive")
+        return self.response("Server is alive", allow_html=True)
 
 
 class AuthStatus(EndpointResource):

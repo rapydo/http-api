@@ -2,11 +2,12 @@ import json
 import os
 import re
 import sys
-import urllib
+import urllib.parse
+from typing import Optional
 
 from loguru import logger as log
 
-from restapi.confs import PRODUCTION
+from restapi.config import PRODUCTION, TESTING
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
@@ -32,23 +33,10 @@ else:  # pragma: no cover
         os.makedirs(LOGS_FOLDER, exist_ok=True)
 
 
-LOGS_PATH = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
+LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
-
-
-def verbose(*args, **kwargs):
-    log.log("VERBOSE", *args, **kwargs)
-
-
-def critical_exit(message="", *args, **kwargs):
-    log.critical(message, *args, **kwargs)
-    sys.exit(1)
-
-
-log.verbose = verbose
-log.exit = critical_exit
 
 log.remove()
 
@@ -59,10 +47,11 @@ def print_message_on_stderr(record):
 
 
 if LOGS_PATH is not None:
+    FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
     try:
         log.add(
             LOGS_PATH,
-            level="WARNING",
+            level=FILE_LOGLEVEL,
             rotation="1 week",
             retention="4 weeks",
             # If True the exception trace is extended upward, beyond the catching point
@@ -99,7 +88,8 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 def set_logger(level):
 
     if hasattr(set_logger, "log_id"):
-        log.remove(set_logger.log_id)
+        log_id = getattr(set_logger, "log_id")
+        log.remove(log_id)
 
     log_id = log.add(
         sys.stderr,
@@ -116,7 +106,7 @@ def set_logger(level):
         filter=print_message_on_stderr,
     )
 
-    set_logger.log_id = log_id
+    setattr(set_logger, "log_id", log_id)
 
 
 set_logger(log_level)

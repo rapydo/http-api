@@ -57,9 +57,16 @@ class AdminTokens(EndpointResource):
             return self.pagination_total(len(tokens))
 
         if sort_by:
+
+            def sorter(t):
+                return glom(t, sort_by, default="")
+
             tokens = sorted(
                 tokens,
-                key=lambda t: glom(t, sort_by, default=""),
+                # Raising error:
+                # Returning Any from function declared to return "_SupportsLessThan"
+                # https://github.com/python/mypy/issues/9656
+                key=sorter,
                 reverse=sort_order == "desc",
             )
 

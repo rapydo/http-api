@@ -19,7 +19,7 @@ GET_SCHEMA_KEY = "get_schema"
 # ISO 8601 format with Zulu time (default format for Javascript Date)
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
-log.verbose("{} loaded", validate)
+log.debug("{} loaded", validate)
 
 
 @parser.location_loader("body")
@@ -36,15 +36,10 @@ class Schema(MarshmallowSchema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # A fake field used to force return of schemas
-    get_schema = fields.Bool(
-        required=False, description="Request schema specifications"
-    )
-
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
         ordered = True
-        json_module = simplejson
+        render_module = simplejson
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load

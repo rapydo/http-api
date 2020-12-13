@@ -6,6 +6,7 @@ import pytest
 import pytz
 from neo4j.exceptions import CypherSyntaxError
 
+from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -16,17 +17,15 @@ CONNECTOR = "neo4j"
 
 if not detector.check_availability(CONNECTOR):
 
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is None
-
     try:
-        obj = detector.get_service_instance(CONNECTOR)
-        pytest("No exception raised")
+        obj = connector.get_instance()
+        pytest.fail("No exception raised")  # pragma: no cover
     except ServiceUnavailable:
         pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
-elif not Env.get_bool("TEST_CORE_ENABLED"):
+# Alwas enabled during core tests
+elif not Env.get_bool("TEST_CORE_ENABLED"):  # pragma: no cover
     log.warning("Skipping {} tests: only avaiable on core", CONNECTOR)
 else:
 
@@ -52,11 +51,6 @@ else:
         @staticmethod
         def test_connector(app, fake):
 
-            # Run this before the init_services,
-            # get_debug_instance is able to load what is needed
-            obj = detector.get_debug_instance(CONNECTOR)
-            assert obj is not None
-
             detector.init_services(
                 app=app,
                 project_init=False,
@@ -64,23 +58,24 @@ else:
             )
 
             try:
-                detector.get_service_instance(
-                    CONNECTOR, host="invalidhostname", port=123
-                )
-                pytest.fail("No exception raised on unavailable service")
+                connector.get_instance(host="invalidhostname", port=123)
+                pytest.fail(
+                    "No exception raised on unavailable service"
+                )  # pragma: no cover
             except ServiceUnavailable:
                 pass
 
             try:
-                detector.get_service_instance(
-                    CONNECTOR,
+                connector.get_instance(
                     user="invaliduser",
                 )
-                pytest.fail("No exception raised on unavailable service")
+                pytest.fail(
+                    "No exception raised on unavailable service"
+                )  # pragma: no cover
             except ServiceUnavailable:
                 pass
 
-            obj = detector.get_service_instance(CONNECTOR)
+            obj = connector.get_instance()
             assert obj is not None
 
             for row in obj.cypher("MATCH (u: User) RETURN u limit 1"):
@@ -116,31 +111,37 @@ else:
             assert obj.fuzzy_tokenize("x + y") == "x~1 + y~1"
             assert obj.fuzzy_tokenize("AND OR + NOT !") == "AND OR + NOT !"
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            obj.disconnect()
+
+            # a second disconnect should not raise any error
+            obj.disconnect()
+
+            # Create new connector with short expiration time
+            obj = connector.get_instance(expiration=2, verification=1)
             obj_id = id(obj)
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            # Connector is expected to be still valid
+            obj = connector.get_instance(expiration=2, verification=1)
             assert id(obj) == obj_id
 
             time.sleep(1)
 
-            obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+            # The connection should have been checked and should be still valid
+            obj = connector.get_instance(expiration=2, verification=1)
+            assert id(obj) == obj_id
+
+            time.sleep(1)
+
+            # Connection should have been expired and a new connector been created
+            obj = connector.get_instance(expiration=2, verification=1)
             assert id(obj) != obj_id
 
-            # Close connection...
+            assert obj.is_connected()
             obj.disconnect()
-
-            # Test connection... should fail!
-            # ??
+            assert not obj.is_connected()
 
             # ... close connection again ... nothing should happens
             obj.disconnect()
 
-            with detector.get_service_instance(CONNECTOR) as obj:
+            with connector.get_instance() as obj:
                 assert obj is not None
-
-            obj = detector.get_debug_instance(CONNECTOR)
-            assert obj is not None
-
-            obj = detector.get_debug_instance("invalid")
-            assert obj is None

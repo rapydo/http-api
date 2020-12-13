@@ -28,9 +28,6 @@ class Role(MongoModel):
 
 
 class User(MongoModel):
-    # To be enabled after completed the output serialization,
-    # otherwise will raise this error: Object of type UUID is not JSON serializable
-    # uuid = fields.UUIDField()
     id = fields.CharField(primary_key=True)
     uuid = fields.CharField()
     email = fields.EmailField()
@@ -44,6 +41,7 @@ class User(MongoModel):
     is_active = fields.BooleanField(default=True)
     privacy_accepted = fields.BooleanField(default=True)
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
+    belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
@@ -69,4 +67,21 @@ class Token(MongoModel):
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
 
-        indexes = [IndexModel("token", unique=True)]
+        indexes = [IndexModel("jti", unique=True), IndexModel("token", unique=True)]
+
+
+class Group(MongoModel):
+    # otherwise will raise this error: Object of type UUID is not JSON serializable
+    id = fields.CharField(primary_key=True)
+    uuid = fields.CharField()
+    shortname = fields.CharField()
+    fullname = fields.CharField()
+
+    class Meta:
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
+
+        indexes = [
+            IndexModel("uuid", unique=True),
+            IndexModel("shortname", unique=True),
+        ]

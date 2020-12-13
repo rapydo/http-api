@@ -8,8 +8,10 @@ http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.h
 import inspect
 import pkgutil
 from importlib import import_module
+from typing import Any, Callable, Dict
 
-from restapi.confs import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 
 
@@ -45,6 +47,7 @@ class Meta:
                 classes[key] = value
         return classes
 
+    # Should return `from types import ModuleType` -> Optional[ModuleType]
     @staticmethod
     def get_module_from_string(modulestring, prefix_package=False, exit_on_fail=False):
         """
@@ -60,13 +63,13 @@ class Meta:
         except ModuleNotFoundError as e:
             if exit_on_fail:
                 raise e
-            # log.warning("Failed to load module:\n{}", e)
+            return None
         except BaseException as e:
             if exit_on_fail:
                 raise e
             log.error("Module {} not found.\nError: {}", modulestring, e)
 
-        return None
+            return None
 
     @staticmethod
     def get_self_reference_from_args(*args):
@@ -97,7 +100,7 @@ class Meta:
         except BaseException as e:
             log.error("Cannot load {} models from {}", name, module_name)
             if exit_on_fail:
-                log.exit(e)
+                print_and_exit(e)
 
             log.warning(e)
             return {}
@@ -108,7 +111,6 @@ class Meta:
     def get_authentication_module(auth_service):
 
         module_name = f"connectors.{auth_service}"
-        log.verbose("Loading authentication module: {}", module_name)
         module = Meta.get_module_from_string(
             modulestring=module_name, prefix_package=True, exit_on_fail=True
         )
@@ -116,14 +118,14 @@ class Meta:
         return module
 
     @staticmethod
-    def get_celery_tasks(package_name):
+    def get_celery_tasks(package_name: str) -> Dict[str, Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
         Celery tasks are functions decorated by @celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
-        tasks = {}
+        tasks: Dict[str, Callable[..., Any]] = {}
         # package = tasks folder
         package = Meta.get_module_from_string(package_name)
         if package is None:
@@ -169,7 +171,6 @@ class Meta:
             return None
 
         if not hasattr(module, class_name):
-            log.verbose("{} not found in {}", class_name, abspath)
             return None
 
         return getattr(module, class_name)

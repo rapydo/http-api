@@ -24,7 +24,7 @@ BASE_URLS = [API_URL, AUTH_URL]
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
-UPLOAD_PATH = os.getenv("UPLOAD_PATH")
+UPLOAD_PATH = os.getenv("UPLOAD_PATH", "/upload")
 SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
 
 #################
@@ -36,7 +36,7 @@ EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = "restapi"  # package inside rapydo-http
 
 CUSTOM_PACKAGE = os.getenv("VANILLA_PACKAGE", "custom")
-EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", None)
+EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", EXTENDED_PROJECT_DISABLED)
 #################
 # SQLALCHEMY
 BASE_DB_DIR = "/dbs"
@@ -49,6 +49,10 @@ if SENTRY_URL is not None and SENTRY_URL.strip() == "":
     SENTRY_URL = None
 
 ABS_RESTAPI_PATH = os.path.dirname(os.path.realpath(__file__))
+
+GZIP_ENABLE = Env.get_bool("GZIP_COMPRESSION_ENABLE")
+GZIP_THRESHOLD = max(0, Env.get_int("GZIP_COMPRESSION_THRESHOLD"))
+GZIP_LEVEL = max(1, min(9, Env.get_int("GZIP_COMPRESSION_LEVEL")))
 
 
 @lru_cache

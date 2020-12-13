@@ -1,12 +1,14 @@
 import traceback
 from datetime import timedelta
 from functools import wraps
+from typing import Optional, Union
 
 from celery import Celery
 
-from restapi.confs import CUSTOM_PACKAGE, get_project_configuration
+from restapi.config import CUSTOM_PACKAGE, get_project_configuration
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
@@ -15,58 +17,46 @@ class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"
-    celery_app = None
+    celery_app: Celery = None
 
     def get_connection_exception(self):
         return None
 
     def connect(self, **kwargs):
 
-        # set here to avoid warnings like 'Possible hardcoded password'
-        EMPTY = ""
-
         variables = self.variables.copy()
         variables.update(kwargs)
         broker = variables.get("broker")
 
         if broker is None:  # pragma: no cover
-            log.exit("Unable to start Celery, missing broker service")
-
-        # Do not import before loading the ext!
-        from restapi.services.detect import Detector
+            print_and_exit("Unable to start Celery, missing broker service")
 
         if broker == "RABBIT":
-            service_vars = Detector.load_variables(prefix="rabbitmq")
+            service_vars = Env.load_variables_group(prefix="rabbitmq")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
-            BROKER_USER = service_vars.get("user", "")
-            BROKER_PASSWORD = service_vars.get("password", "")
             BROKER_VHOST = service_vars.get("vhost", "")
             BROKER_USE_SSL = Env.to_bool(service_vars.get("ssl_enabled"))
 
+            BROKER_USER = service_vars.get("user", "")
+            BROKER_PASSWORD = service_vars.get("password", "")
+            if BROKER_USER and BROKER_PASSWORD:
+                BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
+
         elif broker == "REDIS":
-            service_vars = Detector.load_variables(prefix="redis")
+            service_vars = Env.load_variables_group(prefix="redis")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
-            BROKER_USER = None
-            BROKER_PASSWORD = None
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
-        else:  # pragma: no cover
-            log.exit("Invalid celery broker: {}", broker)
 
-        if BROKER_USER == "":  # pragma: no cover
-            BROKER_USER = None
-        if BROKER_PASSWORD == EMPTY:  # pragma: no cover
-            BROKER_PASSWORD = None
+            BROKERCRED = ""
+
+        else:  # pragma: no cover
+            print_and_exit("Invalid celery broker: {}", broker)
 
         if BROKER_VHOST != "":
             BROKER_VHOST = f"/{BROKER_VHOST}"
-
-        if BROKER_USER is not None and BROKER_PASSWORD is not None:
-            BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
-        else:
-            BROKERCRED = ""
 
         if broker == "RABBIT":
             BROKER_URL = f"amqp://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}{BROKER_VHOST}"
@@ -80,38 +70,36 @@ class CeleryExt(Connector):
 
         backend = variables.get("backend", broker)
 
+        BACKENDCRED = ""
+
         if backend == "RABBIT":
-            service_vars = Detector.load_variables(prefix="rabbitmq")
+            service_vars = Env.load_variables_group(prefix="rabbitmq")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
+            if BACKEND_USER and BACKEND_PASSWORD:
+                BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         elif backend == "REDIS":
-            service_vars = Detector.load_variables(prefix="redis")
+            service_vars = Env.load_variables_group(prefix="redis")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
-            BACKEND_USER = ""
-            BACKEND_PASSWORD = None
         elif backend == "MONGODB":
-            service_vars = Detector.load_variables(prefix="mongo")
+            service_vars = Env.load_variables_group(prefix="mongo")
             BACKEND_HOST = service_vars.get("host")
             BACKEND_PORT = Env.to_int(service_vars.get("port"))
             BACKEND_USER = service_vars.get("user", "")
             BACKEND_PASSWORD = service_vars.get("password", "")
+            if BACKEND_USER and BACKEND_PASSWORD:
+                BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
         else:  # pragma: no cover
-            log.exit("Invalid celery backend: {}", backend)
-
-        if BACKEND_USER == EMPTY:
-            BACKEND_USER = None
-        if BACKEND_PASSWORD == EMPTY:
-            BACKEND_PASSWORD = None
-
-        if BACKEND_USER is not None and BACKEND_PASSWORD is not None:
-            BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
-        else:
-            BACKENDCRED = ""
+            print_and_exit("Invalid celery backend: {}", backend)
 
         if backend == "RABBIT":
+            log.warning(
+                "RABBIT backend is quite limited and not fully supported. "
+                "Consider to enable Redis or MongoDB as a backend database"
+            )
             BACKEND_URL = f"rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
             log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
         elif backend == "REDIS":
@@ -121,7 +109,9 @@ class CeleryExt(Connector):
             BACKEND_URL = f"mongodb://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}"
             log.info("Configured MongoDB as backend {}", obfuscate_url(BACKEND_URL))
         else:  # pragma: no cover
-            log.exit("Unable to start Celery unknown backend service: {}", backend)
+            print_and_exit(
+                "Unable to start Celery unknown backend service: {}", backend
+            )
 
         celery_app = Celery("RestApiQueue", broker=BROKER_URL, backend=BACKEND_URL)
         celery_app.conf["broker_use_ssl"] = BROKER_USE_SSL
@@ -187,6 +177,7 @@ class CeleryExt(Connector):
             CeleryExt.celery_app = celery_app
 
         self.celery_app = celery_app
+        # self.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
 
@@ -197,9 +188,13 @@ class CeleryExt(Connector):
 
         return self
 
-    def disconnect(self):
-        self.celery_app.disconnected = True
-        return
+    def disconnect(self) -> None:
+        self.disconnected = True
+
+    def is_connected(self):
+
+        log.warning("celery.is_connected method is not implemented")
+        return not self.disconnected
 
     @classmethod
     def get_periodic_task(cls, name):
@@ -383,10 +378,27 @@ Error: {traceback.format_exc()}
 """
 
                 project = get_project_configuration(
-                    "project.title", default="Unkown title",
+                    "project.title",
+                    default="Unkown title",
                 )
                 subject = f"{project}: task {task_name} failed"
-                smtp = detector.get_service_instance("smtp")
-                smtp.send(body, subject)
+                from restapi.connectors import smtp
+
+                smtp_client = smtp.get_instance()
+                smtp_client.send(body, subject)
 
     return wrapper
+
+
+instance = CeleryExt()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "CeleryExt":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

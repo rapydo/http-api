@@ -1,10 +1,19 @@
+import gzip
+import sys
+import time
+from io import BytesIO
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
-from restapi.confs import get_project_configuration
+from restapi.config import (
+    GZIP_ENABLE,
+    GZIP_LEVEL,
+    GZIP_THRESHOLD,
+    get_project_configuration,
+)
 from restapi.models import GET_SCHEMA_KEY, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
@@ -14,10 +23,17 @@ def handle_marshmallow_errors(error):
 
     try:
 
-        params = request.args or request.get_json() or request.form or {}
+        if request.args:
+            if request.args.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
-        if params.get(GET_SCHEMA_KEY, False):
-            return ResponseMaker.respond_with_schema(error.data.get("schema"))
+        elif j := request.get_json():
+            if j.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+
+        elif request.form:
+            if request.form.get(GET_SCHEMA_KEY, False):
+                return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
     except BaseException as e:  # pragma: no cover
         log.error(e)
@@ -34,7 +50,26 @@ def handle_marshmallow_errors(error):
     return (errors, 400, {})
 
 
-def log_response(response):
+def obfuscate_query_parameters(raw_url):
+    url = urllib_parse.urlparse(raw_url)
+    try:
+        params = urllib_parse.unquote(
+            urllib_parse.urlencode(handle_log_output(url.query))
+        )
+        url = url._replace(query=params)
+        # remove http(s)://
+        url = url._replace(scheme="")
+        # remove hostname:port
+        url = url._replace(netloc="")
+    except TypeError:  # pragma: no cover
+        log.error("Unable to url encode the following parameters:")
+        print(url.query)
+        return url
+
+    return urllib_parse.urlunparse(url)
+
+
+def handle_response(response):
 
     response.headers["_RV"] = str(version)
 
@@ -59,22 +94,26 @@ def log_response(response):
         log.debug(e)
         data = ""
 
-    # Obfuscating query parameters
-    url = urllib_parse.urlparse(request.url)
-    try:
-        params = urllib_parse.unquote(
-            urllib_parse.urlencode(handle_log_output(url.query))
-        )
-        url = url._replace(query=params)
-        # remove http(s)://
-        url = url._replace(scheme="")
-        # remove hostname:port
-        url = url._replace(netloc="")
-    except TypeError:  # pragma: no cover
-        log.error("Unable to url encode the following parameters:")
-        print(url.query)
+    url = obfuscate_query_parameters(request.url)
 
-    url = urllib_parse.urlunparse(url)
+    if GZIP_ENABLE and "gzip" in request.headers.get("Accept-Encoding", "").lower():
+        response.direct_passthrough = False
+        content, headers = ResponseMaker.gzip_response(
+            response.data,
+            response.status_code,
+            response.headers.get("Content-Encoding"),
+            response.headers.get("Content-Type"),
+        )
+        if content:
+            response.data = content
+
+            try:
+                response.headers.update(headers)
+            # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
+            except AttributeError:  # pragma: no cover
+                for k, v in headers.items():
+                    response.headers.set(k, v)
+
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
         "{} {} {}{} -> {}",
@@ -108,6 +147,32 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
+    def is_binary(content_type):
+        if not content_type:
+            return False
+
+        if content_type == "application/json":
+            return False
+
+        if content_type.startswith("text/"):
+            return False
+
+        if content_type.startswith("image/"):
+            return True
+
+        if content_type.startswith("audio/"):
+            return True
+
+        if content_type.startswith("video/"):
+            return True
+
+        if content_type.startswith("application/"):
+            return True
+
+        log.warning("Unknown Content-Type: {}", content_type)
+        return False
+
+    @staticmethod
     def get_html(content, code, headers):
 
         if isinstance(content, list):
@@ -121,11 +186,66 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
+    def gzip_response(content, code, content_encoding, content_type):
+        if code < 200 or code >= 300 or content_encoding is not None:
+            return None, {}
+
+        # Do not compress binary contents (like images) due to small benefits expected
+        if ResponseMaker.is_binary(content_type):
+            # log.warning("Skipping gzip compression on {}", content_type)
+            return None, {}
+
+        # Do not compress small contents
+        if (nbytes := sys.getsizeof(content)) < GZIP_THRESHOLD:
+            return None, {}
+
+        start_time = time.time()
+
+        gzip_buffer = BytesIO()
+        # compresslevel: an integer from 0 to 9 controlling the level of compression;
+        # 1 is fastest and produces the least compression
+        # 9 is slowest and produces the most compression (default)
+        # 0 is no compression
+        gzip_file = gzip.GzipFile(
+            mode="w", fileobj=gzip_buffer, compresslevel=GZIP_LEVEL
+        )
+
+        gzip_file.write(content)
+        gzip_file.close()
+
+        gzipped_content = gzip_buffer.getvalue()
+
+        headers = {
+            "Content-Encoding": "gzip",
+            "Vary": "Accept-Encoding",
+            "Content-Length": len(gzipped_content),
+        }
+
+        end_time = time.time()
+        t = int(1000 * (end_time - start_time))
+        new_size = sys.getsizeof(gzipped_content)
+        ratio = 1 - new_size / nbytes
+
+        log.info(
+            "[GZIP] {} bytes compressed in {} ms -> {} bytes ({:.2f} %)",
+            nbytes,
+            "< 1" if t < 1 else t,
+            new_size,
+            100 * ratio,
+        )
+        # This a debug code use to detect content types that should not be compressed
+        if ratio < 0.1:  # pragma: no cover
+            log.warning(
+                "Small benefit due to gzip compression on Content-Type: {} ({:.2f} %)",
+                content_type,
+                100 * ratio,
+            )
+        return gzipped_content, headers
+
+    @staticmethod
     def convert_model_to_schema(schema):
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
-            if field == GET_SCHEMA_KEY:
-                continue
 
             f = {}
 
@@ -142,7 +262,7 @@ class ResponseMaker:
                 f["description"] = field_def.metadata["description"]
             else:
                 f["description"] = f["label"]
-            f["required"] = "true" if field_def.required else "false"
+            f["required"] = field_def.required
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
@@ -189,9 +309,9 @@ class ResponseMaker:
 
                     choices = validator.choices
                     labels = validator.labels
-                    if len(labels) != len(choices):
+                    if len(tuple(labels)) != len(tuple(choices)):
                         labels = choices
-                    f["enum"] = dict(zip(choices, labels))
+                    f["options"] = dict(zip(choices, labels))
 
                 else:
 

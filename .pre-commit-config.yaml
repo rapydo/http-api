@@ -1,8 +1,4 @@
 repos:
-  - repo: https://github.com/asottile/seed-isort-config
-    rev: v2.2.0
-    hooks:
-      - id: seed-isort-config
   - repo: https://github.com/timothycrosley/isort
     rev: 5.5.2
     hooks:
@@ -24,3 +20,92 @@ repos:
     rev: 3.8.3
     hooks:
       - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.790
+    hooks:
+      - id: mypy
+        additional_dependencies: [
+            "Flask==1.1.2",
+            "Flask-RESTful==0.3.8",
+            "flask-apispec==0.11.0",
+            "Flask-Cors==3.0.9",
+            "Flask-SQLAlchemy==2.4.4",
+            "Flask-Migrate==2.5.3",
+            "PyJWT",
+            "pyOpenSSL",
+            "passlib[bcrypt]==1.7.4",
+            "neomodel==4.0.1",
+            "psycopg2-binary",
+            "pymodm",
+            "PyMySQL",
+            "redis",
+            "pika",
+            "celery==4.4.7",
+            "flower==0.9.5",
+            "celery-redbeat==2.0.0",
+            "celerybeat-mongo==0.2.0",
+            "python-telegram-bot==13.0",
+            "pyotp==2.4.1",
+            "segno==1.3.1",
+            "PyYAML==5.3.1",
+            "loguru",
+            "glom",
+            "psutil",
+            "plumbum",
+            "maxminddb-geolite2",
+            "simplejson",
+            "websocket-client",
+            "gripcontrol==4.0.0",
+            "sentry-sdk[flask]==0.19.1",
+            "pytest-flask==1.0.0",
+            "pytest-cov==2.10.1",
+            "pytest-timeout==1.4.2",
+            "schemathesis==2.7.1",
+            "Faker==4.14.0",
+            "Telethon==1.17.5",
+
+            # Extra dependencies
+            "lxml",
+            "pytest-stub",
+          ]
+
+        # https://mypy.readthedocs.io/en/stable/command_line.html
+
+        args: [
+            # -> Base type Model becomes "Any" due to an unfollowed import
+            # -> Base type MongoModel becomes "Any" due to an unfollowed import
+            # "--disallow-any-unimported",
+
+            # Disable errors like:
+            # found module but no type hints
+            "--ignore-missing-imports",
+
+            # This flag disallows usage of generic types that do not specify explicit type parameters.
+            # Moreover, built-in collections (such as list and dict)
+            # become disallowed as you should use their aliases from the typing module
+            # (such as List[int] and Dict[str, str]).
+            "--disallow-any-generics",
+            # This flag type checks the body of every function, regardless of whether it has type annotations.
+            # (By default the bodies of functions without annotations are not type checked.)
+            "--check-untyped-defs",
+            "--warn-redundant-casts",
+            "--warn-unused-ignores",
+            "--warn-return-any",
+            "--warn-unreachable",
+
+            # This flag reports an error whenever a function with type annotations
+            # calls a function defined without annotations
+            # -> Call to untyped function "xyz" in typed context
+            # "--disallow-untyped-calls",
+
+            # This flag reports an error whenever it encounters a
+            # function definition without type annotations.
+            # -> xyz Function is missing a type annotation
+            # "--disallow-untyped-defs",
+
+            # This flag reports an error whenever it encounters a
+            # partly annotated function definition.
+            "--disallow-incomplete-defs",
+            "--txt-report",
+            ".",
+          ]

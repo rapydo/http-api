@@ -1,15 +1,24 @@
 import json
 import socket
 import ssl
+import urllib.parse
+from typing import Dict, List, Optional, Union
 
 import pika
+import requests
+from requests.auth import HTTPBasicAuth
 
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.exceptions import RestApiException
 from restapi.utilities.logs import log
 
 
 class RabbitExt(Connector):
+    def __init__(self, app=None):
+        self.connection: pika.BlockingConnection = None
+        super().__init__(app)
+
     def get_connection_exception(self):
         # Includes:
         #   AuthenticationError,
@@ -25,6 +34,10 @@ class RabbitExt(Connector):
     def connect(self, **kwargs):
 
         variables = self.variables.copy()
+        # Beware, if you specify a user different by the default,
+        # then the send method will fail to to PRECONDITION_FAILED because
+        # the user_id will not pass the verification
+        # Locally save self.variables + kwargs to be used in send()
         variables.update(kwargs)
 
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
@@ -32,7 +45,8 @@ class RabbitExt(Connector):
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
         credentials = pika.PlainCredentials(
-            variables.get("user"), variables.get("password"),
+            variables.get("user"),
+            variables.get("password"),
         )
 
         if ssl_enabled:
@@ -53,7 +67,7 @@ class RabbitExt(Connector):
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=variables.get("host"),
-                port=int(variables.get("port")),
+                port=int(variables.get("port", "0")),
                 virtual_host=variables.get("vhost"),
                 credentials=credentials,
                 ssl_options=ssl_options,
@@ -63,14 +77,42 @@ class RabbitExt(Connector):
         self.channel = None
         return self
 
-    def disconnect(self):
-        if self.connection.is_closed:
-            log.debug("Connection already closed")
-        else:
-            self.connection.close()
+    def disconnect(self) -> None:
         self.disconnected = True
+        if self.connection:
+            if self.connection.is_closed:
+                log.debug("Connection already closed")
+            else:
+                self.connection.close()
 
-    def queue_exists(self, queue):
+    def is_connected(self) -> bool:
+        return bool(self.connection.is_open)
+
+    def exchange_exists(self, exchange: str) -> bool:
+        channel = self.get_channel()
+        try:
+            out = channel.exchange_declare(exchange=exchange, passive=True)
+            log.debug(out)
+            return True
+        except pika.exceptions.ChannelClosedByBroker as e:
+            log.error(e)
+            return False
+
+    def create_exchange(self, exchange: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.exchange_declare(
+            exchange=exchange, exchange_type="direct", durable=True, auto_delete=False
+        )
+        log.debug(out)
+
+    def delete_exchange(self, exchange: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.exchange_delete(exchange, if_unused=False)
+        log.debug(out)
+
+    def queue_exists(self, queue: str) -> bool:
         channel = self.get_channel()
         try:
             out = channel.queue_declare(queue=queue, passive=True)
@@ -80,7 +122,7 @@ class RabbitExt(Connector):
             log.error(e)
             return False
 
-    def create_queue(self, queue):
+    def create_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
         out = channel.queue_declare(
@@ -88,52 +130,138 @@ class RabbitExt(Connector):
         )
         log.debug(out)
 
-    def delete_queue(self, queue):
+    def delete_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_delete(queue, if_unused=False, if_empty=False,)
+        out = channel.queue_delete(
+            queue,
+            if_unused=False,
+            if_empty=False,
+        )
         log.debug(out)
 
-    def write_to_queue(self, jmsg, queue, exchange="", headers=None):
-        """
-        Send a log message to the RabbitMQ queue, unless
-        the dont-connect parameter is set. In that case,
-        the messages get logged into the normal log files.
-        If the connection is dead, reconnection is attempted,
-        but not eternally.
+    def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
+        if not self.exchange_exists(exchange):
+            log.critical("Does not exist")
+            return None
 
-        :param jmsg: JSON log message
-        :param app_name: App name (will be used for the ElasticSearch index name)
-        :param exchange: RabbitMQ exchange where the jmsg should be sent.
+        host = self.variables.get("host", "")
+        schema = ""
+        if not host.startswith("http"):
+            if Env.to_bool(self.variables.get("ssl_enabled")):
+                schema = "https://"
+            else:
+                schema = "http://"
+
+        port = self.variables.get("management_port")
+        # url-encode unsafe characters by also including / (thanks to safe parameter)
+        # / -> %2F
+        vhost = urllib.parse.quote(self.variables.get("vhost", "/"), safe="")
+        user = self.variables.get("user")
+        password = self.variables.get("password")
+        # API Reference:
+        # A list of all bindings in which a given exchange is the source.
+        r = requests.get(
+            f"{schema}{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
+            auth=HTTPBasicAuth(user, password),
+            verify=False,
+        )
+        response = r.json()
+        if r.status_code != 200:  # pragma: no cover
+            raise RestApiException(
+                {"RabbitMQ": response.get("error", "Unknown error")},
+                status_code=r.status_code,
+            )
+
+        bindings = []
+        for row in response:
+            # row == {
+            #   'source': exchange-name,
+            #   'vhost': probably '/',
+            #   'destination': queue-or-dest-exchange-name,
+            #   'destination_type': 'queue' or 'exchange',
+            #   'routing_key': routing_key,
+            #   'arguments': Dict,
+            #   'properties_key': ?? as routing_key?
+            # }
+
+            bindings.append(
+                {
+                    "exchange": row["source"],
+                    "routing_key": row["routing_key"],
+                    "queue": row["destination"],
+                }
+            )
+
+        return bindings
+
+    def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.queue_bind(
+            queue=queue, exchange=exchange, routing_key=routing_key
+        )
+        log.debug(out)
+
+    def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
+
+        channel = self.get_channel()
+        out = channel.queue_unbind(
+            queue=queue, exchange=exchange, routing_key=routing_key
+        )
+        log.debug(out)
+
+    def send_json(self, message, routing_key="", exchange="", headers=None):
+        return self.send(
+            body=json.dumps(message),
+            routing_key=routing_key,
+            exchange=exchange,
+            headers=headers,
+        )
+
+    def send(self, body, routing_key="", exchange="", headers=None):
+        """
+        Send a message to the RabbitMQ queue
+
+        :param body: the data to be send.
+                        If this message should be json-encoded please use .send_json()
+        :param exchange: RabbitMQ exchange where the message should be sent.
                          Empty for default exchange.
         :param queue: RabbitMQ routing key.
         """
 
-        log.verbose(
-            "Asked to log ({}, {}): {}", exchange, queue, jmsg,
-        )
-        body = json.dumps(jmsg)
-
         # Settings for the message:
         permanent_delivery = 2  # make message persistent
+
         if headers is None:
             headers = {}
 
-        props = pika.BasicProperties(delivery_mode=permanent_delivery, headers=headers)
-
-        log.verbose("Sending message to RabbitMQ")
+        props = pika.BasicProperties(
+            delivery_mode=permanent_delivery,
+            headers=headers,
+            # This should be the same used by the connect method, i.e.:
+            # self.variables + kwargs
+            # Otherwise it will fail with error:
+            # Failed to write message, channel is dead (
+            #     (406, "PRECONDITION_FAILED - user_id property
+            #            set to 'CUSTOM' but authenticated user was 'BASE'
+            #           "
+            #     )
+            # )
+            user_id=self.variables.get("user"),
+        )
 
         try:
 
             channel = self.get_channel()
             channel.basic_publish(
                 exchange=exchange,
-                routing_key=queue,
+                routing_key=routing_key,
                 body=body,
                 properties=props,
                 mandatory=True,
             )
-            log.verbose("Message sent to RabbitMQ")
+            log.debug("Message sent to RabbitMQ")
             return True
         except pika.exceptions.UnroutableError as e:
             log.error(e)
@@ -163,13 +291,27 @@ class RabbitExt(Connector):
         :raises: AttributeError if the connection is None.
         """
         if self.channel is None:
-            log.verbose("Creating new channel.")
+            log.debug("Creating new channel.")
             self.channel = self.connection.channel()
             self.channel.confirm_delivery()
 
         elif self.channel.is_closed:
-            log.verbose("Recreating channel.")
+            log.debug("Recreating channel.")
             self.channel = self.connection.channel()
             self.channel.confirm_delivery()
 
         return self.channel
+
+
+instance = RabbitExt()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "RabbitExt":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

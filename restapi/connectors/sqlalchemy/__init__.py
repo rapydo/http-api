@@ -9,6 +9,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, Union
 
 import pytz
 import sqlalchemy
@@ -17,20 +18,62 @@ from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import IntegrityError, InternalError, OperationalError
+from sqlalchemy.exc import (
+    IntegrityError,
+    InternalError,
+    OperationalError,
+    ProgrammingError,
+)
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.confs import TESTING
+# from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
 db = OriginalAlchemy()
+
+
+def parse_postgres_error(excpt):
+
+    if m0 := re.search(
+        r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
+    ):
+        # duplicate key value violates unique constraint "user_email_key"
+        # => m0.group(1) === user_email_key
+        # => table = user
+        table = m0.group(1).split("_")[0]
+        m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", excpt[1])
+
+        if m:
+            prop = m.group(1)
+            val = m.group(2)
+            return f"A {table.title()} already exists with {prop}: {val}"
+
+    return None
+
+
+def parse_mysql_error(excpt):
+
+    if m0 := re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0]):
+
+        val = m0.group(1)
+        prop = m0.group(2)
+
+        # table name can be "tablename" or "`tablename`"
+        # => match all non-space and non-backticks characters optioanlly wrapped among `
+        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
+
+        if m:
+            table = m.group(1)
+            return f"A {table.title()} already exists with {prop}: {val}"
+
+    return None  # pragma: no cover
 
 
 def catch_db_exceptions(func):
@@ -43,33 +86,24 @@ def catch_db_exceptions(func):
             # already catched and parser, raise up
             raise
         except IntegrityError as e:
-
             message = str(e).split("\n")
-            if not re.search(
-                r".*duplicate key value violates unique constraint .*", message[0]
-            ):
+
+            error = parse_postgres_error(message)
+            if not error:
+                error = parse_mysql_error(message)
+
+            # Should never happen except in case of new alchemy version
+            if not error:  # pragma: no cover
                 log.error("Unrecognized error message: {}", e)
                 raise DatabaseDuplicatedEntry("Duplicated entry")
 
-            m = re.search(r"DETAIL:  Key \((.+)\)=\((.+)\) already exists.", message[1])
-
-            if m:
-                prop = m.group(1)
-                val = m.group(2)
-                error = f"{prop.title()} already exists with value: {val}"
-                raise DatabaseDuplicatedEntry(error)
-
-            # Can't be tested, should never happen except in case of new alchemy version
-            log.error("Unrecognized error message: {}", e)  # pragma: no cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+            raise DatabaseDuplicatedEntry(error)
 
         except InternalError as e:  # pragma: no cover
 
-            message = str(e)
-
             m = re.search(
                 r"Incorrect string value: '(.*)' for column `.*`.`.*`.`(.*)` at row .*",
-                message,
+                str(e),
             )
 
             if m:
@@ -78,7 +112,17 @@ def catch_db_exceptions(func):
                 error = f"Invalid {column}: {value}"
                 raise BadRequest(error)
 
-            log.error("Unrecognized error message: {}", message)
+            log.error("Unrecognized error message: {}", e)
+            raise
+
+        except ProgrammingError as e:
+            # Ignore ProgrammingError (like Table doesn't exist) during initialization
+            if not SQLAlchemy.DB_INITIALIZING:
+                message = str(e).split("\n")
+                log.error(message[0])
+                if len(message) > 1:
+                    log.info(message[1])
+
             raise
 
         except BaseException as e:
@@ -89,44 +133,52 @@ def catch_db_exceptions(func):
 
 
 class SQLAlchemy(Connector):
+    # Used to suppress ProgrammingError raised by MySQL during DB initialization
+    DB_INITIALIZING = False
+
+    def __init__(self, app=None):
+        self.db: OriginalAlchemy = None
+        super().__init__(app)
+
+    def is_mysql(self) -> bool:
+        return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
+
     def get_connection_exception(self):
         return (OperationalError,)
 
     def connect(self, **kwargs):
 
-        test_connection = kwargs.get("test_connection", False)
-
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        db_url = {
-            "database": variables.get("db"),
-            "drivername": variables.get("dbtype", "postgresql"),
-            "username": variables.get("user"),
-            "password": variables.get("password"),
-            "host": variables.get("host"),
-            "port": variables.get("port"),
-        }
+        query = None
+        if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
+            query = {"charset": "utf8mb4"}
 
-        if variables.get("dbtype", "postgresql") == "mysql+pymysql":
-            db_url["query"] = {"charset": "utf8mb4"}
-
-        uri = URL(**db_url)
+        uri = URL(
+            drivername=variables.get("dbtype", "postgresql"),
+            username=variables.get("user"),
+            password=variables.get("password"),
+            host=variables.get("host"),
+            port=variables.get("port"),
+            database=variables.get("db"),
+            query=query,
+        )
         # TODO: in case we need different connection binds
         # (multiple connections with sql) then:
         # SQLALCHEMY_BINDS = {
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
+        if self.app:
+            self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
+            # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+            self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-        # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-        # The Alembic package, which handles the migration work, does not recognize
-        # type changes in columns by default. If you want that fine level of
-        # detection you need to enable the compare_type option
-        Migrate(self.app, db, compare_type=True)
+            # The Alembic package, which handles the migration work, does not recognize
+            # type changes in columns by default. If you want that fine level of
+            # detection you need to enable the compare_type option
+            Migrate(self.app, db, compare_type=True)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
@@ -135,57 +187,73 @@ class SQLAlchemy(Connector):
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)
         db.session.flush = catch_db_exceptions(db.session.flush)
-        db.update_properties = self.update_properties
-        db.disconnect = self.disconnect
-        db.disconnected = False
+        # db.update_properties = self.update_properties
+        # db.disconnect = self.disconnect
+        # db.is_connected = self.is_connected
 
         Connection.execute = catch_db_exceptions(Connection.execute)
 
-        try:
-            db.init_app(self.app)
-        # It is required by test script executing destroy tests (test_zzz_destroy.py)
-        # to prevent errors due to double initializations
-        except AssertionError as e:  # pragma: no cover
-            if TESTING:
-                log.warning(e)
-            else:
-                raise e
+        if self.app:
+            # This is to prevent multiple app initialization and avoid the error:
+            #   A setup function was called after the first request was handled.
+            #   This usually indicates a bug in the application where a module was
+            #   not imported and decorators or other functionality was called too late.
+            #   To fix this make sure to import all your view modules,
+            #   database models and everything related at a central place before
+            #   the application starts serving requests.
+            if "sqlalchemy" not in self.app.extensions:
+                db.init_app(self.app)
 
-        if test_connection:
-            sql = text("SELECT 1")
-            db.engine.execute(sql)
+            # This is needed to test the connection
+            with self.app.app_context():
+                sql = text("SELECT 1")
+                db.engine.execute(sql)
+
         self.db = db
-        return db
+        return self
 
-    def disconnect(self):
-        self.db.disconnected = True
-        return
+    @property
+    def session(self):
+        return self.db.session
+
+    def disconnect(self) -> None:
+        if self.db:
+            self.db.session.close()
+        self.disconnected = True
+
+    def is_connected(self):
+        log.warning("sqlalchemy.is_connected method is not implemented")
+        return not self.disconnected
 
     def initialize(self):
 
-        db = self.get_instance()
+        instance = self.get_instance()
 
-        with self.app.app_context():
+        if self.app:
+            with self.app.app_context():
 
-            sql = text("SELECT 1")
-            db.engine.execute(sql)
+                sql = text("SELECT 1")
+                instance.db.engine.execute(sql)
 
-            db.create_all()
+                SQLAlchemy.DB_INITIALIZING = True
+                instance.db.create_all()
+                SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self):
 
-        db = self.get_instance()
+        instance = self.get_instance()
 
-        with self.app.app_context():
+        if self.app:
+            with self.app.app_context():
 
-            sql = text("SELECT 1")
-            db.engine.execute(sql)
+                sql = text("SELECT 1")
+                instance.db.engine.execute(sql)
 
-            db.session.remove()
-            db.session.close_all()
-            # massive destruction
-            log.critical("Destroy current SQL data")
-            db.drop_all()
+                instance.db.session.remove()
+                instance.db.session.close_all()
+                # massive destruction
+                log.critical("Destroy current SQL data")
+                instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance, properties):
@@ -195,6 +263,8 @@ class SQLAlchemy(Connector):
 
 
 class Authentication(BaseAuthentication):
+    def __init__(self):
+        self.db = get_instance()
 
     # Also used by POST user
     def create_user(self, userdata, roles):
@@ -227,14 +297,33 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def get_user_object(self, username=None, payload=None):
+    def create_group(self, groupdata):
+
+        groupdata.setdefault("uuid", getUUID())
+
+        group = self.db.Group(**groupdata)
+
+        self.db.session.add(group)
+        self.db.session.commit()
+
+        return group
+
+    def add_user_to_group(self, user, group):
+
+        if user and group:
+            user.belongs_to = group
+
+            self.db.session.add(user)
+            self.db.session.commit()
+
+    def get_user(self, username=None, user_id=None):
 
         try:
             if username:
                 return self.db.User.query.filter_by(email=username).first()
 
-            if payload and "user_id" in payload:
-                return self.db.User.query.filter_by(uuid=payload["user_id"]).first()
+            if user_id:
+                return self.db.User.query.filter_by(uuid=user_id).first()
 
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
             log.error(e)
@@ -242,24 +331,58 @@ class Authentication(BaseAuthentication):
         except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
             raise e
 
-    def get_users(self, user_id=None):
+        # only reached if both username and user_id are None
+        return None
 
-        # Retrieve all
-        if user_id is None:
-            return self.db.User.query.all()
+    def get_users(self):
+        return self.db.User.query.all()
 
-        # Retrieve one
-        user = self.db.User.query.filter_by(uuid=user_id).first()
-        if user is None:
-            return None
+    def save_user(self, user):
+        if user:
+            self.db.session.add(user)
+            self.db.session.commit()
+            return True
+        return False
 
-        return [user]
+    def delete_user(self, user):
+        if user:
+            self.db.session.delete(user)
+            self.db.session.commit()
+            return True
+        return False
+
+    def get_group(self, group_id=None, name=None):
+        if group_id:
+            return self.db.Group.query.filter_by(uuid=group_id).first()
+
+        if name:
+            return self.db.Group.query.filter_by(shortname=name).first()
+
+        return None
+
+    def get_groups(self):
+        return self.db.Group.query.all()
+
+    def save_group(self, group):
+        if group:
+            self.db.session.add(group)
+            self.db.session.commit()
+            return True
+        return False
+
+    def delete_group(self, group):
+        if group:
+            self.db.session.delete(group)
+            self.db.session.commit()
+            return True
+        return False
 
     def get_roles(self):
         roles = []
         for role_name in self.roles:
             role = self.db.Role.query.filter_by(name=role_name).first()
-            roles.append(role)
+            if role:
+                roles.append(role)
 
         return roles
 
@@ -271,48 +394,17 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    # TODO: (IMPORTANT) developer should be able to specify a custom init
-    # which would replace this function below
-    def init_users_and_roles(self):
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        self.db.session.add(role)
+        self.db.session.commit()
 
-        missing_role = missing_user = False
-
-        try:
-            # if no roles
-            missing_role = not self.db.Role.query.first()
-            if missing_role:
-                for role_name in self.roles:
-                    role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                    role = self.db.Role(name=role_name, description=role_description)
-                    self.db.session.add(role)
-                log.info("Injected default roles")
-
-            # if no users
-            missing_user = not self.db.User.query.first()
-            if missing_user:
-                self.create_user(
-                    {
-                        "email": self.default_user,
-                        # 'authmethod': 'credentials',
-                        "name": "Default",
-                        "surname": "User",
-                        "password": self.default_password,
-                    },
-                    roles=self.roles,
-                )
-                log.info("Injected default user")
-
-            if missing_user or missing_role:
-                self.db.session.commit()
-        except sqlalchemy.exc.OperationalError:  # pragma: no cover
-            self.db.session.rollback()
-            # A migration / rebuild is required?
-            raise AttributeError("Inconsistences between DB schema and data models")
-
-    def save_user(self, user):
-        if user:
-            self.db.session.add(user)
+    def save_role(self, role):
+        if role:
+            self.db.session.add(role)
             self.db.session.commit()
+            return True
+        return False
 
     def save_token(self, user, token, payload, token_type=None):
 
@@ -345,7 +437,6 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-            log.verbose("Token stored inside the DB")
         except BaseException as e:
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
@@ -442,3 +533,17 @@ class Authentication(BaseAuthentication):
 
         log.warning("Could not invalidate token")
         return False
+
+
+instance = SQLAlchemy()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "SQLAlchemy":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

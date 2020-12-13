@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.confs import TESTING
+from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource
 
 if TESTING:

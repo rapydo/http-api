@@ -1,4 +1,6 @@
-from restapi.confs import get_project_configuration
+import json
+
+from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests
@@ -8,28 +10,18 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_admin_users(self, client, fake):
 
-        if Env.get_bool("ADMINER_DISABLED"):
+        # Adminer is always enabled during tests
+        if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
             return
 
         project_tile = get_project_configuration("project.title", default="YourProject")
 
         headers, _ = self.do_login(client, None, None)
-        self._test_endpoint(
-            client,
-            "admin/users",
-            headers,
-            200,
-            400,
-            405,
-            405,
-        )
-
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
-        log.critical(schema)
         data = self.buildData(schema)
         data["email_notification"] = True
         data["is_active"] = True
@@ -168,7 +160,7 @@ class TestApp(BaseTests):
         data = {
             "password": BaseAuthentication.default_password,
             # very important, otherwise the default user will lose its admin role
-            "roles_admin_root": True,
+            "roles": json.dumps(["admin_root"]),
         }
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
         assert r.status_code == 204

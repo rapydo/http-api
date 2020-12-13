@@ -1,9 +1,11 @@
 import os
+from typing import Optional
 
-import jwt
+from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
 from restapi import decorators
-from restapi.confs import get_frontend_url, get_project_configuration
+from restapi.config import get_frontend_url, get_project_configuration
+from restapi.connectors import smtp
 from restapi.exceptions import RestApiException
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource
@@ -22,7 +24,7 @@ def send_activation_link(smtp, auth, user):
     rt = activation_token.replace(".", "+")
     log.debug("Activation token: {}", rt)
     url = f"{server_url}/public/register/{rt}"
-    body = f"Follow this link to activate your account: {url}"
+    body: Optional[str] = f"Follow this link to activate your account: {url}"
 
     # customized template
     template_file = "activate_account.html"
@@ -61,13 +63,14 @@ class ProfileActivation(EndpointResource):
             )
 
         # If token is expired
-        except jwt.exceptions.ExpiredSignatureError:
+        except ExpiredSignatureError:
             raise RestApiException(
-                "Invalid activation token: this request is expired", status_code=400,
+                "Invalid activation token: this request is expired",
+                status_code=400,
             )
 
         # if token is not yet active
-        except jwt.exceptions.ImmatureSignatureError:
+        except ImmatureSignatureError:
             raise RestApiException("Invalid activation token", status_code=400)
 
         # if token does not exist (or other generic errors)
@@ -111,13 +114,13 @@ class ProfileActivation(EndpointResource):
     )
     def post(self, username):
 
-        user = self.auth.get_user_object(username=username)
+        user = self.auth.get_user(username=username)
 
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-            smtp = self.get_service_instance("smtp")
-            send_activation_link(smtp, self.auth, user)
+            smtp_client = smtp.get_instance()
+            send_activation_link(smtp_client, self.auth, user)
         msg = (
             "We are sending an email to your email address where "
             "you will find the link to activate your account"

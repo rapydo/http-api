@@ -4,7 +4,13 @@ We create all the internal flask components here.
 """
 import logging
 import os
+import signal
+import sys
+import time
 import warnings
+from enum import Enum
+from threading import Lock
+from typing import Dict, Optional, Union
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -17,62 +23,69 @@ from flask_restful import Api
 from geolite2 import geolite2
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from restapi import confs as config
-from restapi.confs import (
+from restapi import config
+from restapi.config import (
     ABS_RESTAPI_PATH,
+    FORCE_PRODUCTION_TESTS,
     PRODUCTION,
     SENTRY_URL,
+    TESTING,
     get_backend_url,
     get_project_configuration,
 )
 from restapi.customizer import BaseCustomizer
+from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
-from restapi.rest.response import handle_marshmallow_errors, log_response
+from restapi.rest.response import handle_marshmallow_errors, handle_response
+from restapi.services.cache import Cache
 from restapi.services.detect import detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
+lock = Lock()
 
-def create_app(
-    name=__name__,
-    init_mode=False,
-    destroy_mode=False,
-    worker_mode=False,
-    testing_mode=False,
-    skip_endpoint_mapping=False,
-    **kwargs,
-):
+
+class ServerModes(int, Enum):
+    NORMAL = 0
+    INIT = 1
+    DESTROY = 2
+    WORKER = 3
+
+
+def teardown_handler(signal, frame):
+    with lock:
+        from restapi.connectors import Connector
+
+        Connector.disconnect_all()
+
+        # This is needed to let connectors to complete the disconnection and prevent
+        # errors like this on rabbitMQ:
+        # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
+        # client unexpectedly closed TCP connection
+    time.sleep(1)
+    print("Disconnection completed")
+    sys.exit(0)
+
+
+def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     """ Create the server istance for Flask application """
 
-    if (
-        PRODUCTION and testing_mode and not config.FORCE_PRODUCTION_TESTS
-    ):  # pragma: no cover
-        log.exit("Unable to execute tests in production")
-    if testing_mode and not config.TESTING:  # pragma: no cover
-        # Deprecated since 0.7.3
-        log.exit(
-            "Deprecated use of testing_mode, please export env variable APP_MODE=test"
-        )
+    if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
+        print_and_exit("Unable to execute tests in production")
 
-    # Add template dir for output in HTML
-    kwargs["template_folder"] = os.path.join(ABS_RESTAPI_PATH, "templates")
+    # TERM is not catched by Flask
+    # https://github.com/docker/compose/issues/4199#issuecomment-426109482
+    # signal.signal(signal.SIGTERM, teardown_handler)
+    # SIGINT is registered as STOPSIGNAL in Dockerfile
+    signal.signal(signal.SIGINT, teardown_handler)
 
     # Flask app instance
-    microservice = Flask(name, **kwargs)
-
-    # Add commands to 'flask' binary
-    if init_mode:
-        # microservice.config['INIT_MODE'] = init_mode
-        skip_endpoint_mapping = True
-    elif destroy_mode:
-        # microservice.config['DESTROY_MODE'] = destroy_mode
-        skip_endpoint_mapping = True
-    elif testing_mode:
-        # microservice.config['TESTING'] = testing_mode
-        init_mode = True
-    elif worker_mode:
-        skip_endpoint_mapping = True
+    # template_folder = template dir for output in HTML
+    microservice = Flask(
+        name, template_folder=os.path.join(ABS_RESTAPI_PATH, "templates")
+    )
 
     # CORS
     if not PRODUCTION:
@@ -90,7 +103,7 @@ def create_app(
         )
 
         cors.init_app(microservice)
-        log.verbose("FLASKING! Injected CORS")
+        log.debug("CORS Injected")
 
     # Flask configuration from config file
     microservice.config.from_object(config)
@@ -102,23 +115,23 @@ def create_app(
     endpoints_loader = EndpointsLoader()
     mem.configuration = endpoints_loader.load_configuration()
 
-    mem.initializer = Meta.get_class("initialization.initialization", "Initializer")
+    mem.initializer = Meta.get_class("initialization", "Initializer")
     if not mem.initializer:
-        log.exit("Invalid Initializer class")
+        print_and_exit("Invalid Initializer class")
 
-    mem.customizer = Meta.get_instance("initialization.initialization", "Customizer")
+    mem.customizer = Meta.get_instance("customization", "Customizer")
     if not mem.customizer:
-        log.exit("Invalid Customizer class")
+        print_and_exit("Invalid Customizer class")
 
     if not isinstance(mem.customizer, BaseCustomizer):
-        log.exit("Invalid Customizer class, it should inherit BaseCustomizer")
+        print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    # Find services and try to connect to the ones available
     detector.init_services(
         app=microservice,
-        project_init=init_mode,
-        project_clean=destroy_mode,
-        worker_mode=worker_mode,
+        project_init=(mode == ServerModes.INIT),
+        project_clean=(mode == ServerModes.DESTROY),
+        worker_mode=(mode == ServerModes.WORKER),
+        options=options,
     )
 
     # Initialize reading of all files
@@ -126,14 +139,15 @@ def create_app(
     # when to close??
     # geolite2.close()
 
-    # Restful plugin
-    if not skip_endpoint_mapping:
+    # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
+    if mode == ServerModes.NORMAL:
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
         # ignore warning messages from apispec
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
+        mem.cache = Cache.get_instance(microservice, detector)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
@@ -146,8 +160,6 @@ def create_app(
             # Create the restful resource with it;
             # this method is from RESTful plugin
             rest_api.add_resource(endpoint.cls, *endpoint.uris)
-
-            log.verbose("Map '{}' to {}", endpoint.cls.__name__, endpoint.uris)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
@@ -209,8 +221,6 @@ def create_app(
                     # remove from flask mapping
                     # to allow 405 response
                     newmethods.add(verb)
-                else:
-                    log.verbose("Removed method {}.{} from mapping", rulename, verb)
 
             rule.methods = newmethods
 
@@ -227,7 +237,7 @@ def create_app(
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
     # Logging responses
-    microservice.after_request(log_response)
+    microservice.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
 
@@ -235,7 +245,7 @@ def create_app(
             sentry_sdk.init(
                 dsn=SENTRY_URL,
                 # already catched by handle_marshmallow_errors
-                ignore_errors=(werkzeug.exceptions.UnprocessableEntity,),
+                ignore_errors=[werkzeug.exceptions.UnprocessableEntity],
                 integrations=[FlaskIntegration()],
             )
             log.info("Enabled Sentry {}", SENTRY_URL)
@@ -244,8 +254,6 @@ def create_app(
             # sentry_sdk.init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
-    # and the flask App is ready now:
     log.info("Boot completed")
 
-    # return our flask app
     return microservice

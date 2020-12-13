@@ -21,7 +21,7 @@ def get_auth_token(client, data):
 
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
-            actions = content.get("actions")
+            actions = content.get("actions", {})
 
             if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                 currentpwd = data["password"]
@@ -44,14 +44,15 @@ def get_auth_token(client, data):
     return content, {"Authorization": f"Bearer {content}"}
 
 
-if not RUN_SCHEMATHESIS:
+# Schemathesis is always enabled during core tests
+if not RUN_SCHEMATHESIS:  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
     # No need to restore the logger after this test because
     # schemathesis test is the last one!
     # (just because in alphabetic order there are no other tests)
     set_logger("WARNING")
-    app = create_app(testing_mode=True)
+    app = create_app()
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
     BaseAuthentication.load_default_user()
     BaseAuthentication.load_roles()
@@ -81,7 +82,7 @@ else:
 
         # I want to allow 503 errors, raised in case of mail sending not enabled
         # Let's convert to 404 errors
-        if response.status_code == 503:
+        if response.status_code == 503:  # pragma: no cover
             response.status_code = 404
 
         # validation checks are defined here:
@@ -106,7 +107,7 @@ else:
 
         # I want to allow 503 errors, raised in case of mail sending not enabled
         # Let's convert to 404 errors
-        if response.status_code == 503:
+        if response.status_code == 503:  # pragma: no cover
             response.status_code = 404
 
         # validation checks are defined here:
@@ -124,7 +125,7 @@ else:
     )
     def test_logout(case):
 
-        if case.headers is None:
+        if case.headers is None:  # pragma: no cover
             case.headers = auth_header
 
         response = case.call_wsgi()

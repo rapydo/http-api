@@ -1,0 +1,115 @@
+name: Test
+
+on:
+  push:
+  # schedule:
+  #   - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
+
+    strategy:
+      matrix:
+        template:
+          [
+            extra,
+            neo4j,
+            postgres,
+            celery-rabbit-redis,
+            celery-rabbit-mongo,
+            celery-redis-redis,
+            celery-redis-mongo,
+            celery-rabbit-rabbit,
+            mysql,
+            mongo,
+          ]
+        mode: [dev, prod]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install
+        run: |
+
+          # Randomize auth service to test some services
+          # double neo4j to balance with sql databases
+          # mongo is only tested on the mongo TEMPLATE for two reasons:
+          #  - no need to test it too much (no project is really using it as backend)
+          #  - prevent celery-rabbit-rabbit template to become a celery-rabbit-mongo template
+          auth_services=(postgres mysql neo4j neo4j)
+          RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
+          echo "Selected random authentication service = ${RANDOM_AUTH}"
+          # Make the environment variable available to next steps
+          echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
+          echo "TELEGRAM_ADMINS=${{ secrets.TELEGRAM_ADMINS }}" >> $GITHUB_ENV
+          echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> $GITHUB_ENV
+          echo "TELEGRAM_APP_HASH=${{ secrets.TELEGRAM_APP_HASH }}" >> $GITHUB_ENV
+          echo "TELEGRAM_APP_ID=${{ secrets.TELEGRAM_APP_ID }}" >> $GITHUB_ENV
+          echo "TELEGRAM_BOTNAME=${{ secrets.TELEGRAM_BOTNAME }}" >> $GITHUB_ENV
+          echo "TELETHON_SESSION=${{ secrets.TELETHON_SESSION }}" >> $GITHUB_ENV
+
+          python -m pip install --upgrade pip
+          CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
+          pip install --upgrade --no-cache-dir git+https://github.com/rapydo/do.git@${CURRENT_VERSION}
+          rapydo --version
+
+          mkdir ${{ matrix.template }}.${{ matrix.mode }}
+          cd ${{ matrix.template }}.${{ matrix.mode }}
+          bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
+
+      - name: DEV Tests
+        if: ${{ matrix.mode == 'dev' }}
+        run: |
+          cd ${{ matrix.template }}.${{ matrix.mode }}
+          rapydo --testing --project prj init
+          rapydo pull
+          bash ../tests/customize_template.sh ${{ matrix.template }}
+          rapydo -e ACTIVATE_TELEGRAM=0 start
+          sleep 25
+          rapydo logs
+          rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
+
+          # Send coverage
+          rapydo dump
+          backend_container=$(docker-compose ps -q backend)
+          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+
+      - name: PROD Tests
+        if: ${{ matrix.mode == 'prod' }}
+        run: |
+          cd ${{ matrix.template }}.${{ matrix.mode }}
+
+          rapydo --production --testing --project prj init --force
+          rapydo pull
+          bash ../tests/customize_template.sh ${{ matrix.template }}
+          rapydo ssl --volatile
+          rapydo start
+          # wait for all services to start (25 failed sometimes)
+          sleep 30
+          rapydo logs
+          curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
+          if [[ "${{ matrix.template }}" == "extra" ]]; then
+            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+            rapydo -s bot remove;
+          fi
+          rapydo -s proxy,backend logs --tail 20
+
+          # Tests in production mode
+          rapydo shell --no-tty backend 'restapi tests --core --wait'
+          # Send coverage
+          rapydo dump
+          backend_container=$(docker-compose ps -q backend)
+          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+
+      - name: Print Logs
+        if: failure()
+        run: |
+          tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log

@@ -7,7 +7,7 @@ from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
-from restapi.confs import SENTRY_URL
+from restapi.config import SENTRY_URL
 from restapi.exceptions import (
     BadRequest,
     Conflict,
@@ -17,10 +17,13 @@ from restapi.exceptions import (
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-log.verbose("Auth loaded {}", auth)
-log.verbose("Marshal loaded {}", marshal_with)
+log.debug("Auth loaded {}", auth)
+log.debug("Marshal loaded {}", marshal_with)
+
+SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
 
 
 # same definition as in:
@@ -67,6 +70,24 @@ def endpoint(path, summary=None, description=None, responses=None, **kwargs):
     return decorator
 
 
+# Prevent caching of 5xx errors responses
+def cache_response_filter(response):
+    if not isinstance(response, tuple):
+        return True
+
+    if len(response) < 3:
+        return True
+
+    return response[1] < 500
+
+
+# Used to cache endpoint with @decorators.cache(timeout=60)
+def cache(*args, **kwargs):
+    if "response_filter" not in kwargs:
+        kwargs["response_filter"] = cache_response_filter
+    return mem.cache.memoize(*args, **kwargs)
+
+
 def catch_graph_exceptions(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -96,16 +117,14 @@ def graph_transactions(func):
         try:
 
             db.begin()
-            log.verbose("Neomodel transaction BEGIN")
 
             out = func(self, *args, **kwargs)
 
             db.commit()
-            log.verbose("Neomodel transaction COMMIT")
 
             return out
         except Exception as e:
-            log.verbose("Neomodel transaction ROLLBACK")
+            log.debug("Neomodel transaction ROLLBACK")
             try:
                 db.rollback()
             except Exception as sub_ex:
@@ -243,11 +262,12 @@ def catch_exceptions(**kwargs):
                     message = "Unknown error"
                 log.exception(message)
                 log.error("Catched {} exception: {}", excname, message)
-                if excname in ["AttributeError", "ValueError", "KeyError"]:
-                    error = "Server failure; please contact admin."
-                else:
-                    error = {excname: message}
-                return self.response(error, code=400)
+
+                if excname in SYSTEM_EXCEPTIONS:
+                    return self.response(
+                        "Server failure; please contact admin.", code=400
+                    )
+                return self.response({excname: message}, code=400)
 
             return out
 

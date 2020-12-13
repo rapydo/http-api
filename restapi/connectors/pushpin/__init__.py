@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
 
@@ -30,9 +32,12 @@ class PushpinExt(Connector):
             raise ServiceUnavailable(f"Pushpin unavailable on {control_uri}")
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        return
+
+    def is_connected(self):
+        log.warning("pushpin.is_connected method is not implemented")
+        return not self.disconnected
 
     @staticmethod
     def callback(result, message):
@@ -71,3 +76,17 @@ class PushpinExt(Connector):
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
+
+
+instance = PushpinExt()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "PushpinExt":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

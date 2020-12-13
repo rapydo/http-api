@@ -1,8 +1,8 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, Union
 
-import pytz
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
@@ -10,7 +10,7 @@ from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
 
@@ -35,7 +35,7 @@ def catch_db_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = f"A {node} already exists with {prop}: {val}"
+                error = f"A {node.title()} already exists with {prop}: {val}"
 
                 raise DatabaseDuplicatedEntry(error)
 
@@ -51,7 +51,7 @@ def catch_db_exceptions(func):
             # but the cause is still unknown...
             raise RestApiException(str(e), status_code=400)
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 
@@ -59,12 +59,14 @@ def catch_db_exceptions(func):
 
 
 class MongoExt(Connector):
+
+    DATABASE: str = "rapydo"
+
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError,)
 
     def connect(self, **kwargs):
 
-        test_connection = kwargs.get("test_connection", False)
         variables = self.variables.copy()
         variables.update(kwargs)
 
@@ -75,28 +77,28 @@ class MongoExt(Connector):
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
         self.connection = mongodb._get_connection(alias=MongoExt.DATABASE)
-        log.verbose("Connected to db {}", MongoExt.DATABASE)
 
         TopLevelMongoModel.save = catch_db_exceptions(TopLevelMongoModel.save)
 
-        if test_connection:
-            pass
-
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        return
+
+    def is_connected(self):
+
+        log.warning("mongo.is_connected method is not implemented")
+        return not self.disconnected
 
     def initialize(self):
         pass
 
     def destroy(self):
 
-        db = self.get_instance()
+        instance = self.get_instance()
 
         # massive destruction
-        client = db.connection.database
+        client = instance.connection.database
 
         from pymongo import MongoClient
 
@@ -118,6 +120,8 @@ class MongoExt(Connector):
 
 
 class Authentication(BaseAuthentication):
+    def __init__(self):
+        self.db = get_instance()
 
     # Also used by POST user
     def create_user(self, userdata, roles):
@@ -152,40 +156,93 @@ class Authentication(BaseAuthentication):
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
-    def get_user_object(self, username=None, payload=None):
+    def create_group(self, groupdata):
+
+        groupdata.setdefault("uuid", getUUID())
+        groupdata.setdefault("id", groupdata["uuid"])
+
+        group = self.db.Group(**groupdata)
+
+        group.save()
+
+        return group
+
+    def add_user_to_group(self, user, group):
+
+        if user and group:
+            user.belongs_to = group
+            user.save()
+
+    def get_user(self, username=None, user_id=None):
 
         try:
             if username:
                 return self.db.User.objects.raw({"email": username}).first()
 
-            if payload and "user_id" in payload:
-                return self.db.User.objects.get({"uuid": payload["user_id"]})
+            if user_id:
+                return self.db.User.objects.get({"uuid": user_id})
 
         except self.db.User.DoesNotExist:
-            log.warning(
-                "Could not find user for username={}, payload={}", username, payload
+            log.debug(
+                "Could not find user for username={}, user_id={}", username, user_id
             )
-            return None
 
-    def get_users(self, user_id=None):
+        return None
 
-        # Retrieve all
-        if user_id is None:
-            return self.db.User.objects.all()
+    def get_users(self):
+        return list(self.db.User.objects.all())
 
-        # Retrieve one
+    def save_user(self, user):
+        if user:
+            user.save()
+
+            return True
+        return False
+
+    def delete_user(self, user):
+        if user:
+            user.delete()
+            return True
+        return False
+
+    def get_group(self, group_id=None, name=None):
         try:
-            return [self.db.User.objects.get({"uuid": user_id})]
-        except self.db.User.DoesNotExist:
-            return None
+
+            if group_id:
+                return self.db.Group.objects.get({"uuid": group_id})
+
+            if name:
+                return self.db.Group.objects.raw({"shortname": name}).first()
+
+        except self.db.Group.DoesNotExist:
+            log.debug("Could not find group for name={}, group_id={}", name, group_id)
+
+        return None
+
+    def get_groups(self):
+        return list(self.db.Group.objects.all())
+
+    def save_group(self, group):
+        if group:
+            group.save()
+            return True
+        return False
+
+    def delete_group(self, group):
+        if group:
+            group.delete()
+            return True
+        return False
 
     def get_roles(self):
         roles = []
         for role_name in self.roles:
             try:
                 role = self.db.Role.objects.get({"name": role_name})
-                roles.append(role)
-            except self.db.Role.DoesNotExist:
+                if role:
+                    roles.append(role)
+            # Can't be tested, since roles are injected at init time
+            except self.db.Role.DoesNotExist:  # pragma: no cover
                 log.warning("Role not found: {}", role_name)
 
         return roles
@@ -198,49 +255,15 @@ class Authentication(BaseAuthentication):
 
         return [role.name for role in userobj.roles]
 
-    def init_users_and_roles(self):
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        role.save()
 
-        roles = []
-
-        for role_name in self.roles:
-            try:
-                role = self.db.Role.objects.get({"name": role_name})
-                roles.append(role.name)
-                log.info("Role already exists: {}", role.name)
-            except self.db.Role.DoesNotExist:
-                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(name=role_name, description=role_description)
-                role.save()
-                roles.append(role.name)
-                log.warning("Injected default role: {}", role.name)
-
-        try:
-
-            # if no users
-            cursor = self.db.User.objects.all()
-            if len(list(cursor)) > 0:
-                log.info("No user injected")
-            else:
-
-                self.create_user(
-                    {
-                        "email": self.default_user,
-                        "name": "Default",
-                        "surname": "User",
-                        "password": self.default_password,
-                        "last_password_change": datetime.now(pytz.utc),
-                    },
-                    roles=roles,
-                )
-
-                log.warning("Injected default user")
-
-        except BaseException as e:
-            raise AttributeError(f"Models for auth are wrong:\n{e}")
-
-    def save_user(self, user):
-        if user:
-            user.save()
+    def save_role(self, role):
+        if role:
+            role.save()
+            return True
+        return False
 
     def save_token(self, user, token, payload, token_type=None):
 
@@ -347,3 +370,17 @@ class Authentication(BaseAuthentication):
             log.warning("Could not invalidate non-existing token")
 
         return True
+
+
+instance = MongoExt()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "MongoExt":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

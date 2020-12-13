@@ -14,26 +14,26 @@ setup(
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
     packages=find_packages(where=".", exclude=["tests*"]),
     package_data={main_package: ["templates/index.html"]},
-    python_requires=">=3.6.0",
+    python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]
         {main_package}={app}:cli
     """,
+    # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask and plugins
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
-        "flask-apispec==0.10.0",
+        "flask-apispec==0.11.0",
+        "Flask-Caching==1.9.0",
         "Flask-Cors==3.0.9",
         "Flask-SQLAlchemy==2.4.4",
         "Flask-Migrate==2.5.3",
-        # Removed me after flask-apispec will have fixed the requirements
-        "apispec==3.3.2",
         "PyJWT",
         "pyOpenSSL",
-        "passlib[bcrypt]==1.7.2",
+        "passlib[bcrypt]==1.7.4",
         # DB and services drivers
-        "neomodel==4.0.0",
+        "neomodel==4.0.1",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
@@ -41,11 +41,11 @@ setup(
         "pika",
         "celery==4.4.7",
         "flower==0.9.5",
-        "celery-redbeat==1.0.0",
+        "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==12.8",
+        "python-telegram-bot==13.0",
         # TOTP
-        "pyotp==2.4.0",
+        "pyotp==2.4.1",
         "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
@@ -59,22 +59,20 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.17.6",
+        "sentry-sdk[flask]==0.19.1",
         # Tests
         "pytest-flask==1.0.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==2.4.1",
-        "Faker==4.1.3",
-        "Telethon==1.16.4",
+        "schemathesis==2.7.1",
+        "Faker==4.14.0",
+        "Telethon==1.17.5",
     ],
     classifiers=[
         "Programming Language :: Python",
         "Intended Audience :: Developers",
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
 )

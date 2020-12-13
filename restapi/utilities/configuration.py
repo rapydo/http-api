@@ -1,16 +1,25 @@
 import os
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, cast
 
 import yaml
 
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 
-PROJECTS_DEFAULTS_FILE = "projects_defaults.yaml"
-PROJECT_CONF_FILENAME = "project_configuration.yaml"
+PROJECTS_DEFAULTS_FILE = Path("projects_defaults.yaml")
+PROJECT_CONF_FILENAME = Path("project_configuration.yaml")
+
+
+ConfigurationType = Dict[str, Any]
 
 
 def read_configuration(
-    default_file_path, base_project_path, projects_path, submodules_path
-):
+    default_file_path: Path,
+    base_project_path: Path,
+    projects_path: Path,
+    submodules_path: Path,
+) -> Tuple[ConfigurationType, Optional[str], Optional[Path]]:
     """
     Read default configuration
     """
@@ -28,7 +37,7 @@ def read_configuration(
     for key in variables:
         # Can't be tested because it is included in default configuration
         if project.get(key) is None:  # pragma: no cover
-            log.exit(
+            print_and_exit(
                 "Project not configured, missing key '{}' in file {}/{}",
                 key,
                 base_project_path,
@@ -52,25 +61,23 @@ def read_configuration(
     elif extends_from.startswith("submodules/"):  # pragma: no cover
         repository_name = (extends_from.split("/")[1]).strip()
         if repository_name == "":
-            log.exit("Invalid repository name in extends-from, name is empty")
+            print_and_exit("Invalid repository name in extends-from, name is empty")
 
         extend_path = submodules_path
     else:  # pragma: no cover
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
-        log.exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
+        print_and_exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
     if not os.path.exists(extend_path):  # pragma: no cover
-        log.exit("From project not found: {}", extend_path)
+        print_and_exit("From project not found: {}", extend_path)
 
-    extend_file = f"extended_{PROJECT_CONF_FILENAME}"
+    extend_file = Path(f"extended_{PROJECT_CONF_FILENAME}")
     extended_configuration = load_yaml_file(file=extend_file, path=extend_path)
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
 
-def mix(base, custom):
-    if base is None:
-        base = {}
+def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType:
 
     for key, elements in custom.items():
 
@@ -95,11 +102,9 @@ def mix(base, custom):
     return base
 
 
-def load_yaml_file(file, path):
+def load_yaml_file(file: Path, path: Path) -> ConfigurationType:
 
     filepath = os.path.join(path, file)
-
-    log.verbose("Reading file {}", filepath)
 
     if not os.path.exists(filepath):
         raise AttributeError(f"YAML file does not exist: {filepath}")
@@ -111,7 +116,7 @@ def load_yaml_file(file, path):
             if len(docs) == 0:
                 raise AttributeError(f"YAML file is empty: {filepath}")
 
-            return docs[0]
+            return cast(ConfigurationType, docs[0])
 
         except Exception as e:
             # # IF dealing with a strange exception string (escaped)

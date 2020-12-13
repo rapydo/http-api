@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -14,12 +15,9 @@ def test_sqlalchemy(app):
 
     if not detector.check_availability(CONNECTOR):
 
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
-
         try:
-            obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            obj = connector.get_instance()
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -28,71 +26,66 @@ def test_sqlalchemy(app):
 
     log.info("Executing {} tests", CONNECTOR)
 
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
         try:
-            detector.get_service_instance(
-                CONNECTOR, test_connection=True, host="invalidhostname", port=123
-            )
+            connector.get_instance(host="invalidhostname", port=123)
 
-            pytest.fail("No exception raised on unavailable service")
+            pytest.fail(
+                "No exception raised on unavailable service"
+            )  # pragma: no cover
         except ServiceUnavailable:
             pass
 
     try:
-        detector.get_service_instance(
-            CONNECTOR, test_connection=True, user="invaliduser",
-        )
+        connector.get_instance(user="invaliduser")
 
-        pytest.fail("No exception raised on unavailable service")
+        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(CONNECTOR, test_connection=True,)
+    obj = connector.get_instance()
     assert obj is not None
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
-    obj_id = id(obj)
+    obj.disconnect()
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
+    # Create new connector with short expiration time
+    obj = connector.get_instance(expiration=2, verification=1)
+    obj_id = id(obj)
+    obj_db_id = id(obj.db)
+
+    # Connector is expected to be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(
-        CONNECTOR, cache_expiration=1, test_connection=True
-    )
-    # With alchemy the connection object remain the same...
+    # The connection should have been checked and should be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
-    # assert id(obj) != obj_id
 
-    # Close connection...
+    time.sleep(1)
+
+    obj = connector.get_instance(expiration=2, verification=1)
+    # With alchemy the connection object remains the same...
+    assert id(obj) != obj_id
+    assert id(obj.db) == obj_db_id
+
+    assert obj.is_connected()
     obj.disconnect()
-
-    # test connection... and should fail
-    # ???
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()
 
     # sqlalchemy connector does not support with context
-    # with detector.get_service_instance(CONNECTOR) as obj:
+    # with connector.get_instance() as obj:
     #     assert obj is not None
-
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None

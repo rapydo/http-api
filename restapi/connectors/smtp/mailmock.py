@@ -1,6 +1,6 @@
 import email
 import json
-from smtplib import SMTPException
+from smtplib import SMTPException, SMTPServerDisconnected
 
 from restapi.utilities.logs import log
 
@@ -12,6 +12,7 @@ class SMTP:
 
     def __init__(self, host):
         log.info("Mail mock initialized with host = {}", host)
+        self.disconnected = False
 
     def __enter__(self):
         return self
@@ -31,8 +32,8 @@ class SMTP:
     def login(user, pwd):
         log.info("Mail mock login ok")
 
-    @staticmethod
-    def quit():
+    def quit(self):
+        self.disconnected = True
         log.info("Mail mock sent quit message")
 
     @staticmethod
@@ -59,12 +60,10 @@ class SMTP:
         log.info("Extracting body")
         fpath = "/logs/mock.mail.lastsent.body"
         b = email.message_from_string(msg)
-        payload = ""
         if b.is_multipart():
-            for payload in b.get_payload():
-                # get the first payload (the non html version)
-                payload = payload.get_payload()
-                break
+            # get the first payload (the non html version)
+            first_payload = b.get_payload()[0]
+            payload = first_payload.get_payload()
         else:
             payload = b.get_payload()
 
@@ -72,6 +71,12 @@ class SMTP:
             file.write(payload)
 
         log.info("Mail body written in {}", fpath)
+
+    def noop(self):
+        if self.disconnected:
+            raise SMTPServerDisconnected
+
+        return (250,)
 
 
 class SMTP_SSL(SMTP):

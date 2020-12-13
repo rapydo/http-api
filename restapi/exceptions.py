@@ -46,6 +46,11 @@ class Conflict(RestApiException):
         super().__init__(exception, status_code=409, is_warning=is_warning)
 
 
+class ServerError(RestApiException):
+    def __init__(self, exception, is_warning=False):
+        super().__init__(exception, status_code=500, is_warning=is_warning)
+
+
 class ServiceUnavailable(RestApiException):
     def __init__(self, exception, is_warning=False):
         super().__init__(exception, status_code=503, is_warning=is_warning)

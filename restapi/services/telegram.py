@@ -1,6 +1,7 @@
 import json
 import threading
 from functools import wraps
+from typing import Dict
 
 import requests
 from marshmallow import ValidationError
@@ -14,11 +15,11 @@ from telegram.ext import (
     Updater,
 )
 
-from restapi.confs import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.models import validate
-from restapi.services.detect import Detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 from restapi.utilities.uuid import getUUID
@@ -40,7 +41,9 @@ class Bot:
     # Startup workflow: init -> load_commands -> start
     def __init__(self):
         self.commands = {}
-        self.variables = Detector.load_variables(prefix="telegram")
+        self.variables = Env.load_variables_group(prefix="telegram")
+        if not self.variables.get("api_key"):
+            raise RestApiException("Missing API KEY", status_code=503)
         self.updater = Updater(
             self.variables.get("api_key"),
             use_context=True,
@@ -57,7 +60,7 @@ class Bot:
 
         self.admins = Bot.get_ids(self.variables.get("admins"))
         if not self.admins:  # pragma: no cover
-            log.exit("No admin list")
+            print_and_exit("No admin list")
 
         self.users = Bot.get_ids(self.variables.get("users"))
 
@@ -92,7 +95,7 @@ class Bot:
         self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
         self.updater.idle()
-        log.exit("Bot closed")
+        print_and_exit("Bot closed")
 
     ##################
     #    DECORATORS
@@ -242,7 +245,7 @@ class Bot:
 
             choices = definition.validate.choices
             labels = definition.validate.labels
-            if len(labels) != len(choices):
+            if len(tuple(labels)) != len(tuple(choices)):
                 labels = choices
 
             keyboard = []
@@ -342,6 +345,9 @@ class Bot:
 
 
 class BotApiClient:
+
+    variables: Dict[str, str] = {}
+
     def __init__(self, variables):
         BotApiClient.variables = variables
 

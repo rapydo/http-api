@@ -1,3 +1,5 @@
+from typing import Any, Dict, List
+
 from flask import jsonify
 from glom import glom
 
@@ -28,10 +30,6 @@ class NewSwaggerSpecifications(EndpointResource):
 
         specs = mem.docs.spec.to_dict()
 
-        # Remove get_schema parameters from Definitions
-        for schema, definition in specs.get("definitions", {}).items():
-            definition.get("properties", {}).pop("get_schema", None)
-
         user = self.get_user_if_logged(allow_access_token_parameter=True)
         if user:
             # Set security requirements for endpoint
@@ -42,13 +40,6 @@ class NewSwaggerSpecifications(EndpointResource):
                     for uri, endpoint in data.items():
                         u = uri.replace("{", "<").replace("}", ">")
                         for method, definition in endpoint.items():
-
-                            # Removed get_schema parameters from GET endpoints
-                            defs = definition.get("parameters", [])[:]
-                            for idx, p in enumerate(defs):
-                                if p["name"] == "get_schema":
-                                    definition["parameters"].pop(idx)
-                                    break
 
                             auth_required = glom(
                                 mem.authenticated_endpoints,
@@ -63,11 +54,11 @@ class NewSwaggerSpecifications(EndpointResource):
 
         log.info("Unauthenticated request, filtering out private endpoints")
         # Remove sensible data
-        filtered_specs = {}
+        filtered_specs: Dict[str, Dict[str, Dict[str, Any]]] = {}
         # schemaName => True|False (private|public)
-        privatedefs = {}
+        privatedefs: Dict[str, bool] = {}
         # schemaName => [list of definitions including this]
-        parentdefs = {}
+        parentdefs: Dict[str, List[Any]] = {}
         for key, data in specs.items():
 
             # Find endpoint mapping flagged as private
@@ -82,11 +73,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             default=False,
                         )
                         defs = definition.get("parameters", [])[:]
-                        for idx, p in enumerate(defs):
-                            # Remove get_schema parameters from GET endpoints
-                            if p["name"] == "get_schema":
-                                definition["parameters"].pop(idx)
-                                continue
+                        for p in defs:
 
                             if "schema" not in p:
                                 continue

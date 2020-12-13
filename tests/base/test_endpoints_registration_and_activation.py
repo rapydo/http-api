@@ -1,7 +1,6 @@
-import re
-import urllib.parse
+import pytest
 
-from restapi.confs import PRODUCTION, get_project_configuration
+from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
 from restapi.utilities.logs import log
@@ -10,7 +9,8 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_registration(self, client, fake):
 
-        if not Env.get_bool("ALLOW_REGISTRATION"):
+        # Always enabled during core tests
+        if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
             log.warning("User registration is disabled, skipping tests")
             return True
 
@@ -106,9 +106,6 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
-        plain = "Follow this link to activate your account: "
-        html = ">click here</a> to activate your account"
-        assert html in body or plain in body
 
         # This will fail because the user is not active
         self.do_login(
@@ -182,15 +179,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
-        plain = "Follow this link to activate your account: "
-        html = ">click here</a> to activate your account"
-        assert html in body or plain in body
 
-        if html in body:
-            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
-        else:
-            token = body[1 + body.rfind("/") :]
-        token = urllib.parse.unquote(token)
+        token = self.get_token_from_body(body)
+        assert token is not None
 
         # profile activation
         r = client.put(f"{AUTH_URI}/profile/activate/thisisatoken")
@@ -275,13 +266,9 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         assert f"{proto}://localhost/public/register/" in body
-        html = ">click here</a> to activate your account"
 
-        if html in body:
-            token = re.search(r".*https?://.*/register/(.*)\n", body)[1]
-        else:
-            token = body[1 + body.rfind("/") :]
-        token = urllib.parse.unquote(token)
+        token = self.get_token_from_body(body)
+        assert token is not None
 
         headers, _ = self.do_login(client, None, None)
 
@@ -308,10 +295,8 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         content = self.get_content(r)
 
-        uuid = None
         for t in content:
-            if t.get("token") == token:
-                uuid = t.get(id)
-                break
-        # The token is invalidated by the error above => no user correspondance found
-        assert uuid is None
+            if t.get("token") == token:  # pragma: no cover
+                pytest.fail(
+                    "Token not properly invalidated, still bount to user {}", t.get(id)
+                )

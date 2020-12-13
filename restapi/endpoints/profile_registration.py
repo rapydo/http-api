@@ -1,40 +1,58 @@
 from restapi import decorators
-from restapi.confs import get_project_configuration
+from restapi.config import get_project_configuration
+from restapi.connectors import smtp
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
+from restapi.utilities.globals import mem
 
-# This endpoint require the server to send the activation oken via email
+# This endpoint requires the server to send the activation token via email
 if detector.check_availability("smtp"):
 
-    auth = EndpointResource.load_authentication()
+    auth = detector.get_authentication_instance()
 
-    class User(Schema):
-        email = fields.Email(required=True)
-        name = fields.Str(required=True)
-        surname = fields.Str(required=True)
-        password = fields.Str(
+    # Note that these are callables returning a model, not models!
+    # They will be executed a runtime
+    def getInputSchema(request):
+
+        if not request:
+            return Schema.from_dict({})
+
+        attributes = {}
+        attributes["name"] = fields.Str(required=True)
+        attributes["surname"] = fields.Str(required=True)
+        attributes["email"] = fields.Email(
+            required=True, label="Username (email address)"
+        )
+        attributes["password"] = fields.Str(
             required=True,
             password=True,
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
-        password_confirm = fields.Str(
+        attributes["password_confirm"] = fields.Str(
             required=True,
             password=True,
+            label="Password confirmation",
             validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
         )
+
+        if custom_fields := mem.customizer.get_custom_input_fields(
+            request=None, scope=mem.customizer.REGISTRATION
+        ):
+            attributes.update(custom_fields)
+
+        return Schema.from_dict(attributes)
 
     class ProfileRegistration(EndpointResource):
-        """ Current user informations """
 
         baseuri = "/auth"
         depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
-        @decorators.use_kwargs(User)
+        @decorators.use_kwargs(getInputSchema)
         @decorators.endpoint(
             path="/profile",
             summary="Register new user",
@@ -47,7 +65,7 @@ if detector.check_availability("smtp"):
             """ Register new user """
 
             email = kwargs.get("email")
-            user = self.auth.get_user_object(username=email)
+            user = self.auth.get_user(username=email)
             if user is not None:
                 raise Conflict(f"This user already exists: {email}")
 
@@ -74,7 +92,7 @@ if detector.check_availability("smtp"):
                     user, userdata, extra_userdata, self.auth.db
                 )
 
-                smtp = self.get_service_instance("smtp")
+                smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
                     title = get_project_configuration(
@@ -83,9 +101,9 @@ if detector.check_availability("smtp"):
                     subject = f"{title} New credentials requested"
                     body = f"New credentials request from {user.email}"
 
-                    smtp.send(body, subject)
+                    smtp_client.send(body, subject)
 
-                send_activation_link(smtp, self.auth, user)
+                send_activation_link(smtp_client, self.auth, user)
 
             except BaseException as e:
                 user.delete()

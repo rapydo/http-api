@@ -7,7 +7,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from restapi import __commands__ as cli
-from restapi.confs import PRODUCTION
+from restapi.config import PRODUCTION
 from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
@@ -26,7 +26,7 @@ def test_bot():
     start_timeout(3)
     try:
         runner.invoke(cli.bot, [])
-    except Timeout:
+    except Timeout:  # pragma: no cover
         pass
 
     stop_timeout()
@@ -34,6 +34,8 @@ def test_bot():
     from restapi.services.telegram import bot
 
     # Your API ID, hash and session string here
+    # How to generate StringSessions:
+    # https://docs.telethon.dev/en/latest/concepts/sessions.html#string-sessions
     api_id = Env.get_int("TELEGRAM_APP_ID")
     api_hash = Env.get("TELEGRAM_APP_HASH")
     session_str = Env.get("TELETHON_SESSION")

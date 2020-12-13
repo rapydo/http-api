@@ -1,19 +1,59 @@
-# TO BE ENABLED WHEN REQUIRED
-
-# from restapi.models import fields, validate, Schema
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
-# from restapi.exceptions import RestApiException, DatabaseDuplicatedEntry
-# from restapi.confs import get_project_configuration
-# from restapi.services.authentication import BaseAuthentication
 # from restapi.services.detect import detector
-# from restapi.utilities.globals import mem
-# from restapi.endpoints.admin_users import send_notification, parse_roles, parse_group
 # from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
 
-# from restapi.utilities.logs import log
+# # from restapi.utilities.logs import log
 
+# ################################################
+# #   THIS IS THE NEW READ-ONLY IMPLEMENTATION   #
+# ################################################
+
+# class GroupUsers(EndpointResource):
+
+#     depends_on = ["not ADMINER_DISABLED"]
+#     labels = ["admin"]
+
+#     @decorators.auth.require_all(Role.COORDINATOR)
+#     @decorators.marshal_with(get_output_schema(), code=200)
+#     @decorators.endpoint(
+#         path="/group/users",
+#         summary="List of users of your group",
+#         responses={
+#             200: "List of users successfully retrieved",
+#         },
+#     )
+#     def get(self):
+
+#         users = self.auth.get_users()
+#         current_user = self.get_user()
+
+#         if detector.authentication_service == "neo4j":
+#             current_user.belongs_to = current_user.belongs_to.single()
+
+#         data = []
+#         # Should iterate over current_user.belong_to.users instead of on all
+#         for user in users:
+
+#             if detector.authentication_service == "neo4j":
+#                 user.belongs_to = user.belongs_to.single()
+
+#             if current_user.belongs_to != user.belongs_to:
+#                 continue
+
+#             data.append(user)
+
+#         return self.response(data)
+
+# #############################################################
+# #   THIS IS THE OLD IMPLEMENTATION WITH WRITE PERMISSIONS   #
+# #############################################################
+
+# from restapi.config import get_project_configuration
+# from restapi.services.authentication import BaseAuthentication
+# from restapi.endpoints.admin_users import send_notification, parse_roles, parse_group
+# from restapi.utilities.globals import mem
 
 # def get_roles(auth):
 
@@ -38,7 +78,7 @@
 #     if auth_service == 'neo4j':
 
 #         groups = []
-#         neo4j = detector.get_service_instance('neo4j')
+#         graph = neo4j.get_instance()
 
 #         # current_user = self.get_user()
 #         # for idx, val in enumerate(new_schema):
@@ -52,7 +92,7 @@
 #         #         new_schema[idx]["custom"]["label"] = "Group"
 #         #         new_schema[idx]["enum"] = []
 
-#         #         default_group = self.graph.Group.nodes.get_or_none(
+#         #         default_group = graph.Group.nodes.get_or_none(
 #         #             shortname="default"
 #         #         )
 
@@ -77,7 +117,7 @@
 #         #             #     new_schema[idx]["default"] = g.uuid
 #         #         if (len(new_schema[idx]["enum"])) == 1:
 #         #             new_schema[idx]["default"] = defg
-#         # for g in neo4j.Group.nodes.all():
+#         # for g in graph.Group.nodes.all():
 #         #     group_name = f"{g.shortname} - {g.fullname}"
 #         #     groups.append({g.uuid: group_name})
 
@@ -95,7 +135,7 @@
 # def get_input_schema(strip_required=false, exclude_email=False):
 
 #     set_required = not strip_required
-#     auth = EndpointResource.load_authentication()
+#     auth = detector.get_authentication_instance()
 
 #     attributes = {}
 #     if not exclude_email:
@@ -122,7 +162,9 @@
 #                 labels=groups.values()
 #             )
 #         )
-#     if custom_fields := mem.customizer.get_custom_input_fields(strip_required):
+#     if custom_fields := mem.customizer.get_custom_input_fields(
+#         strip_required, scope=mem.customizer.ADMIN
+#     ):
 #         attributes.update(custom_fields)
 
 #     if detector.check_availability("smtp"):
@@ -131,17 +173,6 @@
 #         )
 
 #     return Schema.from_dict(attributes)
-
-
-# class LocalAdminUsers(EndpointResource):
-
-#     auth_service = detector.authentication_service
-#     neo4j_enabled = auth_service == 'neo4j'
-#     sql_enabled = auth_service == 'sqlalchemy'
-#     mongo_enabled = auth_service == 'mongo'
-
-#     depends_on = ["not ADMINER_DISABLED"]
-#     labels = ["admin"]
 
 #     def is_authorized(self, current_user, user, is_admin):
 
@@ -158,7 +189,7 @@
 #             return False
 
 #         # You cannot modify ADMINs
-#         if ADMIN in self.auth.get_roles_from_user(user):
+#         if Role.ADMIN in self.auth.get_roles_from_user(user):
 #             return False
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -169,57 +200,17 @@
 #                     return True
 
 #             # All local admins have rights on general users
-#             g = self.graph.Group.nodes.get_or_none(shortname="default")
+#             g = graph.Group.nodes.get_or_none(shortname="default")
 #             if g is not None:
 #                 if user.belongs_to.is_connected(g):
 #                     return True
 
 #         return False
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
-#     @decorators.marshal_with(get_output_schema(), code=200)
-#     @decorators.endpoint(
-#         path="/localadmin/users",
-#         summary="List of users",
-#         responses={
-#             200: "List of users successfully retrieved",
-#         },
-#     )
-#     @decorators.endpoint(
-#         path="/localadmin/users/<user_id>",
-#         summary="Obtain information on a single user",
-#         responses={
-#             200: "User information successfully retrieved",
-#         },
-#     )
-#     def get(self, user_id=None):
-
-#         data = []
-
-#         is_admin = self.verify_admin()
-
-#         users = self.auth.get_users(user_id)
-#         if users is None:
-#             raise RestApiException(
-#                 "This user cannot be found or you are not authorized"
-#             )
-#         if self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
-
-#         current_user = self.get_user()
-#         for user in users:
-
-#             if not self.is_authorized(current_user, user, is_admin):
-#                 continue
-
-#             data.append(user)
-
-#         return self.response(data)
-
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.use_kwargs(get_input_schema())
 #     @decorators.endpoint(
-#         path="/localadmin/users",
+#         path="/group/users",
 #         summary="Create a new user",
 #         responses={
 #             200: "The uuid of the new user is returned",
@@ -260,8 +251,8 @@
 
 #         # FIXME: groups management is only implemented for neo4j
 #         if 'group' in kwargs and self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
-#             group = parse_group(kwargs, self.graph)
+#             graph = neo4j.get_instance()
+#             group = parse_group(kwargs, graph)
 
 #             if group is not None:
 #                 if group.shortname != "default":
@@ -279,10 +270,10 @@
 
 #         return self.response(user.uuid)
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.use_kwargs(get_input_schema(strip_required=True, exclude_email=True))
 #     @decorators.endpoint(
-#         path="/localadmin/users/<user_id>",
+#         path="/group/users/<user_id>",
 #         summary="Modify a user",
 #         responses={
 #             200: "User successfully modified",
@@ -290,14 +281,12 @@
 #     )
 #     def put(self, user_id, **kwargs):
 
-#         user = self.auth.get_users(user_id)
+#         user = self.auth.get_user(user_id=user_id)
 
 #         if user is None:
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
 #             )
-
-#         user = user[0]
 
 #         current_user = self.get_user()
 #         is_admin = self.verify_admin()
@@ -331,8 +320,7 @@
 
 #         self.auth.link_roles(user, roles)
 
-#         db = self.get_service_instance(detector.authentication_service)
-#         db.update_properties(user, kwargs)
+#         self.auth.db.update_properties(user, kwargs)
 #         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
@@ -362,9 +350,9 @@
 
 #         return self.empty_response()
 
-#     @decorators.auth.require_all(Role.LOCAL_ADMIN)
+#     @decorators.auth.require_all(Role.COORDINATOR)
 #     @decorators.endpoint(
-#         path="/localadmin/users/<user_id>",
+#         path="/group/users/<user_id>",
 #         summary="Delete a user",
 #         responses={
 #             200: "User successfully deleted",
@@ -374,16 +362,14 @@
 
 #         is_admin = self.verify_admin()
 #         if self.neo4j_enabled:
-#             self.graph = self.get_service_instance('neo4j')
+#             graph = neo4j.get_instance()
 
-#         user = self.auth.get_users(user_id)
+#         user = self.auth.get_user(user_id=user_id
 
 #         if user is None:
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
 #             )
-
-#         user = user[0]
 
 #         current_user = self.get_user()
 #         if not self.is_authorized(current_user, user, is_admin):

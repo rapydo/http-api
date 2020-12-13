@@ -2,14 +2,16 @@ import datetime
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from smtplib import SMTPAuthenticationError, SMTPException
+from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
+from typing import Optional, Union
 
 import pytz
 
-from restapi.confs import TESTING
+from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.env import Env
 
+# mypy: ignore-errors
 if TESTING:
     from restapi.connectors.smtp.mailmock import SMTP, SMTP_SSL
 else:
@@ -19,6 +21,10 @@ from restapi.utilities.logs import log
 
 
 class Mail(Connector):
+    def __init__(self, app=None):
+        self.smtp = None
+        super().__init__(app)
+
     def get_connection_exception(self):
         return (socket.gaierror, SMTPAuthenticationError)
 
@@ -33,7 +39,7 @@ class Mail(Connector):
 
         if not port:
             smtp = SMTP(host)
-            log.verbose("Connecting to {}", host)
+            log.debug("Connecting to {}", host)
         elif port == 465:
             smtp = SMTP_SSL(host)
         else:
@@ -41,21 +47,40 @@ class Mail(Connector):
 
         smtp.set_debuglevel(0)
         if port:
-            log.verbose("Connecting to {}:{}", host, port)
+            log.debug("Connecting to {}:{}", host, port)
             smtp.connect(host, port)
             smtp.ehlo()
 
         if self.variables.get("username") and self.variables.get("password"):
-            log.verbose("Authenticating SMTP")
             smtp.login(self.variables.get("username"), self.variables.get("password"))
 
         self.smtp = smtp
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        self.smtp.quit()
-        self.smtp = None
+
+        if not self.smtp:
+            return None
+
+        try:
+            self.smtp.quit()
+            self.smtp = None
+        except SMTPServerDisconnected:
+            log.debug("SMTP is already disconnected")
+
+        return None
+
+    def is_connected(self) -> bool:
+
+        if not self.smtp:
+            return False
+
+        try:
+            status = self.smtp.noop()[0]
+            return status == 250
+        except SMTPServerDisconnected:
+            return False
 
     def send(
         self,
@@ -128,7 +153,7 @@ class Mail(Connector):
                 msg.attach(part1)
                 msg.attach(part2)
 
-            log.verbose("Sending email to {}", to_address)
+            log.debug("Sending email to {}", to_address)
 
             self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
 
@@ -146,3 +171,17 @@ class Mail(Connector):
         except BaseException as e:
             log.error(str(e))
             return False
+
+
+instance = Mail()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "Mail":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

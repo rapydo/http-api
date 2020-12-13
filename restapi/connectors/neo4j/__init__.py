@@ -4,6 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Any, Optional, Union
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -22,7 +23,7 @@ from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
 from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import NULL_IP, ROLE_DISABLED, BaseAuthentication
+from restapi.services.authentication import NULL_IP, BaseAuthentication
 from restapi.utilities.logs import log
 
 
@@ -50,7 +51,7 @@ def catch_db_exceptions(func):
                 node = m.group(1)
                 prop = m.group(2)
                 val = m.group(3)
-                error = f"A {node} already exists with {prop} = {val}"
+                error = f"A {node.title()} already exists with {prop}: {val}"
                 raise DatabaseDuplicatedEntry(error)
 
             # Can't be tested, should never happen except in case of new neo4j version
@@ -84,16 +85,14 @@ def graph_transactions(func):  # pragma: no cover
         try:
 
             db.begin()
-            log.verbose("Neomodel transaction BEGIN")
 
             out = func(self, *args, **kwargs)
 
             db.commit()
-            log.verbose("Neomodel transaction COMMIT")
 
             return out
         except Exception as e:
-            log.verbose("Neomodel transaction ROLLBACK")
+            log.debug("Neomodel transaction ROLLBACK")
             try:
                 db.rollback()
             except Exception as sub_ex:
@@ -140,34 +139,39 @@ class NeoModel(Connector):
         self.db = db
         return self
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.disconnected = True
-        return
+
+    def is_connected(self):
+        log.warning("neo4j.is_connected method is not implemented")
+        return not self.disconnected
 
     def initialize(self):
 
-        with self.app.app_context():
-            remove_all_labels()
-            # install_all_labels()
+        if self.app:
+            with self.app.app_context():
+                remove_all_labels()
+                # install_all_labels()
 
-            # install_all_labels can fail when models are cross-referenced between
-            # core and custom. For example:
-            # neo4j.exceptions.ClientError:
-            #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
-            #     {message: An equivalent constraint already exists,
-            #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
-            # This loop with install_labels prevent errors
-            for model in self.models.values():
-                install_labels(model, quiet=False)
+                # install_all_labels can fail when models are cross-referenced between
+                # core and custom. For example:
+                # neo4j.exceptions.ClientError:
+                #     {code: Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists}
+                #     {message: An equivalent constraint already exists,
+                #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
+                # This loop with install_labels prevent errors
+                for model in self.models.values():
+                    install_labels(model, quiet=False)
 
     def destroy(self):
 
         graph = self.get_instance()
 
-        with self.app.app_context():
-            log.critical("Destroy current Neo4j data")
+        if self.app:
+            with self.app.app_context():
+                log.critical("Destroy current Neo4j data")
 
-            clear_neo4j_database(graph.db)
+                clear_neo4j_database(graph.db)
 
     # def refresh_connection(self):
     #     if self.db.url is None:
@@ -226,38 +230,64 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def get_user_object(self, username=None, payload=None):
+    def __init__(self):
+        self.db = get_instance()
 
-        try:
-            if username:
-                return self.db.User.nodes.get(email=username)
+    def get_user(self, username=None, user_id=None):
 
-            if payload and "user_id" in payload:
-                return self.db.User.nodes.get(uuid=payload["user_id"])
+        if username:
+            return self.db.User.nodes.get_or_none(email=username)
 
-        except self.db.User.DoesNotExist:
-            log.warning(
-                "Could not find user for username={}, payload={}", username, payload
-            )
-            return None
+        if user_id:
+            return self.db.User.nodes.get_or_none(uuid=user_id)
 
-    def get_users(self, user_id=None):
+        # only reached if both username and user_id are None
+        return None
 
-        # Retrieve all
-        if user_id is None:
-            return self.db.User.nodes.all()
+    def get_users(self):
+        return self.db.User.nodes.all()
 
-        # Retrieve one
-        user = self.db.User.nodes.get_or_none(uuid=user_id)
-        if user is None:
-            return None
+    def save_user(self, user):
+        if user:
+            user.save()
+            return True
+        return False
 
-        return [user]
+    def delete_user(self, user):
+        if user:
+            user.delete()
+            return True
+        return False
+
+    def get_group(self, group_id=None, name=None):
+        if group_id:
+            return self.db.Group.nodes.get_or_none(uuid=group_id)
+
+        if name:
+            return self.db.Group.nodes.get_or_none(shortname=name)
+
+        return None
+
+    def get_groups(self):
+        return self.db.Group.nodes.all()
+
+    def save_group(self, group):
+        if group:
+            group.save()
+            return True
+        return False
+
+    def delete_group(self, group):
+        if group:
+            group.delete()
+            return True
+        return False
 
     def get_roles(self):
         roles = []
         for role in self.db.Role.nodes.all():
-            roles.append(role)
+            if role:
+                roles.append(role)
 
         return roles
 
@@ -268,6 +298,16 @@ class Authentication(BaseAuthentication):
             return []
 
         return [role.name for role in userobj.roles.all()]
+
+    def create_role(self, name, description):
+        role = self.db.Role(name=name, description=description)
+        role.save()
+
+    def save_role(self, role):
+        if role:
+            role.save()
+            return True
+        return False
 
     # Also used by POST user
     def create_user(self, userdata, roles):
@@ -305,42 +345,22 @@ class Authentication(BaseAuthentication):
                 raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
 
-    def init_users_and_roles(self):
+    def create_group(self, groupdata):
+        group = self.db.Group(**groupdata).save()
 
-        # Handle system roles
-        current_roles = []
-        current_roles_objs = self.db.Role.nodes.all()
-        for role in current_roles_objs:
-            current_roles.append(role.name)
+        return group
 
-        log.info("Current roles: {}", current_roles)
+    def add_user_to_group(self, user, group):
 
-        for role_name in self.roles:
-            if role_name not in current_roles:
-                log.info("Creating role: {}", role_name)
-                role_description = self.roles_data.get(role_name, ROLE_DISABLED)
-                role = self.db.Role(name=role_name, description=role_description)
-                role.save()
+        if user and group:
+            prev_group = user.belongs_to.single()
 
-        # Default user (if no users yet available)
-        if not len(self.db.User.nodes) > 0:
-            self.create_user(
-                {
-                    "email": self.default_user,
-                    # 'authmethod': 'credentials',
-                    "name": "Default",
-                    "surname": "User",
-                    "password": self.default_password,
-                },
-                roles=self.roles,
-            )
-            log.warning("Injected default user")
-        else:
-            log.debug("Users already created")
-
-    def save_user(self, user):
-        if user:
-            user.save()
+            if prev_group is not None:
+                user.belongs_to.reconnect(prev_group, group)
+            elif prev_group == group:
+                pass
+            else:
+                user.belongs_to.connect(group)
 
     def save_token(self, user, token, payload, token_type=None):
 
@@ -447,3 +467,17 @@ class Authentication(BaseAuthentication):
             log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
+
+
+instance = NeoModel()
+
+
+def get_instance(
+    verification: Optional[int] = None,
+    expiration: Optional[int] = None,
+    **kwargs: Union[Optional[str], int],
+) -> "NeoModel":
+
+    return instance.get_instance(
+        verification=verification, expiration=expiration, **kwargs
+    )

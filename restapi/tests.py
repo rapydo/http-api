@@ -1,9 +1,12 @@
 import json
 import os
+import re
 import secrets
 import string
+import urllib.parse
 import uuid
 from datetime import datetime, timedelta
+from typing import Dict, Optional
 
 import jwt
 import pyotp
@@ -12,7 +15,13 @@ import pytz
 from faker import Faker
 from faker.providers import BaseProvider
 
-from restapi.confs import API_URL, AUTH_URL, DEFAULT_HOST, DEFAULT_PORT
+from restapi.config import (
+    API_URL,
+    AUTH_URL,
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+    SECRET_KEY_FILE,
+)
 from restapi.services.authentication import BaseAuthentication
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -145,7 +154,7 @@ class BaseTests:
 
     # will be used by do_login in case of TOTP
     # This will save correspondances between user email and provided QR Code
-    QRsecrets = {}
+    QRsecrets: Dict[str, str] = {}
     TOTP = False
 
     @classmethod
@@ -165,16 +174,6 @@ class BaseTests:
             return getattr(cls, variable)
 
         raise AttributeError(f"Class variable {variable} not found")
-
-    @staticmethod
-    def get_specs(client):
-        """
-        Retrieve Swagger definition by calling API/specs endpoint
-        """
-        r = client.get(f"{API_URI}/specs")
-        assert r.status_code == 200
-        content = json.loads(r.data.decode("utf-8"))
-        return content
 
     @staticmethod
     def getDynamicInputSchema(client, endpoint, headers):
@@ -206,16 +205,13 @@ class BaseTests:
         if secret:
             return pyotp.TOTP(secret).now()
 
-        try:
-            auth = detector.get_service_instance("authentication")
+        auth = detector.get_authentication_instance()
 
-            user = auth.get_user_object(username=user)
+        user = auth.get_user(username=user)
 
-            secret = BaseAuthentication.get_secret(user)
+        secret = BaseAuthentication.get_secret(user)
 
-            return pyotp.TOTP(secret).now()
-        except BaseException as e:
-            log.error(e)
+        return pyotp.TOTP(secret).now()
 
     @staticmethod
     def do_login(client, USER, PWD, status_code=200, error=None, data=None):
@@ -257,7 +253,6 @@ class BaseTests:
                         continue
                     if action == "PASSWORD EXPIRED":
                         continue
-                    pytest.fail(f"Unknown post log action requested: {action}")
 
                 data = {}
                 # Will read and store qr_code + init totp_code required for next action
@@ -266,10 +261,11 @@ class BaseTests:
                         # validate that the QR code is a valid PNG image
                         pass
 
-                    if content.get("qr_url"):
-                        assert content.get("qr_url").startswith("otpauth://totp/")
-                        assert "?secret=" in content.get("qr_url")
-                        secret = content.get("qr_url").split("?secret=")[1]
+                    if qr_url := content.get("qr_url", ""):
+                        assert isinstance(qr_url, str)
+                        assert qr_url.startswith("otpauth://totp/")
+                        assert "?secret=" in qr_url
+                        secret = qr_url.split("?secret=")[1]
                         assert secret is not None
                         assert len(secret) == 16
 
@@ -386,22 +382,24 @@ class BaseTests:
             key = d.get("key")
             field_type = d.get("type")
 
-            if "enum" in d:
-                if len(d["enum"]) > 0:
-                    keys = list(d["enum"].keys())
+            if "options" in d:
+                if len(d["options"]) > 0:
+                    keys = list(d["options"].keys())
                     if d.get("multiple", False):
                         # requests is unable to send lists, if not json-dumped
                         data[key] = json.dumps([fake.random_element(keys)])
                     else:
                         data[key] = fake.random_element(keys)
-                # else:
-                #     pytest.fail(f"BuildData for {key}: invalid enum (empty?)")
+                # else:  # pragma: no cover
+                #     pytest.fail(f"BuildData for {key}: invalid options (empty?)")
             elif field_type == "number" or field_type == "int":
                 min_value = d.get("min", 0)
                 max_value = d.get("max", 9999)
                 data[key] = fake.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
-                data[key] = fake.date(pattern="%Y-%m-%d")
+                # d = fake.date(pattern="%Y-%m-%d")
+                # data[key] = f"{d}T00:00:00.000Z"
+                data[key] = f"{fake.iso8601()}.000Z"
             elif field_type == "email":
                 data[key] = fake.ascii_email()
             elif field_type == "boolean":
@@ -410,73 +408,10 @@ class BaseTests:
                 data[key] = fake.password(strong=True)
             elif field_type == "string":
                 data[key] = fake.pystr(min_chars=16, max_chars=32)
-            else:
+            else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
         return data
-
-    @staticmethod
-    def method_exists(status):
-        if status is None:
-            return False
-        if status == 404:
-            return False
-        if status == 405:
-            return False
-
-        return True
-
-    def _test_endpoint(
-        self,
-        client,
-        endpoint,
-        headers=None,
-        get_status=None,
-        post_status=None,
-        put_status=None,
-        del_status=None,
-        post_data=None,
-    ):
-
-        if headers is not None:
-
-            if self.method_exists(get_status):
-                r = client.get(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-            if self.method_exists(post_status):
-                r = client.post(f"{API_URI}/{endpoint}", data=post_data)
-                assert r.status_code == 401
-
-            if self.method_exists(put_status):
-                r = client.put(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-            if self.method_exists(del_status):
-                r = client.delete(f"{API_URI}/{endpoint}")
-                assert r.status_code == 401
-
-        get_r = post_r = put_r = delete_r = None
-
-        if get_status is not None:
-            get_r = client.get(f"{API_URI}/{endpoint}", headers=headers)
-            assert get_r.status_code == get_status
-
-        if post_status is not None:
-            post_r = client.post(
-                f"{API_URI}/{endpoint}", headers=headers, data=post_data
-            )
-            assert post_r.status_code == post_status
-
-        if put_status is not None:
-            put_r = client.put(f"{API_URI}/{endpoint}", headers=headers)
-            assert put_r.status_code == put_status
-
-        if del_status is not None:
-            delete_r = client.delete(f"{API_URI}/{endpoint}", headers=headers)
-            assert delete_r.status_code == del_status
-
-        return get_r, post_r, put_r, delete_r
 
     @staticmethod
     def read_mock_email():
@@ -495,6 +430,25 @@ class BaseTests:
         return data
 
     @staticmethod
+    def get_token_from_body(body: str) -> Optional[str]:
+        token = None
+
+        # if a token is not found the email is considered to be plain text
+        if "</a>" not in body:
+            token = body[1 + body.rfind("/") :]
+        # if a token is found the email is considered to be html
+        else:
+            urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', body)
+            if urls:
+                # token is the last part of the url, extract as a path
+                token = os.path.basename(urls[0])
+
+        if token:
+            token = urllib.parse.unquote(token)
+
+        return token
+
+    @staticmethod
     def get_crafted_token(
         token_type,
         user_id=None,
@@ -507,8 +461,7 @@ class BaseTests:
         if wrong_secret:
             secret = fake.password()
         else:
-            f = os.getenv("JWT_APP_SECRETS") + "/secret.key"
-            secret = open(f, "rb").read()
+            secret = open(SECRET_KEY_FILE, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"

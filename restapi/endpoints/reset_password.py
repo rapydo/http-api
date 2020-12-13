@@ -1,7 +1,10 @@
+from typing import Optional
+
 import jwt
 
 from restapi import decorators
-from restapi.confs import get_frontend_url, get_project_configuration
+from restapi.config import get_frontend_url, get_project_configuration
+from restapi.connectors import smtp
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
@@ -10,12 +13,12 @@ from restapi.services.detect import detector
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
-auth = EndpointResource.load_authentication()
+auth = detector.get_authentication_instance()
 
 
 def send_password_reset_link(smtp, uri, title, reset_email):
     # Internal templating
-    body = f"Follow this link to reset your password: {uri}"
+    body: Optional[str] = f"Follow this link to reset your password: {uri}"
     html_body = get_html_template("reset_password.html", {"url": uri})
     if html_body is None:
         log.warning("Unable to find email template")
@@ -54,7 +57,7 @@ if detector.check_availability("smtp"):
 
             reset_email = reset_email.lower()
 
-            user = self.auth.get_user_object(username=reset_email)
+            user = self.auth.get_user(username=reset_email)
 
             if user is None:
                 raise Forbidden(
@@ -79,8 +82,8 @@ if detector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            smtp = self.get_service_instance("smtp")
-            send_password_reset_link(smtp, complete_uri, title, reset_email)
+            smtp_client = smtp.get_instance()
+            send_password_reset_link(smtp_client, complete_uri, title, reset_email)
 
             ##################
             # Completing the reset task

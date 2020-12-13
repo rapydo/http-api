@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from restapi.connectors import rabbitmq as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
 from restapi.utilities.logs import log
@@ -13,12 +14,9 @@ def test_rabbit(app, faker):
 
     if not detector.check_availability(CONNECTOR):
 
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
-
         try:
-            obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            obj = connector.get_instance()
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -26,67 +24,136 @@ def test_rabbit(app, faker):
         return False
 
     log.info("Executing {} tests", CONNECTOR)
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
 
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
     try:
-        detector.get_service_instance(CONNECTOR, host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")
+        connector.get_instance(host="invalidhostname", port=123)
+        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass
 
-    obj = detector.get_service_instance(CONNECTOR)
+    obj = connector.get_instance()
     assert obj is not None
 
+    exchange = faker.pystr()
+    # This is useful for local tests, on CI the exchange never exists
+    if obj.exchange_exists(exchange):  # pragma: no cover
+        obj.delete_exchange(exchange)
+
     queue = faker.pystr()
-    if obj.queue_exists(queue):
+    # This is useful for local tests, on CI the queue never exists
+    if obj.queue_exists(queue):  # pragma: no cover
         obj.delete_queue(queue)
 
     assert not obj.queue_exists(queue)
-    assert not obj.write_to_queue("test", queue)
+    assert not obj.send("test", routing_key=queue)
+    assert not obj.send_json("test", routing_key=queue)
     obj.create_queue(queue)
     assert obj.queue_exists(queue)
     obj.create_queue(queue)
 
-    assert obj.write_to_queue("test", queue)
+    # Now send works because queue exists
+    assert obj.send("test", routing_key=queue)
+    assert obj.send_json("test", routing_key=queue)
 
-    obj.channel.close()
+    assert not obj.exchange_exists(exchange)
+    assert obj.get_bindings(exchange) is None
+    # This send does not work because exchange does not exist
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
-    # Channel is automatically open, if found closed
-    assert obj.write_to_queue("test", queue)
+    obj.create_exchange(exchange)
+    assert obj.exchange_exists(exchange)
+    obj.create_exchange(exchange)
+
+    # Now the exchange exists, but the queue is not bound
+    bindings = obj.get_bindings(exchange)
+    assert isinstance(bindings, list)
+    assert len(bindings) == 0
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_bind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert bindings is not None
+    assert len(bindings) == 1
+    assert bindings[0]["exchange"] == exchange
+    assert bindings[0]["routing_key"] == queue
+    assert bindings[0]["queue"] == queue
+
+    assert obj.send("test", routing_key=queue, exchange=exchange)
+    assert obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_unbind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert isinstance(bindings, list)
+    assert len(bindings) == 0
+
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    obj.queue_bind(queue, exchange, queue)
+    bindings = obj.get_bindings(exchange)
+    assert bindings is not None
+    assert len(bindings) == 1
+    assert bindings[0]["exchange"] == exchange
+    assert bindings[0]["routing_key"] == queue
+    assert bindings[0]["queue"] == queue
+
+    if obj.channel:
+        obj.channel.close()
+
+    # Channel is automatically opened, if found closed
+    assert obj.send("test", queue)
+
+    obj.delete_exchange(exchange)
+    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send_json("test", routing_key=queue, exchange=exchange)
+
+    assert obj.send("test", routing_key=queue)
+    assert obj.send_json("test", routing_key=queue)
+
     obj.delete_queue(queue)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    assert not obj.send("test", routing_key=queue)
+    assert not obj.send_json("test", routing_key=queue)
+
+    obj.disconnect()
+
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
+    # Create new connector with short expiration time
+    obj = connector.get_instance(expiration=2, verification=1)
     obj_id = id(obj)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    # Connector is expected to be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    # The connection should have been checked and should be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
+    assert id(obj) == obj_id
+
+    time.sleep(1)
+
+    # Connection should have been expired and a new connector been created
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) != obj_id
 
-    # Close connection...
+    assert obj.is_connected()
     obj.disconnect()
-
-    # Connection is closed, of course
-    assert not obj.write_to_queue("test", queue)
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()
 
-    with detector.get_service_instance(CONNECTOR) as obj:
+    with connector.get_instance() as obj:
         assert obj is not None
-
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None

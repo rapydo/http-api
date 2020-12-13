@@ -1,7 +1,4 @@
-import re
-import urllib.parse
-
-from restapi.confs import PRODUCTION, get_project_configuration
+from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
 from restapi.utilities.logs import log
@@ -10,7 +7,8 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_password_reset(self, client, fake):
 
-        if not Env.get_bool("ALLOW_PASSWORD_RESET"):
+        # Always enable during core tests
+        if not Env.get_bool("ALLOW_PASSWORD_RESET"):  # pragma: no cover
             log.warning("Password reset is disabled, skipping tests")
             return True
 
@@ -64,15 +62,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {project_tile} Password Reset" in mail.get("headers")
         assert f"{proto}://localhost/public/reset/" in body
-        plain = "Follow this link to reset your password: "
-        html = ">click here</a> to reset your password"
-        assert html in body or plain in body
 
-        if html in body:
-            token = re.search(r".*https?://.*/reset/(.*)\n", body)[1]
-        else:
-            token = body[1 + body.rfind("/") :]
-        token = urllib.parse.unquote(token)
+        token = self.get_token_from_body(body)
+        assert token is not None
 
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         assert r.status_code == 200

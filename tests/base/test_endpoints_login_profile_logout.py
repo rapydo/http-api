@@ -13,8 +13,8 @@ class TestApp(BaseTests):
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
         BaseAuthentication.load_default_user()
         BaseAuthentication.load_roles()
-        USER = BaseAuthentication.default_user
-        PWD = BaseAuthentication.default_password
+        USER = BaseAuthentication.default_user or "just-to-prevent-None"
+        PWD = BaseAuthentication.default_password or "just-to-prevent-None"
         self.do_login(client, USER.upper(), PWD)
 
         # Off course PWD cannot be upper :D
@@ -41,14 +41,20 @@ class TestApp(BaseTests):
         log.info("*** VERIFY with a non-email-username")
 
         self.do_login(
-            client, "notanemail", "[A-Za-z0-9]+", status_code=400,
+            client,
+            "notanemail",
+            "[A-Za-z0-9]+",
+            status_code=400,
         )
 
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
         self.do_login(
-            client, fake.ascii_email(), fake.password(strong=True), status_code=401,
+            client,
+            fake.ascii_email(),
+            fake.password(strong=True),
+            status_code=401,
         )
 
     def test_02_GET_profile(self, client, fake):
@@ -156,7 +162,8 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client, fake):
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):
+        # Always enable during core tests
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Profile is disabled, skipping tests")
             return True
 

@@ -1,6 +1,8 @@
 import os
 import tempfile
 import time
+from pathlib import Path
+from typing import Any, Dict
 
 import psutil
 import pytest
@@ -14,7 +16,6 @@ from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
-from restapi.utilities.htmlcodes import hcodes
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.meta import Meta
 from restapi.utilities.processes import (
@@ -124,13 +125,18 @@ class TestApp(BaseTests):
         start_timeout(15)
         try:
             wait_socket("invalid", 123, service_name="test")
-            pytest.fail("wait_socket should be blocking!")
+            pytest.fail("wait_socket should be blocking!")  # pragma: no cover
         except Timeout:
             pass
 
-        s = Meta.get_celery_tasks(None)
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        start_timeout(15)
+        try:
+            wait_socket("invalid", 123, service_name="test", retries=2)
+            pytest.fail("No exception raised")  # pragma: no cover
+        except ServiceUnavailable:
+            pass
+        except Timeout:  # pragma: no cover
+            pytest.fail("Reached Timeout, max retries not worked?")
 
         # This is a valid package containing other packages... but no task will be found
         s = Meta.get_celery_tasks("restapi.utilities")
@@ -145,22 +151,20 @@ class TestApp(BaseTests):
         assert isinstance(s, dict)
         assert len(s) == 0
 
-        s = Meta.get_module_from_string("this-should-not-exist")
-        assert s is None
+        assert not Meta.get_module_from_string("this-should-not-exist")
 
         try:
             Meta.get_module_from_string(
                 "this-should-not-exist",
                 exit_on_fail=True,
             )
-            pytest.fail("ModuleNotFoundError not raised")
+            pytest.fail("ModuleNotFoundError not raised")  # pragma: no cover
         except ModuleNotFoundError:
             pass
 
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
-        s = Meta.get_self_reference_from_args()
-        assert s is None
+        assert not Meta.get_self_reference_from_args()
         s = Meta.get_self_reference_from_args("test")
         assert s == "test"
 
@@ -170,24 +174,20 @@ class TestApp(BaseTests):
 
         try:
             Meta.import_models("this-should", "not-exist", exit_on_fail=True)
-            pytest.fail("SystemExit not raised")
+            pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
         # Check exit_on_fail default value
         try:
             Meta.import_models("this-should", "not-exist")
-            pytest.fail("SystemExit not raised")
+            pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
         assert Meta.get_instance("invalid.path", "InvalidClass") is None
-        assert (
-            Meta.get_instance("initialization.initialization", "InvalidClass") is None
-        )
-        assert (
-            Meta.get_instance("initialization.initialization", "Customizer") is not None
-        )
+        assert Meta.get_instance("customization", "InvalidClass") is None
+        assert Meta.get_instance("customization", "Customizer") is not None
 
         assert get_html_template("this-should-not-exist", {}) is None
 
@@ -195,7 +195,7 @@ class TestApp(BaseTests):
         try:
             # This operation will be interrupted because slower than timeout
             time.sleep(2)
-            pytest.fail("Operation not interrupted")
+            pytest.fail("Operation not interrupted")  # pragma: no cover
         except BaseException as e:
             assert str(e) == "Operation timeout: interrupted"
 
@@ -204,7 +204,7 @@ class TestApp(BaseTests):
             stop_timeout()
             # This operation will not be interrupted
             time.sleep(2)
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Operation interrupted")
 
         s = handle_log_output(None)
@@ -230,37 +230,12 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"new_password": "y"}) == {"new_password": "****"}
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
 
-        assert hcodes.HTTP_CONTINUE == 100
-        assert hcodes.HTTP_SWITCHING_PROTOCOLS == 101
-        assert hcodes.HTTP_OK_BASIC == 200
-        assert hcodes.HTTP_OK_CREATED == 201
-        assert hcodes.HTTP_OK_ACCEPTED == 202
-        assert hcodes.HTTP_OK_NORESPONSE == 204
-        assert hcodes.HTTP_PARTIAL_CONTENT == 206
-        assert hcodes.HTTP_MULTIPLE_CHOICES == 300
-        assert hcodes.HTTP_FOUND == 302
-        assert hcodes.HTTP_NOT_MODIFIED == 304
-        assert hcodes.HTTP_TEMPORARY_REDIRECT == 307
-        assert hcodes.HTTP_BAD_REQUEST == 400
-        assert hcodes.HTTP_BAD_UNAUTHORIZED == 401
-        assert hcodes.HTTP_BAD_FORBIDDEN == 403
-        assert hcodes.HTTP_BAD_NOTFOUND == 404
-        assert hcodes.HTTP_BAD_METHOD_NOT_ALLOWED == 405
-        assert hcodes.HTTP_BAD_CONFLICT == 409
-        assert hcodes.HTTP_BAD_RESOURCE == 410
-        assert hcodes.HTTP_BAD_PAYLOAD_TOO_LARGE == 413
-        assert hcodes.HTTP_BAD_RANGE_NOT_SATISFIABLE == 416
-        assert hcodes.HTTP_SERVER_ERROR == 500
-        assert hcodes.HTTP_NOT_IMPLEMENTED == 501
-        assert hcodes.HTTP_SERVICE_UNAVAILABLE == 503
-        assert hcodes.HTTP_INTERNAL_TIMEOUT == 504
+        data: Dict[str, Any] = {"a": 1}
+        assert mix({}, data) == data
 
-        data = {"a": 1}
-        assert mix(None, data) == data
-
-        data1 = {"a": {"b": 1}, "c": 1}
-        data2 = {"a": {"b": 2}}
-        expected = {"a": {"b": 2}, "c": 1}
+        data1: Dict[str, Any] = {"a": {"b": 1}, "c": 1}
+        data2: Dict[str, Any] = {"a": {"b": 2}}
+        expected: Dict[str, Any] = {"a": {"b": 2}, "c": 1}
 
         assert mix(data1, data2) == expected
 
@@ -290,83 +265,83 @@ class TestApp(BaseTests):
         # t = total_length
         # s = start
         # e = end
-        t, s, e = Uploader.parse_content_range(None)
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range(None)
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("test")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test/test")
-        assert t is None
-        assert s is None
-        assert e is None
+        tlen, start, end = Uploader.parse_content_range("test/test")
+        assert tlen is None
+        assert start is None
+        assert end is None
 
-        t, s, e = Uploader.parse_content_range("test/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("test/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes test/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes test/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes */1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes */1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
-        t, s, e = Uploader.parse_content_range("bytes 2-499/1000")
-        assert t == 1000
-        assert s == 2
-        assert e == 500
+        tlen, start, end = Uploader.parse_content_range("bytes 2-499/1000")
+        assert tlen == 1000
+        assert start == 2
+        assert end == 500
 
-        t, s, e = Uploader.parse_content_range("bytes 2-499*/1000")
-        assert t == 1000
-        assert s == 0
-        assert e == 1000
+        tlen, start, end = Uploader.parse_content_range("bytes 2-499*/1000")
+        assert tlen == 1000
+        assert start == 0
+        assert end == 1000
 
         # Invalid file / path
         try:
-            load_yaml_file("invalid", "path")
-            pytest.fail("No exception raised")
+            load_yaml_file(Path("invalid"), Path("path"))
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         try:
-            load_yaml_file("invalid", "tests")
-            pytest.fail("No exception raised")
+            load_yaml_file(Path("invalid"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         # Valid path, but not in yaml format
         try:
-            load_yaml_file("conftest.py", "tests")
-            pytest.fail("No exception raised")
+            load_yaml_file(Path("conftest.py"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         # File is empty
-        f = tempfile.NamedTemporaryFile()
+        tmpf = tempfile.NamedTemporaryFile()
         try:
-            load_yaml_file(f.name, ".")
-            pytest.fail("No exception raised")
+            load_yaml_file(Path(tmpf.name), Path("."))
+            pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
-        f.close()
+        tmpf.close()
 
         try:
             detector.get_connector(faker.pystr())
-            pytest.fail("No exception raised")
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -383,8 +358,9 @@ class TestApp(BaseTests):
         try:
             schema.load({})
         except ValidationError as e:
-            err = "Missing data for required field."
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
+            err = "Missing data for required field."
             assert e.messages["advanced_list"][0] == err
             assert "unique_delimited_list" in e.messages
             assert e.messages["unique_delimited_list"][0] == err
@@ -396,18 +372,21 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": None})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Field may not be null."
 
         try:
             schema.load({"advanced_list": ""})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Not a valid list."
 
         try:
             schema.load({"advanced_list": [10]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert 0 in e.messages["advanced_list"]
             assert e.messages["advanced_list"][0][0] == "Not a valid string."
@@ -416,12 +395,14 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": ["a"]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == min_items_error
 
         try:
             schema.load({"advanced_list": ["a", "a"]})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == min_items_error
 
@@ -432,6 +413,7 @@ class TestApp(BaseTests):
         try:
             schema.load({"advanced_list": {"a": "b"}})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
             assert e.messages["advanced_list"][0] == "Not a valid list."
 
@@ -461,6 +443,7 @@ class TestApp(BaseTests):
         try:
             schema.load({"unique_delimited_list": "a,b,b"})
         except ValidationError as e:
+            assert isinstance(e.messages, dict)
             assert "unique_delimited_list" in e.messages
             err = "Provided list contains duplicates"
             assert e.messages["unique_delimited_list"][0] == err

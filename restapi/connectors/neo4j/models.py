@@ -1,4 +1,5 @@
 """ Models for graph database """
+from typing import Type
 
 from neomodel import (
     BooleanProperty,
@@ -16,8 +17,14 @@ from neomodel import (
 from restapi.connectors.neo4j.types import IdentifiedNode
 from restapi.utilities.meta import Meta
 
-UserCustomClass = Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
-GroupCustomClass = Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
+# mypy: ignore-errors
+UserCustomClass: Type[IdentifiedNode] = (
+    Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
+)
+# mypy: ignore-errors
+GroupCustomClass: Type[IdentifiedNode] = (
+    Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
+)
 
 
 class User(UserCustomClass):
@@ -34,15 +41,13 @@ class User(UserCustomClass):
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")
-    coordinator = RelationshipTo("Group", "PI_FOR", cardinality=ZeroOrMore)
 
 
 class Group(GroupCustomClass):
-    fullname = StringProperty(required=True, unique_index=False)
     shortname = StringProperty(required=True, unique_index=True)
+    fullname = StringProperty(required=True, unique_index=False)
 
     members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
-    coordinator = RelationshipFrom("User", "PI_FOR", cardinality=ZeroOrOne)
 
 
 class Token(StructuredNode):

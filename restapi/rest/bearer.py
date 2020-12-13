@@ -11,6 +11,7 @@ there is no client id nor is client authentication required.
 """
 
 from functools import wraps
+from typing import Optional, Tuple
 
 from flask import request
 
@@ -34,7 +35,9 @@ class HTTPTokenAuth:
     """
 
     @staticmethod
-    def get_authorization_token(allow_access_token_parameter=False):
+    def get_authorization_token(
+        allow_access_token_parameter: bool = False,
+    ) -> Tuple[Optional[str], Optional[str]]:
         # Basic authenticaton is now allowed
         if request.authorization is not None:
             return None, None
@@ -43,7 +46,7 @@ class HTTPTokenAuth:
             # Flask/Werkzeug do not recognize any authentication types
             # other than Basic or Digest, so here we parse the header by hand
             try:
-                auth_header = request.headers.get(HTTPAUTH_AUTH_FIELD)
+                auth_header: str = request.headers.get(HTTPAUTH_AUTH_FIELD, "")
                 # Do not return directly auth_header.split
                 # Otherwise in case of malformed tokens the exception will be raised
                 # outside this function and probably not properly catched
@@ -56,29 +59,13 @@ class HTTPTokenAuth:
                 return None, None
 
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
-            token = request.args.get("access_token")
 
-            if token is None:
+            if not (token := request.args.get("access_token", "")):
                 return None, None
+
             return HTTPAUTH_SCHEME, token
 
         return None, None
-
-    # Deprecated since 0.7.5
-    @staticmethod
-    def required(
-        roles=None, required_roles=None, allow_access_token_parameter=False
-    ):  # pragma: no cover
-        log.warning(
-            "Deprecated use of auth.required decorator, "
-            "use require/require_all/require_any"
-        )
-
-        return HTTPTokenAuth.require(
-            roles=roles,
-            required_roles=required_roles,
-            allow_access_token_parameter=allow_access_token_parameter,
-        )
 
     @staticmethod
     def require_all(*arg, allow_access_token_parameter=False):
@@ -121,7 +108,9 @@ class HTTPTokenAuth:
                         f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    return caller.response(msg, code=401, headers=HTTPAUTH_ERR_HEADER)
+                    return caller.response(
+                        msg, code=401, headers=HTTPAUTH_ERR_HEADER, allow_html=True
+                    )
 
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
@@ -131,7 +120,7 @@ class HTTPTokenAuth:
                     # Check authentication
                     if not caller.unpacked_token[0]:
                         # Clear TCP receive buffer of any pending data
-                        log.verbose(request.data)
+                        _ = request.data
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         # log.info("Invalid token received '{}'", token)
@@ -140,6 +129,7 @@ class HTTPTokenAuth:
                             "Invalid token received",
                             headers=HTTPAUTH_ERR_HEADER,
                             code=401,
+                            allow_html=True,
                         )
 
                 # Check roles
@@ -148,7 +138,9 @@ class HTTPTokenAuth:
                 ):
                     log.info("Unauthorized request: missing privileges")
                     return caller.response(
-                        "You are not authorized: missing privileges", code=401,
+                        "You are not authorized: missing privileges",
+                        code=401,
+                        allow_html=True,
                     )
 
                 return func(*args, **kwargs)

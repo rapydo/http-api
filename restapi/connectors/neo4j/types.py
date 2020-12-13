@@ -7,7 +7,7 @@ from neomodel import DateTimeProperty, StructuredNode, UniqueIdProperty
 class IdentifiedNode(StructuredNode):
 
     """
-        A StructuredNode identified by an uuid
+    A StructuredNode identified by an uuid
     """
 
     __abstract_node__ = True
@@ -18,7 +18,7 @@ class IdentifiedNode(StructuredNode):
 class TimestampedNode(IdentifiedNode):
 
     """
-        An IdentifiedNode with creation and modification dates
+    An IdentifiedNode with creation and modification dates
     """
 
     __abstract_node__ = True

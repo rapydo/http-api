@@ -1,11 +1,11 @@
 from restapi import decorators
-from restapi.models import Schema, fields, validate
+from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-auth = EndpointResource.load_authentication()
+auth = detector.get_authentication_instance()
 
 
 class NewPassword(Schema):
@@ -33,7 +33,9 @@ def patchUserProfile():
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
 
-    if custom_fields := mem.customizer.get_user_editable_fields(None):
+    if custom_fields := mem.customizer.get_custom_input_fields(
+        request=None, scope=mem.customizer.PROFILE
+    ):
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes)
@@ -55,11 +57,18 @@ def getProfileData():
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
     attributes["isAdmin"] = fields.Boolean(required=True)
-    attributes["isLocalAdmin"] = fields.Boolean(required=True)
+    attributes["isStaff"] = fields.Boolean(required=True)
+    attributes["isCoordinator"] = fields.Boolean(required=True)
     attributes["privacy_accepted"] = fields.Boolean(required=True)
+    attributes["is_active"] = fields.Boolean(required=True)
     attributes["roles"] = fields.Dict(required=True)
+    attributes["last_password_change"] = fields.DateTime(
+        required=True, format=ISO8601UTC
+    )
+    attributes["first_login"] = fields.DateTime(required=True, format=ISO8601UTC)
+    attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
 
-    attributes["group"] = fields.Nested(Group, required=False)
+    attributes["group"] = fields.Nested(Group)
 
     attributes["SECOND_FACTOR"] = fields.Str(required=False)
 
@@ -71,14 +80,10 @@ def getProfileData():
 
 
 class Profile(EndpointResource):
-    """ Current user informations """
 
     baseuri = "/auth"
     depends_on = ["not PROFILE_DISABLED"]
     labels = ["profile"]
-
-    auth_service = detector.authentication_service
-    neo4j_enabled = auth_service == "neo4j"
 
     @decorators.auth.require()
     @decorators.marshal_with(getProfileData(), code=200)
@@ -96,13 +101,21 @@ class Profile(EndpointResource):
             "name": current_user.name,
             "surname": current_user.surname,
             "isAdmin": self.verify_admin(),
-            "isLocalAdmin": self.verify_local_admin(),
+            "isStaff": self.verify_staff(),
+            "isCoordinator": self.verify_coordinator(),
             "privacy_accepted": current_user.privacy_accepted,
+            "last_password_change": current_user.last_password_change,
+            "first_login": current_user.first_login,
+            "last_login": current_user.last_login,
+            "is_active": current_user.is_active,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
         }
-        if self.neo4j_enabled:
+
+        if detector.authentication_service == "neo4j":
             data["group"] = current_user.belongs_to.single()
+        else:
+            data["group"] = current_user.belongs_to
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
@@ -147,8 +160,7 @@ class Profile(EndpointResource):
 
         user = self.get_user()
 
-        db = self.get_service_instance(detector.authentication_service)
-        db.update_properties(user, kwargs)
+        self.auth.db.update_properties(user, kwargs)
 
         log.info("Profile updated")
 

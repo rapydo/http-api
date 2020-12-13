@@ -11,15 +11,17 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
+from typing import Dict, List, Optional, cast
 
 import jwt
 import pyotp  # TOTP generation
 import pytz
 import segno  # QR Code generation
 from flask import request
+from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
-from restapi.confs import (
+from restapi.config import (
     PRODUCTION,
     SECRET_KEY_FILE,
     TESTING,
@@ -36,6 +38,7 @@ from restapi.exceptions import (
     Unauthorized,
 )
 from restapi.services.detect import Detector
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.time import get_now
@@ -51,7 +54,7 @@ ROLE_DISABLED = "disabled"
 
 class Role(Enum):
     ADMIN = "admin_root"
-    LOCAL_ADMIN = "local_admin"
+    COORDINATOR = "group_coordinator"
     STAFF = "staff_user"
     USER = "normal_user"
 
@@ -84,52 +87,60 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
+    TOTP = "TOTP"
+    MIN_PASSWORD_LENGTH = 8
+    FORCE_FIRST_PASSWORD_CHANGE = False
+    VERIFY_PASSWORD_STRENGTH = False
+    MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
+    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
+    REGISTER_FAILED_LOGIN = False
+    MAX_LOGIN_ATTEMPTS = 0
+    SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
 
-    def __init__(self, backend_database):
-        self.db = backend_database
-        self.load_default_user()
-        self.load_roles()
+    default_user: Optional[str] = None
+    default_password: Optional[str] = None
+    roles: List[str] = []
+    roles_data: Dict[str, str] = {}
+    default_role: Optional[str] = None
 
-        variables = Detector.load_variables(prefix="auth")
+    # Executed once by Detector in init_services
+    @classmethod
+    def module_initialization(cls) -> None:
+        cls.load_default_user()
+        cls.load_roles()
+        cls.import_secret(SECRET_KEY_FILE)
 
-        self.import_secret(SECRET_KEY_FILE)
+        variables = Env.load_variables_group(prefix="auth")
 
-        self.TOTP = "TOTP"
-
-        self.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
-        self.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
+        cls.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
+        cls.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
             variables.get("force_first_password_change")
         )
-        self.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
+        cls.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
             variables.get("verify_password_strength")
         )
-        if not (val := Env.to_int(variables.get("max_password_validity", 0))):
-            self.MAX_PASSWORD_VALIDITY = None
-        elif TESTING:
-            self.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
-        # Of course cannot be tested
-        else:  # pragma: no cover
-            self.MAX_PASSWORD_VALIDITY = timedelta(days=val)
+        if val := Env.to_int(variables.get("max_password_validity", 0)):
+            if TESTING:
+                cls.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
+            # Of course cannot be tested
+            else:  # pragma: no cover
+                cls.MAX_PASSWORD_VALIDITY = timedelta(days=val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
-        else:
-            self.DISABLE_UNUSED_CREDENTIALS_AFTER = None
+            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
 
-        self.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
-        self.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
-        self.SECOND_FACTOR_AUTHENTICATION = variables.get(
-            "second_factor_authentication"
-        )
+        cls.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
+        cls.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
+        cls.SECOND_FACTOR_AUTHENTICATION = variables.get("second_factor_authentication")
 
-        if self.SECOND_FACTOR_AUTHENTICATION == "None":
-            self.SECOND_FACTOR_AUTHENTICATION = None
-        elif not self.FORCE_FIRST_PASSWORD_CHANGE:
+        if cls.SECOND_FACTOR_AUTHENTICATION == "None":
+            cls.SECOND_FACTOR_AUTHENTICATION = None
+        elif not cls.FORCE_FIRST_PASSWORD_CHANGE:
             log.error(
                 "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
-                self.SECOND_FACTOR_AUTHENTICATION,
+                cls.SECOND_FACTOR_AUTHENTICATION,
             )
-            self.SECOND_FACTOR_AUTHENTICATION = None
+            cls.SECOND_FACTOR_AUTHENTICATION = None
 
     @staticmethod
     def load_default_user():
@@ -140,7 +151,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             BaseAuthentication.default_user is None
             or BaseAuthentication.default_password is None
         ):  # pragma: no cover
-            log.exit("Default credentials are unavailable!")
+            print_and_exit("Default credentials are unavailable!")
 
     @staticmethod
     def load_roles():
@@ -148,20 +159,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             "variables.roles"
         ).copy()
         if not BaseAuthentication.roles_data:  # pragma: no cover
-            log.exit("No roles configured")
+            print_and_exit("No roles configured")
 
         BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
 
         BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
-            if description == ROLE_DISABLED:
-                continue
-            BaseAuthentication.roles.append(role)
+            if description != ROLE_DISABLED:
+                BaseAuthentication.roles.append(role)
 
-        if (
-            BaseAuthentication.default_role is None or None in BaseAuthentication.roles
-        ):  # pragma: no cover
-            log.exit("Default role {} not available!", BaseAuthentication.default_role)
+        if not BaseAuthentication.default_role:  # pragma: no cover
+            print_and_exit(
+                "Default role {} not available!", BaseAuthentication.default_role
+            )
 
     def failed_login(self, username):
         # if self.REGISTER_FAILED_LOGIN and username is not None:
@@ -173,7 +183,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """ The method which will check if credentials are good to go """
 
         try:
-            user = self.get_user_object(username=username)
+            user = self.get_user(username=username)
         except ValueError as e:  # pragma: no cover
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
@@ -219,19 +229,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         self.failed_login(username)
 
-    # ########################
-    # # Configure Secret Key #
-    # ########################
-    def import_secret(self, abs_filename):
-        """
-        Load the jwt secret from a file
-        """
-
+    @classmethod
+    def import_secret(cls, abs_filename):
         try:
-            self.JWT_SECRET = open(abs_filename, "rb").read()
-            return self.JWT_SECRET
+            cls.JWT_SECRET = open(abs_filename, "rb").read()
+            return cls.JWT_SECRET
         except OSError:  # pragma: no cover
-            log.exit("Jwt secret file {} not found", abs_filename)
+            print_and_exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
     # # Password handling #
@@ -265,9 +269,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return hashed_password == BaseAuthentication.hash_password(password)
 
     @staticmethod
-    def verify_password(plain_password, hashed_password):
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
-            return pwd_context.verify(plain_password, hashed_password)
+            return cast(bool, pwd_context.verify(plain_password, hashed_password))
         except ValueError as e:  # pragma: no cover
             log.error(e)
 
@@ -284,20 +288,54 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ########################
 
     @abc.abstractmethod
-    def get_user_object(self, username=None, payload=None):  # pragma: no cover
+    def get_user(self, username=None, user_id=None):  # pragma: no cover
         """
-        How to retrieve the user from the current service,
-        based on the unique username given, or from the content of the token
+        How to retrieve a single user from the current authentication db,
+        based on the unique username or the user_id
+        return None if no filter parameter is given
         """
         return
 
     @abc.abstractmethod
-    def get_users(self, user_id=None):  # pragma: no cover
+    def get_users(self):  # pragma: no cover
         """
-        How to retrieve users list from the current service,
-        Optionally filter by the unique uuid given
+        How to retrieve a list of all users from the current authentication db,
         """
         return
+
+    @abc.abstractmethod
+    def save_user(self, user):  # pragma: no cover
+        log.error("Users are not saved in base authentication")
+        return False
+
+    @abc.abstractmethod
+    def delete_user(self, user):  # pragma: no cover
+        log.error("Users are not deleted in base authentication")
+        return False
+
+    @abc.abstractmethod
+    def get_group(self, group_id=None, name=None):  # pragma: no cover
+        """
+        How to retrieve a single group from the current authentication db,
+        """
+        return
+
+    @abc.abstractmethod
+    def get_groups(self):  # pragma: no cover
+        """
+        How to retrieve groups list from the current authentication db,
+        """
+        return
+
+    @abc.abstractmethod
+    def save_group(self, group):  # pragma: no cover
+        log.error("Groups are not saved in base authentication")
+        return False
+
+    @abc.abstractmethod
+    def delete_group(self, group):  # pragma: no cover
+        log.error("Groups are not deleted in base authentication")
+        return False
 
     @abc.abstractmethod
     def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
@@ -363,10 +401,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ###################
     # # Tokens handling #
     # ###################
-    def create_token(self, payload):
+    @classmethod
+    def create_token(cls, payload):
         """ Generate a byte token with JWT library to encrypt the payload """
-        return jwt.encode(payload, self.JWT_SECRET, algorithm=self.JWT_ALGO).decode(
-            "ascii"
+        if cls.JWT_SECRET:
+            return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
+                "ascii"
+            )
+        print_and_exit(  # pragma: no cover
+            "Server misconfiguration, missing jwt configuration"
         )
 
     def create_temporary_token(self, user, token_type, duration=86400):
@@ -398,20 +441,26 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    def unpack_token(self, token, raiseErrors=False):
+    @classmethod
+    def unpack_token(cls, token, raiseErrors=False):
 
         payload = None
         try:
-            payload = jwt.decode(token, self.JWT_SECRET, algorithms=[self.JWT_ALGO])
+            if cls.JWT_SECRET:
+                payload = jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
+            else:
+                print_and_exit(  # pragma: no cover
+                    "Server misconfiguration, missing jwt configuration"
+                )
         # now > exp
-        except jwt.exceptions.ExpiredSignatureError as e:
+        except ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
             if raiseErrors:
                 raise e
             else:
                 log.info("Unable to decode JWT token. {}", e)
         # now < nbf
-        except jwt.exceptions.ImmatureSignatureError as e:
+        except ImmatureSignatureError as e:
             if raiseErrors:
                 raise e
             else:
@@ -454,7 +503,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return self.unpacked_token(False)
 
         # Get the user from payload
-        user = self.get_user_object(payload=payload)
+        user = self.get_user(user_id=payload.get("user_id"))
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
@@ -466,17 +515,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
 
-        log.verbose("User authorized")
+        log.debug("User {} authorized", user.email)
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
     @abc.abstractmethod  # pragma: no cover
     def save_token(self, user, token, payload, token_type=None):
-        log.debug("Token is not saved in base authentication")
-
-    @abc.abstractmethod
-    def save_user(self, user):  # pragma: no cover
-        log.debug("User is not saved in base authentication")
+        log.debug("Tokens is not saved in base authentication")
 
     @abc.abstractmethod
     def invalidate_token(self, token):  # pragma: no cover
@@ -576,16 +621,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    # #################
-    # # Database init #
-    # #################
-
     @abc.abstractmethod
-    def init_users_and_roles(self):  # pragma: no cover
+    def create_role(self, name, description):  # pragma: no cover
         """
-        Create roles and a user if no one exists.
+        A method to create a new role
         """
         return
+
+    @abc.abstractmethod
+    def save_role(self, role):  # pragma: no cover
+        log.error("Roles are not saved in base authentication")
+        return False
 
     @staticmethod
     def custom_user_properties_pre(userdata):
@@ -610,7 +656,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
-            log.critical(type(e))
             raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata
@@ -621,9 +666,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def create_user(self, userdata, roles):  # pragma: no cover
         """
-        A method to create a new user following some standards.
-        - The user should be at least associated to the default (basic) role
-        - More to come
+        A method to create a new user
         """
         return
 
@@ -631,6 +674,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def link_roles(self, user, roles):  # pragma: no cover
         """
         A method to assign roles to a user
+        """
+        return
+
+    @abc.abstractmethod
+    def create_group(self, groupdata):  # pragma: no cover
+        """
+        A method to create a new group
+        """
+        return
+
+    @abc.abstractmethod
+    def add_user_to_group(self, user, group):  # pragma: no cover
+        """
+        Expand the group.members -> user relationship
         """
         return
 
@@ -670,7 +727,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if totp_code is None:
             raise Unauthorized("Invalid verification code")
-        secret = BaseAuthentication.get_secret(user)
+        secret = self.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             # if self.REGISTER_FAILED_LOGIN:
@@ -679,10 +736,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    @staticmethod
-    def get_qrcode(user):
+    @classmethod
+    def get_qrcode(cls, user):
 
-        secret = BaseAuthentication.get_secret(user)
+        secret = cls.get_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration("project.title", "No project name")
@@ -787,3 +844,131 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
+
+    def init_auth_db(self, options):
+
+        self.init_roles()
+
+        default_group = self.init_groups(force=options.get("force_group", False))
+
+        self.init_users(
+            default_group, self.roles, force=options.get("force_user", False)
+        )
+
+    def init_roles(self):
+        current_roles = {role.name: role for role in self.get_roles()}
+
+        for role_name in self.roles:
+            description = self.roles_data.get(role_name, ROLE_DISABLED)
+            if r := current_roles.get(role_name):
+
+                if r.description == description:
+                    log.info("Role {} already exists", role_name)
+                else:
+                    log.info("Role {} already exists, updating description", role_name)
+
+                    r.description = description
+                    self.save_role(r)
+
+            else:
+                log.info("Creating role: {}", role_name)
+                self.create_role(name=role_name, description=description)
+
+        for r in current_roles:
+            if r not in self.roles:
+                log.warning("Unknown role found: {}", r)
+
+        return self.roles
+
+    def init_groups(self, force):
+
+        DEFAULT_GROUP_NAME = "Default"
+        DEFAULT_GROUP_DESCR = "Default group"
+
+        create = False
+        update = False
+
+        default_group = self.get_group(name=DEFAULT_GROUP_NAME)
+
+        # If there are not groups, let's create the default group
+        if not self.get_groups():
+            create = True
+        # If there are some groups skip group creation in absence of a force flag
+        elif force:
+            # If force flag is enable, create the default group if missing or update it
+            create = default_group is None
+            update = default_group is not None
+
+        if create:
+            default_group = self.create_group(
+                {
+                    "shortname": DEFAULT_GROUP_NAME,
+                    "fullname": DEFAULT_GROUP_DESCR,
+                }
+            )
+            log.info("Injected default group")
+        elif update:
+            log.info("Default group already exists, updating")
+            default_group.shortname = DEFAULT_GROUP_NAME
+            default_group.fullname = DEFAULT_GROUP_DESCR
+            self.save_group(default_group)
+        elif default_group:
+            log.info("Default group already exists")
+        else:
+            log.info("Default group does not exist but other groups do")
+
+        return default_group
+
+    def init_users(self, default_group, roles, force):
+
+        create = False
+        update = False
+
+        default_user = self.get_user(username=self.default_user)
+
+        # If there are no users, let's create the default user
+        if not self.get_users():
+            create = True
+        # If there are some users skip user creation in absence of a force flag
+        elif force:
+            # If force flag is enable, create the default user if missing or update it
+            create = default_user is None
+            update = default_user is not None
+
+        if create:
+            default_user = self.create_user(
+                {
+                    "email": self.default_user,
+                    "name": "Default",
+                    "surname": "User",
+                    "password": self.default_password,
+                    "last_password_change": datetime.now(pytz.utc),
+                },
+                roles=roles,
+            )
+            self.add_user_to_group(default_user, default_group)
+            # This is required to execute the commit on sqlalchemy...
+            self.save_user(default_user)
+            log.info("Injected default user")
+
+        elif update:
+            log.info("Default user already exists, updating")
+            default_user.email = self.default_user
+            default_user.name = "Default"
+            default_user.surname = "User"
+            default_user.password = self.get_password_hash(self.default_password)
+            default_user.last_password_change = datetime.now(pytz.utc)
+            self.link_roles(default_user, roles)
+            self.add_user_to_group(default_user, default_group)
+            self.save_user(default_user)
+        elif default_user:
+            log.info("Default user already exists")
+        else:
+            log.info("Default user does not exist but other users do")
+
+        # Assign all users without a group to the default group
+        for user in self.get_users():
+            if not user.belongs_to:
+                self.add_user_to_group(user, default_group)
+
+        return default_user

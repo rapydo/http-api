@@ -2,11 +2,13 @@ import os
 import time
 from datetime import timedelta
 
+import celery
 import pytest
 
+from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
 from restapi.exceptions import ServiceUnavailable
-from restapi.server import create_app
+from restapi.server import ServerModes, create_app
 from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
@@ -17,11 +19,10 @@ CONNECTOR = "celery"
 def test_celery(app, faker):
 
     if not detector.check_availability(CONNECTOR):
-        obj = detector.get_debug_instance(CONNECTOR)
-        assert obj is None
+
         try:
-            obj = detector.get_service_instance(CONNECTOR)
-            pytest("No exception raised")
+            obj = connector.get_instance()
+            pytest.fail("No exception raised")  # pragma: no cover
         except ServiceUnavailable:
             pass
 
@@ -30,54 +31,80 @@ def test_celery(app, faker):
 
     log.info("Executing {} tests", CONNECTOR)
 
-    # Run this before the init_services,
-    # get_debug_instance is able to load what is needed
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
     detector.init_services(
-        app=app, project_init=False, project_clean=False,
+        app=app,
+        project_init=False,
+        project_clean=False,
     )
 
-    obj = detector.get_service_instance(CONNECTOR)
+    obj = connector.get_instance()
     assert obj is not None
+
+    task_id = obj.test_task.apply_async().id
+
+    assert task_id is not None
+
+    if obj.variables.get("backend") == "RABBIT":
+        log.warning(
+            "Due to limitations on RABBIT backend task results will not be tested"
+        )
+    else:
+        try:
+            task = obj.celery_app.AsyncResult(task_id)
+            assert task is not None
+            r = task.get(timeout=60)
+            assert r is not None
+            # This is the task output, as defined in task_template.py.j2
+            assert r == "Task executed!"
+            assert task.status == "SUCCESS"
+            assert task.result == "Task executed!"
+        except celery.exceptions.TimeoutError:  # pragma: no cover
+            pytest.fail(f"Task timeout, result={task.result}, status={task.status}")
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
         try:
             obj.get_periodic_task("does_not_exist")
-            pytest.fail("get_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "get_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             obj.delete_periodic_task("does_not_exist")
-            pytest.fail("delete_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "delete_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             obj.create_periodic_task(
                 name="task1", task="task.does.not.exists", every="60"
             )
-            pytest.fail("create_periodic_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "create_periodic_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
             obj.create_crontab_task(
                 name="task2", task="task.does.not.exists", minute="0", hour="1"
             )
-            pytest.fail("create_crontab_task with unknown CELERYBEAT_SCHEDULER")
+            pytest.fail(
+                "create_crontab_task with unknown CELERYBEAT_SCHEDULER"
+            )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:
+        except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
     else:
@@ -136,12 +163,16 @@ def test_celery(app, faker):
                 assert str(e) == "Unsupported period minutes for redis beat"
 
             obj.create_periodic_task(
-                name="task3", task="task.does.not.exists", every=60,
+                name="task3",
+                task="task.does.not.exists",
+                every=60,
             )
             assert obj.delete_periodic_task("task3")
 
             obj.create_periodic_task(
-                name="task4", task="task.does.not.exists", every=timedelta(seconds=60),
+                name="task4",
+                task="task.does.not.exists",
+                every=timedelta(seconds=60),
             )
             assert obj.delete_periodic_task("task4")
 
@@ -158,36 +189,42 @@ def test_celery(app, faker):
             )
             assert obj.delete_periodic_task("task3")
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    obj.disconnect()
+
+    # a second disconnect should not raise any error
+    obj.disconnect()
+
+    # Create new connector with short expiration time
+    obj = connector.get_instance(expiration=2, verification=1)
     obj_id = id(obj)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    # Connector is expected to be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) == obj_id
 
     time.sleep(1)
 
-    obj = detector.get_service_instance(CONNECTOR, cache_expiration=1)
+    # The connection should have been checked and should be still valid
+    obj = connector.get_instance(expiration=2, verification=1)
+    assert id(obj) == obj_id
+
+    time.sleep(1)
+
+    # Connection should have been expired and a new connector been created
+    obj = connector.get_instance(expiration=2, verification=1)
     assert id(obj) != obj_id
 
-    # Close connection...
+    assert obj.is_connected()
     obj.disconnect()
-
-    # Test connection... should fail!
-    # ??
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happens
     obj.disconnect()
 
-    with detector.get_service_instance(CONNECTOR) as obj:
+    with connector.get_instance() as obj:
         assert obj is not None
 
-    obj = detector.get_debug_instance(CONNECTOR)
-    assert obj is not None
-
-    obj = detector.get_debug_instance("invalid")
-    assert obj is None
-
-    app = create_app(worker_mode=True)
+    app = create_app(mode=ServerModes.WORKER)
     assert app is not None
     from restapi.utilities.logs import LOGS_FILE
 

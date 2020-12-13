@@ -14,15 +14,13 @@
   <body>
     {% if is_error %}
 
-    <main style="color: red;">{{ body_content }}<br /></main>
+    <main style="color: red">{{ body_content }}<br /></main>
 
     {% elif body_content is mapping %} {% for key, value in body_content.items()
     %}
     <b>{{ key }}</b>: {{ value }}<br />
     {% endfor %} {% else %}
-    <main>
-      {{ body_content }}
-    </main>
+    <main>{{ body_content }}</main>
     {% endif %}
   </body>
 </html>

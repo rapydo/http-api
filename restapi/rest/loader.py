@@ -5,12 +5,14 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+from typing import Any, Dict, List, Set, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
+from flask_restful import Resource
 
 from restapi import decorators
-from restapi.confs import (
+from restapi.config import (
     ABS_RESTAPI_PATH,
     API_URL,
     BASE_URLS,
@@ -20,6 +22,7 @@ from restapi.confs import (
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.services.detect import detector  # do not remove this unused import
+from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -34,17 +37,18 @@ ERR404_AUTH = {"description": "The resource cannot be found or you are not autho
 
 uri_pattern = re.compile(r"\<([^\>]+)\>")
 
-log.verbose("Detector loaded: {}", detector)
+log.debug("Detector loaded: {}", detector)
 
 
 @ClassOfAttributes
 class EndpointElements:
-    cls = attribute(default=None)
-    uris = attribute(default=[])
-    methods = attribute(default={})
-    tags = attribute(default=[])
-    base_uri = attribute(default="")
-    private = attribute(default=False)
+    # type of endpoint from flask_restful
+    cls: Type[Resource] = attribute(default=None)
+    uris: List[str] = attribute(default=[])
+    methods: Dict[str, List[str]] = attribute(default={})
+    tags: List[str] = attribute(default=[])
+    base_uri: str = attribute(default="")
+    private: bool = attribute(default=False)
 
 
 class EndpointsLoader:
@@ -64,7 +68,7 @@ class EndpointsLoader:
 
         self._used_tags = set()
 
-    def load_configuration(self):
+    def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
         confs_path = os.path.join(os.curdir, CONF_PATH)
         defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)
@@ -80,7 +84,7 @@ class EndpointsLoader:
                 submodules_path=submodules_path,
             )
         except AttributeError as e:  # pragma: no cover
-            log.exit(e)
+            print_and_exit(e)
 
         return configuration
 
@@ -112,10 +116,10 @@ class EndpointsLoader:
                 dependency = pieces.pop()
                 negate = False
             elif pieces_num == 2:
-                negate, dependency = pieces
-                negate = negate.lower() == "not"
+                neg, dependency = pieces
+                negate = neg.lower() == "not"
             else:  # pragma: no cover
-                log.exit("Wrong depends_on parameter: {}", var)
+                print_and_exit("Wrong depends_on parameter: {}", var)
 
             check = Env.get_bool(dependency)
             if negate:
@@ -211,7 +215,7 @@ class EndpointsLoader:
                 auth_required = fn.__dict__.get("auth.required", False)
 
                 if not hasattr(fn, "uris"):  # pragma: no cover
-                    log.exit(
+                    print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
                         method_fn,
                         epclss.__name__,
@@ -229,7 +233,7 @@ class EndpointsLoader:
                     )
 
                     # Set default responses
-                    responses = {}
+                    responses: Dict[str, Dict[str, str]] = {}
 
                     responses.setdefault("400", ERR400)
                     if auth_required:
@@ -253,7 +257,7 @@ class EndpointsLoader:
                     self.uri2methods.setdefault(full_uri, [])
                     self.uri2methods[full_uri].append(method_fn)
 
-                    log.verbose("Built definition '{}:{}'", m, full_uri)
+                    # log.debug("Built definition '{}:{}'", m, full_uri)
 
                     self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
@@ -274,8 +278,8 @@ class EndpointsLoader:
         # /xyz/<variable>
         # /xyz/abc
         # The second endpoint is shadowed by the first one
-        mappings = {}
-        classes = {}
+        mappings: Dict[str, Set[str]] = {}
+        classes: Dict[str, Dict[str, Type[Resource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
             for method, uris in endpoint.methods.items():

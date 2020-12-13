@@ -22,10 +22,4 @@ celery_app = detector.get_connector("celery").celery_app
 celery_app.app = app
 
 
-def get_service(service, **kwargs):
-    return detector.get_service_instance(service, **kwargs)
-
-
-celery_app.get_service = get_service
-
 log.debug("Celery beat is ready {}", celery_app)
