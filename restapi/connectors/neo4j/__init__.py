@@ -4,7 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -67,36 +67,6 @@ def catch_db_exceptions(func):
 
         except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
-            raise e
-
-    return wrapper
-
-
-# Deprecated since 0.7.6
-def graph_transactions(func):  # pragma: no cover
-
-    log.warning(
-        "Deprecated use of graph_transactions from neo4j, use from @decorators instead"
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        try:
-
-            db.begin()
-
-            out = func(self, *args, **kwargs)
-
-            db.commit()
-
-            return out
-        except Exception as e:
-            log.debug("Neomodel transaction ROLLBACK")
-            try:
-                db.rollback()
-            except Exception as sub_ex:
-                log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
     return wrapper
