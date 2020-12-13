@@ -80,11 +80,11 @@ def verify(services):
 
     for service in services:
 
-        myclass = glom(detector.services, f"{service}.class", default=None)
-        if myclass is None:
+        if not glom(detector.services, f"{service}.available", default=False):
             print_and_exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
-        host, port = get_service_address(myclass.variables, "host", "port", service)
+        variables = glom(detector.services, f"{service}.variables", default={})
+        host, port = get_service_address(variables, "host", "port", service)
         wait_socket(host, port, service)
 
     log.info("Completed successfully")
