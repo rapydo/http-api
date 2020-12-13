@@ -154,6 +154,9 @@ def mywait():
 
     for name, service in detector.services.items():
 
+        if not service.get("available", False):
+            continue
+
         variables = service.get("variables", {})
 
         if name == "authentication":
@@ -173,9 +176,10 @@ def mywait():
             else:
                 print_and_exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
-            host, port = get_service_address(service_vars, "host", "port", broker)
+            label = f"celery broker ({broker})"
+            host, port = get_service_address(service_vars, "host", "port", label)
 
-            wait_socket(host, port, broker)
+            wait_socket(host, port, label)
 
             backend = variables.get("backend")
             if backend == "RABBIT":
@@ -189,9 +193,10 @@ def mywait():
                     "Invalid celery backend: {}", backend
                 )  # pragma: no cover
 
-            host, port = get_service_address(service_vars, "host", "port", backend)
+            label = f"celery backend ({backend})"
+            host, port = get_service_address(service_vars, "host", "port", label)
 
-            wait_socket(host, port, backend)
+            wait_socket(host, port, label)
 
         else:
             host, port = get_service_address(variables, "host", "port", name)
