@@ -43,7 +43,7 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.0",
+        "python-telegram-bot==13.1",
         # TOTP
         "pyotp==2.4.1",
         "segno==1.3.1",
@@ -59,14 +59,14 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.19.1",
+        "sentry-sdk[flask]==0.19.5",
         # Tests
-        "pytest-flask==1.0.0",
+        "pytest-flask==1.1.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==2.7.1",
-        "Faker==4.14.0",
-        "Telethon==1.17.5",
+        "schemathesis==2.8.4",
+        "Faker==5.0.1",
+        "Telethon==1.18.2",
     ],
     classifiers=[
         "Programming Language :: Python",

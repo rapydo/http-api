@@ -24,6 +24,8 @@ class RedisExt(Connector):
         # ssl=True, ssl_ca_certs=certifi.where()
         # turning off hostname verification (not recommended):
         # ssl_cert_reqs=None
+        # Please note about the huge drop of performances with TLS:
+        # https://github.com/redis/redis/issues/7595
         self.r = StrictRedis(
             host=variables.get("host", "redis.dockerized.io"),
             port=Env.to_int(variables.get("port"), 6379),
