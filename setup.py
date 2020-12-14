@@ -39,7 +39,7 @@ setup(
         "PyMySQL",
         "redis",
         "pika",
-        "celery==5.0.4",
+        "celery[redis]==5.0.4",
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",

@@ -31,18 +31,24 @@ class CeleryExt(Connector):
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
 
+        BROKER_URL = ""
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
             BROKER_HOST = service_vars.get("host")
             BROKER_PORT = Env.to_int(service_vars.get("port"))
             BROKER_VHOST = service_vars.get("vhost", "")
+            BROKER_VHOST = f"/{BROKER_VHOST}"
             BROKER_USE_SSL = Env.to_bool(service_vars.get("ssl_enabled"))
 
             BROKER_USER = service_vars.get("user", "")
             BROKER_PASSWORD = service_vars.get("password", "")
             if BROKER_USER and BROKER_PASSWORD:
                 BROKERCRED = f"{BROKER_USER}:{BROKER_PASSWORD}@"
+            else:
+                BROKERCRED = ""
 
+            BROKER_URL = f"amqp://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}{BROKER_VHOST}"
+            log.info("Configured RabbitMQ as broker {}", obfuscate_url(BROKER_URL))
         elif broker == "REDIS":
             service_vars = Env.load_variables_group(prefix="redis")
             BROKER_HOST = service_vars.get("host")
@@ -50,28 +56,25 @@ class CeleryExt(Connector):
             BROKER_VHOST = ""
             BROKER_USE_SSL = False
 
-            BROKERCRED = ""
+            BROKER_PASSWORD = service_vars.get("password", "")
+            if BROKER_PASSWORD:
+                # Redis >= 6.0.0 Added ACL style (username and password).
+                # When ACLs are used and only the password is specified,
+                # assumes that the implicit username is "default".
+                # BACKENDCRED = f"default:{BROKER_PASSWORD}@"
+                BROKERCRED = f":{BROKER_PASSWORD}@"
+            else:
+                BROKERCRED = ""
 
-        else:  # pragma: no cover
-            print_and_exit("Invalid celery broker: {}", broker)
-
-        if BROKER_VHOST != "":
-            BROKER_VHOST = f"/{BROKER_VHOST}"
-
-        if broker == "RABBIT":
-            BROKER_URL = f"amqp://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}{BROKER_VHOST}"
-            log.info("Configured RabbitMQ as broker {}", obfuscate_url(BROKER_URL))
-        elif broker == "REDIS":
             BROKER_URL = f"redis://{BROKERCRED}{BROKER_HOST}:{BROKER_PORT}/0"
             log.info("Configured Redis as broker {}", obfuscate_url(BROKER_URL))
+
         else:  # pragma: no cover
-            log.error("Unable to start Celery: unknown broker service: {}", broker)
-            return None
+            print_and_exit("Unable to start Celery: unknown broker service: {}", broker)
 
         backend = variables.get("backend", broker)
 
-        BACKENDCRED = ""
-
+        BACKEND_URL = ""
         if backend == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
             BACKEND_HOST = service_vars.get("host")
@@ -80,6 +83,16 @@ class CeleryExt(Connector):
             BACKEND_PASSWORD = service_vars.get("password", "")
             if BACKEND_USER and BACKEND_PASSWORD:
                 BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
+            else:
+                BACKENDCRED = ""
+
+            log.warning(
+                "RABBIT backend is quite limited and not fully supported. "
+                "Consider to enable Redis or MongoDB as a backend database"
+            )
+            BACKEND_URL = f"rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
+            log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
+
         elif backend == "REDIS":
             service_vars = Env.load_variables_group(prefix="redis")
             BACKEND_HOST = service_vars.get("host")
@@ -89,7 +102,14 @@ class CeleryExt(Connector):
                 # Redis >= 6.0.0 Added ACL style (username and password).
                 # When ACLs are used and only the password is specified,
                 # assumes that the implicit username is "default".
-                BACKENDCRED = f"default:{BACKEND_PASSWORD}@"
+                # BACKENDCRED = f"default:{BACKEND_PASSWORD}@"
+                BACKENDCRED = f":{BACKEND_PASSWORD}@"
+            else:
+                BACKENDCRED = ""
+
+            BACKEND_URL = f"redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
+            log.info("Configured Redis as backend {}", obfuscate_url(BACKEND_URL))
+
         elif backend == "MONGODB":
             service_vars = Env.load_variables_group(prefix="mongo")
             BACKEND_HOST = service_vars.get("host")
@@ -98,31 +118,26 @@ class CeleryExt(Connector):
             BACKEND_PASSWORD = service_vars.get("password", "")
             if BACKEND_USER and BACKEND_PASSWORD:
                 BACKENDCRED = f"{BACKEND_USER}:{BACKEND_PASSWORD}@"
-        else:  # pragma: no cover
-            print_and_exit("Invalid celery backend: {}", backend)
+            else:
+                BACKENDCRED = ""
 
-        if backend == "RABBIT":
-            log.warning(
-                "RABBIT backend is quite limited and not fully supported. "
-                "Consider to enable Redis or MongoDB as a backend database"
-            )
-            BACKEND_URL = f"rpc://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
-            log.info("Configured RabbitMQ as backend {}", obfuscate_url(BACKEND_URL))
-        elif backend == "REDIS":
-            BACKEND_URL = f"redis://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}/0"
-            log.info("Configured Redis as backend {}", obfuscate_url(BACKEND_URL))
-        elif backend == "MONGODB":
             BACKEND_URL = f"mongodb://{BACKENDCRED}{BACKEND_HOST}:{BACKEND_PORT}"
             log.info("Configured MongoDB as backend {}", obfuscate_url(BACKEND_URL))
+
         else:  # pragma: no cover
             print_and_exit(
-                "Unable to start Celery unknown backend service: {}", backend
+                "Unable to start Celery: unknown backend service: {}", backend
             )
 
-        # self.__autoset('broker_use_ssl', kwargs.get('broker_use_ssl'))
+        celery_app = Celery("RestApiQueue")
+        celery_app.conf.broker_url = BROKER_URL
+        # From the guide: "Default: Taken from broker_url."
+        # But it is not true, connection fails if not explicitly set
+        celery_app.conf.broker_read_url = BROKER_URL
+        celery_app.conf.broker_write_url = BROKER_URL
+        celery_app.conf.broker_use_ssl = BROKER_USE_SSL
+        celery_app.conf.result_backend = BACKEND_URL
         # self.__autoset('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
-        celery_app = Celery("RestApiQueue", broker=BROKER_URL, backend=BACKEND_URL)
-        celery_app.conf["broker_use_ssl"] = BROKER_USE_SSL
 
         # Skip initial warnings, avoiding pickle format (deprecated)
         celery_app.conf.accept_content = ["json"]
