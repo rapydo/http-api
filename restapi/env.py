@@ -1,29 +1,31 @@
 import os
 from functools import lru_cache
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, TypeVar, Union
+
+T = TypeVar("T")
 
 
 class Env:
     @staticmethod
     @lru_cache
-    def get(var, default=None):
+    def get(var: str, default: T = None) -> Optional[Union[str, T]]:
         return os.getenv(var, default)
 
     @staticmethod
     @lru_cache
-    def get_bool(var, default=False):
+    def get_bool(var: str, default: bool = False) -> bool:
         value = Env.get(var, default)
         return Env.to_bool(value, default)
 
     @staticmethod
     @lru_cache
-    def get_int(var, default=0):
+    def get_int(var: str, default: int = 0) -> int:
         value = Env.get(var, default)
         return Env.to_int(value, default)
 
     @staticmethod
     @lru_cache
-    def to_bool(var, default=False):
+    def to_bool(var: Optional[Union[str, bool]], default: bool = False) -> bool:
 
         if var is None:
             return default
