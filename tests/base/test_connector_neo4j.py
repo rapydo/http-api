@@ -4,6 +4,8 @@ from datetime import datetime
 import dateutil.parser
 import pytest
 import pytz
+from faker import Faker
+from flask import Flask
 from neo4j.exceptions import CypherSyntaxError
 
 from restapi.connectors import neo4j as connector
@@ -49,7 +51,7 @@ else:
             assert data["modified1"] < data["modified2"]
 
         @staticmethod
-        def test_connector(app, fake):
+        def test_connector(app: Flask, fake: Faker) -> None:
 
             detector.init_services(
                 app=app,

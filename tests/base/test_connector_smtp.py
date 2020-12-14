@@ -1,4 +1,6 @@
 import pytest
+from faker import Faker
+from flask import Flask
 
 from restapi.connectors import smtp as connector
 from restapi.exceptions import ServiceUnavailable
@@ -9,7 +11,7 @@ from restapi.utilities.logs import log
 CONNECTOR = "smtp"
 
 
-def test_smtp(app, faker):
+def test_smtp(app: Flask, faker: Faker) -> None:
 
     # mailmock is always enabled during core tests
     if not detector.check_availability(CONNECTOR):  # pragma: no cover
@@ -21,7 +23,7 @@ def test_smtp(app, faker):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     detector.init_services(
         app=app,

@@ -4,6 +4,8 @@ from datetime import timedelta
 
 import celery
 import pytest
+from faker import Faker
+from flask import Flask
 
 from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
@@ -16,7 +18,7 @@ from restapi.utilities.logs import log
 CONNECTOR = "celery"
 
 
-def test_celery(app, faker):
+def test_celery(app: Flask, faker: Faker) -> None:
 
     if not detector.check_availability(CONNECTOR):
 
@@ -27,7 +29,7 @@ def test_celery(app, faker):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
 

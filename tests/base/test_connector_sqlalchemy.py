@@ -2,6 +2,7 @@ import os
 import time
 
 import pytest
+from flask import Flask
 
 from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
@@ -11,7 +12,7 @@ from restapi.utilities.logs import log
 CONNECTOR = "sqlalchemy"
 
 
-def test_sqlalchemy(app):
+def test_sqlalchemy(app: Flask) -> None:
 
     if not detector.check_availability(CONNECTOR):
 
@@ -22,7 +23,7 @@ def test_sqlalchemy(app):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
 

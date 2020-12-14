@@ -1,6 +1,8 @@
 import time
 
 import pytest
+from faker import Faker
+from flask import Flask
 
 from restapi.connectors import rabbitmq as connector
 from restapi.exceptions import ServiceUnavailable
@@ -10,7 +12,7 @@ from restapi.utilities.logs import log
 CONNECTOR = "rabbitmq"
 
 
-def test_rabbit(app, faker):
+def test_rabbit(app: Flask, faker: Faker) -> None:
 
     if not detector.check_availability(CONNECTOR):
 
@@ -21,7 +23,7 @@ def test_rabbit(app, faker):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
 

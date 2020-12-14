@@ -221,11 +221,11 @@ class SQLAlchemy(Connector):
             self.db.session.close()
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("sqlalchemy.is_connected method is not implemented")
         return not self.disconnected
 
-    def initialize(self):
+    def initialize(self) -> None:
 
         instance = self.get_instance()
 
@@ -239,7 +239,7 @@ class SQLAlchemy(Connector):
                 instance.db.create_all()
                 SQLAlchemy.DB_INITIALIZING = False
 
-    def destroy(self):
+    def destroy(self) -> None:
 
         instance = self.get_instance()
 

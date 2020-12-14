@@ -1,6 +1,8 @@
 import os
-from typing import Any, Dict, TypeVar
+from types import ModuleType
+from typing import Dict, Optional, TypedDict, TypeVar
 
+from flask import Flask
 from glom import glom
 
 from restapi.config import (
@@ -23,6 +25,12 @@ CONNECTORS_FOLDER = "connectors"
 T = TypeVar("T", bound="Connector")
 
 
+class Service(TypedDict):
+    module: Optional[ModuleType]
+    available: bool
+    variables: Dict[str, str]
+
+
 class Detector:
     def __init__(self):
 
@@ -34,8 +42,12 @@ class Detector:
         # - services[name]['module']
         # - services[name]['available']
         # - services[name]['variables']
-        self.services: Dict[str, Dict[str, Any]] = {
-            "authentication": {"available": Env.get_bool("AUTH_ENABLE")}
+        self.services: Dict[str, Service] = {
+            "authentication": {
+                "available": Env.get_bool("AUTH_ENABLE"),
+                "module": None,
+                "variables": {},
+            }
         }
 
         self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
@@ -47,8 +59,11 @@ class Detector:
 
         self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
 
-    def check_availability(self, name):
-        return glom(self.services, f"{name}.available", default=False)
+    def check_availability(self, name: str) -> bool:
+        if name not in self.services:
+            return False
+
+        return self.services[name].get("available", False)
 
     def get_authentication_instance(self):
         return self.authentication_module.Authentication()
@@ -91,10 +106,12 @@ class Detector:
             enabled = Env.to_bool(variables.get("enable"))
             available = enabled or external
 
-            self.services.setdefault(connector, {})
-            self.services[connector]["available"] = available
-
             if not available:
+                self.services[connector] = {
+                    "available": available,
+                    "module": None,
+                    "variables": {},
+                }
                 continue
 
             connector_module = Meta.get_module_from_string(
@@ -122,8 +139,11 @@ class Detector:
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            self.services[connector]["variables"] = variables
-            self.services[connector]["module"] = connector_module
+            self.services[connector] = {
+                "available": available,
+                "module": connector_module,
+                "variables": variables,
+            }
 
             connector_class.available = True
             connector_class.set_variables(variables)
@@ -156,12 +176,12 @@ class Detector:
 
     def init_services(
         self,
-        app,
-        project_init=False,
-        project_clean=False,
-        worker_mode=False,
-        options=None,
-    ):
+        app: Flask,
+        project_init: bool = False,
+        project_clean: bool = False,
+        worker_mode: bool = False,
+        options: Optional[Dict[str, bool]] = None,
+    ) -> None:
 
         Connector.app = app
 

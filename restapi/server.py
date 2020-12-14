@@ -10,7 +10,7 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -34,7 +34,6 @@ from restapi.config import (
     get_project_configuration,
 )
 from restapi.customizer import BaseCustomizer
-from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.cache import Cache
@@ -69,7 +68,11 @@ def teardown_handler(signal, frame):
     sys.exit(0)
 
 
-def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
+def create_app(
+    name: str = __name__,
+    mode: ServerModes = ServerModes.NORMAL,
+    options: Optional[Dict[str, bool]] = None,
+) -> Flask:
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover

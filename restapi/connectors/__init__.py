@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, TypeVar
 
 # mypy: ignore-errors
+from flask import Flask
 from flask import _app_ctx_stack as stack
 
 from restapi.env import Env
@@ -22,7 +23,7 @@ class Connector(metaclass=abc.ABCMeta):
     variables: Dict[str, str] = {}
     models = {}
     # Assigned by Detector during init_services
-    app = None
+    app: Flask = None
 
     # Modified by Detector during init_services
     available: bool = False

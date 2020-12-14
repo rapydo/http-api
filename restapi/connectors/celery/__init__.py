@@ -235,7 +235,7 @@ class CeleryExt(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
 
         log.warning("celery.is_connected method is not implemented")
         return not self.disconnected

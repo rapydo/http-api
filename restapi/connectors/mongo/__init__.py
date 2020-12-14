@@ -85,12 +85,12 @@ class MongoExt(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
 
         log.warning("mongo.is_connected method is not implemented")
         return not self.disconnected
 
-    def initialize(self):
+    def initialize(self) -> None:
         pass
 
     def destroy(self):

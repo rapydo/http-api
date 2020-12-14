@@ -35,7 +35,7 @@ class PushpinExt(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("pushpin.is_connected method is not implemented")
         return not self.disconnected
 

@@ -112,11 +112,11 @@ class NeoModel(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("neo4j.is_connected method is not implemented")
         return not self.disconnected
 
-    def initialize(self):
+    def initialize(self) -> None:
 
         if self.app:
             with self.app.app_context():
@@ -133,7 +133,7 @@ class NeoModel(Connector):
                 for model in self.models.values():
                     install_labels(model, quiet=False)
 
-    def destroy(self):
+    def destroy(self) -> None:
 
         graph = self.get_instance()
 
