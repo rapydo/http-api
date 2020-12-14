@@ -28,6 +28,10 @@ class RedisExt(Connector):
             host=variables.get("host", "redis.dockerized.io"),
             port=Env.to_int(variables.get("port"), 6379),
             password=variables.get("password"),
+            # Usually 0 is used by celery
+            # 1 by celery-beat
+            # 2 by flask caching
+            # We use use here 3? Or keep 0 and shift the others?
             db=0,
         )
         return self
