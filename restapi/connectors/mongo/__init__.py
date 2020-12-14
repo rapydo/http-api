@@ -93,7 +93,7 @@ class MongoExt(Connector):
     def initialize(self) -> None:
         pass
 
-    def destroy(self):
+    def destroy(self) -> None:
 
         instance = self.get_instance()
 
@@ -107,7 +107,7 @@ class MongoExt(Connector):
         )
 
         system_dbs = ["admin", "local", "config"]
-        for db in client.database_names():
+        for db in client.list_database_names():
             if db not in system_dbs:
                 client.drop_database(db)
                 log.critical("Dropped db '{}'", db)
