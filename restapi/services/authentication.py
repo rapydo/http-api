@@ -142,10 +142,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def load_default_user():
 
-        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME", default="")
-        BaseAuthentication.default_password = Env.get(
-            "AUTH_DEFAULT_PASSWORD", default=""
-        )
+        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
+        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
         if (
             BaseAuthentication.default_user is None
             or BaseAuthentication.default_password is None
