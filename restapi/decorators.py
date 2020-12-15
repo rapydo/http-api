@@ -1,4 +1,5 @@
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, TypeVar, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
@@ -26,6 +27,9 @@ log.debug("Marshal loaded {}", marshal_with)
 SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
 
 
+F = TypeVar("F", bound=Callable[..., Any])
+
+
 # same definition as in:
 # https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
 def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
@@ -42,30 +46,37 @@ def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
     )
 
 
-def endpoint(path, summary=None, description=None, responses=None, **kwargs):
-    def decorator(func):
+def endpoint(
+    path: str,
+    summary: Optional[str] = None,
+    description: Optional[str] = None,
+    responses: Optional[Dict[str, str]] = None,
+    **kwargs: Any,
+) -> Callable[[F], F]:
+    def decorator(func: F) -> F:
 
-        specs = {}
+        specs: Dict[str, Any] = {}
 
         specs["summary"] = summary
         specs["description"] = description
 
+        specs_responses: Dict[str, Dict[str, str]] = {}
         if responses:
-            for code in responses:
-                responses[code] = {"description": responses[code]}
-        specs["responses"] = responses
+            for code, message in responses.items():
+                specs_responses[code] = {"description": message}
+        specs["responses"] = specs_responses
 
         if not hasattr(func, "uris"):
-            func.uris = []
-        func.uris.append(path)
+            setattr(func, "uris", [])
+        getattr(func, "uris").append(path)
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
 
-            return func(self, *args, **kwargs)
+            return cast(F, func(self, *args, **kwargs))
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
 
