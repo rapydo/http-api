@@ -9,7 +9,7 @@ import re
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import jwt
 import pyotp  # TOTP generation
@@ -589,9 +589,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return False
 
     @staticmethod
-    def custom_user_properties_pre(userdata):
+    def custom_user_properties_pre(
+        userdata: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         try:
-            userdata = mem.customizer.custom_user_properties_pre(userdata)
+            userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
         except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
@@ -600,7 +602,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
 
-        return userdata
+        return userdata, extradata
 
     @staticmethod
     def custom_user_properties_post(user, userdata, extra_userdata, db):
