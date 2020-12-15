@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypeVar, cast
+from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
@@ -50,7 +50,7 @@ def endpoint(
     path: str,
     summary: Optional[str] = None,
     description: Optional[str] = None,
-    responses: Optional[Dict[str, str]] = None,
+    responses: Optional[Dict[Union[str, int], str]] = None,
     **kwargs: Any,
 ) -> Callable[[F], F]:
     def decorator(func: F) -> F:
@@ -63,7 +63,7 @@ def endpoint(
         specs_responses: Dict[str, Dict[str, str]] = {}
         if responses:
             for code, message in responses.items():
-                specs_responses[code] = {"description": message}
+                specs_responses[str(code)] = {"description": message}
         specs["responses"] = specs_responses
 
         if not hasattr(func, "uris"):
