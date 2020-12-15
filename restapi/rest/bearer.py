@@ -10,9 +10,8 @@ Note that anyone can validate a token as it is a bearer token:
 there is no client id nor is client authentication required.
 """
 
-from enum import Enum
 from functools import wraps
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union, cast
+from typing import Optional, Tuple
 
 from flask import request
 
@@ -27,8 +26,6 @@ HTTPAUTH_ERR_HEADER = {
     "WWW-Authenticate": f'{HTTPAUTH_SCHEME} realm="Authentication Required"'
 }
 ALLOW_ACCESS_TOKEN_PARAMETER = Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER")
-
-F = TypeVar("F", bound=Callable[..., Any])
 
 
 class HTTPTokenAuth:
@@ -71,9 +68,7 @@ class HTTPTokenAuth:
         return None, None
 
     @staticmethod
-    def require_all(
-        *arg: Union[Enum, str], allow_access_token_parameter: bool = False
-    ) -> Callable[[F], F]:
+    def require_all(*arg, allow_access_token_parameter=False):
         return HTTPTokenAuth.require(
             roles=arg,
             required_roles="all",
@@ -81,9 +76,7 @@ class HTTPTokenAuth:
         )
 
     @staticmethod
-    def require_any(
-        *arg: Union[Enum, str], allow_access_token_parameter: bool = False
-    ) -> Callable[[F], F]:
+    def require_any(*arg, allow_access_token_parameter=False):
         return HTTPTokenAuth.require(
             roles=arg,
             required_roles="any",
@@ -91,19 +84,15 @@ class HTTPTokenAuth:
         )
 
     @staticmethod
-    def require(
-        roles: Optional[List[Union[Enum, str]]] = None,
-        required_roles: Optional[str] = None,
-        allow_access_token_parameter: bool = False,
-    ) -> Callable[[F], F]:
+    def require(roles=None, required_roles=None, allow_access_token_parameter=False):
         # required_roles = 'all', 'any'
-        def decorator(func: F) -> F:
+        def decorator(func):
             # it is used in Customization to verify if an endpoint is requiring
             # authentication and inject 401 errors
             func.__dict__["auth.required"] = True
 
             @wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> F:
+            def wrapper(*args, **kwargs):
                 # Recover the auth object
                 auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
@@ -154,8 +143,8 @@ class HTTPTokenAuth:
                         allow_html=True,
                     )
 
-                return cast(F, func(*args, **kwargs))
+                return func(*args, **kwargs)
 
-            return cast(F, wrapper)
+            return wrapper
 
         return decorator
