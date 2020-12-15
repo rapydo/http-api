@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from flask import Response
+from flask import Response as FlaskResponse
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
@@ -16,6 +16,8 @@ CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
 PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
+
+Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
 
 
 class EndpointResource(MethodResource, Resource):
@@ -71,7 +73,7 @@ class EndpointResource(MethodResource, Resource):
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
         allow_html: bool = False,
-    ) -> Union[Response, Tuple[Any, int, Dict[str, str]]]:
+    ) -> Response:
 
         if headers is None:
             headers = {}
@@ -95,7 +97,7 @@ class EndpointResource(MethodResource, Resource):
         if allow_html:
             if "text/html" in ResponseMaker.get_accepted_formats():
                 content, headers = ResponseMaker.get_html(content, code, headers)
-                return Response(
+                return FlaskResponse(
                     content, mimetype="text/html", status=code, headers=headers
                 )
 
