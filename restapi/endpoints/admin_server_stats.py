@@ -18,7 +18,7 @@ class SystemSchema(Schema):
 
 class CPUSchema(Schema):
     count = fields.Int()
-    load = fields.Decimal(places=2)
+    _load = fields.Decimal(places=2)
     user = fields.Int()
     system = fields.Int()
     idle = fields.Int()

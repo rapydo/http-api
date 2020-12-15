@@ -51,13 +51,17 @@ class RabbitExt(Connector):
 
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
+        if (host := variables.get("host")) is None:
+            raise ServiceUnavailable("Missing hostname")
+
         if (user := variables.get("user")) is None:
             raise ServiceUnavailable("Missing credentials")
 
         if (password := variables.get("password")) is None:
             raise ServiceUnavailable("Missing credentials")
 
-        credentials = pika.PlainCredentials(user, password)
+        port = int(variables.get("port", "0"))
+        vhost = variables.get("vhost", "/")
 
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
@@ -68,24 +72,28 @@ class RabbitExt(Connector):
             # Enable client certification verification
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
-            ssl_options: Optional[pika.SSLOptions] = pika.SSLOptions(
-                context=context, server_hostname=variables.get("host")
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=host,
+                    port=port,
+                    virtual_host=vhost,
+                    credentials=pika.PlainCredentials(user, password),
+                    ssl_options=pika.SSLOptions(
+                        context=context, server_hostname=variables.get("host")
+                    ),
+                )
             )
+
         else:
-            ssl_options = None
 
-        if (host := variables.get("host")) is None:
-            raise ServiceUnavailable("Missing hostname")
-
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=host,
-                port=int(variables.get("port", "0")),
-                virtual_host=variables.get("vhost", "/"),
-                credentials=credentials,
-                ssl_options=ssl_options,
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=host,
+                    port=port,
+                    virtual_host=vhost,
+                    credentials=pika.PlainCredentials(user, password),
+                )
             )
-        )
 
         self.channel = None
         return self

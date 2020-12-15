@@ -50,6 +50,7 @@ class Stats(Schema):
 @bot.command("monitor", help="get server monitoring stats")
 @bot.restricted_to_admins
 @bot.parameters(Stats())
+# mypy: ignore-errors
 @run_async
 def monitor(update, context, param):
 
