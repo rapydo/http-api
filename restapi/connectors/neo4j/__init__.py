@@ -211,7 +211,7 @@ class Authentication(BaseAuthentication):
         if user_id:
             return self.db.User.nodes.get_or_none(uuid=user_id)
 
-        # only reached if both username and user_id are None
+        # reached if both username and user_id are None
         return None
 
     def get_users(self):
