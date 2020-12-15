@@ -31,9 +31,9 @@ class TestApp(BaseTests):
         assert stats["cpu"]["idle"] >= 0
         assert stats["cpu"]["idle"] <= 100
 
-        assert "load" in stats["cpu"]
-        assert float(stats["cpu"]["load"]) >= 0
-        assert float(stats["cpu"]["load"]) <= 100
+        assert "load_percentage" in stats["cpu"]
+        assert float(stats["cpu"]["load_percentage"]) >= 0
+        assert float(stats["cpu"]["load_percentage"]) <= 100
 
         assert "stolen" in stats["cpu"]
         assert stats["cpu"]["stolen"] >= 0

@@ -18,7 +18,7 @@ class SystemSchema(Schema):
 
 class CPUSchema(Schema):
     count = fields.Int()
-    _load = fields.Decimal(places=2)
+    load_percentage = fields.Decimal(places=2)
     user = fields.Int()
     system = fields.Int()
     idle = fields.Int()
@@ -113,7 +113,9 @@ class AdminStats(EndpointResource):
 
         # Here we are converting the load average into percentage.
         # The higher the percentage the higher the load
-        statistics["cpu"]["load"] = (100 * os.getloadavg()[-1]) / (os.cpu_count() or 1)
+        statistics["cpu"]["load_percentage"] = (100 * os.getloadavg()[-1]) / (
+            os.cpu_count() or 1
+        )
 
         # # Total amount of RAM
         # grep = local["grep"]
