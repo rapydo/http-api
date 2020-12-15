@@ -26,8 +26,27 @@ jobs:
 
           echo "[mypy]" > mypy.ini
 
-          for lib in glom flask_apispec apispec flask_caching flask_cors flask_restful celery neomodel neo4j sqlalchemy pymodm plumbum faker psutil jwt.exceptions passlib wrong; do
+          for lib in \
+            glom \
+            flask_apispec \
+            apispec \
+            flask_caching \
+            flask_cors \
+            flask_restful \
+            celery \
+            neomodel \
+            neo4j \
+            sqlalchemy \
+            pymodm \
+            plumbum \
+            faker \
+            psutil \
+            jwt.exceptions \
+            passlib \
+            wrong \
+            ; do
             echo "[mypy-${lib}.*]" >> mypy.ini
+            echo "ignore_missing_imports = True" >> mypy.ini
             
           done
 
