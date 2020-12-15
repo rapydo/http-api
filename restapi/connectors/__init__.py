@@ -21,7 +21,7 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 class Connector(metaclass=abc.ABCMeta):
 
     variables: Dict[str, str] = {}
-    models = {}
+    models: Dict[str, Any] = {}
     # Assigned by Detector during init_services
     app: Flask = None
 
@@ -109,12 +109,6 @@ class Connector(metaclass=abc.ABCMeta):
         if len(cls.models) > 0:
             log.debug("Models loaded")
 
-            for name, model in cls.models.items():
-                # Save attribute inside class with the same name
-                log.debug("Injecting model '{}'", name)
-                setattr(cls, name, model)
-            log.debug("Models injected")
-
     @classmethod
     def set_variables(cls, envvars: Dict[str, str]) -> None:
         cls.variables = envvars
@@ -189,14 +183,6 @@ class Connector(metaclass=abc.ABCMeta):
 
         return obj
 
-    # def set_models_to_service(self, obj):
-
-    #     for name, model in self.models.items():
-    #         # Save attribute inside class with the same name
-    #         log.debug("Injecting model '{}'", name)
-    #         setattr(obj, name, model)
-    #     obj.models = self.models
-
     def get_instance(
         self: T,
         verification: Optional[int] = None,
@@ -221,7 +207,6 @@ class Connector(metaclass=abc.ABCMeta):
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
             obj = self.initialize_connection(expiration, verification, **kwargs)
-            # self.set_models_to_service(obj)
             return obj
 
         unique_hash = str(sorted(kwargs.items()))
@@ -263,6 +248,5 @@ class Connector(metaclass=abc.ABCMeta):
 
         # can raise ServiceUnavailable exception
         obj = self.initialize_connection(expiration, verification, **kwargs)
-        # self.set_models_to_service(obj)
         self.set_object(name=self.name, obj=obj, key=unique_hash)
         return obj

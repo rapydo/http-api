@@ -73,6 +73,13 @@ def catch_db_exceptions(func):
 
 
 class NeoModel(Connector):
+
+    # This is used to return Models in a type-safe way
+    def __getattr__(self, name: str) -> StructuredNode:
+        if name in self.models:
+            return self.models[name]
+        raise AttributeError(f"Model {name} not found")
+
     def get_connection_exception(self):
 
         return (

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Optional, Union
 
+from pymodm import MongoModel
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
@@ -61,6 +62,12 @@ def catch_db_exceptions(func):
 class MongoExt(Connector):
 
     DATABASE: str = "rapydo"
+
+    # This is used to return Models in a type-safe way
+    def __getattr__(self, name: str) -> MongoModel:
+        if name in self.models:
+            return self.models[name]
+        raise AttributeError(f"Model {name} not found")
 
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError,)

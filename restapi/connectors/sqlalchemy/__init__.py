@@ -14,6 +14,7 @@ from typing import Optional, Union
 import pytz
 import sqlalchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
@@ -139,6 +140,12 @@ class SQLAlchemy(Connector):
     def __init__(self, app=None):
         self.db: OriginalAlchemy = None
         super().__init__(app)
+
+    # This is used to return Models in a type-safe way
+    def __getattr__(self, name: str) -> Model:
+        if name in self.models:
+            return self.models[name]
+        raise AttributeError(f"Model {name} not found")
 
     def is_mysql(self) -> bool:
         return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
