@@ -1,9 +1,9 @@
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from restapi import decorators
 from restapi.exceptions import NotFound
 from restapi.models import Schema, fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
 from restapi.services.detect import detector
 
@@ -64,7 +64,7 @@ class AdminGroups(EndpointResource):
             409: "Request is invalid due to conflicts",
         },
     )
-    def get(self):
+    def get(self) -> Response:
 
         groups = self.auth.get_groups()
 
@@ -80,7 +80,7 @@ class AdminGroups(EndpointResource):
             409: "Request is invalid due to conflicts",
         },
     )
-    def post(self, **kwargs):
+    def post(self, **kwargs: Any) -> Response:
 
         group = self.auth.create_group(kwargs)
 
@@ -95,7 +95,7 @@ class AdminGroups(EndpointResource):
         summary="Modify a group",
         responses={204: "Group successfully modified", 404: "Group not found"},
     )
-    def put(self, group_id, **kwargs):
+    def put(self, group_id: str, **kwargs: Any) -> Response:
 
         group = self.auth.get_group(group_id=group_id)
         if not group:
@@ -113,7 +113,7 @@ class AdminGroups(EndpointResource):
         summary="Delete a group",
         responses={204: "Group successfully deleted", 404: "Group not found"},
     )
-    def delete(self, group_id):
+    def delete(self, group_id: str) -> Response:
 
         group = self.auth.get_group(group_id=group_id)
         if not group:

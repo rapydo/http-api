@@ -151,7 +151,7 @@ class Connector(metaclass=abc.ABCMeta):
         log.info("[{}] All connectors disconnected", os.getpid())
 
     def initialize_connection(
-        self, expiration: int, verification: int, **kwargs: Dict[str, Any]
+        self, expiration: int, verification: int, **kwargs: Any
     ) -> T:
 
         # Create a new instance of itself

@@ -8,7 +8,7 @@ from plumbum import local
 
 from restapi import decorators
 from restapi.models import ISO8601UTC, Schema, fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
 
 
@@ -90,7 +90,7 @@ class AdminStats(EndpointResource):
         summary="Retrieve stats from the server",
         responses={"200": "Stats retrieved"},
     )
-    def get(self):
+    def get(self) -> Response:
         statistics: Dict[str, Dict[str, Union[str, int, float, datetime]]] = {
             "system": {},
             "cpu": {},

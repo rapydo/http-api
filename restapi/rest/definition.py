@@ -103,12 +103,12 @@ class EndpointResource(MethodResource, Resource):
 
         return (content, code, headers)
 
-    def empty_response(self):
+    def empty_response(self) -> Response:
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
 
     # This function has to be coupled with a marshal_with(TotalSchema, code=206)
-    def pagination_total(self, total):
+    def pagination_total(self, total: int) -> Response:
         return self.response({"total": total}, code=206)
 
     def get_user_if_logged(self, allow_access_token_parameter=False):

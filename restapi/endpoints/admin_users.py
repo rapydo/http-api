@@ -1,11 +1,11 @@
-from typing import Dict, Union
+from typing import Any, Dict, List, Optional, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.connectors import smtp
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.detect import detector
 from restapi.utilities.globals import mem
@@ -175,7 +175,7 @@ class AdminUsers(EndpointResource):
         summary="Obtain information on a single user",
         responses={200: "User information successfully retrieved"},
     )
-    def get(self, user_id=None):
+    def get(self, user_id: Optional[str] = None) -> Response:
 
         users = None
 
@@ -204,9 +204,9 @@ class AdminUsers(EndpointResource):
             409: "This user already exists",
         },
     )
-    def post(self, **kwargs):
+    def post(self, **kwargs: Any) -> Response:
 
-        roles = kwargs.pop("roles", [])
+        roles: List[str] = kwargs.pop("roles", [])
         group_id = kwargs.pop("group")
 
         email_notification = kwargs.pop("email_notification", False)
@@ -243,7 +243,7 @@ class AdminUsers(EndpointResource):
         summary="Modify a user",
         responses={200: "User successfully modified"},
     )
-    def put(self, user_id, **kwargs):
+    def put(self, user_id: str, **kwargs: Any) -> Response:
 
         user = self.auth.get_user(user_id=user_id)
 
@@ -258,7 +258,7 @@ class AdminUsers(EndpointResource):
         else:
             unhashed_password = None
 
-        roles = kwargs.pop("roles", [])
+        roles: List[str] = kwargs.pop("roles", [])
 
         group_id = kwargs.pop("group", None)
 
@@ -295,7 +295,7 @@ class AdminUsers(EndpointResource):
         summary="Delete a user",
         responses={200: "User successfully deleted"},
     )
-    def delete(self, user_id):
+    def delete(self, user_id: str) -> Response:
 
         user = self.auth.get_user(user_id=user_id)
 
