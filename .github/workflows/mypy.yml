@@ -33,17 +33,26 @@ jobs:
             flask_caching \
             flask_cors \
             flask_restful \
+            flask_sqlalchemy \
+            flask_migrate \
             celery \
             neomodel \
             neo4j \
+            neobolt \
             sqlalchemy \
             pymodm \
+            mongoengine \
+            celerybeatmongo \
+            redbeat \
+            geolite2 \
             plumbum \
             faker \
             psutil \
+            amqp.exceptions \
             jwt.exceptions \
             passlib \
-            wrong \
+            gripcontrol \
+            pubcontrol \
             ; do
             echo "[mypy-${lib}.*]" >> mypy.ini
             echo "ignore_missing_imports = True" >> mypy.ini
