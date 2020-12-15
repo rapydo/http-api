@@ -6,17 +6,24 @@ from typing import Dict, List, Optional, Union
 
 import pika
 import requests
+from pika.exceptions import (
+    AMQPChannelError,
+    AMQPConnectionError,
+    ChannelClosedByBroker,
+    ConnectionClosed,
+    UnroutableError,
+)
 from requests.auth import HTTPBasicAuth
 
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
 
 
 class RabbitExt(Connector):
     def __init__(self, app=None):
-        self.connection: pika.BlockingConnection = None
+        self.connection: Optional[pika.BlockingConnection] = None
         super().__init__(app)
 
     def get_connection_exception(self):
@@ -26,7 +33,7 @@ class RabbitExt(Connector):
         #   ProbableAccessDeniedError,
         #   ConnectionClosed...
         return (
-            pika.exceptions.AMQPConnectionError,
+            AMQPConnectionError,
             # Includes failures in name resolution
             socket.gaierror,
         )
@@ -44,10 +51,13 @@ class RabbitExt(Connector):
 
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
-        credentials = pika.PlainCredentials(
-            variables.get("user"),
-            variables.get("password"),
-        )
+        if (user := variables.get("user")) is None:
+            raise ServiceUnavailable("Missing credentials")
+
+        if (password := variables.get("password")) is None:
+            raise ServiceUnavailable("Missing credentials")
+
+        credentials = pika.PlainCredentials(user, password)
 
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
@@ -58,17 +68,20 @@ class RabbitExt(Connector):
             # Enable client certification verification
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
-            ssl_options = pika.SSLOptions(
+            ssl_options: Optional[pika.SSLOptions] = pika.SSLOptions(
                 context=context, server_hostname=variables.get("host")
             )
         else:
             ssl_options = None
 
+        if (host := variables.get("host")) is None:
+            raise ServiceUnavailable("Missing hostname")
+
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                host=variables.get("host"),
+                host=host,
                 port=int(variables.get("port", "0")),
-                virtual_host=variables.get("vhost"),
+                virtual_host=variables.get("vhost", "/"),
                 credentials=credentials,
                 ssl_options=ssl_options,
             )
@@ -86,7 +99,9 @@ class RabbitExt(Connector):
                 self.connection.close()
 
     def is_connected(self) -> bool:
-        return bool(self.connection.is_open)
+        if self.connection and self.connection.is_open:
+            return True
+        return False
 
     def exchange_exists(self, exchange: str) -> bool:
         channel = self.get_channel()
@@ -94,7 +109,7 @@ class RabbitExt(Connector):
             out = channel.exchange_declare(exchange=exchange, passive=True)
             log.debug(out)
             return True
-        except pika.exceptions.ChannelClosedByBroker as e:
+        except ChannelClosedByBroker as e:
             log.error(e)
             return False
 
@@ -118,7 +133,7 @@ class RabbitExt(Connector):
             out = channel.queue_declare(queue=queue, passive=True)
             log.debug(out)
             return True
-        except pika.exceptions.ChannelClosedByBroker as e:
+        except ChannelClosedByBroker as e:
             log.error(e)
             return False
 
@@ -263,17 +278,17 @@ class RabbitExt(Connector):
             )
             log.debug("Message sent to RabbitMQ")
             return True
-        except pika.exceptions.UnroutableError as e:
+        except UnroutableError as e:
             log.error(e)
 
-        except pika.exceptions.ConnectionClosed as e:
+        except ConnectionClosed as e:
             # TODO: This happens often. Check if heartbeat solves problem.
             log.error("Failed to write message, connection is dead ({})", e)
 
-        except pika.exceptions.AMQPConnectionError as e:
+        except AMQPConnectionError as e:
             log.error("Failed to write message, connection failed ({})", e)
 
-        except pika.exceptions.AMQPChannelError as e:
+        except AMQPChannelError as e:
             log.error("Failed to write message, channel is dead ({})", e)
             self.channel = None
 
@@ -290,6 +305,10 @@ class RabbitExt(Connector):
         :return: An healthy channel.
         :raises: AttributeError if the connection is None.
         """
+
+        if not self.connection:
+            raise ServiceUnavailable(f"Service {self.name} is not available")
+
         if self.channel is None:
             log.debug("Creating new channel.")
             self.channel = self.connection.channel()
