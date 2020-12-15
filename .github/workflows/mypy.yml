@@ -18,36 +18,18 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install mypy lxml html5lib pymongo-stubs
+          pip install mypy lxml html5lib pymongo-stubs pika-stubs
           pip install --upgrade --no-cache-dir --editable .
 
       - name: MyPy
         run: |
 
           echo "[mypy]" > mypy.ini
-          echo "[mypy-glom.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-flask_apispec.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-apispec.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-flask_caching.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-flask_cors.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-flask_restful.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-celery.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-neomodel.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-neo4j.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-sqlalchemy.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-plumbum.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          echo "[mypy-faker.*]" >> mypy.ini
-          echo "ignore_missing_imports = True" >> mypy.ini
-          mypy --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable --txt-report . --html-report . restapi/
+
+          for lib in glom flask_apispec apispec flask_caching flask_cors flask_restful celery neomodel neo4j sqlalchemy pymodm plumbum faker psutil jwt.exceptions passlib wrong; do
+            echo "[mypy-${lib}.*]" >> mypy.ini
+            
+          done
+
+          mypy --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report . --html-report . restapi/
           cat index.txt
