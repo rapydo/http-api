@@ -12,63 +12,70 @@ from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import Role
 
 
+class SystemSchema(Schema):
+    boot_time = fields.DateTime(format=ISO8601UTC)
+
+
+class CPUSchema(Schema):
+    count = fields.Int()
+    load = fields.Decimal(places=2)
+    user = fields.Int()
+    system = fields.Int()
+    idle = fields.Int()
+    wait = fields.Int()
+    stolen = fields.Int()
+
+
+class RAMSchema(Schema):
+    total = fields.Int()
+    used = fields.Int()
+    active = fields.Int()
+    inactive = fields.Int()
+    buffer = fields.Int()
+    free = fields.Int()
+    cache = fields.Int()
+
+
+class SwapSchema(Schema):
+    from_disk = fields.Int()
+    to_disk = fields.Int()
+    total = fields.Int()
+    used = fields.Int()
+    free = fields.Int()
+
+
+class DiskSchema(Schema):
+    total_disk_space = fields.Decimal(places=2)
+    used_disk_space = fields.Decimal(places=2)
+    free_disk_space = fields.Decimal(places=2)
+    occupacy = fields.Decimal(places=2)
+
+
+class ProcSchema(Schema):
+    waiting_for_run = fields.Int()
+    uninterruptible_sleep = fields.Int()
+
+
+class IOSchema(Schema):
+    blocks_received = fields.Int()
+    blocks_sent = fields.Int()
+
+
+class NetworkSchema(Schema):
+    min = fields.Decimal(places=2)
+    max = fields.Decimal(places=2)
+    avg = fields.Decimal(places=2)
+
+
 class StatsSchema(Schema):
-    system = fields.Nested({"boot_time": fields.DateTime(format=ISO8601UTC)})
-    cpu = fields.Nested(
-        {
-            "count": fields.Int(),
-            "load": fields.Decimal(places=2),
-            "user": fields.Int(),
-            "system": fields.Int(),
-            "idle": fields.Int(),
-            "wait": fields.Int(),
-            "stolen": fields.Int(),
-        }
-    )
-    ram = fields.Nested(
-        {
-            "total": fields.Int(),
-            "used": fields.Int(),
-            "active": fields.Int(),
-            "inactive": fields.Int(),
-            "buffer": fields.Int(),
-            "free": fields.Int(),
-            "cache": fields.Int(),
-        }
-    )
-
-    swap = fields.Nested(
-        {
-            "from_disk": fields.Int(),
-            "to_disk": fields.Int(),
-            "total": fields.Int(),
-            "used": fields.Int(),
-            "free": fields.Int(),
-        }
-    )
-
-    disk = fields.Nested(
-        {
-            "total_disk_space": fields.Decimal(places=2),
-            "used_disk_space": fields.Decimal(places=2),
-            "free_disk_space": fields.Decimal(places=2),
-            "occupacy": fields.Decimal(places=2),
-        }
-    )
-
-    procs = fields.Nested(
-        {"waiting_for_run": fields.Int(), "uninterruptible_sleep": fields.Int()}
-    )
-
-    io = fields.Nested({"blocks_received": fields.Int(), "blocks_sent": fields.Int()})
-
-    network_latency = fields.Nested(
-        {
-            "min": fields.Decimal(places=2),
-            "max": fields.Decimal(places=2),
-            "avg": fields.Decimal(places=2),
-        }
-    )
+    system = fields.Nested(SystemSchema)
+    cpu = fields.Nested(CPUSchema)
+    ram = fields.Nested(RAMSchema)
+    swap = fields.Nested(SwapSchema)
+    disk = fields.Nested(DiskSchema)
+    procs = fields.Nested(ProcSchema)
+    io = fields.Nested(IOSchema)
+    network_latency = fields.Nested(NetworkSchema)
 
 
 class AdminStats(EndpointResource):

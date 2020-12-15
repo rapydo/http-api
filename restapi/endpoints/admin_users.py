@@ -1,4 +1,4 @@
-from typingtyping import Dict
+from typing import Dict
 
 from restapi import decorators
 from restapi.config import get_project_configuration
