@@ -137,7 +137,8 @@
 #     set_required = not strip_required
 #     auth = detector.get_authentication_instance()
 
-#     attributes: Dict[str, fields.Field] = {}
+#     # as defined in Marshmallow.schema.from_dict
+#     attributes: Dict[str, Union[fields.Field, type]] = {}
 #     if not exclude_email:
 #         attributes["email"] = fields.Email(required=set_required)
 #     attributes["password"] = fields.Str(

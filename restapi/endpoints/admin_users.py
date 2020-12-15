@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
@@ -54,7 +54,8 @@ class Group(Schema):
 
 
 def get_output_schema():
-    attributes: Dict[str, fields.Field] = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
 
     attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
@@ -89,7 +90,8 @@ def getInputSchema(request):
 
     set_required = request.method == "POST"
 
-    attributes: Dict[str, fields.Field] = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
     if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 

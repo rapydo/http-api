@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 from restapi import decorators
 from restapi.models import ISO8601UTC, Schema, fields, validate
@@ -30,7 +30,9 @@ class NewPassword(Schema):
 
 
 def patchUserProfile():
-    attributes: Dict[str, fields.Field] = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
+
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
@@ -52,7 +54,8 @@ class Group(Schema):
 
 
 def getProfileData():
-    attributes: Dict[str, fields.Field] = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
 
     attributes["uuid"] = fields.UUID(required=True)
     attributes["email"] = fields.Email(required=True)

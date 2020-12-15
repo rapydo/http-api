@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 from restapi import decorators
 from restapi.exceptions import NotFound
@@ -40,7 +40,8 @@ def getInputSchema(request):
         label = f"{u.name} {u.surname} ({u.email})"
         users[u.uuid] = label
 
-    attributes: Dict[str, fields.Field] = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
 
     attributes["shortname"] = fields.Str(required=True, description="Short name")
     attributes["fullname"] = fields.Str(required=True, description="Full name")

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
@@ -23,7 +23,9 @@ if detector.check_availability("smtp"):
         if not request:
             return Schema.from_dict({})
 
-        attributes: Dict[str, fields.Field] = {}
+        # as defined in Marshmallow.schema.from_dict
+        attributes: Dict[str, Union[fields.Field, type]] = {}
+
         attributes["name"] = fields.Str(required=True)
         attributes["surname"] = fields.Str(required=True)
         attributes["email"] = fields.Email(
