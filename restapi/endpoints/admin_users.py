@@ -1,3 +1,5 @@
+from typingtyping import Dict
+
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.connectors import smtp
@@ -52,7 +54,7 @@ class Group(Schema):
 
 
 def get_output_schema():
-    attributes = {}
+    attributes: Dict[str, fields.Field] = {}
 
     attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
@@ -87,7 +89,7 @@ def getInputSchema(request):
 
     set_required = request.method == "POST"
 
-    attributes = {}
+    attributes: Dict[str, fields.Field] = {}
     if request.method != "PUT":
         attributes["email"] = fields.Email(required=set_required)
 

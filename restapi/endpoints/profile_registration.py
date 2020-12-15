@@ -1,3 +1,5 @@
+from typing import Dict
+
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.connectors import smtp
@@ -21,7 +23,7 @@ if detector.check_availability("smtp"):
         if not request:
             return Schema.from_dict({})
 
-        attributes = {}
+        attributes: Dict[str, fields.Field] = {}
         attributes["name"] = fields.Str(required=True)
         attributes["surname"] = fields.Str(required=True)
         attributes["email"] = fields.Email(

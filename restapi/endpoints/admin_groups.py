@@ -1,3 +1,5 @@
+from typing import Dict
+
 from restapi import decorators
 from restapi.exceptions import NotFound
 from restapi.models import Schema, fields
@@ -38,7 +40,7 @@ def getInputSchema(request):
         label = f"{u.name} {u.surname} ({u.email})"
         users[u.uuid] = label
 
-    attributes = {}
+    attributes: Dict[str, fields.Field] = {}
 
     attributes["shortname"] = fields.Str(required=True, description="Short name")
     attributes["fullname"] = fields.Str(required=True, description="Full name")

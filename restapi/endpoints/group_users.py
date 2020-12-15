@@ -137,7 +137,7 @@
 #     set_required = not strip_required
 #     auth = detector.get_authentication_instance()
 
-#     attributes = {}
+#     attributes: Dict[str, fields.Field] = {}
 #     if not exclude_email:
 #         attributes["email"] = fields.Email(required=set_required)
 #     attributes["password"] = fields.Str(

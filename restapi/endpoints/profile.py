@@ -1,3 +1,5 @@
+from typing import Dict
+
 from restapi import decorators
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
@@ -28,7 +30,7 @@ class NewPassword(Schema):
 
 
 def patchUserProfile():
-    attributes = {}
+    attributes: Dict[str, fields.Field] = {}
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
     attributes["privacy_accepted"] = fields.Boolean()
@@ -50,7 +52,7 @@ class Group(Schema):
 
 
 def getProfileData():
-    attributes = {}
+    attributes: Dict[str, fields.Field] = {}
 
     attributes["uuid"] = fields.UUID(required=True)
     attributes["email"] = fields.Email(required=True)
