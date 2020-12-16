@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, TypedDict, TypeVar
 # mypy: ignore-errors
 from flask import Flask
 from flask import _app_ctx_stack as stack
+from glom import glom
 
 from restapi.config import (
     BACKEND_PACKAGE,
@@ -17,6 +18,7 @@ from restapi.config import (
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities import print_and_exit
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -24,6 +26,8 @@ from restapi.utilities.meta import Meta
 T = TypeVar("T", bound="Connector")
 
 CONNECTORS_FOLDER = "connectors"
+NO_AUTH = "NO_AUTHENTICATION"
+
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
@@ -216,6 +220,71 @@ class Connector(metaclass=abc.ABCMeta):
             log.debug("Got class definition for {}", connector_class)
 
         return services
+
+    @staticmethod
+    def init_services(
+        app: Flask,
+        project_init: bool = False,
+        project_clean: bool = False,
+        worker_mode: bool = False,
+        options: Optional[Dict[str, bool]] = None,
+        Detector: Any = None,
+    ) -> None:
+
+        Connector.app = app
+
+        if options is None:
+            options = {}
+
+        for connector_name, service in Detector.services.items():
+
+            if not service.get("available", False):
+                continue
+
+        if Detector.authentication_service == NO_AUTH:
+            if not worker_mode:
+                log.warning("No authentication service configured")
+        elif Detector.authentication_service not in Detector.services:
+            print_and_exit(
+                "Auth service '{}' is unreachable", Detector.authentication_service
+            )
+        elif not Detector.services[Detector.authentication_service].get(
+            "available", False
+        ):
+            print_and_exit(
+                "Auth service '{}' is not available", Detector.authentication_service
+            )
+
+        if Detector.authentication_service != NO_AUTH:
+
+            authentication_instance = Detector.get_authentication_instance()
+            authentication_instance.module_initialization()
+
+            # Only once in a lifetime
+            if project_init:
+
+                # Connector instance needed here
+                connector = glom(
+                    Detector.services, f"{Detector.authentication_service}.module"
+                ).get_instance()
+                log.debug("Initializing {}", Detector.authentication_service)
+                connector.initialize()
+
+                with app.app_context():
+                    authentication_instance.init_auth_db(options)
+                    log.info("Initialized authentication module")
+
+                if mem.initializer(app=app):
+                    log.info("Vanilla project has been initialized")
+                else:
+                    log.error("Errors during custom initialization")
+
+            if project_clean:
+                connector = glom(
+                    Detector.services, f"{Detector.authentication_service}.module"
+                ).get_instance()
+                log.debug("Destroying {}", Detector.authentication_service)
+                connector.destroy()
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):

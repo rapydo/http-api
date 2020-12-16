@@ -14,8 +14,6 @@ from restapi.config import (
 )
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.utilities import print_and_exit
-from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -98,6 +96,7 @@ class Detector:
         Detector.services = services
         Connector.services = services
 
+    # Deprecated since 1.0
     @staticmethod
     def init_services(
         app: Flask,
@@ -106,61 +105,19 @@ class Detector:
         worker_mode: bool = False,
         options: Optional[Dict[str, bool]] = None,
     ) -> None:
+        log.warning(
+            "Deprecated use of Detector.init_services, "
+            "use Connector.init_services instead"
+        )
 
-        Connector.app = app
-
-        if options is None:
-            options = {}
-
-        for connector_name, service in Detector.services.items():
-
-            if not service.get("available", False):
-                continue
-
-        if Detector.authentication_service == NO_AUTH:
-            if not worker_mode:
-                log.warning("No authentication service configured")
-        elif Detector.authentication_service not in Detector.services:
-            print_and_exit(
-                "Auth service '{}' is unreachable", Detector.authentication_service
-            )
-        elif not Detector.services[Detector.authentication_service].get(
-            "available", False
-        ):
-            print_and_exit(
-                "Auth service '{}' is not available", Detector.authentication_service
-            )
-
-        if Detector.authentication_service != NO_AUTH:
-
-            authentication_instance = Detector.get_authentication_instance()
-            authentication_instance.module_initialization()
-
-            # Only once in a lifetime
-            if project_init:
-
-                # Connector instance needed here
-                connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Initializing {}", Detector.authentication_service)
-                connector.initialize()
-
-                with app.app_context():
-                    authentication_instance.init_auth_db(options)
-                    log.info("Initialized authentication module")
-
-                if mem.initializer(app=app):
-                    log.info("Vanilla project has been initialized")
-                else:
-                    log.error("Errors during custom initialization")
-
-            if project_clean:
-                connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Destroying {}", Detector.authentication_service)
-                connector.destroy()
+        return Connector.init_services(
+            app=app,
+            project_init=project_init,
+            project_clean=project_clean,
+            worker_mode=worker_mode,
+            options=options,
+            Detector=Detector,
+        )
 
 
 detector = Detector
