@@ -40,12 +40,13 @@ class Service(TypedDict):
 
 class Connector(metaclass=abc.ABCMeta):
 
+    authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
     variables: Dict[str, str] = {}
     models: Dict[str, Any] = {}
-    # Assigned by Detector during init_services
+    # Assigned by init_services
     app: Flask = None
 
-    # Modified by Detector during init_services
+    # Modified by during init_services
     available: bool = False
 
     services: Dict[str, Service] = {
@@ -77,7 +78,7 @@ class Connector(metaclass=abc.ABCMeta):
         # Added to convince mypy that self.app cannot be None
         if self.app is None:  # pragma: no cover
             # This should never happen because app is
-            # assigned by Detector during init_services
+            # assigned during init_services
             from flask import current_app
 
             self.app = current_app
@@ -85,7 +86,7 @@ class Connector(metaclass=abc.ABCMeta):
     @staticmethod
     def init():
 
-        # log.info("Authentication service: {}", Detector.authentication_service)
+        log.info("Authentication service: {}", Connector.authentication_service)
 
         Connector.services = Connector.load_connectors(
             ABS_RESTAPI_PATH, BACKEND_PACKAGE, Connector.services
@@ -258,26 +259,26 @@ class Connector(metaclass=abc.ABCMeta):
         if options is None:
             options = {}
 
-        for connector_name, service in Detector.services.items():
+        for connector_name, service in Connector.services.items():
 
             if not service.get("available", False):
                 continue
 
-        if Detector.authentication_service == NO_AUTH:
+        if Connector.authentication_service == NO_AUTH:
             if not worker_mode:
                 log.warning("No authentication service configured")
-        elif Detector.authentication_service not in Detector.services:
+        elif Connector.authentication_service not in Connector.services:
             print_and_exit(
-                "Auth service '{}' is unreachable", Detector.authentication_service
+                "Auth service '{}' is unreachable", Connector.authentication_service
             )
-        elif not Detector.services[Detector.authentication_service].get(
+        elif not Connector.services[Connector.authentication_service].get(
             "available", False
         ):
             print_and_exit(
-                "Auth service '{}' is not available", Detector.authentication_service
+                "Auth service '{}' is not available", Connector.authentication_service
             )
 
-        if Detector.authentication_service != NO_AUTH:
+        if Connector.authentication_service != NO_AUTH:
 
             authentication_instance = Detector.get_authentication_instance()
             authentication_instance.module_initialization()
@@ -287,9 +288,9 @@ class Connector(metaclass=abc.ABCMeta):
 
                 # Connector instance needed here
                 connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
+                    Connector.services, f"{Connector.authentication_service}.module"
                 ).get_instance()
-                log.debug("Initializing {}", Detector.authentication_service)
+                log.debug("Initializing {}", Connector.authentication_service)
                 connector.initialize()
 
                 with app.app_context():
@@ -303,9 +304,9 @@ class Connector(metaclass=abc.ABCMeta):
 
             if project_clean:
                 connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
+                    Connector.services, f"{Connector.authentication_service}.module"
                 ).get_instance()
-                log.debug("Destroying {}", Detector.authentication_service)
+                log.debug("Destroying {}", Connector.authentication_service)
                 connector.destroy()
 
     @classmethod
