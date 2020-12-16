@@ -1,6 +1,5 @@
 import os
-from types import ModuleType
-from typing import Dict, Optional, TypedDict, TypeVar
+from typing import Dict, Optional, TypeVar
 
 from flask import Flask
 from glom import glom
@@ -27,29 +26,12 @@ T = TypeVar("T", bound="Connector")
 NO_AUTH = "NO_AUTHENTICATION"
 
 
-class Service(TypedDict):
-    module: Optional[ModuleType]
-    available: bool
-    variables: Dict[str, str]
-
-
 class Detector:
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
     authentication_module = None
 
-    # Only used to get:
-    # - services[name]['module']
-    # - services[name]['available']
-    # - services[name]['variables']
-
-    services: Dict[str, Service] = {
-        "authentication": {
-            "available": Env.get_bool("AUTH_ENABLE"),
-            "module": None,
-            "variables": {},
-        }
-    }
+    services = Connector.services
 
     # Deprecated since 1.0
     @staticmethod
@@ -120,7 +102,7 @@ class Detector:
             available = enabled or external
 
             if not available:
-                Detector.services[connector] = {
+                Connector.services[connector] = {
                     "available": available,
                     "module": None,
                     "variables": {},
@@ -139,7 +121,7 @@ class Detector:
             else:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
-                Detector.services[connector]["available"] = False
+                Connector.services[connector]["available"] = False
                 continue
 
             try:
@@ -152,7 +134,7 @@ class Detector:
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            Detector.services[connector] = {
+            Connector.services[connector] = {
                 "available": available,
                 "module": connector_module,
                 "variables": variables,
