@@ -8,6 +8,7 @@ from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.config import CUSTOM_PACKAGE, PRODUCTION
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -72,7 +73,6 @@ def launch():  # pragma: no cover
 @click.option("--services", "-s", multiple=True, default=[])
 def verify(services):
     """Verify connected service"""
-    from restapi.services.detect import detector
 
     if len(services) == 0:
         log.warning("Empty list of services, nothing to be verified.")
@@ -80,10 +80,10 @@ def verify(services):
 
     for service in services:
 
-        if not glom(detector.services, f"{service}.available", default=False):
+        if not Connector.check_availability(service):
             print_and_exit("Service {} not detected", service)
         log.info("Verifying service: {}", service)
-        variables = glom(detector.services, f"{service}.variables", default={})
+        variables = glom(Connector.services, f"{service}.variables", default={})
         host, port = get_service_address(variables, "host", "port", service)
         wait_socket(host, port, service)
 
@@ -150,9 +150,7 @@ def mywait():
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
     """
-    from restapi.services.detect import detector
-
-    for name, service in detector.services.items():
+    for name, service in Connector.services.items():
 
         if not service.get("available", False):
             continue
