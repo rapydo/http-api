@@ -34,6 +34,7 @@ class Service(TypedDict):
 class Detector:
 
     authentication_service = Env.get("AUTH_SERVICE")
+    authentication_module = None
 
     # Only used to get:
     # - services[name]['module']
@@ -48,14 +49,16 @@ class Detector:
         }
     }
 
-    def check_availability(self, name: str) -> bool:
-        if name not in self.services:
+    @staticmethod
+    def check_availability(name: str) -> bool:
+        if name not in Detector.services:
             return False
 
-        return self.services[name].get("available", False)
+        return Detector.services[name].get("available", False)
 
-    def get_authentication_instance(self):
-        return self.authentication_module.Authentication()
+    @staticmethod
+    def get_authentication_instance():
+        return Detector.authentication_module.Authentication()
 
     @staticmethod
     def init():
@@ -180,8 +183,8 @@ class Detector:
 
         return True
 
+    @staticmethod
     def init_services(
-        self,
         app: Flask,
         project_init: bool = False,
         project_clean: bool = False,
@@ -194,29 +197,31 @@ class Detector:
         if options is None:
             options = {}
 
-        for connector_name, service in self.services.items():
+        for connector_name, service in Detector.services.items():
 
             if not service.get("available", False):
                 continue
 
-        if self.authentication_service is None:
+        if Detector.authentication_service is None:
             if not worker_mode:
                 log.warning("No authentication service configured")
-        elif self.authentication_service not in self.services:
+        elif Detector.authentication_service not in Detector.services:
             print_and_exit(
-                "Auth service '{}' is unreachable", self.authentication_service
+                "Auth service '{}' is unreachable", Detector.authentication_service
             )
-        elif not self.services[self.authentication_service].get("available", False):
+        elif not Detector.services[Detector.authentication_service].get(
+            "available", False
+        ):
             print_and_exit(
-                "Auth service '{}' is not available", self.authentication_service
+                "Auth service '{}' is not available", Detector.authentication_service
             )
 
-        if self.authentication_service is not None:
-            self.authentication_module = Meta.get_authentication_module(
-                self.authentication_service
+        if Detector.authentication_service is not None:
+            Detector.authentication_module = Meta.get_authentication_module(
+                Detector.authentication_service
             )
 
-            authentication_instance = self.authentication_module.Authentication()
+            authentication_instance = Detector.authentication_module.Authentication()
             authentication_instance.module_initialization()
 
             # Only once in a lifetime
@@ -224,9 +229,9 @@ class Detector:
 
                 # Connector instance needed here
                 connector = glom(
-                    self.services, f"{self.authentication_service}.module"
+                    Detector.services, f"{Detector.authentication_service}.module"
                 ).get_instance()
-                log.debug("Initializing {}", self.authentication_service)
+                log.debug("Initializing {}", Detector.authentication_service)
                 connector.initialize()
 
                 with app.app_context():
@@ -240,12 +245,12 @@ class Detector:
 
             if project_clean:
                 connector = glom(
-                    self.services, f"{self.authentication_service}.module"
+                    Detector.services, f"{Detector.authentication_service}.module"
                 ).get_instance()
-                log.debug("Destroying {}", self.authentication_service)
+                log.debug("Destroying {}", Detector.authentication_service)
                 connector.destroy()
 
 
-detector = Detector()
+detector = Detector
 
 detector.init()
