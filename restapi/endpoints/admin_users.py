@@ -188,7 +188,7 @@ class AdminUsers(EndpointResource):
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
-        if detector.authentication_service == "neo4j":
+        if Connector.authentication_service == "neo4j":
             for u in users:
                 u.belongs_to = u.belongs_to.single()
 
@@ -220,7 +220,7 @@ class AdminUsers(EndpointResource):
             user = self.auth.create_user(kwargs, roles)
             self.auth.save_user(user)
         except DatabaseDuplicatedEntry as e:
-            if detector.authentication_service == "sqlalchemy":
+            if Connector.authentication_service == "sqlalchemy":
                 self.auth.db.session.rollback()
             raise Conflict(str(e))
 

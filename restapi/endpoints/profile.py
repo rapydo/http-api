@@ -1,6 +1,7 @@
 from typing import Dict, Union
 
 from restapi import decorators
+from restapi.connectors import Connector
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
 from restapi.services.detect import detector
@@ -117,7 +118,7 @@ class Profile(EndpointResource):
             "roles": {role.name: role.description for role in current_user.roles},
         }
 
-        if detector.authentication_service == "neo4j":
+        if Connector.authentication_service == "neo4j":
             data["group"] = current_user.belongs_to.single()
         else:
             data["group"] = current_user.belongs_to

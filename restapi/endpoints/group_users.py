@@ -29,14 +29,14 @@
 #         users = self.auth.get_users()
 #         current_user = self.get_user()
 
-#         if detector.authentication_service == "neo4j":
+#         if Connector.authentication_service == "neo4j":
 #             current_user.belongs_to = current_user.belongs_to.single()
 
 #         data = []
 #         # Should iterate over current_user.belong_to.users instead of on all
 #         for user in users:
 
-#             if detector.authentication_service == "neo4j":
+#             if Connector.authentication_service == "neo4j":
 #                 user.belongs_to = user.belongs_to.single()
 
 #             if current_user.belongs_to != user.belongs_to:
@@ -73,7 +73,7 @@
 
 
 # def get_groups():
-#     auth_service = detector.authentication_service
+#     auth_service = Connector.authentication_service
 
 #     if auth_service == 'neo4j':
 
