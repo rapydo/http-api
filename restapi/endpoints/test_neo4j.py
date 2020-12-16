@@ -1,13 +1,12 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.connectors import neo4j
+from restapi.connectors import Connector, neo4j
 from restapi.exceptions import RestApiException
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-if TESTING and detector.check_availability("neo4j"):
+if TESTING and Connector.check_availability("neo4j"):
 
     from restapi.connectors.neo4j.models import Group, User
 
