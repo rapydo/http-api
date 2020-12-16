@@ -24,6 +24,8 @@ CONNECTORS_FOLDER = "connectors"
 # https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
 T = TypeVar("T", bound="Connector")
 
+NO_AUTH = "NO_AUTHENTICATION"
+
 
 class Service(TypedDict):
     module: Optional[ModuleType]
@@ -33,7 +35,7 @@ class Service(TypedDict):
 
 class Detector:
 
-    authentication_service = Env.get("AUTH_SERVICE")
+    authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
     authentication_module = None
 
     # Only used to get:
@@ -194,61 +196,58 @@ class Detector:
 
         Connector.app = app
 
-        if options is None:
-            options = {}
-
-        for connector_name, service in Detector.services.items():
-
-            if not service.get("available", False):
-                continue
-
-        if Detector.authentication_service is None:
+        if Detector.authentication_service == NO_AUTH:
             if not worker_mode:
                 log.warning("No authentication service configured")
-        elif Detector.authentication_service not in Detector.services:
+            return
+
+        if Detector.authentication_service not in Detector.services:
             print_and_exit(
                 "Auth service '{}' is unreachable", Detector.authentication_service
             )
-        elif not Detector.services[Detector.authentication_service].get(
+
+        if not Detector.services[Detector.authentication_service].get(
             "available", False
         ):
             print_and_exit(
                 "Auth service '{}' is not available", Detector.authentication_service
             )
 
-        if Detector.authentication_service is not None:
-            Detector.authentication_module = Meta.get_authentication_module(
-                Detector.authentication_service
-            )
+        if options is None:
+            options = {}
 
-            authentication_instance = Detector.authentication_module.Authentication()
-            authentication_instance.module_initialization()
+        Detector.authentication_module = Meta.get_authentication_module(
+            Detector.authentication_service
+        )
 
-            # Only once in a lifetime
-            if project_init:
+        authentication_instance = Detector.authentication_module.Authentication()
+        authentication_instance.module_initialization()
 
-                # Connector instance needed here
-                connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Initializing {}", Detector.authentication_service)
-                connector.initialize()
+        # Only once in a lifetime
+        if project_init:
 
-                with app.app_context():
-                    authentication_instance.init_auth_db(options)
-                    log.info("Initialized authentication module")
+            # Connector instance needed here
+            connector = glom(
+                Detector.services, f"{Detector.authentication_service}.module"
+            ).get_instance()
+            log.debug("Initializing {}", Detector.authentication_service)
+            connector.initialize()
 
-                if mem.initializer(app=app):
-                    log.info("Vanilla project has been initialized")
-                else:
-                    log.error("Errors during custom initialization")
+            with app.app_context():
+                authentication_instance.init_auth_db(options)
+                log.info("Initialized authentication module")
 
-            if project_clean:
-                connector = glom(
-                    Detector.services, f"{Detector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Destroying {}", Detector.authentication_service)
-                connector.destroy()
+            if mem.initializer(app=app):
+                log.info("Vanilla project has been initialized")
+            else:
+                log.error("Errors during custom initialization")
+
+        if project_clean:
+            connector = glom(
+                Detector.services, f"{Detector.authentication_service}.module"
+            ).get_instance()
+            log.debug("Destroying {}", Detector.authentication_service)
+            connector.destroy()
 
 
 detector = Detector
