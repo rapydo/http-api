@@ -30,8 +30,6 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
 
     detector.init_services(
         app=app,
-        project_init=False,
-        project_clean=False,
     )
 
     try:

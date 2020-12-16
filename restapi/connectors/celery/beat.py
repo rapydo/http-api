@@ -19,7 +19,7 @@ app = Flask("beat")
 
 # Explicit init_services is needed because the app is created directly from Flask
 # instead of using the create_app method from server
-detector.init_services(app=app, project_init=False, project_clean=False)
+detector.init_services(app=app)
 
 # Used by Celery to run the instance (-A app)
 celery_app = celery.get_instance().celery_app

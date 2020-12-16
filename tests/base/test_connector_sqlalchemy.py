@@ -30,8 +30,6 @@ def test_sqlalchemy(app: Flask) -> None:
 
     detector.init_services(
         app=app,
-        project_init=False,
-        project_clean=False,
     )
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":

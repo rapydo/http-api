@@ -28,8 +28,6 @@ def test_redis(app: Flask) -> None:
 
     detector.init_services(
         app=app,
-        project_init=False,
-        project_clean=False,
     )
 
     obj = connector.get_instance(host="invalidhostname", port=123)
