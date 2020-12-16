@@ -66,6 +66,7 @@ class Connector(metaclass=abc.ABCMeta):
     # }
     instances: InstancesCache = {}
 
+    # App can be removed?
     def __init__(self, app=None):
 
         self.name = self.__class__.__name__.lower()
