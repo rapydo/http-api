@@ -1,5 +1,6 @@
 import os
-from typing import Dict, Optional, TypeVar
+from types import ModuleType
+from typing import Dict, Optional, TypedDict, TypeVar
 
 from flask import Flask
 from glom import glom
@@ -26,21 +27,36 @@ T = TypeVar("T", bound="Connector")
 NO_AUTH = "NO_AUTHENTICATION"
 
 
+class Service(TypedDict):
+    module: Optional[ModuleType]
+    available: bool
+    variables: Dict[str, str]
+
+
 class Detector:
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
     authentication_module = None
 
-    services = Connector.services
+    # Only used to get:
+    # - services[name]['module']
+    # - services[name]['available']
+    # - services[name]['variables']
 
-    # Deprecated since 1.0
+    services: Dict[str, Service] = {
+        "authentication": {
+            "available": Env.get_bool("AUTH_ENABLE"),
+            "module": None,
+            "variables": {},
+        }
+    }
+
     @staticmethod
     def check_availability(name: str) -> bool:
-        log.warning(
-            "Deprecated use of detector.check_availability, "
-            "use Connector.check_availability instead"
-        )
-        return Connector.check_availability(name)
+        if name not in Detector.services:
+            return False
+
+        return Detector.services[name].get("available", False)
 
     @staticmethod
     def get_authentication_instance():
@@ -102,7 +118,7 @@ class Detector:
             available = enabled or external
 
             if not available:
-                Connector.services[connector] = {
+                Detector.services[connector] = {
                     "available": available,
                     "module": None,
                     "variables": {},
@@ -121,7 +137,7 @@ class Detector:
             else:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
-                Connector.services[connector]["available"] = False
+                Detector.services[connector]["available"] = False
                 continue
 
             try:
@@ -134,7 +150,7 @@ class Detector:
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            Connector.services[connector] = {
+            Detector.services[connector] = {
                 "available": available,
                 "module": connector_module,
                 "variables": variables,
