@@ -8,7 +8,6 @@ from faker import Faker
 from flask import Flask
 from neo4j.exceptions import CypherSyntaxError
 
-from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
@@ -18,7 +17,7 @@ from restapi.utilities.logs import log
 
 CONNECTOR = "neo4j"
 
-if not Connector.check_availability(CONNECTOR):
+if not detector.check_availability(CONNECTOR):
 
     try:
         obj = connector.get_instance()

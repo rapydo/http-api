@@ -7,7 +7,6 @@ import pytest
 from faker import Faker
 from flask import Flask
 
-from restapi.connectors import Connector
 from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
 from restapi.exceptions import ServiceUnavailable
@@ -21,7 +20,7 @@ CONNECTOR = "celery"
 
 def test_celery(app: Flask, faker: Faker) -> None:
 
-    if not Connector.check_availability(CONNECTOR):
+    if not detector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()

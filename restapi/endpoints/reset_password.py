@@ -4,7 +4,7 @@ import jwt
 
 from restapi import decorators
 from restapi.config import get_frontend_url, get_project_configuration
-from restapi.connectors import Connector, smtp
+from restapi.connectors import smtp
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
@@ -34,7 +34,7 @@ def send_password_reset_link(smtp, uri, title, reset_email):
 
 
 # This endpoint require the server to send the reset token via email
-if Connector.check_availability("smtp"):
+if detector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
 
