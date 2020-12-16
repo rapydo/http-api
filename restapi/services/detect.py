@@ -82,24 +82,30 @@ class Detector:
 
         log.info("Authentication service: {}", Detector.authentication_service)
 
-        Detector.load_connectors(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
+        services: Dict[str, Service] = {}
+        services = Detector.load_connectors(ABS_RESTAPI_PATH, BACKEND_PACKAGE, services)
 
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            Detector.load_connectors(
-                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE
+            services = Detector.load_connectors(
+                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE, services
             )
 
-        Detector.load_connectors(
-            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE
+        services = Detector.load_connectors(
+            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, services
         )
 
+        Detector.services = services
+        Connector.services = services
+
     @staticmethod
-    def load_connectors(path, module):
+    def load_connectors(
+        path: str, module: str, services: Dict[str, Service]
+    ) -> Dict[str, Service]:
 
         main_folder = os.path.join(path, CONNECTORS_FOLDER)
         if not os.path.isdir(main_folder):
             log.debug("Connectors folder not found: {}", main_folder)
-            return False
+            return services
 
         # Looking for all file in apis folder
         for connector in os.listdir(main_folder):
@@ -133,12 +139,7 @@ class Detector:
             available = enabled or external
 
             if not available:
-                Detector.services[connector] = {
-                    "available": available,
-                    "module": None,
-                    "variables": {},
-                }
-                Connector.services[connector] = {
+                services[connector] = {
                     "available": available,
                     "module": None,
                     "variables": {},
@@ -157,8 +158,7 @@ class Detector:
             else:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
-                Detector.services[connector]["available"] = False
-                Connector.services[connector]["available"] = False
+                services[connector]["available"] = False
                 continue
 
             try:
@@ -171,12 +171,7 @@ class Detector:
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            Detector.services[connector] = {
-                "available": available,
-                "module": connector_module,
-                "variables": variables,
-            }
-            Connector.services[connector] = {
+            services[connector] = {
                 "available": available,
                 "module": connector_module,
                 "variables": variables,
@@ -209,7 +204,7 @@ class Detector:
 
             log.debug("Got class definition for {}", connector_class)
 
-        return True
+        return services
 
     @staticmethod
     def init_services(
