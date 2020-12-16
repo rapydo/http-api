@@ -3,6 +3,7 @@ import time
 import pytest
 from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import redis as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -13,7 +14,7 @@ CONNECTOR = "redis"
 
 def test_redis(app: Flask) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()

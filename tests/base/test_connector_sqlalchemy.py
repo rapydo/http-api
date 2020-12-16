@@ -4,6 +4,7 @@ import time
 import pytest
 from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -14,7 +15,7 @@ CONNECTOR = "sqlalchemy"
 
 def test_sqlalchemy(app: Flask) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()
