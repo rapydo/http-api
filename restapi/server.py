@@ -129,7 +129,7 @@ def create_app(
     if not isinstance(mem.customizer, BaseCustomizer):
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    Connector.load_connectors()
+    # Connector.load_connectors()
 
     detector.init_services(
         app=microservice,

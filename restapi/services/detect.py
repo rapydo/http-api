@@ -51,12 +51,14 @@ class Detector:
         }
     }
 
+    # Deprecated since 1.0
     @staticmethod
     def check_availability(name: str) -> bool:
-        if name not in Detector.services:
-            return False
-
-        return Detector.services[name].get("available", False)
+        log.warning(
+            "Deprecated use of detector.check_availability, "
+            "use Connector.check_availability instead"
+        )
+        return Connector.check_availability(name)
 
     @staticmethod
     def get_authentication_instance():

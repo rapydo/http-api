@@ -187,6 +187,16 @@ class Connector(metaclass=abc.ABCMeta):
 
         return obj
 
+    @staticmethod
+    def check_availability(name: str) -> bool:
+
+        from restapi.services.detect import Detector
+
+        if name not in Detector.services:
+            return False
+
+        return Detector.services[name].get("available", False)
+
     def get_instance(
         self: T,
         verification: Optional[int] = None,
