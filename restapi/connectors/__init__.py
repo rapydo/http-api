@@ -1,7 +1,8 @@
 import abc
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, TypeVar
+from types import ModuleType
+from typing import Any, Dict, Optional, TypedDict, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -18,6 +19,12 @@ T = TypeVar("T", bound="Connector")
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
+class Service(TypedDict):
+    module: Optional[ModuleType]
+    available: bool
+    variables: Dict[str, str]
+
+
 class Connector(metaclass=abc.ABCMeta):
 
     variables: Dict[str, str] = {}
@@ -27,6 +34,14 @@ class Connector(metaclass=abc.ABCMeta):
 
     # Modified by Detector during init_services
     available: bool = False
+
+    services: Dict[str, Service] = {
+        "authentication": {
+            "available": Env.get_bool("AUTH_ENABLE"),
+            "module": None,
+            "variables": {},
+        }
+    }
 
     # will contain:
     # instances = {

@@ -27,6 +27,7 @@ T = TypeVar("T", bound="Connector")
 NO_AUTH = "NO_AUTHENTICATION"
 
 
+# Also duplicated in Connector
 class Service(TypedDict):
     module: Optional[ModuleType]
     available: bool
@@ -43,6 +44,7 @@ class Detector:
     # - services[name]['available']
     # - services[name]['variables']
 
+    # Also duplicated in Connector
     services: Dict[str, Service] = {
         "authentication": {
             "available": Env.get_bool("AUTH_ENABLE"),
@@ -123,6 +125,11 @@ class Detector:
                     "module": None,
                     "variables": {},
                 }
+                Connector.services[connector] = {
+                    "available": available,
+                    "module": None,
+                    "variables": {},
+                }
                 continue
 
             connector_module = Meta.get_module_from_string(
@@ -138,6 +145,7 @@ class Detector:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
                 Detector.services[connector]["available"] = False
+                Connector.services[connector]["available"] = False
                 continue
 
             try:
@@ -151,6 +159,11 @@ class Detector:
                 print_and_exit(e)
 
             Detector.services[connector] = {
+                "available": available,
+                "module": connector_module,
+                "variables": variables,
+            }
+            Connector.services[connector] = {
                 "available": available,
                 "module": connector_module,
                 "variables": variables,
@@ -198,6 +211,11 @@ class Detector:
 
         if options is None:
             options = {}
+
+        for connector_name, service in Detector.services.items():
+
+            if not service.get("available", False):
+                continue
 
         if Detector.authentication_service == NO_AUTH:
             if not worker_mode:
