@@ -19,8 +19,6 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
-CONNECTORS_FOLDER = "connectors"
-
 # https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
 T = TypeVar("T", bound="Connector")
 
@@ -83,128 +81,22 @@ class Detector:
         log.info("Authentication service: {}", Detector.authentication_service)
 
         services: Dict[str, Service] = {}
-        services = Detector.load_connectors(ABS_RESTAPI_PATH, BACKEND_PACKAGE, services)
+
+        services = Connector.load_connectors(
+            ABS_RESTAPI_PATH, BACKEND_PACKAGE, services
+        )
 
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            services = Detector.load_connectors(
+            services = Connector.load_connectors(
                 os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE, services
             )
 
-        services = Detector.load_connectors(
+        services = Connector.load_connectors(
             os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, services
         )
 
         Detector.services = services
         Connector.services = services
-
-    @staticmethod
-    def load_connectors(
-        path: str, module: str, services: Dict[str, Service]
-    ) -> Dict[str, Service]:
-
-        main_folder = os.path.join(path, CONNECTORS_FOLDER)
-        if not os.path.isdir(main_folder):
-            log.debug("Connectors folder not found: {}", main_folder)
-            return services
-
-        # Looking for all file in apis folder
-        for connector in os.listdir(main_folder):
-            connector_path = os.path.join(path, CONNECTORS_FOLDER, connector)
-            if not os.path.isdir(connector_path):
-                continue
-            if connector.startswith("_"):
-                continue
-
-            # This is the only exception... we should rename sqlalchemy as alchemy
-            if connector == "sqlalchemy":
-                prefix = "alchemy"
-            else:
-                prefix = connector
-
-            variables = Env.load_variables_group(prefix=prefix)
-
-            if not Env.to_bool(variables.get("enable_connector", True)):
-                log.info("{} connector is disabled", connector)
-                continue
-
-            # if host is not in variables (like for Celery) do not consider it
-            external = False
-            if "host" in variables:
-                if host := variables.get("host"):
-                    external = Connector.is_external(host)
-                else:
-                    variables["enable"] = "0"
-
-            enabled = Env.to_bool(variables.get("enable"))
-            available = enabled or external
-
-            if not available:
-                services[connector] = {
-                    "available": available,
-                    "module": None,
-                    "variables": {},
-                }
-                continue
-
-            connector_module = Meta.get_module_from_string(
-                ".".join((module, CONNECTORS_FOLDER, connector))
-            )
-            classes = Meta.get_new_classes_from_module(connector_module)
-            for class_name, connector_class in classes.items():
-                if not issubclass(connector_class, Connector):
-                    continue
-
-                break
-            else:
-                log.error("No connector class found in {}/{}", main_folder, connector)
-                # To be removed
-                services[connector]["available"] = False
-                continue
-
-            try:
-                # This is to test the Connector compliance,
-                # i.e. to verify instance and get_instance in the connector module
-                # and verify that the Connector can be instanced
-                connector_module.instance
-                connector_module.get_instance
-                connector_class()
-            except AttributeError as e:  # pragma: no cover
-                print_and_exit(e)
-
-            services[connector] = {
-                "available": available,
-                "module": connector_module,
-                "variables": variables,
-            }
-
-            connector_class.available = True
-            connector_class.set_variables(variables)
-
-            # NOTE: module loading algoritm is based on core connectors
-            # if you need project connectors with models please review this part
-            models_file = os.path.join(connector_path, "models.py")
-
-            if os.path.isfile(models_file):
-                log.debug("Loading models from {}", connector_path)
-
-                base_models = Meta.import_models(
-                    connector, BACKEND_PACKAGE, exit_on_fail=True
-                )
-                if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                    extended_models = {}
-                else:
-                    extended_models = Meta.import_models(
-                        connector, EXTENDED_PACKAGE, exit_on_fail=False
-                    )
-                custom_models = Meta.import_models(
-                    connector, CUSTOM_PACKAGE, exit_on_fail=False
-                )
-
-                connector_class.set_models(base_models, extended_models, custom_models)
-
-            log.debug("Got class definition for {}", connector_class)
-
-        return services
 
     @staticmethod
     def init_services(

@@ -8,14 +8,22 @@ from typing import Any, Dict, Optional, TypedDict, TypeVar
 from flask import Flask
 from flask import _app_ctx_stack as stack
 
+from restapi.config import (
+    BACKEND_PACKAGE,
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+)
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
+from restapi.utilities.meta import Meta
 
 # https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
 T = TypeVar("T", bound="Connector")
 
+CONNECTORS_FOLDER = "connectors"
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
@@ -102,8 +110,112 @@ class Connector(metaclass=abc.ABCMeta):
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
-    def load_connectors(cls):
-        log.warning("Connector.load_connectors not implemented yet")
+    def load_connectors(
+        cls, path: str, module: str, services: Dict[str, Service]
+    ) -> Dict[str, Service]:
+
+        main_folder = os.path.join(path, CONNECTORS_FOLDER)
+        if not os.path.isdir(main_folder):
+            log.debug("Connectors folder not found: {}", main_folder)
+            return services
+
+        for connector in os.listdir(main_folder):
+            connector_path = os.path.join(path, CONNECTORS_FOLDER, connector)
+            if not os.path.isdir(connector_path):
+                continue
+            if connector.startswith("_"):
+                continue
+
+            # This is the only exception... we should rename sqlalchemy as alchemy
+            if connector == "sqlalchemy":
+                prefix = "alchemy"
+            else:
+                prefix = connector
+
+            variables = Env.load_variables_group(prefix=prefix)
+
+            if not Env.to_bool(variables.get("enable_connector", True)):
+                log.info("{} connector is disabled", connector)
+                continue
+
+            # if host is not in variables (like for Celery) do not consider it
+            external = False
+            if "host" in variables:
+                if host := variables.get("host"):
+                    external = cls.is_external(host)
+                else:
+                    variables["enable"] = "0"
+
+            enabled = Env.to_bool(variables.get("enable"))
+            available = enabled or external
+
+            if not available:
+                services[connector] = {
+                    "available": available,
+                    "module": None,
+                    "variables": {},
+                }
+                continue
+
+            connector_module = Meta.get_module_from_string(
+                ".".join((module, CONNECTORS_FOLDER, connector))
+            )
+            classes = Meta.get_new_classes_from_module(connector_module)
+            for class_name, connector_class in classes.items():
+                if not issubclass(connector_class, Connector):
+                    continue
+
+                break
+            else:
+                log.error("No connector class found in {}/{}", main_folder, connector)
+                # To be removed
+                services[connector]["available"] = False
+                continue
+
+            try:
+                # This is to test the Connector compliance,
+                # i.e. to verify instance and get_instance in the connector module
+                # and verify that the Connector can be instanced
+                connector_module.instance
+                connector_module.get_instance
+                connector_class()
+            except AttributeError as e:  # pragma: no cover
+                print_and_exit(e)
+
+            services[connector] = {
+                "available": available,
+                "module": connector_module,
+                "variables": variables,
+            }
+
+            connector_class.available = True
+            connector_class.set_variables(variables)
+
+            # NOTE: module loading algoritm is based on core connectors
+            # if you need project connectors with models please review this part
+            models_file = os.path.join(connector_path, "models.py")
+
+            if os.path.isfile(models_file):
+                log.debug("Loading models from {}", connector_path)
+
+                base_models = Meta.import_models(
+                    connector, BACKEND_PACKAGE, exit_on_fail=True
+                )
+                if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                    extended_models = {}
+                else:
+                    extended_models = Meta.import_models(
+                        connector, EXTENDED_PACKAGE, exit_on_fail=False
+                    )
+                custom_models = Meta.import_models(
+                    connector, CUSTOM_PACKAGE, exit_on_fail=False
+                )
+
+                connector_class.set_models(base_models, extended_models, custom_models)
+
+            log.debug("Got class definition for {}", connector_class)
+
+        return services
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
