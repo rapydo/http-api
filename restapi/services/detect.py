@@ -3,7 +3,6 @@ from types import ModuleType
 from typing import Dict, Optional, TypedDict, TypeVar
 
 from flask import Flask
-from glom import glom
 
 from restapi.config import (
     ABS_RESTAPI_PATH,
@@ -32,14 +31,6 @@ class Service(TypedDict):
 
 class Detector:
 
-    authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
-    _authentication_module = None
-
-    # Only used to get:
-    # - services[name]['module']
-    # - services[name]['available']
-    # - services[name]['variables']
-
     # Also duplicated in Connector
     services: Dict[str, Service] = {
         "authentication": {
@@ -48,6 +39,20 @@ class Detector:
             "variables": {},
         }
     }
+
+    _authentication_module = None
+
+    @staticmethod
+    def get_authentication_instance():
+        if not Detector._authentication_module:
+            Detector._authentication_module = Meta.get_authentication_module(
+                Connector.authentication_service
+            )
+
+        if Detector._authentication_module:
+            return Detector._authentication_module.Authentication()
+        # or Raise ServiceUnavailable ...
+        return None
 
     # Deprecated since 1.0
     @staticmethod
@@ -61,25 +66,13 @@ class Detector:
 
         return Detector.services[name].get("available", False)
 
-    @staticmethod
-    def get_authentication_instance():
-        if not Detector._authentication_module:
-            Detector._authentication_module = Meta.get_authentication_module(
-                Detector.authentication_service
-            )
-
-        if Detector._authentication_module:
-            return Detector._authentication_module.Authentication()
-        # or Raise ServiceUnavailable ...
-        return None
-
     # Deprecated since 1.0
     @staticmethod
     def init():
 
         log.warning("Deprecated use of Detector.init(), it is no longer needed")
 
-        log.info("Authentication service: {}", Detector.authentication_service)
+        log.info("Authentication service: {}", Connector.authentication_service)
 
         Detector.services = Connector.load_connectors(
             ABS_RESTAPI_PATH, BACKEND_PACKAGE, Detector.services
