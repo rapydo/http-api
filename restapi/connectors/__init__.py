@@ -187,11 +187,6 @@ class Connector(metaclass=abc.ABCMeta):
 
         return obj
 
-    def available(cls) -> bool:
-        log.critical(cls.available)
-        log.critical(cls.name)
-        return True
-
     def get_instance(
         self: T,
         verification: Optional[int] = None,
