@@ -406,9 +406,7 @@ def send_errors_by_email(func):
             log.error("Failed task arguments: {}", arguments[0:256])
             log.error("Task error: {}", traceback.format_exc())
 
-            from restapi.services.detect import detector
-
-            if detector.check_availability("smtp"):
+            if Connector.check_availability("smtp"):
                 log.info("Sending error report by email", task_id, task_name)
 
                 body = f"""

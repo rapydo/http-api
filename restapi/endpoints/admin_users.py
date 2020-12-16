@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors import Connector, smtp
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
@@ -108,7 +108,7 @@ def getInputSchema(request):
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
 
-    if detector.check_availability("smtp"):
+    if Connector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(

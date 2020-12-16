@@ -2,7 +2,7 @@ from typing import Dict, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors import Connector, smtp
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
@@ -12,7 +12,7 @@ from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 
 # This endpoint requires the server to send the activation token via email
-if detector.check_availability("smtp"):
+if Connector.check_availability("smtp"):
 
     auth = detector.get_authentication_instance()
 

@@ -168,7 +168,7 @@
 #     ):
 #         attributes.update(custom_fields)
 
-#     if detector.check_availability("smtp"):
+#     if Connector.check_availability("smtp"):
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )

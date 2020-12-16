@@ -202,6 +202,13 @@ class Connector(metaclass=abc.ABCMeta):
 
         return obj
 
+    @staticmethod
+    def check_availability(name: str) -> bool:
+        if name not in Connector.services:
+            return False
+
+        return Connector.services[name].get("available", False)
+
     def get_instance(
         self: T,
         verification: Optional[int] = None,
