@@ -87,6 +87,10 @@ class Connector(metaclass=abc.ABCMeta):
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
+    def load_connectors(cls):
+        log.warning("Connector.load_connectors not implemented yet")
+
+    @classmethod
     def set_models(cls, base_models, extended_models, custom_models):
 
         # Join models as described by issue #16

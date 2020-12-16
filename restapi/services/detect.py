@@ -1,6 +1,6 @@
 import os
 from types import ModuleType
-from typing import Dict, Optional, TypedDict, TypeVar
+from typing import Dict, Optional, TypedDict
 
 from flask import Flask
 from glom import glom
@@ -20,9 +20,6 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 CONNECTORS_FOLDER = "connectors"
-
-# https://mypy.readthedocs.io/en/latest/generics.html#generic-methods-and-generic-self
-T = TypeVar("T", bound="Connector")
 
 NO_AUTH = "NO_AUTHENTICATION"
 

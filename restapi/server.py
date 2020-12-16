@@ -33,6 +33,7 @@ from restapi.config import (
     get_backend_url,
     get_project_configuration,
 )
+from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
@@ -55,7 +56,6 @@ class ServerModes(int, Enum):
 
 def teardown_handler(signal, frame):
     with lock:
-        from restapi.connectors import Connector
 
         Connector.disconnect_all()
 
@@ -128,6 +128,8 @@ def create_app(
 
     if not isinstance(mem.customizer, BaseCustomizer):
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
+
+    Connector.load_connectors()
 
     detector.init_services(
         app=microservice,
