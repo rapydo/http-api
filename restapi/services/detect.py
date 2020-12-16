@@ -67,7 +67,10 @@ class Detector:
 
     @staticmethod
     def get_authentication_instance():
-        return Detector.authentication_module.Authentication()
+        if Detector.authentication_module:
+            return Detector.authentication_module.Authentication()
+        # or Raise ServiceUnavailable ...
+        return None
 
     @staticmethod
     def init():
