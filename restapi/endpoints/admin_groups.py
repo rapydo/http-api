@@ -1,11 +1,11 @@
 from typing import Any, Dict, Union
 
 from restapi import decorators
+from restapi.connectors import Connector
 from restapi.exceptions import NotFound
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
-from restapi.services.detect import detector
 
 
 class User(Schema):
@@ -32,7 +32,7 @@ def getInputSchema(request):
     if not request:
         return Schema.from_dict({})
 
-    auth = detector.get_authentication_instance()
+    auth = Connector.get_authentication_instance()
 
     users = {}
     for u in auth.get_users():

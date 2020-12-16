@@ -40,20 +40,6 @@ class Detector:
         }
     }
 
-    _authentication_module = None
-
-    @staticmethod
-    def get_authentication_instance():
-        if not Detector._authentication_module:
-            Detector._authentication_module = Meta.get_authentication_module(
-                Connector.authentication_service
-            )
-
-        if Detector._authentication_module:
-            return Detector._authentication_module.Authentication()
-        # or Raise ServiceUnavailable ...
-        return None
-
     # Deprecated since 1.0
     @staticmethod
     def check_availability(name: str) -> bool:

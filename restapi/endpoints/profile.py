@@ -4,11 +4,10 @@ from restapi import decorators
 from restapi.connectors import Connector
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-auth = detector.get_authentication_instance()
+auth = Connector.get_authentication_instance()
 
 
 class NewPassword(Schema):

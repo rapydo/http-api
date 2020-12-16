@@ -22,8 +22,8 @@ from restapi.config import (
     DEFAULT_PORT,
     SECRET_KEY_FILE,
 )
+from restapi.connectors import Connector
 from restapi.services.authentication import BaseAuthentication
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
@@ -205,7 +205,7 @@ class BaseTests:
         if secret:
             return pyotp.TOTP(secret).now()
 
-        auth = detector.get_authentication_instance()
+        auth = Connector.get_authentication_instance()
 
         user = auth.get_user(username=user)
 

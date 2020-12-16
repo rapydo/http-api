@@ -1,6 +1,5 @@
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
-# from restapi.services.detect import detector
 # from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
 
@@ -135,7 +134,7 @@
 # def get_input_schema(strip_required=false, exclude_email=False):
 
 #     set_required = not strip_required
-#     auth = detector.get_authentication_instance()
+#     auth = Connector.get_authentication_instance()
 
 #     # as defined in Marshmallow.schema.from_dict
 #     attributes: Dict[str, Union[fields.Field, type]] = {}

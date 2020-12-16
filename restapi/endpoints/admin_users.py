@@ -7,7 +7,6 @@ from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
-from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.templates import get_html_template
 
@@ -86,7 +85,7 @@ def getInputSchema(request):
     if not request:
         return Schema.from_dict({})
 
-    auth = detector.get_authentication_instance()
+    auth = Connector.get_authentication_instance()
 
     set_required = request.method == "POST"
 

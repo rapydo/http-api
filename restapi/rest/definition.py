@@ -5,11 +5,11 @@ from flask_apispec import MethodResource
 from flask_restful import Resource
 
 from restapi.config import API_URL
+from restapi.connectors import Connector
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import Role
 from restapi.services.cache import Cache
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CURRENTPAGE_KEY = "currentpage"
@@ -39,7 +39,7 @@ class EndpointResource(MethodResource, Resource):
     @property
     def auth(self):
         if not self.__auth:
-            self.__auth = detector.get_authentication_instance()
+            self.__auth = Connector.get_authentication_instance()
 
         return self.__auth
 

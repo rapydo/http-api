@@ -41,6 +41,7 @@ class Service(TypedDict):
 class Connector(metaclass=abc.ABCMeta):
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
+    _authentication_module = None
     variables: Dict[str, str] = {}
     models: Dict[str, Any] = {}
     # Assigned by init_services
@@ -245,6 +246,18 @@ class Connector(metaclass=abc.ABCMeta):
         return services
 
     @staticmethod
+    def get_authentication_instance():
+        if not Connector._authentication_module:
+            Connector._authentication_module = Meta.get_authentication_module(
+                Connector.authentication_service
+            )
+
+        if Connector._authentication_module:
+            return Connector._authentication_module.Authentication()
+        # or Raise ServiceUnavailable ...
+        return None
+
+    @staticmethod
     def init_services(
         app: Flask,
         project_init: bool = False,
@@ -280,7 +293,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         if Connector.authentication_service != NO_AUTH:
 
-            authentication_instance = Detector.get_authentication_instance()
+            authentication_instance = Connector.get_authentication_instance()
             authentication_instance.module_initialization()
 
             # Only once in a lifetime

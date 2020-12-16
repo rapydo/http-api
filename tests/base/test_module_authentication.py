@@ -5,7 +5,6 @@ import pytest
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
@@ -34,7 +33,7 @@ class TestApp(BaseTests):
             log.warning("Skipping authentication test: service not available")
             return False
 
-        auth = detector.get_authentication_instance()
+        auth = Connector.get_authentication_instance()
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
@@ -148,7 +147,7 @@ class TestApp(BaseTests):
             Role,
         )
 
-        auth = detector.get_authentication_instance()
+        auth = Connector.get_authentication_instance()
 
         pwd1 = fake.password(strong=True)
         pwd2 = fake.password(strong=True)

@@ -8,13 +8,12 @@ from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 
 # This endpoint requires the server to send the activation token via email
 if Connector.check_availability("smtp"):
 
-    auth = detector.get_authentication_instance()
+    auth = Connector.get_authentication_instance()
 
     # Note that these are callables returning a model, not models!
     # They will be executed a runtime

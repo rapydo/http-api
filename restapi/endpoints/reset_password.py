@@ -9,11 +9,10 @@ from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
-auth = detector.get_authentication_instance()
+auth = Connector.get_authentication_instance()
 
 
 def send_password_reset_link(smtp, uri, title, reset_email):
