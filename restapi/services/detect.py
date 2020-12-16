@@ -32,32 +32,21 @@ class Service(TypedDict):
 
 
 class Detector:
-    def __init__(self):
 
-        self.authentication_service = Env.get("AUTH_SERVICE")
+    authentication_service = Env.get("AUTH_SERVICE")
 
-        log.info("Authentication service: {}", self.authentication_service)
+    # Only used to get:
+    # - services[name]['module']
+    # - services[name]['available']
+    # - services[name]['variables']
 
-        # Only used to get:
-        # - services[name]['module']
-        # - services[name]['available']
-        # - services[name]['variables']
-        self.services: Dict[str, Service] = {
-            "authentication": {
-                "available": Env.get_bool("AUTH_ENABLE"),
-                "module": None,
-                "variables": {},
-            }
+    services: Dict[str, Service] = {
+        "authentication": {
+            "available": Env.get_bool("AUTH_ENABLE"),
+            "module": None,
+            "variables": {},
         }
-
-        self.load_services(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
-
-        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            self.load_services(
-                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE
-            )
-
-        self.load_services(os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE)
+    }
 
     def check_availability(self, name: str) -> bool:
         if name not in self.services:
@@ -68,7 +57,24 @@ class Detector:
     def get_authentication_instance(self):
         return self.authentication_module.Authentication()
 
-    def load_services(self, path, module):
+    @staticmethod
+    def init():
+
+        log.info("Authentication service: {}", Detector.authentication_service)
+
+        Detector.load_connectors(ABS_RESTAPI_PATH, BACKEND_PACKAGE)
+
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            Detector.load_connectors(
+                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE
+            )
+
+        Detector.load_connectors(
+            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE
+        )
+
+    @staticmethod
+    def load_connectors(path, module):
 
         main_folder = os.path.join(path, CONNECTORS_FOLDER)
         if not os.path.isdir(main_folder):
@@ -107,7 +113,7 @@ class Detector:
             available = enabled or external
 
             if not available:
-                self.services[connector] = {
+                Detector.services[connector] = {
                     "available": available,
                     "module": None,
                     "variables": {},
@@ -126,7 +132,7 @@ class Detector:
             else:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 # To be removed
-                self.services[connector]["available"] = False
+                Detector.services[connector]["available"] = False
                 continue
 
             try:
@@ -139,7 +145,7 @@ class Detector:
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            self.services[connector] = {
+            Detector.services[connector] = {
                 "available": available,
                 "module": connector_module,
                 "variables": variables,
@@ -241,3 +247,5 @@ class Detector:
 
 
 detector = Detector()
+
+detector.init()
