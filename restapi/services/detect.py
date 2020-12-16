@@ -199,11 +199,6 @@ class Detector:
         if options is None:
             options = {}
 
-        for connector_name, service in Detector.services.items():
-
-            if not service.get("available", False):
-                continue
-
         if Detector.authentication_service == NO_AUTH:
             if not worker_mode:
                 log.warning("No authentication service configured")
