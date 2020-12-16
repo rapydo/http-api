@@ -73,28 +73,28 @@ class Detector:
         # or Raise ServiceUnavailable ...
         return None
 
+    # Deprecated since 1.0
     @staticmethod
     def init():
 
+        log.warning("Deprecated use of Detector.init(), it is no longer needed")
+
         log.info("Authentication service: {}", Detector.authentication_service)
 
-        services: Dict[str, Service] = {}
-
-        services = Connector.load_connectors(
-            ABS_RESTAPI_PATH, BACKEND_PACKAGE, services
+        Detector.services = Connector.load_connectors(
+            ABS_RESTAPI_PATH, BACKEND_PACKAGE, Detector.services
         )
 
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
-            services = Connector.load_connectors(
-                os.path.join(os.curdir, EXTENDED_PACKAGE), EXTENDED_PACKAGE, services
+            Detector.services = Connector.load_connectors(
+                os.path.join(os.curdir, EXTENDED_PACKAGE),
+                EXTENDED_PACKAGE,
+                Detector.services,
             )
 
-        services = Connector.load_connectors(
-            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, services
+        Detector.services = Connector.load_connectors(
+            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, Detector.services
         )
-
-        Detector.services = services
-        Connector.services = services
 
     # Deprecated since 1.0
     @staticmethod

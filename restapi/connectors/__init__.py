@@ -10,6 +10,7 @@ from flask import _app_ctx_stack as stack
 from glom import glom
 
 from restapi.config import (
+    ABS_RESTAPI_PATH,
     BACKEND_PACKAGE,
     CUSTOM_PACKAGE,
     EXTENDED_PACKAGE,
@@ -79,6 +80,26 @@ class Connector(metaclass=abc.ABCMeta):
             from flask import current_app
 
             self.app = current_app
+
+    @staticmethod
+    def init():
+
+        # log.info("Authentication service: {}", Detector.authentication_service)
+
+        Connector.services = Connector.load_connectors(
+            ABS_RESTAPI_PATH, BACKEND_PACKAGE, Connector.services
+        )
+
+        if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
+            Connector.services = Connector.load_connectors(
+                os.path.join(os.curdir, EXTENDED_PACKAGE),
+                EXTENDED_PACKAGE,
+                Connector.services,
+            )
+
+        Connector.services = Connector.load_connectors(
+            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
+        )
 
     def __del__(self) -> None:
         if not self.disconnected:
@@ -457,3 +478,6 @@ class Connector(metaclass=abc.ABCMeta):
         obj = self.initialize_connection(expiration, verification, **kwargs)
         self.set_object(name=self.name, obj=obj, key=unique_hash)
         return obj
+
+
+Connector.init()
