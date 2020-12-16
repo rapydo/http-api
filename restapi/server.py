@@ -150,7 +150,7 @@ def create_app(
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        mem.cache = Cache.get_instance(microservice, detector)
+        mem.cache = Cache.get_instance(microservice)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints

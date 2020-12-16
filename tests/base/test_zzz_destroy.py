@@ -1,6 +1,6 @@
 import os
 
-from restapi.connectors import sqlalchemy
+from restapi.connectors import Connector, sqlalchemy
 from restapi.exceptions import ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
@@ -16,11 +16,11 @@ def test_destroy():
         return False
 
     # Always enable during core tests
-    if not detector.check_availability("authentication"):  # pragma: no cover
+    if not Connector.check_availability("authentication"):  # pragma: no cover
         log.warning("Skipping authentication test: service not available")
         return False
 
-    if detector.check_availability("sqlalchemy"):
+    if Connector.check_availability("sqlalchemy"):
         sql = sqlalchemy.get_instance()
         # Close previous connections, otherwise the new create_app will hang
         sql.session.remove()

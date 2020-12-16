@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import RestApiException
 from restapi.services.detect import detector
@@ -29,7 +30,7 @@ class TestApp(BaseTests):
     def test_authentication_service(self, client, fake):
 
         # Always enable during core tests
-        if not detector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return False
 

@@ -4,6 +4,7 @@ import pytest
 from faker import Faker
 from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import rabbitmq as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.detect import detector
@@ -14,7 +15,7 @@ CONNECTOR = "rabbitmq"
 
 def test_rabbit(app: Flask, faker: Faker) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()

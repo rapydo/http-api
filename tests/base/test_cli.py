@@ -7,7 +7,7 @@ from click.testing import CliRunner
 
 from restapi import __commands__ as cli
 from restapi import decorators
-from restapi.services.detect import detector
+from restapi.connectors import Connector
 
 
 def test_cli():
@@ -29,7 +29,7 @@ def test_cli():
     assert response.exit_code == 1
 
     for service in ("neo4j", "mongo", "sqlalchemy"):
-        if not detector.check_availability(service):
+        if not Connector.check_availability(service):
             continue
 
         response = runner.invoke(cli.verify, ["--services", service])

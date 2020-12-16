@@ -1,4 +1,4 @@
-from restapi.services.detect import detector
+from restapi.connectors import Connector
 from restapi.tests import API_URI, BaseTests
 from restapi.utilities.logs import log
 
@@ -6,7 +6,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_websockets(self, client, fake):
 
-        if not detector.check_availability("pushpin"):
+        if not Connector.check_availability("pushpin"):
             log.warning("Skipping websockets test: pushpin service not available")
             return False
 
