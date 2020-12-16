@@ -37,7 +37,7 @@ class Service(TypedDict):
 class Detector:
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
-    authentication_module = None
+    _authentication_module = None
 
     # Only used to get:
     # - services[name]['module']
@@ -67,8 +67,13 @@ class Detector:
 
     @staticmethod
     def get_authentication_instance():
-        if Detector.authentication_module:
-            return Detector.authentication_module.Authentication()
+        if not Detector._authentication_module:
+            Detector._authentication_module = Meta.get_authentication_module(
+                Detector.authentication_service
+            )
+
+        if Detector._authentication_module:
+            return Detector._authentication_module.Authentication()
         # or Raise ServiceUnavailable ...
         return None
 
@@ -240,11 +245,8 @@ class Detector:
             )
 
         if Detector.authentication_service != NO_AUTH:
-            Detector.authentication_module = Meta.get_authentication_module(
-                Detector.authentication_service
-            )
 
-            authentication_instance = Detector.authentication_module.Authentication()
+            authentication_instance = Detector.get_authentication_instance()
             authentication_instance.module_initialization()
 
             # Only once in a lifetime
