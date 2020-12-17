@@ -248,8 +248,14 @@ class Connector(metaclass=abc.ABCMeta):
     @staticmethod
     def get_authentication_instance():
         if not Connector._authentication_module:
-            Connector._authentication_module = Meta.get_authentication_module(
-                Connector.authentication_service
+            Connector._authentication_module = Meta.get_module_from_string(
+                ".".join(
+                    (
+                        BACKEND_PACKAGE,
+                        CONNECTORS_FOLDER,
+                        Connector.authentication_service,
+                    )
+                )
             )
 
         if Connector._authentication_module:

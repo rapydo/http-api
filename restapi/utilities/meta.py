@@ -49,14 +49,11 @@ class Meta:
 
     # Should return `from types import ModuleType` -> Optional[ModuleType]
     @staticmethod
-    def get_module_from_string(modulestring, prefix_package=False, exit_on_fail=False):
+    def get_module_from_string(modulestring, exit_on_fail=False):
         """
         Getting a module import
         when your module is stored as a string in a variable
         """
-
-        if prefix_package:
-            modulestring = f"{BACKEND_PACKAGE}.{modulestring.lstrip('.')}"
 
         try:
             return import_module(modulestring)
@@ -106,16 +103,6 @@ class Meta:
             return {}
 
         return Meta.get_new_classes_from_module(module)
-
-    @staticmethod
-    def get_authentication_module(auth_service):
-
-        module_name = f"connectors.{auth_service}"
-        module = Meta.get_module_from_string(
-            modulestring=module_name, prefix_package=True, exit_on_fail=True
-        )
-
-        return module
 
     @staticmethod
     def get_celery_tasks(package_name: str) -> Dict[str, Callable[..., Any]]:
