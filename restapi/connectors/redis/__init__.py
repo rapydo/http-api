@@ -10,8 +10,8 @@ from restapi.env import Env
 
 
 class RedisExt(Connector):
-    def __init__(self, app=None):
-        super().__init__(app)
+    def __init__(self) -> None:
+        super().__init__()
 
     def get_connection_exception(self):
         return None

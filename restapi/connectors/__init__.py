@@ -52,8 +52,7 @@ class Connector(metaclass=abc.ABCMeta):
     # Used by set_object and get_object
     _instances: InstancesCache = {}
 
-    # App can be removed?
-    def __init__(self, app=None):
+    def __init__(self) -> None:
 
         # This is the lower-cased class name (neomodel, celeryext)
         self.name = self.__class__.__name__.lower()

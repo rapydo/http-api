@@ -21,9 +21,9 @@ from restapi.utilities.logs import log
 
 
 class Mail(Connector):
-    def __init__(self, app=None):
+    def __init__(self) -> None:
         self.smtp = None
-        super().__init__(app)
+        super().__init__()
         # instance_variables is updated with custom variabiles in connect
         # and the used in the send method.
         # This way the send method will be able to use variabiles overridden in connect

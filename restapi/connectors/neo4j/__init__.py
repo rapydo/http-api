@@ -137,7 +137,7 @@ class NeoModel(Connector):
                 #     {message: An equivalent constraint already exists,
                 #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
                 # This loop with install_labels prevent errors
-                for model in self.models.values():
+                for model in self._models.values():
                     install_labels(model, quiet=False)
 
     def destroy(self) -> None:

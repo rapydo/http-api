@@ -137,9 +137,9 @@ class SQLAlchemy(Connector):
     # Used to suppress ProgrammingError raised by MySQL during DB initialization
     DB_INITIALIZING = False
 
-    def __init__(self, app=None):
+    def __init__(self) -> None:
         self.db: OriginalAlchemy = None
-        super().__init__(app)
+        super().__init__()
 
     # This is used to return Models in a type-safe way
     def __getattr__(self, name: str) -> Model:

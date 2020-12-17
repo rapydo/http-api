@@ -22,9 +22,9 @@ from restapi.utilities.logs import log
 
 
 class RabbitExt(Connector):
-    def __init__(self, app=None):
+    def __init__(self) -> None:
         self.connection: Optional[pika.BlockingConnection] = None
-        super().__init__(app)
+        super().__init__()
 
     def get_connection_exception(self):
         # Includes:
