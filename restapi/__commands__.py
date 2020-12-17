@@ -154,9 +154,6 @@ def mywait():
     """
     for name, variables in Connector.services.items():
 
-        if name == "authentication":
-            continue
-
         if name == "smtp":
             continue
 

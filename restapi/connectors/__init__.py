@@ -399,6 +399,9 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def check_availability(name: str) -> bool:
+        if name == "authentication":
+            return Connector.authentication_service != NO_AUTH
+
         return name in Connector.services
 
     def get_instance(
