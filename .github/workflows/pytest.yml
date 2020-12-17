@@ -13,8 +13,9 @@ jobs:
 
     strategy:
       matrix:
-        template: [
-            # extra,
+        template:
+          [
+            extra,
             neo4j,
             postgres,
             celery-rabbit-redis,
