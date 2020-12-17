@@ -185,9 +185,7 @@ class Connector(metaclass=abc.ABCMeta):
                 }
                 continue
 
-            connector_module = Meta.get_module_from_string(
-                ".".join((module, CONNECTORS_FOLDER, connector))
-            )
+            connector_module = Connector.get_module(connector, module)
             classes = Meta.get_new_classes_from_module(connector_module)
             for class_name, connector_class in classes.items():
                 if not issubclass(connector_class, Connector):
@@ -246,16 +244,16 @@ class Connector(metaclass=abc.ABCMeta):
         return services
 
     @staticmethod
+    def get_module(connector: str, module: str) -> Optional[ModuleType]:
+        return Meta.get_module_from_string(
+            ".".join((module, CONNECTORS_FOLDER, connector))
+        )
+
+    @staticmethod
     def get_authentication_instance():
         if not Connector._authentication_module:
-            Connector._authentication_module = Meta.get_module_from_string(
-                ".".join(
-                    (
-                        BACKEND_PACKAGE,
-                        CONNECTORS_FOLDER,
-                        Connector.authentication_service,
-                    )
-                )
+            Connector._authentication_module = Connector.get_module(
+                Connector.authentication_service, BACKEND_PACKAGE
             )
 
         if Connector._authentication_module:
