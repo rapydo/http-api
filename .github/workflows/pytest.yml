@@ -111,5 +111,8 @@ jobs:
 
       - name: Print Logs
         if: failure()
-        run: |
-          tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log
+        run: tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log
+
+      - name: Docker Logs
+        if: failure()
+        run: rapydo logs
