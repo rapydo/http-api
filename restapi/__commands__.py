@@ -82,6 +82,7 @@ def verify(services):
 
         if not Connector.check_availability(service):
             print_and_exit("Service {} not detected", service)
+
         log.info("Verifying service: {}", service)
         variables = glom(Connector.services, f"{service}.variables", default={})
         host, port = get_service_address(variables, "host", "port", service)
@@ -155,13 +156,13 @@ def mywait():
         if not Connector.check_availability(name):
             continue
 
-        variables = service.get("variables", {})
-
         if name == "authentication":
             continue
 
         if name == "smtp":
             continue
+
+        variables = service.get("variables", {})
 
         if name == "celery":
 

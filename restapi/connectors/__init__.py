@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional, TypedDict, TypeVar
 # mypy: ignore-errors
 from flask import Flask
 from flask import _app_ctx_stack as stack
-from glom import glom
 
 from restapi.config import (
     ABS_RESTAPI_PATH,
@@ -29,6 +28,7 @@ T = TypeVar("T", bound="Connector")
 CONNECTORS_FOLDER = "connectors"
 NO_AUTH = "NO_AUTHENTICATION"
 
+# thread-id.ConnectorName.params-unique-key = instance
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
@@ -49,21 +49,8 @@ class Connector(metaclass=abc.ABCMeta):
     # Modified by load_connectors
     available: bool = False
 
-    services: Dict[str, Service] = {
-        "authentication": {
-            "available": Env.get_bool("AUTH_ENABLE"),
-            "variables": {},
-        }
-    }
+    services: Dict[str, Service] = {}
 
-    # will contain:
-    # instances = {
-    #     'thread-id': {
-    #         'ConnectorName': {
-    #             'params-unique-key': instance
-    #         }
-    #     }
-    # }
     instances: InstancesCache = {}
 
     # App can be removed?
