@@ -17,7 +17,7 @@ class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER = None
     REDBEAT_KEY_PREFIX = "redbeat:"
-    celery_app: Celery = Optional[None]
+    celery_app: Celery = None
 
     def get_connection_exception(self):
         return None
