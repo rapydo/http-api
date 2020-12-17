@@ -86,16 +86,15 @@ class Detector:
     ) -> None:
         log.warning(
             "Deprecated use of Detector.init_services, "
-            "use Connector.init_services instead"
+            "use Connector.init_app instead"
         )
 
-        return Connector.init_services(
+        return Connector.init_app(
             app=app,
             project_init=project_init,
             project_clean=project_clean,
             worker_mode=worker_mode,
             options=options,
-            Detector=Detector,
         )
 
 

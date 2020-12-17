@@ -100,7 +100,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     roles_data: Dict[str, str] = {}
     default_role: Optional[str] = None
 
-    # Executed once by Detector in init_services
+    # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:
         cls.load_default_user()

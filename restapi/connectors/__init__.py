@@ -44,10 +44,10 @@ class Connector(metaclass=abc.ABCMeta):
     _authentication_module = None
     variables: Dict[str, str] = {}
     models: Dict[str, Any] = {}
-    # Assigned by init_services
+    # Assigned by init_app
     app: Flask = None
 
-    # Modified by during init_services
+    # Modified by load_connectors
     available: bool = False
 
     services: Dict[str, Service] = {
@@ -258,13 +258,12 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @staticmethod
-    def init_services(
+    def init_app(
         app: Flask,
         project_init: bool = False,
         project_clean: bool = False,
         worker_mode: bool = False,
         options: Optional[Dict[str, bool]] = None,
-        Detector: Any = None,
     ) -> None:
 
         Connector.app = app
