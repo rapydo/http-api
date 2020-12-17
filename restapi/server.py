@@ -38,7 +38,6 @@ from restapi.customizer import BaseCustomizer
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.cache import Cache
-from restapi.services.detect import detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log

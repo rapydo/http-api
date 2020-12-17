@@ -22,7 +22,6 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
-from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -35,8 +34,6 @@ ERR404 = {"description": "The requested resource cannot be found"}
 ERR404_AUTH = {"description": "The resource cannot be found or you are not authorized"}
 
 uri_pattern = re.compile(r"\<([^\>]+)\>")
-
-log.debug("Detector loaded: {}", detector)
 
 
 @ClassOfAttributes
