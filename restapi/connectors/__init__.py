@@ -38,7 +38,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
     _authentication_module = None
-    variables: Dict[str, str] = {}
     models: Dict[str, Any] = {}
     # Assigned by init_app
     app: Flask = None
@@ -123,6 +122,10 @@ class Connector(metaclass=abc.ABCMeta):
     def initialize(self) -> None:  # pragma: no cover
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
+    @property
+    def variables(self) -> Dict[str, str]:
+        return self.services.get(self.name) or {}
+
     @classmethod
     def load_connectors(cls, path: str, module: str, services: Services) -> Services:
 
@@ -140,11 +143,9 @@ class Connector(metaclass=abc.ABCMeta):
 
             # This is the only exception... we should rename sqlalchemy as alchemy
             if connector == "sqlalchemy":
-                prefix = "alchemy"
+                variables = Env.load_variables_group(prefix="alchemy")
             else:
-                prefix = connector
-
-            variables = Env.load_variables_group(prefix=prefix)
+                variables = Env.load_variables_group(prefix=connector)
 
             if not Env.to_bool(variables.get("enable_connector", True)):
                 log.info("{} connector is disabled", connector)
@@ -186,8 +187,6 @@ class Connector(metaclass=abc.ABCMeta):
                 print_and_exit(e)
 
             services[connector] = variables
-
-            connector_class.set_variables(variables)
 
             # NOTE: module loading algoritm is based on core connectors
             # if you need project connectors with models please review this part
@@ -311,10 +310,6 @@ class Connector(metaclass=abc.ABCMeta):
 
         if len(cls.models) > 0:
             log.debug("Models loaded")
-
-    @classmethod
-    def set_variables(cls, envvars: Dict[str, str]) -> None:
-        cls.variables = envvars
 
     @staticmethod
     def is_external(host: str) -> bool:
