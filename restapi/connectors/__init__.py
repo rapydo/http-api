@@ -1,8 +1,8 @@
 import abc
 import os
 from datetime import datetime, timedelta
-from types import ModuleType
-from typing import Any, Dict, Optional, TypeVar
+from types import ModuleType, TracebackType
+from typing import Any, Dict, Optional, Tuple, Type, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -17,6 +17,7 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.services.authentication import BaseAuthentication
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -44,10 +45,10 @@ class Connector(metaclass=abc.ABCMeta):
     app: Flask = None
 
     # Used by get_authentication_module
-    _authentication_module = None
+    _authentication_module: Optional[ModuleType] = None
 
     # Returned by __getattr__ in neo4j, sqlalchemy and mongo connectors
-    _models: Dict[str, Any] = {}
+    _models: Dict[str, Type] = {}
 
     # Used by set_object and get_object
     _instances: InstancesCache = {}
@@ -74,7 +75,7 @@ class Connector(metaclass=abc.ABCMeta):
             self.app = current_app
 
     @staticmethod
-    def init():
+    def init() -> None:
 
         log.info("Authentication service: {}", Connector.authentication_service)
 
@@ -100,12 +101,21 @@ class Connector(metaclass=abc.ABCMeta):
     def __enter__(self: T) -> T:
         return self
 
-    def __exit__(self, _type, value, tb):
+    def __exit__(
+        self,
+        exctype: Optional[Type[BaseException]],
+        excinst: Optional[BaseException],
+        exctb: Optional[TracebackType],
+    ) -> bool:
         if not self.disconnected:
             self.disconnect()
+            return True
+        return False
 
     @abc.abstractmethod
-    def get_connection_exception(self):  # pragma: no cover
+    def get_connection_exception(
+        self,
+    ) -> Optional[Tuple[Type[BaseException]]]:  # pragma: no cover
         return None
 
     @abc.abstractmethod
@@ -225,7 +235,7 @@ class Connector(metaclass=abc.ABCMeta):
         )
 
     @staticmethod
-    def get_authentication_instance():
+    def get_authentication_instance() -> Optional[BaseAuthentication]:
         if not Connector._authentication_module:
             Connector._authentication_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
@@ -293,7 +303,12 @@ class Connector(metaclass=abc.ABCMeta):
             connector.destroy()
 
     @classmethod
-    def set_models(cls, base_models, extended_models, custom_models):
+    def set_models(
+        cls,
+        base_models: Dict[str, Type],
+        extended_models: Dict[str, Type],
+        custom_models: Dict[str, Type],
+    ) -> None:
 
         # Join models as described by issue #16
         cls._models = base_models
