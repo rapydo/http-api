@@ -153,9 +153,6 @@ def mywait():
     """
     for name, service in Connector.services.items():
 
-        if not Connector.check_availability(name):
-            continue
-
         if name == "authentication":
             continue
 

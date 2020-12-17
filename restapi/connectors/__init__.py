@@ -33,7 +33,6 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
 class Service(TypedDict):
-    available: bool
     variables: Dict[str, str]
 
 
@@ -45,9 +44,6 @@ class Connector(metaclass=abc.ABCMeta):
     models: Dict[str, Any] = {}
     # Assigned by init_app
     app: Flask = None
-
-    # Modified by load_connectors
-    available: bool = False
 
     services: Dict[str, Service] = {}
 
@@ -163,10 +159,6 @@ class Connector(metaclass=abc.ABCMeta):
             available = enabled or external
 
             if not available:
-                services[connector] = {
-                    "available": available,
-                    "variables": {},
-                }
                 continue
 
             connector_module = Connector.get_module(connector, module)
@@ -178,8 +170,6 @@ class Connector(metaclass=abc.ABCMeta):
                 break
             else:
                 log.error("No connector class found in {}/{}", main_folder, connector)
-                # To be removed
-                services[connector]["available"] = False
                 continue
 
             try:
@@ -193,11 +183,9 @@ class Connector(metaclass=abc.ABCMeta):
                 print_and_exit(e)
 
             services[connector] = {
-                "available": available,
                 "variables": variables,
             }
 
-            connector_class.available = True
             connector_class.set_variables(variables)
 
             # NOTE: module loading algoritm is based on core connectors
@@ -255,13 +243,6 @@ class Connector(metaclass=abc.ABCMeta):
             return
 
         if Connector.authentication_service not in Connector.services:
-            print_and_exit(
-                "Auth service '{}' is not available", Connector.authentication_service
-            )
-
-        if not Connector.services[Connector.authentication_service].get(
-            "available", False
-        ):
             print_and_exit(
                 "Auth service '{}' is not available", Connector.authentication_service
             )
@@ -406,10 +387,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def check_availability(name: str) -> bool:
-        if name not in Connector.services:
-            return False
-
-        return Connector.services[name].get("available", False)
+        return name in Connector.services
 
     def get_instance(
         self: T,
@@ -418,7 +396,7 @@ class Connector(metaclass=abc.ABCMeta):
         **kwargs,
     ) -> T:
 
-        if not self.available:
+        if not Connector.check_availability(self.name):
             raise ServiceUnavailable(f"Service {self.name} is not available")
 
         if verification is None:
