@@ -249,29 +249,25 @@ class Connector(metaclass=abc.ABCMeta):
 
         Connector.app = app
 
-        for connector_name, service in Connector.services.items():
-
-            if not service.get("available", False):
-                continue
-
         if Connector.authentication_service == NO_AUTH:
             if not worker_mode:
                 log.warning("No authentication service configured")
-        elif Connector.authentication_service not in Connector.services:
+            return
+
+        if Connector.authentication_service not in Connector.services:
             print_and_exit(
-                "Auth service '{}' is unreachable", Connector.authentication_service
+                "Auth service '{}' is not available", Connector.authentication_service
             )
-        elif not Connector.services[Connector.authentication_service].get(
+
+        if not Connector.services[Connector.authentication_service].get(
             "available", False
         ):
             print_and_exit(
                 "Auth service '{}' is not available", Connector.authentication_service
             )
 
-        if Connector.authentication_service != NO_AUTH:
-
-            authentication_instance = Connector.get_authentication_instance()
-            authentication_instance.module_initialization()
+        authentication_instance = Connector.get_authentication_instance()
+        authentication_instance.module_initialization()
 
     @staticmethod
     def project_init(options: Optional[Dict[str, bool]] = None) -> None:
