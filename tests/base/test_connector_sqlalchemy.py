@@ -7,7 +7,6 @@ from flask import Flask
 from restapi.connectors import Connector
 from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "sqlalchemy"
@@ -27,10 +26,6 @@ def test_sqlalchemy(app: Flask) -> None:
         return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-    )
 
     if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
         try:

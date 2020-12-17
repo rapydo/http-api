@@ -7,7 +7,6 @@ from flask import Flask
 from restapi.connectors import Connector
 from restapi.connectors import rabbitmq as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "rabbitmq"
@@ -27,10 +26,6 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
         return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-    )
 
     try:
         connector.get_instance(host="invalidhostname", port=123)

@@ -12,7 +12,6 @@ from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.tests import API_URI, BaseTests
 from restapi.utilities.logs import log
 
@@ -53,10 +52,6 @@ else:
 
         @staticmethod
         def test_connector(app: Flask, fake: Faker) -> None:
-
-            detector.init_services(
-                app=app,
-            )
 
             try:
                 connector.get_instance(host="invalidhostname", port=123)

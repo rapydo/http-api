@@ -12,7 +12,6 @@ from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
 from restapi.exceptions import ServiceUnavailable
 from restapi.server import ServerModes, create_app
-from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
@@ -33,10 +32,6 @@ def test_celery(app: Flask, faker: Faker) -> None:
         return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-    )
 
     obj = connector.get_instance()
     assert obj is not None
