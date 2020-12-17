@@ -37,15 +37,20 @@ Services = Dict[str, Dict[str, str]]
 class Connector(metaclass=abc.ABCMeta):
 
     authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
-    _authentication_module = None
-    models: Dict[str, Any] = {}
-    # Assigned by init_app
-    app: Flask = None
-
     # Available services with associated env variables
     services: Services = {}
 
-    instances: InstancesCache = {}
+    # Assigned by init_app
+    app: Flask = None
+
+    # Used by get_authentication_module
+    _authentication_module = None
+
+    # Returned by __getattr__ in neo4j, sqlalchemy and mongo connectors
+    _models: Dict[str, Any] = {}
+
+    # Used by set_object and get_object
+    _instances: InstancesCache = {}
 
     # App can be removed?
     def __init__(self, app=None):
@@ -292,7 +297,7 @@ class Connector(metaclass=abc.ABCMeta):
     def set_models(cls, base_models, extended_models, custom_models):
 
         # Join models as described by issue #16
-        cls.models = base_models
+        cls._models = base_models
         for m in [extended_models, custom_models]:
             for key, model in m.items():
 
@@ -302,13 +307,13 @@ class Connector(metaclass=abc.ABCMeta):
                     # Override
                     if issubclass(model, original_model):
                         log.debug("Overriding model {}", key)
-                        cls.models[key] = model
+                        cls._models[key] = model
                         continue
 
                 # Otherwise just append
-                cls.models[key] = model
+                cls._models[key] = model
 
-        if len(cls.models) > 0:
+        if len(cls._models) > 0:
             log.debug("Models loaded")
 
     @staticmethod
@@ -320,22 +325,22 @@ class Connector(metaclass=abc.ABCMeta):
         """ set object into internal array """
 
         tid = os.getpid()
-        cls.instances.setdefault(tid, {})
-        cls.instances[tid].setdefault(name, {})
-        cls.instances[tid][name][key] = obj
+        cls._instances.setdefault(tid, {})
+        cls._instances[tid].setdefault(name, {})
+        cls._instances[tid][name][key] = obj
 
     @classmethod
     def get_object(cls, name: str, key: str = "[]") -> Optional[T]:
         """ recover object if any """
 
         tid = os.getpid()
-        cls.instances.setdefault(tid, {})
-        cls.instances[tid].setdefault(name, {})
-        return cls.instances[tid][name].get(key, None)
+        cls._instances.setdefault(tid, {})
+        cls._instances[tid].setdefault(name, {})
+        return cls._instances[tid][name].get(key, None)
 
     @classmethod
     def disconnect_all(cls) -> None:
-        for connectors in cls.instances.values():
+        for connectors in cls._instances.values():
             for instances in connectors.values():
                 for instance in instances.values():
                     if not instance.disconnected:
@@ -344,7 +349,7 @@ class Connector(metaclass=abc.ABCMeta):
                         )
                         instance.disconnect()
 
-        cls.instances.clear()
+        cls._instances.clear()
 
         log.info("[{}] All connectors disconnected", os.getpid())
 

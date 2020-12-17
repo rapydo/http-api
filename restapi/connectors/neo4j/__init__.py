@@ -76,8 +76,8 @@ class NeoModel(Connector):
 
     # This is used to return Models in a type-safe way
     def __getattr__(self, name: str) -> StructuredNode:
-        if name in self.models:
-            return self.models[name]
+        if name in self._models:
+            return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
     def get_connection_exception(self):
