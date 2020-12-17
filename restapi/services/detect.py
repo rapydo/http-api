@@ -89,13 +89,11 @@ class Detector:
             "use Connector.init_app instead"
         )
 
-        return Connector.init_app(
-            app=app,
-            project_init=project_init,
-            project_clean=project_clean,
-            worker_mode=worker_mode,
-            options=options,
-        )
+        Connector.init_app(app=app, worker_mode=worker_mode)
+
+        Connector.project_init(app=app, project_init=project_init, options=options)
+
+        Connector.project_clean(project_clean=project_clean)
 
 
 detector = Detector

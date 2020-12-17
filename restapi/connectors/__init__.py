@@ -258,18 +258,9 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @staticmethod
-    def init_app(
-        app: Flask,
-        project_init: bool = False,
-        project_clean: bool = False,
-        worker_mode: bool = False,
-        options: Optional[Dict[str, bool]] = None,
-    ) -> None:
+    def init_app(app: Flask, worker_mode: bool = False) -> None:
 
         Connector.app = app
-
-        if options is None:
-            options = {}
 
         for connector_name, service in Connector.services.items():
 
@@ -295,8 +286,16 @@ class Connector(metaclass=abc.ABCMeta):
             authentication_instance = Connector.get_authentication_instance()
             authentication_instance.module_initialization()
 
-            # Only once in a lifetime
+    @staticmethod
+    def project_init(
+        app: Flask,
+        project_init: bool = False,
+        options: Optional[Dict[str, bool]] = None,
+    ) -> None:
+
+        if Connector.authentication_service != NO_AUTH:
             if project_init:
+                authentication_instance = Connector.get_authentication_instance()
 
                 # Connector instance needed here
                 connector = glom(
@@ -304,6 +303,9 @@ class Connector(metaclass=abc.ABCMeta):
                 ).get_instance()
                 log.debug("Initializing {}", Connector.authentication_service)
                 connector.initialize()
+
+                if options is None:
+                    options = {}
 
                 with app.app_context():
                     authentication_instance.init_auth_db(options)
@@ -313,6 +315,10 @@ class Connector(metaclass=abc.ABCMeta):
                     log.info("Vanilla project has been initialized")
                 else:
                     log.error("Errors during custom initialization")
+
+    @staticmethod
+    def project_clean(project_clean: bool = False) -> None:
+        if Connector.authentication_service != NO_AUTH:
 
             if project_clean:
                 connector = glom(
