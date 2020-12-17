@@ -77,23 +77,13 @@ class Detector:
 
     # Deprecated since 1.0
     @staticmethod
-    def init_services(
-        app: Flask,
-        project_init: bool = False,
-        project_clean: bool = False,
-        worker_mode: bool = False,
-        options: Optional[Dict[str, bool]] = None,
-    ) -> None:
+    def init_services(app: Flask) -> None:
         log.warning(
             "Deprecated use of Detector.init_services, "
             "use Connector.init_app instead"
         )
 
-        Connector.init_app(app=app, worker_mode=worker_mode)
-
-        Connector.project_init(app=app, project_init=project_init, options=options)
-
-        Connector.project_clean(project_clean=project_clean)
+        Connector.init_app(app=app, worker_mode=False)
 
 
 detector = Detector

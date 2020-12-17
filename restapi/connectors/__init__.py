@@ -287,45 +287,39 @@ class Connector(metaclass=abc.ABCMeta):
             authentication_instance.module_initialization()
 
     @staticmethod
-    def project_init(
-        app: Flask,
-        project_init: bool = False,
-        options: Optional[Dict[str, bool]] = None,
-    ) -> None:
+    def project_init(options: Optional[Dict[str, bool]] = None) -> None:
 
         if Connector.authentication_service != NO_AUTH:
-            if project_init:
-                authentication_instance = Connector.get_authentication_instance()
+            authentication_instance = Connector.get_authentication_instance()
 
-                # Connector instance needed here
-                connector = glom(
-                    Connector.services, f"{Connector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Initializing {}", Connector.authentication_service)
-                connector.initialize()
+            # Connector instance needed here
+            connector = glom(
+                Connector.services, f"{Connector.authentication_service}.module"
+            ).get_instance()
+            log.debug("Initializing {}", Connector.authentication_service)
+            connector.initialize()
 
-                if options is None:
-                    options = {}
+            if options is None:
+                options = {}
 
-                with app.app_context():
-                    authentication_instance.init_auth_db(options)
-                    log.info("Initialized authentication module")
+            with Connector.app.app_context():
+                authentication_instance.init_auth_db(options)
+                log.info("Initialized authentication module")
 
-                if mem.initializer(app=app):
-                    log.info("Vanilla project has been initialized")
-                else:
-                    log.error("Errors during custom initialization")
+            if mem.initializer(app=Connector.app):
+                log.info("Vanilla project has been initialized")
+            else:
+                log.error("Errors during custom initialization")
 
     @staticmethod
-    def project_clean(project_clean: bool = False) -> None:
+    def project_clean() -> None:
         if Connector.authentication_service != NO_AUTH:
 
-            if project_clean:
-                connector = glom(
-                    Connector.services, f"{Connector.authentication_service}.module"
-                ).get_instance()
-                log.debug("Destroying {}", Connector.authentication_service)
-                connector.destroy()
+            connector = glom(
+                Connector.services, f"{Connector.authentication_service}.module"
+            ).get_instance()
+            log.debug("Destroying {}", Connector.authentication_service)
+            connector.destroy()
 
     @classmethod
     def set_models(cls, base_models, extended_models, custom_models):

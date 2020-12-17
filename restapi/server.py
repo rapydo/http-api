@@ -133,10 +133,10 @@ def create_app(
     Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
 
     if mode == ServerModes.INIT:
-        Connector.project_init(app=microservice, project_init=True, options=options)
+        Connector.project_init(options=options)
 
     if mode == ServerModes.DESTROY:
-        Connector.project_clean(project_clean=True)
+        Connector.project_clean()
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
