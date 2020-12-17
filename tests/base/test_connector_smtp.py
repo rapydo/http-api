@@ -5,7 +5,6 @@ from flask import Flask
 from restapi.connectors import Connector
 from restapi.connectors import smtp as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
@@ -25,10 +24,6 @@ def test_smtp(app: Flask, faker: Faker) -> None:
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return None
-
-    detector.init_services(
-        app=app,
-    )
 
     # try:
     #     connector.get_instance(host="invalidhostname", port=123)
