@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType
-from typing import Any, Dict, Optional, TypedDict, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -30,10 +30,8 @@ NO_AUTH = "NO_AUTHENTICATION"
 
 # thread-id.ConnectorName.params-unique-key = instance
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
-
-
-class Service(TypedDict):
-    variables: Dict[str, str]
+# service-name => dict of variables
+Services = Dict[str, Dict[str, str]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -45,7 +43,8 @@ class Connector(metaclass=abc.ABCMeta):
     # Assigned by init_app
     app: Flask = None
 
-    services: Dict[str, Service] = {}
+    # Available services with associated env variables
+    services: Services = {}
 
     instances: InstancesCache = {}
 
@@ -119,9 +118,7 @@ class Connector(metaclass=abc.ABCMeta):
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @classmethod
-    def load_connectors(
-        cls, path: str, module: str, services: Dict[str, Service]
-    ) -> Dict[str, Service]:
+    def load_connectors(cls, path: str, module: str, services: Services) -> Services:
 
         main_folder = os.path.join(path, CONNECTORS_FOLDER)
         if not os.path.isdir(main_folder):
@@ -182,9 +179,7 @@ class Connector(metaclass=abc.ABCMeta):
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            services[connector] = {
-                "variables": variables,
-            }
+            services[connector] = variables
 
             connector_class.set_variables(variables)
 

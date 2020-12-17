@@ -69,6 +69,7 @@ def launch():  # pragma: no cover
         log.warning("Server shutdown")
 
 
+# Multiple is not used, should be removed by fixing verify command
 @cli.command()
 @click.option("--services", "-s", multiple=True, default=[])
 def verify(services):
@@ -84,7 +85,7 @@ def verify(services):
             print_and_exit("Service {} not detected", service)
 
         log.info("Verifying service: {}", service)
-        variables = glom(Connector.services, f"{service}.variables", default={})
+        variables = Connector.services.get(service, {})
         host, port = get_service_address(variables, "host", "port", service)
         wait_socket(host, port, service)
 
@@ -151,15 +152,13 @@ def mywait():
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
     """
-    for name, service in Connector.services.items():
+    for name, variables in Connector.services.items():
 
         if name == "authentication":
             continue
 
         if name == "smtp":
             continue
-
-        variables = service.get("variables", {})
 
         if name == "celery":
 
