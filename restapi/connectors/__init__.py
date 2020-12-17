@@ -33,7 +33,6 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 
 
 class Service(TypedDict):
-    module: Optional[ModuleType]
     available: bool
     variables: Dict[str, str]
 
@@ -53,7 +52,6 @@ class Connector(metaclass=abc.ABCMeta):
     services: Dict[str, Service] = {
         "authentication": {
             "available": Env.get_bool("AUTH_ENABLE"),
-            "module": None,
             "variables": {},
         }
     }
@@ -180,7 +178,6 @@ class Connector(metaclass=abc.ABCMeta):
             if not available:
                 services[connector] = {
                     "available": available,
-                    "module": None,
                     "variables": {},
                 }
                 continue
@@ -210,7 +207,6 @@ class Connector(metaclass=abc.ABCMeta):
 
             services[connector] = {
                 "available": available,
-                "module": connector_module,
                 "variables": variables,
             }
 
@@ -296,10 +292,11 @@ class Connector(metaclass=abc.ABCMeta):
         if Connector.authentication_service != NO_AUTH:
             authentication_instance = Connector.get_authentication_instance()
 
-            # Connector instance needed here
-            connector = glom(
-                Connector.services, f"{Connector.authentication_service}.module"
-            ).get_instance()
+            connector_module = Connector.get_module(
+                Connector.authentication_service, BACKEND_PACKAGE
+            )
+            connector = connector_module.get_instance()
+
             log.debug("Initializing {}", Connector.authentication_service)
             connector.initialize()
 
@@ -319,9 +316,11 @@ class Connector(metaclass=abc.ABCMeta):
     def project_clean() -> None:
         if Connector.authentication_service != NO_AUTH:
 
-            connector = glom(
-                Connector.services, f"{Connector.authentication_service}.module"
-            ).get_instance()
+            connector_module = Connector.get_module(
+                Connector.authentication_service, BACKEND_PACKAGE
+            )
+            connector = connector_module.get_instance()
+
             log.debug("Destroying {}", Connector.authentication_service)
             connector.destroy()
 
