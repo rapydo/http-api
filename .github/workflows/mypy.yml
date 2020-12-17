@@ -30,6 +30,7 @@ jobs:
           echo "[mypy]" > mypy.ini
 
           for lib in \
+            celery \
             glom \
             flask_apispec \
             apispec \
