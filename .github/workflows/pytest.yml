@@ -115,4 +115,7 @@ jobs:
 
       - name: Docker Logs
         if: failure()
-        run: rapydo logs
+        run: |
+          cd ${{ matrix.template }}.${{ matrix.mode }}
+
+          rapydo logs
