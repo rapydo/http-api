@@ -20,7 +20,7 @@ class Meta:
     """Utilities with meta in mind"""
 
     @staticmethod
-    def get_classes_from_module(module: ModuleType) -> Dict[str, Type]:
+    def get_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
         """
         Find classes inside a python module file.
         """
@@ -37,7 +37,7 @@ class Meta:
         return {}
 
     @staticmethod
-    def get_new_classes_from_module(module: ModuleType) -> Dict[str, Type]:
+    def get_new_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
         """
         Skip classes not originated inside the module.
         """
@@ -72,7 +72,7 @@ class Meta:
             return None
 
     @staticmethod
-    def get_self_reference_from_args(*args: Any) -> Optional[object]:
+    def get_self_reference_from_args(*args: Any) -> Optional[Any]:
         """
         Useful in decorators:
         being able to call the internal method by getting
@@ -90,7 +90,7 @@ class Meta:
     @staticmethod
     def import_models(
         name: str, package: str, mandatory: bool = False
-    ) -> Dict[str, Type]:
+    ) -> Dict[str, Type[Any]]:
 
         if package == BACKEND_PACKAGE:
             module_name = f"{package}.connectors.{name}.models"
@@ -157,7 +157,7 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_class(module_relpath: str, class_name: str) -> Optional[Type]:
+    def get_class(module_relpath: str, class_name: str) -> Optional[Type[Any]]:
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
@@ -173,7 +173,7 @@ class Meta:
         return getattr(module, class_name)
 
     @staticmethod
-    def get_instance(module_relpath: str, class_name: str, **kwargs: Any) -> object:
+    def get_instance(module_relpath: str, class_name: str, **kwargs: Any) -> Any:
 
         MyClass = Meta.get_class(module_relpath, class_name)
 
