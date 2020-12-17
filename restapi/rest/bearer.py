@@ -10,13 +10,13 @@ Note that anyone can validate a token as it is a bearer token:
 there is no client id nor is client authentication required.
 """
 
+import sys
 from functools import wraps
 from typing import Optional, Tuple
 
 from flask import request
 
 from restapi.env import Env
-from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -106,9 +106,12 @@ class HTTPTokenAuth:
                     # An exit here is really really dangerous, but even if
                     # get_self_reference_from_args can return None, this case is quite
                     # impossible... however with None the server can't continue!
-                    print_and_exit(
+                    log.critical(
                         "Server misconfiguration, self reference can't be None!"
                     )
+                    # with print_and_exit my-py does not understand that the execute
+                    # halts here... let's use an explicit exit
+                    sys.exit(1)
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
