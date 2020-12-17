@@ -151,6 +151,9 @@ class EndpointsLoader:
             )
 
             # Extract classes from the module
+            # module can't be none because of exit_on_fail=True...
+            # but my-py can't understand this
+            # mypy: ignore-errors
             classes = Meta.get_new_classes_from_module(module)
             for class_name, epclss in classes.items():
                 # Filtering out classes without expected data

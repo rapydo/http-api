@@ -16,6 +16,7 @@ from typing import Optional, Tuple
 from flask import request
 
 from restapi.env import Env
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -100,6 +101,14 @@ class HTTPTokenAuth:
 
                 # Internal API 'self' reference
                 caller = Meta.get_self_reference_from_args(*args)
+
+                if caller is None:  # pragma: no cover
+                    # An exit here is really really dangerous, but even if
+                    # get_self_reference_from_args can return None, this case is quite
+                    # impossible... however with None the server can't continue!
+                    print_and_exit(
+                        "Server misconfiguration, self reference can't be None!"
+                    )
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
