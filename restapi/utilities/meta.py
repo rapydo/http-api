@@ -100,6 +100,7 @@ class Meta:
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
+            module = None
             if mandatory:
                 log.critical(e)
 
