@@ -78,7 +78,7 @@ repos:
 
             # Disable errors like:
             # found module but no type hints
-            # "--ignore-missing-imports",
+            "--ignore-missing-imports",
 
             # This flag disallows usage of generic types that do not specify explicit type parameters.
             # Moreover, built-in collections (such as list and dict)
