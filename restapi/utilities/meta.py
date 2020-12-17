@@ -8,7 +8,8 @@ http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.h
 import inspect
 import pkgutil
 from importlib import import_module
-from typing import Any, Callable, Dict
+from types import ModuleType
+from typing import Any, Callable, Dict, Optional, Type
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities import print_and_exit
@@ -19,7 +20,7 @@ class Meta:
     """Utilities with meta in mind"""
 
     @staticmethod
-    def get_classes_from_module(module):
+    def get_classes_from_module(module: ModuleType) -> Dict[str, Type]:
         """
         Find classes inside a python module file.
         """
@@ -36,20 +37,22 @@ class Meta:
         return {}
 
     @staticmethod
-    def get_new_classes_from_module(module):
+    def get_new_classes_from_module(module: ModuleType) -> Dict[str, Type]:
         """
         Skip classes not originated inside the module.
         """
 
         classes = {}
-        for key, value in Meta.get_classes_from_module(module).items():
+        for name, value in Meta.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
-                classes[key] = value
+                classes[name] = value
         return classes
 
     # Should return `from types import ModuleType` -> Optional[ModuleType]
     @staticmethod
-    def get_module_from_string(modulestring, exit_on_fail=False):
+    def get_module_from_string(
+        modulestring: str, exit_on_fail: bool = False
+    ) -> Optional[ModuleType]:
         """
         Getting a module import
         when your module is stored as a string in a variable
@@ -69,7 +72,7 @@ class Meta:
             return None
 
     @staticmethod
-    def get_self_reference_from_args(*args):
+    def get_self_reference_from_args(*args: Any) -> Optional[object]:
         """
         Useful in decorators:
         being able to call the internal method by getting
@@ -85,7 +88,9 @@ class Meta:
         return None
 
     @staticmethod
-    def import_models(name, package, exit_on_fail=True):
+    def import_models(
+        name: str, package: str, exit_on_fail: bool = True
+    ) -> Dict[str, Type]:
 
         if package == BACKEND_PACKAGE:
             module_name = f"{package}.connectors.{name}.models"
@@ -119,7 +124,9 @@ class Meta:
             return tasks
 
         # get all modules in package (i.e. py files)
-        for _, module_name, ispkg in pkgutil.iter_modules(package.__path__):
+        # my-py does not like accessing __path__
+        path = package.__path__  # type: ignore
+        for _, module_name, ispkg in pkgutil.iter_modules(path):
             # skip modules (i.e. subfolders)
             if ispkg:
                 continue
@@ -147,7 +154,7 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_class(module_relpath, class_name):
+    def get_class(module_relpath: str, class_name: str) -> Optional[Type]:
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
@@ -163,7 +170,7 @@ class Meta:
         return getattr(module, class_name)
 
     @staticmethod
-    def get_instance(module_relpath, class_name, **kwargs):
+    def get_instance(module_relpath: str, class_name: str, **kwargs: Any) -> object:
 
         MyClass = Meta.get_class(module_relpath, class_name)
 
