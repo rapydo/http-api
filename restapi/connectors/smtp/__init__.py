@@ -23,11 +23,11 @@ from restapi.utilities.logs import log
 class Mail(Connector):
     def __init__(self, app=None):
         self.smtp = None
+        super().__init__(app)
         # instance_variables is updated with custom variabiles in connect
         # and the used in the send method.
         # This way the send method will be able to use variabiles overridden in connect
         self.instance_variables = self.variables.copy()
-        super().__init__(app)
 
     def get_connection_exception(self):
         return (socket.gaierror, SMTPAuthenticationError)
