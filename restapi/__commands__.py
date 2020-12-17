@@ -152,7 +152,7 @@ def mywait():
     """
     for name, service in Connector.services.items():
 
-        if not service.get("available", False):
+        if not Connector.check_availability(name):
             continue
 
         variables = service.get("variables", {})
