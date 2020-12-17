@@ -89,7 +89,7 @@ class Meta:
 
     @staticmethod
     def import_models(
-        name: str, package: str, exit_on_fail: bool = True
+        name: str, package: str, mandatory: bool = False
     ) -> Dict[str, Type]:
 
         if package == BACKEND_PACKAGE:
@@ -100,11 +100,13 @@ class Meta:
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
-            log.error("Cannot load {} models from {}", name, module_name)
-            if exit_on_fail:
-                print_and_exit(e)
+            if mandatory:
+                log.critical(e)
 
-            log.warning(e)
+        if not module:
+            if mandatory:
+                print_and_exit("Cannot load {} models from {}", name, module_name)
+
             return {}
 
         return Meta.get_new_classes_from_module(module)

@@ -210,17 +210,13 @@ class Connector(metaclass=abc.ABCMeta):
                 log.debug("Loading models from {}", connector_path)
 
                 base_models = Meta.import_models(
-                    connector, BACKEND_PACKAGE, exit_on_fail=True
+                    connector, BACKEND_PACKAGE, mandatory=True
                 )
                 if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
                     extended_models = {}
                 else:
-                    extended_models = Meta.import_models(
-                        connector, EXTENDED_PACKAGE, exit_on_fail=False
-                    )
-                custom_models = Meta.import_models(
-                    connector, CUSTOM_PACKAGE, exit_on_fail=False
-                )
+                    extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
+                custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
 
                 connector_class.set_models(base_models, extended_models, custom_models)
 

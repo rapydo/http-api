@@ -167,22 +167,20 @@ class TestApp(BaseTests):
         s = Meta.get_self_reference_from_args("test")
         assert s == "test"
 
-        s = Meta.import_models("this-should", "not-exist", exit_on_fail=False)
+        s = Meta.import_models("this-should", "not-exist", mandatory=False)
         assert isinstance(s, dict)
         assert len(s) == 0
 
         try:
-            Meta.import_models("this-should", "not-exist", exit_on_fail=True)
+            Meta.import_models("this-should", "not-exist", mandatory=True)
             pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
         # Check exit_on_fail default value
-        try:
-            Meta.import_models("this-should", "not-exist")
-            pytest.fail("SystemExit not raised")  # pragma: no cover
-        except SystemExit:
-            pass
+        s = Meta.import_models("this-should", "not-exist")
+        assert isinstance(s, dict)
+        assert len(s) == 0
 
         assert Meta.get_instance("invalid.path", "InvalidClass") is None
         assert Meta.get_instance("customization", "InvalidClass") is None
