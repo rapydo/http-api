@@ -6,7 +6,6 @@ from flask import Flask
 from restapi.connectors import Connector
 from restapi.connectors import redis as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "redis"
@@ -25,10 +24,6 @@ def test_redis(app: Flask) -> None:
         return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-    )
 
     obj = connector.get_instance(host="invalidhostname", port=123)
     assert obj is not None
