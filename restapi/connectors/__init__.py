@@ -231,7 +231,7 @@ class Connector(metaclass=abc.ABCMeta):
         )
 
     @staticmethod
-    def get_authentication_instance() -> Optional[BaseAuthentication]:
+    def get_authentication_instance() -> BaseAuthentication:
         if not Connector._authentication_module:
             Connector._authentication_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
@@ -239,8 +239,9 @@ class Connector(metaclass=abc.ABCMeta):
 
         if Connector._authentication_module:
             return Connector._authentication_module.Authentication()
-        # or Raise ServiceUnavailable ...
-        return None
+
+        log.critical("{} not available", Connector.authentication_service)
+        raise ServiceUnavailable("Authentication service not available")
 
     @staticmethod
     def init_app(app: Flask, worker_mode: bool = False) -> None:

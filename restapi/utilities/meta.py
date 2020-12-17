@@ -157,7 +157,7 @@ class Meta:
         return tasks
 
     @staticmethod
-    def get_class(module_relpath: str, class_name: str) -> Optional[Type[Any]]:
+    def get_class(module_relpath: str, class_name: str) -> Optional[Any]:
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
