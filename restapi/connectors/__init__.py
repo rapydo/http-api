@@ -51,7 +51,13 @@ class Connector(metaclass=abc.ABCMeta):
     # App can be removed?
     def __init__(self, app=None):
 
+        # This is the lower-cased class name (neomodel, celeryext)
         self.name = self.__class__.__name__.lower()
+        # This is the folder name corresponding to the connector name (neo4j, celery, )
+        # self.__class__.__module__ == restapi.connectors.sqlalchemy
+        # .split(".") == ['restapi', 'connectors', 'sqlalchemy']
+        # [-1] == 'sqlalchemy'
+        self.name = self.__class__.__module__.split(".")[-1]
 
         # Will be modified by self.disconnect()
         self.disconnected = False
