@@ -67,12 +67,10 @@ class NewSwaggerSpecifications(EndpointResource):
                     u = uri.replace("{", "<").replace("}", ">")
                     for method, definition in endpoint.items():
 
-                        is_private = bool(
-                            glom(
-                                mem.private_endpoints,
-                                f"{u}.{method}",
-                                default=False,
-                            )
+                        is_private = glom(
+                            mem.private_endpoints,
+                            f"{u}.{method}",
+                            default=False,
                         )
                         defs = definition.get("parameters", [])[:]
                         for p in defs:
