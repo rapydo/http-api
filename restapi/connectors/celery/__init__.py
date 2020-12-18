@@ -12,12 +12,13 @@ from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
+REDBEAT_KEY_PREFIX: str = "redbeat:"
+
 
 class CeleryExt(Connector):
 
-    CELERYBEAT_SCHEDULER = None
-    REDBEAT_KEY_PREFIX = "redbeat:"
-    celery_app: Celery = None
+    CELERYBEAT_SCHEDULER: Optional[str] = None
+    celery_app: Optional[Celery] = None
 
     def get_connection_exception(self):
         return None
@@ -210,7 +211,7 @@ class CeleryExt(Connector):
                 url = self.get_redis_url(service_vars, protocol="redis")
 
                 celery_app.conf["REDBEAT_REDIS_URL"] = url
-                celery_app.conf["REDBEAT_KEY_PREFIX"] = CeleryExt.REDBEAT_KEY_PREFIX
+                celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
                 log.info("Celery-beat connected to Redis: {}", obfuscate_url(url))
             else:
                 log.warning(
@@ -254,7 +255,7 @@ class CeleryExt(Connector):
             from redbeat.schedulers import RedBeatSchedulerEntry
 
             try:
-                task_key = f"{cls.REDBEAT_KEY_PREFIX}{name}"
+                task_key = f"{REDBEAT_KEY_PREFIX}{name}"
                 return RedBeatSchedulerEntry.from_key(
                     task_key, app=CeleryExt.celery_app
                 )
