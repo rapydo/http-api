@@ -20,8 +20,7 @@ jobs:
           python -m pip install --upgrade pip
           # flask-sqlalchemy-stubs does not work very well...
           # sqlalchemy-stubs to be tested
-          # celery-stubs to be enabled
-          pip install mypy lxml html5lib pymongo-stubs pika-stubs pytest-stub
+          pip install mypy lxml html5lib pymongo-stubs pika-stubs celery-stubs pytest-stub
           pip install --upgrade --no-cache-dir --editable .
 
       - name: Run MyPy
