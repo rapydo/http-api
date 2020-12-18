@@ -89,7 +89,7 @@ repos:
             # (By default the bodies of functions without annotations are not type checked.)
             "--check-untyped-defs",
             "--warn-redundant-casts",
-            "--warn-unused-ignores",
+            # "--warn-unused-ignores",
             "--warn-return-any",
             "--warn-unreachable",
 
