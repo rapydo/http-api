@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
 
-def glom(self: Any, target: Dict[str, Any], **kw: str) -> str:
-    ...
+class Spec:
+    # Glom is not really intended to return a str, but it is true in my case
+    def glom(self, target: Dict[str, Any], **kw: str) -> str:
+        ...
