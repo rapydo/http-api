@@ -20,11 +20,12 @@ app = Flask("beat")
 # instead of using the create_app method from server
 Connector.init_app(app=app)
 
-# Used by Celery to run the instance (--appA app)
-celery_app = celery.get_instance().celery_app
+instance = celery.get_instance()
+# Used by Celery to run the instance (--app app)
+celery_app = instance.celery_app
 
 # Reload Flask app code for the worker (needed to have the app context available)
-celery_app.app = app
+celery.CeleryExt.app = app
 
 
 log.debug("Celery beat is ready {}", celery_app)
