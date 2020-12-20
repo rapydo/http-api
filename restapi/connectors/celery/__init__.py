@@ -18,7 +18,7 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER: Optional[str] = None
-    celery_app: Optional[Celery] = None
+    celery_app: Celery = Celery("RAPyDo")
 
     def get_connection_exception(self):
         return None
@@ -71,25 +71,23 @@ class CeleryExt(Connector):
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
 
-        celery_app = Celery("RAPyDo")
-
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
 
-            celery_app.conf.broker_use_ssl = Env.to_bool(
+            self.celery_app.conf.broker_use_ssl = Env.to_bool(
                 service_vars.get("ssl_enabled")
             )
 
-            celery_app.conf.broker_url = self.get_rabbit_url(
+            self.celery_app.conf.broker_url = self.get_rabbit_url(
                 service_vars, protocol="amqp"
             )
 
         elif broker == "REDIS":
             service_vars = Env.load_variables_group(prefix="redis")
 
-            celery_app.conf.broker_use_ssl = False
+            self.celery_app.conf.broker_use_ssl = False
 
-            celery_app.conf.broker_url = self.get_redis_url(
+            self.celery_app.conf.broker_url = self.get_redis_url(
                 service_vars, protocol="redis"
             )
 
@@ -99,12 +97,12 @@ class CeleryExt(Connector):
         log.info(
             "Configured {} as broker {}",
             broker,
-            obfuscate_url(celery_app.conf.broker_url),
+            obfuscate_url(self.celery_app.conf.broker_url),
         )
         # From the guide: "Default: Taken from broker_url."
         # But it is not true, connection fails if not explicitly set
-        celery_app.conf.broker_read_url = celery_app.conf.broker_url
-        celery_app.conf.broker_write_url = celery_app.conf.broker_url
+        self.celery_app.conf.broker_read_url = self.celery_app.conf.broker_url
+        self.celery_app.conf.broker_write_url = self.celery_app.conf.broker_url
 
         backend = variables.get("backend", broker)
 
@@ -115,14 +113,14 @@ class CeleryExt(Connector):
                 "RABBIT backend is quite limited and not fully supported. "
                 "Consider to enable Redis or MongoDB as a backend database"
             )
-            celery_app.conf.result_backend = self.get_rabbit_url(
+            self.celery_app.conf.result_backend = self.get_rabbit_url(
                 service_vars, protocol="rpc"
             )
 
         elif backend == "REDIS":
             service_vars = Env.load_variables_group(prefix="redis")
 
-            celery_app.conf.result_backend = self.get_redis_url(
+            self.celery_app.conf.result_backend = self.get_redis_url(
                 service_vars, protocol="redis"
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
@@ -130,7 +128,7 @@ class CeleryExt(Connector):
         elif backend == "MONGODB":
             service_vars = Env.load_variables_group(prefix="mongo")
 
-            celery_app.conf.result_backend = self.get_mongodb_url(
+            self.celery_app.conf.result_backend = self.get_mongodb_url(
                 service_vars, protocol="mongodb"
             )
 
@@ -142,41 +140,41 @@ class CeleryExt(Connector):
         log.info(
             "Configured {} as backend {}",
             backend,
-            obfuscate_url(celery_app.conf.result_backend),
+            obfuscate_url(self.celery_app.conf.result_backend),
         )
 
         # Should be enabled?
         # Default: Disabled by default (transient messages).
         # If set to True, result messages will be persistent.
         # This means the messages won’t be lost after a broker restart.
-        # celery_app.conf.result_persistent = True
+        # self.celery_app.conf.result_persistent = True
 
         # Skip initial warnings, avoiding pickle format (deprecated)
-        celery_app.conf.accept_content = ["json"]
-        celery_app.conf.task_serializer = "json"
-        celery_app.conf.result_serializer = "json"
+        self.celery_app.conf.accept_content = ["json"]
+        self.celery_app.conf.task_serializer = "json"
+        self.celery_app.conf.result_serializer = "json"
 
         # Already enabled by default to use UTC
-        # celery_app.conf.enable_utc
-        # celery_app.conf.timezone
+        # self.celery_app.conf.enable_utc
+        # self.celery_app.conf.timezone
 
         # Not needed, because tasks are dynamcally injected
-        # celery_app.conf.imports
-        # celery_app.conf.includes
+        # self.celery_app.conf.imports
+        # self.celery_app.conf.includes
 
         # Max priority default value for all queues
-        # Required to be able to set priority parameter on apply_async calls
-        celery_app.conf.task_queue_max_priority = 10
+        # Required to be able to set priority parameter on task calls
+        self.celery_app.conf.task_queue_max_priority = 10
 
         # Default priority for taks (if not specified)
-        celery_app.conf.task_default_priority = 5
+        self.celery_app.conf.task_default_priority = 5
 
         # If you want to apply a more strict priority to items
         # probably prefetching should also be disabled:
 
         # Late ack means the task messages will be acknowledged after the task
         # has been executed, not just before (the default behavior).
-        # celery_app.conf.task_acks_late = True
+        # self.celery_app.conf.task_acks_late = True
 
         # How many messages to prefetch at a time multiplied by the number
         # of concurrent processes. The default is 4 (four messages for each process).
@@ -187,7 +185,7 @@ class CeleryExt(Connector):
         # the workers. To disable prefetching, set worker_prefetch_multiplier to 1.
         # Changing that setting to 0 will allow the worker to keep consuming as many
         # messages as it wants.
-        celery_app.conf.worker_prefetch_multiplier = 1
+        self.celery_app.conf.worker_prefetch_multiplier = 1
 
         if Env.get_bool("CELERYBEAT_ENABLED"):
 
@@ -197,9 +195,11 @@ class CeleryExt(Connector):
                 service_vars = Env.load_variables_group(prefix="mongo")
                 url = self.get_mongodb_url(service_vars, protocol="mongodb")
                 SCHEDULER_DB = "celery"
-                celery_app.conf["CELERY_MONGODB_SCHEDULER_DB"] = SCHEDULER_DB
-                celery_app.conf["CELERY_MONGODB_SCHEDULER_COLLECTION"] = "schedules"
-                celery_app.conf["CELERY_MONGODB_SCHEDULER_URL"] = url
+                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_DB"] = SCHEDULER_DB
+                self.celery_app.conf[
+                    "CELERY_MONGODB_SCHEDULER_COLLECTION"
+                ] = "schedules"
+                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_URL"] = url
 
                 import mongoengine
 
@@ -210,18 +210,14 @@ class CeleryExt(Connector):
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(service_vars, protocol="redis")
 
-                celery_app.conf["REDBEAT_REDIS_URL"] = url
-                celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
+                self.celery_app.conf["REDBEAT_REDIS_URL"] = url
+                self.celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
                 log.info("Celery-beat connected to Redis: {}", obfuscate_url(url))
             else:
                 log.warning(
                     "Cannot configure celery beat scheduler with backend: {}", backend
                 )
 
-        if CeleryExt.celery_app is None:
-            CeleryExt.celery_app = celery_app
-
-        self.celery_app = celery_app
         # self.disconnected = False
 
         task_package = f"{CUSTOM_PACKAGE}.tasks"
@@ -229,7 +225,8 @@ class CeleryExt(Connector):
         tasks = Meta.get_celery_tasks(task_package)
 
         for func_name, funct in tasks.items():
-            setattr(self, func_name, funct)
+            self.celery_app.tasks.register(funct)
+            # setattr(self, func_name, funct)
 
         return self
 
