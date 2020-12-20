@@ -224,7 +224,10 @@ class CeleryExt(Connector):
         # self.disconnected = False
 
         for funct in Meta.get_celery_tasks(f"{CUSTOM_PACKAGE}.tasks"):
-            self.celery_app.tasks.register(funct)
+            # Weird errors due to celery-stubs?
+            # "Callable[[], Any]" has no attribute "register"
+            # The code is correct... let's ignore it
+            self.celery_app.tasks.register(funct)  # type: ignore
 
         return self
 
