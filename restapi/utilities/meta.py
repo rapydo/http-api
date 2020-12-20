@@ -9,7 +9,7 @@ import inspect
 import pkgutil
 from importlib import import_module
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities import print_and_exit
@@ -113,14 +113,14 @@ class Meta:
         return Meta.get_new_classes_from_module(module)
 
     @staticmethod
-    def get_celery_tasks(package_name: str) -> Dict[str, Callable[..., Any]]:
+    def get_celery_tasks(package_name: str) -> List[Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
         Celery tasks are functions decorated by @celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
-        tasks: Dict[str, Callable[..., Any]] = {}
+        tasks: List[Callable[..., Any]] = []
         # package = tasks folder
         package = Meta.get_module_from_string(package_name)
         if package is None:
@@ -153,7 +153,10 @@ class Meta:
                 if obj_type.__module__ != "celery.local":
                     continue
 
-                tasks[func[0]] = func[1]
+                # This was a dict name => func
+                # tasks[func[0]] = func[1]
+                # Now it is a list
+                tasks.append(func[1])
         return tasks
 
     @staticmethod

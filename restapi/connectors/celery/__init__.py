@@ -223,13 +223,8 @@ class CeleryExt(Connector):
 
         # self.disconnected = False
 
-        task_package = f"{CUSTOM_PACKAGE}.tasks"
-
-        tasks = Meta.get_celery_tasks(task_package)
-
-        for func_name, funct in tasks.items():
+        for funct in Meta.get_celery_tasks(f"{CUSTOM_PACKAGE}.tasks"):
             self.celery_app.tasks.register(funct)
-            # setattr(self, func_name, funct)
 
         return self
 
