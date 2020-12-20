@@ -49,17 +49,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
         try:
             task = obj.celery_app.AsyncResult(task_id)
             assert task is not None
-            # Debug code:
-            # The task is executed (as shown in the logs of the celery container)
-            # But here we are not received the results
-            # Let's try an experiment: instead of a single timeout=60,
-            # split in two timeouts of 30 seconds
-            try:
-                r = task.get(timeout=30)
-            except celery.exceptions.TimeoutError:  # pragma: no cover
-                task = obj.celery_app.AsyncResult(task_id)
-                r = task.get(timeout=30)
-
+            r = task.get(timeout=120)
             assert r is not None
             # This is the task output, as defined in task_template.py.j2
             assert r == "Task executed!"
