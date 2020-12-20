@@ -57,6 +57,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
             try:
                 r = task.get(timeout=30)
             except celery.exceptions.TimeoutError:  # pragma: no cover
+                task = obj.celery_app.AsyncResult(task_id)
                 r = task.get(timeout=30)
 
             assert r is not None
