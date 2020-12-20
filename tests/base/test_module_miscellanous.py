@@ -139,11 +139,11 @@ class TestApp(BaseTests):
 
         # This is a valid package containing other packages... but no task will be found
         s = Meta.get_celery_tasks("restapi.utilities")
-        assert isinstance(s, dict)
+        assert isinstance(s, list)
         assert len(s) == 0
 
         s = Meta.get_celery_tasks("this-should-not-exist")
-        assert isinstance(s, dict)
+        assert isinstance(s, list)
         assert len(s) == 0
 
         s = Meta.get_classes_from_module("this-should-not-exist")
