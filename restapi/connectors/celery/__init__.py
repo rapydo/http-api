@@ -71,6 +71,9 @@ class CeleryExt(Connector):
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
 
+        # Replace the previous App
+        self.celery_app = Celery("RAPyDo")
+
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
 
