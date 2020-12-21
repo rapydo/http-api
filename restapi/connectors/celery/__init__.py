@@ -71,9 +71,6 @@ class CeleryExt(Connector):
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
 
-        # Replace the previous App
-        self.celery_app = Celery("RAPyDo")
-
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
 
@@ -222,6 +219,13 @@ class CeleryExt(Connector):
                 )
 
         # self.disconnected = False
+
+        conf = self.celery_app.conf
+        # Replace the previous App with new settings
+        self.celery_app = Celery(
+            "RAPyDo", broker=conf["broker_url"], backend=conf["result_backend"]
+        )
+        self.celery_app.conf = conf
 
         for funct in Meta.get_celery_tasks(f"{CUSTOM_PACKAGE}.tasks"):
             # Weird errors due to celery-stubs?

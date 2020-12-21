@@ -37,9 +37,10 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert obj is not None
 
     # task_id = obj.test_task.apply_async().id
-    task_id = obj.celery_app.send_task("test_task").id
+    task = obj.celery_app.send_task("test_task")
 
-    assert task_id is not None
+    assert task is not None
+    assert task.id is not None
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
@@ -47,9 +48,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
         )
     else:
         try:
-            task = obj.celery_app.AsyncResult(task_id)
-            assert task is not None
-            r = task.get(timeout=120)
+            r = task.get(timeout=10)
             assert r is not None
             # This is the task output, as defined in task_template.py.j2
             assert r == "Task executed!"
