@@ -182,13 +182,9 @@ class Connector(metaclass=abc.ABCMeta):
                 continue
 
             connector_module = Connector.get_module(connector, module)
-            classes = Meta.get_new_classes_from_module(connector_module)
-            for class_name, connector_class in classes.items():
-                if not issubclass(connector_class, Connector):
-                    continue
+            connector_class = Connector.get_class(connector_module)
 
-                break
-            else:
+            if not connector_class:
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 continue
 
@@ -231,8 +227,6 @@ class Connector(metaclass=abc.ABCMeta):
                     extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
                 custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
 
-                connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
-
                 log.info(
                     "Models loaded from {}: core {}, extended {}, custom {}",
                     connector,
@@ -240,8 +234,14 @@ class Connector(metaclass=abc.ABCMeta):
                     len(extended_models),
                     len(custom_models),
                 )
-                connector_class = connector_module.get_instance().__class__
-                connector_class.set_models(base_models, extended_models, custom_models)
+                connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
+                connector_class = Connector.get_class(connector_module)
+                if connector_class:
+                    connector_class.set_models(
+                        base_models, extended_models, custom_models
+                    )
+                else:  # pragma: no cover
+                    log.error("Connector class not found for {}", connector)
             else:
                 log.debug("No model found for {}", connector)
 
@@ -250,6 +250,19 @@ class Connector(metaclass=abc.ABCMeta):
         return Meta.get_module_from_string(
             ".".join((module, CONNECTORS_FOLDER, connector))
         )
+
+    @staticmethod
+    def get_class(connector_module: Optional[ModuleType]) -> Optional[Type]:
+
+        if not connector_module:  # pragma: no cover
+            return False
+
+        classes = Meta.get_new_classes_from_module(connector_module)
+        for connector_class in classes.values():
+            if issubclass(connector_class, Connector):
+                return connector_class
+
+        return None
 
     @staticmethod
     def get_authentication_instance() -> BaseAuthentication:
