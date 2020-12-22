@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType, TracebackType
-from typing import Any, Dict, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -93,6 +93,8 @@ class Connector(metaclass=abc.ABCMeta):
         Connector.services = Connector.load_connectors(
             os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
         )
+
+        Connector.load_models(Connector.services.keys())
 
     def __del__(self) -> None:
         if not self.disconnected:
@@ -202,13 +204,24 @@ class Connector(metaclass=abc.ABCMeta):
 
             services[connector] = variables
 
-            # NOTE: module loading algoritm is based on core connectors
-            # if you need project connectors with models please review this part
-            models_file = os.path.join(connector_path, "models.py")
+            log.debug("Got class definition for {}", connector_class)
 
-            if os.path.isfile(models_file):
-                log.debug("Loading models from {}", connector_path)
+        return services
 
+    def load_models(connectors: List[str]) -> None:
+
+        for connector in connectors:
+            connector_path = os.path.join(
+                ABS_RESTAPI_PATH, CONNECTORS_FOLDER, connector
+            )
+
+            # Models are strictly core-dependent. If you need to enable models starting
+            # from a custom connector this function has to be refactored:
+            # 1) now is checked the existence of models.py in ABS_RESTAPI_PATH/connector
+            # 2) Core model is mandatory
+            # 3) Connector class, used to inject models is taken from BACKEND_PACKAGE
+            if os.path.isfile(os.path.join(connector_path, "models.py")):
+                log.debug("Loading models from {}", connector)
                 base_models = Meta.import_models(
                     connector, BACKEND_PACKAGE, mandatory=True
                 )
@@ -218,11 +231,19 @@ class Connector(metaclass=abc.ABCMeta):
                     extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
                 custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
 
+                connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
+
+                log.info(
+                    "Models loaded from {}: core {}, extended {}, custom {}",
+                    connector,
+                    len(base_models),
+                    len(extended_models),
+                    len(custom_models),
+                )
+                connector_class = connector_module.get_instance().__class__
                 connector_class.set_models(base_models, extended_models, custom_models)
-
-            log.debug("Got class definition for {}", connector_class)
-
-        return services
+            else:
+                log.debug("No model found for {}", connector)
 
     @staticmethod
     def get_module(connector: str, module: str) -> Optional[ModuleType]:
