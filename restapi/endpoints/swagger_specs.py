@@ -16,6 +16,7 @@ class NewSwaggerSpecifications(EndpointResource):
 
     labels = ["specifications"]
 
+    @decorators.auth.optional(allow_access_token_parameter=True)
     @decorators.endpoint(
         path="/swagger",
         summary="Endpoints specifications based on OpenAPI format",
@@ -30,8 +31,7 @@ class NewSwaggerSpecifications(EndpointResource):
 
         specs = mem.docs.spec.to_dict()
 
-        user = self.get_user_if_logged(allow_access_token_parameter=True)
-        if user:
+        if self.get_user():
             # Set security requirements for endpoint
             for key, data in specs.items():
 
