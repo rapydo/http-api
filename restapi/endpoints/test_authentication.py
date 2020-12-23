@@ -15,13 +15,10 @@ if TESTING:
         def get(self):
             user = self.get_user()
 
-            return self.response(
-                {
-                    "token": self.get_token(),
-                    "user": user,
-                    "unpacked_user": user.email,
-                }
-            )
+            resp = {}
+            resp["token"] = self.get_token()
+            resp["user"] = user.email
+            return self.response(resp)
 
     class TestOptionalAuthentication(EndpointResource):
         @decorators.auth.optional()
@@ -32,13 +29,46 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self):
-            if not (user := self.get_user_if_logged()):
-                return {"token": self.get_token(), "user": user}
 
-            return self.response(
-                {
-                    "token": self.get_token(),
-                    "user": user,
-                    "unpacked_user": user.email,
-                }
-            )
+            resp = {}
+            resp["token"] = self.get_token()
+            if user := self.get_user():
+                resp["user"] = user.email
+            else:
+                resp["user"] = None
+
+            return self.response(resp)
+
+    class TestQueryParameterAuthentication(EndpointResource):
+        @decorators.auth.require(allow_access_token_parameter=True)
+        @decorators.endpoint(
+            path="/tests/queryauthentication",
+            summary="Only echos received token and corresponding user",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        def get(self):
+            user = self.get_user()
+
+            resp = {}
+            resp["token"] = self.get_token()
+            resp["user"] = user.email
+            return self.response(resp)
+
+    class TestOptionalQueryParameterAuthentication(EndpointResource):
+        @decorators.auth.optional(allow_access_token_parameter=True)
+        @decorators.endpoint(
+            path="/tests/optionalqueryauthentication",
+            summary="Only echos received token and corresponding user, if any",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        def get(self):
+            resp = {}
+            resp["token"] = self.get_token()
+            if user := self.get_user():
+                resp["user"] = user.email
+            else:
+                resp["user"] = None
+
+            return self.response(resp)
