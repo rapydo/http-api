@@ -214,6 +214,9 @@ class EndpointsLoader:
                 # auth.required injected by the required decorator in bearer.py
                 auth_required = fn.__dict__.get("auth.required", False)
 
+                # auth.optional injected by the optional decorator in bearer.py
+                auth_optional = fn.__dict__.get("auth.optional", False)
+
                 if not hasattr(fn, "uris"):  # pragma: no cover
                     print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
@@ -239,6 +242,9 @@ class EndpointsLoader:
                     if auth_required:
                         responses.setdefault("401", ERR401)
                         responses.setdefault("404", ERR404_AUTH)
+                    elif auth_optional:
+                        responses.setdefault("401", ERR401)
+                        responses.setdefault("404", ERR404)
                     else:
                         responses.setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute
