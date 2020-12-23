@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
+from flask import request
 from flask_apispec import marshal_with  # also imported from endpoints
 from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
@@ -17,6 +18,7 @@ from restapi.exceptions import (
 )
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -92,10 +94,28 @@ def cache_response_filter(response):
     return response[1] < 500
 
 
+# This is used to manipulate the function name to append a string depending
+# by the Bearer token. This way all cache entries for authenticated endpoints
+# will always user-dependent.
+def make_cache_function_name(name: str) -> str:
+
+    # Non authenticated endpoints do not valida the token.
+    # Function name is not expanded by any token that could be provided (are ignored)
+    if not request.environ.get(TOKEN_VALIDATED_KEY):
+        return name
+
+    # If the token is validated, the function name is expanded by a token-dependent key
+    token = auth.get_authorization_token(allow_access_token_parameter=True)
+    new_name = f"{name}-{hash(token)}"
+    return new_name
+
+
 # Used to cache endpoint with @decorators.cache(timeout=60)
 def cache(*args, **kwargs):
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
+    if "make_name" not in kwargs:
+        kwargs["make_name"] = make_cache_function_name
     return mem.cache.memoize(*args, **kwargs)
 
 
