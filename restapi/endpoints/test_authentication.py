@@ -1,6 +1,7 @@
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource
+from restapi.utilities.logs import log
 
 if TESTING:
 
@@ -32,6 +33,7 @@ if TESTING:
 
             resp = {}
             resp["token"] = self.get_token()
+            log.critical(resp["token"] is None)
             if user := self.get_user():
                 resp["user"] = user.email
             else:
