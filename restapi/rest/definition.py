@@ -111,6 +111,7 @@ class EndpointResource(MethodResource, Resource):
     def pagination_total(self, total: int) -> Response:
         return self.response({"total": total}, code=206)
 
+    # Deprecated since 1.0
     def get_user_if_logged(self, allow_access_token_parameter=False):
         """
         Helper to be used inside an endpoint that doesn't explicitly
@@ -118,6 +119,10 @@ class EndpointResource(MethodResource, Resource):
         when a valid token is presented
         """
 
+        log.warning(
+            "Deprecated use of self.get_user_if_logged, "
+            "decorate the endpoint with @decorators.auth.optional() instead"
+        )
         auth_type, token = HTTPTokenAuth.get_authorization_token(
             allow_access_token_parameter=allow_access_token_parameter
         )
