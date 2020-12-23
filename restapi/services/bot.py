@@ -1,5 +1,4 @@
 from marshmallow import Schema
-from telegram.ext.dispatcher import run_async
 from webargs import fields, validate
 
 from restapi.exceptions import RestApiException
@@ -27,9 +26,8 @@ def my_self(update, context):
     )
 
 
-@bot.command("status", help="get server status")
+@bot.command("status", help="get server status", run_async=True)
 @bot.restricted_to_users
-@run_async
 def status(update, context):
     try:
         out = bot.api.get("status")
@@ -47,11 +45,9 @@ class Stats(Schema):
     )
 
 
-@bot.command("monitor", help="get server monitoring stats")
+@bot.command("monitor", help="get server monitoring stats", run_async=True)
 @bot.restricted_to_admins
 @bot.parameters(Stats())
-# mypy: ignore-errors
-@run_async
 def monitor(update, context, param):
 
     bot.send_markdown(f"You asked: {param}", update)

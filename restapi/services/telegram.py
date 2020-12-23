@@ -46,7 +46,8 @@ class Bot:
             raise RestApiException("Missing API KEY", status_code=503)
         self.updater = Updater(
             self.variables.get("api_key"),
-            use_context=True,
+            # Starting from v13 use_context is True by default
+            # use_context=True,
             workers=Env.to_int(self.variables.get("workers"), default=1),
         )
 
@@ -101,11 +102,11 @@ class Bot:
     #    DECORATORS
     ##################
 
-    def command(self, cmd, help="N/A"):
+    def command(self, cmd, help="N/A", run_async=False):
         def decorator(func):
             log.info("Registering {}", cmd)
             self.updater.dispatcher.add_handler(
-                CommandHandler(cmd, func, pass_args=True)
+                CommandHandler(cmd, func, pass_args=True, run_async=run_async)
             )
             self.commands[cmd] = help
 
