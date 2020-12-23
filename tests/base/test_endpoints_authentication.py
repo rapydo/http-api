@@ -69,6 +69,7 @@ class TestApp(BaseTests):
         )
         # query token is ignored but the endpoint accepts missing tokens
         assert r.status_code == 200
+        content = self.get_content(r)
         assert len(content) == 2
         assert "token" in content
         assert "user" in content
@@ -81,6 +82,7 @@ class TestApp(BaseTests):
         )
         # invalid tokens should be rejected, but query token is ignored
         assert r.status_code == 200
+        content = self.get_content(r)
         assert len(content) == 2
         assert "token" in content
         assert "user" in content
