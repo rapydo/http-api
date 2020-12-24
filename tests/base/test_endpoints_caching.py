@@ -128,6 +128,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # Wrong token does not affected the cache
+        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers1)
         assert r.status_code == 200
         resp2bis = self.get_content(r)
         assert isinstance(resp2bis, list)
