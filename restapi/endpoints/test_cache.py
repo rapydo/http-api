@@ -1,20 +1,19 @@
-import time
-
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource
 
 if TESTING:
 
-    class TestCache(EndpointResource):
+    class TestShortCache(EndpointResource):
+        """
+        Used to test cache autocleaning at expiration
+        """
 
         labels = ["tests"]
-        # Increased at each request... except cached responses of course
-        counter1 = 0
-        counter2 = 0
+        counter = 0  # Increased at each request... except cached responses of course
 
         @decorators.endpoint(
-            path="/tests/cache",
+            path="/tests/cache/short",
             summary="Execute tests on cached responses",
             description="Only enabled in testing mode",
             responses={
@@ -22,13 +21,21 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=1)
-        def patch(self):
+        def get(self):
 
-            TestSemiAuthCache.counter1 += 1
-            return self.response(TestSemiAuthCache.counter1)
+            TestSemiAuthCache.counter += 1
+            return self.response(TestSemiAuthCache.counter)
+
+    class TestLongCache(EndpointResource):
+        """
+        Used to test cache cleaning with manual methods
+        """
+
+        labels = ["tests"]
+        counter = 0  # Increased at each request... except cached responses of course
 
         @decorators.endpoint(
-            path="/tests/cache",
+            path="/tests/cache/long",
             summary="Execute tests on cached responses",
             description="Only enabled in testing mode",
             responses={
@@ -42,7 +49,7 @@ if TESTING:
             return self.response(TestSemiAuthCache.counter2)
 
         @decorators.endpoint(
-            path="/tests/cache",
+            path="/tests/cache/long",
             summary="Clear endpoint cache",
             description="Only enabled in testing mode",
             responses={
@@ -55,15 +62,18 @@ if TESTING:
             return self.empty_response()
 
     class TestAuthCache(EndpointResource):
+        """
+        Used to test cache of authenticated endpoints
+        (cache keys are token dependent)
+        """
 
         labels = ["tests"]
 
-        # Increased at each request... except cached responses of course
-        counter = 0
+        counter = 0  # Increased at each request... except cached responses of course
 
         @decorators.auth.require()
         @decorators.endpoint(
-            path="/tests/authcache",
+            path="/tests/cache/auth",
             summary="Execute tests of cached responses from authenticated endpoints",
             description="Only enabled in testing mode",
             responses={
@@ -77,15 +87,18 @@ if TESTING:
             return self.response((self.get_user().uuid, TestAuthCache.counter))
 
     class TestSemiAuthCache(EndpointResource):
+        """
+        Used to test cache of optionally authenticated endpoints
+        (cache keys are token dependent, if tokens are provided and valid)
+        """
 
         labels = ["tests"]
 
-        # Increased at each request... except cached responses of course
-        counter = 0
+        counter = 0  # Increased at each request... except cached responses of course
 
         @decorators.auth.optional()
         @decorators.endpoint(
-            path="/tests/semiauthcache",
+            path="/tests/cache/optionalauth",
             summary="Execute tests of cached responses from optionally auth. endpoints",
             description="Only enabled in testing mode",
             responses={

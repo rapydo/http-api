@@ -9,33 +9,33 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        # patch method is cached for 1 second
+        # get method is cached for 1 second
 
         # First response is not cached
-        r = client.patch(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/tests/cache/short")
         assert r.status_code == 200
         counter1 = self.get_content(r)
 
         # Second response is cached
-        r = client.patch(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/tests/cache/short")
         assert r.status_code == 200
         assert self.get_content(r) == counter1
 
         # Third response is no longer cached
         time.sleep(1)
 
-        r = client.patch(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/tests/cache/short")
         assert r.status_code == 200
         counter2 = self.get_content(r)
         assert counter2 != counter1
 
         # Fourth response is cached again
-        r = client.patch(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/tests/cache/short")
         assert r.status_code == 200
         assert self.get_content(r) == counter2
 
         # Endpoint is unauthenticated, headers are ignored when building the cache key
-        r = client.patch(f"{API_URI}/tests/cache", headers=headers)
+        r = client.get(f"{API_URI}/tests/cache/short", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == counter2
 
@@ -46,12 +46,12 @@ class TestApp(BaseTests):
         # get method is cached for 200 seconds
 
         # First response is not cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         counter1 = self.get_content(r)
 
         # Second response is cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         assert self.get_content(r) == counter1
 
@@ -59,32 +59,32 @@ class TestApp(BaseTests):
         Cache.clear()
 
         # Third response is no longer cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         counter2 = self.get_content(r)
         assert counter2 != counter1
 
         # Response is still cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         assert self.get_content(r) == counter2
 
         # Empty the endpoint cache
-        client.delete(f"{API_URI}/tests/cache")
+        client.delete(f"{API_URI}/ttests/cache/long")
 
         # Second response is no longer cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         counter3 = self.get_content(r)
         assert counter3 != counter2
 
         # Response is still cached
-        r = client.get(f"{API_URI}/tests/cache")
+        r = client.get(f"{API_URI}/ttests/cache/long")
         assert r.status_code == 200
         assert self.get_content(r) == counter3
 
         # Endpoint is unauthenticated, headers are ignored when building the cache key
-        r = client.get(f"{API_URI}/tests/cache", headers=headers)
+        r = client.get(f"{API_URI}/ttests/cache/long", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == counter3
 
@@ -92,14 +92,14 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        r = client.get(f"{API_URI}/tests/authcache", headers=headers)
+        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers)
         assert r.status_code == 200
         resp1 = self.get_content(r)
         assert isinstance(resp1, list)
         # counter is 1 because this is the first request to this endpoint
         assert resp1[1] == 1
 
-        r = client.get(f"{API_URI}/tests/authcache", headers=headers)
+        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers)
         assert r.status_code == 200
         resp2 = self.get_content(r)
         assert isinstance(resp2, list)
@@ -117,7 +117,7 @@ class TestApp(BaseTests):
         uuid = self.get_content(r)
         headers2, _ = self.do_login(client, data["email"], data["password"])
 
-        r = client.get(f"{API_URI}/tests/authcache", headers=headers2)
+        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers2)
         assert r.status_code == 200
         resp3 = self.get_content(r)
         assert isinstance(resp3, list)
@@ -126,7 +126,7 @@ class TestApp(BaseTests):
         # The counter changed, because the response is not replied from the cache
         assert resp3[1] == 2
 
-        r = client.get(f"{API_URI}/tests/authcache", headers=headers2)
+        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers2)
         assert r.status_code == 200
         resp4 = self.get_content(r)
         assert isinstance(resp4, list)
@@ -136,7 +136,7 @@ class TestApp(BaseTests):
         assert resp4[1] == 2
 
     def test_cached_semiauthenticated_endpoint(self, client):
-        r = client.get(f"{API_URI}/tests/semiauthcache")
+        r = client.get(f"{API_URI}/tests/cache/optionalauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)
         assert isinstance(nonauthenticated1, list)
@@ -144,7 +144,7 @@ class TestApp(BaseTests):
         # counter is 1 because this is the first request to this endpoint
         assert nonauthenticated1[1] == 1
 
-        r = client.get(f"{API_URI}/tests/semiauthcache")
+        r = client.get(f"{API_URI}/tests/cache/optionalauth")
         assert r.status_code == 200
         nonauthenticated2 = self.get_content(r)
         assert isinstance(nonauthenticated2, list)
@@ -153,7 +153,7 @@ class TestApp(BaseTests):
         assert nonauthenticated2[1] == 1
 
         headers, _ = self.do_login(client, None, None)
-        r = client.get(f"{API_URI}/tests/semiauthcache", headers=headers)
+        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers)
         assert r.status_code == 200
         authenticated1 = self.get_content(r)
         assert isinstance(authenticated1, list)
@@ -162,7 +162,7 @@ class TestApp(BaseTests):
         assert authenticated1[1] == 2
 
         headers, _ = self.do_login(client, None, None)
-        r = client.get(f"{API_URI}/tests/semiauthcache", headers=headers)
+        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers)
         assert r.status_code == 200
         authenticated2 = self.get_content(r)
         assert isinstance(authenticated2, list)
