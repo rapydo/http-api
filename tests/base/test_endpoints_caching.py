@@ -108,7 +108,6 @@ class TestApp(BaseTests):
     def test_cached_authenticated_endpoint(self, client):
 
         headers1, _ = self.do_login(client, None, None)
-        headers2, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/cache/auth", headers=headers1)
         assert r.status_code == 200
@@ -139,6 +138,7 @@ class TestApp(BaseTests):
         # Same counter as above, because the response is replied from the cache
         assert resp2bis[COUNTER] == 1
 
+        headers2, _ = self.do_login(client, None, None)
         # Same user but different token, the cache should not be used
         r = client.get(f"{API_URI}/tests/cache/auth", headers=headers2)
         assert r.status_code == 200
@@ -238,7 +238,6 @@ class TestApp(BaseTests):
     def test_cached_authenticated_param_endpoint(self, client):
 
         headers1, _ = self.do_login(client, None, None)
-        headers2, token2 = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/cache/paramauth", headers=headers1)
         assert r.status_code == 200
@@ -256,6 +255,7 @@ class TestApp(BaseTests):
         assert resp2[COUNTER] == resp1[COUNTER]
         assert resp2[COUNTER] == 1
 
+        headers2, token2 = self.do_login(client, None, None)
         # Test by using access_token parameter instead of Headers
         r = client.get(
             f"{API_URI}/tests/cache/paramauth", query_string={"access_token": token2}
