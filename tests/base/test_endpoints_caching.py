@@ -216,9 +216,9 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         authenticated2 = self.get_content(r)
         assert isinstance(authenticated2, list)
-        assert authenticated2[UUID] != authenticated1[UUID]
+        assert authenticated2[UUID] == authenticated1[UUID]
         # Same counter as above, because the response is replied from the cache
-        assert authenticated2[COUNTER] == 3
+        assert authenticated2[COUNTER] == 2
 
         r = client.get(
             f"{API_URI}/tests/cache/optionalauth",
@@ -271,8 +271,8 @@ class TestApp(BaseTests):
         assert resp4[COUNTER] == resp3[COUNTER]
         assert resp4[COUNTER] == 2
 
-        # Cache is stored from access_token parameter,
-        # but the token is the same if provided in the headers
+        # Cache is stored starting from the access_token parameter,
+        # but the token is the same also if provided as header
         r = client.get(f"{API_URI}/tests/cache/auth", headers=headers2)
         assert r.status_code == 200
         resp5 = self.get_content(r)
