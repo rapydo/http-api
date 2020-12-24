@@ -2,7 +2,7 @@ import os
 import re
 import shutil
 from datetime import datetime
-from typing import Dict, Union
+from typing import TypedDict
 
 from plumbum import local
 
@@ -78,6 +78,72 @@ class StatsSchema(Schema):
     network_latency = fields.Nested(NetworkSchema)
 
 
+class SystemType(TypedDict):
+    boot_time: datetime
+
+
+class CPUType(TypedDict):
+    count: int
+    load_percentage: float
+    user: int
+    system: int
+    idle: int
+    wait: int
+    stolen: int
+
+
+class RAMType(TypedDict):
+    total: int
+    used: int
+    active: int
+    inactive: int
+    buffer: int
+    free: int
+    cache: int
+
+
+class SwapType(TypedDict):
+    from_disk: int
+    to_disk: int
+    total: int
+    used: int
+    free: int
+
+
+class DiskType(TypedDict):
+    total_disk_space: float
+    used_disk_space: float
+    free_disk_space: float
+    occupacy: float
+
+
+class ProcType(TypedDict):
+    waiting_for_run: int
+    uninterruptible_sleep: int
+
+
+class IOType(TypedDict):
+    blocks_received: int
+    blocks_sent: int
+
+
+class NetworkType(TypedDict):
+    min: float
+    max: float
+    avg: float
+
+
+class StatsType(TypedDict):
+    system: SystemType
+    cpu: CPUType
+    ram: RAMType
+    swap: SwapType
+    disk: DiskType
+    procs: ProcType
+    io: IOType
+    network_latency: NetworkType
+
+
 class AdminStats(EndpointResource):
 
     labels = ["helpers"]
@@ -91,19 +157,6 @@ class AdminStats(EndpointResource):
         responses={"200": "Stats retrieved"},
     )
     def get(self) -> Response:
-        statistics: Dict[str, Dict[str, Union[str, int, float, datetime]]] = {
-            "system": {},
-            "cpu": {},
-            "ram": {},
-            "swap": {},
-            "disk": {},
-            "procs": {},
-            "io": {},
-            "network_latency": {},
-        }
-
-        # Get Physical and Logical CPU Count
-        statistics["cpu"]["count"] = os.cpu_count() or 0
 
         # This is the average system load calculated over a given period of time
         # of 1, 5 and 15 minutes.
@@ -113,63 +166,18 @@ class AdminStats(EndpointResource):
 
         # Here we are converting the load average into percentage.
         # The higher the percentage the higher the load
-        statistics["cpu"]["load_percentage"] = (100 * os.getloadavg()[-1]) / (
-            os.cpu_count() or 1
-        )
-
-        # # Total amount of RAM
-        # grep = local["grep"]
-        # regexp = r"MemTotal:\s+(\d+) kB"
-
-        # if m := re.search(regexp, grep(["MemTotal", "/proc/meminfo"])):
-        #     statistics["ram"]["total"] = m.group(1)
+        load_percentage = (100 * os.getloadavg()[-1]) / (os.cpu_count() or 1)
 
         vmstat = local["vmstat"]
-        vm = vmstat().split("\n")
-        vm = re.split(r"\s+", vm[2])
+
+        vmstat_out1 = vmstat().split("\n")
+        vmstat_out1 = re.split(r"\s+", vmstat_out1[2])
 
         # convert list in dict
-        vm = {k: v for k, v in enumerate(vm)}
-
-        # Procs
-        # r: The number of processes waiting for run time.
-        # b: The number of processes in uninterruptible sleep.
-        statistics["procs"]["waiting_for_run"] = vm.get(1, "N/A")
-        statistics["procs"]["uninterruptible_sleep"] = vm.get(2, "N/A")
-
-        # Swap
-        #     si: Amount of memory swapped in from disk (/s).
-        #     so: Amount of memory swapped to disk (/s).
-        statistics["swap"]["from_disk"] = vm.get(7, "N/A")
-        statistics["swap"]["to_disk"] = vm.get(8, "N/A")
-
-        # IO
-        #     bi: Blocks received from a block device (blocks/s).
-        #     bo: Blocks sent to a block device (blocks/s).
-        statistics["io"]["blocks_received"] = vm.get(9, "N/A")
-        statistics["io"]["blocks_sent"] = vm.get(10, "N/A")
-        # System
-        #     in: The number of interrupts per second, including the clock.
-        #     cs: The number of context switches per second.
-        # in = vm.get(11, "N/A")
-        # cs = vm.get(12, "N/A")
-
-        # CPU
-        #     These are percentages of total CPU time.
-        #     us: Time spent running non-kernel code. (user time, including nice time)
-        #     sy: Time spent running kernel code. (system time)
-        #     id: Time spent idle.
-        #     wa: Time spent waiting for IO.
-        #     st: Time stolen from a virtual machine.
-
-        statistics["cpu"]["user"] = vm.get(13, "N/A")
-        statistics["cpu"]["system"] = vm.get(14, "N/A")
-        statistics["cpu"]["idle"] = vm.get(15, "N/A")
-        statistics["cpu"]["wait"] = vm.get(16, "N/A")
-        statistics["cpu"]["stolen"] = vm.get(17, "N/A")
+        vmstat_out1 = {k: v for k, v in enumerate(vmstat_out1)}
 
         # summarize disk statistics
-        # vm = vmstat(["-D"]).split('\n')
+        # vmstat_out2 = vmstat(["-D"]).split('\n')
         # Example:
         #       22 disks
         #        0 partitions
@@ -185,44 +193,13 @@ class AdminStats(EndpointResource):
         #     1412 milli spent IO
 
         # event counter statistics
-        vm = vmstat(["-s", "-S", "M"]).split("\n")
+        vmstat_out2 = vmstat(["-s", "-S", "M"]).split("\n")
 
-        statistics["ram"]["total"] = vm[0].strip().split(" ")[0]
-        statistics["ram"]["used"] = vm[1].strip().split(" ")[0]
-        statistics["ram"]["active"] = vm[2].strip().split(" ")[0]
-        statistics["ram"]["inactive"] = vm[3].strip().split(" ")[0]
-        statistics["ram"]["free"] = vm[4].strip().split(" ")[0]
-        statistics["ram"]["buffer"] = vm[5].strip().split(" ")[0]
-        statistics["ram"]["cache"] = vm[6].strip().split(" ")[0]
-        statistics["swap"]["total"] = vm[7].strip().split(" ")[0]
-        statistics["swap"]["used"] = vm[8].strip().split(" ")[0]
-        statistics["swap"]["free"] = vm[9].strip().split(" ")[0]
-        # 31043968 non-nice user cpu ticks
-        # 107729 nice user cpu ticks
-        # 7319284 system cpu ticks
-        # 46052009 idle cpu ticks
-        # 49240 IO-wait cpu ticks
-        # 0 IRQ cpu ticks
-        # 232548 softirq cpu ticks
-        # 0 stolen cpu ticks
-        # 18753270 pages paged in
-        # 99473392 pages paged out
-        # 25168 pages swapped in
-        # 100386 pages swapped out
-        # 793916005 interrupts
-        # 2266434254 CPU context switches
-        statistics["system"]["boot_time"] = datetime.fromtimestamp(
-            int(vm[24].strip().split(" ")[0])
-        )
-        # 742942 forks
+        boot_time = datetime.fromtimestamp(int(vmstat_out2[24].strip().split(" ")[0]))
 
         # Disk usage
         # Get total disk size, used disk space, and free disk
         total, used, free = shutil.disk_usage("/")
-        statistics["disk"]["total_disk_space"] = total / 1024 ** 3
-        statistics["disk"]["used_disk_space"] = used / 1024 ** 3
-        statistics["disk"]["free_disk_space"] = free / 1024 ** 3
-        statistics["disk"]["occupacy"] = 100 * used / total
 
         # Network latency
         # Here we will ping google at an interval of five seconds for five times
@@ -231,18 +208,78 @@ class AdminStats(EndpointResource):
         # ping_result = ping(["-c", "5", "google.com"]).split("\n")
 
         # ping_result = ping_result[-2].split("=")[-1].split("/")[:3]
-        # statistics["network_latency"] = dict(
-        #     {
-        #         "min": ping_result[0].strip(),
-        #         "avg": ping_result[1].strip(),
-        #         "max": ping_result[2].strip(),
-        #     }
-        # )
-        statistics["network_latency"] = dict(
-            {
+
+        statistics: StatsType = {
+            "system": {"boot_time": boot_time},
+            "cpu": {
+                # Get Physical and Logical CPU Count
+                "count": os.cpu_count() or 0,
+                "load_percentage": load_percentage,
+                # System
+                #     in: The number of interrupts per second, including the clock.
+                #     cs: The number of context switches per second.
+                # in = vm.get(11, 0)
+                # cs = vm.get(12, 0)
+                # CPU
+                #     These are percentages of total CPU time.
+                #     us: Time spent running non-kernel code. (user time and nice time)
+                #     sy: Time spent running kernel code. (system time)
+                #     id: Time spent idle.
+                #     wa: Time spent waiting for IO.
+                #     st: Time stolen from a virtual machine.
+                "user": vmstat_out1.get(13, 0),
+                "system": vmstat_out1.get(14, 0),
+                "idle": vmstat_out1.get(15, 0),
+                "wait": vmstat_out1.get(16, 0),
+                "stolen": vmstat_out1.get(17, 0),
+            },
+            "ram": {
+                "total": vmstat_out2[0].strip().split(" ")[0],
+                "used": vmstat_out2[1].strip().split(" ")[0],
+                "active": vmstat_out2[2].strip().split(" ")[0],
+                "inactive": vmstat_out2[3].strip().split(" ")[0],
+                "free": vmstat_out2[4].strip().split(" ")[0],
+                "buffer": vmstat_out2[5].strip().split(" ")[0],
+                "cache": vmstat_out2[6].strip().split(" ")[0],
+            },
+            "swap": {
+                # Swap
+                #     si: Amount of memory swapped in from disk (/s).
+                #     so: Amount of memory swapped to disk (/s).
+                "from_disk": vmstat_out1.get(7, 0),
+                "to_disk": vmstat_out1.get(8, 0),
+                "total": vmstat_out2[7].strip().split(" ")[0],
+                "used": vmstat_out2[8].strip().split(" ")[0],
+                "free": vmstat_out2[9].strip().split(" ")[0],
+            },
+            "disk": {
+                "total_disk_space": total / 1024 ** 3,
+                "used_disk_space": used / 1024 ** 3,
+                "free_disk_space": free / 1024 ** 3,
+                "occupacy": 100 * used / total,
+            },
+            "procs": {
+                # Procs
+                # r: The number of processes waiting for run time.
+                # b: The number of processes in uninterruptible sleep.
+                "waiting_for_run": vmstat_out1.get(1, 0),
+                "uninterruptible_sleep": vmstat_out1.get(2, 0),
+            },
+            "io": {
+                # IO
+                #     bi: Blocks received from a block device (blocks/s).
+                #     bo: Blocks sent to a block device (blocks/s).
+                "blocks_received": vmstat_out1.get(9, 0),
+                "blocks_sent": vmstat_out1.get(10, 0),
+            },
+            "network_latency": {
+                # "min": ping_result[0].strip(),
+                # "avg": ping_result[1].strip(),
+                # "max": ping_result[2].strip(),
                 "min": 0,
                 "avg": 0,
                 "max": 0,
-            }
-        )
+            },
+        }
+
         return self.response(statistics)
