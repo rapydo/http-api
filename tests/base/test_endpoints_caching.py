@@ -240,14 +240,14 @@ class TestApp(BaseTests):
         headers1, _ = self.do_login(client, None, None)
         headers2, token2 = self.do_login(client, None, None)
 
-        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers1)
+        r = client.get(f"{API_URI}/tests/cache/paramauth", headers=headers1)
         assert r.status_code == 200
         resp1 = self.get_content(r)
         assert isinstance(resp1, list)
         # counter is 1 because this is the first request to this endpoint
         assert resp1[COUNTER] == 1
 
-        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers1)
+        r = client.get(f"{API_URI}/tests/cache/paramauth", headers=headers1)
         assert r.status_code == 200
         resp2 = self.get_content(r)
         assert isinstance(resp2, list)
@@ -258,7 +258,7 @@ class TestApp(BaseTests):
 
         # Test by using access_token parameter instead of Headers
         r = client.get(
-            f"{API_URI}/tests/cache/auth", query_string={"access_token": token2}
+            f"{API_URI}/tests/cache/paramauth", query_string={"access_token": token2}
         )
         assert r.status_code == 200
         resp3 = self.get_content(r)
@@ -270,7 +270,7 @@ class TestApp(BaseTests):
         assert resp3[COUNTER] == 2
 
         r = client.get(
-            f"{API_URI}/tests/cache/auth", query_string={"access_token": token2}
+            f"{API_URI}/tests/cache/paramauth", query_string={"access_token": token2}
         )
         assert r.status_code == 200
         resp4 = self.get_content(r)
@@ -282,7 +282,7 @@ class TestApp(BaseTests):
 
         # Cache is stored starting from the access_token parameter,
         # but the token is the same also if provided as header
-        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers2)
+        r = client.get(f"{API_URI}/tests/cache/paramauth", headers=headers2)
         assert r.status_code == 200
         resp5 = self.get_content(r)
         assert isinstance(resp5, list)
@@ -292,7 +292,7 @@ class TestApp(BaseTests):
         assert resp5[COUNTER] == 2
 
     def test_cached_semiauthenticated_param_endpoint(self, client):
-        r = client.get(f"{API_URI}/tests/cache/optionalauth")
+        r = client.get(f"{API_URI}/tests/cache/optionalparamauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)
         assert isinstance(nonauthenticated1, list)
@@ -300,7 +300,7 @@ class TestApp(BaseTests):
         # counter is 1 because this is the first request to this endpoint
         assert nonauthenticated1[COUNTER] == 1
 
-        r = client.get(f"{API_URI}/tests/cache/optionalauth")
+        r = client.get(f"{API_URI}/tests/cache/optionalparamauth")
         assert r.status_code == 200
         nonauthenticated2 = self.get_content(r)
         assert isinstance(nonauthenticated2, list)
@@ -311,7 +311,7 @@ class TestApp(BaseTests):
         headers1, token1 = self.do_login(client, None, None)
         headers2, token2 = self.do_login(client, None, None)
 
-        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers1)
+        r = client.get(f"{API_URI}/tests/cache/optionalparamauth", headers=headers1)
         assert r.status_code == 200
         authenticated1 = self.get_content(r)
         assert isinstance(authenticated1, list)
@@ -319,7 +319,7 @@ class TestApp(BaseTests):
         # The counter changed, because the response is not replied from the cache
         assert authenticated1[COUNTER] == 2
 
-        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers1)
+        r = client.get(f"{API_URI}/tests/cache/optionalparamauth", headers=headers1)
         assert r.status_code == 200
         authenticated2 = self.get_content(r)
         assert isinstance(authenticated2, list)
@@ -330,7 +330,8 @@ class TestApp(BaseTests):
 
         # Response is reply from the cache even if the token is provided as query param
         r = client.get(
-            f"{API_URI}/tests/cache/optionalauth", query_string={"access_token": token1}
+            f"{API_URI}/tests/cache/optionalparamauth",
+            query_string={"access_token": token1},
         )
         assert r.status_code == 200
         authenticated3 = self.get_content(r)
@@ -344,7 +345,8 @@ class TestApp(BaseTests):
         # This time access_token and then headers
 
         r = client.get(
-            f"{API_URI}/tests/cache/optionalauth", query_string={"access_token": token2}
+            f"{API_URI}/tests/cache/optionalparamauth",
+            query_string={"access_token": token2},
         )
         assert r.status_code == 200
         authenticated4 = self.get_content(r)
@@ -356,7 +358,8 @@ class TestApp(BaseTests):
         assert authenticated4[COUNTER] == 3
 
         r = client.get(
-            f"{API_URI}/tests/cache/optionalauth", query_string={"access_token": token2}
+            f"{API_URI}/tests/cache/optionalparamauth",
+            query_string={"access_token": token2},
         )
         assert r.status_code == 200
         authenticated5 = self.get_content(r)
@@ -368,7 +371,7 @@ class TestApp(BaseTests):
         assert authenticated5[COUNTER] == authenticated4[COUNTER]
         assert authenticated5[COUNTER] == 3
 
-        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers2)
+        r = client.get(f"{API_URI}/tests/cache/optionalparamauth", headers=headers2)
         assert r.status_code == 200
         authenticated6 = self.get_content(r)
         assert isinstance(authenticated6, list)
