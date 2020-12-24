@@ -3,6 +3,26 @@ from restapi.tests import API_URI, BaseTests
 
 
 class TestApp(BaseTests):
+    def test_no_auth(self, client):
+
+        r = client.get(f"{API_URI}/tests/noauth")
+        assert r.status_code == 200
+        assert self.get_content(r) == "OK"
+
+        headers, _ = self.do_login(client, None, None)
+
+        # Tokens are ignored
+        r = client.get(f"{API_URI}/tests/noauth", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == "OK"
+
+        # Tokens are ignored even if invalid
+        r = client.get(
+            f"{API_URI}/tests/noauth", headers={"Authorization": "Bearer invalid"}
+        )
+        assert r.status_code == 200
+        assert self.get_content(r) == "OK"
+
     def test_auth(self, client):
 
         r = client.get(f"{API_URI}/tests/authentication")

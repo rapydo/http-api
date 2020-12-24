@@ -4,6 +4,17 @@ from restapi.rest.definition import EndpointResource
 
 if TESTING:
 
+    class TestAuthenticationNotRequired(EndpointResource):
+        @decorators.endpoint(
+            path="/tests/noauth",
+            summary="Only resp a fixed response, no authenticataion is required",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        def get(self):
+
+            return self.response("OK")
+
     class TestAuthentication(EndpointResource):
         @decorators.auth.require()
         @decorators.endpoint(
