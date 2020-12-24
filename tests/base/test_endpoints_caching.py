@@ -211,7 +211,6 @@ class TestApp(BaseTests):
         assert authenticated1[COUNTER] == 2
 
         # Token cached => cache should be used
-        headers, _ = self.do_login(client, None, None)
         r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers)
         assert r.status_code == 200
         authenticated2 = self.get_content(r)
@@ -219,6 +218,16 @@ class TestApp(BaseTests):
         assert authenticated2[UUID] == authenticated1[UUID]
         # Same counter as above, because the response is replied from the cache
         assert authenticated2[COUNTER] == 2
+
+        # New token => no cache
+        headers, _ = self.do_login(client, None, None)
+        r = client.get(f"{API_URI}/tests/cache/optionalauth", headers=headers)
+        assert r.status_code == 200
+        authenticated2 = self.get_content(r)
+        assert isinstance(authenticated2, list)
+        assert authenticated2[UUID] == authenticated1[UUID]
+        # Counter changed
+        assert authenticated2[COUNTER] == 3
 
         r = client.get(
             f"{API_URI}/tests/cache/optionalauth",
