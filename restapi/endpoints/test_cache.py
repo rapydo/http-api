@@ -9,6 +9,9 @@ if TESTING:
     class TestCache(EndpointResource):
 
         labels = ["tests"]
+        # Increased at each request... except cached responses of course
+        counter1 = 0
+        counter2 = 0
 
         @decorators.endpoint(
             path="/tests/cache",
@@ -18,11 +21,11 @@ if TESTING:
                 200: "Content sent",
             },
         )
-        @decorators.cache(timeout=4)
+        @decorators.cache(timeout=1)
         def patch(self):
 
-            time.sleep(2)
-            return self.response("OK")
+            TestSemiAuthCache.counter1 += 1
+            return self.response(TestSemiAuthCache.counter1)
 
         @decorators.endpoint(
             path="/tests/cache",
@@ -35,8 +38,8 @@ if TESTING:
         @decorators.cache(timeout=200)
         def get(self):
 
-            time.sleep(2)
-            return self.response("OK")
+            TestSemiAuthCache.counter2 += 1
+            return self.response(TestSemiAuthCache.counter2)
 
         @decorators.endpoint(
             path="/tests/cache",

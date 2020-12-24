@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 
 from restapi.services.cache import Cache
 from restapi.tests import API_URI, BaseTests
@@ -7,86 +6,87 @@ from restapi.tests import API_URI, BaseTests
 
 class TestApp(BaseTests):
     def test_caching_autocleaning(self, client):
-        # patch method is cached for 4 seconds
 
-        # First response is not cached, expected time is greater than 2 second
-        start_time = datetime.now()
-        r = client.patch(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
-        assert r.status_code == 200
-        assert self.get_content(r) == "OK"
-        assert (end_time - start_time).total_seconds() > 2
+        headers, _ = self.do_login(client, None, None)
 
-        # Second response is cached, expected time is lower than 2 second
-        start_time = datetime.now()
-        r = client.patch(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
-        assert r.status_code == 200
-        assert self.get_content(r) == "OK"
-        assert (end_time - start_time).total_seconds() < 2
+        # patch method is cached for 1 second
 
-        # Third response is no longer cached, expected time is greater than 2 second
-        time.sleep(4)
-        start_time = datetime.now()
+        # First response is not cached
         r = client.patch(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert self.get_content(r) == "OK"
-        assert (end_time - start_time).total_seconds() > 2
+        counter1 = self.get_content(r)
 
-        # Fourth response is cached again, expected time is lower than 2 second
-        start_time = datetime.now()
+        # Second response is cached
         r = client.patch(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert self.get_content(r) == "OK"
-        assert (end_time - start_time).total_seconds() < 2
+        assert self.get_content(r) == counter1
+
+        # Third response is no longer cached
+        time.sleep(1)
+
+        r = client.patch(f"{API_URI}/tests/cache")
+        assert r.status_code == 200
+        counter2 = self.get_content(r)
+        assert counter2 != counter1
+
+        # Fourth response is cached again
+        r = client.patch(f"{API_URI}/tests/cache")
+        assert r.status_code == 200
+        assert self.get_content(r) == counter2
+
+        # Endpoint is unauthenticated, headers are ignored when building the cache key
+        r = client.patch(f"{API_URI}/tests/cache", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == counter2
 
     def test_caching_general_clearing(self, client):
+
+        headers, _ = self.do_login(client, None, None)
+
         # get method is cached for 200 seconds
 
-        # First response is not cached, expected time is greater than 2 second
-        start_time = datetime.now()
+        # First response is not cached
         r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() > 2
+        counter1 = self.get_content(r)
 
-        # Second response is cached, expected time is lower than 2 second
-        start_time = datetime.now()
+        # Second response is cached
         r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() < 2
+        assert self.get_content(r) == counter1
 
         # Empty all the cache
         Cache.clear()
 
-        # Third response is no longer cached, expected time is greater than 2 second
-        start_time = datetime.now()
+        # Third response is no longer cached
         r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() > 2
+        counter2 = self.get_content(r)
+        assert counter2 != counter1
 
-    def test_caching_endpoint_clearing(self, client):
-
-        # First response is still cached, expected time is lower than 2 second
-        start_time = datetime.now()
+        # Response is still cached
         r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() < 2
+        assert self.get_content(r) == counter2
 
         # Empty the endpoint cache
         client.delete(f"{API_URI}/tests/cache")
 
-        # Second response is no longer cached, expected time is greater than 2 second
-        start_time = datetime.now()
+        # Second response is no longer cached
         r = client.get(f"{API_URI}/tests/cache")
-        end_time = datetime.now()
         assert r.status_code == 200
-        assert (end_time - start_time).total_seconds() > 2
+        counter3 = self.get_content(r)
+        assert counter3 != counter2
+
+        # Response is still cached
+        r = client.get(f"{API_URI}/tests/cache")
+        assert r.status_code == 200
+        assert self.get_content(r) == counter3
+
+        # Endpoint is unauthenticated, headers are ignored when building the cache key
+        r = client.get(f"{API_URI}/tests/cache", headers=headers)
+        assert r.status_code == 200
+        assert self.get_content(r) == counter3
 
     def test_cached_authenticated_endpoint(self, client):
 
@@ -115,7 +115,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
-        headers2, _ = self.do_login(client, schema["email"], schema["password"])
+        headers2, _ = self.do_login(client, data["email"], data["password"])
 
         r = client.get(f"{API_URI}/tests/authcache", headers=headers2)
         assert r.status_code == 200
