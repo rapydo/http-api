@@ -55,7 +55,6 @@ class ServerModes(int, Enum):
 
 def teardown_handler(signal, frame):
     with lock:
-        from restapi.connectors import Connector
 
         Connector.disconnect_all()
 

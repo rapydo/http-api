@@ -4,7 +4,6 @@ import time
 
 import click
 from flask.cli import FlaskGroup
-from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.config import CUSTOM_PACKAGE, PRODUCTION
