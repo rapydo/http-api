@@ -11,6 +11,7 @@ from pika.exceptions import (
     AMQPConnectionError,
     ChannelClosedByBroker,
     ConnectionClosed,
+    ConnectionWrongStateError,
     UnroutableError,
 )
 from requests.auth import HTTPBasicAuth
@@ -107,9 +108,19 @@ class RabbitExt(Connector):
                 self.connection.close()
 
     def is_connected(self) -> bool:
-        if self.connection and self.connection.is_open:
+        if not self.connection or not self.connection.is_open:
+            return False
+
+        try:
+            # this will verify if channel is still open and will try to recreate it
+            # In some conditions the connection is open but in a wrong state and the
+            # channel creation raises a ConnectionWrongStateError exception
+            # This way the connection will be considered as closed and invalidated
+            self.get_channel()
             return True
-        return False
+        # raised when `Channel allocation requires an open connection`
+        except ConnectionWrongStateError:  # pragma: no cover
+            return False
 
     def exchange_exists(self, exchange: str) -> bool:
         channel = self.get_channel()
