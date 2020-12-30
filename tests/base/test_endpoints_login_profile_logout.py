@@ -292,3 +292,23 @@ class TestApp(BaseTests):
         log.info("*** VERIFY invalid token")
         r = client.get(f"{AUTH_URI}/logout")
         assert r.status_code == 401
+
+    def test_05_failed_login(self, client):
+        uuid, data = self.create_user(client)
+
+        self.do_login(client, data["email"], "wrong", status_code=401)
+        self.do_login(client, data["email"], "wrong", status_code=401)
+        self.do_login(client, data["email"], "wrong", status_code=401)
+
+        if Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0) > 0:
+            # This should fail
+            headers, _ = self.do_login(client, data["email"], data["password"])
+
+            # assert headers is None
+        else:
+            # This should be ok
+            headers, _ = self.do_login(client, data["email"], data["password"])
+
+            assert headers is not None
+
+        self.delete_user(client, uuid)

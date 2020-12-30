@@ -149,13 +149,7 @@ class TestApp(BaseTests):
         assert resp3[COUNTER] == 2
 
         # Create a new user on the fly to test the cached endpoint
-        schema = self.getDynamicInputSchema(client, "admin/users", headers1)
-        data = self.buildData(schema)
-        data["email_notification"] = False
-        data["is_active"] = True
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers1)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
+        uuid, data = self.create_user(client)
         headers3, _ = self.do_login(client, data["email"], data["password"])
 
         # Another user, the response must change
@@ -180,9 +174,7 @@ class TestApp(BaseTests):
         # Same counter as above, because the response is replied from the cache
         assert resp5[COUNTER] == 3
 
-        # Delete the user created on the fly to test the cache
-        r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers1)
-        assert r.status_code == 204
+        self.delete_user(client, uuid)
 
     def test_cached_semiauthenticated_endpoint(self, client):
         r = client.get(f"{API_URI}/tests/cache/optionalauth")

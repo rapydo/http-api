@@ -32,7 +32,7 @@ elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no;
-  rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_MAX_LOGIN_ATTEMPTS=3 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
 else

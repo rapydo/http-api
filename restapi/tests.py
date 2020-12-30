@@ -370,6 +370,25 @@ class BaseTests:
 
         return {"Authorization": f"Bearer {content}"}, content
 
+    @classmethod
+    def create_user(cls, client):
+        admin_headers, _ = cls.do_login(client, None, None)
+        schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
+        data = cls.buildData(schema)
+        data["email_notification"] = False
+        data["is_active"] = True
+        r = client.post(f"{API_URI}/admin/users", data=data, headers=admin_headers)
+        assert r.status_code == 200
+        uuid = cls.get_content(r)
+
+        return uuid, data
+
+    @classmethod
+    def delete_user(cls, client, uuid):
+        admin_headers, _ = cls.do_login(client, None, None)
+        r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=admin_headers)
+        assert r.status_code == 204
+
     @staticmethod
     def buildData(schema):
         """

@@ -61,7 +61,8 @@ class Login(EndpointResource):
 
         # ##################################################
         # Authentication control
-        # self.auth.verify_blocked_username(username)
+        self.auth.verify_blocked_username(username)
+
         token, payload, user = self.auth.make_login(username, password)
 
         self.auth.verify_blocked_user(user)
@@ -103,6 +104,8 @@ class Login(EndpointResource):
             user.first_login = now
         user.last_login = now
         self.auth.save_token(user, token, payload)
+
+        self.auth.flush_failed_logins(username)
 
         return self.response(token)
 

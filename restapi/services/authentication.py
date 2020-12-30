@@ -102,6 +102,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     roles_data: Dict[str, str] = {}
     default_role: Optional[str] = None
 
+    @classmethod
+    def get_timedelta(cls, val: int) -> timedelta:
+        if TESTING:
+            return timedelta(seconds=val)
+        # Of course cannot be tested
+        return timedelta(days=val)  # pragma: no cover
+
     # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:
@@ -119,11 +126,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             variables.get("verify_password_strength")
         )
         if val := Env.to_int(variables.get("max_password_validity", 0)):
-            if TESTING:
-                cls.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
-            # Of course cannot be tested
-            else:  # pragma: no cover
-                cls.MAX_PASSWORD_VALIDITY = timedelta(days=val)
+            cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
             cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
@@ -664,14 +667,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def register_failed_login(username: str) -> None:
-        log.critical(BaseAuthentication.MAX_LOGIN_ATTEMPTS)
-        log.critical(username)
-        log.critical("auth.register_failed_login: not implemented")
+        log.warning("auth.register_failed_login: not implemented")
 
-    # @staticmethod
-    # def get_failed_login(username):
-    #     log.critical("auth.get_failed_login: not implemented")
-    #     return 0
+    @staticmethod
+    def get_failed_login(username: str) -> int:
+        log.warning("auth.get_failed_login: not implemented")
+        return 0
+
+    @staticmethod
+    def flush_failed_logins(username: str) -> None:
+        log.warning("auth.flush_failed_logins: not implemented")
 
     @staticmethod
     def get_secret(user: User) -> str:
@@ -783,21 +788,22 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    # def verify_blocked_username(self, username):
+    def verify_blocked_username(self, username: str) -> None:
 
-    #     if self.MAX_LOGIN_ATTEMPTS <= 0:
-    #         # We we do not count failed logins
-    #         return False
-    #     # FIXME: implement get_failed_login
-    #     if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
-    #         # We register and set a max, but user does not reached it yet
-    #         return False
-    #     # Dear user, you have exceeded the limit
-    #     msg = f"""
-    #         Sorry, this account is temporarily blocked due to
-    #         more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
-    #         Try again later"""
-    #     raise Unauthorized(msg)
+        # We do not count failed logins
+        if self.MAX_LOGIN_ATTEMPTS <= 0:
+            return
+
+        # We register failed logins but the user does not reached it yet
+        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+            return
+
+        # Dear user, you have exceeded the limit!1
+        msg = f"""
+            Sorry, this account is temporarily blocked due to
+            more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
+            Try again later"""
+        raise Unauthorized(msg)
 
     def verify_blocked_user(self, user: User) -> None:
 
