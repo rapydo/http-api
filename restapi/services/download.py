@@ -1,8 +1,8 @@
 """
 Download data from APIs
 """
-
 from mimetypes import MimeTypes
+from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
 
@@ -16,7 +16,11 @@ class Downloader:
     # This is good for small files
     # It is also good for media files by sending Range header
     @staticmethod
-    def download(filename=None, subfolder=None, mime=None):
+    def download(
+        filename: Optional[str] = None,
+        subfolder: Optional[str] = None,
+        mime: Optional[str] = None,
+    ) -> Response:
 
         if filename is None:
             raise RestApiException("No filename specified to download", status_code=400)
@@ -42,10 +46,9 @@ class Downloader:
 
     # this is good for large files
     @staticmethod
-    def send_file_streamed(path, mime=None):
+    def send_file_streamed(path: str, mime: Optional[str] = None) -> Response:
         if mime is None:
-            mime = MimeTypes()
-            mime_type = mime.guess_type(path)
+            mime_type = MimeTypes().guess_type(path)
             mime = mime_type[0]
 
         log.info("Providing streamed content from {} (mime={})", path, mime)

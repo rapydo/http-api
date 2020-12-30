@@ -1,7 +1,9 @@
+from typing import Optional
+
 from restapi import decorators
 from restapi.config import TESTING, UPLOAD_PATH
 from restapi.models import fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.download import Downloader
 from restapi.services.uploader import Uploader
 
@@ -30,7 +32,7 @@ if TESTING:
                 416: "Range Not Satisfiable",
             },
         )
-        def get(self, fname=None, stream=False):
+        def get(self, fname: Optional[str] = None, stream: bool = False) -> Response:
 
             if stream:
                 fpath = Uploader.absolute_upload_file(fname, subfolder=UPLOAD_PATH)

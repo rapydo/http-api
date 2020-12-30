@@ -8,7 +8,7 @@ from restapi.config import get_frontend_url, get_project_configuration
 from restapi.connectors import smtp
 from restapi.exceptions import RestApiException
 from restapi.models import fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
@@ -53,7 +53,7 @@ class ProfileActivation(EndpointResource):
         summary="Activate your account by providing the activation token",
         responses={200: "Account successfully activated"},
     )
-    def put(self, token):
+    def put(self, token: str) -> Response:
 
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
@@ -112,7 +112,7 @@ class ProfileActivation(EndpointResource):
         summary="Ask a new activation link",
         responses={200: "A new activation link has been sent"},
     )
-    def post(self, username):
+    def post(self, username: str) -> Response:
 
         user = self.auth.get_user(username=username)
 

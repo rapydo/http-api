@@ -1,10 +1,9 @@
 from typing import Any, Dict, List
 
-from flask import jsonify
 from glom import glom
 
 from restapi import decorators
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -27,7 +26,7 @@ class NewSwaggerSpecifications(EndpointResource):
         summary="Endpoints specifications based on OpenAPI format",
         responses={200: "Endpoints JSON based on OpenAPI Specifications"},
     )
-    def get(self):
+    def get(self) -> Response:
 
         specs = mem.docs.spec.to_dict()
 
@@ -50,7 +49,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             if auth_required:
                                 definition["security"] = [{"Bearer": []}]
 
-            return jsonify(specs)
+            return self.response(specs)
 
         log.info("Unauthenticated request, filtering out private endpoints")
         # Remove sensible data
@@ -136,7 +135,7 @@ class NewSwaggerSpecifications(EndpointResource):
                     continue
                 filtered_specs["definitions"].setdefault(schema, definition)
 
-        return jsonify(filtered_specs)
+        return self.response(filtered_specs)
 
     def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):
 

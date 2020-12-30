@@ -1,9 +1,9 @@
-from typing import Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from restapi import decorators
 from restapi.connectors import Connector
 from restapi.models import ISO8601UTC, Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -97,7 +97,7 @@ class Profile(EndpointResource):
         summary="List profile attributes",
         responses={200: "User profile is returned"},
     )
-    def get(self):
+    def get(self) -> Response:
 
         current_user = self.get_user()
         data = {
@@ -136,7 +136,13 @@ class Profile(EndpointResource):
         summary="Update user password",
         responses={204: "Password updated"},
     )
-    def put(self, password, new_password, password_confirm, totp_code=None):
+    def put(
+        self,
+        password: str,
+        new_password: str,
+        password_confirm: str,
+        totp_code: Optional[str] = None,
+    ) -> Response:
         """ Update password for current user """
 
         user = self.get_user()
@@ -160,7 +166,7 @@ class Profile(EndpointResource):
         summary="Update profile information",
         responses={204: "Profile updated"},
     )
-    def patch(self, **kwargs):
+    def patch(self, **kwargs: Any) -> Response:
         """ Update profile for current user """
 
         user = self.get_user()

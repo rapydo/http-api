@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
@@ -7,7 +7,7 @@ from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
 from restapi.models import Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 
 # This endpoint requires the server to send the activation token via email
@@ -64,7 +64,7 @@ if Connector.check_availability("smtp"):
                 409: "This user already exists",
             },
         )
-        def post(self, **kwargs):
+        def post(self, **kwargs: Any) -> Response:
             """ Register new user """
 
             email = kwargs.get("email")

@@ -1,6 +1,8 @@
+from typing import Optional
+
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
@@ -18,18 +20,18 @@ if TESTING:
         )
         def get(
             self,
-            get_total,
-            page,
-            size,
-            sort_by,
-            sort_order,
-            input_filter,
-        ):
+            get_total: bool,
+            page: int,
+            size: int,
+            sort_by: Optional[str],
+            sort_order: Optional[str],
+            input_filter: Optional[str],
+        ) -> Response:
             if get_total:
-                return len(TestPagination.values)
+                return self.response(len(TestPagination.values))
 
             offset = (page - 1) * size
-            return TestPagination.values[offset : offset + size]
+            return self.response(TestPagination.values[offset : offset + size])
 
         @decorators.get_pagination
         @decorators.endpoint(
@@ -40,15 +42,15 @@ if TESTING:
         )
         def post(
             self,
-            get_total,
-            page,
-            size,
-            sort_by,
-            sort_order,
-            input_filter,
-        ):
+            get_total: bool,
+            page: int,
+            size: int,
+            sort_by: Optional[str],
+            sort_order: Optional[str],
+            input_filter: Optional[str],
+        ) -> Response:
             if get_total:
-                return len(TestPagination.values)
+                return self.response(len(TestPagination.values))
 
             offset = (page - 1) * size
-            return TestPagination.values[offset : offset + size]
+            return self.response(TestPagination.values[offset : offset + size])

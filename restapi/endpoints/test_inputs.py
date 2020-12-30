@@ -1,11 +1,12 @@
 # from datetime import datetime
 
 # import pytz
+from typing import Any
 
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.models import ISO8601UTC, Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
@@ -30,6 +31,6 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={204: "Tests executed"},
         )
-        def post(self, **kwargs):
+        def post(self, **kwargs: Any) -> Response:
 
             return self.empty_response()

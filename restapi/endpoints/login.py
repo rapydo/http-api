@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pytz
 
@@ -7,7 +7,7 @@ from restapi import decorators
 from restapi.connectors import Connector
 from restapi.exceptions import Forbidden
 from restapi.models import Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.time import EPOCH, get_now
 
 auth = Connector.get_authentication_instance()
@@ -50,12 +50,12 @@ class Login(EndpointResource):
     )
     def post(
         self,
-        username,
-        password,
-        new_password=None,
-        password_confirm=None,
-        totp_code=None,
-    ):
+        username: str,
+        password: str,
+        new_password: Optional[str] = None,
+        password_confirm: Optional[str] = None,
+        totp_code: Optional[str] = None,
+    ) -> Response:
 
         username = username.lower()
 

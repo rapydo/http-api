@@ -1,6 +1,6 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
@@ -11,7 +11,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self):
+        def get(self) -> Response:
 
             return self.response("OK")
 
@@ -23,7 +23,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self):
+        def get(self) -> Response:
             user = self.get_user()
 
             resp = {}
@@ -39,7 +39,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self):
+        def get(self) -> Response:
 
             resp = {}
             resp["token"] = self.get_token()
@@ -58,7 +58,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self):
+        def get(self) -> Response:
             user = self.get_user()
 
             resp = {}
@@ -74,7 +74,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self):
+        def get(self) -> Response:
             resp = {}
             resp["token"] = self.get_token()
             if user := self.get_user():

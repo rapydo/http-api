@@ -11,7 +11,7 @@ http://stackoverflow.com/a/9533843/2114395
 """
 
 import os
-from typing import List
+from typing import List, Optional, Tuple
 
 from flask import request
 from plumbum.cmd import file
@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import BadRequest, ServiceUnavailable
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 
@@ -65,7 +65,7 @@ class Uploader:
             return {}
 
     # this method is used by b2stage and mistral
-    def upload(self, subfolder=None, force=False):
+    def upload(self, subfolder: Optional[str] = None, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
@@ -116,7 +116,9 @@ class Uploader:
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
     # and with https://www.npmjs.com/package/ngx-uploadx and with
-    def init_chunk_upload(self, upload_dir, filename, force=True):
+    def init_chunk_upload(
+        self, upload_dir: str, filename: str, force: bool = True
+    ) -> Response:
 
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
@@ -187,7 +189,9 @@ class Uploader:
 
         return total_length, start, stop
 
-    def chunk_upload(self, upload_dir, filename, chunk_size=None):
+    def chunk_upload(
+        self, upload_dir: str, filename: str, chunk_size: Optional[int] = None
+    ) -> Tuple[bool, Response]:
         filename = secure_filename(filename)
 
         try:

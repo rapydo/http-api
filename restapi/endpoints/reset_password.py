@@ -8,7 +8,7 @@ from restapi.connectors import Connector, smtp
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, RestApiException
 from restapi.models import fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
@@ -52,7 +52,7 @@ if Connector.check_availability("smtp"):
                 403: "Account not found or already active",
             },
         )
-        def post(self, reset_email):
+        def post(self, reset_email: str) -> Response:
 
             reset_email = reset_email.lower()
 
@@ -117,7 +117,12 @@ if Connector.check_availability("smtp"):
                 401: "Invalid reset token",
             },
         )
-        def put(self, token, new_password=None, password_confirm=None):
+        def put(
+            self,
+            token: str,
+            new_password: Optional[str] = None,
+            password_confirm: Optional[str] = None,
+        ) -> Response:
 
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")

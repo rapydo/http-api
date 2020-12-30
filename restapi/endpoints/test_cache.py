@@ -1,6 +1,6 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
@@ -21,7 +21,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=1)
-        def get(self):
+        def get(self) -> Response:
 
             TestShortCache.counter += 1
             return self.response(TestShortCache.counter)
@@ -43,7 +43,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self):
+        def get(self) -> Response:
 
             TestLongCache.counter += 1
             return self.response(TestLongCache.counter)
@@ -56,7 +56,7 @@ if TESTING:
                 204: "Endpoint cache cleared",
             },
         )
-        def delete(self):
+        def delete(self) -> Response:
 
             self.clear_endpoint_cache()
             return self.empty_response()
@@ -81,7 +81,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self):
+        def get(self) -> Response:
 
             TestAuthCache.counter += 1
             return self.response((self.get_user().uuid, TestAuthCache.counter))
@@ -106,7 +106,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self):
+        def get(self) -> Response:
 
             user = self.get_user()
 
@@ -138,7 +138,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self):
+        def get(self) -> Response:
 
             TestParamAuthCache.counter += 1
             return self.response((self.get_user().uuid, TestParamAuthCache.counter))
@@ -164,7 +164,7 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self):
+        def get(self) -> Response:
 
             user = self.get_user()
 
