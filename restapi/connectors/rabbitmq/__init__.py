@@ -12,6 +12,7 @@ from pika.exceptions import (
     ChannelClosedByBroker,
     ConnectionClosed,
     ConnectionWrongStateError,
+    StreamLostError,
     UnroutableError,
 )
 from requests.auth import HTTPBasicAuth
@@ -101,11 +102,16 @@ class RabbitExt(Connector):
 
     def disconnect(self) -> None:
         self.disconnected = True
-        if self.connection:
-            if self.connection.is_closed:
-                log.debug("Connection already closed")
-            else:
-                self.connection.close()
+        try:
+            if self.connection:
+                if self.connection.is_closed:
+                    log.debug("Connection already closed")
+                else:
+                    self.connection.close()
+        # No need to close the connection in this case... right?
+        # Stream connection lost: ConnectionResetError(104, 'Connection reset by peer')
+        except StreamLostError:  # pragma: no cover
+            pass
 
     def is_connected(self) -> bool:
         if not self.connection or not self.connection.is_open:

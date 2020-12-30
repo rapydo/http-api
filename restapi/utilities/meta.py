@@ -116,7 +116,7 @@ class Meta:
     def get_celery_tasks(package_name: str) -> List[Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
-        Celery tasks are functions decorated by @celery_app.task(...)
+        Celery tasks are functions decorated by @CeleryExt.celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
