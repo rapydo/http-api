@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import jwt
 import pyotp  # TOTP generation
@@ -429,7 +429,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
         return (valid, token, jti, user)
 
-    def verify_token(self, token, raiseErrors=False, token_type=None):
+    def verify_token(
+        self,
+        token: Optional[str],
+        raiseErrors: bool = False,
+        token_type: Optional[str] = None,
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
 
         if token is None:
             if raiseErrors:
@@ -483,7 +488,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         return
 
-    def fill_payload(self, userobj, expiration=None, token_type=None):
+    def fill_payload(
+        self,
+        user: User,
+        expiration: Optional[timedelta] = None,
+        token_type: Optional[str] = None,
+    ) -> Tuple[Payload, Payload]:
         """Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
@@ -493,7 +503,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        payload = {"user_id": userobj.uuid, "jti": getUUID()}
+        payload = {"user_id": user.uuid, "jti": getUUID()}
         full_payload = payload.copy()
 
         if not token_type:
@@ -526,13 +536,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     # # Roles handling #
     # ##################
-    def verify_roles(self, user, roles, required_roles=None, warnings=True):
+    def verify_roles(
+        self,
+        user: User,
+        roles: List[Union[str, Role]],
+        required_roles: str = ALL_ROLES,
+        warnings: bool = True,
+    ) -> bool:
 
         if not roles:
             return True
-
-        if required_roles is None:
-            required_roles = ALL_ROLES
 
         current_roles = self.get_roles_from_user(user)
 
@@ -661,7 +674,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     #     return 0
 
     @staticmethod
-    def get_secret(user):
+    def get_secret(user: User) -> str:
 
         return "base32secret3232"
         # FIXME: use a real secret
@@ -704,7 +717,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         qr_url.save(qr_stream, kind="png", scale=5)
         return otpauth_url, base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
-    def verify_password_strength(self, pwd, old_pwd):
+    def verify_password_strength(
+        self, pwd: str, old_pwd: Optional[str]
+    ) -> Tuple[bool, Optional[str]]:
 
         if old_pwd:
             if pwd == old_pwd:
@@ -731,7 +746,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True, None
 
-    def change_password(self, user, password, new_password, password_confirm):
+    def change_password(
+        self,
+        user: User,
+        password: str,
+        new_password: Optional[str],
+        password_confirm: Optional[str],
+    ) -> bool:
 
         if new_password is None:
             raise BadRequest("Missing new password")
@@ -778,7 +799,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     #         Try again later"""
     #     raise Unauthorized(msg)
 
-    def verify_blocked_user(self, user):
+    def verify_blocked_user(self, user: User) -> None:
 
         if self.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
 
@@ -789,7 +810,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 raise Unauthorized("Sorry, this account is blocked for inactivity")
 
     @staticmethod
-    def verify_active_user(user):
+    def verify_active_user(user: User) -> None:
 
         if not user.is_active:
             # Beware, frontend leverages on this exact message,
@@ -806,7 +827,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             default_group, self.roles, force=options.get("force_user", False)
         )
 
-    def init_roles(self):
+    def init_roles(self) -> None:
         current_roles = {role.name: role for role in self.get_roles()}
 
         for role_name in self.roles:
@@ -828,8 +849,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         for r in current_roles:
             if r not in self.roles:
                 log.warning("Unknown role found: {}", r)
-
-        return self.roles
 
     def init_groups(self, force):
 
