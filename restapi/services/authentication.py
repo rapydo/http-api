@@ -232,67 +232,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise Unauthorized("Invalid password")
         return pwd_context.hash(password)
 
-    # ########################
-    # # Retrieve information #
-    # ########################
-
-    @abc.abstractmethod
-    def get_user(self, username=None, user_id=None):  # pragma: no cover
-        """
-        How to retrieve a single user from the current authentication db,
-        based on the unique username or the user_id
-        return None if no filter parameter is given
-        """
-        return
-
-    @abc.abstractmethod
-    def get_users(self):  # pragma: no cover
-        """
-        How to retrieve a list of all users from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def save_user(self, user):  # pragma: no cover
-        log.error("Users are not saved in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def delete_user(self, user):  # pragma: no cover
-        log.error("Users are not deleted in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def get_group(self, group_id=None, name=None):  # pragma: no cover
-        """
-        How to retrieve a single group from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def get_groups(self):  # pragma: no cover
-        """
-        How to retrieve groups list from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def save_group(self, group):  # pragma: no cover
-        log.error("Groups are not saved in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def delete_group(self, group):  # pragma: no cover
-        log.error("Groups are not deleted in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
-        """
-        Return the list of tokens
-        """
-        return
-
     @staticmethod
     def get_remote_ip():  # pragma: no cover
         try:
@@ -384,14 +323,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         token = self.create_token(payload)
         return token, full_payload
 
-    @abc.abstractmethod
-    def verify_token_validity(self, jti, user):  # pragma: no cover
-        """
-        This method MUST be implemented by specific Authentication Methods
-        to add more specific validation contraints
-        """
-        return
-
     @classmethod
     def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
 
@@ -479,18 +410,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
-    @abc.abstractmethod  # pragma: no cover
-    def save_token(self, user, token, payload, token_type=None):
-        log.debug("Tokens is not saved in base authentication")
-
-    @abc.abstractmethod
-    def invalidate_token(self, token):  # pragma: no cover
-        """
-        With this method the specified token must be invalidated
-        as expected after a user logout
-        """
-        return
-
     def fill_payload(
         self,
         user: User,
@@ -575,32 +494,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         log.critical("Unknown role authorization requirement: {}", required_roles)
         return False
 
-    @abc.abstractmethod
-    def get_roles(self):  # pragma: no cover
-        """
-        How to retrieve all the roles
-        """
-        return
-
-    @abc.abstractmethod
-    def get_roles_from_user(self, userobj):  # pragma: no cover
-        """
-        Retrieve roles from a user object from the current auth service
-        """
-        return
-
-    @abc.abstractmethod
-    def create_role(self, name, description):  # pragma: no cover
-        """
-        A method to create a new role
-        """
-        return
-
-    @abc.abstractmethod
-    def save_role(self, role):  # pragma: no cover
-        log.error("Roles are not saved in base authentication")
-        return False
-
     @staticmethod
     def custom_user_properties_pre(
         userdata: Dict[str, Any]
@@ -629,37 +522,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata
-
-    # ################
-    # # Create Users #
-    # ################
-    @abc.abstractmethod
-    def create_user(self, userdata, roles):  # pragma: no cover
-        """
-        A method to create a new user
-        """
-        return
-
-    @abc.abstractmethod
-    def link_roles(self, user, roles):  # pragma: no cover
-        """
-        A method to assign roles to a user
-        """
-        return
-
-    @abc.abstractmethod
-    def create_group(self, groupdata):  # pragma: no cover
-        """
-        A method to create a new group
-        """
-        return
-
-    @abc.abstractmethod
-    def add_user_to_group(self, user, group):  # pragma: no cover
-        """
-        Expand the group.members -> user relationship
-        """
-        return
 
     # ###########################
     # # Login attempts handling #
@@ -928,15 +790,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.info("Injected default user")
 
         elif update:
-            log.info("Default user already exists, updating")
-            default_user.email = self.default_user
-            default_user.name = "Default"
-            default_user.surname = "User"
-            default_user.password = self.get_password_hash(self.default_password)
-            default_user.last_password_change = datetime.now(pytz.utc)
-            self.link_roles(default_user, roles)
-            self.add_user_to_group(default_user, default_group)
-            self.save_user(default_user)
+            # Added to make the life easier to mypy... but cannot be False
+            if default_user:
+                log.info("Default user already exists, updating")
+                default_user.email = self.default_user
+                default_user.name = "Default"
+                default_user.surname = "User"
+                default_user.password = self.get_password_hash(self.default_password)
+                default_user.last_password_change = datetime.now(pytz.utc)
+                self.link_roles(default_user, roles)
+                self.add_user_to_group(default_user, default_group)
+                self.save_user(default_user)
+            else:  # pragma: no cover
+                log.critical("Default user not found")
         elif default_user:
             log.info("Default user already exists")
         else:
@@ -948,3 +814,143 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 self.add_user_to_group(user, default_group)
 
         return default_user
+
+    # ########################
+    # #  Abstract methods  # #
+    # ########################
+
+    @abc.abstractmethod
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:  # pragma: no cover
+        """
+        How to retrieve a single user from the current authentication db,
+        based on the unique username or the user_id
+        return None if no filter parameter is given
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_users(self) -> List[User]:  # pragma: no cover
+        """
+        How to retrieve a list of all users from the current authentication db,
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_user(self, user: User) -> bool:  # pragma: no cover
+        # log.error("Users are not saved in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def delete_user(self, user: User) -> bool:  # pragma: no cover
+        # log.error("Users are not deleted in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def get_group(self, group_id=None, name=None):  # pragma: no cover
+        """
+        How to retrieve a single group from the current authentication db,
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_groups(self):  # pragma: no cover
+        """
+        How to retrieve groups list from the current authentication db,
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_group(self, group):  # pragma: no cover
+        log.error("Groups are not saved in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def delete_group(self, group):  # pragma: no cover
+        log.error("Groups are not deleted in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
+        """
+        Return the list of tokens
+        """
+        ...
+
+    @abc.abstractmethod
+    def verify_token_validity(self, jti, user):  # pragma: no cover
+        """
+        This method MUST be implemented by specific Authentication Methods
+        to add more specific validation contraints
+        """
+        ...
+
+    @abc.abstractmethod  # pragma: no cover
+    def save_token(self, user, token, payload, token_type=None):
+        log.debug("Tokens is not saved in base authentication")
+
+    @abc.abstractmethod
+    def invalidate_token(self, token):  # pragma: no cover
+        """
+        With this method the specified token must be invalidated
+        as expected after a user logout
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_roles(self):  # pragma: no cover
+        """
+        How to retrieve all the roles
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_roles_from_user(self, userobj):  # pragma: no cover
+        """
+        Retrieve roles from a user object from the current auth service
+        """
+        ...
+
+    @abc.abstractmethod
+    def create_role(self, name, description):  # pragma: no cover
+        """
+        A method to create a new role
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_role(self, role):  # pragma: no cover
+        log.error("Roles are not saved in base authentication")
+        ...
+
+    # ################
+    # # Create Users #
+    # ################
+    @abc.abstractmethod
+    def create_user(self, userdata, roles):  # pragma: no cover
+        """
+        A method to create a new user
+        """
+        ...
+
+    @abc.abstractmethod
+    def link_roles(self, user, roles):  # pragma: no cover
+        """
+        A method to assign roles to a user
+        """
+        ...
+
+    @abc.abstractmethod
+    def create_group(self, groupdata):  # pragma: no cover
+        """
+        A method to create a new group
+        """
+        ...
+
+    @abc.abstractmethod
+    def add_user_to_group(self, user, group):  # pragma: no cover
+        """
+        Expand the group.members -> user relationship
+        """
+        ...
