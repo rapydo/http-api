@@ -2,10 +2,10 @@
 SECURITY ENDPOINTS CHECK
 Add auth checks called /checklogged and /testadmin
 """
-
 import abc
 import base64
 import re
+import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
@@ -48,6 +48,9 @@ ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
 
+Payload = Dict[str, Any]
+User = Any
+
 
 class Role(Enum):
     ADMIN = "admin_root"
@@ -69,7 +72,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     """
 
     # Secret loaded from secret.key file
-    JWT_SECRET = None
+    JWT_SECRET: Optional[bytes] = None
     # JWT_ALGO = 'HS256'
     # Should be faster on 64bit machines
     JWT_ALGO = "HS512"
@@ -90,7 +93,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     VERIFY_PASSWORD_STRENGTH = False
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
     DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
-    REGISTER_FAILED_LOGIN = False
     MAX_LOGIN_ATTEMPTS = 0
     SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
 
@@ -126,7 +128,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
             cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
 
-        cls.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
         cls.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
         cls.SECOND_FACTOR_AUTHENTICATION = variables.get("second_factor_authentication")
 
@@ -140,7 +141,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             cls.SECOND_FACTOR_AUTHENTICATION = None
 
     @staticmethod
-    def load_default_user():
+    def load_default_user() -> None:
 
         BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
         BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
@@ -151,7 +152,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             print_and_exit("Default credentials are unavailable!")
 
     @staticmethod
-    def load_roles():
+    def load_roles() -> None:
         BaseAuthentication.roles_data = get_project_configuration(
             "variables.roles"
         ).copy()
@@ -170,13 +171,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "Default role {} not available!", BaseAuthentication.default_role
             )
 
-    def failed_login(self, username):
-        # if self.REGISTER_FAILED_LOGIN and username is not None:
-        #     self.register_failed_login(username)
-
-        raise Unauthorized("Invalid username or password", is_warning=True)
-
-    def make_login(self, username, password):
+    def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
         """ The method which will check if credentials are good to go """
 
         try:
@@ -192,8 +187,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise ServiceUnavailable("Unable to connect to auth backend")
 
         if user is None:
-            # this can raise exceptions in case of errors
-            self.failed_login(username)
+            self.register_failed_login(username)
+            raise Unauthorized("Invalid username or password", is_warning=True)
 
         # Check if Oauth2 is enabled
         if user.authmethod != "credentials":  # pragma: no cover
@@ -204,19 +199,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             payload, full_payload = self.fill_payload(user)
             token = self.create_token(payload)
 
-            if token is None:
-                # this can raise exceptions in case of errors
-                self.failed_login(username)
-
             return token, full_payload, user
 
-        self.failed_login(username)
+        self.register_failed_login(username)
+        raise Unauthorized("Invalid username or password", is_warning=True)
 
     @classmethod
-    def import_secret(cls, abs_filename):
+    def import_secret(cls, abs_filename: str) -> None:
         try:
             cls.JWT_SECRET = open(abs_filename, "rb").read()
-            return cls.JWT_SECRET
         except OSError:  # pragma: no cover
             print_and_exit("Jwt secret file {} not found", abs_filename)
 
@@ -357,17 +348,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Tokens handling #
     # ###################
     @classmethod
-    def create_token(cls, payload):
+    def create_token(cls, payload: Payload) -> str:
         """ Generate a byte token with JWT library to encrypt the payload """
         if cls.JWT_SECRET:
             return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
                 "ascii"
             )
-        print_and_exit(  # pragma: no cover
-            "Server misconfiguration, missing jwt configuration"
-        )
+        else:  # pragma: no cover
+            log.critical("Server misconfiguration, missing jwt configuration")
+            sys.exit(1)
 
-    def create_temporary_token(self, user, token_type, duration=86400):
+    def create_temporary_token(
+        self, user: User, token_type: str, duration: int = 86400
+    ) -> Tuple[str, Payload]:
         # invalidate previous tokens with same token_type
         tokens = self.get_tokens(user=user)
         for t in tokens:
@@ -397,12 +390,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return
 
     @classmethod
-    def unpack_token(cls, token, raiseErrors=False):
+    def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
 
-        payload = None
         try:
             if cls.JWT_SECRET:
-                payload = jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
+                return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
             else:
                 print_and_exit(  # pragma: no cover
                     "Server misconfiguration, missing jwt configuration"
@@ -426,10 +418,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             else:
                 log.warning("Unable to decode JWT token. {}", e)
 
-        return payload
+        return None
 
     @staticmethod
-    def unpacked_token(valid, token=None, jti=None, user=None):
+    def unpacked_token(
+        valid: bool,
+        token: Optional[str] = None,
+        jti: Optional[str] = None,
+        user: Optional[User] = None,
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
         return (valid, token, jti, user)
 
     def verify_token(self, token, raiseErrors=False, token_type=None):
@@ -652,10 +649,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    # @staticmethod
-    # def register_failed_login(username):
-    #     log.critical("auth.register_failed_login: not implemented")
-    #     return True
+    @staticmethod
+    def register_failed_login(username: str) -> None:
+        log.critical(BaseAuthentication.MAX_LOGIN_ATTEMPTS)
+        log.critical(username)
+        log.critical("auth.register_failed_login: not implemented")
 
     # @staticmethod
     # def get_failed_login(username):
@@ -680,15 +678,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # return base64.b32encode(user.name.encode('utf-8'))
 
-    def verify_totp(self, user, totp_code):
+    def verify_totp(self, user: User, totp_code: str) -> bool:
 
         if totp_code is None:
             raise Unauthorized("Invalid verification code")
         secret = self.get_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
-            # if self.REGISTER_FAILED_LOGIN:
-            #     self.register_failed_login(user.email)
+            self.register_failed_login(user.email)
             raise Unauthorized("Invalid verification code")
 
         return True
@@ -767,11 +764,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     # def verify_blocked_username(self, username):
 
-    #     if not self.REGISTER_FAILED_LOGIN:
-    #         # We do not register failed login
-    #         return False
     #     if self.MAX_LOGIN_ATTEMPTS <= 0:
-    #         # We register failed login, but we do not set a max num of failures
+    #         # We we do not count failed logins
     #         return False
     #     # FIXME: implement get_failed_login
     #     if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:

@@ -6,16 +6,16 @@ AUTH=$2
 
 if [[ "$TEMPLATE" == "postgres" ]]; then
   # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is 0;
-  rapydo create prj --auth postgres --frontend no -e AUTH_REGISTER_FAILED_LOGIN=1 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --auth postgres --frontend no -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 elif [[ "$TEMPLATE" == "mysql" ]]; then
   # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is 0;
-  rapydo create prj --auth mysql --frontend no -e AUTH_REGISTER_FAILED_LOGIN=1 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --auth mysql --frontend no -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 elif [[ "$TEMPLATE" == "neo4j" ]]; then
   # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is 0;
-  rapydo create prj --auth neo4j --frontend no -e AUTH_REGISTER_FAILED_LOGIN=1 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --auth neo4j --frontend no -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 elif [[ "$TEMPLATE" == "mongo" ]]; then
   # TOTP will be checked and disabled because AUTH_FORCE_FIRST_PASSWORD_CHANGE is 0;
-  rapydo create prj --auth mongo --frontend no -e AUTH_REGISTER_FAILED_LOGIN=1 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --auth mongo --frontend no -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
 elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
@@ -32,7 +32,7 @@ elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no;
-  rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_REGISTER_FAILED_LOGIN=1 -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
+  rapydo create prj --current --extend prjbase -s ftp -s pushpin -s bot --auth ${AUTH} --frontend no --add-optionals -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 -e AUTH_MAX_PASSWORD_VALIDITY=10 -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=30 -e AUTH_MAX_LOGIN_ATTEMPTS=5 -e AUTH_SECOND_FACTOR_AUTHENTICATION=TOTP;
 
 
 else
