@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
 import pyotp  # TOTP generation
@@ -50,6 +50,20 @@ ROLE_DISABLED = "disabled"
 
 Payload = Dict[str, Any]
 User = Any
+Group = Any
+RoleObj = Any
+
+
+class Token(TypedDict, total=False):
+    id: str
+    token: str
+    token_type: str
+    emitted: datetime
+    last_access: datetime
+    expiration: datetime
+    IP: str
+    location: str
+    user: Optional[User]
 
 
 class Role(Enum):
@@ -100,7 +114,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     default_password: Optional[str] = None
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
-    default_role: Optional[str] = None
+    default_role: str = "normal_user"
 
     @classmethod
     def get_timedelta(cls, val: int) -> timedelta:
@@ -313,7 +327,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 continue
 
             tok = t.get("token")
-            if self.invalidate_token(tok):
+            if tok and self.invalidate_token(tok):
                 log.info("Previous token invalidated: {}", tok)
 
         expiration = timedelta(seconds=duration)
@@ -747,8 +761,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.info("Injected default group")
         elif update:
             log.info("Default group already exists, updating")
-            default_group.shortname = DEFAULT_GROUP_NAME
-            default_group.fullname = DEFAULT_GROUP_DESCR
+            # Added to make the life easier to mypy... but cannot be False
+            if default_group:
+                default_group.shortname = DEFAULT_GROUP_NAME
+                default_group.fullname = DEFAULT_GROUP_DESCR
+            else:  # pragma: no cover
+                log.critical("Default group not found")
             self.save_group(default_group)
         elif default_group:
             log.info("Default group already exists")
@@ -848,38 +866,43 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_group(self, group_id=None, name=None):  # pragma: no cover
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:  # pragma: no cover
         """
         How to retrieve a single group from the current authentication db,
         """
         ...
 
     @abc.abstractmethod
-    def get_groups(self):  # pragma: no cover
+    def get_groups(self) -> List[Group]:  # pragma: no cover
         """
         How to retrieve groups list from the current authentication db,
         """
         ...
 
     @abc.abstractmethod
-    def save_group(self, group):  # pragma: no cover
-        log.error("Groups are not saved in base authentication")
+    def save_group(self, group: Group) -> bool:  # pragma: no cover
         ...
 
     @abc.abstractmethod
-    def delete_group(self, group):  # pragma: no cover
-        log.error("Groups are not deleted in base authentication")
+    def delete_group(self, group: Group) -> bool:  # pragma: no cover
         ...
 
     @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:  # pragma: no cover
         """
         Return the list of tokens
         """
         ...
 
     @abc.abstractmethod
-    def verify_token_validity(self, jti, user):  # pragma: no cover
+    def verify_token_validity(self, jti: str, user: User) -> bool:  # pragma: no cover
         """
         This method MUST be implemented by specific Authentication Methods
         to add more specific validation contraints
@@ -887,11 +910,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod  # pragma: no cover
-    def save_token(self, user, token, payload, token_type=None):
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
         log.debug("Tokens is not saved in base authentication")
 
     @abc.abstractmethod
-    def invalidate_token(self, token):  # pragma: no cover
+    def invalidate_token(self, token: str) -> bool:  # pragma: no cover
         """
         With this method the specified token must be invalidated
         as expected after a user logout
@@ -899,57 +924,60 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_roles(self):  # pragma: no cover
+    def get_roles(self) -> List[RoleObj]:  # pragma: no cover
         """
         How to retrieve all the roles
         """
         ...
 
     @abc.abstractmethod
-    def get_roles_from_user(self, userobj):  # pragma: no cover
+    def get_roles_from_user(
+        self, user: Optional[User]
+    ) -> List[str]:  # pragma: no cover
         """
         Retrieve roles from a user object from the current auth service
         """
         ...
 
     @abc.abstractmethod
-    def create_role(self, name, description):  # pragma: no cover
+    def create_role(self, name: str, description: str) -> None:  # pragma: no cover
         """
         A method to create a new role
         """
         ...
 
     @abc.abstractmethod
-    def save_role(self, role):  # pragma: no cover
-        log.error("Roles are not saved in base authentication")
+    def save_role(self, role: RoleObj) -> bool:  # pragma: no cover
         ...
 
     # ################
     # # Create Users #
     # ################
     @abc.abstractmethod
-    def create_user(self, userdata, roles):  # pragma: no cover
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str]
+    ) -> User:  # pragma: no cover
         """
         A method to create a new user
         """
         ...
 
     @abc.abstractmethod
-    def link_roles(self, user, roles):  # pragma: no cover
+    def link_roles(self, user: User, roles: List[str]) -> None:  # pragma: no cover
         """
         A method to assign roles to a user
         """
         ...
 
     @abc.abstractmethod
-    def create_group(self, groupdata):  # pragma: no cover
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:  # pragma: no cover
         """
         A method to create a new group
         """
         ...
 
     @abc.abstractmethod
-    def add_user_to_group(self, user, group):  # pragma: no cover
+    def add_user_to_group(self, user: User, group: Group) -> None:  # pragma: no cover
         """
         Expand the group.members -> user relationship
         """

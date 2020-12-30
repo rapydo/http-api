@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pymodm import MongoModel
 from pymodm import connection as mongodb
@@ -11,7 +11,15 @@ from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
-from restapi.services.authentication import NULL_IP, BaseAuthentication
+from restapi.services.authentication import (
+    NULL_IP,
+    BaseAuthentication,
+    Group,
+    Payload,
+    RoleObj,
+    Token,
+    User,
+)
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
 
@@ -131,7 +139,7 @@ class Authentication(BaseAuthentication):
         self.db = get_instance()
 
     # Also used by POST user
-    def create_user(self, userdata, roles):
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
 
         userdata.setdefault("authmethod", "credentials")
         userdata.setdefault("uuid", getUUID())
@@ -152,7 +160,7 @@ class Authentication(BaseAuthentication):
 
         return user
 
-    def link_roles(self, user, roles):
+    def link_roles(self, user: User, roles: List[str]) -> None:
 
         if not roles:
             roles = [BaseAuthentication.default_role]
@@ -163,7 +171,7 @@ class Authentication(BaseAuthentication):
             roles_obj.append(role_obj)
         user.roles = roles_obj
 
-    def create_group(self, groupdata):
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
 
         groupdata.setdefault("uuid", getUUID())
         groupdata.setdefault("id", groupdata["uuid"])
@@ -174,13 +182,15 @@ class Authentication(BaseAuthentication):
 
         return group
 
-    def add_user_to_group(self, user, group):
+    def add_user_to_group(self, user: User, group: Group) -> None:
 
         if user and group:
             user.belongs_to = group
             user.save()
 
-    def get_user(self, username=None, user_id=None):
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:
 
         try:
             if username:
@@ -196,23 +206,25 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_users(self):
+    def get_users(self) -> List[User]:
         return list(self.db.User.objects.all())
 
-    def save_user(self, user):
+    def save_user(self, user: User) -> bool:
         if user:
             user.save()
 
             return True
         return False
 
-    def delete_user(self, user):
+    def delete_user(self, user: User) -> bool:
         if user:
             user.delete()
             return True
         return False
 
-    def get_group(self, group_id=None, name=None):
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:
         try:
 
             if group_id:
@@ -226,22 +238,22 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self):
+    def get_groups(self) -> List[Group]:
         return list(self.db.Group.objects.all())
 
-    def save_group(self, group):
+    def save_group(self, group: Group) -> bool:
         if group:
             group.save()
             return True
         return False
 
-    def delete_group(self, group):
+    def delete_group(self, group: Group) -> bool:
         if group:
             group.delete()
             return True
         return False
 
-    def get_roles(self):
+    def get_roles(self) -> List[RoleObj]:
         roles = []
         for role_name in self.roles:
             try:
@@ -254,25 +266,27 @@ class Authentication(BaseAuthentication):
 
         return roles
 
-    def get_roles_from_user(self, userobj):
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
 
-        # No user for on authenticated endpoints -> return no role
-        if userobj is None:
+        # No user for non authenticated endpoints -> return no role
+        if user is None:
             return []
 
-        return [role.name for role in userobj.roles]
+        return [role.name for role in user.roles]
 
-    def create_role(self, name, description):
+    def create_role(self, name: str, description: str) -> None:
         role = self.db.Role(name=name, description=description)
         role.save()
 
-    def save_role(self, role):
+    def save_role(self, role: RoleObj) -> bool:
         if role:
             role.save()
             return True
         return False
 
-    def save_token(self, user, token, payload, token_type=None):
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
 
         ip = self.get_remote_ip()
         ip_loc = self.localize_ip(ip)
@@ -298,7 +312,7 @@ class Authentication(BaseAuthentication):
         # Save user updated in profile endpoint
         user.save()
 
-    def verify_token_validity(self, jti, user):
+    def verify_token_validity(self, jti: str, user: User) -> bool:
 
         try:
             token_entry = self.db.Token.objects.raw({"jti": jti}).first()
@@ -334,9 +348,14 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def get_tokens(self, user=None, token_jti=None, get_all=False):
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:
 
-        tokens_list = []
+        tokens_list: List[Token] = []
         tokens = []
 
         if get_all:
@@ -354,22 +373,23 @@ class Authentication(BaseAuthentication):
 
         if tokens:
             for token in tokens:
-                t = {}
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation
-                t["last_access"] = token.last_access
-                t["expiration"] = token.expiration
-                t["IP"] = token.IP
-                t["location"] = token.location
+                t: Token = {
+                    "id": token.jti,
+                    "token": token.token,
+                    "token_type": token.token_type,
+                    "emitted": token.creation,
+                    "last_access": token.last_access,
+                    "expiration": token.expiration,
+                    "IP": token.IP,
+                    "location": token.location,
+                }
                 if get_all:
                     t["user"] = token.user_id
                 tokens_list.append(t)
 
         return tokens_list
 
-    def invalidate_token(self, token):
+    def invalidate_token(self, token: str) -> bool:
         try:
             token_entry = self.db.Token.objects.raw({"token": token}).first()
             token_entry.delete()
