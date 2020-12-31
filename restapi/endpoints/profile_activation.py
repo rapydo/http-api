@@ -77,6 +77,9 @@ class ProfileActivation(EndpointResource):
         except BaseException:
             raise RestApiException("Invalid activation token", status_code=400)
 
+        user = unpacked_token[3]
+        self.auth.verify_blocked_username(user.email)
+
         # Recovering token object from jti
         jti = unpacked_token[2]
         token_obj = self.auth.get_tokens(token_jti=jti)
@@ -88,7 +91,6 @@ class ProfileActivation(EndpointResource):
                 status_code=400,
             )
 
-        user = unpacked_token[3]
         # If user logged is already active, invalidate the token
         if user.is_active:
             self.auth.invalidate_token(token)
@@ -113,6 +115,8 @@ class ProfileActivation(EndpointResource):
         responses={200: "A new activation link has been sent"},
     )
     def post(self, username: str) -> Response:
+
+        self.auth.verify_blocked_username(username)
 
         user = self.auth.get_user(username=username)
 
