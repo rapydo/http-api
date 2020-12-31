@@ -46,7 +46,11 @@ class Login(EndpointResource):
         path="/login",
         summary="Login with basic credentials",
         description="Login with normal credentials (username and password)",
-        responses={200: "Credentials are valid", 401: "Invalid username or password"},
+        responses={
+            200: "Credentials are valid",
+            401: "Invalid username or password",
+            403: "Access to this account is not allowed",
+        },
     )
     def post(
         self,
