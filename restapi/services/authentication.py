@@ -101,6 +101,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     # 1 month in seconds
     DEFAULT_TOKEN_TTL = Env.get_int("AUTH_JWT_TOKEN_TTL", 2_592_000)
+    # Grace period before starting to evaluate IP address on token validation
     GRACE_PERIOD = timedelta(seconds=7200)  # 2 hours in seconds
     SAVE_LAST_ACCESS_EVERY = timedelta(
         seconds=Env.get_int("AUTH_TOKEN_SAVE_FREQUENCY", 60)
@@ -110,16 +111,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
     TOTP = "TOTP"
-    MIN_PASSWORD_LENGTH = 8
-    FORCE_FIRST_PASSWORD_CHANGE = False
-    VERIFY_PASSWORD_STRENGTH = False
+    MIN_PASSWORD_LENGTH = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 8)
+    FORCE_FIRST_PASSWORD_CHANGE = Env.get_bool(
+        "AUTH_FORCE_FIRST_PASSWORD_CHANGE", False
+    )
+    VERIFY_PASSWORD_STRENGTH = Env.get_bool("AUTH_VERIFY_PASSWORD_STRENGTH", False)
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
     DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
-    MAX_LOGIN_ATTEMPTS = 0
+
+    MAX_LOGIN_ATTEMPTS = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
         seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
     )
-    SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
+    SECOND_FACTOR_AUTHENTICATION: Optional[str] = Env.get(
+        "AUTHSECOND_FACTOR_AUTHENTICATION", None
+    )
 
     default_user: Optional[str] = None
     default_password: Optional[str] = None
@@ -146,21 +152,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         variables = Env.load_variables_group(prefix="auth")
 
-        cls.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
-        cls.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
-            variables.get("force_first_password_change")
-        )
-        cls.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
-            variables.get("verify_password_strength")
-        )
         if val := Env.to_int(variables.get("max_password_validity", 0)):
             cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
             cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
-
-        cls.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
-        cls.SECOND_FACTOR_AUTHENTICATION = variables.get("second_factor_authentication")
 
         if cls.SECOND_FACTOR_AUTHENTICATION == "None":
             cls.SECOND_FACTOR_AUTHENTICATION = None

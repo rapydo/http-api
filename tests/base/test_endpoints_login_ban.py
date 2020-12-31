@@ -7,10 +7,6 @@ from restapi.tests import AUTH_URI, BaseTests
 max_login_attempts = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
 ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
 
-# This test executes a sleep(ban_duration)... this assert is to prevent to
-# block the tests due to a too-long ban duration
-assert ban_duration < 60
-
 BAN_MESSAGE = (
     "Sorry, this account is temporarily blocked "
     + "due to the number of failed login attempts."
@@ -34,6 +30,10 @@ if max_login_attempts == 0:
 
 
 else:
+
+    # This test executes a sleep(ban_duration)... this assert is to prevent to
+    # block the tests due to a too-long ban duration
+    assert ban_duration < 60
 
     class TestApp2(BaseTests):
         def test_01_failed_login_ban(self, client):
