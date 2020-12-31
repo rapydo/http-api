@@ -296,19 +296,50 @@ class TestApp(BaseTests):
     def test_05_failed_login(self, client):
         uuid, data = self.create_user(client)
 
-        self.do_login(client, data["email"], "wrong", status_code=401)
-        self.do_login(client, data["email"], "wrong", status_code=401)
-        self.do_login(client, data["email"], "wrong", status_code=401)
+        max_login_attempts = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
 
-        if Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0) > 0:
-            # This should fail
+        if max_login_attempts == 0:
+
+            # Login attempts are not registered, let's try to fail the login many times
+            for i in range(0, 10):
+                self.do_login(client, data["email"], "wrong", status_code=401)
+
+            # and verify that login is still allowed
             headers, _ = self.do_login(client, data["email"], data["password"])
-
-            # assert headers is None
-        else:
-            # This should be ok
-            headers, _ = self.do_login(client, data["email"], data["password"])
-
             assert headers is not None
 
+            # Goodbye temporary user
+            self.delete_user(client, uuid)
+            return
+
+        for i in range(0, max_login_attempts):
+            self.do_login(client, data["email"], "wrong", status_code=401)
+
+        # This should fail
+        headers, _ = self.do_login(
+            client, data["email"], data["password"], status_code=403
+        )
+        assert headers is None
+
+        # verify that the account is blocked for any other event like:
+        #   - reset
+        #   - activation
+
+        time.sleep(10)
+
+        headers, _ = self.do_login(client, data["email"], data["password"])
+        assert headers is not None
+
+        # Verify that already emitted tokens are not blocked, block again the account
+        for i in range(0, max_login_attempts):
+            self.do_login(client, data["email"], "wrong", status_code=401)
+
+        # Verify that the account is blocked
+        self.do_login(client, data["email"], data["password"], status_code=403)
+
+        # Verify that the previously emitted token is still valid
+        r = client.get(f"{AUTH_URI}/status", headers=headers)
+        assert r.status_code == 200
+
+        # Goodbye temporary user
         self.delete_user(client, uuid)

@@ -66,6 +66,14 @@ class Token(TypedDict, total=False):
     user: Optional[User]
 
 
+class FailedLogin(TypedDict):
+    progressive_count: int
+    username: str
+    date: datetime
+    IP: str
+    location: str
+
+
 class Role(Enum):
     ADMIN = "admin_root"
     COORDINATOR = "group_coordinator"
@@ -108,6 +116,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
     DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
     MAX_LOGIN_ATTEMPTS = 0
+    FAILED_LOGINS_EXPIRATION: timedelta = timedelta(seconds=10)
     SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
 
     default_user: Optional[str] = None
@@ -115,6 +124,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
     default_role: str = "normal_user"
+
+    # To be stored on DB
+    failed_logins: Dict[str, List[FailedLogin]] = {}
 
     @classmethod
     def get_timedelta(cls, val: int) -> timedelta:
@@ -541,18 +553,42 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    @staticmethod
-    def register_failed_login(username: str) -> None:
-        log.warning("auth.register_failed_login: not implemented")
+    @classmethod
+    def register_failed_login(cls, username: str) -> None:
+        ip = cls.get_remote_ip()
+        ip_loc = cls.localize_ip(ip)
+        cls.failed_logins.setdefault(username, [])
 
-    @staticmethod
-    def get_failed_login(username: str) -> int:
-        log.warning("auth.get_failed_login: not implemented")
-        return 0
+        count = len(cls.failed_logins[username])
+        cls.failed_logins[username].append(
+            {
+                "progressive_count": count + 1,
+                "username": username,
+                "date": datetime.now(pytz.utc),
+                "IP": ip,
+                "location": ip_loc,
+            }
+        )
 
-    @staticmethod
-    def flush_failed_logins(username: str) -> None:
-        log.warning("auth.flush_failed_logins: not implemented")
+    @classmethod
+    def get_failed_login(cls, username: str) -> int:
+
+        # username not listed or listed with an empty array
+        if not (events := cls.failed_logins.get(username, None)):
+            return 0
+
+        # Verify the last event
+        last_event = events[-1]
+        exp = last_event["date"] + cls.FAILED_LOGINS_EXPIRATION
+        if datetime.now(pytz.utc) > exp:
+            cls.flush_failed_logins(username)
+            return 0
+
+        return last_event["progressive_count"]
+
+    @classmethod
+    def flush_failed_logins(cls, username: str) -> None:
+        cls.failed_logins.pop(username, None)
 
     @staticmethod
     def get_secret(user: User) -> str:
@@ -674,12 +710,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
-        # Dear user, you have exceeded the limit!1
-        msg = f"""
-            Sorry, this account is temporarily blocked due to
-            more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
-            Try again later"""
-        raise Unauthorized(msg)
+        # Dear user, you have exceeded the limit!
+        raise Forbidden(
+            "Sorry, this account is temporarily blocked "
+            "due to the number of failed login attempts."
+        )
 
     def verify_blocked_user(self, user: User) -> None:
 
