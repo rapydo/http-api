@@ -116,7 +116,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
     DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
     MAX_LOGIN_ATTEMPTS = 0
-    FAILED_LOGINS_EXPIRATION: timedelta = timedelta(seconds=10)
+    FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
+        seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
+    )
     SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
 
     default_user: Optional[str] = None

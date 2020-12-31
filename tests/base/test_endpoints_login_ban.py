@@ -5,7 +5,11 @@ from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseTests
 
 max_login_attempts = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
 
+# This test executes a sleep(ban_duration)... this assert is to prevent to
+# block the tests due to a too-long ban duration
+assert ban_duration < 60
 
 BAN_MESSAGE = (
     "Sorry, this account is temporarily blocked "
@@ -49,7 +53,7 @@ else:
             assert r.status_code == 403
             assert self.get_content(r) == BAN_MESSAGE
 
-            time.sleep(10)
+            time.sleep(ban_duration)
 
             headers, _ = self.do_login(client, data["email"], data["password"])
             assert headers is not None
@@ -130,7 +134,7 @@ else:
                 assert r.status_code == 403
                 assert self.get_content(r) == BAN_MESSAGE
 
-                time.sleep(10)
+                time.sleep(ban_duration)
 
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
