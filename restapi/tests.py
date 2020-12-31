@@ -164,7 +164,7 @@ class BaseTests:
     TOTP = False
 
     @classmethod
-    def save(cls, variable: str, value: str) -> None:
+    def save(cls, variable: str, value: Any) -> None:
         """
         Save a variable in the class, to be re-used in further tests
         """
@@ -172,12 +172,12 @@ class BaseTests:
         setattr(cls, variable, value)
 
     @classmethod
-    def get(cls, variable: str) -> str:
+    def get(cls, variable: str) -> Any:
         """
         Retrieve a previously stored variable using the .save method
         """
         if hasattr(cls, variable):
-            return str(getattr(cls, variable))
+            return getattr(cls, variable)
 
         raise AttributeError(f"Class variable {variable} not found")
 
