@@ -6,7 +6,7 @@ import string
 import urllib.parse
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import jwt
 import pyotp
@@ -14,6 +14,7 @@ import pytest
 import pytz
 from faker import Faker
 from faker.providers import BaseProvider
+from flask.testing import FlaskClient
 
 from restapi.config import (
     API_URL,
@@ -35,13 +36,13 @@ AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 class PasswordProvider(BaseProvider):
     def password(
         self,
-        length=8,
-        strong=False,  # this enables all low, up, digits and symbols
-        low=True,
-        up=False,
-        digits=False,
-        symbols=False,
-    ):
+        length: int = 8,
+        strong: bool = False,  # this enables all low, up, digits and symbols
+        low: bool = True,
+        up: bool = False,
+        digits: bool = False,
+        symbols: bool = False,
+    ) -> str:
 
         if strong:
             if length < 16:
@@ -96,7 +97,7 @@ class PasswordProvider(BaseProvider):
         return randstr
 
 
-def get_faker():
+def get_faker() -> Faker:
 
     locales = {
         "ar_EG": "Arabic",
@@ -158,7 +159,7 @@ class BaseTests:
     TOTP = False
 
     @classmethod
-    def save(cls, variable, value):
+    def save(cls, variable: str, value: str) -> None:
         """
         Save a variable in the class, to be re-used in further tests
         """
@@ -166,17 +167,19 @@ class BaseTests:
         setattr(cls, variable, value)
 
     @classmethod
-    def get(cls, variable):
+    def get(cls, variable: str) -> str:
         """
         Retrieve a previously stored variable using the .save method
         """
         if hasattr(cls, variable):
-            return getattr(cls, variable)
+            return str(getattr(cls, variable))
 
         raise AttributeError(f"Class variable {variable} not found")
 
     @staticmethod
-    def getDynamicInputSchema(client, endpoint, headers):
+    def getDynamicInputSchema(
+        client: FlaskClient[Any], endpoint: str, headers: Dict[str, str]
+    ) -> Any:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
