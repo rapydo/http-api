@@ -14,7 +14,6 @@ import pytest
 import pytz
 from faker import Faker
 from faker.providers import BaseProvider
-from flask.testing import FlaskClient
 
 from restapi.config import (
     API_URL,
@@ -30,6 +29,12 @@ from restapi.utilities.logs import log
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
 AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
+
+# Should be:
+# from flask.testing import FlaskClient
+# but it raises Missing type parameters for generic type "FlaskClient"
+# I cannot understand how to fix this... so let's fallback to Any...
+FlaskClient = Any
 
 
 # Create a random password to be used to build data for tests
@@ -178,12 +183,13 @@ class BaseTests:
 
     @staticmethod
     def getDynamicInputSchema(
-        client: FlaskClient[Any], endpoint: str, headers: Dict[str, str]
+        client: FlaskClient, endpoint: str, headers: Dict[str, str]
     ) -> Any:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
 
+        log.critical(type(client))
         r = client.post(
             f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
         )
