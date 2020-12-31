@@ -56,6 +56,8 @@ if Connector.check_availability("smtp"):
 
             reset_email = reset_email.lower()
 
+            self.auth.verify_blocked_username(reset_email)
+
             user = self.auth.get_user(username=reset_email)
 
             if user is None:

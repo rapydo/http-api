@@ -322,8 +322,16 @@ class TestApp(BaseTests):
         assert headers is None
 
         # verify that the account is blocked for any other event like:
-        #   - reset
         #   - activation
+
+        reset_data = {"reset_email": data["email"]}
+        r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+        assert r.status_code == 403
+        msg = (
+            "Sorry, this account is temporarily blocked "
+            + "due to the number of failed login attempts."
+        )
+        assert self.get_content(r) == msg
 
         time.sleep(10)
 
