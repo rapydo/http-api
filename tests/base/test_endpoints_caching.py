@@ -301,7 +301,6 @@ class TestApp(BaseTests):
         assert nonauthenticated2[COUNTER] == 1
 
         headers1, token1 = self.do_login(client, None, None)
-        headers2, token2 = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/cache/optionalparamauth", headers=headers1)
         assert r.status_code == 200
@@ -336,6 +335,7 @@ class TestApp(BaseTests):
         # Let's test another token => new cache key.
         # This time access_token and then headers
 
+        headers2, token2 = self.do_login(client, None, None)
         r = client.get(
             f"{API_URI}/tests/cache/optionalparamauth",
             query_string={"access_token": token2},
