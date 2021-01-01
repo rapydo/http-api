@@ -38,6 +38,8 @@ class User(UserCustomClass):
     last_password_change = DateTimeProperty()
     is_active = BooleanProperty(default=True)
     privacy_accepted = BooleanProperty(default=True)
+    expiration = DateTimeProperty()
+
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")

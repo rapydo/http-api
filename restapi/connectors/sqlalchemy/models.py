@@ -38,10 +38,11 @@ class User(db.Model):
     last_password_change = db.Column(db.DateTime(timezone=True))
     is_active = db.Column(db.Boolean, default=True)
     privacy_accepted = db.Column(db.Boolean, default=True)
+    expiration = db.Column(db.DateTime(timezone=True))
+
     roles = db.relationship(
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
-
     group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
     belongs_to = db.relationship(
         "Group", backref=db.backref("members"), foreign_keys=[group_id]

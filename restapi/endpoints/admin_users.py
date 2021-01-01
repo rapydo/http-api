@@ -68,6 +68,7 @@ def get_output_schema():
     attributes["is_active"] = fields.Boolean()
     attributes["privacy_accepted"] = fields.Boolean()
     attributes["roles"] = fields.List(fields.Nested(Roles))
+    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
 
     attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
@@ -143,9 +144,17 @@ def getInputSchema(request):
         default_group = None
 
     attributes["group"] = fields.Str(
+        label="Group",
+        description="The group to which the user belongs",
         required=set_required,
         default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
+    )
+
+    attributes["expiration"] = fields.DateTime(
+        required=False,
+        label="Account expiration",
+        description="This user will be blocked after this date",
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(
