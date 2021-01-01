@@ -153,6 +153,7 @@ def getInputSchema(request):
 
     attributes["expiration"] = fields.DateTime(
         required=False,
+        allow_none=True,
         label="Account expiration",
         description="This user will be blocked after this date",
     )
