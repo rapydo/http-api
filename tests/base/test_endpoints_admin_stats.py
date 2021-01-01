@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
-    def test_admin_stats(self, client):
+    def test_admin_stats(self, client: FlaskClient) -> None:
 
         r = client.get(f"{API_URI}/admin/stats")
         assert r.status_code == 401

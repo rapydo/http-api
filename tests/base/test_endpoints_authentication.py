@@ -1,9 +1,9 @@
 from restapi.services.authentication import BaseAuthentication
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
-    def test_no_auth(self, client):
+    def test_no_auth(self, client: FlaskClient) -> None:
 
         r = client.get(f"{API_URI}/tests/noauth")
         assert r.status_code == 200
@@ -23,7 +23,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == "OK"
 
-    def test_auth(self, client):
+    def test_auth(self, client: FlaskClient) -> None:
 
         r = client.get(f"{API_URI}/tests/authentication")
         assert r.status_code == 401
@@ -51,7 +51,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-    def test_optional_auth(self, client):
+    def test_optional_auth(self, client: FlaskClient) -> None:
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalauthentication")
@@ -109,7 +109,7 @@ class TestApp(BaseTests):
         assert content["token"] is None
         assert content["user"] is None
 
-    def test_access_token_parameter(self, client):
+    def test_access_token_parameter(self, client: FlaskClient) -> None:
 
         r = client.get(f"{API_URI}/tests/queryauthentication")
         assert r.status_code == 401
@@ -148,7 +148,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-    def test_optional_access_token_parameter(self, client):
+    def test_optional_access_token_parameter(self, client: FlaskClient) -> None:
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication")

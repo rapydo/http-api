@@ -1,14 +1,15 @@
 import json
 
 import pytest
+from faker import Faker
 
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseTests
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_admin_groups(self, client, fake):
+    def test_admin_groups(self, client: FlaskClient, fake: Faker) -> None:
 
         # Adminer is always enabled during tests
         if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover

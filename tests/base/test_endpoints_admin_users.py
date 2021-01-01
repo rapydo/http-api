@@ -1,14 +1,16 @@
 import json
 
+from faker import Faker
+
 from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
-from restapi.tests import API_URI, AUTH_URI, BaseTests
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_admin_users(self, client, fake):
+    def test_admin_users(self, client: FlaskClient, fake: Faker) -> None:
 
         # Adminer is always enabled during tests
         if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
@@ -35,7 +37,7 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
-        assert f"Username: {data.get('email').lower()}" in mail.get("body")
+        assert f"Username: {data.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {data.get('password')}" in mail.get("body")
 
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
@@ -43,7 +45,7 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is saved lowercase
-        assert users_list[0].get("email") == data.get("email").lower()
+        assert users_list[0].get("email") == data.get("email", "MISSING").lower()
 
         # Check duplicates
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
@@ -62,7 +64,7 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
-        assert f"Username: {data2.get('email').lower()}" in mail.get("body")
+        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {data2.get('password')}" in mail.get("body")
 
         # send and invalid user_id
@@ -91,8 +93,8 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
-        assert users_list[0].get("email") != data.get("email").lower()
-        assert users_list[0].get("email") == data2.get("email").lower()
+        assert users_list[0].get("email") != data.get("email", "MISSING").lower()
+        assert users_list[0].get("email") == data2.get("email", "MISSING").lower()
 
         r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
         assert r.status_code == 404
@@ -114,7 +116,7 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: password changed" in mail.get("headers")
-        assert f"Username: {data2.get('email').lower()}" in mail.get("body")
+        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {newpwd}" in mail.get("body")
 
         # login with a newly created user

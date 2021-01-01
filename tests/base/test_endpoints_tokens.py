@@ -1,8 +1,10 @@
-from restapi.tests import API_URI, AUTH_URI, BaseTests
+from faker import Faker
+
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
-    def test_tokens(self, client, fake):
+    def test_tokens(self, client: FlaskClient, fake: Faker) -> None:
 
         last_token = None
         last_tokens_header = None

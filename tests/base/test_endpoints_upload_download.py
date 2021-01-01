@@ -1,10 +1,12 @@
 import io
 
-from restapi.tests import API_URI, BaseTests
+from faker import Faker
+
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestUploadAndDownload(BaseTests):
-    def test_upload(self, client, fake):
+    def test_upload(self, client: FlaskClient, fake: Faker) -> None:
 
         self.fcontent = fake.paragraph()
         self.save("fcontent", self.fcontent)
@@ -75,7 +77,7 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") is not None
         assert meta.get("type") is not None
 
-    def test_download(self, client, fake):
+    def test_download(self, client: FlaskClient, fake: Faker) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
@@ -120,7 +122,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 400
 
-    def test_chunked(self, client, fake):
+    def test_chunked(self, client: FlaskClient, fake: Faker) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")

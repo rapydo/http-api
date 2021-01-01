@@ -1,14 +1,14 @@
 import time
 
 from restapi.services.cache import Cache
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 UUID = 0
 COUNTER = 1
 
 
 class TestApp(BaseTests):
-    def test_caching_autocleaning(self, client):
+    def test_caching_autocleaning(self, client: FlaskClient) -> None:
 
         headers, _ = self.do_login(client, None, None)
 
@@ -49,7 +49,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == counter2
 
-    def test_caching_general_clearing(self, client):
+    def test_caching_general_clearing(self, client: FlaskClient) -> None:
 
         headers, _ = self.do_login(client, None, None)
 
@@ -105,7 +105,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == counter3
 
-    def test_cached_authenticated_endpoint(self, client):
+    def test_cached_authenticated_endpoint(self, client: FlaskClient) -> None:
 
         headers1, _ = self.do_login(client, None, None)
 
@@ -176,7 +176,7 @@ class TestApp(BaseTests):
 
         self.delete_user(client, uuid)
 
-    def test_cached_semiauthenticated_endpoint(self, client):
+    def test_cached_semiauthenticated_endpoint(self, client: FlaskClient) -> None:
         r = client.get(f"{API_URI}/tests/cache/optionalauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)
@@ -227,7 +227,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-    def test_cached_authenticated_param_endpoint(self, client):
+    def test_cached_authenticated_param_endpoint(self, client: FlaskClient) -> None:
 
         headers1, _ = self.do_login(client, None, None)
 
@@ -283,7 +283,7 @@ class TestApp(BaseTests):
         assert resp5[COUNTER] == resp3[COUNTER]
         assert resp5[COUNTER] == 2
 
-    def test_cached_semiauthenticated_param_endpoint(self, client):
+    def test_cached_semiauthenticated_param_endpoint(self, client: FlaskClient) -> None:
         r = client.get(f"{API_URI}/tests/cache/optionalparamauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)

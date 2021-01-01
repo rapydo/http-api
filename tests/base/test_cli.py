@@ -10,7 +10,7 @@ from restapi import decorators
 from restapi.connectors import Connector
 
 
-def test_cli():
+def test_cli() -> None:
     runner = CliRunner()
 
     response = runner.invoke(cli.verify, [])

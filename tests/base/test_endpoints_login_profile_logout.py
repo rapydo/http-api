@@ -1,13 +1,15 @@
 import base64
 import time
 
+from faker import Faker
+
 from restapi.env import Env
-from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests
+from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_01_login(self, client, fake):
+    def test_01_login(self, client: FlaskClient, fake: Faker) -> None:
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
@@ -57,7 +59,7 @@ class TestApp(BaseTests):
             status_code=401,
         )
 
-    def test_02_GET_profile(self, client, fake):
+    def test_02_GET_profile(self, client: FlaskClient, fake: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
 
         # Check success
@@ -160,12 +162,12 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-    def test_03_change_profile(self, client, fake):
+    def test_03_change_profile(self, client: FlaskClient, fake: Faker) -> None:
 
         # Always enable during core tests
         if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Profile is disabled, skipping tests")
-            return True
+            return
 
         headers, _ = self.do_login(client, None, None)
 
@@ -280,7 +282,7 @@ class TestApp(BaseTests):
 
         self.save("auth_header", headers)
 
-    def test_04_logout(self, client):
+    def test_04_logout(self, client: FlaskClient) -> None:
         """ Check that you can logout with a valid token """
 
         # Check success

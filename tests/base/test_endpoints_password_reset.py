@@ -1,16 +1,18 @@
+from faker import Faker
+
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
+from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_password_reset(self, client, fake):
+    def test_password_reset(self, client: FlaskClient, fake: Faker) -> None:
 
         # Always enable during core tests
         if not Env.get_bool("ALLOW_PASSWORD_RESET"):  # pragma: no cover
             log.warning("Password reset is disabled, skipping tests")
-            return True
+            return
 
         project_tile = get_project_configuration("project.title", default="YourProject")
         proto = "https" if PRODUCTION else "http"

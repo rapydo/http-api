@@ -1,14 +1,16 @@
+from faker import Faker
+
 from restapi.connectors import Connector
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_websockets(self, client, fake):
+    def test_websockets(self, client: FlaskClient, fake: Faker) -> None:
 
         if not Connector.check_availability("pushpin"):
             log.warning("Skipping websockets test: pushpin service not available")
-            return False
+            return
 
         log.info("Executing websockets tests")
 
@@ -20,6 +22,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         headers, _ = self.do_login(client, None, None)
+        assert headers is not None
         headers["Content-Type"] = "application/websocket-events"
 
         r = client.post(f"{API_URI}/socket/{channel}", headers=headers)

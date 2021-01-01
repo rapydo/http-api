@@ -6,7 +6,7 @@ import string
 import urllib.parse
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import jwt
 import pyotp
@@ -14,6 +14,7 @@ import pytest
 import pytz
 from faker import Faker
 from faker.providers import BaseProvider
+from flask.wrappers import Response
 
 from restapi.config import (
     API_URL,
@@ -23,7 +24,7 @@ from restapi.config import (
     SECRET_KEY_FILE,
 )
 from restapi.connectors import Connector
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, Payload
 from restapi.utilities.logs import log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
@@ -183,7 +184,7 @@ class BaseTests:
 
     @staticmethod
     def getDynamicInputSchema(
-        client: FlaskClient, endpoint: str, headers: Dict[str, str]
+        client: FlaskClient, endpoint: str, headers: Optional[Dict[str, str]]
     ) -> Any:
         """
         Retrieve a dynamic data schema associated with a endpoint
@@ -198,7 +199,7 @@ class BaseTests:
         return json.loads(r.data.decode("utf-8"))
 
     @staticmethod
-    def get_content(http_out):
+    def get_content(http_out: Response) -> Any:
 
         try:
             response = json.loads(http_out.get_data().decode())
@@ -209,21 +210,29 @@ class BaseTests:
         return response
 
     @staticmethod
-    def generate_totp(user):
-        secret = BaseTests.QRsecrets.get(user.lower())
+    def generate_totp(email: Optional[str]) -> str:
+        assert email is not None
+        secret = BaseTests.QRsecrets.get(email.lower())
         if secret:
             return pyotp.TOTP(secret).now()
 
         auth = Connector.get_authentication_instance()
 
-        user = auth.get_user(username=user)
+        user = auth.get_user(username=email)
 
         secret = BaseAuthentication.get_secret(user)
 
         return pyotp.TOTP(secret).now()
 
     @staticmethod
-    def do_login(client, USER, PWD, status_code=200, error=None, data=None):
+    def do_login(
+        client: FlaskClient,
+        USER: Optional[str],
+        PWD: Optional[str],
+        status_code: int = 200,
+        error: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
         """
         Make login and return both token and authorization header
         """
@@ -231,10 +240,13 @@ class BaseTests:
         if USER is None or PWD is None:
             BaseAuthentication.load_default_user()
             BaseAuthentication.load_roles()
-            if USER is None:
-                USER = BaseAuthentication.default_user
-            if PWD is None:
-                PWD = BaseAuthentication.default_password
+        if USER is None:
+            USER = BaseAuthentication.default_user
+        if PWD is None:
+            PWD = BaseAuthentication.default_password
+
+        assert USER is not None
+        assert PWD is not None
 
         if data is None:
             data = {}
@@ -380,8 +392,9 @@ class BaseTests:
         return {"Authorization": f"Bearer {content}"}, content
 
     @classmethod
-    def create_user(cls, client):
+    def create_user(cls, client: FlaskClient) -> Tuple[str, Dict[str, Any]]:
         admin_headers, _ = cls.do_login(client, None, None)
+        assert admin_headers is not None
         schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
         data = cls.buildData(schema)
         data["email_notification"] = False
@@ -393,13 +406,14 @@ class BaseTests:
         return uuid, data
 
     @classmethod
-    def delete_user(cls, client, uuid):
+    def delete_user(cls, client: FlaskClient, uuid: str) -> None:
         admin_headers, _ = cls.do_login(client, None, None)
+        assert admin_headers is not None
         r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=admin_headers)
         assert r.status_code == 204
 
     @staticmethod
-    def buildData(schema):
+    def buildData(schema: Any) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema
         Output: a dictionary of random data
@@ -442,7 +456,7 @@ class BaseTests:
         return data
 
     @staticmethod
-    def read_mock_email():
+    def read_mock_email() -> Any:
         fpath = "/logs/mock.mail.lastsent.json"
         if not os.path.exists(fpath):
             return None
@@ -478,13 +492,13 @@ class BaseTests:
 
     @staticmethod
     def get_crafted_token(
-        token_type,
-        user_id=None,
-        expired=False,
-        immature=False,
-        wrong_secret=False,
-        wrong_algorithm=False,
-    ):
+        token_type: str,
+        user_id: Optional[str] = None,
+        expired: bool = False,
+        immature: bool = False,
+        wrong_secret: bool = False,
+        wrong_algorithm: bool = False,
+    ) -> str:
 
         if wrong_secret:
             secret = fake.password()
@@ -499,7 +513,7 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
+        payload: Payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
         payload["iat"] = now

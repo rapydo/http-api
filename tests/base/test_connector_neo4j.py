@@ -12,7 +12,7 @@ from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 CONNECTOR = "neo4j"
@@ -34,7 +34,7 @@ else:
     log.info("Executing {} tests", CONNECTOR)
 
     class TestNeo4j(BaseTests):
-        def test_endpoint(self, client):
+        def test_endpoint(self, client: FlaskClient) -> None:
             r = client.get(f"{API_URI}/tests/neo4j/1")
             assert r.status_code == 200
 

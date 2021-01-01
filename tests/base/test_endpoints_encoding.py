@@ -1,11 +1,11 @@
 import gzip
 from io import BytesIO
 
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
-    def test_encoding(self, client):
+    def test_encoding(self, client: FlaskClient) -> None:
         """ Test that the flask server is running and reachable """
 
         # Check success

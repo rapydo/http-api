@@ -7,17 +7,17 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
 
 
-def test_destroy():
+def test_destroy() -> None:
 
     # Only executed if tests are run with --destroy flag
     if os.getenv("TEST_DESTROY_MODE", "0") != "1":
         log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
-        return False
+        return
 
     # Always enable during core tests
     if not Connector.check_availability("authentication"):  # pragma: no cover
         log.warning("Skipping authentication test: service not available")
-        return False
+        return
 
     if Connector.check_availability("sqlalchemy"):
         sql = sqlalchemy.get_instance()
@@ -46,8 +46,8 @@ def test_destroy():
     # 2) the init al already tests with any other DB, included postgres
     # 3) MySQL is not used by any project
     # => there is no need to go crazy in debugging this issue!
-    if Connector.authentication_service == "sqlalchemy" and auth.db.is_mysql():
-        return False
+    if Connector.authentication_service == "sqlalchemy" and auth.db.is_mysql():  # type: ignore
+        return
 
     create_app(mode=ServerModes.INIT)
 

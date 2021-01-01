@@ -1,18 +1,19 @@
 import pytest
+from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
+from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_registration(self, client, fake):
+    def test_registration(self, client: FlaskClient, fake: Faker) -> None:
 
         # Always enabled during core tests
         if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
             log.warning("User registration is disabled, skipping tests")
-            return True
+            return
 
         project_tile = get_project_configuration("project.title", default="YourProject")
         proto = "https" if PRODUCTION else "http"

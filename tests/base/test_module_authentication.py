@@ -1,15 +1,20 @@
 import time
+from typing import Optional
 
 import pytest
+from faker import Faker
 
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.tests import BaseTests
+from restapi.services.authentication import BaseAuthentication
+from restapi.tests import BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
-def verify_token_is_valid(auth, token, ttype=None):
+def verify_token_is_valid(
+    auth: BaseAuthentication, token: str, ttype: Optional[str] = None
+) -> None:
     unpacked_token = auth.verify_token(token, token_type=ttype)
     assert unpacked_token[0]
     assert unpacked_token[1] is not None
@@ -17,7 +22,9 @@ def verify_token_is_valid(auth, token, ttype=None):
     assert unpacked_token[3] is not None
 
 
-def verify_token_is_not_valid(auth, token, ttype=None):
+def verify_token_is_not_valid(
+    auth: BaseAuthentication, token: str, ttype: Optional[str] = None
+) -> None:
     unpacked_token = auth.verify_token(token, token_type=ttype)
     assert not unpacked_token[0]
     assert unpacked_token[1] is None
@@ -26,12 +33,12 @@ def verify_token_is_not_valid(auth, token, ttype=None):
 
 
 class TestApp(BaseTests):
-    def test_authentication_service(self, client, fake):
+    def test_authentication_service(self, client: FlaskClient, fake: Faker) -> None:
 
         # Always enable during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
-            return False
+            return
 
         auth = Connector.get_authentication_instance()
 
@@ -132,7 +139,7 @@ class TestApp(BaseTests):
             pytest.fail("Unexpected exception raised")
 
         try:
-            auth.verify_totp(None, None)
+            auth.verify_totp(None, None)  # type: ignore
             pytest.fail("NULL totp accepted!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 401
@@ -176,16 +183,16 @@ class TestApp(BaseTests):
 
         assert auth.verify_password(pwd1, hash_1)
         try:
-            auth.verify_password(None, hash_1)
+            auth.verify_password(None, hash_1)  # type: ignore
             pytest.fail("Hashed a None password!")  # pragma: no cover
         except TypeError:
             pass
         except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
-        assert not auth.verify_password(pwd1, None)
+        assert not auth.verify_password(pwd1, None)  # type: ignore
 
-        assert not auth.verify_password(None, None)
+        assert not auth.verify_password(None, None)  # type: ignore
 
         ip_data = auth.localize_ip("8.8.8.8")
 

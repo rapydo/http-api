@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 import psutil
 import pytest
+from faker import Faker
 from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
@@ -28,7 +29,7 @@ from restapi.utilities.templates import get_html_template
 
 
 class TestApp(BaseTests):
-    def test_libs(self, faker):
+    def test_libs(self, faker: Faker) -> None:
 
         assert not Env.to_bool(None)
         assert Env.to_bool(None, True)
@@ -60,6 +61,9 @@ class TestApp(BaseTests):
         assert Env.to_int(faker.pystr(), random_default) == random_default
         assert Env.to_bool(object) == 0
 
+        class MySchema(Schema):
+            name = fields.Str()
+
         f = "myfield"
         assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
         assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
@@ -78,7 +82,7 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.String()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.Dict()) == "dictionary"
         assert ResponseMaker.get_schema_type(f, fields.List(fields.Str())) == "string[]"
-        assert ResponseMaker.get_schema_type(f, fields.Nested(fields.Str())) == "nested"
+        assert ResponseMaker.get_schema_type(f, fields.Nested(MySchema())) == "nested"
         # Unsupported types, fallback to string
         assert ResponseMaker.get_schema_type(f, fields.URL()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.Url()) == "string"
@@ -138,17 +142,17 @@ class TestApp(BaseTests):
             pytest.fail("Reached Timeout, max retries not worked?")
 
         # This is a valid package containing other packages... but no task will be found
-        s = Meta.get_celery_tasks("restapi.utilities")
-        assert isinstance(s, list)
-        assert len(s) == 0
+        tasks = Meta.get_celery_tasks("restapi.utilities")
+        assert isinstance(tasks, list)
+        assert len(tasks) == 0
 
-        s = Meta.get_celery_tasks("this-should-not-exist")
-        assert isinstance(s, list)
-        assert len(s) == 0
+        tasks = Meta.get_celery_tasks("this-should-not-exist")
+        assert isinstance(tasks, list)
+        assert len(tasks) == 0
 
-        s = Meta.get_classes_from_module("this-should-not-exist")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        mcls = Meta.get_classes_from_module("this-should-not-exist")  # type: ignore
+        assert isinstance(mcls, dict)
+        assert len(mcls) == 0
 
         assert not Meta.get_module_from_string("this-should-not-exist")
 
@@ -164,12 +168,12 @@ class TestApp(BaseTests):
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
         assert not Meta.get_self_reference_from_args()
-        s = Meta.get_self_reference_from_args("test")
-        assert s == "test"
+        selfref = Meta.get_self_reference_from_args("test")
+        assert selfref == "test"
 
-        s = Meta.import_models("this-should", "not-exist", mandatory=False)
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        models = Meta.import_models("this-should", "not-exist", mandatory=False)
+        assert isinstance(models, dict)
+        assert len(models) == 0
 
         try:
             Meta.import_models("this-should", "not-exist", mandatory=True)
@@ -178,9 +182,9 @@ class TestApp(BaseTests):
             pass
 
         # Check exit_on_fail default value
-        s = Meta.import_models("this-should", "not-exist")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        models = Meta.import_models("this-should", "not-exist")
+        assert isinstance(models, dict)
+        assert len(models) == 0
 
         assert Meta.get_instance("invalid.path", "InvalidClass") is None
         assert Meta.get_instance("customization", "InvalidClass") is None
@@ -204,13 +208,13 @@ class TestApp(BaseTests):
         except BaseException:  # pragma: no cover
             pytest.fail("Operation interrupted")
 
-        s = handle_log_output(None)
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        log_output = handle_log_output(None)
+        assert isinstance(log_output, dict)
+        assert len(log_output) == 0
 
-        s = handle_log_output(" ")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        log_output = handle_log_output(" ")
+        assert isinstance(log_output, dict)
+        assert len(log_output) == 0
 
         # obfuscate_dict only accepts dict
         assert obfuscate_dict(None) is None
@@ -336,7 +340,7 @@ class TestApp(BaseTests):
             pass
         tmpf.close()
 
-    def test_marshmallow_schemas(self):
+    def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
             unique_delimited_list = UniqueDelimitedList(
                 fields.Str(), delimiter=",", required=True
