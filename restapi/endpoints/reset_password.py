@@ -65,10 +65,7 @@ if Connector.check_availability("smtp"):
                     f"Sorry, {reset_email} is not recognized as a valid username",
                 )
 
-            if user.is_active is not None and not user.is_active:
-                # Beware, frontend leverages on this exact message,
-                # do not modified it without fix also on frontend side
-                raise Forbidden("Sorry, this account is not active")
+            self.auth.verify_user_status(user)
 
             title = get_project_configuration("project.title", default="Unkown title")
 
