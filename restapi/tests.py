@@ -392,18 +392,22 @@ class BaseTests:
         return {"Authorization": f"Bearer {content}"}, content
 
     @classmethod
-    def create_user(cls, client: FlaskClient) -> Tuple[str, Dict[str, Any]]:
+    def create_user(
+        cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, Dict[str, Any]]:
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
         schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
-        data = cls.buildData(schema)
-        data["email_notification"] = False
-        data["is_active"] = True
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=admin_headers)
+        user_data = cls.buildData(schema)
+        user_data["email_notification"] = False
+        user_data["is_active"] = True
+        if data:
+            user_data.update(data)
+        r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
 
-        return uuid, data
+        return uuid, user_data
 
     @classmethod
     def delete_user(cls, client: FlaskClient, uuid: str) -> None:

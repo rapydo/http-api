@@ -737,7 +737,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if not now:
                 now = get_now(user.expiration.tzinfo)
 
-            if user.expiration > now:
+            if user.expiration < now:
                 raise Forbidden("Sorry, this account is expired")
 
     def init_auth_db(self, options):
