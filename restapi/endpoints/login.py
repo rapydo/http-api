@@ -69,8 +69,7 @@ class Login(EndpointResource):
 
         token, payload, user = self.auth.make_login(username, password)
 
-        self.auth.verify_blocked_user(user)
-        self.auth.verify_active_user(user)
+        self.auth.verify_user_status(user)
 
         totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
 

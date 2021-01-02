@@ -717,23 +717,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         )
 
     @classmethod
-    def verify_blocked_user(cls, user: User) -> None:
-
-        if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
-
-            # offset-naive datetime to compare with MySQL
-            now = get_now(user.last_login.tzinfo)
-
-            if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
-                raise Unauthorized("Sorry, this account is blocked for inactivity")
-
-    @staticmethod
-    def verify_active_user(user: User) -> None:
+    def verify_user_status(cls, user: User) -> None:
 
         if not user.is_active:
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
+
+        now: Optional[datetime] = None
+
+        if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
+            now = get_now(user.last_login.tzinfo)
+            if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+                raise Unauthorized("Sorry, this account is blocked for inactivity")
+
+        if user.expiration:
+            # Reuse the now instance, if previously inizialized
+            # tzinfo should be the same for both last_login and expiration fields
+            if not now:
+                now = get_now(user.expiration.tzinfo)
+
+            if user.expiration > now:
+                raise Forbidden("Sorry, this account is expired")
 
     def init_auth_db(self, options):
 
