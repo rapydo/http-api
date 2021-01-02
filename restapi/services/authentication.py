@@ -160,7 +160,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if cls.SECOND_FACTOR_AUTHENTICATION == "None":
             cls.SECOND_FACTOR_AUTHENTICATION = None
-        elif not cls.FORCE_FIRST_PASSWORD_CHANGE:
+
+        if cls.SECOND_FACTOR_AUTHENTICATION and not cls.FORCE_FIRST_PASSWORD_CHANGE:
             log.error(
                 "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
                 cls.SECOND_FACTOR_AUTHENTICATION,
@@ -698,14 +699,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    def verify_blocked_username(self, username: str) -> None:
+    @classmethod
+    def verify_blocked_username(cls, username: str) -> None:
 
         # We do not count failed logins
-        if self.MAX_LOGIN_ATTEMPTS <= 0:
+        if cls.MAX_LOGIN_ATTEMPTS <= 0:
             return
 
         # We register failed logins but the user does not reached it yet
-        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
             return
 
         # Dear user, you have exceeded the limit!
@@ -714,14 +716,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             "due to the number of failed login attempts."
         )
 
-    def verify_blocked_user(self, user: User) -> None:
+    @classmethod
+    def verify_blocked_user(cls, user: User) -> None:
 
-        if self.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
+        if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
 
             # offset-naive datetime to compare with MySQL
             now = get_now(user.last_login.tzinfo)
 
-            if user.last_login + self.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+            if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
                 raise Unauthorized("Sorry, this account is blocked for inactivity")
 
     @staticmethod
