@@ -88,7 +88,7 @@ class TestApp2(BaseTests):
         )
         assert invalid_headers is None
 
-        # This token was valid and origina TTL was set >= now
+        # This token was valid and original TTL was set >= now
         # But when the user expiration were reduced the token was invalided
         r = client.get(f"{AUTH_URI}/status", headers=valid_headers)
         assert r.status_code == 401

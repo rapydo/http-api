@@ -330,8 +330,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self, user: User, token_type: str, duration: int = 86400
     ) -> Tuple[str, Payload]:
         # invalidate previous tokens with same token_type
-        tokens = self.get_tokens(user=user)
-        for t in tokens:
+        for t in self.get_tokens(user=user):
             ttype = t.get("token_type")
             if ttype is None:
                 continue
@@ -692,8 +691,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         user.last_password_change = datetime.now(pytz.utc)
         self.save_user(user)
 
-        tokens = self.get_tokens(user=user)
-        for token in tokens:
+        for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
             except BaseException as e:

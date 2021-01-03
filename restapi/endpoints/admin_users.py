@@ -277,6 +277,17 @@ class AdminUsers(EndpointResource):
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
+        invalidate_tokens = False
+        if userdata.get("expiration"):
+            # Set expiration on a previously non-expiring account
+            if user.expiration is None:
+                invalidate_tokens = True
+            # or update the expiration by reducing the validity period
+            elif userdata["expiration"] < user.expiration:
+                invalidate_tokens = True
+            # In both cases tokens should be invalited to prevent to have tokens
+            # with TTL > account validity
+
         self.auth.db.update_properties(user, userdata)
 
         self.auth.custom_user_properties_post(
@@ -295,6 +306,14 @@ class AdminUsers(EndpointResource):
         if email_notification and unhashed_password is not None:
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=True)
+
+        # Token invalidation postponed here to be sure to invalidate
+        # only after update successufully completed
+        if invalidate_tokens:
+            for token in self.auth.get_tokens(user=user):
+                # Invalidate all tokens with expiration after the account expiration
+                if token["expiration"] > user.expiration:
+                    self.auth.invalidate_token(token=token["token"])
 
         return self.empty_response()
 
