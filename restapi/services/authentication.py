@@ -224,7 +224,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
-            payload, full_payload = self.fill_payload(user)
+            # Token expiration is capped by the user expiration date, if set
+            payload, full_payload = self.fill_payload(user, expiration=user.expiration)
             token = self.create_token(payload)
 
             return token, full_payload, user
@@ -341,7 +342,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if tok and self.invalidate_token(tok):
                 log.info("Previous token invalidated: {}", tok)
 
-        expiration = timedelta(seconds=duration)
+        expiration = datetime.now(pytz.utc) + timedelta(seconds=duration)
         payload, full_payload = self.fill_payload(
             user, expiration=expiration, token_type=token_type
         )
@@ -438,7 +439,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def fill_payload(
         self,
         user: User,
-        expiration: Optional[timedelta] = None,
+        expiration: Optional[datetime] = None,
         token_type: Optional[str] = None,
     ) -> Tuple[Payload, Payload]:
         """Informations to store inside the JWT token,
@@ -463,15 +464,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         full_payload["t"] = token_type
 
-        if expiration is None:
-            expiration = timedelta(seconds=self.DEFAULT_TOKEN_TTL)
         now = datetime.now(pytz.utc)
+
+        if expiration is None:
+            expiration = now + timedelta(seconds=self.DEFAULT_TOKEN_TTL)
+
         full_payload["iat"] = now
-        full_payload["nbf"] = now  # you can add a timedelta
-        full_payload["exp"] = now + expiration
+        full_payload["nbf"] = now  # you may add a timedelta
+        full_payload["exp"] = expiration
 
         if not short_token:
-            now = datetime.now(pytz.utc)
             payload["iat"] = full_payload["iat"]
             payload["nbf"] = full_payload["nbf"]
             payload["exp"] = full_payload["exp"]

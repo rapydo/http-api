@@ -190,7 +190,6 @@ class BaseTests:
         Retrieve a dynamic data schema associated with a endpoint
         """
 
-        log.critical(type(client))
         r = client.post(
             f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
         )
