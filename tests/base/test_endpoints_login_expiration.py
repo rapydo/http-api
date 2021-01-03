@@ -28,6 +28,11 @@ class TestApp2(BaseTests):
         )
         assert invalid_headers is None
 
+        # This token was valid before the expiration, but should be no longer valid
+        # due to the short TTL set when emitted (capped to expiration time)
+        r = client.get(f"{AUTH_URI}/status", headers=valid_headers)
+        assert r.status_code == 401
+
         reset_data = {"reset_email": data["email"]}
         r = client.post(f"{AUTH_URI}/reset", data=reset_data)
         assert r.status_code == 403
@@ -82,3 +87,8 @@ class TestApp2(BaseTests):
             client, data["email"], data["password"], status_code=403, error=error
         )
         assert invalid_headers is None
+
+        # This token was valid and origina TTL was set >= now
+        # But when the user expiration were reduced the token was invalided
+        r = client.get(f"{AUTH_URI}/status", headers=valid_headers)
+        assert r.status_code == 401
