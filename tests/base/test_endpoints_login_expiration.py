@@ -1,6 +1,8 @@
 import time
 from datetime import datetime, timedelta
 
+import pytz
+
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
 
 
@@ -9,7 +11,7 @@ class TestApp2(BaseTests):
 
         # Let's create a new user with an expiration time of 5 seconds
         expiration_time = 5
-        expiration = datetime.now() + timedelta(seconds=expiration_time)
+        expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         uuid, data = self.create_user(client, data={"expiration": expiration})
 
         # The user is valid
