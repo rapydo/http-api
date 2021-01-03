@@ -316,8 +316,7 @@ class AdminUsers(EndpointResource):
                 log.critical(token["expiration"])
                 log.critical(user.expiration)
                 if token["expiration"] > user.expiration:
-                    # self.auth.invalidate_token(token=token["token"])
-                    pass
+                    self.auth.invalidate_token(token=token["token"])
 
         return self.empty_response()
 
