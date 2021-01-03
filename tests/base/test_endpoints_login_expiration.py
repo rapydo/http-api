@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from restapi.tests import AUTH_URI, BaseTests, FlaskClient
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 
 
 class TestApp2(BaseTests):
@@ -15,19 +15,41 @@ class TestApp2(BaseTests):
         uuid, data = self.create_user(client, data={"expiration": expiration})
 
         # The user is valid
-        headers, _ = self.do_login(client, data["email"], data["password"])
-        assert headers is not None
+        valid_headers, _ = self.do_login(client, data["email"], data["password"])
+        assert valid_headers is not None
 
         # But after 5 seconds the login will be refused
         time.sleep(expiration_time)
 
         error = f"Sorry, this account expired on {expiration:%d %B %Y}"
 
-        headers, _ = self.do_login(
+        invalid_headers, _ = self.do_login(
             client, data["email"], data["password"], status_code=403, error=error
         )
+        assert invalid_headers is None
 
         reset_data = {"reset_email": data["email"]}
         r = client.post(f"{AUTH_URI}/reset", data=reset_data)
         assert r.status_code == 403
         assert self.get_content(r) == error
+
+        # Let's extend the account validity for other 5 seconds
+        admin_headers, _ = self.do_login(client, None, None)
+        expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
+        r = client.put(
+            f"{API_URI}/admin/users/{uuid}",
+            data={"expiration": expiration},
+            headers=admin_headers,
+        )
+
+        # The user is valid again
+        valid_headers, _ = self.do_login(client, data["email"], data["password"])
+        assert valid_headers is not None
+
+        # But after 5 seconds the login will be refused again
+        time.sleep(expiration_time)
+
+        invalid_headers, _ = self.do_login(
+            client, data["email"], data["password"], status_code=403, error=error
+        )
+        assert invalid_headers is None
