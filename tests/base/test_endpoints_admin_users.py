@@ -27,6 +27,7 @@ class TestApp(BaseTests):
         data = self.buildData(schema)
         data["email_notification"] = True
         data["is_active"] = True
+        data["expiration"] = None
 
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
@@ -55,6 +56,8 @@ class TestApp(BaseTests):
         data2 = self.buildData(schema)
         data2["email_notification"] = True
         data2["is_active"] = True
+        data2["expiration"] = None
+
         r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
