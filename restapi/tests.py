@@ -401,6 +401,7 @@ class BaseTests:
         user_data = cls.buildData(schema)
         user_data["email_notification"] = False
         user_data["is_active"] = True
+        user_data["expiration"] = None
         if data:
             user_data.update(data)
         r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
