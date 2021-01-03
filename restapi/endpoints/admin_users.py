@@ -276,10 +276,10 @@ class AdminUsers(EndpointResource):
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-        log.critical(userdata["expiration"])
-        log.critical(user.expiration)
         invalidate_tokens = False
         if userdata.get("expiration"):
+            log.critical(userdata["expiration"])
+            log.critical(user.expiration)
             # Set expiration on a previously non-expiring account
             if user.expiration is None:
                 invalidate_tokens = True
