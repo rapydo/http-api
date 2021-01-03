@@ -8,9 +8,8 @@ from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.globals import mem
+from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
-
-# from restapi.utilities.logs import log
 
 
 def send_notification(smtp, user, unhashed_password, is_update=False):
@@ -277,6 +276,8 @@ class AdminUsers(EndpointResource):
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
+        log.critical(userdata["expiration"])
+        log.critical(user.expiration)
         invalidate_tokens = False
         if userdata.get("expiration"):
             # Set expiration on a previously non-expiring account
@@ -312,8 +313,11 @@ class AdminUsers(EndpointResource):
         if invalidate_tokens:
             for token in self.auth.get_tokens(user=user):
                 # Invalidate all tokens with expiration after the account expiration
+                log.critical(token["expiration"])
+                log.critical(user.expiration)
                 if token["expiration"] > user.expiration:
-                    self.auth.invalidate_token(token=token["token"])
+                    # self.auth.invalidate_token(token=token["token"])
+                    pass
 
         return self.empty_response()
 

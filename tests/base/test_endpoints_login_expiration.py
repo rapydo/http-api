@@ -46,6 +46,7 @@ class TestApp2(BaseTests):
             data={"expiration": expiration},
             headers=admin_headers,
         )
+        assert r.status_code == 204
 
         # The user is valid again
         valid_headers, _ = self.do_login(client, data["email"], data["password"])
@@ -69,6 +70,7 @@ class TestApp2(BaseTests):
             data={"expiration": expiration},
             headers=admin_headers,
         )
+        assert r.status_code == 204
 
         # The user is valid again
         valid_headers, _ = self.do_login(client, data["email"], data["password"])
@@ -81,6 +83,7 @@ class TestApp2(BaseTests):
             data={"expiration": expiration},
             headers=admin_headers,
         )
+        assert r.status_code == 204
 
         # User is no longer valid
         invalid_headers, _ = self.do_login(

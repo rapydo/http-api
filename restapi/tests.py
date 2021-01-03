@@ -375,10 +375,10 @@ class BaseTests:
                         data=data,
                     )
 
-        if r.status_code != 200:
-            # VERY IMPORTANT FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
-            c = json.loads(r.data.decode("utf-8"))
-            log.error(c)
+        # FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
+        # if r.status_code != 200:
+        #     c = json.loads(r.data.decode("utf-8"))
+        #     log.error(c)
 
         assert r.status_code == status_code
 
