@@ -278,8 +278,12 @@ class AdminUsers(EndpointResource):
 
         invalidate_tokens = False
         if userdata.get("expiration"):
-            log.critical(userdata["expiration"])
-            log.critical(user.expiration)
+
+            # Mysql is unable to store tz data => remove it from userdata["expiration"]
+            # to prevent errors like:
+            # can't compare offset-naive and offset-aware datetimes
+            userdata["expiraton"] = userdata.get("expiration").replace(tzinfo=None)
+
             # Set expiration on a previously non-expiring account
             if user.expiration is None:
                 invalidate_tokens = True
