@@ -297,12 +297,12 @@ class AdminUsers(EndpointResource):
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=True)
 
-        if prev_user_expiration:
+        if user.expiration:
             # Set expiration on a previously non-expiring account
             # or update the expiration by reducing the validity period
             # In both cases tokens should be invalited to prevent to have tokens
             # with TTL > account validity
-            if user.expiration is None or prev_user_expiration < user.expiration:
+            if prev_user_expiration is None or user.expiration < prev_user_expiration:
 
                 for token in self.auth.get_tokens(user=user):
                     # Invalidate all tokens with expiration after the account expiration

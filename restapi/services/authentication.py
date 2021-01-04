@@ -737,9 +737,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if not now:
                 now = get_now(user.expiration.tzinfo)
 
-            log.critical(now)
-            log.critical(user.expiration)
-
             if user.expiration < now:
                 raise Forbidden(
                     f"Sorry, this account expired on {user.expiration:%d %B %Y}"
