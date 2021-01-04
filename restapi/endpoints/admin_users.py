@@ -8,8 +8,10 @@ from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
+from restapi.utilities.time import date_lower_than as dt_lower
+
+# from restapi.utilities.logs import log
 
 
 def send_notification(smtp, user, unhashed_password, is_update=False):
@@ -276,7 +278,7 @@ class AdminUsers(EndpointResource):
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-        prev_user_expiration = user.expiration
+        prev_expiration = user.expiration
 
         self.auth.db.update_properties(user, userdata)
 
@@ -303,13 +305,8 @@ class AdminUsers(EndpointResource):
             # In both cases tokens should be invalited to prevent to have tokens
             # with TTL > account validity
 
-            # Remove tzinfo to prevent errors like:
-            # can't compare offset-naive and offset-aware datetimes
-            if (
-                prev_user_expiration is None
-                or user.expiration < prev_user_expiration.replace(tzinfo=None)
-            ):
-
+            # dt_lower (alias for date_lower_than) is a comparison fn that ignores tz
+            if prev_expiration is None or dt_lower(user.expiration, prev_expiration):
                 for token in self.auth.get_tokens(user=user):
                     # Invalidate all tokens with expiration after the account expiration
                     if token["expiration"] > user.expiration:

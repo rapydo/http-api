@@ -14,3 +14,7 @@ def get_now(tzinfo: Optional[tzinfo]) -> datetime:
 
     # Create a offset-aware datetime
     return datetime.now(pytz.utc)
+
+
+def date_lower_than(a: datetime, b: datetime) -> bool:
+    return a.replace(tzinfo=pytz.utc) < b.replace(tzinfo=pytz.utc)
