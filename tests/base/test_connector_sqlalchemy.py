@@ -1,4 +1,3 @@
-import os
 import time
 
 import pytest
@@ -27,7 +26,7 @@ def test_sqlalchemy(app: Flask) -> None:
 
     log.info("Executing {} tests", CONNECTOR)
 
-    if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
+    if not connector.SQLAlchemy.is_mysql():
         try:
             connector.get_instance(host="invalidhostname", port=123)
 

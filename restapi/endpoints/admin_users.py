@@ -282,7 +282,13 @@ class AdminUsers(EndpointResource):
             # Mysql is unable to store tz data => remove it from userdata["expiration"]
             # to prevent errors like:
             # can't compare offset-naive and offset-aware datetimes
-            userdata["expiraton"] = userdata.get("expiration").replace(tzinfo=None)
+            if Connector.authentication_service == "sqlalchemy":
+                from restapi.connectors.sqlalchemy import SQLAlchemy
+
+                if SQLAlchemy.is_mysql():
+                    userdata["expiraton"] = userdata.get("expiration").replace(
+                        tzinfo=None
+                    )
 
             # Set expiration on a previously non-expiring account
             if user.expiration is None:

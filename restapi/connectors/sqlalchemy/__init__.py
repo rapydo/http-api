@@ -30,6 +30,7 @@ from sqlalchemy.orm.attributes import set_attribute
 
 # from restapi.config import TESTING
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
 from restapi.services.authentication import (
     NULL_IP,
@@ -155,8 +156,15 @@ class SQLAlchemy(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def is_mysql(self) -> bool:
-        return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
+    @staticmethod
+    def is_mysql() -> bool:
+        # could be based on self.variables but this version Env based
+        # can be used as static method and be used before creating instances
+        return (
+            Env.get("AUTH_SERVICE", "NO_AUTHENTICATION") == "sqlalchemy"
+            and Env.get("ALCHEMY_DBTYPE", "postgresql") == "mysql+pymysql"
+        )
+        # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
     def get_connection_exception(self):
         return (OperationalError,)

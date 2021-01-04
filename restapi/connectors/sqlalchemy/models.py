@@ -1,10 +1,8 @@
 """ Models for the relational database """
-import os
-
-from restapi.connectors.sqlalchemy import db
+from restapi.connectors.sqlalchemy import SQLAlchemy, db
 
 DEFAULT_COLLATION = None
-if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
+if SQLAlchemy.is_mysql():
     # Required by MySQL to accept unicode strings (like chinese)
     DEFAULT_COLLATION = "utf8_unicode_ci"
 
