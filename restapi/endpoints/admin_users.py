@@ -302,7 +302,13 @@ class AdminUsers(EndpointResource):
             # or update the expiration by reducing the validity period
             # In both cases tokens should be invalited to prevent to have tokens
             # with TTL > account validity
-            if prev_user_expiration is None or user.expiration < prev_user_expiration:
+
+            # Remove tzinfo to prevent errors like:
+            # can't compare offset-naive and offset-aware datetimes
+            if (
+                prev_user_expiration is None
+                or user.expiration < prev_user_expiration.replace(tzinfo=None)
+            ):
 
                 for token in self.auth.get_tokens(user=user):
                     # Invalidate all tokens with expiration after the account expiration
