@@ -286,7 +286,7 @@ class AdminUsers(EndpointResource):
                 from restapi.connectors.sqlalchemy import SQLAlchemy
 
                 if SQLAlchemy.is_mysql():
-                    userdata["expiraton"] = userdata.get("expiration").replace(
+                    userdata["expiration"] = userdata.get("expiration").replace(
                         tzinfo=None
                     )
 
