@@ -309,7 +309,7 @@ class AdminUsers(EndpointResource):
             if prev_expiration is None or dt_lower(user.expiration, prev_expiration):
                 for token in self.auth.get_tokens(user=user):
                     # Invalidate all tokens with expiration after the account expiration
-                    if token["expiration"] > user.expiration:
+                    if dt_lower(user.expiration, token["expiration"]):
                         self.auth.invalidate_token(token=token["token"])
 
         return self.empty_response()
