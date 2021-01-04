@@ -9,8 +9,8 @@ from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 class TestApp2(BaseTests):
     def test_01_login_expiration(self, client: FlaskClient) -> None:
 
-        # Let's create a new user with an expiration time of 5 seconds
-        expiration_time = 5
+        # Let's create a new user with an expiration time of N seconds
+        expiration_time = 6
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         uuid, data = self.create_user(client, data={"expiration": expiration})
 
@@ -18,13 +18,15 @@ class TestApp2(BaseTests):
         valid_headers, _ = self.do_login(client, data["email"], data["password"])
         assert valid_headers is not None
 
-        # But after 5 seconds the login will be refused
+        # But after N seconds the login will be refused
         time.sleep(expiration_time)
 
-        error = f"Sorry, this account expired on {expiration:%d %B %Y}"
-
         invalid_headers, _ = self.do_login(
-            client, data["email"], data["password"], status_code=403, error=error
+            client,
+            data["email"],
+            data["password"],
+            status_code=403,
+            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
 
@@ -36,9 +38,9 @@ class TestApp2(BaseTests):
         reset_data = {"reset_email": data["email"]}
         r = client.post(f"{AUTH_URI}/reset", data=reset_data)
         assert r.status_code == 403
-        assert self.get_content(r) == error
+        assert self.get_content(r) == "Sorry, this account is expired"
 
-        # Let's extend the account validity for other 5 seconds
+        # Let's extend the account validity for other N seconds
         admin_headers, _ = self.do_login(client, None, None)
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
@@ -52,17 +54,21 @@ class TestApp2(BaseTests):
         valid_headers, _ = self.do_login(client, data["email"], data["password"])
         assert valid_headers is not None
 
-        # But after 5 seconds the login will be refused again
+        # But after N seconds the login will be refused again
         time.sleep(expiration_time)
 
         invalid_headers, _ = self.do_login(
-            client, data["email"], data["password"], status_code=403, error=error
+            client,
+            data["email"],
+            data["password"],
+            status_code=403,
+            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
 
         # Test reduction of account validity
 
-        # Let's extent other 5 seconds
+        # Let's extent other N seconds
         admin_headers, _ = self.do_login(client, None, None)
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
@@ -87,7 +93,11 @@ class TestApp2(BaseTests):
 
         # User is no longer valid
         invalid_headers, _ = self.do_login(
-            client, data["email"], data["password"], status_code=403, error=error
+            client,
+            data["email"],
+            data["password"],
+            status_code=403,
+            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
 
