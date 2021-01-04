@@ -276,28 +276,7 @@ class AdminUsers(EndpointResource):
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-        invalidate_tokens = False
-        if userdata.get("expiration"):
-
-            # Mysql is unable to store tz data => remove it from userdata["expiration"]
-            # to prevent errors like:
-            # can't compare offset-naive and offset-aware datetimes
-            if Connector.authentication_service == "sqlalchemy":
-                from restapi.connectors.sqlalchemy import SQLAlchemy
-
-                if SQLAlchemy.is_mysql():
-                    userdata["expiration"] = userdata.get("expiration").replace(
-                        tzinfo=None
-                    )
-
-            # Set expiration on a previously non-expiring account
-            if user.expiration is None:
-                invalidate_tokens = True
-            # or update the expiration by reducing the validity period
-            elif userdata["expiration"] < user.expiration:
-                invalidate_tokens = True
-            # In both cases tokens should be invalited to prevent to have tokens
-            # with TTL > account validity
+        prev_user_expiration = user.expiration
 
         self.auth.db.update_properties(user, userdata)
 
@@ -318,15 +297,17 @@ class AdminUsers(EndpointResource):
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=True)
 
-        # Token invalidation postponed here to be sure to invalidate
-        # only after update successufully completed
-        if invalidate_tokens:
-            for token in self.auth.get_tokens(user=user):
-                # Invalidate all tokens with expiration after the account expiration
-                log.critical(token["expiration"])
-                log.critical(user.expiration)
-                if token["expiration"] > user.expiration:
-                    self.auth.invalidate_token(token=token["token"])
+        if prev_user_expiration:
+            # Set expiration on a previously non-expiring account
+            # or update the expiration by reducing the validity period
+            # In both cases tokens should be invalited to prevent to have tokens
+            # with TTL > account validity
+            if user.expiration is None or prev_user_expiration < user.expiration:
+
+                for token in self.auth.get_tokens(user=user):
+                    # Invalidate all tokens with expiration after the account expiration
+                    if token["expiration"] > user.expiration:
+                        self.auth.invalidate_token(token=token["token"])
 
         return self.empty_response()
 
