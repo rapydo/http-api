@@ -87,7 +87,9 @@ class Env:
                 continue
 
             # Fix key and value before saving
-            key = var.removeprefix(prefix)
+            # Can't be enabled due to mistral stuck at py38
+            # key = var.removeprefix(prefix)
+            key = var[len(prefix) :]
             # One thing that we must avoid is any quote around our value
             value = value.strip('"').strip("'")
             # save

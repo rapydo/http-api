@@ -158,7 +158,7 @@ def mywait():
 
         if name == "celery":
 
-            broker = variables.get("broker")
+            broker = variables.get("broker", "N/A")
 
             if broker == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -167,12 +167,12 @@ def mywait():
             else:
                 print_and_exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
-            label = f"celery broker ({broker})"
+            label = f"{broker.lower()} as celery broker"
             host, port = get_service_address(service_vars, "host", "port", label)
 
             wait_socket(host, port, label)
 
-            backend = variables.get("backend")
+            backend = variables.get("backend", "N/a")
             if backend == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
@@ -184,7 +184,7 @@ def mywait():
                     "Invalid celery backend: {}", backend
                 )  # pragma: no cover
 
-            label = f"celery backend ({backend})"
+            label = f"{backend.lower()} as celery backend"
             host, port = get_service_address(service_vars, "host", "port", label)
 
             wait_socket(host, port, label)
@@ -262,7 +262,10 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
         parameters.append(CUSTOM_PACKAGE)
 
     if file is not None:
-        file = file.removeprefix("tests/")
+        # Can't be enabled due to mistral stuck at py38
+        # file = file.removeprefix("tests/")
+        if file.startswith("tests/"):
+            file = file[6:]
 
         if not os.path.isfile(os.path.join("tests", file)):
             print_and_exit("File not found: {}", file)
