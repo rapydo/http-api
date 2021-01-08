@@ -14,7 +14,8 @@ class NewPassword(Schema):
     password = fields.Str(
         required=True,
         password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        # Not needed to check the length of the current password... if set...
+        # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     new_password = fields.Str(
         required=True,
