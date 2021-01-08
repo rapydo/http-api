@@ -84,19 +84,20 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 401
 
-        # access token parameter is not allowed by default
-        r = client.get(
-            f"{API_URI}/tests/optionalauthentication",
-            query_string={"access_token": token},
-        )
-        # query token is ignored but the endpoint accepts missing tokens
-        assert r.status_code == 200
-        content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] is None
-        assert content["user"] is None
+        if not Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER"):
+            # access token parameter is not allowed by default
+            r = client.get(
+                f"{API_URI}/tests/optionalauthentication",
+                query_string={"access_token": token},
+            )
+            # query token is ignored but the endpoint accepts missing tokens
+            assert r.status_code == 200
+            content = self.get_content(r)
+            assert len(content) == 2
+            assert "token" in content
+            assert "user" in content
+            assert content["token"] is None
+            assert content["user"] is None
 
         r = client.get(
             f"{API_URI}/tests/optionalauthentication",
