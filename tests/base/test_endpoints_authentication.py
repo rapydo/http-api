@@ -1,3 +1,4 @@
+from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
@@ -45,11 +46,12 @@ class TestApp(BaseTests):
         assert content["token"] == token
         assert content["user"] == BaseAuthentication.default_user
 
-        # access token parameter is not allowed by default
-        r = client.get(
-            f"{API_URI}/tests/authentication", query_string={"access_token": token}
-        )
-        assert r.status_code == 401
+        if not Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER"):
+            # access token parameter is not allowed by default
+            r = client.get(
+                f"{API_URI}/tests/authentication", query_string={"access_token": token}
+            )
+            assert r.status_code == 401
 
     def test_optional_auth(self, client: FlaskClient) -> None:
 
