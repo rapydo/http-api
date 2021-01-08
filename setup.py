@@ -23,7 +23,7 @@ setup(
     """,
     # Remember to update mypy.additional_dependencies
     install_requires=[
-        # Flask and plugins
+        # Flask, plugins and webservers
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
@@ -34,6 +34,8 @@ setup(
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
+        "meinheld==1.0.2",
+        "gunicorn==20.0.4",
         # DB and services drivers
         "neomodel==4.0.1",
         "psycopg2-binary",
