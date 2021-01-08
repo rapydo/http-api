@@ -99,18 +99,18 @@ class TestApp(BaseTests):
             assert content["token"] is None
             assert content["user"] is None
 
-        r = client.get(
-            f"{API_URI}/tests/optionalauthentication",
-            query_string={"access_token": "invalid"},
-        )
-        # invalid tokens should be rejected, but query token is ignored
-        assert r.status_code == 200
-        content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] is None
-        assert content["user"] is None
+            r = client.get(
+                f"{API_URI}/tests/optionalauthentication",
+                query_string={"access_token": "invalid"},
+            )
+            # invalid tokens should be rejected, but query token is ignored
+            assert r.status_code == 200
+            content = self.get_content(r)
+            assert len(content) == 2
+            assert "token" in content
+            assert "user" in content
+            assert content["token"] is None
+            assert content["user"] is None
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
 
