@@ -43,11 +43,18 @@ def test_destroy() -> None:
     # Considering that:
     # 1) this is a workaround to test the initialization
     #       (not the normal workflow used by the application)
-    # 2) the init al already tests with any other DB, included postgres
+    # 2) the init is already tested with any other DB, included postgres
     # 3) MySQL is not used by any project
     # => there is no need to go crazy in debugging this issue!
     if Connector.authentication_service == "sqlalchemy" and auth.db.is_mysql():  # type: ignore
         return
+
+    if Connector.check_availability("sqlalchemy"):
+        # Close previous connections, otherwise the new app may raise errors like:
+        # AttributeError: 'NoneType' object has no attribute 'twophase'
+        sql = sqlalchemy.get_instance()
+        sql.session.remove()
+        sql.session.close_all()
 
     create_app(mode=ServerModes.INIT)
 
