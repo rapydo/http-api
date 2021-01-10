@@ -87,8 +87,14 @@ class MongoExt(Connector):
 
         HOST = variables.get("host")
         PORT = variables.get("port")
+        USER = variables.get("user")
+        PWD = variables.get("password")
+        credentials = ""
+        if USER and PWD:
+            credentials = f"{USER}:{PWD}@"
+
         MongoExt.DATABASE = variables.get("database", "rapydo")
-        uri = f"mongodb://{HOST}:{PORT}/{MongoExt.DATABASE}"
+        uri = f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
         self.connection = mongodb._get_connection(alias=MongoExt.DATABASE)
