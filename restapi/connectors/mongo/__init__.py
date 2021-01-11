@@ -9,7 +9,6 @@ from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
 from restapi.connectors import Connector
-from restapi.env import Env
 from restapi.exceptions import DatabaseDuplicatedEntry, RestApiException
 from restapi.services.authentication import (
     NULL_IP,
@@ -80,11 +79,7 @@ class MongoExt(Connector):
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError,)
 
-    def connect(self, **kwargs):
-
-        variables = self.variables.copy()
-        variables.update(kwargs)
-
+    def _get_uri(self, variables):
         HOST = variables.get("host")
         PORT = variables.get("port")
         USER = variables.get("user")
@@ -93,8 +88,15 @@ class MongoExt(Connector):
         if USER and PWD:
             credentials = f"{USER}:{PWD}@"
 
+        return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
+
+    def connect(self, **kwargs):
+
+        variables = self.variables.copy()
+        variables.update(kwargs)
+
         MongoExt.DATABASE = variables.get("database", "rapydo")
-        uri = f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
+        uri = self._get_uri(variables)
 
         mongodb.connect(uri, alias=MongoExt.DATABASE)
         self.connection = mongodb._get_connection(alias=MongoExt.DATABASE)
@@ -123,9 +125,8 @@ class MongoExt(Connector):
 
         from pymongo import MongoClient
 
-        client = MongoClient(
-            self.variables.get("host"), Env.to_int(self.variables.get("port"))
-        )
+        uri = self._get_uri(self.variables)
+        client = MongoClient(uri)
 
         system_dbs = ["admin", "local", "config"]
         for db in client.list_database_names():
