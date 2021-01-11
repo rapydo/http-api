@@ -72,14 +72,6 @@ jobs:
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
-
-          # This is needed because mongoDB start listen and accept connections before creating users
-          # making containers to fail due to authentication errors. With this restart we let containers
-          # to re-negotiate connections AFTER the user are created. Very ugly workaround...
-          if [[ $(rapydo list services | grep mongodb) ]]; then
-            rapydo restart
-          fi
-
           rapydo logs
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
 
@@ -101,14 +93,6 @@ jobs:
           rapydo start
           # wait for all services to start (25 and 30 failed sometimes, in particular with rabbit)
           sleep 35
-
-          # This is needed because mongoDB start listen and accept connections before creating users
-          # making containers to fail due to authentication errors. With this restart we let containers
-          # to re-negotiate connections AFTER the user are created. Very ugly workaround...
-          if [[ $(rapydo list services | grep mongodb) ]]; then
-            rapydo restart
-          fi
-
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
