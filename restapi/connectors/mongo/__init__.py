@@ -79,7 +79,8 @@ class MongoExt(Connector):
     def get_connection_exception(self):
         return (ServerSelectionTimeoutError,)
 
-    def _get_uri(self, variables):
+    @staticmethod
+    def _get_uri(variables):
         HOST = variables.get("host")
         PORT = variables.get("port")
         USER = variables.get("user")
