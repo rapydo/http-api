@@ -3,11 +3,18 @@ from datetime import datetime, timedelta
 
 import pytz
 
+from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 
 class TestApp2(BaseTests):
     def test_01_login_expiration(self, client: FlaskClient) -> None:
+
+        # Adminer is always enabled during tests
+        if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+            log.warning("Skipping admin/users tests")
+            return
 
         # Let's create a new user with an expiration time of N seconds
         expiration_time = 6
