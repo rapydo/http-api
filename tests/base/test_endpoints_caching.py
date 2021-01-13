@@ -1,5 +1,6 @@
 import time
 
+from restapi.env import Env
 from restapi.services.cache import Cache
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
@@ -148,33 +149,34 @@ class TestApp(BaseTests):
         assert resp3[UUID] == resp2[UUID]
         assert resp3[COUNTER] == 2
 
-        # Create a new user on the fly to test the cached endpoint
-        uuid, data = self.create_user(client)
-        headers3, _ = self.do_login(client, data["email"], data["password"])
+        if not Env.get_bool("ADMINER_DISABLED"):
+            # Create a new user on the fly to test the cached endpoint
+            uuid, data = self.create_user(client)
+            headers3, _ = self.do_login(client, data["email"], data["password"])
 
-        # Another user, the response must change
-        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers3)
-        assert r.status_code == 200
-        resp4 = self.get_content(r)
-        assert isinstance(resp4, list)
-        assert resp4[UUID] == uuid
-        assert resp4[UUID] != resp1[UUID]
-        assert resp4[UUID] != resp2[UUID]
-        assert resp4[UUID] != resp3[UUID]
-        # The counter changed, because the response is not replied from the cache
-        assert resp4[COUNTER] == 3
+            # Another user, the response must change
+            r = client.get(f"{API_URI}/tests/cache/auth", headers=headers3)
+            assert r.status_code == 200
+            resp4 = self.get_content(r)
+            assert isinstance(resp4, list)
+            assert resp4[UUID] == uuid
+            assert resp4[UUID] != resp1[UUID]
+            assert resp4[UUID] != resp2[UUID]
+            assert resp4[UUID] != resp3[UUID]
+            # The counter changed, because the response is not replied from the cache
+            assert resp4[COUNTER] == 3
 
-        # Same token, response must be cached
-        r = client.get(f"{API_URI}/tests/cache/auth", headers=headers3)
-        assert r.status_code == 200
-        resp5 = self.get_content(r)
-        assert isinstance(resp5, list)
-        assert resp5[UUID] == uuid
-        assert resp5[UUID] == resp4[UUID]
-        # Same counter as above, because the response is replied from the cache
-        assert resp5[COUNTER] == 3
+            # Same token, response must be cached
+            r = client.get(f"{API_URI}/tests/cache/auth", headers=headers3)
+            assert r.status_code == 200
+            resp5 = self.get_content(r)
+            assert isinstance(resp5, list)
+            assert resp5[UUID] == uuid
+            assert resp5[UUID] == resp4[UUID]
+            # Same counter as above, because the response is replied from the cache
+            assert resp5[COUNTER] == 3
 
-        self.delete_user(client, uuid)
+            self.delete_user(client, uuid)
 
     def test_cached_semiauthenticated_endpoint(self, client: FlaskClient) -> None:
         r = client.get(f"{API_URI}/tests/cache/optionalauth")
