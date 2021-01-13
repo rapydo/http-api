@@ -5,6 +5,7 @@ from faker import Faker
 from restapi.config import PRODUCTION
 from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 max_login_attempts = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
 ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
@@ -18,6 +19,12 @@ if max_login_attempts == 0:
 
     class TestApp1(BaseTests):
         def test_01_login_ban_not_enabled(self, client: FlaskClient) -> None:
+
+            # Adminer is always enabled during tests
+            if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+                log.warning("Skipping admin/users tests")
+                return
+
             uuid, data = self.create_user(client)
             # Login attempts are not registered, let's try to fail the login many times
             for i in range(0, 10):
@@ -39,6 +46,12 @@ else:
 
     class TestApp2(BaseTests):
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
+
+            # Adminer is always enabled during tests
+            if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+                log.warning("Skipping admin/users tests")
+                return
+
             uuid, data = self.create_user(client)
 
             for i in range(0, max_login_attempts):

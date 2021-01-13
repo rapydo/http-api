@@ -24,6 +24,7 @@ from restapi.config import (
     SECRET_KEY_FILE,
 )
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Payload
 from restapi.utilities.logs import log
 
@@ -394,6 +395,9 @@ class BaseTests:
     def create_user(
         cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
     ) -> Tuple[str, Dict[str, Any]]:
+
+        assert not Env.get_bool("ADMINER_DISABLED")
+
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
         schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
@@ -411,6 +415,9 @@ class BaseTests:
 
     @classmethod
     def delete_user(cls, client: FlaskClient, uuid: str) -> None:
+
+        assert not Env.get_bool("ADMINER_DISABLED")
+
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
         r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=admin_headers)
