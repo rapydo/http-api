@@ -75,9 +75,9 @@ jobs:
           rapydo logs
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
 
-          rapydo list services
+          LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
-          [[ ! $(rapydo list services | grep -E "Exit|Restarting|Created") ]]
+          [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
           rapydo dump
@@ -108,10 +108,10 @@ jobs:
           # Tests in production mode
           rapydo shell --no-tty backend 'restapi tests --core --wait'
 
-          rapydo list services
+          LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
           # Except for frontend that is expected to be exited in prod mode
-          [[ ! $(rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
+          [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
           rapydo dump
