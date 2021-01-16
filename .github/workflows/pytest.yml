@@ -76,7 +76,7 @@ jobs:
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
 
           # This should fail if at least one container is in Exit status
-          [[ ! $(rapydo list services | grep Exit) ]]
+          [[ ! $(rapydo list services | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
           rapydo dump
@@ -109,7 +109,7 @@ jobs:
 
           # This should fail if at least one container is in Exit status
           # Except for frontend that is expected to be exited in prod mode
-          [[ ! $(rapydo list services | grep -v frontend | grep Exit) ]]
+          [[ ! $(rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
           rapydo dump
