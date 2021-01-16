@@ -75,6 +75,9 @@ jobs:
           rapydo logs
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
 
+          # This should fail if at least one container is in Exit status
+          [[ ! $(rapydo list services | grep Exit) ]]
+
           # Send coverage
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
@@ -103,6 +106,11 @@ jobs:
 
           # Tests in production mode
           rapydo shell --no-tty backend 'restapi tests --core --wait'
+
+          # This should fail if at least one container is in Exit status
+          # Except for frontend that is expected to be exited in prod mode
+          [[ ! $(rapydo list services | grep -v frontend | grep Exit) ]]
+
           # Send coverage
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
