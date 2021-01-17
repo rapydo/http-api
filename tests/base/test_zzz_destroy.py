@@ -39,6 +39,20 @@ def test_destroy() -> None:
     except ServiceUnavailable:
         pass
 
+
+def test_init() -> None:
+
+    # Only executed if tests are run with --destroy flag
+    if os.getenv("TEST_DESTROY_MODE", "0") != "1":
+        log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
+        return
+
+    # Always enable during core tests
+    if not Connector.check_availability("authentication"):  # pragma: no cover
+        log.warning("Skipping authentication test: service not available")
+        return
+
+    auth = Connector.get_authentication_instance()
     # Re-init does not work with MySQL due to issues with previously created connection
     # Considering that:
     # 1) this is a workaround to test the initialization
@@ -48,13 +62,6 @@ def test_destroy() -> None:
     # => there is no need to go crazy in debugging this issue!
     if Connector.authentication_service == "sqlalchemy" and auth.db.is_mysql():  # type: ignore
         return
-
-    if Connector.check_availability("sqlalchemy"):
-        # Close previous connections, otherwise the new app may raise errors like:
-        # AttributeError: 'NoneType' object has no attribute 'twophase'
-        sql = sqlalchemy.get_instance()
-        sql.session.remove()
-        sql.session.close_all()
 
     create_app(mode=ServerModes.INIT)
 
