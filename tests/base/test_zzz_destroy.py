@@ -1,4 +1,5 @@
 import os
+import time
 
 from restapi.connectors import Connector, sqlalchemy
 from restapi.exceptions import ServiceUnavailable
@@ -38,6 +39,9 @@ def test_destroy() -> None:
         assert user is None
     except ServiceUnavailable:
         pass
+
+    Connector.disconnect_all()
+    time.sleep(2)
 
 
 def test_init() -> None:
