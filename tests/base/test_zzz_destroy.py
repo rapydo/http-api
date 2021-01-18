@@ -20,11 +20,11 @@ def test_destroy() -> None:
         log.warning("Skipping authentication test: service not available")
         return
 
-    if Connector.check_availability("sqlalchemy"):
-        sql = sqlalchemy.get_instance()
-        # Close previous connections, otherwise the new create_app will hang
-        sql.session.remove()
-        sql.session.close_all()
+    # if Connector.check_availability("sqlalchemy"):
+    #     sql = sqlalchemy.get_instance()
+    #     # Close previous connections, otherwise the new create_app will hang
+    #     sql.session.remove()
+    #     sql.session.close_all()
 
     auth = Connector.get_authentication_instance()
 
@@ -68,10 +68,7 @@ def test_init() -> None:
         if auth.db.is_mysql():  # type: ignore
             return
 
-        sql = sqlalchemy.get_instance()
-        # Close previous connections to prevent errors with next app
-        sql.session.remove()
-        sql.session.close_all()
+        # sql = sqlalchemy.get_instance()
 
     create_app(mode=ServerModes.INIT)
 
