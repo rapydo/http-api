@@ -57,15 +57,21 @@ def test_init() -> None:
         return
 
     auth = Connector.get_authentication_instance()
-    # Re-init does not work with MySQL due to issues with previously created connection
-    # Considering that:
-    # 1) this is a workaround to test the initialization
-    #       (not the normal workflow used by the application)
-    # 2) the init is already tested with any other DB, included postgres
-    # 3) MySQL is not used by any project
-    # => there is no need to go crazy in debugging this issue!
-    if Connector.authentication_service == "sqlalchemy" and auth.db.is_mysql():  # type: ignore
-        return
+    if Connector.authentication_service == "sqlalchemy":
+        # Re-init does not work with MySQL due to issues with previous connections
+        # Considering that:
+        # 1) this is a workaround to test the initialization
+        #       (not the normal workflow used by the application)
+        # 2) the init is already tested with any other DB, included postgres
+        # 3) MySQL is not used by any project
+        # => there is no need to go crazy in debugging this issue!
+        if auth.db.is_mysql():  # type: ignore
+            return
+
+        sql = sqlalchemy.get_instance()
+        # Close previous connections to prevent errors with next app
+        sql.session.remove()
+        sql.session.close_all()
 
     create_app(mode=ServerModes.INIT)
 
