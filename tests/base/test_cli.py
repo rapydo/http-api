@@ -1,7 +1,7 @@
 # from datetime import datetime
 
 import random
-import time.sleep
+import time
 
 import pytest
 from click.testing import CliRunner
@@ -87,7 +87,7 @@ def test_cli() -> None:
 
     create_app(name="Cache clearing")
 
-    # make_name prevent the use of rapydo default make_name function, that is only
+    # make_name prevents the use of rapydo default make_name function, that is only
     # working from the endpoints context since it is based on tokens from flask.requests
     @decorators.cache(timeout=3600, make_name=None)
     def random_values():
