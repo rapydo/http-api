@@ -30,7 +30,7 @@ setup(
         "Flask-Caching==1.9.0",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.4.4",
-        "Flask-Migrate==2.5.3",
+        "Flask-Migrate==2.6.0",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
