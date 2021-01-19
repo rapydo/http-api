@@ -402,7 +402,8 @@ class BaseTests:
         assert admin_headers is not None
         schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
         user_data = cls.buildData(schema)
-        user_data["email_notification"] = False
+        if Connector.check_availability("smtp"):
+            user_data["email_notification"] = False
         user_data["is_active"] = True
         user_data["expiration"] = None
         if data:
