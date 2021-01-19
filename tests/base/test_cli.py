@@ -94,9 +94,9 @@ def test_cli() -> None:
         return random.randrange(0, 100000)
 
     val = random_values()
-    time.sleep(0.05)
+    time.sleep(0.1)
     assert random_values() == val
-    time.sleep(0.05)
+    time.sleep(0.1)
     assert random_values() == val
 
     # Let's clear the cache
