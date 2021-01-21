@@ -347,8 +347,7 @@ class TestApp(BaseTests):
         t = get_timedelta(every, "seconds")
         assert t is not None
         assert isinstance(t, timedelta)
-        assert t.days == 0
-        assert t.seconds == every
+        assert 86400 * t.days + t.seconds == every
         assert t.microseconds == 0
 
         t = get_timedelta(every, "days")
@@ -362,8 +361,7 @@ class TestApp(BaseTests):
         assert t is not None
         assert isinstance(t, timedelta)
         assert t.days == 0
-        assert t.seconds == 0
-        assert t.microseconds == every
+        assert 1_000_000 * t.seconds + t.microseconds == every
 
         t = get_timedelta(every, "milliseconds")
         assert t is not None
@@ -374,15 +372,13 @@ class TestApp(BaseTests):
         t = get_timedelta(every, "minutes")
         assert t is not None
         assert isinstance(t, timedelta)
-        assert t.days == 0
-        assert t.seconds == every * 60
+        assert 86400 * t.days + t.seconds == every * 60
         assert t.microseconds == 0
 
         t = get_timedelta(every, "hours")
         assert t is not None
         assert isinstance(t, timedelta)
-        assert t.days == 0
-        assert t.seconds == every * 3600
+        assert 86400 * t.days + t.seconds == every * 3600
         assert t.microseconds == 0
 
         t = get_timedelta(every, "weeks")
