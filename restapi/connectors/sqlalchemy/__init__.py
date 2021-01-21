@@ -405,8 +405,7 @@ class Authentication(BaseAuthentication):
 
     def get_roles(self) -> List[RoleObj]:
         roles = []
-        for role_name in self.roles:
-            role = self.db.Role.query.filter_by(name=role_name).first()
+        for role in self.db.Role.query.all():
             if role:
                 roles.append(role)
 
