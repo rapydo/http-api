@@ -369,8 +369,7 @@ class TestApp(BaseTests):
         assert t is not None
         assert isinstance(t, timedelta)
         assert t.days == 0
-        assert t.seconds == 0
-        assert t.microseconds == every * 1000
+        assert 1_000_000 * t.seconds + t.microseconds == every * 1000
 
         t = get_timedelta(every, "minutes")
         assert t is not None
