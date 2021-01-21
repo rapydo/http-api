@@ -1,7 +1,7 @@
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import Dict, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from celery import Celery
 
@@ -13,6 +13,9 @@ from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
 
 REDBEAT_KEY_PREFIX: str = "redbeat:"
+AllowedPeriods = Literal[
+    "days", "seconds", "microseconds", "milliseconds", "minutes", "hours", "weeks"
+]
 
 
 class CeleryExt(Connector):
@@ -268,7 +271,7 @@ class CeleryExt(Connector):
         )
 
     @classmethod
-    def delete_periodic_task(cls, name):
+    def delete_periodic_task(cls, name: str) -> bool:
         t = cls.get_periodic_task(name)
         if t is None:
             return False
@@ -278,8 +281,14 @@ class CeleryExt(Connector):
     # period = ('days', 'hours', 'minutes', 'seconds', 'microseconds')
     @classmethod
     def create_periodic_task(
-        cls, name, task, every, period="seconds", args=None, kwargs=None
-    ):
+        cls,
+        name: str,
+        task: str,
+        every: Union[str, int, timedelta],
+        period: AllowedPeriods = "seconds",
+        args: List[Any] = None,
+        kwargs: Dict[str, Any] = None,
+    ) -> None:
         if args is None:
             args = []
         if kwargs is None:
@@ -317,7 +326,7 @@ class CeleryExt(Connector):
                 raise AttributeError(
                     f"Invalid input parameter every = {every} (type {t})"
                 )
-            interval = schedule(run_every=every)  # seconds
+            interval = schedule(run_every=every)
             entry = RedBeatSchedulerEntry(
                 name, task, interval, args=args, app=CeleryExt.celery_app
             )
