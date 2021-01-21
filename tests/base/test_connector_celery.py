@@ -208,7 +208,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
                     every="invalid",
                 )
             except AttributeError as e:
-                assert str(e) == "Invalid input parameter every = 'invalid' (type str)"
+                assert str(e) == "Invalid input parameter every = invalid (type str)"
 
         else:
             obj.create_periodic_task(
