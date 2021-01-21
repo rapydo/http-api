@@ -67,6 +67,7 @@ def getProfileData():
     attributes["isCoordinator"] = fields.Boolean(required=True)
     attributes["privacy_accepted"] = fields.Boolean(required=True)
     attributes["is_active"] = fields.Boolean(required=True)
+    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
     attributes["roles"] = fields.Dict(required=True)
     attributes["last_password_change"] = fields.DateTime(
         required=True, format=ISO8601UTC
@@ -114,6 +115,7 @@ class Profile(EndpointResource):
             "first_login": current_user.first_login,
             "last_login": current_user.last_login,
             "is_active": current_user.is_active,
+            "expiration": current_user.expiration,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
         }
