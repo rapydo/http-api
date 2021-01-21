@@ -1,6 +1,7 @@
 import os
 import tempfile
 import time
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict
 
@@ -10,7 +11,7 @@ from faker import Faker
 from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
-from restapi.exceptions import ServiceUnavailable
+from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
@@ -26,6 +27,7 @@ from restapi.utilities.processes import (
     wait_socket,
 )
 from restapi.utilities.templates import get_html_template
+from restapi.utilities.time import get_timedelta
 
 
 class TestApp(BaseTests):
@@ -339,6 +341,75 @@ class TestApp(BaseTests):
         except AttributeError:
             pass
         tmpf.close()
+
+        every = faker.pyint()
+
+        t = get_timedelta(every, "seconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert t.seconds == every
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "days")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == every
+        assert t.seconds == 0
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "microseconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert t.seconds == 0
+        assert t.microseconds == every
+
+        t = get_timedelta(every, "milliseconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert t.seconds == 0
+        assert t.microseconds == every * 1000
+
+        t = get_timedelta(every, "minutes")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert t.seconds == every * 60
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "hours")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert t.seconds == every * 3600
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "weeks")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == every * 7
+        assert t.seconds == 0
+        assert t.microseconds == 0
+
+        try:
+            get_timedelta(every, "months")  # type: ignore
+            pytest.fail("No exception raised from get_timedelta with period=months")
+        except BadRequest:
+            pass
+
+        try:
+            get_timedelta(every, "years")  # type: ignore
+            pytest.fail("No exception raised from get_timedelta with period=years")
+        except BadRequest:
+            pass
+
+        try:
+            get_timedelta(every, faker.pystr())  # type: ignore
+            pytest.fail("No exception raised from get_timedelta with period=randomstr")
+        except BadRequest:
+            pass
 
     def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):

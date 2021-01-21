@@ -1,7 +1,7 @@
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from celery import Celery
 
@@ -11,11 +11,9 @@ from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
 from restapi.utilities.meta import Meta
+from restapi.utilities.time import AllowedTimedeltaPeriods, get_timedelta
 
 REDBEAT_KEY_PREFIX: str = "redbeat:"
-AllowedPeriods = Literal[
-    "days", "seconds", "microseconds", "milliseconds", "minutes", "hours", "weeks"
-]
 
 
 class CeleryExt(Connector):
@@ -247,7 +245,7 @@ class CeleryExt(Connector):
         return not self.disconnected
 
     @classmethod
-    def get_periodic_task(cls, name):
+    def get_periodic_task(cls, name: str) -> Any:
 
         if cls.CELERYBEAT_SCHEDULER == "MONGODB":
             from celerybeatmongo.models import DoesNotExist, PeriodicTask
@@ -285,7 +283,7 @@ class CeleryExt(Connector):
         name: str,
         task: str,
         every: Union[str, int, timedelta],
-        period: AllowedPeriods = "seconds",
+        period: AllowedTimedeltaPeriods = "seconds",
         args: List[Any] = None,
         kwargs: Dict[str, Any] = None,
     ) -> None:
@@ -309,17 +307,11 @@ class CeleryExt(Connector):
             from celery.schedules import schedule
             from redbeat.schedulers import RedBeatSchedulerEntry
 
-            if period != "seconds":
-
-                # do conversion... run_every should be a datetime.timedelta
-                log.error("Unsupported period {} for redis beat", period)
-                raise AttributeError(f"Unsupported period {period} for redis beat")
-
-            # convert string to timedelta
+            # convert strings and integers to timedeltas
             if isinstance(every, str) and every.isdigit():
-                every = timedelta(seconds=int(every))
+                every = get_timedelta(int(every), period)
             elif isinstance(every, int):
-                every = timedelta(seconds=every)
+                every = get_timedelta(every, period)
 
             if not isinstance(every, timedelta):
                 t = type(every).__name__
@@ -340,16 +332,16 @@ class CeleryExt(Connector):
     @classmethod
     def create_crontab_task(
         cls,
-        name,
-        task,
-        minute,
-        hour,
-        day_of_week="*",
-        day_of_month="*",
-        month_of_year="*",
-        args=None,
-        kwargs=None,
-    ):
+        name: str,
+        task: str,
+        minute: str,
+        hour: str,
+        day_of_week: str = "*",
+        day_of_month: str = "*",
+        month_of_year: str = "*",
+        args: List[Any] = None,
+        kwargs: Dict[str, Any] = None,
+    ) -> None:
 
         if args is None:
             args = []
