@@ -85,15 +85,15 @@ if Connector.check_availability("smtp"):
                 if not check:
                     raise Conflict(msg)
 
-            userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+            # userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-            userdata["is_active"] = False
-            user = self.auth.create_user(userdata, [self.auth.default_role])
+            kwargs["is_active"] = False
+            user = self.auth.create_user(kwargs, [self.auth.default_role])
 
             try:
-                self.auth.custom_user_properties_post(
-                    user, userdata, extra_userdata, self.auth.db
-                )
+                # self.auth.custom_user_properties_post(
+                #     user, userdata, extra_userdata, self.auth.db
+                # )
 
                 smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
