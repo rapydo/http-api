@@ -40,5 +40,13 @@ def test_init() -> None:
     create_app(mode=ServerModes.INIT)
 
     auth = Connector.get_authentication_instance()
-    user = auth.get_user(username=BaseAuthentication.default_user)
+    try:
+        user = auth.get_user(username=BaseAuthentication.default_user)
+    # SqlAlchemy sometimes can raise an:
+    # AttributeError: 'NoneType' object has no attribute 'twophase'
+    # due to the multiple app created... should be an issue specific of this test
+    # In that case... simply retry.
+    except AttributeError:  # pragma: no cover
+        user = auth.get_user(username=BaseAuthentication.default_user)
+
     assert user is not None
