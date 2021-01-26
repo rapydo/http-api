@@ -1,7 +1,6 @@
-from typing import Any, Dict, Union
+from typing import Any
 
 from restapi import decorators
-from restapi.connectors import Connector
 from restapi.exceptions import NotFound
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
@@ -24,29 +23,9 @@ class Group(Schema):
     members = fields.Nested(User(many=True))
 
 
-# Function required here to reload the model at runtime and fill the groups list
-# Note that these are callables returning a model, not models!
-# They will be executed a runtime
-def getInputSchema(request):
-
-    if not request:
-        return Schema.from_dict({})
-
-    auth = Connector.get_authentication_instance()
-
-    users = {}
-    for u in auth.get_users():
-
-        label = f"{u.name} {u.surname} ({u.email})"
-        users[u.uuid] = label
-
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["shortname"] = fields.Str(required=True, description="Short name")
-    attributes["fullname"] = fields.Str(required=True, description="Full name")
-
-    return Schema.from_dict(attributes)
+class GroupInput(Schema):
+    shortname = fields.Str(required=True, description="Short name")
+    fullname = fields.Str(required=True, description="Full name")
 
 
 class AdminGroups(EndpointResource):
@@ -71,7 +50,7 @@ class AdminGroups(EndpointResource):
         return self.response(groups)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(GroupInput)
     @decorators.endpoint(
         path="/admin/groups",
         summary="Create a new group",
@@ -89,7 +68,7 @@ class AdminGroups(EndpointResource):
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(GroupInput)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",
         summary="Modify a group",
