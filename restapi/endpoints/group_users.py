@@ -172,7 +172,7 @@
 #             label="Notify password by email"
 #         )
 
-#     return Schema.from_dict(attributes)
+#     return Schema.from_dict(attributes, name="GroupDefinition")
 
 #     def is_authorized(self, current_user, user, is_admin):
 

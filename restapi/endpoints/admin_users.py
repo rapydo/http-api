@@ -76,35 +76,31 @@ def get_output_schema():
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes)
+    schema = Schema.from_dict(attributes, name="UserData")
     return schema(many=True)
+
+
+auth = Connector.get_authentication_instance()
 
 
 # Note that these are callables returning a model, not models!
 # They will be executed a runtime
-def getInputSchema(request):
-
-    if not request:
-        return Schema.from_dict({})
-
-    auth = Connector.get_authentication_instance()
-
-    set_required = request.method == "POST"
+# Can't use request.method because it is not passed at loading time, i.e. the Specs will
+# be created with empty request
+def getInputSchema(request, is_post):
 
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
-    if request.method != "PUT":
-        attributes["email"] = fields.Email(required=set_required)
+    if is_post:
+        attributes["email"] = fields.Email(required=is_post)
 
-    attributes["name"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1)
-    )
+    attributes["name"] = fields.Str(required=is_post, validate=validate.Length(min=1))
     attributes["surname"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1)
+        required=is_post, validate=validate.Length(min=1)
     )
 
     attributes["password"] = fields.Str(
-        required=set_required,
+        required=is_post,
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
@@ -147,7 +143,7 @@ def getInputSchema(request):
     attributes["group"] = fields.Str(
         label="Group",
         description="The group to which the user belongs",
-        required=set_required,
+        required=is_post,
         default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
     )
@@ -164,7 +160,15 @@ def getInputSchema(request):
     ):
         attributes.update(custom_fields)
 
-    return Schema.from_dict(attributes)
+    return Schema.from_dict(attributes, name="UserDefinition")
+
+
+def getPOSTInputSchema(request):
+    return getInputSchema(request, True)
+
+
+def getPUTInputSchema(request):
+    return getInputSchema(request, False)
 
 
 class AdminUsers(EndpointResource):
@@ -205,7 +209,7 @@ class AdminUsers(EndpointResource):
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(getPOSTInputSchema)
     @decorators.endpoint(
         path="/admin/users",
         summary="Create a new user",
@@ -247,7 +251,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(getPUTInputSchema)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Modify a user",

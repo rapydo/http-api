@@ -22,9 +22,6 @@ if Connector.check_availability("smtp"):
     # They will be executed a runtime
     def getInputSchema(request):
 
-        if not request:
-            return Schema.from_dict({})
-
         # as defined in Marshmallow.schema.from_dict
         attributes: Dict[str, Union[fields.Field, type]] = {}
 
@@ -50,7 +47,7 @@ if Connector.check_availability("smtp"):
         ):
             attributes.update(custom_fields)
 
-        return Schema.from_dict(attributes)
+        return Schema.from_dict(attributes, name="UserRegistration")
 
     class ProfileRegistration(EndpointResource):
 

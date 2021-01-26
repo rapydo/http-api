@@ -43,7 +43,7 @@ def patchUserProfile():
     ):
         attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes)
+    schema = Schema.from_dict(attributes, name="UserProfileEdit")
     return schema()
 
 
@@ -82,7 +82,7 @@ def getProfileData():
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes)
+    schema = Schema.from_dict(attributes, name="UserProfile")
     return schema()
 
 
