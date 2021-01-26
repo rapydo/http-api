@@ -8,6 +8,7 @@ from restapi.env import Env
 from restapi.exceptions import Conflict, RestApiException
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import DEFAULT_GROUP_NAME
 from restapi.utilities.globals import mem
 
 # from restapi.utilities.logs import log
@@ -90,6 +91,8 @@ if Connector.check_availability("smtp"):
             kwargs["is_active"] = False
             user = self.auth.create_user(kwargs, [self.auth.default_role])
 
+            default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+            self.auth.add_user_to_group(user, default_group)
             self.auth.save_user(user)
 
             try:

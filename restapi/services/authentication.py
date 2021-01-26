@@ -47,6 +47,8 @@ NULL_IP = "0.0.0.0"
 ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
+DEFAULT_GROUP_NAME = "Default"
+DEFAULT_GROUP_DESCR = "Default group"
 
 Payload = Dict[str, Any]
 User = Any
@@ -775,15 +777,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def init_groups(self, force):
 
-        DEFAULT_GROUP_NAME = "Default"
-        DEFAULT_GROUP_DESCR = "Default group"
-
         create = False
         update = False
 
         default_group = self.get_group(name=DEFAULT_GROUP_NAME)
 
-        # If there are not groups, let's create the default group
+        # If there are no groups, let's create the default group
         if not self.get_groups():
             create = True
         # If there are some groups skip group creation in absence of a force flag
