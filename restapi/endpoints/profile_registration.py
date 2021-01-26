@@ -10,6 +10,8 @@ from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 
+# from restapi.utilities.logs import log
+
 # This endpoint requires the server to send the activation token via email
 if Connector.check_availability("smtp"):
 
@@ -85,16 +87,12 @@ if Connector.check_availability("smtp"):
                 if not check:
                     raise Conflict(msg)
 
-            # userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
-
             kwargs["is_active"] = False
             user = self.auth.create_user(kwargs, [self.auth.default_role])
 
-            try:
-                # self.auth.custom_user_properties_post(
-                #     user, userdata, extra_userdata, self.auth.db
-                # )
+            self.auth.save_user(user)
 
+            try:
                 smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
@@ -109,7 +107,7 @@ if Connector.check_availability("smtp"):
                 send_activation_link(smtp_client, self.auth, user)
 
             except BaseException as e:
-                user.delete()
+                self.auth.delete_user(user)
                 raise RestApiException(f"Errors during account registration: {e}")
 
             return self.response(
