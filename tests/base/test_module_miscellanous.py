@@ -390,19 +390,25 @@ class TestApp(BaseTests):
 
         try:
             get_timedelta(every, "months")  # type: ignore
-            pytest.fail("No exception raised from get_timedelta with period=months")
+            pytest.fail(
+                "No exception raised from get_timedelta with period=months"
+            )  # pragma: no cover
         except BadRequest:
             pass
 
         try:
             get_timedelta(every, "years")  # type: ignore
-            pytest.fail("No exception raised from get_timedelta with period=years")
+            pytest.fail(
+                "No exception raised from get_timedelta with period=years"
+            )  # pragma: no cover
         except BadRequest:
             pass
 
         try:
             get_timedelta(every, faker.pystr())  # type: ignore
-            pytest.fail("No exception raised from get_timedelta with period=randomstr")
+            pytest.fail(
+                "No exception raised from get_timedelta with period=randomstr"
+            )  # pragma: no cover
         except BadRequest:
             pass
 

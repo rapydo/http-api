@@ -6,7 +6,7 @@ from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
 
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
@@ -23,7 +23,7 @@ class Downloader:
     ) -> Response:
 
         if filename is None:
-            raise RestApiException("No filename specified to download", status_code=400)
+            raise BadRequest("No filename specified to download")
 
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True

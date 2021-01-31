@@ -891,7 +891,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_users(self) -> List[User]:  # pragma: no cover
         """
-        How to retrieve a list of all users from the current authentication db,
+        How to retrieve a list of all users from the current authentication db
         """
         ...
 

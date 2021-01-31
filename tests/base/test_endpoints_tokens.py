@@ -23,7 +23,7 @@ class TestApp(BaseTests):
         # Probably due to password expiration:
         # change password invalidated tokens created before
         # => create tokens again
-        if len(content) < 3:
+        if len(content) < 3:  # pragma: no cover
 
             for _ in range(3):
                 header, token = self.do_login(client, None, None)

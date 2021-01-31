@@ -71,6 +71,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             f"{u}.{method}",
                             default=False,
                         )
+
                         defs = definition.get("parameters", [])[:]
                         for p in defs:
 

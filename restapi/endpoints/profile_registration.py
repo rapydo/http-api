@@ -5,7 +5,7 @@ from restapi.config import get_project_configuration
 from restapi.connectors import Connector, smtp
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
-from restapi.exceptions import Conflict, RestApiException
+from restapi.exceptions import Conflict, ServiceUnavailable
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import DEFAULT_GROUP_NAME
@@ -108,7 +108,7 @@ if Connector.check_availability("smtp"):
 
             except BaseException as e:
                 self.auth.delete_user(user)
-                raise RestApiException(f"Errors during account registration: {e}")
+                raise ServiceUnavailable(f"Errors during account registration: {e}")
 
             return self.response(
                 "We are sending an email to your email address where "

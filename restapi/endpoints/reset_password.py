@@ -6,7 +6,7 @@ from restapi import decorators
 from restapi.config import get_frontend_url, get_project_configuration
 from restapi.connectors import Connector, smtp
 from restapi.env import Env
-from restapi.exceptions import BadRequest, Forbidden, RestApiException
+from restapi.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
@@ -29,7 +29,7 @@ def send_password_reset_link(smtp, uri, title, reset_email):
     c = smtp.send(html_body, subject, reset_email, plain_body=body)
     # it cannot fail during tests, because the email sending is mocked
     if not c:  # pragma: no cover
-        raise RestApiException("Error sending email, please retry")
+        raise ServiceUnavailable("Error sending email, please retry")
 
 
 # This endpoint require the server to send the reset token via email

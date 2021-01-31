@@ -10,7 +10,7 @@ from gripcontrol import (
 
 from restapi import decorators
 from restapi.connectors import pushpin
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
@@ -50,15 +50,11 @@ class PushpinWebSocket(EndpointResource):
             in_events = decode_websocket_events(request.get_data())
         except ValueError as e:
             log.error(e)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid format", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid format")
 
         if in_events is None or len(in_events) <= 0:
             log.error("Websocket request: {}", request.data)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid in_event", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid in_event")
         in_events = in_events[0]
 
         event_type = None
@@ -67,12 +63,10 @@ class PushpinWebSocket(EndpointResource):
             event_type = in_events.type
         except BaseException as e:  # pragma: no cover
             log.error(e)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid type", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid type")
 
         if event_type is None:  # pragma: no cover
-            raise RestApiException("Cannot decode websocket request, no event type")
+            raise BadRequest("Cannot decode websocket request, no event type")
 
         out_events = []
         if event_type == "OPEN":
@@ -93,7 +87,7 @@ class PushpinWebSocket(EndpointResource):
             return resp
 
         log.error("Unknkown event type: {}", event_type)
-        raise RestApiException("Cannot understand websocket request", status_code=400)
+        raise BadRequest("Cannot understand websocket request")
 
 
 class PushpinHTTPStream(EndpointResource):

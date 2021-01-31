@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector, neo4j
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
@@ -76,5 +76,5 @@ if TESTING and Connector.check_availability("neo4j"):
                 else:
                     log.info("No Test")
             except Exception as e:
-                raise RestApiException(str(e), status_code=400)
+                raise BadRequest(str(e))
             return self.response({"val": 1})
