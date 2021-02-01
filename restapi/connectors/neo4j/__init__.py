@@ -18,11 +18,16 @@ from neomodel import (  # install_all_labels,
     install_labels,
     remove_all_labels,
 )
-from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
+from neomodel.exceptions import (
+    DeflateError,
+    DoesNotExist,
+    RequiredProperty,
+    UniqueProperty,
+)
 from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry
+from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
 from restapi.services.authentication import (
     NULL_IP,
     BaseAuthentication,
@@ -65,13 +70,29 @@ def catch_db_exceptions(func):
             # Can't be tested, should never happen except in case of new neo4j version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+        except RequiredProperty as e:
+
+            # message = property 'xyz' on objects of class XYZ
+
+            message = str(e)
+            m = re.search(r"property '(.*)' on objects of class (.*)", str(e))
+            if m:
+                missing_property = m.group(1)
+                model = m.group(2)
+                message = f"Missing property {missing_property} required by {model}"
+
+            raise BadRequest(message)
         except DeflateError as e:
             log.warning(e)
             return None
 
-        except ServiceUnavailable as e:
+        except ServiceUnavailable:
             # refresh_connection()
-            raise e
+            raise
+
+        # Catched in case of re-raise for example RequiredProperty -> BadRequest
+        except RestApiException:
+            raise
 
         except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))

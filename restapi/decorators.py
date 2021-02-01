@@ -119,7 +119,13 @@ def cache(*args, **kwargs):
     return mem.cache.memoize(*args, **kwargs)
 
 
-def catch_graph_exceptions(func):
+# Deprecated since 1.0
+def catch_graph_exceptions(func):  # pragma: no cover
+
+    log.warning(
+        "Deprecated use of decorators.catch_graph_exceptions, you safely remove it"
+    )
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
@@ -130,9 +136,13 @@ def catch_graph_exceptions(func):
 
         except DatabaseDuplicatedEntry as e:
 
+            log.critical("boh")
+
             raise Conflict(str(e))
 
         except RequiredProperty as e:
+
+            log.critical("Missing required")
 
             raise BadRequest(e)
 
