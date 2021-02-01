@@ -11,7 +11,16 @@ from faker import Faker
 from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
-from restapi.exceptions import BadRequest, ServiceUnavailable
+from restapi.exceptions import (
+    BadRequest,
+    Conflict,
+    Forbidden,
+    NotFound,
+    RestApiException,
+    ServerError,
+    ServiceUnavailable,
+    Unauthorized,
+)
 from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
@@ -529,3 +538,38 @@ class TestApp(BaseTests):
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
         assert r["unique_delimited_list"][2] == "c "
+
+        try:
+            raise BadRequest("test")
+        except RestApiException as e:
+            assert e.status_code == 400
+
+        try:
+            raise Unauthorized("test")
+        except RestApiException as e:
+            assert e.status_code == 401
+
+        try:
+            raise Forbidden("test")
+        except RestApiException as e:
+            assert e.status_code == 403
+
+        try:
+            raise NotFound("test")
+        except RestApiException as e:
+            assert e.status_code == 404
+
+        try:
+            raise Conflict("test")
+        except RestApiException as e:
+            assert e.status_code == 409
+
+        try:
+            raise ServerError("test")
+        except RestApiException as e:
+            assert e.status_code == 500
+
+        try:
+            raise ServiceUnavailable("test")
+        except RestApiException as e:
+            assert e.status_code == 503

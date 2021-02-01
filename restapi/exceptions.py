@@ -4,20 +4,23 @@ Generalization of Exceptions
 to handle services known errors
 
 """
+from restapi.utilities.logs import log
 
 
 class RestApiException(Exception):
     # code is now an alias for status_code
-    def __init__(self, exception, status_code=None, code=None, is_warning=False):
+    def __init__(self, exception, status_code=404, code=None, is_warning=False):
 
-        if status_code is None:
+        if code:
+            # Deprecated since 1.0
+            log.warning(
+                "Deprecated use of RestApiException(code),"
+                "use status_code or even better specific exceptions"
+            )
             status_code = code
 
-        if status_code is None:
-            status_code = 404
-
         super().__init__(exception)
-        self.status_code = status_code
+        self.status_code = status_code or 404
         self.is_warning = is_warning
 
 

@@ -53,7 +53,7 @@ class ServerModes(int, Enum):
     WORKER = 3
 
 
-def teardown_handler(signal, frame):
+def teardown_handler(signal, frame):  # pragma: no cover
     with lock:
 
         Connector.disconnect_all()
@@ -118,14 +118,14 @@ def create_app(
     mem.configuration = endpoints_loader.load_configuration()
 
     mem.initializer = Meta.get_class("initialization", "Initializer")
-    if not mem.initializer:
+    if not mem.initializer:  # pragma: no cover
         print_and_exit("Invalid Initializer class")
 
     mem.customizer = Meta.get_instance("customization", "Customizer")
-    if not mem.customizer:
+    if not mem.customizer:  # pragma: no cover
         print_and_exit("Invalid Customizer class")
 
-    if not isinstance(mem.customizer, BaseCustomizer):
+    if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
     Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
@@ -231,7 +231,7 @@ def create_app(
             for endpoint in endpoints_loader.endpoints:
                 try:
                     mem.docs.register(endpoint.cls)
-                except TypeError as e:
+                except TypeError as e:  # pragma: no cover
                     print(e)
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
