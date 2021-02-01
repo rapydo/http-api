@@ -126,7 +126,7 @@ class Profile(EndpointResource):
             data["group"] = current_user.belongs_to
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            data["SECOND_FACTOR"] = self.auth.SECOND_FACTOR_AUTHENTICATION
+            data["SECOND_FACTOR"] = "TOTP"
 
         data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
 
@@ -150,10 +150,9 @@ class Profile(EndpointResource):
 
         user = self.get_user()
 
-        totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
-
-        if totp_authentication:
+        if self.auth.SECOND_FACTOR_AUTHENTICATION:
             self.auth.verify_totp(user, totp_code)
+
         self.auth.make_login(user.email, password)
 
         self.auth.change_password(user, password, new_password, password_confirm)

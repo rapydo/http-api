@@ -71,13 +71,13 @@ class Login(EndpointResource):
 
         self.auth.verify_user_status(user)
 
-        totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
-
-        if totp_authentication:
+        if self.auth.SECOND_FACTOR_AUTHENTICATION:
 
             if totp_code is None:
-                message = self.check_password_validity(user, totp_authentication)
-                message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
+                message = self.check_password_validity(
+                    user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
+                )
+                message["actions"].append("TOTP")
                 message["errors"].append("You do not provided a valid second factor")
                 if message["errors"]:
                     raise Forbidden(message)
@@ -96,7 +96,9 @@ class Login(EndpointResource):
                 password = new_password
                 token, payload, user = self.auth.make_login(username, password)
 
-        message = self.check_password_validity(user, totp_authentication)
+        message = self.check_password_validity(
+            user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
+        )
         if message["errors"]:
             raise Forbidden(message)
 

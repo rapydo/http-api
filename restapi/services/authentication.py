@@ -125,8 +125,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
         seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
     )
-    SECOND_FACTOR_AUTHENTICATION: Optional[str] = Env.get(
-        "AUTHSECOND_FACTOR_AUTHENTICATION", None
+    SECOND_FACTOR_AUTHENTICATION = Env.get_bool(
+        "AUTH_SECOND_FACTOR_AUTHENTICATION", False
     )
 
     default_user: Optional[str] = None
@@ -160,15 +160,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
             cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
 
-        if cls.SECOND_FACTOR_AUTHENTICATION == "None":
-            cls.SECOND_FACTOR_AUTHENTICATION = None
-
         if cls.SECOND_FACTOR_AUTHENTICATION and not cls.FORCE_FIRST_PASSWORD_CHANGE:
             log.error(
-                "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
-                cls.SECOND_FACTOR_AUTHENTICATION,
+                "TOTP cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
             )
-            cls.SECOND_FACTOR_AUTHENTICATION = None
+            cls.SECOND_FACTOR_AUTHENTICATION = False
 
     @staticmethod
     def load_default_user() -> None:
