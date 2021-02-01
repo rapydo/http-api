@@ -17,7 +17,7 @@ class TestApp2(BaseTests):
             return
 
         # Let's create a new user with an expiration time of N seconds
-        expiration_time = 6
+        expiration_time = 10
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         uuid, data = self.create_user(client, data={"expiration": expiration})
 
