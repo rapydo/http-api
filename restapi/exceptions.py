@@ -11,7 +11,7 @@ class RestApiException(Exception):
     # code is now an alias for status_code
     def __init__(self, exception, status_code=404, code=None, is_warning=False):
 
-        if code:
+        if code:  # pragma: no cover
             # Deprecated since 1.0
             log.warning(
                 "Deprecated use of RestApiException(code),"

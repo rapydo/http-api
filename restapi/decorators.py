@@ -123,7 +123,7 @@ def cache(*args, **kwargs):
 def catch_graph_exceptions(func):  # pragma: no cover
 
     log.warning(
-        "Deprecated use of decorators.catch_graph_exceptions, you safely remove it"
+        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it"
     )
 
     @wraps(func)
