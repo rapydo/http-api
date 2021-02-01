@@ -40,7 +40,7 @@ class User(MongoModel):
     last_password_change = fields.DateTimeField()
     is_active = fields.BooleanField(default=True)
     privacy_accepted = fields.BooleanField(default=True)
-    expiration = fields.DateTimeField()
+    expiration = fields.DateTimeField(blank=True)
 
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
     belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
