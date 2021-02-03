@@ -294,3 +294,13 @@ class TestApp(BaseTests):
         log.info("*** VERIFY invalid token")
         r = client.get(f"{AUTH_URI}/logout")
         assert r.status_code == 401
+
+    def test_05_test_login_failures(self, client: FlaskClient) -> None:
+        if not Env.get_bool("ADMINER_DISABLED"):
+            # Create a new user on the fly to test the cached endpoint
+            uuid, data = self.create_user(client)
+            headers, token = self.do_login(
+                client, data["email"], data["password"], test_failures=True
+            )
+            r = client.get(f"{AUTH_URI}/logout", headers=headers)
+            assert r.status_code == 204

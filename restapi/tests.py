@@ -210,7 +210,7 @@ class BaseTests:
         return response
 
     @staticmethod
-    def generate_totp(email: Optional[str]) -> Optional[str]:
+    def generate_totp(email: Optional[str]) -> str:
         assert email is not None
         secret = BaseTests.QRsecrets.get(email.lower())
         if secret:
@@ -219,10 +219,6 @@ class BaseTests:
         auth = Connector.get_authentication_instance()
 
         user = auth.get_user(username=email)
-
-        if user is None:
-            log.error("Can't find a user for {}", email)
-            return None
 
         secret = auth.get_totp_secret(user)
 
@@ -236,6 +232,7 @@ class BaseTests:
         status_code: int = 200,
         error: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
+        test_failures: bool = False,
     ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
         """
         Make login and return both token and authorization header
@@ -297,47 +294,48 @@ class BaseTests:
                         BaseTests.QRsecrets[USER.lower()] = secret
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
-                    newpwd = fake.password(strong=True)
-                    data["new_password"] = newpwd
-                    data["password_confirm"] = fake.password(strong=True)
-                    if BaseTests.TOTP:
-                        data["totp_code"] = BaseTests.generate_totp(USER)
-
-                    BaseTests.do_login(
-                        client,
-                        USER,
-                        PWD,
-                        data=data,
-                        status_code=409,
-                    )
-
-                    # Test failure of password change if TOTP is wrong or not provided
-                    if BaseTests.TOTP:
+                    if test_failures:
+                        newpwd = fake.password(strong=True)
                         data["new_password"] = newpwd
-                        data["password_confirm"] = newpwd
-                        data.pop("totp_code", None)
+                        data["password_confirm"] = fake.password(strong=True)
+                        if BaseTests.TOTP:
+                            data["totp_code"] = BaseTests.generate_totp(USER)
 
                         BaseTests.do_login(
                             client,
                             USER,
                             PWD,
                             data=data,
-                            status_code=403,
+                            status_code=409,
                         )
 
-                        data["new_password"] = newpwd
-                        data["password_confirm"] = newpwd
-                        # random int with 6 digits
-                        data["totp_code"] = fake.pyint(
-                            min_value=100000, max_value=999999
-                        )
-                        BaseTests.do_login(
-                            client,
-                            USER,
-                            PWD,
-                            data=data,
-                            status_code=401,
-                        )
+                        # Test failure of password change if TOTP is wrong or missing
+                        if BaseTests.TOTP:
+                            data["new_password"] = newpwd
+                            data["password_confirm"] = newpwd
+                            data.pop("totp_code", None)
+
+                            BaseTests.do_login(
+                                client,
+                                USER,
+                                PWD,
+                                data=data,
+                                status_code=403,
+                            )
+
+                            data["new_password"] = newpwd
+                            data["password_confirm"] = newpwd
+                            # random int with 6 digits
+                            data["totp_code"] = fake.pyint(
+                                min_value=100000, max_value=999999
+                            )
+                            BaseTests.do_login(
+                                client,
+                                USER,
+                                PWD,
+                                data=data,
+                                status_code=401,
+                            )
 
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                     data["new_password"] = newpwd
@@ -366,15 +364,18 @@ class BaseTests:
                 # in this case FIRST LOGIN has not been executed
                 # => login by sending the TOTP code
                 if "TOTP" in actions:
-                    # random int with 6 digits
-                    data["totp_code"] = fake.pyint(min_value=100000, max_value=999999)
-                    BaseTests.do_login(
-                        client,
-                        USER,
-                        PWD,
-                        data=data,
-                        status_code=401,
-                    )
+                    if test_failures:
+                        # random int with 6 digits
+                        data["totp_code"] = fake.pyint(
+                            min_value=100000, max_value=999999
+                        )
+                        BaseTests.do_login(
+                            client,
+                            USER,
+                            PWD,
+                            data=data,
+                            status_code=401,
+                        )
 
                     data["totp_code"] = BaseTests.generate_totp(USER)
                     return BaseTests.do_login(
