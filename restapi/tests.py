@@ -294,8 +294,8 @@ class BaseTests:
                         BaseTests.QRsecrets[USER.lower()] = secret
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+                    newpwd = fake.password(strong=True)
                     if test_failures:
-                        newpwd = fake.password(strong=True)
                         data["new_password"] = newpwd
                         data["password_confirm"] = fake.password(strong=True)
                         if BaseTests.TOTP:
