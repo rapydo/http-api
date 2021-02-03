@@ -588,29 +588,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def flush_failed_logins(cls, username: str) -> None:
         cls.failed_logins.pop(username, None)
 
-    @staticmethod
-    def get_secret(user: User) -> str:
+    def get_totp_secret(self, user: User) -> str:
 
-        return "base32secret3232"
-        # FIXME: use a real secret
-        # hashes does not works... maybe too long??
-        # import hashlib
-        # secret = hashlib.sha224(user.email.encode('utf-8'))
-        # return secret.hexdigest()
-        # same problem with str(user.uuid)
+        if not user.mfa_hash:
+            # to be encrypted
+            user.mfa_hash = pyotp.random_base32()
+            self.save_user(user)
 
-        # neither email works (problems with the @ character?)
-
-        # decoding errors...
-        # return str(user.name)
-
-        # return base64.b32encode(user.name.encode('utf-8'))
+        return cast(str, user.mfa_hash)
 
     def verify_totp(self, user: User, totp_code: str) -> bool:
 
         if totp_code is None:
             raise Unauthorized("Invalid verification code")
-        secret = self.get_secret(user)
+        secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             self.register_failed_login(user.email)
@@ -618,10 +609,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    @classmethod
-    def get_qrcode(cls, user: User) -> Tuple[str, str]:
+    def get_qrcode(self, user: User) -> Tuple[str, str]:
 
-        secret = cls.get_secret(user)
+        secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration("project.title", "No project name")

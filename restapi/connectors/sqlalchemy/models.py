@@ -31,6 +31,7 @@ class User(db.Model):
     surname = db.Column(db.String(255, collation=DEFAULT_COLLATION))
     authmethod = db.Column(db.String(20))
     password = db.Column(db.String(255))
+    mfa_hash = db.Column(db.String(255))
     first_login = db.Column(db.DateTime(timezone=True))
     last_login = db.Column(db.DateTime(timezone=True))
     last_password_change = db.Column(db.DateTime(timezone=True))

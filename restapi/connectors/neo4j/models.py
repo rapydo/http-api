@@ -32,7 +32,8 @@ class User(UserCustomClass):
     name = StringProperty(required=True)
     surname = StringProperty(required=True)
     authmethod = StringProperty(required=True)
-    password = StringProperty()  # Hashed by a custom function
+    password = StringProperty()
+    mfa_hash = StringProperty()
     first_login = DateTimeProperty()
     last_login = DateTimeProperty()
     last_password_change = DateTimeProperty()

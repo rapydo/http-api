@@ -220,7 +220,7 @@ class BaseTests:
 
         user = auth.get_user(username=email)
 
-        secret = BaseAuthentication.get_secret(user)
+        secret = auth.get_totp_secret(user)
 
         return pyotp.TOTP(secret).now()
 
@@ -323,7 +323,10 @@ class BaseTests:
 
                         data["new_password"] = newpwd
                         data["password_confirm"] = newpwd
-                        data["totp_code"] = fake.pyint()
+                        # random int with 6 digits
+                        data["totp_code"] = fake.pyint(
+                            min_value=100000, max_value=999999
+                        )
                         BaseTests.do_login(
                             client,
                             USER,

@@ -35,6 +35,7 @@ class User(MongoModel):
     surname = fields.CharField()
     authmethod = fields.CharField()
     password = fields.CharField(required=True)
+    mfa_hash = fields.CharField()
     first_login = fields.DateTimeField()
     last_login = fields.DateTimeField()
     last_password_change = fields.DateTimeField()
