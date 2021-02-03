@@ -609,7 +609,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True
 
-    def get_qrcode(self, user: User) -> Tuple[str, str]:
+    def get_qrcode(self, user: User) -> str:
 
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
@@ -620,7 +620,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         qr_url = segno.make(otpauth_url)
         qr_stream = BytesIO()
         qr_url.save(qr_stream, kind="png", scale=5)
-        return otpauth_url, base64.b64encode(qr_stream.getvalue()).decode("utf-8")
+        return base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
     def verify_password_strength(
         self, pwd: str, old_pwd: Optional[str]

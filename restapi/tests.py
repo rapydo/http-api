@@ -160,9 +160,6 @@ fake = get_faker()
 
 class BaseTests:
 
-    # will be used by do_login in case of TOTP
-    # This will save correspondances between user email and provided QR Code
-    QRsecrets: Dict[str, str] = {}
     TOTP = False
 
     @classmethod
@@ -212,10 +209,6 @@ class BaseTests:
     @staticmethod
     def generate_totp(email: Optional[str]) -> str:
         assert email is not None
-        secret = BaseTests.QRsecrets.get(email.lower())
-        if secret:
-            return pyotp.TOTP(secret).now()
-
         auth = Connector.get_authentication_instance()
 
         user = auth.get_user(username=email.lower())
@@ -282,16 +275,6 @@ class BaseTests:
                     if content.get("qr_code"):
                         # validate that the QR code is a valid PNG image
                         pass
-
-                    if qr_url := content.get("qr_url", ""):
-                        assert isinstance(qr_url, str)
-                        assert qr_url.startswith("otpauth://totp/")
-                        assert "?secret=" in qr_url
-                        secret = qr_url.split("?secret=")[1]
-                        assert secret is not None
-                        assert len(secret) == 16
-
-                        BaseTests.QRsecrets[USER.lower()] = secret
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                     newpwd = fake.password(strong=True)

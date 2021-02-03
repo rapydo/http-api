@@ -4,12 +4,10 @@ from typing import Dict, List, Optional
 import pytz
 
 from restapi import decorators
-from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import Forbidden
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
-from restapi.utilities.logs import log
 from restapi.utilities.time import EPOCH, get_now
 
 auth = Connector.get_authentication_instance()
@@ -135,11 +133,7 @@ class Login(EndpointResource):
 
             if totp_authentication:
 
-                qr_url, qr_code = self.auth.get_qrcode(user)
-
-                message["qr_code"] = qr_code
-                if TESTING:
-                    message["qr_url"] = qr_url
+                message["qr_code"] = self.auth.get_qrcode(user)
 
         elif self.auth.MAX_PASSWORD_VALIDITY:
 
