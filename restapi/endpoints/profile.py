@@ -77,7 +77,7 @@ def getProfileData():
 
     attributes["group"] = fields.Nested(Group)
 
-    attributes["SECOND_FACTOR"] = fields.Str(required=False)
+    attributes["two_factor_enabled"] = fields.Boolean(required=True)
 
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
@@ -125,8 +125,7 @@ class Profile(EndpointResource):
         else:
             data["group"] = current_user.belongs_to
 
-        if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            data["SECOND_FACTOR"] = "TOTP"
+        data["two_factor_enabled"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
 
