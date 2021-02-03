@@ -362,7 +362,8 @@ class BaseTests:
                 # in this case FIRST LOGIN has not been executed
                 # => login by sending the TOTP code
                 if "TOTP" in actions:
-                    data["totp_code"] = fake.pyint()
+                    # random int with 6 digits
+                    data["totp_code"] = fake.pyint(min_value=100000, max_value=999999)
                     BaseTests.do_login(
                         client,
                         USER,
