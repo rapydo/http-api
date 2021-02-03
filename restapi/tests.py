@@ -210,7 +210,7 @@ class BaseTests:
         return response
 
     @staticmethod
-    def generate_totp(email: Optional[str]) -> Optional[str]:
+    def generate_totp(email: Optional[str]) -> str:
         assert email is not None
         secret = BaseTests.QRsecrets.get(email.lower())
         if secret:
@@ -218,11 +218,7 @@ class BaseTests:
 
         auth = Connector.get_authentication_instance()
 
-        user = auth.get_user(username=email)
-
-        if user is None:
-            log.critical("Can't find a user for {}", email)
-            return None
+        user = auth.get_user(username=email.lower())
 
         secret = auth.get_totp_secret(user)
 
