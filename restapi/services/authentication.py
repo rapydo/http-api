@@ -590,6 +590,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def get_totp_secret(self, user: User) -> str:
 
+        if TESTING:  # pragma: no cover
+            if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
+                return p
+
         if not user.mfa_hash:
             # to be encrypted
             user.mfa_hash = pyotp.random_base32()
