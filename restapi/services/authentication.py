@@ -619,7 +619,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return True
 
     @classmethod
-    def get_qrcode(cls, user):
+    def get_qrcode(cls, user: User) -> Tuple[str, str]:
 
         secret = cls.get_secret(user)
         totp = pyotp.TOTP(secret)

@@ -4,10 +4,12 @@ from typing import Dict, List, Optional
 import pytz
 
 from restapi import decorators
+from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import Forbidden
 from restapi.models import Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
+from restapi.utilities.logs import log
 from restapi.utilities.time import EPOCH, get_now
 
 auth = Connector.get_authentication_instance()
@@ -31,7 +33,7 @@ class Credentials(Schema):
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = fields.Str(required=False)
+    totp_code = fields.Str(required=False, validate=validate.Length(min=6, max=6))
 
 
 class Login(EndpointResource):
@@ -75,7 +77,8 @@ class Login(EndpointResource):
 
             if totp_code is None:
                 message = self.check_password_validity(
-                    user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
+                    user,
+                    totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
                 )
                 message["actions"].append("TOTP")
                 message["errors"].append("You do not provided a valid second factor")
@@ -135,7 +138,8 @@ class Login(EndpointResource):
                 qr_url, qr_code = self.auth.get_qrcode(user)
 
                 message["qr_code"] = qr_code
-                message["qr_url"] = qr_url
+                if TESTING:
+                    message["qr_url"] = qr_url
 
         elif self.auth.MAX_PASSWORD_VALIDITY:
 
