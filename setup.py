@@ -51,7 +51,7 @@ setup(
         "amqp==5.0.2",
         "python-telegram-bot==13.1",
         # TOTP
-        "pyotp==2.4.1",
+        "pyotp==2.6.0",
         "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
