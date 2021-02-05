@@ -48,7 +48,7 @@ class Login(EndpointResource):
         description="Login with normal credentials (username and password)",
         responses={
             200: "Credentials are valid",
-            401: "Invalid username or password",
+            401: "Invalid access credentials",
             403: "Access to this account is not allowed",
         },
     )

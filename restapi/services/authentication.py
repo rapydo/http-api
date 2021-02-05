@@ -214,7 +214,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if user is None:
             self.register_failed_login(username)
-            raise Unauthorized("Invalid username or password", is_warning=True)
+            raise Unauthorized("Invalid access credentials", is_warning=True)
 
         # Check if Oauth2 is enabled
         if user.authmethod != "credentials":  # pragma: no cover
@@ -229,7 +229,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return token, full_payload, user
 
         self.register_failed_login(username)
-        raise Unauthorized("Invalid username or password", is_warning=True)
+        raise Unauthorized("Invalid access credentials", is_warning=True)
 
     @classmethod
     def import_secret(cls, abs_filename: str) -> None:
