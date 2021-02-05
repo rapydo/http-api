@@ -79,7 +79,9 @@ class Login(EndpointResource):
                     totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
                 )
                 message["actions"].append("TOTP")
-                message["errors"].append("You do not provided a valid second factor")
+                message["errors"].append(
+                    "You do not provided a valid verification code"
+                )
                 if message["errors"]:
                     raise Forbidden(message)
 
