@@ -604,12 +604,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_totp(self, user: User, totp_code: str) -> bool:
 
         if totp_code is None:
-            raise Unauthorized("Invalid verification code")
+            raise Unauthorized("Verification code is missing")
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             self.register_failed_login(user.email)
-            raise Unauthorized("Invalid verification code")
+            raise Unauthorized("Verification code is not valid")
 
         return True
 

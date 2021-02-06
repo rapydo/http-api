@@ -143,7 +143,7 @@ class TestApp(BaseTests):
             pytest.fail("NULL totp accepted!")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 401
-            assert str(e) == "Invalid verification code"
+            assert str(e) == "Verification code is missing"
         except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
