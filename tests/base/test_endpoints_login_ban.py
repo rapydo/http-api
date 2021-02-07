@@ -158,3 +158,64 @@ else:
                     data={"username": registration_data["email"]},
                 )
                 assert r.status_code == 200
+
+        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+
+            def test_03_totp_and_login_ban(self, client: FlaskClient) -> None:
+
+                uuid, data = self.create_user(client)
+
+                # Verify that login still works (TOTP will be automatically added)
+                headers, _ = self.do_login(client, data["email"], data["password"])
+                assert headers is not None
+
+                # Verify that TOTP is required
+                headers, _ = self.do_login(
+                    client, data["email"], data["password"], status_code=403
+                )
+                assert headers is None
+
+                # Verify that wrong totp are refused
+                headers, _ = self.do_login(
+                    client,
+                    data["email"],
+                    data["password"],
+                    data={"totp_code": "000000"},
+                    status_code=401,
+                )
+                assert headers is not None
+
+                # Verify that correct totp are accepted
+                headers, _ = self.do_login(
+                    client,
+                    data["email"],
+                    data["password"],
+                    data={"totp_code": self.generate_totp(data["email"])},
+                )
+                assert headers is not None
+
+                # Verify login ban due to wrong TOTPs
+
+                for i in range(0, max_login_attempts):
+                    self.do_login(
+                        client,
+                        data["email"],
+                        data["password"],
+                        data={"totp_code": "000000"},
+                        status_code=401,
+                    )
+
+                # Now the login is blocked
+                headers, _ = self.do_login(
+                    client, data["email"], data["password"], status_code=403
+                )
+                assert headers is None
+
+                time.sleep(ban_duration)
+
+                # Now the login works again
+                headers, _ = self.do_login(client, data["email"], data["password"])
+                assert headers is not None
+
+                # Goodbye temporary user
+                self.delete_user(client, uuid)

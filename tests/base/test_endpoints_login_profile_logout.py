@@ -249,7 +249,7 @@ class TestApp(BaseTests):
         data["password_confirm"] = data["password"]
         data["new_password"] = data["password"]
 
-        if BaseTests.TOTP:
+        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
@@ -270,7 +270,7 @@ class TestApp(BaseTests):
         data["password"] = data["new_password"]
         data["new_password"] = BaseAuthentication.default_password
         data["password_confirm"] = BaseAuthentication.default_password
-        if BaseTests.TOTP:
+        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
@@ -304,3 +304,124 @@ class TestApp(BaseTests):
             )
             r = client.get(f"{AUTH_URI}/logout", headers=headers)
             assert r.status_code == 204
+
+    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+
+        def test_06_test_totp_failures(self, client: FlaskClient, fake: Faker) -> None:
+
+            uuid, data = self.create_user(client)
+
+            username = data["email"]
+            password = data["password"]
+            new_password = fake.password(strong=True)
+
+            invalid_totp = (
+                "0",
+                "a",
+                "aaaaaa",
+                "9999999",
+            )
+            ###################################
+            # Test first password change
+            ###################################
+
+            data = {
+                "username": username,
+                "password": password,
+                "new_password": new_password,
+                "password_confirm": new_password,
+            }
+
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is missing"
+
+            data["totp"] = "000000"
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            for totp in invalid_totp:
+                data["totp"] = totp
+                r = client.post(f"{AUTH_URI}/login", data=data)
+                assert r.status_code == 400
+                assert "totp_code" in self.get_content(r)
+
+            totp = self.generate_totp(username)
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 200
+
+            password = new_password
+
+            ###################################
+            # Test login
+            ###################################
+
+            data = {
+                "username": username,
+                "password": password,
+            }
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 403
+            resp = self.get_content(r)
+            assert "actions" in resp
+            assert "errors" in resp
+            assert "TOTP" in resp["actions"]
+            assert "You do not provided a valid verification code" in resp["errors"]
+
+            data["totp"] = "000000"
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            for totp in invalid_totp:
+                data["totp"] = totp
+                r = client.post(f"{AUTH_URI}/login", data=data)
+                assert r.status_code == 400
+                assert "totp_code" in self.get_content(r)
+
+            totp = self.generate_totp(username)
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 200
+
+            ###################################
+            # Test password change
+            ###################################
+            new_password = fake.password(strong=True)
+            headers, _ = self.do_login(client, username, password)
+
+            data = {
+                "password": password,
+                "new_password": new_password,
+                "password_confirm": new_password,
+            }
+
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is missing"
+
+            data["totp"] = "000000"
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            for totp in invalid_totp:
+                data["totp"] = totp
+                r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+                assert r.status_code == 400
+                assert "totp_code" in self.get_content(r)
+
+            totp = self.generate_totp(username)
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 204
+
+            # verify the new password
+            headers, _ = self.do_login(client, username, new_password)
+
+            assert headers is not None
+
+            ###################################
+            # Goodbye temporary user
+            ###################################
+
+            self.delete_user(client, uuid)

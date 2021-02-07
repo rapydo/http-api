@@ -159,9 +159,6 @@ fake = get_faker()
 
 
 class BaseTests:
-
-    TOTP = False
-
     @classmethod
     def save(cls, variable: str, value: Any) -> None:
         """
@@ -262,7 +259,6 @@ class BaseTests:
 
                 for action in actions:
                     if action == "TOTP":
-                        BaseTests.TOTP = True
                         continue
                     if action == "FIRST LOGIN":
                         continue
@@ -281,7 +277,7 @@ class BaseTests:
                     if test_failures:
                         data["new_password"] = newpwd
                         data["password_confirm"] = fake.password(strong=True)
-                        if BaseTests.TOTP:
+                        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                             data["totp_code"] = BaseTests.generate_totp(USER)
 
                         BaseTests.do_login(
@@ -293,7 +289,7 @@ class BaseTests:
                         )
 
                         # Test failure of password change if TOTP is wrong or missing
-                        if BaseTests.TOTP:
+                        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                             data["new_password"] = newpwd
                             data["password_confirm"] = newpwd
                             data.pop("totp_code", None)
@@ -323,7 +319,7 @@ class BaseTests:
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                     data["new_password"] = newpwd
                     data["password_confirm"] = newpwd
-                    if BaseTests.TOTP:
+                    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                         data["totp_code"] = BaseTests.generate_totp(USER)
                     BaseTests.do_login(
                         client,
@@ -335,7 +331,7 @@ class BaseTests:
                     # and keep all other tests fully working
                     data["new_password"] = PWD
                     data["password_confirm"] = PWD
-                    if BaseTests.TOTP:
+                    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                         data["totp_code"] = BaseTests.generate_totp(USER)
                     return BaseTests.do_login(
                         client,
