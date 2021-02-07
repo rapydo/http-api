@@ -1,5 +1,6 @@
 import inspect
 import json
+import re
 
 import simplejson
 from marshmallow import validate  # used as alias from endpoints
@@ -207,5 +208,16 @@ class AdvancedList(fields.List):
             raise ValidationError(
                 f"Expected at least {self.min_items} items, received {len(value)}"
             )
+
+        return value
+
+
+class TOTP(fields.String):
+    def _deserialize(self, value, attr, data, **kwargs):
+
+        value = super()._deserialize(value, attr, data, **kwargs)
+
+        if not re.match(r"^[0-9]{6}$", value):
+            raise ValidationError("Invalid TOTP format")
 
         return value

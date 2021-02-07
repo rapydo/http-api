@@ -6,7 +6,7 @@ import pytz
 from restapi import decorators
 from restapi.connectors import Connector
 from restapi.exceptions import Forbidden
-from restapi.models import Schema, fields, validate
+from restapi.models import TOTP, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.time import EPOCH, get_now
 
@@ -31,7 +31,7 @@ class Credentials(Schema):
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = fields.Str(required=False, validate=validate.Length(min=6, max=6))
+    totp_code = TOTP(required=False)
 
 
 class Login(EndpointResource):

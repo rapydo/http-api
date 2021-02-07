@@ -316,10 +316,13 @@ class TestApp(BaseTests):
             new_password = fake.password(strong=True)
 
             invalid_totp = (
-                "0",
-                "a",
-                "aaaaaa",
-                "9999999",
+                str(fake.pyint(min_value=0, max_value=9)),
+                str(fake.pyint(min_value=10, max_value=99)),
+                str(fake.pyint(min_value=100, max_value=999)),
+                str(fake.pyint(min_value=1000, max_value=9999)),
+                str(fake.pyint(min_value=10000, max_value=99999)),
+                str(fake.pyint(min_value=1000000, max_value=9999999)),
+                fake.pystr(6),
             )
             ###################################
             # Test first password change
@@ -355,7 +358,9 @@ class TestApp(BaseTests):
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
-                assert "totp_code" in self.get_content(r)
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
 
             totp = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
@@ -388,7 +393,9 @@ class TestApp(BaseTests):
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
-                assert "totp_code" in self.get_content(r)
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
 
             totp = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
@@ -419,7 +426,9 @@ class TestApp(BaseTests):
                 data["totp_code"] = totp
                 r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
                 assert r.status_code == 400
-                assert "totp_code" in self.get_content(r)
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
 
             totp = self.generate_totp(username)
             r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)

@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Union
 
 from restapi import decorators
 from restapi.connectors import Connector
-from restapi.models import ISO8601UTC, Schema, fields, validate
+from restapi.models import ISO8601UTC, TOTP, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -27,7 +27,7 @@ class NewPassword(Schema):
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = fields.Str(required=False)
+    totp_code = TOTP(required=False)
 
 
 def patchUserProfile():
