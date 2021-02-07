@@ -362,7 +362,7 @@ class TestApp(BaseTests):
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
-            totp = self.generate_totp(username)
+            data["totp_code"] = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 200
 
@@ -397,7 +397,7 @@ class TestApp(BaseTests):
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
-            totp = self.generate_totp(username)
+            data["totp_code"] = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 200
 
@@ -430,7 +430,7 @@ class TestApp(BaseTests):
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
-            totp = self.generate_totp(username)
+            data["totp_code"] = self.generate_totp(username)
             r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
             assert r.status_code == 204
 
