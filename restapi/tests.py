@@ -277,7 +277,7 @@ class BaseTests:
                     if test_failures:
                         data["new_password"] = newpwd
                         data["password_confirm"] = fake.password(strong=True)
-                        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+                        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                             data["totp_code"] = BaseTests.generate_totp(USER)
 
                         BaseTests.do_login(
@@ -289,7 +289,7 @@ class BaseTests:
                         )
 
                         # Test failure of password change if TOTP is wrong or missing
-                        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+                        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                             data["new_password"] = newpwd
                             data["password_confirm"] = newpwd
                             data.pop("totp_code", None)
@@ -319,7 +319,7 @@ class BaseTests:
                     # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
                     data["new_password"] = newpwd
                     data["password_confirm"] = newpwd
-                    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+                    if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                         data["totp_code"] = BaseTests.generate_totp(USER)
                     BaseTests.do_login(
                         client,
@@ -331,7 +331,7 @@ class BaseTests:
                     # and keep all other tests fully working
                     data["new_password"] = PWD
                     data["password_confirm"] = PWD
-                    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+                    if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
                         data["totp_code"] = BaseTests.generate_totp(USER)
                     return BaseTests.do_login(
                         client,

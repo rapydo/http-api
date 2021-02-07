@@ -249,7 +249,7 @@ class TestApp(BaseTests):
         data["password_confirm"] = data["password"]
         data["new_password"] = data["password"]
 
-        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
@@ -270,7 +270,7 @@ class TestApp(BaseTests):
         data["password"] = data["new_password"]
         data["new_password"] = BaseAuthentication.default_password
         data["password_confirm"] = BaseAuthentication.default_password
-        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
@@ -305,7 +305,7 @@ class TestApp(BaseTests):
             r = client.get(f"{AUTH_URI}/logout", headers=headers)
             assert r.status_code == 204
 
-    if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+    if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
         def test_06_test_totp_failures(self, client: FlaskClient, fake: Faker) -> None:
 

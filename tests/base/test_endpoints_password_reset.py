@@ -129,7 +129,7 @@ class TestApp(BaseTests):
         assert c == "Invalid reset token"
 
         # Restore the default password
-        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
         data["password"] = new_pwd

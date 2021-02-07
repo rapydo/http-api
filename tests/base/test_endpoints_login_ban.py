@@ -159,7 +159,7 @@ else:
                 )
                 assert r.status_code == 200
 
-        if Env.get("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
             def test_03_totp_and_login_ban(self, client: FlaskClient) -> None:
 
