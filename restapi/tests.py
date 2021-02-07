@@ -266,11 +266,6 @@ class BaseTests:
                         continue
 
                 data = {}
-                # Will read and store qr_code + init totp_code required for next action
-                if "TOTP" in actions:
-                    if content.get("qr_code"):
-                        # validate that the QR code is a valid PNG image
-                        pass
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                     newpwd = fake.password(strong=True)

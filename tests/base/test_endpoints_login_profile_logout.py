@@ -333,8 +333,18 @@ class TestApp(BaseTests):
             }
 
             r = client.post(f"{AUTH_URI}/login", data=data)
-            assert r.status_code == 401
-            assert self.get_content(r) == "Verification code is missing"
+            assert r.status_code == 403
+            resp = self.get_content(r)
+
+            assert "actions" in resp
+            assert "errors" in resp
+            assert "FIRST LOGIN" in resp["actions"]
+            assert "TOTP" in resp["actions"]
+            assert "Please change your temporary password" in resp["errors"]
+            assert "You do not provided a valid verification code" in resp["errors"]
+
+            # validate that the QR code is a valid PNG image
+            # ... not implemented
 
             data["totp"] = "000000"
             r = client.post(f"{AUTH_URI}/login", data=data)
