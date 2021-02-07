@@ -346,13 +346,13 @@ class TestApp(BaseTests):
             # validate that the QR code is a valid PNG image
             # ... not implemented
 
-            data["totp"] = "000000"
+            data["totp_code"] = "000000"
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
             for totp in invalid_totp:
-                data["totp"] = totp
+                data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 assert "totp_code" in self.get_content(r)
@@ -379,13 +379,13 @@ class TestApp(BaseTests):
             assert "TOTP" in resp["actions"]
             assert "You do not provided a valid verification code" in resp["errors"]
 
-            data["totp"] = "000000"
+            data["totp_code"] = "000000"
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
             for totp in invalid_totp:
-                data["totp"] = totp
+                data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 assert "totp_code" in self.get_content(r)
@@ -410,13 +410,13 @@ class TestApp(BaseTests):
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is missing"
 
-            data["totp"] = "000000"
+            data["totp_code"] = "000000"
             r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
             for totp in invalid_totp:
-                data["totp"] = totp
+                data["totp_code"] = totp
                 r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
                 assert r.status_code == 400
                 assert "totp_code" in self.get_content(r)
