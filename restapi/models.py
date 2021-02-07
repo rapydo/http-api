@@ -11,6 +11,7 @@ from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
 from webargs.flaskparser import parser
 
+from restapi.config import TESTING
 from restapi.utilities.logs import log
 
 # Note for SQL-Alchemy, consider to use:
@@ -218,6 +219,8 @@ class TOTP(fields.String):
         value = super()._deserialize(value, attr, data, **kwargs)
 
         if not re.match(r"^[0-9]{6}$", value):
+            if TESTING:
+                log.error("Invalid TOTP format: {}", value)
             raise ValidationError("Invalid TOTP format")
 
         return value
