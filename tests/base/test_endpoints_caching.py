@@ -1,4 +1,6 @@
+import math
 import time
+from datetime import datetime
 
 from restapi.env import Env
 from restapi.services.cache import Cache
@@ -13,7 +15,17 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        # get method is cached for 1 second
+        # Syncronize this test to start at the beginning of the next second and
+        # prevent the test to overlap a change of second
+        # Since the caching is rounded to the second, few milliseconds cann make the
+        # difference, for example:
+        # A first request at 00:00:00.997 is cached
+        # A second request at 00:00:01.002 is no longer cached, even if only 5 millisec
+        # elapsed because the second changed
+        # Added 0.01 just to avoid to exactly start at the beginning of the second
+        time.sleep(1.01 + math.ceil(datetime.now().microsecond / 1000000.0))
+
+        # the GET method is cached for 1 second
 
         # First response is not cached
         r = client.get(f"{API_URI}/tests/cache/short")
