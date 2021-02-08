@@ -104,7 +104,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # 1 month in seconds
     DEFAULT_TOKEN_TTL = Env.get_int("AUTH_JWT_TOKEN_TTL", 2_592_000)
     # Grace period before starting to evaluate IP address on token validation
-    GRACE_PERIOD = timedelta(seconds=7200)  # 2 hours in seconds
+    GRACE_PERIOD = timedelta(seconds=Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD", 7200))
     SAVE_LAST_ACCESS_EVERY = timedelta(
         seconds=Env.get_int("AUTH_TOKEN_SAVE_FREQUENCY", 60)
     )
@@ -165,7 +165,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(val)
 
         if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
+            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = cls.get_timedelta(val)
 
     @staticmethod
     def load_default_user() -> None:
