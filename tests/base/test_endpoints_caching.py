@@ -5,6 +5,7 @@ from datetime import datetime
 from restapi.env import Env
 from restapi.services.cache import Cache
 from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 UUID = 0
 COUNTER = 1
@@ -23,7 +24,9 @@ class TestApp(BaseTests):
         # A second request at 00:00:01.002 is no longer cached, even if only 5 millisec
         # elapsed because the second changed
         # Added 0.01 just to avoid to exactly start at the beginning of the second
-        time.sleep(1.01 - math.ceil(datetime.now().microsecond / 1000000.0))
+        t = 1.01 - math.ceil(datetime.now().microsecond / 1000000.0)
+        log.critical("Sleeping {} sec", t)
+        time.sleep(t)
 
         # the GET method is cached for 1 second
 
