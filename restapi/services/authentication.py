@@ -230,8 +230,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if user is None:
             self.register_failed_login(username)
-            if TESTING:
-                log.critical("Invalid access credentials [1]")
 
             raise Unauthorized("Invalid access credentials", is_warning=True)
 
@@ -248,8 +246,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return token, full_payload, user
 
         self.register_failed_login(username)
-        if TESTING:
-            log.critical("Invalid access credentials [2]")
         raise Unauthorized("Invalid access credentials", is_warning=True)
 
     @classmethod
@@ -274,8 +270,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_password_hash(password):
         if not password:
-            if TESTING:
-                log.critical("Invalid password")
             raise Unauthorized("Invalid password")
         return pwd_context.hash(password)
 
@@ -417,6 +411,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
 
         if token is None:
+            if TESTING:
+                log.critical("Missing token")
             if raiseErrors:
                 raise InvalidToken("Missing token")
             return self.unpacked_token(False)
@@ -424,6 +420,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # Decode the current token
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
+            if TESTING:
+                log.critical("Invald payload")
             if raiseErrors:
                 raise InvalidToken("Invalid payload")
             return self.unpacked_token(False)
@@ -435,6 +433,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if token_type != payload_type:
             log.error("Invalid token type {}, required: {}", payload_type, token_type)
+            if TESTING:
+                log.critical("Invald token type")
             if raiseErrors:
                 raise InvalidToken("Invalid token type")
             return self.unpacked_token(False)
@@ -442,12 +442,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # Get the user from payload
         user = self.get_user(user_id=payload.get("user_id"))
         if user is None:
+            if TESTING:
+                log.critical("No user from payload")
             if raiseErrors:
                 raise InvalidToken("No user from payload")
             return self.unpacked_token(False)
 
         # implemented from the specific db services
         if not self.verify_token_validity(jti=payload["jti"], user=user):
+            if TESTING:
+                log.critical("Token is not valid")
             if raiseErrors:
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
@@ -627,15 +631,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
         if totp_code is None:
-            if TESTING:
-                log.critical("Verification code is missing")
             raise Unauthorized("Verification code is missing")
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             self.register_failed_login(user.email)
-            if TESTING:
-                log.critical("Verification code is not valid")
             raise Unauthorized("Verification code is not valid")
 
         return True
@@ -748,8 +748,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
             now = get_now(user.last_login.tzinfo)
             if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
-                if TESTING:
-                    log.critical("Sorry, this account is blocked for inactivity")
                 raise Unauthorized("Sorry, this account is blocked for inactivity")
 
         if user.expiration:

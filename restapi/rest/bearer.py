@@ -16,7 +16,6 @@ from typing import Optional, Tuple
 
 from flask import request
 
-from restapi.config import TESTING
 from restapi.env import Env
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
@@ -184,8 +183,6 @@ class HTTPTokenAuth:
                         f", e.g. {HTTPAUTH_AUTH_FIELD}: '{HTTPAUTH_SCHEME} TOKEN'"
                     )
                     log.debug("Unauthorized request: missing credentials")
-                    if TESTING:
-                        log.critical("Unauthorized request: missing credentials")
                     return caller.response(
                         msg, code=401, headers=HTTPAUTH_ERR_HEADER, allow_html=True
                     )
@@ -202,8 +199,6 @@ class HTTPTokenAuth:
                         # Mimic the response from a normal endpoint
                         # To use the same standards
                         # log.info("Invalid token received '{}'", token)
-                        if TESTING:
-                            log.critical("Invalid token received")
                         log.debug("Invalid token received")
                         return caller.response(
                             "Invalid token received",
