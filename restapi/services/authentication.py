@@ -55,6 +55,9 @@ User = Any
 Group = Any
 RoleObj = Any
 
+DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
+MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+
 
 class Token(TypedDict, total=False):
     id: str
@@ -146,9 +149,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     failed_logins: Dict[str, List[FailedLogin]] = {}
 
     @classmethod
-    def get_timedelta(cls, val: int) -> timedelta:
+    def get_timedelta(cls, val: int, min_testing_val: int = 0) -> Optional[timedelta]:
+
+        if val == 0:
+            return None
+
         if TESTING:
-            return timedelta(seconds=val)
+            return timedelta(seconds=max(val, min_testing_val))
         # Of course cannot be tested
         return timedelta(days=val)  # pragma: no cover
 
@@ -161,11 +168,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         variables = Env.load_variables_group(prefix="auth")
 
-        if val := Env.to_int(variables.get("max_password_validity", 0)):
-            cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(val)
+        cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(
+            Env.to_int(variables.get("max_password_validity", 0))
+        )
+        cls.DISABLE_UNUSED_CREDENTIALS_AFTER = cls.get_timedelta(
+            # min 60 seconds are required when testing
+            Env.to_int(variables.get("disable_unused_credentials_after", 0)),
+            DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE,
+        )
 
-        if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = cls.get_timedelta(val)
+        if TESTING and cls.MAX_LOGIN_ATTEMPTS:
+            cls.MAX_LOGIN_ATTEMPTS = max(
+                cls.MAX_LOGIN_ATTEMPTS, MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE
+            )
 
     @staticmethod
     def load_default_user() -> None:
@@ -215,6 +230,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if user is None:
             self.register_failed_login(username)
+            if TESTING:
+                log.critical("Invalid access credentials [1]")
+
             raise Unauthorized("Invalid access credentials", is_warning=True)
 
         # Check if Oauth2 is enabled
@@ -230,6 +248,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             return token, full_payload, user
 
         self.register_failed_login(username)
+        if TESTING:
+            log.critical("Invalid access credentials [2]")
         raise Unauthorized("Invalid access credentials", is_warning=True)
 
     @classmethod
@@ -254,6 +274,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @staticmethod
     def get_password_hash(password):
         if not password:
+            if TESTING:
+                log.critical("Invalid password")
             raise Unauthorized("Invalid password")
         return pwd_context.hash(password)
 
@@ -602,14 +624,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return cast(str, user.mfa_hash)
 
-    def verify_totp(self, user: User, totp_code: str) -> bool:
+    def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
         if totp_code is None:
+            if TESTING:
+                log.critical("Verification code is missing")
             raise Unauthorized("Verification code is missing")
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
             self.register_failed_login(user.email)
+            if TESTING:
+                log.critical("Verification code is not valid")
             raise Unauthorized("Verification code is not valid")
 
         return True
@@ -722,6 +748,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
             now = get_now(user.last_login.tzinfo)
             if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+                if TESTING:
+                    log.critical("Sorry, this account is blocked for inactivity")
                 raise Unauthorized("Sorry, this account is blocked for inactivity")
 
         if user.expiration:
