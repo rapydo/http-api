@@ -90,6 +90,31 @@ class InvalidToken(BaseException):
     pass
 
 
+# ##############################################################################
+# Utility functions used to adapt security settings to Testable values
+def get_timedelta(val: int, min_testing_val: int = 0) -> Optional[timedelta]:
+
+    if val == 0:
+        return None
+
+    if TESTING:
+        return timedelta(seconds=max(val, min_testing_val))
+    # Of course cannot be tested
+    return timedelta(days=val)  # pragma: no cover
+
+
+def get_max_login_attempts(val: int) -> int:
+
+    if TESTING and val:
+        # min 10 failures, otherwise normal tests will start to fail
+        return max(val, MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE)
+
+    return val
+
+
+# ##############################################################################
+
+
 class BaseAuthentication(metaclass=abc.ABCMeta):
 
     """
@@ -131,10 +156,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     VERIFY_PASSWORD_STRENGTH = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
         "AUTH_VERIFY_PASSWORD_STRENGTH", False
     )
-    MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
-    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
+    MAX_PASSWORD_VALIDITY: Optional[timedelta] = get_timedelta(
+        Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0)
+    )
 
-    MAX_LOGIN_ATTEMPTS = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = get_timedelta(
+        Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER", 0),
+        # min 60 seconds are required when testing
+        DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE,
+    )
+
+    MAX_LOGIN_ATTEMPTS = get_max_login_attempts(
+        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+    )
+
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
         seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
     )
@@ -148,39 +183,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # To be stored on DB
     failed_logins: Dict[str, List[FailedLogin]] = {}
 
-    @classmethod
-    def get_timedelta(cls, val: int, min_testing_val: int = 0) -> Optional[timedelta]:
-
-        if val == 0:
-            return None
-
-        if TESTING:
-            return timedelta(seconds=max(val, min_testing_val))
-        # Of course cannot be tested
-        return timedelta(days=val)  # pragma: no cover
-
     # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:
         cls.load_default_user()
         cls.load_roles()
         cls.import_secret(SECRET_KEY_FILE)
-
-        variables = Env.load_variables_group(prefix="auth")
-
-        cls.MAX_PASSWORD_VALIDITY = cls.get_timedelta(
-            Env.to_int(variables.get("max_password_validity", 0))
-        )
-        cls.DISABLE_UNUSED_CREDENTIALS_AFTER = cls.get_timedelta(
-            # min 60 seconds are required when testing
-            Env.to_int(variables.get("disable_unused_credentials_after", 0)),
-            DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE,
-        )
-
-        if TESTING and cls.MAX_LOGIN_ATTEMPTS:
-            cls.MAX_LOGIN_ATTEMPTS = max(
-                cls.MAX_LOGIN_ATTEMPTS, MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE
-            )
 
     @staticmethod
     def load_default_user() -> None:
