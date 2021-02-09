@@ -252,6 +252,7 @@ class TestApp(BaseTests):
 
         assert token_id is not None
 
+        last_tokens_header, last_token = self.do_login(client, None, None)
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )

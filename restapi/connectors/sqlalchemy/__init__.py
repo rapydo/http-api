@@ -28,7 +28,6 @@ from sqlalchemy.exc import (
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
@@ -473,12 +472,8 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
 
         if token_entry is None:
-            if TESTING:
-                log.critical("Token does not exists")
             return False
         if token_entry.user_id is None or token_entry.user_id != user.id:
-            if TESTING:
-                log.critical("Token not emitted for this user")
             return False
 
         # offset-naive datetime to compare with MySQL
@@ -490,8 +485,6 @@ class Authentication(BaseAuthentication):
                 "This token is no longer valid: expired since {}",
                 token_entry.expiration.strftime("%d/%m/%Y"),
             )
-            if TESTING:
-                log.critical("Token expired")
             return False
 
         # Verify IP validity only after grace period is expired
@@ -503,8 +496,6 @@ class Authentication(BaseAuthentication):
                     token_entry.IP,
                     ip,
                 )
-                if TESTING:
-                    log.critical("Token from a wrong IP")
                 return False
 
         if token_entry.last_access + self.SAVE_LAST_ACCESS_EVERY < now:
