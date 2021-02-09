@@ -159,6 +159,11 @@ fake = get_faker()
 
 
 class BaseTests:
+
+    # This will store credentials to be used to test unused credentials ban
+    # Tuple = (email, password, uuid)
+    unused_credentials: Optional[Tuple[str, str, str]] = None
+
     @classmethod
     def save(cls, variable: str, value: Any) -> None:
         """
