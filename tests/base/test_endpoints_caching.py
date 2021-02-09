@@ -23,7 +23,7 @@ class TestApp(BaseTests):
         # A second request at 00:00:01.002 is no longer cached, even if only 5 millisec
         # elapsed because the second changed
         # Added 0.01 just to avoid to exactly start at the beginning of the second
-        time.sleep(1.01 + math.ceil(datetime.now().microsecond / 1000000.0))
+        time.sleep(1.01 - math.ceil(datetime.now().microsecond / 1000000.0))
 
         # the GET method is cached for 1 second
 
