@@ -4,10 +4,11 @@ from faker import Faker
 
 from restapi.config import PRODUCTION
 from restapi.env import Env
+from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
-max_login_attempts = Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+max_login_attempts = BaseAuthentication.MAX_LOGIN_ATTEMPTS
 ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
 
 BAN_MESSAGE = (
