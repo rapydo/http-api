@@ -8,6 +8,7 @@ from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
+from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
 from restapi.services.authentication import (
@@ -325,9 +326,13 @@ class Authentication(BaseAuthentication):
         try:
             token_entry = self.db.Token.objects.raw({"jti": jti}).first()
         except self.db.Token.DoesNotExist:
+            if TESTING:
+                log.critical("Token does not exists")
             return False
 
         if token_entry.user_id is None or token_entry.user_id.email != user.email:
+            if TESTING:
+                log.critical("Token not emitted for this user")
             return False
 
         now = datetime.now()
@@ -337,6 +342,8 @@ class Authentication(BaseAuthentication):
                 "This token is no longer valid: expired since {}",
                 token_entry.expiration.strftime("%d/%m/%Y"),
             )
+            if TESTING:
+                log.critical("Token expired")
             return False
 
         # Verify IP validity only after grace period is expired
@@ -348,6 +355,8 @@ class Authentication(BaseAuthentication):
                     token_entry.IP,
                     ip,
                 )
+                if TESTING:
+                    log.critical("Token from a wrong IP")
                 return False
 
         if token_entry.last_access + self.SAVE_LAST_ACCESS_EVERY < now:

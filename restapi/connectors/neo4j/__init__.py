@@ -26,6 +26,7 @@ from neomodel.exceptions import (
 )
 from neomodel.match import NodeSet
 
+from restapi.config import TESTING
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
 from restapi.services.authentication import (
@@ -405,9 +406,13 @@ class Authentication(BaseAuthentication):
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
         except self.db.Token.DoesNotExist:
+            if TESTING:
+                log.critical("Token does not exists")
             return False
 
         if not token_node.emitted_for.is_connected(user):
+            if TESTING:
+                log.critical("Token not emitted for this user")
             return False
 
         now = datetime.now(pytz.utc)
@@ -418,6 +423,8 @@ class Authentication(BaseAuthentication):
                 "This token is no longer valid: expired since {}",
                 token_node.expiration.strftime("%d/%m/%Y"),
             )
+            if TESTING:
+                log.critical("Token expired")
             return False
 
         # Verify IP validity only after grace period is expired
@@ -429,6 +436,8 @@ class Authentication(BaseAuthentication):
                     token_node.IP,
                     ip,
                 )
+            if TESTING:
+                log.critical("Token from a wrong IP")
                 return False
 
         if token_node.last_access + self.SAVE_LAST_ACCESS_EVERY < now:
