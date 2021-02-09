@@ -846,14 +846,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             create = default_user is None
             update = default_user is not None
 
+        if self.FORCE_FIRST_PASSWORD_CHANGE:
+            last_password_change = None
+        else:
+            last_password_change = datetime.now(pytz.utc)
+
         if create:
+
             default_user = self.create_user(
                 {
                     "email": self.default_user,
                     "name": "Default",
                     "surname": "User",
                     "password": self.default_password,
-                    "last_password_change": datetime.now(pytz.utc),
+                    "last_password_change": last_password_change,
                 },
                 roles=roles,
             )
@@ -870,7 +876,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 default_user.name = "Default"
                 default_user.surname = "User"
                 default_user.password = self.get_password_hash(self.default_password)
-                default_user.last_password_change = datetime.now(pytz.utc)
+                default_user.last_password_change = last_password_change
                 self.link_roles(default_user, roles)
                 self.add_user_to_group(default_user, default_group)
                 self.save_user(default_user)

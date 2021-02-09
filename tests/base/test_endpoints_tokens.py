@@ -256,6 +256,8 @@ class TestApp(BaseTests):
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
+        # This may fail with a 404 due to tokens invalidation after expired password
+        # Use another use to separated target tokens and admin token
         assert r.status_code == 204
 
         r = client.delete(
