@@ -232,12 +232,12 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200
 
-        # TEST TOKEN DELETION VIA ADMIN ENDPOINT
-        # This will be used to authenticate the requests. A new last_tokens is required
-        # because the login could invalidate previous tokens due to password expiration
-        last_tokens_header, last_token = self.do_login(client, None, None)
         # This will be used as target for deletion
-        header, token = self.do_login(client, None, None)
+        uuid, data = self.create_user(client)
+        user_header, token = self.do_login(client, data["email"], data["password"])
+
+        r = client.get(f"{AUTH_URI}/status", headers=user_header)
+        assert r.status_code == 200
 
         # TEST GET ALL TOKENS
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
@@ -252,15 +252,18 @@ class TestApp(BaseTests):
 
         assert token_id is not None
 
-        last_tokens_header, last_token = self.do_login(client, None, None)
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
-        # This may fail with a 404 due to tokens invalidation after expired password
-        # Use another use to separated target tokens and admin token
         assert r.status_code == 204
 
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
         assert r.status_code == 404
+
+        r = client.get(f"{AUTH_URI}/status", headers=user_header)
+        assert r.status_code == 401
+
+        # Goodbye temporary user
+        self.delete_user(client, uuid)
