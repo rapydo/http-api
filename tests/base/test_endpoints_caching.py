@@ -1,4 +1,3 @@
-import math
 import time
 from datetime import datetime
 
@@ -24,7 +23,7 @@ class TestApp(BaseTests):
         # A second request at 00:00:01.002 is no longer cached, even if only 5 millisec
         # elapsed because the second changed
         # Added 0.01 just to avoid to exactly start at the beginning of the second
-        t = 1.01 - math.ceil(datetime.now().microsecond / 1000000.0)
+        t = 1.01 - datetime.now().microsecond / 1000000.0
         log.critical("Sleeping {} sec", t)
         time.sleep(t)
 
