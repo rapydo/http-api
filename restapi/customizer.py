@@ -1,4 +1,11 @@
 import abc
+from typing import Any, Dict, Tuple
+
+from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import User
+
+Props = Dict[str, Any]
+FlaskRequest = Any
 
 
 class BaseCustomizer(metaclass=abc.ABCMeta):
@@ -8,8 +15,11 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
     PROFILE = 2
     REGISTRATION = 3
 
+    @staticmethod
     @abc.abstractmethod
-    def custom_user_properties_pre(properties):  # pragma: no cover
+    def custom_user_properties_pre(
+        properties: Props,
+    ) -> Tuple[Props, Props]:  # pragma: no cover
         """
         executed just before user creation
         use this method to removed or manipulate input properties
@@ -17,10 +27,11 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         """
         return properties, {}
 
+    @staticmethod
     @abc.abstractmethod
     def custom_user_properties_post(
-        user, properties, extra_properties, db
-    ):  # pragma: no cover
+        user: User, properties: Props, extra_properties: Props, db: Any
+    ) -> None:  # pragma: no cover
         """
         executed just after user creation
         use this method to implement extra operation needed to create a user
@@ -28,16 +39,22 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         """
         pass
 
+    @staticmethod
     @abc.abstractmethod
-    def manipulate_profile(ref, user, data):  # pragma: no cover
+    def manipulate_profile(
+        ref: EndpointResource, user: User, data: Props
+    ) -> Props:  # pragma: no cover
         """
         execute before sending data from the profile endpoint
         use this method to add additonal information to the user profile
         """
         return data
 
+    @staticmethod
     @abc.abstractmethod
-    def get_custom_input_fields(request, scope):  # pragma: no cover
+    def get_custom_input_fields(
+        request: FlaskRequest, scope: int
+    ) -> Props:  # pragma: no cover
 
         # required = request and request.method == "POST"
         """
@@ -61,8 +78,9 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         """
         return {}
 
+    @staticmethod
     @abc.abstractmethod
-    def get_custom_output_fields(request):  # pragma: no cover
+    def get_custom_output_fields(request: FlaskRequest) -> Props:  # pragma: no cover
         """
         this method is used to extend the output model of admin users
         """
