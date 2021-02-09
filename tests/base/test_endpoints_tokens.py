@@ -240,7 +240,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         # TEST GET ALL TOKENS
-        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens", headers=user_header)
         content = self.get_content(r)
         assert r.status_code == 200
 
