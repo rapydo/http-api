@@ -1,5 +1,6 @@
 from faker import Faker
 
+from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 
 
@@ -232,9 +233,13 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200
 
-        # This will be used as target for deletion
-        uuid, data = self.create_user(client)
-        user_header, token = self.do_login(client, data["email"], data["password"])
+        # user_header will be used as target for deletion
+        if Env.get_bool("ADMINER_DISABLED"):
+
+            user_header, token = self.do_login(client, None, None)
+        else:
+            uuid, data = self.create_user(client)
+            user_header, token = self.do_login(client, data["email"], data["password"])
 
         r = client.get(f"{AUTH_URI}/status", headers=user_header)
         assert r.status_code == 200
@@ -265,5 +270,6 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=user_header)
         assert r.status_code == 401
 
-        # Goodbye temporary user
-        self.delete_user(client, uuid)
+        if not Env.get_bool("ADMINER_DISABLED"):
+            # Goodbye temporary user
+            self.delete_user(client, uuid)

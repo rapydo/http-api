@@ -97,7 +97,7 @@ else:
     def test_with_admin_auth(case):
 
         if case.path == "/auth/logout":
-            log.warning("Skipping logout")
+            # log.warning("Skipping logout")
             return None
 
         if case.headers is None:
