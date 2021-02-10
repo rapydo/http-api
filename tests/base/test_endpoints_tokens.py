@@ -235,7 +235,7 @@ class TestApp(BaseTests):
 
         # user_header will be used as target for deletion
         if Env.get_bool("ADMINER_DISABLED"):
-
+            uuid = None
             user_header, token = self.do_login(client, None, None)
         else:
             uuid, data = self.create_user(client)
@@ -257,6 +257,7 @@ class TestApp(BaseTests):
 
         assert token_id is not None
 
+        last_tokens_header, _ = self.do_login(client, None, None)
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
@@ -270,6 +271,6 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=user_header)
         assert r.status_code == 401
 
-        if not Env.get_bool("ADMINER_DISABLED"):
-            # Goodbye temporary user
+        # Goodbye temporary user (if previously created)
+        if uuid:
             self.delete_user(client, uuid)
