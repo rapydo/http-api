@@ -748,7 +748,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
             now = get_now(user.last_login.tzinfo)
             if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
-                raise Unauthorized("Sorry, this account is blocked for inactivity")
+                raise Forbidden("Sorry, this account is blocked for inactivity")
 
         if user.expiration:
             # Reuse the now instance, if previously inizialized
