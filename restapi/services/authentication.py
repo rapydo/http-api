@@ -56,6 +56,7 @@ Group = Any
 RoleObj = Any
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
+MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
 
 
@@ -157,7 +158,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         "AUTH_VERIFY_PASSWORD_STRENGTH", False
     )
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = get_timedelta(
-        Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0)
+        Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0),
+        MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE,
     )
 
     DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = get_timedelta(
