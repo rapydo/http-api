@@ -421,7 +421,7 @@ class Authentication(BaseAuthentication):
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_node.last_access + self.GRACE_PERIOD < now:
+        if token_node.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_node.IP != ip:
                 log.error(
