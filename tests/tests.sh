@@ -29,11 +29,12 @@ echo "Launching unittests with coverage on tests/${2}"
 echo "Package: $CURRENT_PACKAGE"
 sleep 1
 
+# --timeout is provided by pytest-timeout
+# --cov is provided by pytest-cov
 if [[ -z "$2" ]]; then
     test_folder="tests/custom tests/base"
 else
     test_folder="tests/${2}"
 fi
-# --timeout is provided by pytest-timeout
-# --cov is provided by pytest-cov
-py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} tests/${2}
+
+py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} ${test_folder}
