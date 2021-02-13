@@ -274,6 +274,7 @@ class AdminUsers(EndpointResource):
         else:
             unhashed_password = None
 
+        payload = kwargs.copy()
         roles: List[str] = kwargs.pop("roles", [])
 
         group_id = kwargs.pop("group", None)
@@ -318,7 +319,7 @@ class AdminUsers(EndpointResource):
                     if dt_lower(user.expiration, token["expiration"]):
                         self.auth.invalidate_token(token=token["token"])
 
-        self.log_event(self.events.modify, user, kwargs)
+        self.log_event(self.events.modify, user, payload)
 
         return self.empty_response()
 
