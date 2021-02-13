@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from flask import Response as FlaskResponse
@@ -169,9 +170,7 @@ class EndpointResource(MethodResource, Resource):
         target_type, target_id = self.parse_target(target)
 
         if payload:
-            payload = obfuscate_dict(payload)
-            # mypy blames that returned payload can be None, but it can't occur
-            p = ",".join(f"{key}={val}" for key, val in sorted(payload.items()))  # type: ignore
+            p = json.dumps(obfuscate_dict(payload))
         else:
             p = ""
 

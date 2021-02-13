@@ -551,16 +551,7 @@ class BaseTests:
             for line in lines[-num:]:
                 tokens = line.strip().split(" ")
 
-                # ["k1=v1", "k2=v2", "..."]
-                payload_list: List[str] = (
-                    list(" ".join(tokens[7:]).split(",")) if len(tokens) >= 8 else []
-                )
-
-                # { k1: v1, k2: v2, ...}
-                payload: Dict[str, str] = {}
-                for x in payload_list:
-                    k, v = x.split("=")
-                    payload[k] = v
+                payload = json.loads(" ".join(tokens[7:])) if len(tokens) >= 8 else {}
 
                 event = Event(
                     # datetime
