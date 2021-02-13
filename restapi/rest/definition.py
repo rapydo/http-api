@@ -151,8 +151,8 @@ class EndpointResource(MethodResource, Resource):
         if hasattr(target, "uuid"):
             return target_type, getattr(target, "uuid")
 
-        if hasattr(target, "ui"):
-            return target_type, getattr(target, "ui")
+        if hasattr(target, "id"):
+            return target_type, getattr(target, "id")
 
         return target_type, ""
 
