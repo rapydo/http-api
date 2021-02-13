@@ -549,7 +549,7 @@ class BaseTests:
             events: List[Event] = []
             # read last num lines
             for line in lines[-num:]:
-                tokens = line.split(" ")
+                tokens = line.strip().split(" ")
                 event = Event(
                     # datetime
                     f"{tokens[0]} {tokens[1]}",
