@@ -550,6 +550,18 @@ class BaseTests:
             # read last num lines
             for line in lines[-num:]:
                 tokens = line.strip().split(" ")
+
+                # ["k1=v1", "k2=v2", "..."]
+                payload_list: List[str] = (
+                    list(" ".join(tokens[7:]).split(",")) if len(tokens) >= 8 else []
+                )
+
+                # { k1: v1, k2: v2, ...}
+                payload: Dict[str, str] = {}
+                for x in payload_list:
+                    k, v = x.split("=")
+                    payload[k] = v
+
                 event = Event(
                     # datetime
                     f"{tokens[0]} {tokens[1]}",
@@ -564,7 +576,7 @@ class BaseTests:
                     # Target ID or empty
                     tokens[6] if len(tokens) >= 7 else "",
                     # Payload dictionary
-                    " ".join(tokens[7:]).split(",") if len(tokens) >= 8 else {},
+                    payload,
                 )
 
                 events.append(event)
