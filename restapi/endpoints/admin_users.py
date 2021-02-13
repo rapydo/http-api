@@ -248,6 +248,8 @@ class AdminUsers(EndpointResource):
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=False)
 
+        self.log_event(self.events.create, user, kwargs)
+
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -316,6 +318,8 @@ class AdminUsers(EndpointResource):
                     if dt_lower(user.expiration, token["expiration"]):
                         self.auth.invalidate_token(token=token["token"])
 
+        self.log_event(self.events.modify, user, kwargs)
+
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -332,5 +336,7 @@ class AdminUsers(EndpointResource):
             raise NotFound("This user cannot be found or you are not authorized")
 
         self.auth.delete_user(user)
+
+        self.log_event(self.events.delete, user)
 
         return self.empty_response()
