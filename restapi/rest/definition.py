@@ -8,9 +8,9 @@ from restapi.config import API_URL
 from restapi.connectors import Connector
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
-from restapi.services.authentication import Role
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.cache import Cache
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, obfuscate_dict
 
 CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
@@ -26,6 +26,7 @@ class EndpointResource(MethodResource, Resource):
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False
+    events = Events
 
     def __init__(self):
         super().__init__()
@@ -138,3 +139,49 @@ class EndpointResource(MethodResource, Resource):
 
     def clear_endpoint_cache(self):
         Cache.invalidate(self.get)
+
+    @staticmethod
+    def parse_target(target: Any) -> Tuple[str, str]:
+        if not target:
+            return "", ""
+
+        target_type = type(target).__name__
+
+        if hasattr(target, "uuid"):
+            return target_type, getattr(target, "uuid")
+
+        if hasattr(target, "ui"):
+            return target_type, getattr(target, "ui")
+
+        return target_type, ""
+
+    def log_event(
+        self,
+        event: Events,
+        target: Optional[Any] = None,
+        payload: Optional[Dict[str, Any]] = None,
+        user: Optional[Any] = None,
+    ) -> None:
+
+        if not user:
+            user = self.get_user()
+
+        target_type, target_id = self.parse_target(target)
+
+        if payload:
+            payload = obfuscate_dict(payload)
+            # mypy blames that returned payload can be None, but it can't occur
+            p = ",".join(f"{key}={val}" for key, val in sorted(payload.items()))  # type: ignore
+        else:
+            p = ""
+
+        log.log(
+            "EVENT",
+            "",
+            event=event,
+            ip=BaseAuthentication.get_remote_ip(),
+            user=user.email if user else "-",
+            target_id=target_id,
+            target_type=target_type,
+            payload=p,
+        )

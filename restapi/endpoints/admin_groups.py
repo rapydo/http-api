@@ -65,6 +65,7 @@ class AdminGroups(EndpointResource):
 
         self.auth.save_group(group)
 
+        self.log_event(self.events.create, group, kwargs)
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -84,6 +85,8 @@ class AdminGroups(EndpointResource):
 
         self.auth.save_group(group)
 
+        self.log_event(self.events.modify, group, kwargs)
+
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -99,5 +102,7 @@ class AdminGroups(EndpointResource):
             raise NotFound("This group cannot be found")
 
         self.auth.delete_group(group)
+
+        self.log_event(self.events.delete, group)
 
         return self.empty_response()

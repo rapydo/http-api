@@ -4,6 +4,7 @@ import pytest
 from faker import Faker
 
 from restapi.env import Env
+from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -100,3 +101,45 @@ class TestApp(BaseTests):
         }
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
+
+    def test_events_file(self):
+
+        events = self.get_last_events(6)
+
+        assert events[0].event == "login"
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == ""
+        assert events[0].target_id == ""
+        assert len(events[0].payload) == 0
+
+        assert events[1].event == "create"
+        assert events[1].user == BaseAuthentication.default_user
+        assert events[1].target_type == "Group"
+        assert "fullname" in events[1].payload
+        assert "shortname" in events[1].payload
+
+        assert events[2].event == "modify"
+        assert events[2].user == BaseAuthentication.default_user
+        assert events[2].target_type == "Group"
+        assert events[2].target_id == events[1].target_id
+        assert "fullname" in events[2].payload
+        assert "shortname" in events[2].payload
+
+        assert events[3].event == "delete"
+        assert events[3].user == BaseAuthentication.default_user
+        assert events[3].target_type == "Group"
+        assert events[3].target_id == events[1].target_id
+        assert len(events[3].payload) == 0
+
+        assert events[4].event == "create"
+        assert events[4].user == BaseAuthentication.default_user
+        assert events[4].target_type == "Group"
+        assert events[4].target_id != events[1].target_id
+        assert "fullname" in events[4].payload
+        assert "shortname" in events[4].payload
+
+        assert events[5].event == "modify"
+        assert events[5].user == BaseAuthentication.default_user
+        assert events[5].target_type == "User"
+        assert "fullname" not in events[5].payload
+        assert "shortname" not in events[5].payload

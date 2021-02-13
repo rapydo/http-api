@@ -5,8 +5,9 @@ import secrets
 import string
 import urllib.parse
 import uuid
+from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import jwt
 import pyotp
@@ -37,6 +38,10 @@ AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 # but it raises Missing type parameters for generic type "FlaskClient"
 # I cannot understand how to fix this... so let's fallback to Any...
 FlaskClient = Any
+
+Event = namedtuple(
+    "Event", ["date", "ip", "user", "event", "target_type", "target_id", "payload"]
+)
 
 
 # Create a random password to be used to build data for tests
@@ -529,3 +534,39 @@ class BaseTests:
         token = jwt.encode(payload, secret, algorithm=algorithm).decode("ascii")
 
         return token
+
+    @staticmethod
+    def get_last_events(num: int = 1) -> List[Event]:
+
+        fpath = "/logs/security-events.log"
+        if not os.path.exists(fpath):
+            return []
+
+        with open(fpath) as file:
+            # Not efficient read the whole file to get the last lines, to be improved!
+            lines = file.readlines()
+
+            events: List[Event] = []
+            # read last num lines
+            for line in lines[-num:]:
+                tokens = line.split(" ")
+                event = Event(
+                    # datetime
+                    f"{tokens[0]} {tokens[1]}",
+                    # IP Address
+                    tokens[2],
+                    # User email or -
+                    tokens[3],
+                    # Event name
+                    tokens[4],
+                    # Target type or empty
+                    tokens[5] if len(tokens) >= 6 else "",
+                    # Target ID or empty
+                    tokens[6] if len(tokens) >= 7 else "",
+                    # Payload dictionary
+                    " ".join(tokens[7:]).split(",") if len(tokens) >= 8 else {},
+                )
+
+                events.append(event)
+
+        return events

@@ -115,6 +115,7 @@ class Login(EndpointResource):
 
         self.auth.flush_failed_logins(username)
 
+        self.log_event(self.events.login, user=user)
         return self.response(token)
 
     def check_password_validity(self, user, totp_authentication):

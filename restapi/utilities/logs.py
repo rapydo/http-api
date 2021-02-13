@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import urllib.parse
+from enum import Enum
 from typing import Optional
 
 from loguru import logger as log
@@ -34,9 +35,21 @@ else:  # pragma: no cover
 
 
 LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
+EVENTS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, "security-events.log")
+
+
+class Events(str, Enum):
+    create = "create"
+    modify = "modify"
+    delete = "delete"
+    read = "read"
+    login = "login"
+    failed_login = "failed_login"
+
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
+log.level("EVENT", no=0)
 
 log.remove()
 
@@ -70,6 +83,24 @@ if LOGS_PATH is not None:
             # is not propagated to the caller, preventing your app to crash.
             # This is the case when picle fails to serialize before sending to the queue
             catch=True,
+        )
+
+        fmt = ""
+        fmt += "{time:YYYY-MM-DD HH:mm:ss,SSS} "
+        fmt += "{extra[ip]} "
+        fmt += "{extra[user]} "
+        fmt += "{extra[event]} "
+        fmt += "{extra[target_type]} "
+        fmt += "{extra[target_id]} "
+        fmt += "{extra[payload]} "
+        log.add(
+            EVENTS_PATH,
+            level=0,
+            rotation="1 month",
+            filter=lambda record: "event" in record["extra"],
+            format=fmt,
+            # Otherwise in case of missing extra fields the event will be simply ignored
+            catch=False,
         )
     except PermissionError as p:  # pragma: no cover
         log.error(p)
@@ -161,11 +192,11 @@ def handle_log_output(original_parameters_string):
     return obfuscate_dict(parameters, urlencoded=urlencoded)
 
 
-def obfuscate_url(url):
+def obfuscate_url(url: str) -> str:
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
-def obfuscate_dict(parameters, urlencoded=False):
+def obfuscate_dict(parameters, urlencoded: bool = False):
 
     if not isinstance(parameters, dict):
         return parameters
