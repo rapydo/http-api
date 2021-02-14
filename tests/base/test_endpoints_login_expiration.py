@@ -41,10 +41,11 @@ class TestApp2(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=valid_headers)
         assert r.status_code == 401
 
-        reset_data = {"reset_email": data["email"]}
-        r = client.post(f"{AUTH_URI}/reset", data=reset_data)
-        assert r.status_code == 403
-        assert self.get_content(r) == "Sorry, this account is expired"
+        if Env.get_bool("ALLOW_PASSWORD_RESET"):
+            reset_data = {"reset_email": data["email"]}
+            r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+            assert r.status_code == 403
+            assert self.get_content(r) == "Sorry, this account is expired"
 
         # Let's extend the account validity for other N seconds
         admin_headers, _ = self.do_login(client, None, None)
