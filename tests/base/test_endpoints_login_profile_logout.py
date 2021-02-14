@@ -331,11 +331,7 @@ class TestApp(BaseTests):
                 assert r.status_code == 401
 
                 # After the failure the token is still valid if used from the corret IP
-                r = client.get(
-                    f"{AUTH_URI}/status",
-                    headers=headers,
-                    environ_base={"REMOTE_ADDR": faker.ipv4()},
-                )
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
                 assert r.status_code == 200
 
                 # Another option to provide IP is through the header passed by nginx
