@@ -300,7 +300,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # Raised when get_remote_ip is executed outside request context
         # For example when creating tokens in initialize_testing_environment
         except RuntimeError as e:
-            log.warning(str(e))
+            log.debug(e)
 
         # Mocked IP to prevent tests failures when fn executed outside Flask context
         return "0.0.0.0"
