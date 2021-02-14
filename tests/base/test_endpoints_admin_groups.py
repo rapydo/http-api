@@ -16,6 +16,7 @@ class TestApp(BaseTests):
             log.warning("Skipping admin/users tests")
             return
 
+        # Event 1: login
         headers, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
@@ -23,6 +24,7 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/groups", headers)
         data = self.buildData(schema)
+        # Event 2: create
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
@@ -48,6 +50,7 @@ class TestApp(BaseTests):
             "shortname": faker.company(),
             "fullname": faker.company(),
         }
+        # Event 3: modify
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
 
@@ -64,6 +67,7 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
         assert r.status_code == 404
 
+        # Event 4: delete
         r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
         assert r.status_code == 204
 
@@ -90,6 +94,8 @@ class TestApp(BaseTests):
             "shortname": faker.company(),
         }
 
+        # Event 5: login
+        # Event 6: create
         uuid, _ = self.create_group(client, data=data)
 
         data = {
@@ -97,12 +103,15 @@ class TestApp(BaseTests):
             # very important, otherwise the default user will lose its admin role
             "roles": json.dumps(["admin_root"]),
         }
+        # Event 7: login
+        headers, _ = self.do_login(client, None, None)
+        # Event 8: modify
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
     def test_events_file(self):
 
-        events = self.get_last_events(6)
+        events = self.get_last_events(8)
 
         assert events[0].event == "login"
         assert events[0].user == BaseAuthentication.default_user
@@ -110,7 +119,7 @@ class TestApp(BaseTests):
         assert events[0].target_id == ""
         assert len(events[0].payload) == 0
 
-        # A new grup is created
+        # A new group is created
         assert events[1].event == "create"
         assert events[1].user == BaseAuthentication.default_user
         assert events[1].target_type == "Group"
@@ -132,19 +141,31 @@ class TestApp(BaseTests):
         assert events[3].target_id == events[1].target_id
         assert len(events[3].payload) == 0
 
-        # A new group is created
-        assert events[4].event == "create"
+        assert events[4].event == "login"
         assert events[4].user == BaseAuthentication.default_user
-        assert events[4].target_type == "Group"
-        assert events[4].target_id != events[1].target_id
-        assert "fullname" in events[4].payload
-        assert "shortname" in events[4].payload
+        assert events[4].target_type == ""
+        assert events[4].target_id == ""
+        assert len(events[4].payload) == 0
+
+        # A new group is created
+        assert events[5].event == "create"
+        assert events[5].user == BaseAuthentication.default_user
+        assert events[5].target_type == "Group"
+        assert events[5].target_id != events[1].target_id
+        assert "fullname" in events[5].payload
+        assert "shortname" in events[5].payload
+
+        assert events[6].event == "login"
+        assert events[6].user == BaseAuthentication.default_user
+        assert events[6].target_type == ""
+        assert events[6].target_id == ""
+        assert len(events[6].payload) == 0
 
         # User modified, payload contains the created group
-        assert events[5].event == "modify"
-        assert events[5].user == BaseAuthentication.default_user
-        assert events[5].target_type == "User"
-        assert "fullname" not in events[5].payload
-        assert "shortname" not in events[5].payload
-        assert "group" in events[5].payload
-        assert events[5].payload["group"] == events[4].target_id
+        assert events[7].event == "modify"
+        assert events[7].user == BaseAuthentication.default_user
+        assert events[7].target_type == "User"
+        assert "fullname" not in events[7].payload
+        assert "shortname" not in events[7].payload
+        assert "group" in events[7].payload
+        assert events[7].payload["group"] == events[5].target_id
