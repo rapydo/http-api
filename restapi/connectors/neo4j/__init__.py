@@ -29,7 +29,6 @@ from neomodel.match import NodeSet
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
 from restapi.services.authentication import (
-    NULL_IP,
     BaseAuthentication,
     Group,
     Payload,
@@ -376,8 +375,8 @@ class Authentication(BaseAuthentication):
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
 
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
+        ip_address = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -392,7 +391,7 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-        token_node.IP = ip or NULL_IP
+        token_node.IP = ip_address
         token_node.location = ip_loc or "Unknown"
 
         token_node.save()

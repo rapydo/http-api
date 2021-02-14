@@ -43,7 +43,6 @@ from restapi.utilities.uuid import getUUID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-NULL_IP = "0.0.0.0"
 ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
@@ -284,25 +283,17 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return pwd_context.hash(password)
 
     @staticmethod
-    def get_remote_ip():
-        try:
-            if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-                # it can be something like: ['IP1, IP2']
-                return forwarded_ips[-1].split(",")[0].strip()
+    def get_remote_ip() -> str:
+        if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
+            # it can be something like: ['IP1, IP2']
+            return str(forwarded_ips[-1].split(",")[0].strip())
 
-            if PRODUCTION and not TESTING:  # pragma: no cover
-                log.warning(
-                    "Production mode is enabled, but X-Forwarded-For header is missing"
-                )
+        if PRODUCTION and not TESTING:  # pragma: no cover
+            log.warning(
+                "Production mode is enabled, but X-Forwarded-For header is missing"
+            )
 
-            return request.remote_addr
-        except RuntimeError as e:
-            # When executed from tests it raises
-            # RuntimeError: Working outside of request context.
-            # Just mock an IP address (NULL_IP = 0.0.0.0)
-            if TESTING:
-                return NULL_IP
-            raise e
+        return request.remote_addr
 
     @staticmethod
     def localize_ip(ip):

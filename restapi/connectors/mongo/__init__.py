@@ -11,7 +11,6 @@ from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 from restapi.connectors import Connector
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
 from restapi.services.authentication import (
-    NULL_IP,
     BaseAuthentication,
     Group,
     Payload,
@@ -296,8 +295,8 @@ class Authentication(BaseAuthentication):
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
 
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
+        ip_address = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -312,7 +311,7 @@ class Authentication(BaseAuthentication):
             creation=now,
             last_access=now,
             expiration=exp,
-            IP=ip or NULL_IP,
+            IP=ip_address,
             location=ip_loc or "Unknown",
             user_id=user,
         ).save()
