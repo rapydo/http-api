@@ -2,7 +2,7 @@ from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
+from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
@@ -27,12 +27,6 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        # Save the current number of tokens to verify the creation of activation tokens
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens_snapshot = self.get_content(r)
-        num_tokens = len(tokens_snapshot)
-
         # Request password reset, wrong email
         wrong_email = faker.ascii_email()
         data = {"reset_email": wrong_email}
@@ -40,11 +34,6 @@ class TestApp(BaseTests):
         assert r.status_code == 403
         msg = f"Sorry, {wrong_email} is not recognized as a valid username"
         assert self.get_content(r) == msg
-
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-        assert len(tokens) == num_tokens
 
         # Request password reset, correct email
         data = {"reset_email": BaseAuthentication.default_user}
@@ -67,11 +56,6 @@ class TestApp(BaseTests):
 
         token = self.get_token_from_body(body)
         assert token is not None
-
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-        assert len(tokens) == num_tokens + 1
 
         # Do password reset
         r = client.put(f"{AUTH_URI}/reset/thisisatoken")
