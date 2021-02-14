@@ -80,9 +80,8 @@ class PasswordProvider(BaseProvider):
         return randstr
 
 
-# Beware, this replaced the standard faker fixture provided by Faker it-self
-@pytest.fixture
-def faker():
+@pytest.fixture(autouse=True)
+def configure_faker():
 
     locales = {
         "ar_EG": "Arabic",
@@ -130,4 +129,10 @@ def faker():
 
     # Set here to be available by all methods in BaseTests
     BaseTests.faker = faker
-    return faker
+
+
+# Beware, this replaces the standard faker fixture provided by Faker it-self
+@pytest.fixture
+def faker():
+
+    return BaseTests.faker
