@@ -293,7 +293,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "Production mode is enabled, but X-Forwarded-For header is missing"
             )
 
-        return request.remote_addr
+        if request.remote_addr:
+            return request.remote_addr
+
+        # Mocked IP to prevent tests failures when fn executed outside Flask context
+        return "0.0.0.0"
 
     @staticmethod
     def localize_ip(ip):
