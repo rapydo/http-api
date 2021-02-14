@@ -30,7 +30,7 @@ def initialize_testing_environment(auth: BaseAuthentication) -> None:
     # This is required to execute the commit on sqlalchemy...
     auth.save_user(user)
 
-    for i in range(0, 20):
-        payload, full_payload = auth.fill_payload(user)
-        token = auth.create_token(payload)
-        auth.save_token(user, token, payload)
+    # for i in range(0, 20):
+    #     payload, full_payload = auth.fill_payload(user)
+    #     token = auth.create_token(payload)
+    #     auth.save_token(user, token, payload)
