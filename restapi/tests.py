@@ -299,6 +299,27 @@ class BaseTests:
         assert r.status_code == 204
 
     @classmethod
+    def create_group(
+        cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, Dict[str, Any]]:
+
+        assert Env.get_bool("MAIN_LOGIN_ENABLE")
+
+        admin_headers, _ = cls.do_login(client, None, None)
+        assert admin_headers is not None
+        schema = cls.getDynamicInputSchema(client, "admin/groups", admin_headers)
+        group_data = cls.buildData(schema)
+        if data:
+            group_data.update(data)
+        r = client.post(
+            f"{API_URI}/admin/groups", data=group_data, headers=admin_headers
+        )
+        assert r.status_code == 200
+        uuid = cls.get_content(r)
+
+        return uuid, group_data
+
+    @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema

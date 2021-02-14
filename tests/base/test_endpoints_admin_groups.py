@@ -89,9 +89,8 @@ class TestApp(BaseTests):
             "fullname": "Default group",
             "shortname": faker.company(),
         }
-        r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
+
+        uuid, _ = self.create_group(client, data=data)
 
         data = {
             "group": uuid,

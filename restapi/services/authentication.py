@@ -284,17 +284,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_remote_ip() -> str:
-        if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-            # it can be something like: ['IP1, IP2']
-            return str(forwarded_ips[-1].split(",")[0].strip())
+        try:
+            if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
+                # it can be something like: ['IP1, IP2']
+                return str(forwarded_ips[-1].split(",")[0].strip())
 
-        if PRODUCTION and not TESTING:  # pragma: no cover
-            log.warning(
-                "Production mode is enabled, but X-Forwarded-For header is missing"
-            )
+            if PRODUCTION and not TESTING:  # pragma: no cover
+                log.warning(
+                    "Production mode is enabled, but X-Forwarded-For header is missing"
+                )
 
-        if request.remote_addr:
-            return request.remote_addr
+            if request.remote_addr:
+                return request.remote_addr
+
+        # Raised when get_remote_ip is executed outside request context
+        # For example when creating tokens in initialize_testing_environment
+        except RuntimeError as e:
+            log.warning(str(e))
 
         # Mocked IP to prevent tests failures when fn executed outside Flask context
         return "0.0.0.0"
