@@ -15,6 +15,10 @@ class Status(EndpointResource):
     )
     def get(self, service: str = None) -> Response:
 
+        from restapi.utilities.logs import log
+
+        ip = self.auth.get_remote_ip()
+        log.critical(ip)
         return self.response("Server is alive", allow_html=True)
 
 

@@ -295,7 +295,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/logout")
         assert r.status_code == 401
 
-    def test_05_test_login_failures(self, client: FlaskClient) -> None:
+    def test_05_login_failures(self, client: FlaskClient) -> None:
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
             uuid, data = self.create_user(client)
@@ -305,9 +305,47 @@ class TestApp(BaseTests):
             r = client.get(f"{AUTH_URI}/logout", headers=headers)
             assert r.status_code == 204
 
+    def test_06_token_ip_validity(self, client: FlaskClient, faker: Faker) -> None:
+
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
+            if Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD") < 10:
+                headers, _ = self.do_login(client, None, None)
+
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
+                assert r.status_code == 200
+
+                r = client.get(
+                    f"{AUTH_URI}/status",
+                    headers=headers,
+                    environ_base={"REMOTE_ADDR": faker.ipv4()},
+                )
+                assert r.status_code == 200
+
+                time.sleep(Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD"))
+
+                r = client.get(
+                    f"{AUTH_URI}/status",
+                    headers=headers,
+                    environ_base={"REMOTE_ADDR": faker.ipv4()},
+                )
+                assert r.status_code == 401
+
+                # After the failure the token is still valid if used from the corret IP
+                r = client.get(
+                    f"{AUTH_URI}/status",
+                    headers=headers,
+                    environ_base={"REMOTE_ADDR": faker.ipv4()},
+                )
+                assert r.status_code == 200
+
+                # Another option to provide IP is through the header passed by nginx
+                headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
+                assert r.status_code == 401
+
     if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
-        def test_06_test_totp_failures(self, client: FlaskClient, faker: Faker) -> None:
+        def test_07_totp_failures(self, client: FlaskClient, faker: Faker) -> None:
 
             uuid, data = self.create_user(client)
 
