@@ -52,7 +52,7 @@ if Connector.check_availability("smtp"):
     class ProfileRegistration(EndpointResource):
 
         baseuri = "/auth"
-        depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
+        depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
         @decorators.use_kwargs(getInputSchema)

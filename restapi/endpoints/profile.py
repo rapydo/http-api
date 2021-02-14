@@ -89,7 +89,7 @@ def getProfileData():
 class Profile(EndpointResource):
 
     baseuri = "/auth"
-    depends_on = ["not PROFILE_DISABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["profile"]
 
     @decorators.auth.require()

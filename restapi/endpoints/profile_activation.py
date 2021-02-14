@@ -44,7 +44,7 @@ def send_activation_link(smtp, auth, user):
 
 
 class ProfileActivation(EndpointResource):
-    depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
