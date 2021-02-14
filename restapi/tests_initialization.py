@@ -31,6 +31,6 @@ def initialize_testing_environment(auth: BaseAuthentication) -> None:
     auth.save_user(user)
 
     for i in range(0, 20):
-        payload, full_payload = auth.fill_payload(user, expiration=user.expiration)
+        payload, full_payload = auth.fill_payload(user)
         token = auth.create_token(payload)
         auth.save_token(user, token, payload)

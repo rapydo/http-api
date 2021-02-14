@@ -130,16 +130,16 @@ def create_app(
 
     Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
 
+    # Initialize reading of all files
+    mem.geo_reader = geolite2.reader()
+    # when to close??
+    # geolite2.close()
+
     if mode == ServerModes.INIT:
         Connector.project_init(options=options)
 
     if mode == ServerModes.DESTROY:
         Connector.project_clean()
-
-    # Initialize reading of all files
-    mem.geo_reader = geolite2.reader()
-    # when to close??
-    # geolite2.close()
 
     # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
     if mode == ServerModes.NORMAL:
