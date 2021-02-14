@@ -21,8 +21,7 @@ if max_login_attempts == 0:
     class TestApp1(BaseTests):
         def test_01_login_ban_not_enabled(self, client: FlaskClient) -> None:
 
-            # Adminer is always enabled during tests
-            if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
                 log.warning("Skipping admin/users tests")
                 return
 
@@ -48,8 +47,7 @@ else:
     class TestApp2(BaseTests):
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
 
-            # Adminer is always enabled during tests
-            if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
                 log.warning("Skipping admin/users tests")
                 return
 

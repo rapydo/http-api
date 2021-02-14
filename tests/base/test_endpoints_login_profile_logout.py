@@ -296,7 +296,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_05_test_login_failures(self, client: FlaskClient) -> None:
-        if not Env.get_bool("ADMINER_DISABLED"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
             uuid, data = self.create_user(client)
             headers, token = self.do_login(

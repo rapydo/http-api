@@ -389,7 +389,7 @@ class BaseTests:
         cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
     ) -> Tuple[str, Dict[str, Any]]:
 
-        assert not Env.get_bool("ADMINER_DISABLED")
+        assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
@@ -410,7 +410,7 @@ class BaseTests:
     @classmethod
     def delete_user(cls, client: FlaskClient, uuid: str) -> None:
 
-        assert not Env.get_bool("ADMINER_DISABLED")
+        assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None

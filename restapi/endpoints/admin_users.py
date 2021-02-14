@@ -173,7 +173,7 @@ def getPUTInputSchema(request):
 
 class AdminUsers(EndpointResource):
 
-    depends_on = ["not ADMINER_DISABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["admin"]
     private = True
 

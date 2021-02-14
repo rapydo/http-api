@@ -163,7 +163,7 @@ class TestApp(BaseTests):
         assert resp3[UUID] == resp2[UUID]
         assert resp3[COUNTER] == 2
 
-        if not Env.get_bool("ADMINER_DISABLED"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
             uuid, data = self.create_user(client)
             headers3, _ = self.do_login(client, data["email"], data["password"])

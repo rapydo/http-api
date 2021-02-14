@@ -11,7 +11,7 @@
 
 # class GroupUsers(EndpointResource):
 
-#     depends_on = ["not ADMINER_DISABLED"]
+#     depends_on = ["MAIN_LOGIN_ENABLE"]
 #     labels = ["admin"]
 
 #     @decorators.auth.require_all(Role.COORDINATOR)

@@ -344,7 +344,7 @@ class TestApp(BaseTests):
         # init_auth_db should restore missing default user and group. But previous tests
         # created additional users and groups, so that the init auth db without
         # force flags is not able to re-add the missing and user and group
-        if not Env.get_bool("ADMINER_DISABLED"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
             auth.init_auth_db({})
             assert auth.get_user(username=BaseAuthentication.default_user) is None
             assert auth.get_group(name="Default") is None

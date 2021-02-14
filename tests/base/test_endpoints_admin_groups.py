@@ -12,8 +12,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, fake: Faker) -> None:
 
-        # Adminer is always enabled during tests
-        if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
             return
 
