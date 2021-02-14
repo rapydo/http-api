@@ -51,7 +51,7 @@ else:
             assert data["modified1"] < data["modified2"]
 
         @staticmethod
-        def test_connector(app: Flask, fake: Faker) -> None:
+        def test_connector(app: Flask, faker: Faker) -> None:
 
             try:
                 connector.get_instance(host="invalidhostname", port=123)
@@ -79,7 +79,7 @@ else:
                 assert u.email is not None
                 break
 
-            v = fake.random_letters(24)
+            v = faker.random_letters(24)
             # Create a fake token and verify that is linked to nobody
             t = obj.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
             assert t.emitted_for.single() is None

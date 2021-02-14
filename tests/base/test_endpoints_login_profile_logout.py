@@ -9,7 +9,7 @@ from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_01_login(self, client: FlaskClient, fake: Faker) -> None:
+    def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
@@ -54,12 +54,12 @@ class TestApp(BaseTests):
 
         self.do_login(
             client,
-            fake.ascii_email(),
-            fake.password(strong=True),
+            faker.ascii_email(),
+            faker.password(strong=True),
             status_code=401,
         )
 
-    def test_02_GET_profile(self, client: FlaskClient, fake: Faker) -> None:
+    def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
 
         # Check success
@@ -120,7 +120,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-        headers = {"Authorization": f"Bearer '{fake.pystr()}"}
+        headers = {"Authorization": f"Bearer '{faker.pystr()}"}
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
@@ -162,7 +162,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-    def test_03_change_profile(self, client: FlaskClient, fake: Faker) -> None:
+    def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enable during core tests
         if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
@@ -182,8 +182,8 @@ class TestApp(BaseTests):
         r = client.patch(f"{AUTH_URI}/profile", data={}, headers=headers)
         assert r.status_code == 204
 
-        newname = fake.name()
-        newuuid = fake.pystr()
+        newname = faker.name()
+        newuuid = faker.pystr()
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
@@ -212,7 +212,7 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile", data={}, headers=headers)
         assert r.status_code == 400
         # Sending a new_password and/or password_confirm without a password
-        newpassword = fake.password()
+        newpassword = faker.password()
         data = {"new_password": newpassword}
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
@@ -224,15 +224,15 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         data = {}
-        data["password"] = fake.password(length=5)
+        data["password"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
-        data["new_password"] = fake.password(length=5)
+        data["new_password"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
-        data["password_confirm"] = fake.password(length=5)
+        data["password_confirm"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
@@ -256,7 +256,7 @@ class TestApp(BaseTests):
         assert r.status_code == 409
 
         # Change the password
-        data["new_password"] = fake.password(strong=True)
+        data["new_password"] = faker.password(strong=True)
         data["password_confirm"] = data["new_password"]
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
@@ -307,22 +307,22 @@ class TestApp(BaseTests):
 
     if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
-        def test_06_test_totp_failures(self, client: FlaskClient, fake: Faker) -> None:
+        def test_06_test_totp_failures(self, client: FlaskClient, faker: Faker) -> None:
 
             uuid, data = self.create_user(client)
 
             username = data["email"]
             password = data["password"]
-            new_password = fake.password(strong=True)
+            new_password = faker.password(strong=True)
 
             invalid_totp = (
-                str(fake.pyint(min_value=0, max_value=9)),
-                str(fake.pyint(min_value=10, max_value=99)),
-                str(fake.pyint(min_value=100, max_value=999)),
-                str(fake.pyint(min_value=1000, max_value=9999)),
-                str(fake.pyint(min_value=10000, max_value=99999)),
-                str(fake.pyint(min_value=1000000, max_value=9999999)),
-                fake.pystr(6),
+                str(faker.pyint(min_value=0, max_value=9)),
+                str(faker.pyint(min_value=10, max_value=99)),
+                str(faker.pyint(min_value=100, max_value=999)),
+                str(faker.pyint(min_value=1000, max_value=9999)),
+                str(faker.pyint(min_value=10000, max_value=99999)),
+                str(faker.pyint(min_value=1000000, max_value=9999999)),
+                faker.pystr(6),
             )
             ###################################
             # Test first password change
@@ -404,7 +404,7 @@ class TestApp(BaseTests):
             ###################################
             # Test password change
             ###################################
-            new_password = fake.password(strong=True)
+            new_password = faker.password(strong=True)
             headers, _ = self.do_login(client, username, password)
 
             data = {

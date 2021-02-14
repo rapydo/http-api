@@ -10,7 +10,7 @@ from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_admin_users(self, client: FlaskClient, fake: Faker) -> None:
+    def test_admin_users(self, client: FlaskClient, faker: Faker) -> None:
 
         if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
@@ -72,13 +72,15 @@ class TestApp(BaseTests):
         # send and invalid user_id
         r = client.put(
             f"{API_URI}/admin/users/invalid",
-            data={"name": fake.name()},
+            data={"name": faker.name()},
             headers=headers,
         )
         assert r.status_code == 404
 
         r = client.put(
-            f"{API_URI}/admin/users/{uuid}", data={"name": fake.name()}, headers=headers
+            f"{API_URI}/admin/users/{uuid}",
+            data={"name": faker.name()},
+            headers=headers,
         )
         assert r.status_code == 204
 
@@ -108,7 +110,7 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # change password of user2
-        newpwd = fake.password(strong=True)
+        newpwd = faker.password(strong=True)
         data = {"password": newpwd, "email_notification": True}
         r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
         assert r.status_code == 204
@@ -136,7 +138,7 @@ class TestApp(BaseTests):
 
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"name": fake.name()},
+            data={"name": faker.name()},
             headers=headers2,
         )
         assert r.status_code == 401

@@ -5,7 +5,7 @@ from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
-    def test_tokens(self, client: FlaskClient, fake: Faker) -> None:
+    def test_tokens(self, client: FlaskClient, faker: Faker) -> None:
 
         last_token = None
         last_tokens_header = None
@@ -74,7 +74,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            query_string={"get_total": True, "input_filter": fake.pystr()},
+            query_string={"get_total": True, "input_filter": faker.pystr()},
             headers=last_tokens_header,
         )
         assert r.status_code == 206
@@ -140,7 +140,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            query_string={"page": 1, "size": 20, "input_filter": fake.pystr()},
+            query_string={"page": 1, "size": 20, "input_filter": faker.pystr()},
             headers=last_tokens_header,
         )
         assert r.status_code == 200

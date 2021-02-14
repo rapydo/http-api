@@ -8,7 +8,7 @@ from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_registration(self, client: FlaskClient, fake: Faker) -> None:
+    def test_registration(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enabled during core tests
         if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
@@ -26,63 +26,63 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
         assert r.status_code == 400
         registration_data = {}
-        registration_data["password"] = fake.password(5)
+        registration_data["password"] = faker.password(5)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
         registration_data["email"] = BaseAuthentication.default_user
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
-        registration_data["name"] = fake.first_name()
+        registration_data["name"] = faker.first_name()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["surname"] = fake.last_name()
+        registration_data["surname"] = faker.last_name()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["password_confirm"] = fake.password(strong=True)
+        registration_data["password_confirm"] = faker.password(strong=True)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
-        registration_data["password"] = fake.password(min_pwd_len - 1)
+        registration_data["password"] = faker.password(min_pwd_len - 1)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["password"] = fake.password(min_pwd_len)
+        registration_data["password"] = faker.password(min_pwd_len)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
-        registration_data["email"] = fake.ascii_email()
+        registration_data["email"] = faker.ascii_email()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
 
-        registration_data["password"] = fake.password(min_pwd_len, low=False, up=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=False, up=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing lower case letters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(min_pwd_len, low=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing upper case letters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(min_pwd_len, low=True, up=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=True, up=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing numbers"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(
+        registration_data["password"] = faker.password(
             min_pwd_len, low=True, up=True, digits=True
         )
         registration_data["password_confirm"] = registration_data["password"]
@@ -91,7 +91,7 @@ class TestApp(BaseTests):
         m = "Password is too weak, missing special characters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(strong=True)
+        registration_data["password"] = faker.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
@@ -125,10 +125,10 @@ class TestApp(BaseTests):
         # Activation, missing or wrong information
         r = client.post(f"{AUTH_URI}/profile/activate")
         assert r.status_code == 400
-        r = client.post(f"{AUTH_URI}/profile/activate", data=fake.pydict(2))
+        r = client.post(f"{AUTH_URI}/profile/activate", data=faker.pydict(2))
         assert r.status_code == 400
         # It isn't an email
-        invalid = fake.pystr(10)
+        invalid = faker.pystr(10)
         r = client.post(f"{AUTH_URI}/profile/activate", data={"username": invalid})
         assert r.status_code == 400
 
@@ -144,7 +144,7 @@ class TestApp(BaseTests):
         activation_message += "you will find the link to activate your account"
         # request activation, wrong username
         r = client.post(
-            f"{AUTH_URI}/profile/activate", data={"username": fake.ascii_email()}
+            f"{AUTH_URI}/profile/activate", data={"username": faker.ascii_email()}
         )
         # return is 200, but no token will be generated and no mail will be sent
         # but it respond with the activation msg and hides the non existence of the user
@@ -257,7 +257,7 @@ class TestApp(BaseTests):
         # 2 - user activation using unconventional channel, e.g. by admins
         # 3 - user tries to activate and fails because already active
 
-        registration_data["email"] = fake.ascii_email()
+        registration_data["email"] = faker.ascii_email()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200

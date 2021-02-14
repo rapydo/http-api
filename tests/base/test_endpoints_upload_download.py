@@ -6,12 +6,12 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestUploadAndDownload(BaseTests):
-    def test_upload(self, client: FlaskClient, fake: Faker) -> None:
+    def test_upload(self, client: FlaskClient, faker: Faker) -> None:
 
-        self.fcontent = fake.paragraph()
+        self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
 
-        self.fname = f"{fake.pystr()}.notallowed"
+        self.fname = f"{faker.pystr()}.notallowed"
 
         r = client.put(
             f"{API_URI}/tests/upload",
@@ -25,7 +25,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == "File extension not allowed"
 
-        self.fname = f"{fake.pystr()}.not"
+        self.fname = f"{faker.pystr()}.not"
 
         r = client.put(
             f"{API_URI}/tests/upload",
@@ -39,7 +39,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == "File extension not allowed"
 
-        self.fname = f"{fake.pystr()}.txt"
+        self.fname = f"{faker.pystr()}.txt"
         self.save("fname", self.fname)
 
         r = client.put(
@@ -77,7 +77,7 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") is not None
         assert meta.get("type") is not None
 
-    def test_download(self, client: FlaskClient, fake: Faker) -> None:
+    def test_download(self, client: FlaskClient) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
@@ -122,7 +122,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 400
 
-    def test_chunked(self, client: FlaskClient, fake: Faker) -> None:
+    def test_chunked(self, client: FlaskClient, faker: Faker) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
@@ -141,12 +141,12 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 201
         assert self.get_content(r) == ""
 
-        with io.StringIO(fake.text()) as f:
+        with io.StringIO(faker.text()) as f:
             r = client.put(f"{API_URI}/tests/upload/chunked", data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
-        with io.StringIO(fake.text()) as f:
+        with io.StringIO(faker.text()) as f:
             r = client.put(
                 f"{API_URI}/tests/upload/chunked",
                 data=f,
@@ -155,7 +155,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
-        up_data = fake.pystr(min_chars=24, max_chars=48)
+        up_data = faker.pystr(min_chars=24, max_chars=48)
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
@@ -244,7 +244,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data
 
         # Send a new string as content file. Will be appended as prefix
-        up_data2 = fake.pystr(min_chars=24, max_chars=48)
+        up_data2 = faker.pystr(min_chars=24, max_chars=48)
         STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(

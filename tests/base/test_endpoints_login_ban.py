@@ -88,15 +88,15 @@ else:
             self.delete_user(client, uuid)
 
         def test_02_registration_and_login_ban(
-            self, client: FlaskClient, fake: Faker
+            self, client: FlaskClient, faker: Faker
         ) -> None:
             if Env.get_bool("ALLOW_REGISTRATION"):
 
                 registration_data = {}
-                registration_data["email"] = fake.ascii_email()
-                registration_data["name"] = fake.first_name()
-                registration_data["surname"] = fake.last_name()
-                registration_data["password"] = fake.password(strong=True)
+                registration_data["email"] = faker.ascii_email()
+                registration_data["name"] = faker.first_name()
+                registration_data["surname"] = faker.last_name()
+                registration_data["password"] = faker.password(strong=True)
                 registration_data["password_confirm"] = registration_data["password"]
                 r = client.post(f"{AUTH_URI}/profile", data=registration_data)
                 # now the user is created but INACTIVE, activation endpoint is needed

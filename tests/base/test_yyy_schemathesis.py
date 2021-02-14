@@ -7,7 +7,7 @@ from hypothesis import HealthCheck, settings
 from restapi.env import Env
 from restapi.server import create_app
 from restapi.services.authentication import BaseAuthentication
-from restapi.tests import BaseTests, get_faker
+from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
 RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
@@ -25,8 +25,7 @@ def get_auth_token(client, data):
 
             if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
                 currentpwd = data["password"]
-                fake = get_faker()
-                newpwd = fake.password(strong=True)
+                newpwd = BaseTests.faker.password(strong=True)
                 data["new_password"] = newpwd
                 data["password_confirm"] = newpwd
                 # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED

@@ -11,7 +11,7 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
 
     class TestApp1(BaseTests):
         def test_test_unused_credentials(
-            self, client: FlaskClient, fake: Faker
+            self, client: FlaskClient, faker: Faker
         ) -> None:
 
             assert BaseTests.unused_credentials is not None
@@ -19,7 +19,7 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
 
             data = {
                 "username": BaseTests.unused_credentials[0],
-                "password": fake.password(strong=True),
+                "password": faker.password(strong=True),
             }
 
             # Credentials are verified before the inactivity check

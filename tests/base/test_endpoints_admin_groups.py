@@ -10,7 +10,7 @@ from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_admin_groups(self, client: FlaskClient, fake: Faker) -> None:
+    def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
         if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
@@ -45,8 +45,8 @@ class TestApp(BaseTests):
         assert fullname is not None
 
         newdata = {
-            "shortname": fake.company(),
-            "fullname": fake.company(),
+            "shortname": faker.company(),
+            "fullname": faker.company(),
         }
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
@@ -87,7 +87,7 @@ class TestApp(BaseTests):
 
         data = {
             "fullname": "Default group",
-            "shortname": fake.company(),
+            "shortname": faker.company(),
         }
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200

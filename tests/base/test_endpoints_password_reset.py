@@ -7,7 +7,7 @@ from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_password_reset(self, client: FlaskClient, fake: Faker) -> None:
+    def test_password_reset(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enable during core tests
         if not Env.get_bool("ALLOW_PASSWORD_RESET"):  # pragma: no cover
@@ -22,7 +22,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # Request password reset, missing information
-        r = client.post(f"{AUTH_URI}/reset", data=fake.pydict(2))
+        r = client.post(f"{AUTH_URI}/reset", data=faker.pydict(2))
         assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
@@ -34,7 +34,7 @@ class TestApp(BaseTests):
         num_tokens = len(tokens_snapshot)
 
         # Request password reset, wrong email
-        wrong_email = fake.ascii_email()
+        wrong_email = faker.ascii_email()
         data = {"reset_email": wrong_email}
         r = client.post(f"{AUTH_URI}/reset", data=data)
         assert r.status_code == 403
@@ -99,21 +99,21 @@ class TestApp(BaseTests):
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
         # Password too short
-        data["new_password"] = fake.password(min_pwd_len - 1)
-        data["password_confirm"] = fake.password(min_pwd_len - 1)
+        data["new_password"] = faker.password(min_pwd_len - 1)
+        data["password_confirm"] = faker.password(min_pwd_len - 1)
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 400
         data["password_confirm"] = data["new_password"]
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 400
 
-        data["new_password"] = fake.password(min_pwd_len, strong=True)
-        data["password_confirm"] = fake.password(min_pwd_len, strong=True)
+        data["new_password"] = faker.password(min_pwd_len, strong=True)
+        data["password_confirm"] = faker.password(min_pwd_len, strong=True)
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 400
         assert self.get_content(r) == "New password does not match with confirmation"
 
-        new_pwd = fake.password(min_pwd_len, strong=True)
+        new_pwd = faker.password(min_pwd_len, strong=True)
         data["new_password"] = new_pwd
         data["password_confirm"] = new_pwd
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)

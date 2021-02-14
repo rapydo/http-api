@@ -33,7 +33,7 @@ def verify_token_is_not_valid(
 
 
 class TestApp(BaseTests):
-    def test_authentication_service(self, client: FlaskClient, fake: Faker) -> None:
+    def test_authentication_service(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enable during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
@@ -44,46 +44,46 @@ class TestApp(BaseTests):
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
-        pwd = fake.password(min_pwd_len - 1)
+        pwd = faker.password(min_pwd_len - 1)
         ret_val, ret_text = auth.verify_password_strength(pwd, pwd)
         assert not ret_val
         assert ret_text == "The new password cannot match the previous password"
 
-        pwd = fake.password(min_pwd_len - 1)
-        old_pwd = fake.password(min_pwd_len)
+        pwd = faker.password(min_pwd_len - 1)
+        old_pwd = faker.password(min_pwd_len)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert not ret_val
         error = f"Password is too short, use at least {min_pwd_len} characters"
         assert ret_text == error
 
-        pwd = fake.password(min_pwd_len, low=False, up=True)
+        pwd = faker.password(min_pwd_len, low=False, up=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert not ret_val
         assert ret_text == "Password is too weak, missing lower case letters"
 
-        pwd = fake.password(min_pwd_len, low=True)
+        pwd = faker.password(min_pwd_len, low=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert not ret_val
         assert ret_text == "Password is too weak, missing upper case letters"
 
-        pwd = fake.password(min_pwd_len, low=True, up=True)
+        pwd = faker.password(min_pwd_len, low=True, up=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert not ret_val
         assert ret_text == "Password is too weak, missing numbers"
 
-        pwd = fake.password(min_pwd_len, low=True, up=True, digits=True)
+        pwd = faker.password(min_pwd_len, low=True, up=True, digits=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert not ret_val
         assert ret_text == "Password is too weak, missing special characters"
 
-        pwd = fake.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
+        pwd = faker.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert ret_val
         assert ret_text is None
 
         # How to retrieve a generic user?
         user = None
-        pwd = fake.password(min_pwd_len - 1)
+        pwd = faker.password(min_pwd_len - 1)
 
         try:
             auth.change_password(user, pwd, None, None)
@@ -105,7 +105,7 @@ class TestApp(BaseTests):
 
         try:
             # wrong confirmation
-            auth.change_password(user, pwd, pwd, fake.password(strong=True))
+            auth.change_password(user, pwd, pwd, faker.password(strong=True))
             pytest.fail("wrong password confirmation!?")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 409
@@ -127,7 +127,7 @@ class TestApp(BaseTests):
             # i.e. is verified password != newpassword
             # password validity will be checked once completed checks on new password
             # => a random current password is ok here
-            auth.change_password(user, fake.password(), pwd, pwd)
+            auth.change_password(user, faker.password(), pwd, pwd)
             pytest.fail("Password strength not verified")  # pragma: no cover
         except RestApiException as e:
             assert e.status_code == 409
@@ -156,8 +156,8 @@ class TestApp(BaseTests):
 
         auth = Connector.get_authentication_instance()
 
-        pwd1 = fake.password(strong=True)
-        pwd2 = fake.password(strong=True)
+        pwd1 = faker.password(strong=True)
+        pwd2 = faker.password(strong=True)
 
         hash_1 = auth.get_password_hash(pwd1)
         assert len(hash_1) > 0
@@ -234,9 +234,9 @@ class TestApp(BaseTests):
         assert not auth.verify_roles(None, ["A", "B"], required_roles="ANY")
 
         # Just to verify that the function works
-        verify_token_is_not_valid(auth, fake.pystr())
-        verify_token_is_not_valid(auth, fake.pystr(), auth.PWD_RESET)
-        verify_token_is_not_valid(auth, fake.pystr(), auth.ACTIVATE_ACCOUNT)
+        verify_token_is_not_valid(auth, faker.pystr())
+        verify_token_is_not_valid(auth, faker.pystr(), auth.PWD_RESET)
+        verify_token_is_not_valid(auth, faker.pystr(), auth.ACTIVATE_ACCOUNT)
 
         user = auth.get_user(username=BaseAuthentication.default_user)
         t1, payload1 = auth.create_temporary_token(user, auth.PWD_RESET)
@@ -248,7 +248,7 @@ class TestApp(BaseTests):
         verify_token_is_not_valid(auth, t1, auth.FULL_TOKEN)
         verify_token_is_valid(auth, t1, auth.PWD_RESET)
         verify_token_is_not_valid(auth, t1, auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(auth, fake.ascii_email(), t1)
+        verify_token_is_not_valid(auth, faker.ascii_email(), t1)
 
         # Create another type of temporary token => t1 is still valid
         t2, payload2 = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
@@ -260,7 +260,7 @@ class TestApp(BaseTests):
         verify_token_is_not_valid(auth, t2, auth.FULL_TOKEN)
         verify_token_is_not_valid(auth, t2, auth.PWD_RESET)
         verify_token_is_valid(auth, t2, auth.ACTIVATE_ACCOUNT)
-        verify_token_is_not_valid(auth, fake.ascii_email(), t2)
+        verify_token_is_not_valid(auth, faker.ascii_email(), t2)
 
         EXPIRATION = 3
         # Create another token PWD_RESET, this will invalidate t1
