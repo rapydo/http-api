@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import secrets
+import string
 import urllib.parse
 import uuid
 from collections import namedtuple
@@ -12,6 +14,7 @@ import pyotp
 import pytest
 import pytz
 from faker import Faker
+from faker.providers import BaseProvider
 from flask.wrappers import Response
 
 from restapi.config import (
@@ -19,6 +22,7 @@ from restapi.config import (
     AUTH_URL,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    FAKER_LOCALES,
     SECRET_KEY_FILE,
 )
 from restapi.connectors import Connector
@@ -41,10 +45,20 @@ Event = namedtuple(
 )
 
 
+def get_faker():
+
+    loc = secrets.choice(list(FAKER_LOCALES.keys()))
+    log.warning(f"Today I'm {FAKER_LOCALES.get(loc)}")
+    faker = Faker(loc)
+
+    faker.add_provider(PasswordProvider)
+
+    return faker
+
+
 class BaseTests:
 
-    # It will be replaced by the correct faker instance by fixture defined in conftest
-    faker: Faker = Faker()
+    faker: Faker = get_faker()
     # This will store credentials to be used to test unused credentials ban
     # Tuple = (email, password, uuid)
     unused_credentials: Optional[Tuple[str, str, str]] = None
@@ -455,3 +469,68 @@ class BaseTests:
                 events.append(event)
 
         return events
+
+
+# Create a random password to be used to build data for tests
+class PasswordProvider(BaseProvider):
+    def password(
+        self,
+        length: int = 8,
+        strong: bool = False,  # this enables all low, up, digits and symbols
+        low: bool = True,
+        up: bool = False,
+        digits: bool = False,
+        symbols: bool = False,
+    ) -> str:
+
+        if strong:
+            if length < 16:
+                length = 16
+            low = True
+            up = True
+            digits = True
+            symbols = True
+
+        charset = ""
+        if low:
+            charset += string.ascii_lowercase
+        if up:
+            charset += string.ascii_uppercase
+        if digits:
+            charset += string.digits
+        if symbols:
+            charset += string.punctuation
+
+        rand = secrets.SystemRandom()
+
+        randstr = "".join(rand.choices(charset, k=length))
+        if low and not any(s in randstr for s in string.ascii_lowercase):
+            log.warning(
+                f"{randstr} is not strong enough: missing lower case. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if up and not any(s in randstr for s in string.ascii_uppercase):
+            log.warning(
+                f"{randstr} is not strong enough: missing upper case. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if digits and not any(s in randstr for s in string.digits):
+            log.warning(
+                f"{randstr} is not strong enough: missing digits. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+        if symbols and not any(s in randstr for s in string.punctuation):
+            log.warning(
+                f"{randstr} is not strong enough: missing symbols. Sampling again..."
+            )
+            return self.password(
+                length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
+            )
+
+        return randstr
