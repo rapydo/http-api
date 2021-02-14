@@ -19,7 +19,7 @@ from restapi.config import (
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.authentication import BaseAuthentication
-from restapi.tests_initalization import initialize_testing_environment
+from restapi.tests_initialization import initialize_testing_environment
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
