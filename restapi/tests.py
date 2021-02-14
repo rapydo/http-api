@@ -20,10 +20,15 @@ from restapi.config import (
     DEFAULT_HOST,
     DEFAULT_PORT,
     SECRET_KEY_FILE,
+    TESTING,
 )
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication, Payload
+from restapi.services.authentication import (
+    DEFAULT_GROUP_NAME,
+    BaseAuthentication,
+    Payload,
+)
 from restapi.utilities.faker import get_faker
 from restapi.utilities.logs import log
 
@@ -455,3 +460,31 @@ class BaseTests:
                 events.append(event)
 
         return events
+
+
+def initialize_testing_environment(auth: BaseAuthentication) -> None:
+
+    assert TESTING
+
+    email = BaseTests.faker.ascii_email()
+    password = BaseTests.faker.password(strong=True)
+    default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
+    user = auth.create_user(
+        {
+            "email": email,
+            "name": "Default",
+            "surname": "User",
+            "password": password,
+            "last_password_change": datetime.now(pytz.utc),
+        },
+        # It will be expanded with the default role
+        roles=[],
+    )
+    auth.add_user_to_group(user, default_group)
+    # This is required to execute the commit on sqlalchemy...
+    auth.save_user(user)
+
+    for i in range(0, 20):
+        payload, full_payload = auth.fill_payload(user, expiration=user.expiration)
+        token = auth.create_token(payload)
+        auth.save_token(user, token, payload)

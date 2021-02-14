@@ -14,10 +14,12 @@ from restapi.config import (
     CUSTOM_PACKAGE,
     EXTENDED_PACKAGE,
     EXTENDED_PROJECT_DISABLED,
+    TESTING,
 )
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.authentication import BaseAuthentication
+from restapi.tests import initialize_testing_environment
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -320,6 +322,10 @@ class Connector(metaclass=abc.ABCMeta):
                 log.info("Vanilla project has been initialized")
             else:
                 log.error("Errors during custom initialization")
+
+            if TESTING:
+                initialize_testing_environment(authentication_instance)
+                # TODO: also call project defined testing initialization
 
     @staticmethod
     def project_clean() -> None:
