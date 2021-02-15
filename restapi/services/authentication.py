@@ -812,6 +812,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def log_event(
         cls,
         event: Events,
+        target: Optional[Any] = None,
         payload: Optional[Dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
@@ -820,6 +821,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             event=event,
             payload=payload,
             user=user,
+            target=target,
             ip=cls.get_remote_ip(),
         )
 
