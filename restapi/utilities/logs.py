@@ -164,6 +164,7 @@ OBSCURED_FIELDS = [
     "filename",
     "new_password",
     "password_confirm",
+    "totp",
     "totp_code",
 ]
 
