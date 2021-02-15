@@ -39,7 +39,7 @@ from restapi.services.authentication import (
     Token,
     User,
 )
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -555,6 +555,7 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.delete(token_entry)
                 self.db.session.commit()
+                self.log_event(Events.delete, target=token_entry)
                 return True
             except BaseException as e:
                 log.error("Could not invalidate token ({}), rolling back", e)

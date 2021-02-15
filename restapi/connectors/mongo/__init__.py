@@ -18,7 +18,7 @@ from restapi.services.authentication import (
     Token,
     User,
 )
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 from restapi.utilities.uuid import getUUID
 
 
@@ -400,6 +400,9 @@ class Authentication(BaseAuthentication):
         try:
             token_entry = self.db.Token.objects.raw({"token": token}).first()
             token_entry.delete()
+
+            self.log_event(Events.delete, target=token_entry)
+
         except self.db.Token.DoesNotExist:
             log.warning("Could not invalidate non-existing token")
 

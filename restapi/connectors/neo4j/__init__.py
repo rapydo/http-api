@@ -36,7 +36,7 @@ from restapi.services.authentication import (
     Token,
     User,
 )
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 
 
 def catch_db_exceptions(func):
@@ -479,6 +479,7 @@ class Authentication(BaseAuthentication):
         try:
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()
+            self.log_event(Events.delete, target=token_node)
         except self.db.Token.DoesNotExist:
             log.warning("Unable to invalidate, token not found: {}", token)
             return False

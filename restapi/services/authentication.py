@@ -240,6 +240,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if user is None:
             self.register_failed_login(username)
 
+            self.log_event(
+                Events.failed_login,
+                target=user,
+                payload={"username": username},
+                user=user,
+            )
+
             raise Unauthorized("Invalid access credentials", is_warning=True)
 
         # Check if Oauth2 is enabled
@@ -252,8 +259,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             payload, full_payload = self.fill_payload(user, expiration=user.expiration)
             token = self.create_token(payload)
 
+            self.log_event(Events.login, user=user)
             return token, full_payload, user
 
+        self.log_event(
+            Events.failed_login,
+            payload={"username": username},
+            user=user,
+        )
         self.register_failed_login(username)
         raise Unauthorized("Invalid access credentials", is_warning=True)
 
@@ -633,6 +646,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
+
+            self.log_event(
+                Events.failed_login,
+                payload={"totp": totp_code},
+                user=user,
+            )
+
             self.register_failed_login(user.email)
             raise Unauthorized("Verification code is not valid")
 
@@ -708,6 +728,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         user.last_password_change = datetime.now(pytz.utc)
         self.save_user(user)
 
+        self.log_event(Events.change_password, user=user, target=user)
+
         for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
@@ -727,6 +749,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
             return
 
+        cls.log_event(
+            Events.refused_login,
+            payload={
+                "username": username,
+                "motivation": "account blocked due to too many failed logins",
+            },
+        )
+
         # Dear user, you have exceeded the limit!
         raise Forbidden(
             "Sorry, this account is temporarily blocked "
@@ -737,6 +767,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_user_status(cls, user: User) -> None:
 
         if not user.is_active:
+
+            cls.log_event(
+                Events.refused_login,
+                payload={"username": user.email, "motivation": "account not active"},
+            )
+
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
@@ -750,6 +786,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             else:
                 now = get_now(user.last_login.tzinfo)
                 if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+                    cls.log_event(
+                        Events.refused_login,
+                        payload={
+                            "username": user.email,
+                            "motivation": "account blocked due to inactivity",
+                        },
+                    )
                     raise Forbidden("Sorry, this account is blocked for inactivity")
 
         if user.expiration:
@@ -759,6 +802,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 now = get_now(user.expiration.tzinfo)
 
             if user.expiration < now:
+                cls.log_event(
+                    Events.refused_login,
+                    payload={"username": user.email, "motivation": "account expired"},
+                )
                 raise Forbidden("Sorry, this account is expired")
 
     # Mostly copied in definition.py
