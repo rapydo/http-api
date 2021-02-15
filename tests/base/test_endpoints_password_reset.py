@@ -117,7 +117,7 @@ class TestApp(BaseTests):
                 continue
 
             assert event.event == Events.change_password.value
-            assert event.user == data["email"]
+            assert event.user == BaseAuthentication.default_user
             break
 
         self.do_login(client, None, None, status_code=401)
@@ -149,7 +149,7 @@ class TestApp(BaseTests):
                 continue
 
             assert event.event == Events.change_password.value
-            assert event.user == data["email"]
+            assert event.user == BaseAuthentication.default_user
             break
 
         self.do_login(client, None, new_pwd, status_code=401)
