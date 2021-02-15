@@ -252,6 +252,11 @@ class TestApp(BaseTests):
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
         assert events[INDEX].target_id != events[1].target_id
-        assert "name" in events[INDEX].payload
-        assert "surname" in events[INDEX].payload
+        assert "name" not in events[INDEX].payload
+        assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
+        assert "password" in events[INDEX].payload
+        assert "roles" in events[INDEX].payload
+        assert "email_notification" not in events[INDEX].payload
+        # Verify that the password is obfuscated in the log:
+        assert events[INDEX].payload["password"] == OBSCURE_VALUE
