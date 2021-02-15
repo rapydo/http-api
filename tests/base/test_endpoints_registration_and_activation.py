@@ -141,10 +141,7 @@ class TestApp(BaseTests):
 
         assert events[1].event == Events.refused_login.value
         assert events[1].payload["username"] == data["reset_email"]
-        assert (
-            events[1].payload["motivation"]
-            == "account blocked due to too many failed logins"
-        )
+        assert events[1].payload["motivation"] == "account not active"
 
         # Activation, missing or wrong information
         r = client.post(f"{AUTH_URI}/profile/activate")
