@@ -201,7 +201,7 @@ def obfuscate_url(url: str) -> str:
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
-def obfuscate_dict(parameters, urlencoded: bool = False):
+def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
 
     if not isinstance(parameters, dict):
         return parameters
@@ -219,8 +219,8 @@ def obfuscate_dict(parameters, urlencoded: bool = False):
         else:
             value = str(value)
             try:
-                if len(value) > MAX_CHAR_LEN:
-                    value = value[:MAX_CHAR_LEN] + "..."
+                if len(value) > max_len:
+                    value = value[:max_len] + "..."
             except IndexError:
                 pass
 
@@ -256,7 +256,7 @@ def save_event_log(
     target_type, target_id = parse_event_target(target)
 
     if payload:
-        p = json.dumps(obfuscate_dict(payload))
+        p = json.dumps(obfuscate_dict(payload, max_len=999))
     else:
         p = ""
 
