@@ -267,7 +267,7 @@
 #         email_notification = kwargs.get('email_notification', False)
 #         if email_notification and unhashed_password is not None:
 #             send_notification(user, unhashed_password, is_update=False)
-
+#         self.log_event(self.events.create, user, kwargs)
 #         return self.response(user.uuid)
 
 #     @decorators.auth.require_all(Role.COORDINATOR)
@@ -347,7 +347,7 @@
 #         email_notification = kwargs.get('email_notification', False)
 #         if email_notification and unhashed_password is not None:
 #             send_notification(user, unhashed_password, is_update=True)
-
+#         self.log_event(self.events.modifiy, user, kwargs)
 #         return self.empty_response()
 
 #     @decorators.auth.require_all(Role.COORDINATOR)
@@ -386,5 +386,5 @@
 #             user.delete()
 #         else:
 #             raise RestApiException("Invalid auth backend, all known db are disabled")
-
+#         self.log_event(self.events.delete, user)
 #         return self.empty_response()

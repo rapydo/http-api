@@ -44,7 +44,11 @@ class Events(str, Enum):
     delete = "delete"
     read = "read"
     login = "login"
+    logout = "logout"
     failed_login = "failed_login"
+    refused_login = "refused_login"
+    activation = "activation"
+    reset_password_request = "reset_password_request"
 
 
 log.level("VERBOSE", no=1, color="<fg #666>")

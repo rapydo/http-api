@@ -178,4 +178,5 @@ class Profile(EndpointResource):
 
         self.auth.save_user(user)
 
+        self.log_event(self.events.modify, user, kwargs)
         return self.empty_response()

@@ -16,5 +16,8 @@ class Logout(EndpointResource):
         responses={204: "Token correctly removed"},
     )
     def get(self) -> Response:
-        self.auth.invalidate_token(token=self.get_token())
+
+        token = self.get_token()
+        self.auth.invalidate_token(token)
+        self.log_event(self.events.logout, token)
         return self.empty_response()

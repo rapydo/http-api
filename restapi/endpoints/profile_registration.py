@@ -92,6 +92,8 @@ if Connector.check_availability("smtp"):
             self.auth.add_user_to_group(user, default_group)
             self.auth.save_user(user)
 
+            self.log_event(self.events.create, user, kwargs)
+
             try:
                 smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):

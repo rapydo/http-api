@@ -103,6 +103,8 @@ class ProfileActivation(EndpointResource):
         # Bye bye token (activation tokens are valid only once)
         self.auth.invalidate_token(token)
 
+        self.log_event(self.events.activation, user)
+
         return self.response("Account activated")
 
     @decorators.use_kwargs({"username": fields.Email(required=True)})
