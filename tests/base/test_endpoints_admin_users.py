@@ -6,7 +6,7 @@ from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import OBSCURE_VALUE, log
 
 
 class TestApp(BaseTests):
@@ -234,6 +234,8 @@ class TestApp(BaseTests):
         assert "email" not in events[INDEX].payload
         assert "password" in events[INDEX].payload
         assert "email_notification" in events[INDEX].payload
+        # Verify that the password is obfuscated in the log:
+        assert events[INDEX].payload["password"] == OBSCURE_VALUE
 
         # User 2 is deleted (same target_id as above)
         INDEX = 5
