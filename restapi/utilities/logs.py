@@ -4,7 +4,7 @@ import re
 import sys
 import urllib.parse
 from enum import Enum
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
@@ -226,3 +226,46 @@ def obfuscate_dict(parameters, urlencoded: bool = False):
         output[key] = value
 
     return output
+
+
+def parse_event_target(target: Any) -> Tuple[str, str]:
+    if not target:
+        return "", ""
+
+    target_type = type(target).__name__
+
+    if hasattr(target, "uuid"):
+        return target_type, getattr(target, "uuid")
+
+    if hasattr(target, "id"):
+        return target_type, getattr(target, "id")
+
+    return target_type, ""
+
+
+# Save a log entry in security-events.log
+def save_event_log(
+    event: Events,
+    target: Optional[Any] = None,
+    payload: Optional[Dict[str, Any]] = None,
+    user: Optional[Any] = None,
+    ip: str = "-",
+) -> None:
+
+    target_type, target_id = parse_event_target(target)
+
+    if payload:
+        p = json.dumps(obfuscate_dict(payload))
+    else:
+        p = ""
+
+    log.log(
+        "EVENT",
+        "",
+        event=event,
+        ip=ip,
+        user=user.email if user else "-",
+        target_id=target_id,
+        target_type=target_type,
+        payload=p,
+    )

@@ -11,7 +11,7 @@ from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.cache import Cache
-from restapi.utilities.logs import Events, log, obfuscate_dict
+from restapi.utilities.logs import Events, log, save_event_log
 
 CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
@@ -141,21 +141,7 @@ class EndpointResource(MethodResource, Resource):
     def clear_endpoint_cache(self):
         Cache.invalidate(self.get)
 
-    @staticmethod
-    def parse_target(target: Any) -> Tuple[str, str]:
-        if not target:
-            return "", ""
-
-        target_type = type(target).__name__
-
-        if hasattr(target, "uuid"):
-            return target_type, getattr(target, "uuid")
-
-        if hasattr(target, "id"):
-            return target_type, getattr(target, "id")
-
-        return target_type, ""
-
+    # Mostly copied in authentication.py
     def log_event(
         self,
         event: Events,
@@ -167,20 +153,10 @@ class EndpointResource(MethodResource, Resource):
         if not user:
             user = self.get_user()
 
-        target_type, target_id = self.parse_target(target)
-
-        if payload:
-            p = json.dumps(obfuscate_dict(payload))
-        else:
-            p = ""
-
-        log.log(
-            "EVENT",
-            "",
+        save_event_log(
             event=event,
+            target=target,
+            payload=payload,
+            user=user,
             ip=BaseAuthentication.get_remote_ip(),
-            user=user.email if user else "-",
-            target_id=target_id,
-            target_type=target_type,
-            payload=p,
         )

@@ -148,7 +148,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1, filters={"target_type": "User"})
 
         # User modified, payload contains the created group
-        INDEX = 1
+        INDEX = 0
         assert events[INDEX].event == "modify"
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"

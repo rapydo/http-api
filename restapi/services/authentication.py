@@ -37,7 +37,7 @@ from restapi.exceptions import (
 )
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -760,6 +760,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             if user.expiration < now:
                 raise Forbidden("Sorry, this account is expired")
+
+    # Mostly copied in definition.py
+    @classmethod
+    def log_event(
+        cls,
+        event: Events,
+        target: Optional[Any] = None,
+        payload: Optional[Dict[str, Any]] = None,
+        user: Optional[Any] = None,
+    ) -> None:
+
+        save_event_log(
+            event=event,
+            target=target,
+            payload=payload,
+            user=user,
+            ip=cls.get_remote_ip(),
+        )
 
     def init_auth_db(self, options):
 
