@@ -16,7 +16,6 @@ class TestApp(BaseTests):
             log.warning("Skipping admin/users tests")
             return
 
-        # Event 1: login
         headers, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
@@ -24,7 +23,7 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/groups", headers)
         data = self.buildData(schema)
-        # Event 2: create
+        # Event 1: create
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
@@ -50,7 +49,7 @@ class TestApp(BaseTests):
             "shortname": faker.company(),
             "fullname": faker.company(),
         }
-        # Event 3: modify
+        # Event 2: modify
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
 
@@ -67,7 +66,7 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
         assert r.status_code == 404
 
-        # Event 4: delete
+        # Event 3: delete
         r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
         assert r.status_code == 204
 
@@ -94,8 +93,7 @@ class TestApp(BaseTests):
             "shortname": faker.company(),
         }
 
-        # Event 5: login
-        # Event 6: create
+        # Event 4: create
         uuid, _ = self.create_group(client, data=data)
 
         data = {
@@ -103,9 +101,8 @@ class TestApp(BaseTests):
             # very important, otherwise the default user will lose its admin role
             "roles": json.dumps(["admin_root"]),
         }
-        # Event 7: login
         headers, _ = self.do_login(client, None, None)
-        # Event 8: modify
+        # Event 5: modify
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
@@ -114,43 +111,48 @@ class TestApp(BaseTests):
         events = self.get_last_events(4, filters={"target_type": "Group"})
 
         # A new group is created
-        assert events[0].event == "create"
-        assert events[0].user == BaseAuthentication.default_user
-        assert events[0].target_type == "Group"
-        assert "fullname" in events[0].payload
-        assert "shortname" in events[0].payload
+        INDEX = 0
+        assert events[INDEX].event == "create"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
 
         # Group modified (same target_id as above)
-        assert events[1].event == "modify"
-        assert events[1].user == BaseAuthentication.default_user
-        assert events[1].target_type == "Group"
-        assert events[1].target_id == events[1].target_id
-        assert "fullname" in events[1].payload
-        assert "shortname" in events[1].payload
+        INDEX = 1
+        assert events[INDEX].event == "modify"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id == events[0].target_id
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
 
         # Group is deleted (same target_id as above)
-        assert events[2].event == "delete"
-        assert events[2].user == BaseAuthentication.default_user
-        assert events[2].target_type == "Group"
-        assert events[2].target_id == events[0].target_id
-        assert len(events[2].payload) == 0
+        INDEX = 2
+        assert events[INDEX].event == "delete"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id == events[0].target_id
+        assert len(events[INDEX].payload) == 0
 
         # A new group is created
-        assert events[3].event == "create"
-        assert events[3].user == BaseAuthentication.default_user
-        assert events[3].target_type == "Group"
-        assert events[3].target_id != events[0].target_id
-        assert "fullname" in events[3].payload
-        assert "shortname" in events[3].payload
-        group_uuid = events[3].target_id
+        INDEX = 3
+        assert events[INDEX].event == "create"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id != events[0].target_id
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
+        group_uuid = events[INDEX].target_id
 
         events = self.get_last_events(1, filters={"target_type": "User"})
 
         # User modified, payload contains the created group
-        assert events[0].event == "modify"
-        assert events[0].user == BaseAuthentication.default_user
-        assert events[0].target_type == "User"
-        assert "fullname" not in events[0].payload
-        assert "shortname" not in events[0].payload
-        assert "group" in events[0].payload
-        assert events[0].payload["group"] == group_uuid
+        INDEX = 1
+        assert events[INDEX].event == "modify"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert "fullname" not in events[INDEX].payload
+        assert "shortname" not in events[INDEX].payload
+        assert "group" in events[INDEX].payload
+        assert events[INDEX].payload["group"] == group_uuid

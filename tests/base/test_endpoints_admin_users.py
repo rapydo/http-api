@@ -28,6 +28,7 @@ class TestApp(BaseTests):
         data["is_active"] = True
         data["expiration"] = None
 
+        # Event 1: create
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
@@ -57,6 +58,7 @@ class TestApp(BaseTests):
         data2["is_active"] = True
         data2["expiration"] = None
 
+        # Event 2: create
         r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
@@ -77,6 +79,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 404
 
+        # Event 3: modify
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
             data={"name": faker.name()},
@@ -103,6 +106,7 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
         assert r.status_code == 404
 
+        # Event 4: delete
         r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers)
         assert r.status_code == 204
 
@@ -110,6 +114,7 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # change password of user2
+        # Event 5: modify
         newpwd = faker.password(strong=True)
         data = {"password": newpwd, "email_notification": True}
         r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
@@ -154,6 +159,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # let's delete the second user
+        # Event 6: delete
         r = client.delete(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 204
 
@@ -168,8 +174,82 @@ class TestApp(BaseTests):
             # very important, otherwise the default user will lose its admin role
             "roles": json.dumps(["admin_root"]),
         }
+        # Event 7: modify
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
         r = client.get(f"{AUTH_URI}/logout", headers=headers)
         assert r.status_code == 204
+
+    def test_events_file(self):
+
+        events = self.get_last_events(7, filters={"target_type": "User"})
+
+        # A new User is created
+        INDEX = 0
+        assert events[INDEX].event == "create"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert "name" in events[INDEX].payload
+        assert "surname" in events[INDEX].payload
+        assert "email" in events[INDEX].payload
+
+        # Another User is created
+        INDEX = 1
+        assert events[INDEX].event == "create"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id != events[0].target_id
+        assert "name" in events[INDEX].payload
+        assert "surname" in events[INDEX].payload
+        assert "email" in events[INDEX].payload
+
+        # User 1 modified (same target_id as above)
+        INDEX = 2
+        assert events[INDEX].event == "modify"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[0].target_id
+        assert "name" in events[INDEX].payload
+        assert "surname" not in events[INDEX].payload
+        assert "email" not in events[INDEX].payload
+        assert "password" not in events[INDEX].payload
+
+        # User 2 is deleted (same target_id as above)
+        INDEX = 3
+        assert events[INDEX].event == "delete"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[0].target_id
+        assert len(events[INDEX].payload) == 0
+
+        # User 2 modified (same target_id as above)
+        INDEX = 4
+        assert events[INDEX].event == "modify"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[1].target_id
+        assert "name" not in events[INDEX].payload
+        assert "surname" not in events[INDEX].payload
+        assert "email" not in events[INDEX].payload
+        assert "password" in events[INDEX].payload
+        assert "email_notification" in events[INDEX].payload
+
+        # User 2 is deleted (same target_id as above)
+        INDEX = 5
+        assert events[INDEX].event == "delete"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[1].target_id
+        assert len(events[INDEX].payload) == 0
+
+        # Default user is modified
+        INDEX = 6
+        assert events[INDEX].event == "modify"
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id != events[0].target_id
+        assert events[INDEX].target_id != events[1].target_id
+        assert "name" in events[INDEX].payload
+        assert "surname" in events[INDEX].payload
+        assert "email" not in events[INDEX].payload
