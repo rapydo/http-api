@@ -6,7 +6,7 @@ from restapi.config import PRODUCTION
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import Events, log
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 max_login_attempts = BaseAuthentication.MAX_LOGIN_ATTEMPTS
 ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
@@ -263,7 +263,9 @@ else:
 
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
-                assert events[0].payload["username"] == data["email"]
+                assert "username" not in events[0].payload
+                assert "totp" not in events[0].payload
+                assert events[0].payload["totp"] == OBSCURE_VALUE
 
                 # Now the login is blocked
                 headers, _ = self.do_login(
