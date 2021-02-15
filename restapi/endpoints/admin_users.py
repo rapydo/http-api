@@ -191,13 +191,13 @@ class AdminUsers(EndpointResource):
     )
     def get(self, user_id: Optional[str] = None) -> Response:
 
+        user = None
         users = None
 
-        if user_id:
-            if user := self.auth.get_user(user_id=user_id):
-                users = [user]
-        else:
+        if not user_id:
             users = self.auth.get_users()
+        elif user := self.auth.get_user(user_id=user_id):
+            users = [user]
 
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
