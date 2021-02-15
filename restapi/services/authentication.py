@@ -242,7 +242,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
             self.log_event(
                 Events.failed_login,
-                target=user,
                 payload={"username": username},
                 user=user,
             )
@@ -728,7 +727,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         user.last_password_change = datetime.now(pytz.utc)
         self.save_user(user)
 
-        self.log_event(Events.change_password, user=user, target=user)
+        self.log_event(Events.change_password, user=user)
 
         for token in self.get_tokens(user=user):
             try:
@@ -813,14 +812,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def log_event(
         cls,
         event: Events,
-        target: Optional[Any] = None,
         payload: Optional[Dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
 
         save_event_log(
             event=event,
-            target=target,
             payload=payload,
             user=user,
             ip=cls.get_remote_ip(),

@@ -183,7 +183,7 @@ class TestApp(BaseTests):
 
     def test_events_file(self):
 
-        events = self.get_last_events(9, filters={"target_type": "User"})
+        events = self.get_last_events(7, filters={"target_type": "User"})
 
         # A new User is created
         INDEX = 0
@@ -237,17 +237,8 @@ class TestApp(BaseTests):
         # Verify that the password is obfuscated in the log:
         assert events[INDEX].payload["password"] == OBSCURE_VALUE
 
-        # Chane password also triggers a specific event
-        INDEX = 5
-        assert events[INDEX].event == "change_password"
-        # change password user always refers to the target user (not the admin)
-        assert events[INDEX].user != BaseAuthentication.default_user
-        assert events[INDEX].target_type == "User"
-        assert events[INDEX].target_id == events[1].target_id
-        assert len(events[INDEX].payload) == 0
-
         # User 2 is deleted (same target_id as above)
-        INDEX = 6
+        INDEX = 5
         assert events[INDEX].event == "delete"
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -255,7 +246,7 @@ class TestApp(BaseTests):
         assert len(events[INDEX].payload) == 0
 
         # Default user is modified
-        INDEX = 7
+        INDEX = 6
         assert events[INDEX].event == "modify"
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
