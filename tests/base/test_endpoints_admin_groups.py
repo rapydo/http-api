@@ -111,61 +111,46 @@ class TestApp(BaseTests):
 
     def test_events_file(self):
 
-        events = self.get_last_events(8)
-
-        assert events[0].event == "login"
-        assert events[0].user == BaseAuthentication.default_user
-        assert events[0].target_type == ""
-        assert events[0].target_id == ""
-        assert len(events[0].payload) == 0
+        events = self.get_last_events(4, filters={"target_type": "Group"})
 
         # A new group is created
-        assert events[1].event == "create"
+        assert events[0].event == "create"
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "Group"
+        assert "fullname" in events[0].payload
+        assert "shortname" in events[0].payload
+
+        # Group modified (same target_id as above)
+        assert events[1].event == "modify"
         assert events[1].user == BaseAuthentication.default_user
         assert events[1].target_type == "Group"
+        assert events[1].target_id == events[1].target_id
         assert "fullname" in events[1].payload
         assert "shortname" in events[1].payload
 
-        # Group modified (same target_id as above)
-        assert events[2].event == "modify"
+        # Group is deleted (same target_id as above)
+        assert events[2].event == "delete"
         assert events[2].user == BaseAuthentication.default_user
         assert events[2].target_type == "Group"
-        assert events[2].target_id == events[1].target_id
-        assert "fullname" in events[2].payload
-        assert "shortname" in events[2].payload
-
-        # Group is deleted (same target_id as above)
-        assert events[3].event == "delete"
-        assert events[3].user == BaseAuthentication.default_user
-        assert events[3].target_type == "Group"
-        assert events[3].target_id == events[1].target_id
-        assert len(events[3].payload) == 0
-
-        assert events[4].event == "login"
-        assert events[4].user == BaseAuthentication.default_user
-        assert events[4].target_type == ""
-        assert events[4].target_id == ""
-        assert len(events[4].payload) == 0
+        assert events[2].target_id == events[0].target_id
+        assert len(events[2].payload) == 0
 
         # A new group is created
-        assert events[5].event == "create"
-        assert events[5].user == BaseAuthentication.default_user
-        assert events[5].target_type == "Group"
-        assert events[5].target_id != events[1].target_id
-        assert "fullname" in events[5].payload
-        assert "shortname" in events[5].payload
+        assert events[3].event == "create"
+        assert events[3].user == BaseAuthentication.default_user
+        assert events[3].target_type == "Group"
+        assert events[3].target_id != events[0].target_id
+        assert "fullname" in events[3].payload
+        assert "shortname" in events[3].payload
+        group_uuid = events[3].target_id
 
-        assert events[6].event == "login"
-        assert events[6].user == BaseAuthentication.default_user
-        assert events[6].target_type == ""
-        assert events[6].target_id == ""
-        assert len(events[6].payload) == 0
+        events = self.get_last_events(1, filters={"target_type": "User"})
 
         # User modified, payload contains the created group
-        assert events[7].event == "modify"
-        assert events[7].user == BaseAuthentication.default_user
-        assert events[7].target_type == "User"
-        assert "fullname" not in events[7].payload
-        assert "shortname" not in events[7].payload
-        assert "group" in events[7].payload
-        assert events[7].payload["group"] == events[5].target_id
+        assert events[0].event == "modify"
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "User"
+        assert "fullname" not in events[0].payload
+        assert "shortname" not in events[0].payload
+        assert "group" in events[0].payload
+        assert events[0].payload["group"] == group_uuid

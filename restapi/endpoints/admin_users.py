@@ -221,6 +221,7 @@ class AdminUsers(EndpointResource):
     def post(self, **kwargs: Any) -> Response:
 
         roles: List[str] = kwargs.pop("roles", [])
+        payload = kwargs.copy()
         group_id = kwargs.pop("group")
 
         email_notification = kwargs.pop("email_notification", False)
@@ -248,7 +249,7 @@ class AdminUsers(EndpointResource):
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=False)
 
-        self.log_event(self.events.create, user, kwargs)
+        self.log_event(self.events.create, user, payload)
 
         return self.response(user.uuid)
 

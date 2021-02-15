@@ -439,7 +439,28 @@ class BaseTests:
         return token
 
     @staticmethod
-    def get_last_events(num: int = 1) -> List[Event]:
+    def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
+
+        for filt, value in filters.items():
+            if filt == "date" and event.date != value:
+                return False
+            if filt == "ip" and event.ip != value:
+                return False
+            if filt == "user" and event.user != value:
+                return False
+            if filt == "event" and event.event != value:
+                return False
+            if filt == "target_type" and event.target_type != value:
+                return False
+            if filt == "target_id" and event.target_id != value:
+                return False
+            # filter by payload ... ?
+        return True
+
+    @classmethod
+    def get_last_events(
+        cls, num: int = 1, filters: Optional[Dict[str, str]] = None
+    ) -> List[Event]:
 
         fpath = "/logs/security-events.log"
         if not os.path.exists(fpath):
@@ -448,10 +469,16 @@ class BaseTests:
         with open(fpath) as file:
             # Not efficient read the whole file to get the last lines, to be improved!
             lines = file.readlines()
+            lines.reverse()
 
             events: List[Event] = []
             # read last num lines
-            for line in lines[-num:]:
+            for line in lines:
+
+                # Found enough events, let's stop
+                if len(events) == num:
+                    break
+
                 tokens = line.strip().split(" ")
 
                 payload = json.loads(" ".join(tokens[7:])) if len(tokens) >= 8 else {}
@@ -473,6 +500,10 @@ class BaseTests:
                     payload,
                 )
 
+                if filters and not cls.event_matches_filters(event, filters):
+                    continue
+
                 events.append(event)
 
+        events.reverse()
         return events
