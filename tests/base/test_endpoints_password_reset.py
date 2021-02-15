@@ -107,9 +107,18 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 200
 
-        events = self.get_last_events(1)
-        assert events[0].event == Events.change_password.value
-        assert events[0].user == data["email"]
+        # After a change password a spam of delete Token is expected
+        # Reverse the list and skip all delete tokens to find the change password event
+        events = self.get_last_events(100)
+        events.reverse()
+        for event in events:
+            if event.event == Events.delete.value:
+                assert event.target_type == "Token"
+                continue
+
+            assert event.event == Events.change_password.value
+            assert event.user == data["email"]
+            break
 
         self.do_login(client, None, None, status_code=401)
         headers, _ = self.do_login(client, None, new_pwd)
@@ -130,9 +139,18 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
 
-        events = self.get_last_events(1)
-        assert events[0].event == Events.change_password.value
-        assert events[0].user == data["email"]
+        # After a change password a spam of delete Token is expected
+        # Reverse the list and skip all delete tokens to find the change password event
+        events = self.get_last_events(100)
+        events.reverse()
+        for event in events:
+            if event.event == Events.delete.value:
+                assert event.target_type == "Token"
+                continue
+
+            assert event.event == Events.change_password.value
+            assert event.user == data["email"]
+            break
 
         self.do_login(client, None, new_pwd, status_code=401)
         self.do_login(client, None, None)
