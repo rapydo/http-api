@@ -92,7 +92,7 @@ if Connector.check_availability("smtp"):
             msg = "We'll send instructions to the email provided if it's associated "
             msg += "with an account. Please check your spam/junk folder."
 
-            self.log_event(self.events.reset_password_request, user)
+            self.log_event(self.events.reset_password_request, user=user)
             return self.response(msg)
 
         @decorators.use_kwargs(
