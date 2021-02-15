@@ -226,7 +226,8 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.delete.value
         assert events[0].target_type == "Token"
-        assert events[0].target_id == token_id
+        # Tokens does not have a uuid...
+        # assert events[0].target_id == token_id
         assert events[0].user == BaseAuthentication.default_user
 
         # TEST AN ALREADY DELETED TOKEN
@@ -274,7 +275,8 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.delete.value
         assert events[0].target_type == "Token"
-        assert events[0].target_id == token_id
+        # Tokens does not have a uuid...
+        # assert events[0].target_id == token_id
         assert events[0].user == BaseAuthentication.default_user
 
         r = client.delete(
