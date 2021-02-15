@@ -288,8 +288,8 @@ else:
                 assert headers is not None
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.refused_login.value
-                assert events[0].payload["username"] == data["email"]
+                assert events[0].event == Events.login.value
+                assert events[0].user == data["email"]
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)
