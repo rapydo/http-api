@@ -230,7 +230,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.read.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
-        assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].target_id == events[2].target_id
         assert len(events[INDEX].payload) == 0
 
         # User 2 is deleted (same target_id as above)
@@ -246,7 +246,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
-        assert events[INDEX].target_id == events[1].target_id
+        assert events[INDEX].target_id == events[2].target_id
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
@@ -260,7 +260,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
-        assert events[INDEX].target_id == events[1].target_id
+        assert events[INDEX].target_id == events[2].target_id
         assert len(events[INDEX].payload) == 0
 
         # Default user is modified
@@ -269,7 +269,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
-        assert events[INDEX].target_id != events[1].target_id
+        assert events[INDEX].target_id != events[2].target_id
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
