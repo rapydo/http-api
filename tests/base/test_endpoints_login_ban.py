@@ -30,10 +30,9 @@ if max_login_attempts == 0:
             for i in range(0, 10):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
-            events = self.get_last_events(10)
-            for INDEX in range(0, 10):
-                assert events[INDEX].event == Events.failed_login.value
-                assert events[INDEX].payload["username"] == data["email"]
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].payload["username"] == data["email"]
 
             # and verify that login is still allowed
             headers, _ = self.do_login(client, data["email"], data["password"])
@@ -65,10 +64,9 @@ else:
             for i in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
-            events = self.get_last_events(max_login_attempts)
-            for INDEX in range(0, max_login_attempts):
-                assert events[INDEX].event == Events.failed_login.value
-                assert events[INDEX].payload["username"] == data["email"]
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].payload["username"] == data["email"]
 
             # This should fail
             headers, _ = self.do_login(
@@ -174,12 +172,9 @@ else:
                         status_code=401,
                     )
 
-                events = self.get_last_events(max_login_attempts)
-                for INDEX in range(0, max_login_attempts):
-                    assert events[INDEX].event == Events.failed_login.value
-                    assert (
-                        events[INDEX].payload["username"] == registration_data["email"]
-                    )
+                events = self.get_last_events(1)
+                assert events[0].event == Events.failed_login.value
+                assert events[0].payload["username"] == registration_data["email"]
 
                 # After max_login_attempts the account is not blocked
 
@@ -266,10 +261,9 @@ else:
                         status_code=401,
                     )
 
-                events = self.get_last_events(max_login_attempts)
-                for INDEX in range(0, max_login_attempts):
-                    assert events[INDEX].event == Events.failed_login.value
-                    assert events[INDEX].payload["username"] == data["email"]
+                events = self.get_last_events(1)
+                assert events[0].event == Events.failed_login.value
+                assert events[0].payload["username"] == data["email"]
 
                 # Now the login is blocked
                 headers, _ = self.do_login(
