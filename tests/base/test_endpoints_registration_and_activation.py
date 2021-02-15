@@ -176,10 +176,6 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
 
-        events = self.get_last_events(1)
-        assert events[0].event == Events.activation.value
-        assert events[0].user == registration_data["email"]
-
         mail = self.read_mock_email()
         body = mail.get("body")
         assert body is not None
@@ -200,6 +196,10 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
         assert r.status_code == 200
         assert self.get_content(r) == "Account activated"
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.activation.value
+        assert events[0].user == registration_data["email"]
 
         # Activation token is no longer valid
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
