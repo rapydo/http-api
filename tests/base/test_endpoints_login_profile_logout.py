@@ -72,16 +72,17 @@ class TestApp(BaseTests):
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
+        random_email = faker.ascii_email()
         self.do_login(
             client,
-            faker.ascii_email(),
+            random_email,
             faker.password(strong=True),
             status_code=401,
         )
 
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
-        assert events[0].payload["username"] == USER
+        assert events[0].payload["username"] == random_email
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
