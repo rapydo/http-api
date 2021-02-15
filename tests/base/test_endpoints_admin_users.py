@@ -41,6 +41,7 @@ class TestApp(BaseTests):
         assert f"Username: {data.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {data.get('password')}" in mail.get("body")
 
+        # Event 2: read
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
@@ -58,7 +59,7 @@ class TestApp(BaseTests):
         data2["is_active"] = True
         data2["expiration"] = None
 
-        # Event 2: create
+        # Event 3: create
         r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
@@ -79,7 +80,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 404
 
-        # Event 3: modify
+        # Event 4: modify
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
             data={"name": faker.name()},
@@ -95,6 +96,7 @@ class TestApp(BaseTests):
         # assert r.status_code == 204
         assert r.status_code == 400
 
+        # Event 5: read
         r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
@@ -106,7 +108,7 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
         assert r.status_code == 404
 
-        # Event 4: delete
+        # Event 6: delete
         r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers)
         assert r.status_code == 204
 
@@ -114,7 +116,7 @@ class TestApp(BaseTests):
         assert r.status_code == 404
 
         # change password of user2
-        # Event 5: modify
+        # Event 7: modify
         newpwd = faker.password(strong=True)
         data = {"password": newpwd, "email_notification": True}
         r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
@@ -159,7 +161,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # let's delete the second user
-        # Event 6: delete
+        # Event 8: delete
         r = client.delete(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 204
 
@@ -174,7 +176,7 @@ class TestApp(BaseTests):
             # very important, otherwise the default user will lose its admin role
             "roles": json.dumps(["admin_root"]),
         }
-        # Event 7: modify
+        # Event 9: modify
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
@@ -183,7 +185,7 @@ class TestApp(BaseTests):
 
     def test_events_file(self):
 
-        events = self.get_last_events(7, filters={"target_type": "User"})
+        events = self.get_last_events(9, filters={"target_type": "User"})
 
         # A new User is created
         INDEX = 0
@@ -194,8 +196,16 @@ class TestApp(BaseTests):
         assert "surname" in events[INDEX].payload
         assert "email" in events[INDEX].payload
 
-        # Another User is created
+        # Access to the user
         INDEX = 1
+        assert events[INDEX].event == Events.read.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[0].target_id
+        assert len(events[INDEX].payload) == 0
+
+        # Another User is created
+        INDEX = 2
         assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -205,7 +215,7 @@ class TestApp(BaseTests):
         assert "email" in events[INDEX].payload
 
         # User 1 modified (same target_id as above)
-        INDEX = 2
+        INDEX = 3
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -216,7 +226,7 @@ class TestApp(BaseTests):
         assert "password" not in events[INDEX].payload
 
         # User 2 is deleted (same target_id as above)
-        INDEX = 3
+        INDEX = 4
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -224,7 +234,7 @@ class TestApp(BaseTests):
         assert len(events[INDEX].payload) == 0
 
         # User 2 modified (same target_id as above)
-        INDEX = 4
+        INDEX = 5
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -237,8 +247,16 @@ class TestApp(BaseTests):
         # Verify that the password is obfuscated in the log:
         assert events[INDEX].payload["password"] == OBSCURE_VALUE
 
+        # User access to uuid2
+        INDEX = 6
+        assert events[INDEX].event == Events.read.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[1].target_id
+        assert len(events[INDEX].payload) == 0
+
         # User 2 is deleted (same target_id as above)
-        INDEX = 5
+        INDEX = 7
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -246,7 +264,7 @@ class TestApp(BaseTests):
         assert len(events[INDEX].payload) == 0
 
         # Default user is modified
-        INDEX = 6
+        INDEX = 8
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"

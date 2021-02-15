@@ -206,6 +206,9 @@ class AdminUsers(EndpointResource):
             for u in users:
                 u.belongs_to = u.belongs_to.single()
 
+        if user:
+            self.log_event(self.events.read, user)
+
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
