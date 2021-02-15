@@ -42,7 +42,7 @@ class TestApp(BaseTests):
 
         events = self.get_last_events(1)
         assert events[0].event == Events.reset_password_request.value
-        assert events[0].user == data["email"]
+        assert events[0].user == data["reset_email"]
 
         resetmsg = "We'll send instructions to the email provided "
         resetmsg += "if it's associated with an account. "
