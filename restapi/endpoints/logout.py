@@ -19,5 +19,5 @@ class Logout(EndpointResource):
 
         token = self.get_token()
         self.auth.invalidate_token(token)
-        self.log_event(self.events.logout, token)
+        self.log_event(self.events.logout)
         return self.empty_response()

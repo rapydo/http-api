@@ -362,7 +362,6 @@ class TestApp(BaseTests):
 
         assert events[1].event == Events.logout.value
         assert events[1].user == BaseAuthentication.default_user
-        assert events[1].target_type == "Token"
 
         # Check failure
         log.info("*** VERIFY invalid token")
