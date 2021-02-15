@@ -220,11 +220,6 @@ else:
                 )
                 assert r.status_code == 200
 
-                events = self.get_last_events(1)
-                assert events[0].event == Events.activation.value
-                assert events[0].user == registration_data["email"]
-                assert events[0].target_type == "User"
-
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
             def test_03_totp_and_login_ban(self, client: FlaskClient) -> None:
