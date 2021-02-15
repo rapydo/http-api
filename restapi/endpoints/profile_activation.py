@@ -111,7 +111,7 @@ class ProfileActivation(EndpointResource):
         # Bye bye token (activation tokens are valid only once)
         self.auth.invalidate_token(token)
 
-        self.log_event(self.events.activation, user)
+        self.log_event(self.events.activation, user=user, target=user)
 
         return self.response("Account activated")
 

@@ -200,6 +200,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.activation.value
         assert events[0].user == registration_data["email"]
+        assert events[0].target_type == "User"
 
         # Activation token is no longer valid
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
