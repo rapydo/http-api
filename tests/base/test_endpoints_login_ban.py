@@ -264,7 +264,7 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
                 assert "username" not in events[0].payload
-                assert "totp" not in events[0].payload
+                assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
 
                 # Now the login is blocked
