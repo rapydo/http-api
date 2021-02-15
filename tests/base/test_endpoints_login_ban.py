@@ -6,7 +6,7 @@ from restapi.config import PRODUCTION
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 
 max_login_attempts = BaseAuthentication.MAX_LOGIN_ATTEMPTS
 ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
@@ -30,9 +30,18 @@ if max_login_attempts == 0:
             for i in range(0, 10):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
+            events = self.get_last_events(10)
+            for INDEX in range(0, 10):
+                assert events[INDEX].event == Events.failed_login.value
+                assert events[INDEX].payload["username"] == data["email"]
+
             # and verify that login is still allowed
             headers, _ = self.do_login(client, data["email"], data["password"])
             assert headers is not None
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == data["email"]
 
             # Goodbye temporary user
             self.delete_user(client, uuid)
@@ -56,21 +65,46 @@ else:
             for i in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
+            events = self.get_last_events(max_login_attempts)
+            for INDEX in range(0, max_login_attempts):
+                assert events[INDEX].event == Events.failed_login.value
+                assert events[INDEX].payload["username"] == data["email"]
+
             # This should fail
             headers, _ = self.do_login(
                 client, data["email"], data["password"], status_code=403
             )
             assert headers is None
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.refused_login.value
+            assert events[0].payload["username"] == data["email"]
+            assert (
+                events[0].payload["motivation"]
+                == "account blocked due to too many failed logins"
+            )
+
             reset_data = {"reset_email": data["email"]}
             r = client.post(f"{AUTH_URI}/reset", data=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == BAN_MESSAGE
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.refused_login.value
+            assert events[0].payload["username"] == data["email"]
+            assert (
+                events[0].payload["motivation"]
+                == "account blocked due to too many failed logins"
+            )
+
             time.sleep(ban_duration)
 
             headers, _ = self.do_login(client, data["email"], data["password"])
             assert headers is not None
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == data["email"]
 
             # Verify that already emitted tokens are not blocked
             # 1) Block again the account
@@ -125,6 +159,12 @@ else:
                     status_code=403,
                     # error='Sorry, this account is not active'
                 )
+
+                events = self.get_last_events(1)
+                assert events[0].event == Events.refused_login.value
+                assert events[0].payload["username"] == registration_data["email"]
+                assert events[0].payload["motivation"] == "account not active"
+
                 for i in range(0, max_login_attempts):
                     # Event if non activated if password is wrong the status is 401
                     self.do_login(
@@ -132,7 +172,13 @@ else:
                         registration_data["email"],
                         "wrong",
                         status_code=401,
-                        # error='Sorry, this account is not active'
+                    )
+
+                events = self.get_last_events(max_login_attempts)
+                for INDEX in range(0, max_login_attempts):
+                    assert events[INDEX].event == Events.failed_login.value
+                    assert (
+                        events[INDEX].payload["username"] == registration_data["email"]
                     )
 
                 # After max_login_attempts the account is not blocked
@@ -142,6 +188,14 @@ else:
                 assert r.status_code == 403
                 assert self.get_content(r) == BAN_MESSAGE
 
+                events = self.get_last_events(1)
+                assert events[0].event == Events.refused_login.value
+                assert events[0].payload["username"] == registration_data["email"]
+                assert (
+                    events[0].payload["motivation"]
+                    == "account blocked due to too many failed logins"
+                )
+
                 # request activation forbidden due to blocked acount
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
@@ -150,6 +204,14 @@ else:
                 assert r.status_code == 403
                 assert self.get_content(r) == BAN_MESSAGE
 
+                events = self.get_last_events(1)
+                assert events[0].event == Events.refused_login.value
+                assert events[0].payload["username"] == registration_data["email"]
+                assert (
+                    events[0].payload["motivation"]
+                    == "account blocked due to too many failed logins"
+                )
+
                 time.sleep(ban_duration)
 
                 r = client.post(
@@ -157,6 +219,10 @@ else:
                     data={"username": registration_data["email"]},
                 )
                 assert r.status_code == 200
+
+                events = self.get_last_events(1)
+                assert events[0].event == Events.activation.value
+                assert events[0].user == registration_data["email"]
 
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
@@ -204,17 +270,34 @@ else:
                         status_code=401,
                     )
 
+                events = self.get_last_events(max_login_attempts)
+                for INDEX in range(0, max_login_attempts):
+                    assert events[INDEX].event == Events.failed_login.value
+                    assert events[INDEX].payload["username"] == data["email"]
+
                 # Now the login is blocked
                 headers, _ = self.do_login(
                     client, data["email"], data["password"], status_code=403
                 )
                 assert headers is None
 
+                events = self.get_last_events(1)
+                assert events[0].event == Events.refused_login.value
+                assert events[0].payload["username"] == data["email"]
+                assert (
+                    events[0].payload["motivation"]
+                    == "account blocked due to too many failed logins"
+                )
+
                 time.sleep(ban_duration)
 
                 # Now the login works again
                 headers, _ = self.do_login(client, data["email"], data["password"])
                 assert headers is not None
+
+                events = self.get_last_events(1)
+                assert events[0].event == Events.refused_login.value
+                assert events[0].payload["username"] == data["email"]
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)

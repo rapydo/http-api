@@ -1,7 +1,9 @@
 from faker import Faker
 
 from restapi.env import Env
+from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import Events
 
 
 class TestApp(BaseTests):
@@ -221,6 +223,12 @@ class TestApp(BaseTests):
         r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.delete.value
+        assert events[0].target_type == "Token"
+        assert events[0].target_id == token_id
+        assert events[0].user == BaseAuthentication.default_user
+
         # TEST AN ALREADY DELETED TOKEN
         r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 403
@@ -262,6 +270,12 @@ class TestApp(BaseTests):
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
         assert r.status_code == 204
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.delete.value
+        assert events[0].target_type == "Token"
+        assert events[0].target_id == token_id
+        assert events[0].user == BaseAuthentication.default_user
 
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header

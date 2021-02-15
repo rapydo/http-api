@@ -5,7 +5,7 @@ from faker import Faker
 
 from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 
 class TestApp(BaseTests):
@@ -13,21 +13,41 @@ class TestApp(BaseTests):
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
-        BaseAuthentication.load_default_user()
-        BaseAuthentication.load_roles()
+        # BaseAuthentication.load_default_user()
+        # BaseAuthentication.load_roles()
         USER = BaseAuthentication.default_user or "just-to-prevent-None"
         PWD = BaseAuthentication.default_password or "just-to-prevent-None"
+
+        # Login by using upper case username
         self.do_login(client, USER.upper(), PWD)
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
+
+        # Wrong credentials
         # Off course PWD cannot be upper :D
         self.do_login(client, USER, PWD.upper(), status_code=401)
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.failed_login.value
+        assert events[0].payload["username"] == USER
+
         log.info("*** VERIFY valid credentials")
+        # Login by using normal username (no upper case)
         headers, _ = self.do_login(client, None, None)
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
 
         time.sleep(5)
         # Verify MAX_PASSWORD_VALIDITY, if set
         headers, token = self.do_login(client, None, None)
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
 
         self.save("auth_header", headers)
         self.save("auth_token", token)
@@ -58,6 +78,10 @@ class TestApp(BaseTests):
             faker.password(strong=True),
             status_code=401,
         )
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.failed_login.value
+        assert events[0].payload["username"] == USER
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
@@ -182,6 +206,12 @@ class TestApp(BaseTests):
         r = client.patch(f"{AUTH_URI}/profile", data={}, headers=headers)
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.modify.value
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "User"
+        assert len(events[0].payload) == 0
+
         newname = faker.name()
         newuuid = faker.pystr()
 
@@ -201,6 +231,13 @@ class TestApp(BaseTests):
         data = {"name": newname}
         r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.modify.value
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "User"
+        assert len(events[0].payload) == 1
+        assert "name" in events[0].payload
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
@@ -261,6 +298,10 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.change_password.value
+        assert events[0].user == BaseAuthentication.default_user
+
         # verify the new password
         headers, _ = self.do_login(
             client, BaseAuthentication.default_user, data["new_password"]
@@ -274,6 +315,10 @@ class TestApp(BaseTests):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.change_password.value
+        assert events[0].user == BaseAuthentication.default_user
 
         # verify the new password
         headers, _ = self.do_login(
@@ -289,6 +334,16 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid token")
         r = client.get(f"{AUTH_URI}/logout", headers=self.get("auth_header"))
         assert r.status_code == 204
+
+        events = self.get_last_events(2)
+
+        assert events[0].event == Events.delete.value
+        assert events[0].user == "-"
+        assert events[0].target_type == "Token"
+
+        assert events[1].event == Events.logout.value
+        assert events[1].user == BaseAuthentication.default_user
+        assert events[1].target_type == "Token"
 
         # Check failure
         log.info("*** VERIFY invalid token")
@@ -388,6 +443,12 @@ class TestApp(BaseTests):
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
@@ -399,6 +460,10 @@ class TestApp(BaseTests):
             data["totp_code"] = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 200
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == username
 
             password = new_password
 
@@ -423,6 +488,12 @@ class TestApp(BaseTests):
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
@@ -434,6 +505,10 @@ class TestApp(BaseTests):
             data["totp_code"] = self.generate_totp(username)
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 200
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == username
 
             ###################################
             # Test password change
@@ -456,6 +531,12 @@ class TestApp(BaseTests):
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
@@ -467,6 +548,10 @@ class TestApp(BaseTests):
             data["totp_code"] = self.generate_totp(username)
             r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
             assert r.status_code == 204
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.change_password.value
+            assert events[0].user == username
 
             # verify the new password
             headers, _ = self.do_login(client, username, new_password)

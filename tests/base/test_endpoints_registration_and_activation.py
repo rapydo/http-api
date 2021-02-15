@@ -4,7 +4,7 @@ from faker import Faker
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 
 class TestApp(BaseTests):
@@ -100,6 +100,14 @@ class TestApp(BaseTests):
         registration_message += "you will find the link to activate your account"
         assert self.get_content(r) == registration_message
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.create.value
+        assert events[0].user == "-"
+        assert events[0].target_type == "User"
+        assert "name" in events[0].payload
+        assert "password" in events[0].payload
+        assert events[0].payload["password"] == OBSCURE_VALUE
+
         mail = self.read_mock_email()
         body = mail.get("body")
         assert body is not None
@@ -116,11 +124,27 @@ class TestApp(BaseTests):
             status_code=403,
             # error='Sorry, this account is not active'
         )
+
         # Also password reset is not allowed
         data = {"reset_email": registration_data["email"]}
         r = client.post(f"{AUTH_URI}/reset", data=data)
         assert r.status_code == 403
         assert self.get_content(r) == "Sorry, this account is not active"
+
+        events = self.get_last_events(2)
+        assert events[0].event == Events.refused_login.value
+        assert events[0].payload["username"] == data["email"]
+        assert (
+            events[0].payload["motivation"]
+            == "account blocked due to too many failed logins"
+        )
+
+        assert events[1].event == Events.refused_login.value
+        assert events[1].payload["username"] == data["email"]
+        assert (
+            events[1].payload["motivation"]
+            == "account blocked due to too many failed logins"
+        )
 
         # Activation, missing or wrong information
         r = client.post(f"{AUTH_URI}/profile/activate")
@@ -134,12 +158,6 @@ class TestApp(BaseTests):
 
         headers, _ = self.do_login(client, None, None)
 
-        # Save the current number of tokens to verify the creation of activation tokens
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens_snapshot = self.get_content(r)
-        num_tokens = len(tokens_snapshot)
-
         activation_message = "We are sending an email to your email address where "
         activation_message += "you will find the link to activate your account"
         # request activation, wrong username
@@ -151,12 +169,10 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
 
-        assert self.read_mock_email() is None
+        events = self.get_last_events(1)
+        assert events[0].event != Events.activation.value
 
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-        assert len(tokens) == num_tokens
+        assert self.read_mock_email() is None
 
         # request activation, correct username
         r = client.post(
@@ -166,12 +182,9 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
 
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-
-        # to be enabled
-        # assert len(tokens) == num_tokens + 1
+        events = self.get_last_events(1)
+        assert events[0].event == Events.activation.value
+        assert events[0].user == registration_data["email"]
 
         mail = self.read_mock_email()
         body = mail.get("body")

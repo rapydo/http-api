@@ -6,7 +6,7 @@ from restapi.config import get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import OBSCURE_VALUE, log
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 
 class TestApp(BaseTests):
@@ -187,7 +187,7 @@ class TestApp(BaseTests):
 
         # A new User is created
         INDEX = 0
-        assert events[INDEX].event == "create"
+        assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert "name" in events[INDEX].payload
@@ -196,7 +196,7 @@ class TestApp(BaseTests):
 
         # Another User is created
         INDEX = 1
-        assert events[INDEX].event == "create"
+        assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
@@ -206,7 +206,7 @@ class TestApp(BaseTests):
 
         # User 1 modified (same target_id as above)
         INDEX = 2
-        assert events[INDEX].event == "modify"
+        assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
@@ -217,7 +217,7 @@ class TestApp(BaseTests):
 
         # User 2 is deleted (same target_id as above)
         INDEX = 3
-        assert events[INDEX].event == "delete"
+        assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
@@ -225,7 +225,7 @@ class TestApp(BaseTests):
 
         # User 2 modified (same target_id as above)
         INDEX = 4
-        assert events[INDEX].event == "modify"
+        assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[1].target_id
@@ -239,7 +239,7 @@ class TestApp(BaseTests):
 
         # User 2 is deleted (same target_id as above)
         INDEX = 5
-        assert events[INDEX].event == "delete"
+        assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[1].target_id
@@ -247,7 +247,7 @@ class TestApp(BaseTests):
 
         # Default user is modified
         INDEX = 6
-        assert events[INDEX].event == "modify"
+        assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id

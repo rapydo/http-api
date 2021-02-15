@@ -5,7 +5,7 @@ import pytz
 
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 
 
 class TestApp2(BaseTests):
@@ -36,6 +36,11 @@ class TestApp2(BaseTests):
         )
         assert invalid_headers is None
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.refused_login.value
+        assert events[0].payload["username"] == data["email"]
+        assert events[0].payload["motivation"] == "account expired"
+
         # This token was valid before the expiration, but should be no longer valid
         # due to the short TTL set when emitted (capped to expiration time)
         r = client.get(f"{AUTH_URI}/status", headers=valid_headers)
@@ -46,6 +51,11 @@ class TestApp2(BaseTests):
             r = client.post(f"{AUTH_URI}/reset", data=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == "Sorry, this account is expired"
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.refused_login.value
+            assert events[0].payload["username"] == data["email"]
+            assert events[0].payload["motivation"] == "account expired"
 
         # Let's extend the account validity for other N seconds
         admin_headers, _ = self.do_login(client, None, None)
@@ -72,6 +82,11 @@ class TestApp2(BaseTests):
             error="Sorry, this account is expired",
         )
         assert invalid_headers is None
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.refused_login.value
+        assert events[0].payload["username"] == data["email"]
+        assert events[0].payload["motivation"] == "account expired"
 
         # Test reduction of account validity
 
@@ -107,6 +122,11 @@ class TestApp2(BaseTests):
             error="Sorry, this account is expired",
         )
         assert invalid_headers is None
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.refused_login.value
+        assert events[0].payload["username"] == data["email"]
+        assert events[0].payload["motivation"] == "account expired"
 
         # This token was valid and original TTL was set >= now
         # But when the user expiration were reduced the token was invalided

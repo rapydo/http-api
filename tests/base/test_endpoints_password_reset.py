@@ -3,7 +3,7 @@ from faker import Faker
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log
 
 
 class TestApp(BaseTests):
@@ -39,6 +39,10 @@ class TestApp(BaseTests):
         data = {"reset_email": BaseAuthentication.default_user}
         r = client.post(f"{AUTH_URI}/reset", data=data)
         assert r.status_code == 200
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.reset_password_request.value
+        assert events[0].user == data["email"]
 
         resetmsg = "We'll send instructions to the email provided "
         resetmsg += "if it's associated with an account. "
@@ -103,6 +107,10 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
         assert r.status_code == 200
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.change_password.value
+        assert events[0].user == data["email"]
+
         self.do_login(client, None, None, status_code=401)
         headers, _ = self.do_login(client, None, new_pwd)
 
@@ -121,6 +129,10 @@ class TestApp(BaseTests):
         data["password_confirm"] = data["new_password"]
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.change_password.value
+        assert events[0].user == data["email"]
 
         self.do_login(client, None, new_pwd, status_code=401)
         self.do_login(client, None, None)
