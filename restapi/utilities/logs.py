@@ -43,7 +43,6 @@ class Events(str, Enum):
     create = "create"
     modify = "modify"
     delete = "delete"
-    read = "read"
     login = "login"
     logout = "logout"
     failed_login = "failed_login"
