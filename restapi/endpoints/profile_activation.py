@@ -28,7 +28,15 @@ def send_activation_link(smtp, auth, user):
 
     # customized template
     template_file = "activate_account.html"
-    html_body = get_html_template(template_file, {"url": url})
+    html_body = get_html_template(
+        template_file,
+        {
+            "url": url,
+            "username": user.email,
+            "name": user.name,
+            "surname": user.surname,
+        },
+    )
     if html_body is None:
         html_body = body
         body = None
