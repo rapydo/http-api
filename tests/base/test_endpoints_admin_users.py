@@ -225,8 +225,16 @@ class TestApp(BaseTests):
         assert "email" not in events[INDEX].payload
         assert "password" not in events[INDEX].payload
 
-        # User 2 is deleted (same target_id as above)
+        # Access to user 2
         INDEX = 4
+        assert events[INDEX].event == Events.read.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert events[INDEX].target_id == events[1].target_id
+        assert len(events[INDEX].payload) == 0
+
+        # User 2 is deleted (same target_id as above)
+        INDEX = 5
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -234,7 +242,7 @@ class TestApp(BaseTests):
         assert len(events[INDEX].payload) == 0
 
         # User 2 modified (same target_id as above)
-        INDEX = 5
+        INDEX = 6
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
@@ -246,14 +254,6 @@ class TestApp(BaseTests):
         assert "email_notification" in events[INDEX].payload
         # Verify that the password is obfuscated in the log:
         assert events[INDEX].payload["password"] == OBSCURE_VALUE
-
-        # User access to uuid2
-        INDEX = 6
-        assert events[INDEX].event == Events.read.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "User"
-        assert events[INDEX].target_id == events[1].target_id
-        assert len(events[INDEX].payload) == 0
 
         # User 2 is deleted (same target_id as above)
         INDEX = 7
