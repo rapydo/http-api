@@ -240,7 +240,10 @@ class TestApp(BaseTests):
         assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
-        assert len(events[0].payload) == 1
+        # It is true in the core, but projects may introduce additional values
+        # and expand the input dictionary even if initially empty
+        # e.g. meteohub adds here the requests_expiration_days parameter
+        # assert len(events[0].payload) == 1
         assert "name" in events[0].payload
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
