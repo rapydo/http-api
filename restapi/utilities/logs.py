@@ -39,7 +39,7 @@ EVENTS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, "security-events.log")
 
 
 class Events(str, Enum):
-    read = "read"
+    access = "access"
     create = "create"
     modify = "modify"
     delete = "delete"

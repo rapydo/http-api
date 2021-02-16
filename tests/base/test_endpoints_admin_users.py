@@ -198,7 +198,7 @@ class TestApp(BaseTests):
 
         # Access to the user
         INDEX = 1
-        assert events[INDEX].event == Events.read.value
+        assert events[INDEX].event == Events.access.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
@@ -227,7 +227,7 @@ class TestApp(BaseTests):
 
         # Access to user 2
         INDEX = 4
-        assert events[INDEX].event == Events.read.value
+        assert events[INDEX].event == Events.access.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
