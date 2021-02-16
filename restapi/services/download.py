@@ -5,6 +5,7 @@ from mimetypes import MimeTypes
 from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
+from werkzeug.utils import secure_filename
 
 from restapi.exceptions import BadRequest
 from restapi.services.uploader import Uploader
@@ -25,6 +26,7 @@ class Downloader:
         if filename is None:
             raise BadRequest("No filename specified to download")
 
+        filename = secure_filename(filename)
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
@@ -45,6 +47,7 @@ class Downloader:
             yield data
 
     # this is good for large files
+    # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
     def send_file_streamed(path: str, mime: Optional[str] = None) -> Response:
         if mime is None:

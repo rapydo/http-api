@@ -42,12 +42,15 @@ class Uploader:
 
     @staticmethod
     def absolute_upload_file(filename, subfolder=None, onlydir=False):
+
+        filename = secure_filename(filename)
+
         if subfolder is not None:
             filename = os.path.join(subfolder, filename)
             subdir = os.path.join(UPLOAD_PATH, subfolder)
             if not os.path.exists(subdir):
                 os.makedirs(subdir)
-        abs_file = os.path.join(UPLOAD_PATH, filename)  # filename.lower())
+        abs_file = os.path.join(UPLOAD_PATH, filename)
         if onlydir:
             return os.path.dirname(abs_file)
         return abs_file
