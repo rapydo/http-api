@@ -387,7 +387,9 @@ class BaseTests:
             token = body[1 + body.rfind("/") :]
         # if a token is found the email is considered to be html
         else:
-            urls = re.findall(r'href="(https?://[^\s<>"]+|www\.[^\s<>"]+)"', body)
+            urls = re.findall(
+                r'href=["|\'](https?://[^\s<>"]+|www\.[^\s<>"]+)["|\']', body
+            )
             if urls:
                 # token is the last part of the url, extract as a path
                 token = os.path.basename(urls[0])
