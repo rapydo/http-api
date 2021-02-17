@@ -111,6 +111,7 @@ class BaseTests:
         USER: Optional[str],
         PWD: Optional[str],
         status_code: int = 200,
+        error: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
         test_failures: bool = False,
     ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
@@ -256,6 +257,9 @@ class BaseTests:
         #     log.error(c)
 
         assert r.status_code == status_code
+
+        if error:
+            assert content == error
 
         # when 200 OK content is the token
         assert content is not None
