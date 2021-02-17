@@ -1,7 +1,6 @@
 from faker import Faker
 
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import Events
 

@@ -7,7 +7,7 @@ from faker import Faker
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, InvalidToken, Role
 from restapi.tests import BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -146,13 +146,6 @@ class TestApp(BaseTests):
             assert str(e) == "Verification code is missing"
         except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
-
-        # import here to prevent loading before initializing things...
-        from restapi.services.authentication import (
-            BaseAuthentication,
-            InvalidToken,
-            Role,
-        )
 
         auth = Connector.get_authentication_instance()
 

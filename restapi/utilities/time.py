@@ -12,9 +12,9 @@ AllowedTimedeltaPeriods = Literal[
 ]
 
 
-def get_now(tzinfo: Optional[tzinfo]) -> datetime:
+def get_now(tz: Optional[tzinfo]) -> datetime:
 
-    if tzinfo is None:
+    if tz is None:
         # Create a offset-naive datetime
         return datetime.now()
 

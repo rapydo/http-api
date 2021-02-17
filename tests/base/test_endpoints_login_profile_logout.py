@@ -377,8 +377,8 @@ class TestApp(BaseTests):
     def test_05_login_failures(self, client: FlaskClient) -> None:
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
-            uuid, data = self.create_user(client)
-            headers, token = self.do_login(
+            _, data = self.create_user(client)
+            headers, _ = self.do_login(
                 client, data["email"], data["password"], test_failures=True
             )
             r = client.get(f"{AUTH_URI}/logout", headers=headers)

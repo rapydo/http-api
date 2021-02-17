@@ -86,15 +86,13 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         """
 
         # required = request and request.method == "POST"
-        """
-        return {
-            'custom_field': fields.Int(
-                required=required,
-                # validate=validate.Range(min=0, max=???),
-                validate=validate.Range(min=0),
-                label="CustomField",
-                description="This is a custom field"
-            )
-        }
-        """
+        # return {
+        #     'custom_field': fields.Int(
+        #         required=required,
+        #         # validate=validate.Range(min=0, max=???),
+        #         validate=validate.Range(min=0),
+        #         label="CustomField",
+        #         description="This is a custom field"
+        #     )
+        # }
         return {}

@@ -27,7 +27,7 @@ if max_login_attempts == 0:
 
             uuid, data = self.create_user(client)
             # Login attempts are not registered, let's try to fail the login many times
-            for i in range(0, 10):
+            for _ in range(0, 10):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
@@ -61,7 +61,7 @@ else:
 
             uuid, data = self.create_user(client)
 
-            for i in range(0, max_login_attempts):
+            for _ in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
@@ -106,7 +106,7 @@ else:
 
             # Verify that already emitted tokens are not blocked
             # 1) Block again the account
-            for i in range(0, max_login_attempts):
+            for _ in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             # 2) Verify that the account is blocked
@@ -163,7 +163,7 @@ else:
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
 
-                for i in range(0, max_login_attempts):
+                for _ in range(0, max_login_attempts):
                     # Event if non activated if password is wrong the status is 401
                     self.do_login(
                         client,
@@ -252,7 +252,7 @@ else:
 
                 # Verify login ban due to wrong TOTPs
 
-                for i in range(0, max_login_attempts):
+                for _ in range(0, max_login_attempts):
                     self.do_login(
                         client,
                         data["email"],
