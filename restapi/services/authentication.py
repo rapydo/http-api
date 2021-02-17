@@ -367,7 +367,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # invalidate previous tokens with same token_type
         for t in self.get_tokens(user=user):
             ttype = t.get("token_type")
-            if ttype is None:
+            if ttype is None:  # pragma: no cover
                 continue
             if ttype != token_type:
                 continue
@@ -732,7 +732,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.critical("Failed to invalidate token {}", e)
 
         return True

@@ -32,7 +32,7 @@ def status(update, context):
     try:
         out = bot.api.get("status")
         bot.send_markdown(out, update)
-    except RestApiException as e:
+    except RestApiException as e:  # pragma: no cover
         bot.send_markdown(str(e), update)
 
 

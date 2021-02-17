@@ -36,6 +36,12 @@ def verify_token_is_not_valid(
     assert unpacked_token[2] is None
     assert unpacked_token[3] is None
 
+    try:
+        auth.verify_token(token, token_type=ttype, raiseErrors=True)
+        pytest.fail("No exception raised")
+    except InvalidToken:
+        pass
+
 
 class TestApp(BaseTests):
     def test_authentication_service(self, client: FlaskClient, faker: Faker) -> None:

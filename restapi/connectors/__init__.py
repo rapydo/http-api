@@ -165,7 +165,9 @@ class Connector(metaclass=abc.ABCMeta):
             else:
                 variables = Env.load_variables_group(prefix=connector)
 
-            if not Env.to_bool(variables.get("enable_connector", True)):
+            if not Env.to_bool(
+                variables.get("enable_connector", True)
+            ):  # pragma: no cover
                 log.info("{} connector is disabled", connector)
                 continue
 
@@ -266,7 +268,7 @@ class Connector(metaclass=abc.ABCMeta):
             if issubclass(connector_class, Connector):
                 return connector_class
 
-        return None
+        return None  # pragma: no cover
 
     @staticmethod
     def get_authentication_instance() -> BaseAuthentication:
@@ -275,23 +277,25 @@ class Connector(metaclass=abc.ABCMeta):
                 Connector.authentication_service, BACKEND_PACKAGE
             )
 
-        if Connector._authentication_module:
-            return Connector._authentication_module.Authentication()
+        if not Connector._authentication_module:  # pragma: no cover
+            log.critical("{} not available", Connector.authentication_service)
+            raise ServiceUnavailable("Authentication service not available")
 
-        log.critical("{} not available", Connector.authentication_service)
-        raise ServiceUnavailable("Authentication service not available")
+        return Connector._authentication_module.Authentication()
 
     @staticmethod
     def init_app(app: Flask, worker_mode: bool = False) -> None:
 
         Connector.app = app
 
-        if Connector.authentication_service == NO_AUTH:
+        if Connector.authentication_service == NO_AUTH:  # pragma: no cover
             if not worker_mode:
                 log.warning("No authentication service configured")
             return
 
-        if Connector.authentication_service not in Connector.services:
+        if (
+            Connector.authentication_service not in Connector.services
+        ):  # pragma: no cover
             print_and_exit(
                 "Auth service '{}' is not available", Connector.authentication_service
             )
@@ -322,7 +326,7 @@ class Connector(metaclass=abc.ABCMeta):
 
             if mem.initializer(app=Connector.app):
                 log.info("Vanilla project has been initialized")
-            else:
+            else:  # pragma: no cover
                 log.error("Errors during custom initialization")
 
             if TESTING:
@@ -358,7 +362,7 @@ class Connector(metaclass=abc.ABCMeta):
                 if key in base_models.keys():
                     original_model = base_models[key]
                     # Override
-                    if issubclass(model, original_model):
+                    if issubclass(model, original_model):  # pragma: no cover
                         log.debug("Overriding model {}", key)
                         cls._models[key] = model
                         continue
@@ -497,7 +501,7 @@ class Connector(metaclass=abc.ABCMeta):
                     ver = timedelta(seconds=verification)
                     obj.connection_verification_time = now + ver
                 # if the connection is no longer valid, invalidate the instance
-                else:
+                else:  # pragma: no cover
                     log.warning(
                         "{} is no longer connected, connector invalidated", self.name
                     )

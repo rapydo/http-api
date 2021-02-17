@@ -65,7 +65,7 @@ class BaseTests:
         if hasattr(cls, variable):
             return getattr(cls, variable)
 
-        raise AttributeError(f"Class variable {variable} not found")
+        raise AttributeError(f"Class variable {variable} not found")  # pragma: no cover
 
     @staticmethod
     def getDynamicInputSchema(
@@ -111,7 +111,6 @@ class BaseTests:
         USER: Optional[str],
         PWD: Optional[str],
         status_code: int = 200,
-        error: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
         test_failures: bool = False,
     ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
@@ -229,7 +228,8 @@ class BaseTests:
                 # in this case FIRST LOGIN has not been executed
                 # => login by sending the TOTP code
                 if "TOTP" in actions:
-                    if test_failures:
+                    # Only directly tested => no coverage
+                    if test_failures:  # pragma: no cover
                         # random int with 6 digits
                         data["totp_code"] = cls.faker.pyint(
                             min_value=100000, max_value=999999
@@ -256,9 +256,6 @@ class BaseTests:
         #     log.error(c)
 
         assert r.status_code == status_code
-
-        if error is not None:
-            assert content == error
 
         # when 200 OK content is the token
         assert content is not None
