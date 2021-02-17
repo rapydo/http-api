@@ -114,7 +114,7 @@ class Connector(metaclass=abc.ABCMeta):
         if not self.disconnected:
             self.disconnect()
             return True
-        return False
+        return False  # pragma: no cover
 
     @abc.abstractmethod
     def get_connection_exception(
@@ -174,7 +174,8 @@ class Connector(metaclass=abc.ABCMeta):
             if "host" in variables:
                 if host := variables.get("host"):
                     external = cls.is_external(host)
-                else:
+                # HOST found in variables but empty... never happens during tests
+                else:  # pragma: no cover
                     variables["enable"] = "0"
 
             enabled = Env.to_bool(variables.get("enable"))
@@ -186,7 +187,8 @@ class Connector(metaclass=abc.ABCMeta):
             connector_module = Connector.get_module(connector, module)
             connector_class = Connector.get_class(connector_module)
 
-            if not connector_class:
+            # Can't test connector misconfiguration...
+            if not connector_class:  # pragma: no cover
                 log.error("No connector class found in {}/{}", main_folder, connector)
                 continue
 
@@ -389,8 +391,9 @@ class Connector(metaclass=abc.ABCMeta):
         cls._instances[tid].setdefault(name, {})
         return cls._instances[tid][name].get(key, None)
 
+    # From server.teardown... not executed during tests
     @classmethod
-    def disconnect_all(cls) -> None:
+    def disconnect_all(cls) -> None:  # pragma: no cover
         for connectors in cls._instances.values():
             for instances in connectors.values():
                 for instance in instances.values():
@@ -423,17 +426,15 @@ class Connector(metaclass=abc.ABCMeta):
 
         obj.connection_time = datetime.now()
 
-        if verification == 0:
-            ver = None
-        else:
+        obj.connection_verification_time = None
+        if verification > 0:
             ver = obj.connection_time + timedelta(seconds=verification)
-        obj.connection_verification_time = ver
+            obj.connection_verification_time = ver
 
-        if expiration == 0:
-            exp = None
-        else:
+        obj.connection_expiration_time = None
+        if expiration > 0:
             exp = obj.connection_time + timedelta(seconds=expiration)
-        obj.connection_expiration_time = exp
+            obj.connection_expiration_time = exp
 
         return obj
 

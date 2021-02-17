@@ -113,7 +113,9 @@ class EndpointResource(MethodResource, Resource):
         return self.response({"total": total}, code=206)
 
     # Deprecated since 1.0
-    def get_user_if_logged(self, allow_access_token_parameter=False):
+    def get_user_if_logged(
+        self, allow_access_token_parameter=False
+    ):  # pragma: no cover
         """
         Helper to be used inside an endpoint that doesn't explicitly
         ask for authentication, but might want to do some extra behaviour
