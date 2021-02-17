@@ -85,12 +85,12 @@ def catch_db_exceptions(func):
             log.warning(e)
             return None
 
-        except ServiceUnavailable:
+        except ServiceUnavailable:  # pragma: no cover
             # refresh_connection()
             raise
 
         # Catched in case of re-raise for example RequiredProperty -> BadRequest
-        except RestApiException:
+        except RestApiException:  # pragma: no cover
             raise
 
         except Exception as e:  # pragma: no cover
@@ -255,16 +255,18 @@ class Authentication(BaseAuthentication):
         return cast(List[User], self.db.User.nodes.all())
 
     def save_user(self, user: User) -> bool:
-        if user:
-            user.save()
-            return True
-        return False
+        if not user:
+            return False
+
+        user.save()
+        return True
 
     def delete_user(self, user: User) -> bool:
-        if user:
-            user.delete()
-            return True
-        return False
+        if not user:
+            return False
+
+        user.delete()
+        return True
 
     def get_group(
         self, group_id: Optional[str] = None, name: Optional[str] = None
@@ -350,7 +352,7 @@ class Authentication(BaseAuthentication):
             log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
-            except self.db.Role.DoesNotExist:
+            except self.db.Role.DoesNotExist:  # pragma: no cover
                 raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
 

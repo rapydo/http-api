@@ -175,7 +175,7 @@ class ResponseMaker:
     @staticmethod
     def get_html(content, code, headers):
 
-        if isinstance(content, list):
+        if isinstance(content, list):  # pragma: no cover
             content = content.pop()
 
         headers["Content-Type"] = "text/html; charset=UTF-8"
@@ -313,7 +313,7 @@ class ResponseMaker:
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 
-                else:
+                else:  # pragma: no cover
 
                     log.warning(
                         "Unsupported validation schema: {}.{}",
