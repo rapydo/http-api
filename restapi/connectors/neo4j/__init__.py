@@ -290,7 +290,7 @@ class Authentication(BaseAuthentication):
         return True
 
     def delete_group(self, group: Group) -> bool:
-        if group:
+        if not group:
             return False
 
         group.delete()
