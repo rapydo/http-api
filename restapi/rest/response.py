@@ -147,7 +147,7 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
-    def is_binary(content_type):
+    def is_binary(content_type: str) -> bool:
         if not content_type:
             return False
 

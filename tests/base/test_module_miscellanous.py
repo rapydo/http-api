@@ -101,7 +101,7 @@ class TestApp(BaseTests):
     # #######################################
     # ####      Responses
     #########################################
-    def test_responses(self) -> None:
+    def test_responses(self, faker: Faker) -> None:
         class MySchema(Schema):
             name = fields.Str()
 
@@ -135,6 +135,44 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.Method()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
+
+        assert not ResponseMaker.is_binary(None)  # type: ignore
+        assert not ResponseMaker.is_binary("")
+        assert not ResponseMaker.is_binary("application/json")
+        assert ResponseMaker.is_binary("application/octet-stream")
+        assert ResponseMaker.is_binary("application/x-bzip")
+        assert ResponseMaker.is_binary("application/x-bzip2")
+        assert ResponseMaker.is_binary("application/pdf")
+        assert ResponseMaker.is_binary("application/msword")
+        assert ResponseMaker.is_binary("application/rtf")
+        assert ResponseMaker.is_binary("application/x-tar")
+        assert ResponseMaker.is_binary("application/gzip")
+        assert ResponseMaker.is_binary("application/zip")
+        assert ResponseMaker.is_binary("application/x-7z-compressed")
+        assert not ResponseMaker.is_binary("text/plain")
+        assert not ResponseMaker.is_binary("text/css")
+        assert not ResponseMaker.is_binary("text/csv")
+        assert not ResponseMaker.is_binary("text/html")
+        assert not ResponseMaker.is_binary("text/javascript")
+        assert not ResponseMaker.is_binary("text/xml")
+        assert ResponseMaker.is_binary("image/gif")
+        assert ResponseMaker.is_binary("image/jpeg")
+        assert ResponseMaker.is_binary("image/png")
+        assert ResponseMaker.is_binary("image/svg+xml")
+        assert ResponseMaker.is_binary("image/tiff")
+        assert ResponseMaker.is_binary("image/webp")
+        assert ResponseMaker.is_binary("image/bmp")
+        assert ResponseMaker.is_binary("image/aac")
+        assert ResponseMaker.is_binary("audio/midi")
+        assert ResponseMaker.is_binary("audio/mpeg")
+        assert ResponseMaker.is_binary("audio/wav")
+        assert ResponseMaker.is_binary("audio/anyother")
+        assert ResponseMaker.is_binary("video/mpeg")
+        assert ResponseMaker.is_binary("video/ogg")
+        assert ResponseMaker.is_binary("video/webm")
+        assert ResponseMaker.is_binary("video/anyother")
+        assert ResponseMaker.is_binary("video/anyother")
+        assert not ResponseMaker.is_binary(faker.pystr())
 
     # #######################################
     # ####      Processes
