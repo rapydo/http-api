@@ -7,7 +7,12 @@ from faker import Faker
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.exceptions import RestApiException
-from restapi.services.authentication import BaseAuthentication, InvalidToken, Role
+from restapi.services.authentication import (
+    DEFAULT_GROUP_NAME,
+    BaseAuthentication,
+    InvalidToken,
+    Role,
+)
 from restapi.tests import BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -217,9 +222,23 @@ class TestApp(BaseTests):
         )
         assert user is not None
 
-        # Test the precedence, username invalid  and user valid => None
+        # Test the precedence, username invalid and user valid => None
         user = auth.get_user(username="invalid", user_id=user.uuid)
         assert user is None
+
+        assert auth.get_user(None, None) is None
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user is not None
+        assert not auth.save_user(None)  # type: ignore
+        assert auth.save_user(user)
+        assert not auth.delete_user(None)  # type: ignore
+
+        assert auth.get_group(None, None) is None
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
+        assert group is not None
+        assert not auth.save_group(None)  # type: ignore
+        assert auth.save_group(group)
+        assert not auth.delete_group(None)  # type: ignore
 
         # None user has no roles ... verify_roles will always be False
         assert not auth.verify_roles(None, ["A", "B"], required_roles="invalid")

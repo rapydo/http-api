@@ -6,7 +6,6 @@ from flask import Flask
 from restapi.connectors import Connector
 from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.authentication import DEFAULT_GROUP_NAME, BaseAuthentication
 from restapi.utilities.logs import log
 
 CONNECTOR = "sqlalchemy"
@@ -47,19 +46,11 @@ def test_sqlalchemy(app: Flask) -> None:
     obj = connector.get_instance()
     assert obj is not None
 
-    assert obj.get_user(None, None) is None
-    user = obj.get_user(username=BaseAuthentication.default_user)
-    assert user is not None
-    assert not obj.save_user(None)  # type: ignore
-    assert obj.save_user(user)
-    assert not obj.delete_user(None)  # type: ignore
-
-    assert obj.get_group(None, None) is None
-    group = obj.get_group(name=DEFAULT_GROUP_NAME)
-    assert group is not None
-    assert not obj.save_group(None)  # type: ignore
-    assert obj.save_group(group)
-    assert not obj.delete_group(None)  # type: ignore
+    try:
+        obj.InvalidModel
+        pytest.fail("No exception raised on InvalidModel")
+    except AttributeError as e:
+        assert str(e) == "Model InvalidModel not found"
 
     obj.disconnect()
 
