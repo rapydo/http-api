@@ -133,7 +133,7 @@ def catch_db_exceptions(func):
 
             raise
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
@@ -350,7 +350,10 @@ class Authentication(BaseAuthentication):
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
             log.error(e)
             raise ServiceUnavailable("Backend database is unavailable")
-        except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
+        except (
+            sqlalchemy.exc.DatabaseError,
+            sqlalchemy.exc.OperationalError,
+        ) as e:  # pragma: no cover
             raise e
 
         # only reached if both username and user_id are None
@@ -360,18 +363,20 @@ class Authentication(BaseAuthentication):
         return cast(List[User], self.db.User.query.all())
 
     def save_user(self, user: User) -> bool:
-        if user:
-            self.db.session.add(user)
-            self.db.session.commit()
-            return True
-        return False
+        if not user:
+            return False
+
+        self.db.session.add(user)
+        self.db.session.commit()
+        return True
 
     def delete_user(self, user: User) -> bool:
-        if user:
-            self.db.session.delete(user)
-            self.db.session.commit()
-            return True
-        return False
+        if not user:
+            return False
+
+        self.db.session.delete(user)
+        self.db.session.commit()
+        return True
 
     def get_group(
         self, group_id: Optional[str] = None, name: Optional[str] = None
@@ -388,18 +393,20 @@ class Authentication(BaseAuthentication):
         return cast(List[Group], self.db.Group.query.all())
 
     def save_group(self, group: Group) -> bool:
-        if group:
-            self.db.session.add(group)
-            self.db.session.commit()
-            return True
-        return False
+        if not group:
+            return False
+
+        self.db.session.add(group)
+        self.db.session.commit()
+        return True
 
     def delete_group(self, group: Group) -> bool:
-        if group:
-            self.db.session.delete(group)
-            self.db.session.commit()
-            return True
-        return False
+        if not group:
+            return False
+
+        self.db.session.delete(group)
+        self.db.session.commit()
+        return True
 
     def get_roles(self) -> List[RoleObj]:
         roles = []
@@ -462,7 +469,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
@@ -503,7 +510,7 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.add(token_entry)
                 self.db.session.commit()
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("DB error ({}), rolling back", e)
                 self.db.session.rollback()
 
@@ -557,7 +564,7 @@ class Authentication(BaseAuthentication):
                 self.db.session.commit()
                 self.log_event(Events.delete, target=token_entry)
                 return True
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Could not invalidate token ({}), rolling back", e)
                 self.db.session.rollback()
                 return False

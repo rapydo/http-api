@@ -283,16 +283,18 @@ class Authentication(BaseAuthentication):
         return cast(List[Group], self.db.Group.nodes.all())
 
     def save_group(self, group: Group) -> bool:
-        if group:
-            group.save()
-            return True
-        return False
+        if not group:
+            return False
+
+        group.save()
+        return True
 
     def delete_group(self, group: Group) -> bool:
         if group:
-            group.delete()
-            return True
-        return False
+            return False
+
+        group.delete()
+        return True
 
     def get_roles(self) -> List[RoleObj]:
         roles = []
@@ -408,7 +410,7 @@ class Authentication(BaseAuthentication):
         except self.db.Token.DoesNotExist:
             return False
 
-        if not token_node.emitted_for.is_connected(user):
+        if not token_node.emitted_for.is_connected(user):  # pragma: no cover
             return False
 
         now = datetime.now(pytz.utc)

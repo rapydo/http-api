@@ -214,7 +214,7 @@ class CeleryExt(Connector):
                 self.celery_app.conf["REDBEAT_REDIS_URL"] = url
                 self.celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
                 log.info("Celery-beat connected to Redis: {}", obfuscate_url(url))
-            else:
+            else:  # pragma: no cover
                 log.warning(
                     "Cannot configure celery beat scheduler with backend: {}", backend
                 )

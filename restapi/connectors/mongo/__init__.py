@@ -217,17 +217,18 @@ class Authentication(BaseAuthentication):
         return list(self.db.User.objects.all())
 
     def save_user(self, user: User) -> bool:
-        if user:
-            user.save()
+        if not user:
+            return False
 
-            return True
-        return False
+        user.save()
+        return True
 
     def delete_user(self, user: User) -> bool:
-        if user:
-            user.delete()
-            return True
-        return False
+        if not user:
+            return False
+
+        user.delete()
+        return True
 
     def get_group(
         self, group_id: Optional[str] = None, name: Optional[str] = None
@@ -249,16 +250,18 @@ class Authentication(BaseAuthentication):
         return list(self.db.Group.objects.all())
 
     def save_group(self, group: Group) -> bool:
-        if group:
-            group.save()
-            return True
-        return False
+        if not group:
+            return False
+
+        group.save()
+        return True
 
     def delete_group(self, group: Group) -> bool:
-        if group:
-            group.delete()
-            return True
-        return False
+        if not group:
+            return False
+
+        group.delete()
+        return True
 
     def get_roles(self) -> List[RoleObj]:
         roles = []
@@ -286,10 +289,11 @@ class Authentication(BaseAuthentication):
         role.save()
 
     def save_role(self, role: RoleObj) -> bool:
-        if role:
-            role.save()
-            return True
-        return False
+        if not role:
+            return False
+
+        role.save()
+        return True
 
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
@@ -323,7 +327,7 @@ class Authentication(BaseAuthentication):
 
         try:
             token_entry = self.db.Token.objects.raw({"jti": jti}).first()
-        except self.db.Token.DoesNotExist:
+        except self.db.Token.DoesNotExist:  # pragma: no cover
             return False
 
         if token_entry.user_id is None or token_entry.user_id.email != user.email:
