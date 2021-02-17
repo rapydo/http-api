@@ -40,7 +40,11 @@ from restapi.utilities.time import get_timedelta
 
 
 class TestApp(BaseTests):
-    def test_libs(self, faker: Faker) -> None:
+
+    # #######################################
+    # ####      Env
+    #########################################
+    def test_env(self, faker: Faker) -> None:
 
         assert not Env.to_bool(None)
         assert Env.to_bool(None, True)
@@ -72,6 +76,32 @@ class TestApp(BaseTests):
         assert Env.to_int(faker.pystr(), random_default) == random_default
         assert Env.to_bool(object) == 0
 
+        prefix = faker.pystr().lower()
+        var1 = faker.pystr()
+        var2 = faker.pystr().lower()
+        var3 = faker.pystr().upper()
+        val1 = faker.pystr()
+        val2 = faker.pystr()
+        val3 = faker.pystr()
+
+        os.environ[f"{prefix}_{var1}"] = val1
+        os.environ[f"{prefix}_{var2}"] = val2
+        os.environ[f"{prefix}_{var3}"] = val3
+        variables = Env.load_group(prefix)
+        assert variables is not None
+        assert isinstance(variables, dict)
+        assert len(variables) == 3
+        assert var2 in variables
+        assert var3 not in variables
+        assert var3.lower() in variables
+        assert variables.get(var1.lower()) == val1
+        assert variables.get(var2.lower()) == val2
+        assert variables.get(var3.lower()) == val3
+
+    # #######################################
+    # ####      Responses
+    #########################################
+    def test_responses(self) -> None:
         class MySchema(Schema):
             name = fields.Str()
 
@@ -106,6 +136,11 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
 
+    # #######################################
+    # ####      Processes
+    #########################################
+    def test_processes(self) -> None:
+
         assert not find_process("this-should-not-exist")
         assert find_process("restapi")
         assert find_process("dumb-init")
@@ -113,28 +148,6 @@ class TestApp(BaseTests):
         current_pid = os.getpid()
         process = psutil.Process(current_pid)
         assert not find_process(process.name())
-
-        prefix = faker.pystr().lower()
-        var1 = faker.pystr()
-        var2 = faker.pystr().lower()
-        var3 = faker.pystr().upper()
-        val1 = faker.pystr()
-        val2 = faker.pystr()
-        val3 = faker.pystr()
-
-        os.environ[f"{prefix}_{var1}"] = val1
-        os.environ[f"{prefix}_{var2}"] = val2
-        os.environ[f"{prefix}_{var3}"] = val3
-        variables = Env.load_group(prefix)
-        assert variables is not None
-        assert isinstance(variables, dict)
-        assert len(variables) == 3
-        assert var2 in variables
-        assert var3 not in variables
-        assert var3.lower() in variables
-        assert variables.get(var1.lower()) == val1
-        assert variables.get(var2.lower()) == val2
-        assert variables.get(var3.lower()) == val3
 
         start_timeout(15)
         try:
@@ -151,6 +164,11 @@ class TestApp(BaseTests):
             pass
         except Timeout:  # pragma: no cover
             pytest.fail("Reached Timeout, max retries not worked?")
+
+    # #######################################
+    # ####      Meta
+    #########################################
+    def test_meta(self) -> None:
 
         # This is a valid package containing other packages... but no task will be found
         tasks = Meta.get_celery_tasks("restapi.utilities")
@@ -201,7 +219,17 @@ class TestApp(BaseTests):
         assert Meta.get_instance("customization", "InvalidClass") is None
         assert Meta.get_instance("customization", "Customizer") is not None
 
+    # #######################################
+    # ####      Templates
+    #########################################
+    def test_templates(self) -> None:
+
         assert get_html_template("this-should-not-exist", {}) is None
+
+    # #######################################
+    # ####      Timeouts
+    #########################################
+    def test_timeouts(self) -> None:
 
         start_timeout(1)
         try:
@@ -218,6 +246,11 @@ class TestApp(BaseTests):
             time.sleep(2)
         except BaseException:  # pragma: no cover
             pytest.fail("Operation interrupted")
+
+    # #######################################
+    # ####      Logging
+    #########################################
+    def test_logging(self) -> None:
 
         log_output = handle_log_output(None)
         assert isinstance(log_output, dict)
@@ -242,6 +275,11 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"new_password": "y"}) == {"new_password": "****"}
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
 
+    # #######################################
+    # ####      YAML data load and mix
+    #########################################
+    def test_yaml(self) -> None:
+
         data: Dict[str, Any] = {"a": 1}
         assert mix({}, data) == data
 
@@ -261,6 +299,40 @@ class TestApp(BaseTests):
         expected = {"a": [1, 2, 3, 4]}
 
         assert mix(data1, data2) == expected
+
+        # Invalid file / path
+        try:
+            load_yaml_file(Path("invalid"), Path("path"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        try:
+            load_yaml_file(Path("invalid"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        # Valid path, but not in yaml format
+        try:
+            load_yaml_file(Path("conftest.py"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        # File is empty
+        tmpf = tempfile.NamedTemporaryFile()
+        try:
+            load_yaml_file(Path(tmpf.name), Path("."))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+        tmpf.close()
+
+    # #######################################
+    # ####      Uploader
+    #########################################
+    def test_uploader(self) -> None:
 
         meta = Uploader.get_file_metadata("invalid_file")
         assert isinstance(meta, dict)
@@ -322,34 +394,10 @@ class TestApp(BaseTests):
         assert start == 0
         assert end == 1000
 
-        # Invalid file / path
-        try:
-            load_yaml_file(Path("invalid"), Path("path"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-
-        try:
-            load_yaml_file(Path("invalid"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-
-        # Valid path, but not in yaml format
-        try:
-            load_yaml_file(Path("conftest.py"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-
-        # File is empty
-        tmpf = tempfile.NamedTemporaryFile()
-        try:
-            load_yaml_file(Path(tmpf.name), Path("."))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-        tmpf.close()
+    # #######################################
+    # ####      Time
+    #########################################
+    def test_time(self, faker: Faker) -> None:
 
         every = faker.pyint()
 
@@ -420,6 +468,46 @@ class TestApp(BaseTests):
             )  # pragma: no cover
         except BadRequest:
             pass
+
+    # #######################################
+    # ####      Exceptions
+    #########################################
+    def test_exceptions(self) -> None:
+
+        try:
+            raise BadRequest("test")
+        except RestApiException as e:
+            assert e.status_code == 400
+
+        try:
+            raise Unauthorized("test")
+        except RestApiException as e:
+            assert e.status_code == 401
+
+        try:
+            raise Forbidden("test")
+        except RestApiException as e:
+            assert e.status_code == 403
+
+        try:
+            raise NotFound("test")
+        except RestApiException as e:
+            assert e.status_code == 404
+
+        try:
+            raise Conflict("test")
+        except RestApiException as e:
+            assert e.status_code == 409
+
+        try:
+            raise ServerError("test")
+        except RestApiException as e:
+            assert e.status_code == 500
+
+        try:
+            raise ServiceUnavailable("test")
+        except RestApiException as e:
+            assert e.status_code == 503
 
     def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
@@ -538,38 +626,3 @@ class TestApp(BaseTests):
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
         assert r["unique_delimited_list"][2] == "c "
-
-        try:
-            raise BadRequest("test")
-        except RestApiException as e:
-            assert e.status_code == 400
-
-        try:
-            raise Unauthorized("test")
-        except RestApiException as e:
-            assert e.status_code == 401
-
-        try:
-            raise Forbidden("test")
-        except RestApiException as e:
-            assert e.status_code == 403
-
-        try:
-            raise NotFound("test")
-        except RestApiException as e:
-            assert e.status_code == 404
-
-        try:
-            raise Conflict("test")
-        except RestApiException as e:
-            assert e.status_code == 409
-
-        try:
-            raise ServerError("test")
-        except RestApiException as e:
-            assert e.status_code == 500
-
-        try:
-            raise ServiceUnavailable("test")
-        except RestApiException as e:
-            assert e.status_code == 503

@@ -243,7 +243,8 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         # user_header will be used as target for deletion
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):
+        # Always enabled in core tests
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             uuid = None
             user_header, token = self.do_login(client, None, None)
         else:
