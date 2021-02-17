@@ -22,6 +22,7 @@ from restapi.exceptions import (
     Unauthorized,
 )
 from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
+from restapi.rest.definition import EndpointResource
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
@@ -173,6 +174,10 @@ class TestApp(BaseTests):
         assert ResponseMaker.is_binary("video/anyother")
         assert ResponseMaker.is_binary("video/anyother")
         assert not ResponseMaker.is_binary(faker.pystr())
+
+        assert EndpointResource.response("", code=200)[1] == 200  # type: ignore
+        assert EndpointResource.response(None, code=200)[1] == 204  # type: ignore
+        assert EndpointResource.response(None, code=200, head_method=True)[1] == 200  # type: ignore
 
     # #######################################
     # ####      Processes

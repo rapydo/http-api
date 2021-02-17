@@ -43,7 +43,7 @@ class PushpinExt(Connector):
     def callback(result, message):
         if result:
             log.debug("Message successfully published on pushpin")
-        else:
+        else:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
 
     def publish_on_stream(self, channel, message, sync=False):
