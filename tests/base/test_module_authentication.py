@@ -39,7 +39,7 @@ def verify_token_is_not_valid(
     try:
         auth.verify_token(token, token_type=ttype, raiseErrors=True)
         pytest.fail("No exception raised")
-    except InvalidToken:
+    except BaseException:
         pass
 
 
