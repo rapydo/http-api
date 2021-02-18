@@ -371,6 +371,9 @@ class BaseTests:
 
         with open(fpath) as file:
             data = json.load(file)
+
+            log.warning("Inspecting Email: {}", data)
+
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
             data["headers"] = tokens[0]
