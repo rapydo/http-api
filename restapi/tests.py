@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -378,6 +379,13 @@ class BaseTests:
             tokens = data["msg"].split("\n\n")
             data["headers"] = tokens[0]
             data["body"] = "".join(tokens[1:])
+
+        # Longer email are base64 encoded
+        # It happens with activation email from MeteoHub
+        if "Content-Transfer-Encoding: base64" in data["body"]:  # pragma: no cover
+            encodings = data["body"].split("Content-Transfer-Encoding: base64")
+            base64_body = re.sub(r"--===============.*$", "", encodings[1])
+            data["body"] = base64.b64decode(base64_body.replace("\n", ""))
 
         os.unlink(fpath)
         return data
