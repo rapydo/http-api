@@ -384,7 +384,7 @@ class BaseTests:
         token = None
 
         # Debug code:
-        log.warning("Inspecting email body: %s", body)
+        log.warning("Inspecting email body: {}", body)
 
         # if a token is not found the email is considered to be plain text
         if "</a>" not in body:
@@ -392,9 +392,7 @@ class BaseTests:
         # if a token is found the email is considered to be html
         else:
             urls = re.findall(
-                # r'href=["|\'](https?://[^\s<>"]+|www\.[^\s<>"]+)["|\']', body
-                r'href="(https?://[^\s<>"]+|www\.[^\s<>"]+)"',
-                body,
+                r'href=["|\'](https?://[^\s<>"]+|www\.[^\s<>"]+)["|\']', body
             )
 
             log.warning("Found urls: {}", urls)
