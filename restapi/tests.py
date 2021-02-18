@@ -385,7 +385,11 @@ class BaseTests:
         if "Content-Transfer-Encoding: base64" in data["body"]:  # pragma: no cover
             encodings = data["body"].split("Content-Transfer-Encoding: base64")
             base64_body = re.sub(r"--===============.*$", "", encodings[1])
-            data["body"] = base64.b64decode(base64_body.replace("\n", ""))
+
+            # b64decode gives as output bytes, decode("utf-8") needed to get string
+            data["body"] = base64.b64decode(base64_body.replace("\n", "")).decode(
+                "utf-8"
+            )
 
         os.unlink(fpath)
         return data
