@@ -148,7 +148,8 @@ if Connector.check_availability("smtp"):
             # Recovering token object from jti
             jti = unpacked_token[2]
             token_obj = self.auth.get_tokens(token_jti=jti)
-            if len(token_obj) == 0:
+            # Can't happen because the token is refused from verify_token function
+            if len(token_obj) == 0:  # pragma: no cover
                 raise BadRequest("Invalid reset token: this request is no longer valid")
 
             token_obj = token_obj.pop(0)
@@ -160,12 +161,14 @@ if Connector.check_availability("smtp"):
             if user.last_login is not None:
                 last_change = user.last_login
             # If user changed the pwd after the token emission invalidate the token
-            elif user.last_password_change is not None:
+            # Can't happen because the change password also invalidated the token
+            elif user.last_password_change is not None:  # pragma: no cover
                 last_change = user.last_password_change
 
             if last_change is not None:
 
-                if last_change > emitted:
+                # Can't happen because the change password also invalidated the token
+                if last_change > emitted:  # pragma: no cover
                     self.auth.invalidate_token(token)
                     raise BadRequest(
                         "Invalid reset token: this request is no longer valid",

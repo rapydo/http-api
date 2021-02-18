@@ -108,7 +108,7 @@ if Connector.check_availability("smtp"):
 
                 send_activation_link(smtp_client, self.auth, user)
 
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 self.auth.delete_user(user)
                 raise ServiceUnavailable(f"Errors during account registration: {e}")
 

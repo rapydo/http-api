@@ -74,6 +74,21 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/reset/{token}")
         assert r.status_code == 204
 
+        # Missing information
+        data = {
+            "new_password": BaseAuthentication.default_password,
+        }
+        r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == "Invalid password"
+
+        data = {
+            "password_confirm": BaseAuthentication.default_password,
+        }
+        r = client.put(f"{AUTH_URI}/reset/{token}", data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == "Invalid password"
+
         # Request with old password
         data = {
             "new_password": BaseAuthentication.default_password,

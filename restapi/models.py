@@ -199,7 +199,7 @@ class AdvancedList(fields.List):
 
         value = super()._deserialize(value, attr, data, **kwargs)
 
-        if not isinstance(value, list):
+        if not isinstance(value, list):  # pragma: no cover
             raise ValidationError("Invalid type")
 
         if self.unique:
