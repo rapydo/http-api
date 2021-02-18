@@ -383,6 +383,9 @@ class BaseTests:
     def get_token_from_body(body: str) -> Optional[str]:
         token = None
 
+        # Debug code:
+        log.warning("Inspecting email body: %s", body)
+
         # if a token is not found the email is considered to be plain text
         if "</a>" not in body:
             token = body[1 + body.rfind("/") :]
@@ -393,6 +396,8 @@ class BaseTests:
                 r'href="(https?://[^\s<>"]+|www\.[^\s<>"]+)"',
                 body,
             )
+
+            log.warning("Found urls: {}", urls)
             if urls:
                 # token is the last part of the url, extract as a path
                 token = os.path.basename(urls[0])
