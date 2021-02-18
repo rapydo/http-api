@@ -389,7 +389,9 @@ class BaseTests:
         # if a token is found the email is considered to be html
         else:
             urls = re.findall(
-                r'href=["|\'](https?://[^\s<>"]+|www\.[^\s<>"]+)["|\']', body
+                # r'href=["|\'](https?://[^\s<>"]+|www\.[^\s<>"]+)["|\']', body
+                r'href="(https?://[^\s<>"]+|www\.[^\s<>"]+)"',
+                body,
             )
             if urls:
                 # token is the last part of the url, extract as a path
@@ -444,7 +446,7 @@ class BaseTests:
     @staticmethod
     def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
 
-        for filt, value in filters.items():
+        for filt, value in filters.items():  # pragma: no cover
             if filt == "date" and event.date != value:
                 return False
             if filt == "ip" and event.ip != value:
@@ -466,7 +468,7 @@ class BaseTests:
     ) -> List[Event]:
 
         fpath = "/logs/security-events.log"
-        if not os.path.exists(fpath):
+        if not os.path.exists(fpath):  # pragma: no cover
             return []
 
         with open(fpath) as file:
