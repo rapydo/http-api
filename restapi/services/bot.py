@@ -53,6 +53,7 @@ def monitor(update, context, param):
     bot.send_markdown(f"You asked: {param}", update)
     try:
         out = bot.api.get("admin/stats")
-        bot.send_markdown(out, update)
+        # Not testable for now since token sharing is not implemented
+        bot.send_markdown(out, update)  # pragma: no cover
     except RestApiException as e:
         bot.send_markdown(str(e), update)

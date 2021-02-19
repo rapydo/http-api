@@ -1,6 +1,7 @@
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import Role
 
 if TESTING:
 
@@ -70,6 +71,24 @@ if TESTING:
         @decorators.auth.optional(allow_access_token_parameter=True)
         @decorators.endpoint(
             path="/tests/optionalqueryauthentication",
+            summary="Only echos received token and corresponding user, if any",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        def get(self) -> Response:
+            resp = {}
+            resp["token"] = self.get_token()
+            if user := self.get_user():
+                resp["user"] = user.email
+            else:
+                resp["user"] = None
+
+            return self.response(resp)
+
+    class TestAuthenticationWithMultipleRoles(EndpointResource):
+        @decorators.auth.require_any(Role.ADMIN, Role.USER)
+        @decorators.endpoint(
+            path="/tests/manyrolesuthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
