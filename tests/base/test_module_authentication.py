@@ -432,8 +432,10 @@ class TestApp(BaseTests):
         # Pick one of the default roles and change the description
         role: RoleObj = roles[0]
         assert role is not None
+        default_name = role.name
         default_description = role.description
-        role.description = faker.pystr()
+        new_description = faker.pystr()
+        role.description = new_description
         auth.save_role(role)
 
         # Create a new custom role
@@ -443,8 +445,8 @@ class TestApp(BaseTests):
 
         # Verify the change on the roles and the creation of the new one
         for r in auth.get_roles():
-            if r.name == role.name:
-                assert r.description == role.description
+            if r.name == default_name:
+                assert r.description == new_description
                 assert r.description != default_description
 
             if r.name == new_role_name:
@@ -456,8 +458,8 @@ class TestApp(BaseTests):
 
         for r in auth.get_roles():
             # default description restored for this default role
-            if r.name == role.name:
-                assert r.description != role.description
+            if r.name == default_name:
+                assert r.description != new_description
                 assert r.description == default_description
 
             # custom additional role not modified by init roles
