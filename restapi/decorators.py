@@ -88,7 +88,7 @@ def cache_response_filter(response):
     if not isinstance(response, tuple):
         return True
 
-    if len(response) < 3:
+    if len(response) < 3:  # pragma: no cover
         return True
 
     return response[1] < 500
