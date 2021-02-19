@@ -167,16 +167,25 @@ class Neo4jChoice(fields.Field):
         return value
 
 
-class RelationshipCounter(fields.Int):
+class Neo4jRelationshipToList(fields.Nested):
+    # nested_obj: StructuredRel
+    def _serialize(self, nested_obj, attr, obj, **kwargs):
+        self.many = True
+        return super()._serialize(nested_obj.all(), attr, obj, **kwargs)
+
+
+class Neo4jRelationshipToSingle(fields.Nested):
+    # nested_obj: StructuredRel
+    def _serialize(self, nested_obj, attr, obj, **kwargs):
+        self.many = False
+        self.schema.many = False
+        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
+
+
+class Neo4jRelationshipToCount(fields.Int):
     # value: StructuredRel
     def _serialize(self, value, attr, obj, **kwargs):
         return self._format_num(len(value))
-
-
-class RelationshipSingle(fields.Nested):
-    # nested_obj: StructuredRel
-    def _serialize(self, nested_obj, attr, obj, **kwargs):
-        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
 
 
 class UniqueDelimitedList(fields.DelimitedList):
