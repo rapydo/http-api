@@ -252,7 +252,11 @@ class TestUploadAndDownload(BaseTests):
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
-        assert r.status_code == 400
+        # Back-compatibility check for B2STAGE
+        if werkzeug_version == "0.16.1":  # pragma: no cover
+            assert r.status_code == 200
+        else:
+            assert r.status_code == 206
         # c = self.get_content(r)
         # assert c.get('filename') is not None
         # uploaded_filename = c.get('filename')
