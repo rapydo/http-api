@@ -17,6 +17,7 @@ from typing import Optional, Tuple
 from flask import request
 
 from restapi.env import Env
+from restapi.services.authentication import ALL_ROLES, ANY_ROLE
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -131,25 +132,26 @@ class HTTPTokenAuth:
 
         return decorator
 
-    @staticmethod
-    def require_all(*arg, allow_access_token_parameter=False):
-        return HTTPTokenAuth.require(
-            roles=arg,
-            required_roles="all",
+    @classmethod
+    def require_all(cls, *roles, allow_access_token_parameter=False):
+        return cls.require(
+            roles=roles,
+            required_roles=ALL_ROLES,
             allow_access_token_parameter=allow_access_token_parameter,
         )
 
-    @staticmethod
-    def require_any(*arg, allow_access_token_parameter=False):
-        return HTTPTokenAuth.require(
-            roles=arg,
-            required_roles="any",
+    @classmethod
+    def require_any(cls, *roles, allow_access_token_parameter=False):
+        return cls.require(
+            roles=roles,
+            required_roles=ANY_ROLE,
             allow_access_token_parameter=allow_access_token_parameter,
         )
 
-    @staticmethod
-    def require(roles=None, required_roles=None, allow_access_token_parameter=False):
-        # required_roles = 'all', 'any'
+    @classmethod
+    def require(
+        cls, roles=None, required_roles=ALL_ROLES, allow_access_token_parameter=False
+    ):
         def decorator(func):
             # it is used in Loader to verify if an endpoint is requiring
             # authentication and inject 401 errors
@@ -212,7 +214,7 @@ class HTTPTokenAuth:
                 if not caller.auth.verify_roles(
                     caller.unpacked_token[3], roles, required_roles=required_roles
                 ):
-                    log.info("Unauthorized request: missing privileges")
+                    log.info("Unauthorized request: missing privileges.")
                     return caller.response(
                         "You are not authorized: missing privileges",
                         code=401,

@@ -522,7 +522,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def verify_roles(
         self,
         user: User,
-        roles: List[Union[str, Role]],
+        roles: Optional[List[Union[str, Role]]],
         required_roles: str = ALL_ROLES,
         warnings: bool = True,
     ) -> bool:
@@ -550,6 +550,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
                 if role in current_roles:
                     return True
+
+            log.warning("Expected at least one roles from {}, found none", roles)
             return False
 
         log.critical("Unknown role authorization requirement: {}", required_roles)

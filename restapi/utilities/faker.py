@@ -78,28 +78,38 @@ class PasswordProvider(BaseProvider):
         rand = secrets.SystemRandom()
 
         randstr = "".join(rand.choices(charset, k=length))
-        if low and not any(s in randstr for s in string.ascii_lowercase):
+        # Password is randomly resampled, can't be sure that will be covered by tests
+        if low and not any(
+            s in randstr for s in string.ascii_lowercase
+        ):  # pragma: no cover
             log.warning(
                 f"{randstr} is not strong enough: missing lower case. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
-        if up and not any(s in randstr for s in string.ascii_uppercase):
+        # Password is randomly resampled, can't be sure that will be covered by tests
+        if up and not any(
+            s in randstr for s in string.ascii_uppercase
+        ):  # pragma: no cover
             log.warning(
                 f"{randstr} is not strong enough: missing upper case. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
-        if digits and not any(s in randstr for s in string.digits):
+        # Password is randomly resampled, can't be sure that will be covered by tests
+        if digits and not any(s in randstr for s in string.digits):  # pragma: no cover
             log.warning(
                 f"{randstr} is not strong enough: missing digits. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
             )
-        if symbols and not any(s in randstr for s in string.punctuation):
+        # Password is randomly resampled, can't be sure that will be covered by tests
+        if symbols and not any(
+            s in randstr for s in string.punctuation
+        ):  # pragma: no cover
             log.warning(
                 f"{randstr} is not strong enough: missing symbols. Sampling again..."
             )
