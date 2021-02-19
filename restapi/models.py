@@ -1,7 +1,6 @@
 import inspect
 import json
 import re
-from typing import Any, Optional, TypeVar, Union
 
 import simplejson
 from marshmallow import validate  # used as alias from endpoints
@@ -23,8 +22,6 @@ GET_SCHEMA_KEY = "get_schema"
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.debug("{} loaded", validate)
-
-_T = TypeVar("_T")
 
 
 @parser.location_loader("body")

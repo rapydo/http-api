@@ -23,13 +23,14 @@ if TESTING:
             # ),
         )
         myint_exclusive = fields.Int(
-            required=True, validate=validate.Range(min=1, max=10)
+            required=True,
+            validate=validate.Range(
+                min=1, max=10, min_inclusive=False, max_inclusive=False
+            ),
         )
         myint_inclusive = fields.Int(
             required=True,
-            validate=validate.Range(
-                min=1, max=10, min_inclusive=True, max_inclusive=True
-            ),
+            validate=validate.Range(min=1, max=10),
         )
 
     class TestInputs(EndpointResource):

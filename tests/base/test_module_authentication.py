@@ -1,7 +1,9 @@
 import time
+from datetime import datetime
 from typing import List, Optional
 
 import pytest
+import pytz
 from faker import Faker
 
 from restapi.connectors import Connector
@@ -313,6 +315,23 @@ class TestApp(BaseTests):
         assert user is not None
 
         assert auth.verify_token_validity(jti, user)
+
+        # Verify token against a wrong user
+
+        another_user = auth.create_user(
+            {
+                "email": faker.ascii_email(),
+                "name": "Default",
+                "surname": "User",
+                "password": faker.password(strong=True),
+                "last_password_change": datetime.now(pytz.utc),
+            },
+            # It will be expanded with the default role
+            roles=[],
+        )
+        auth.save_user(another_user)
+
+        assert not auth.verify_token_validity(jti, another_user)
 
     def test_users_groups_roles(self, faker: Faker) -> None:
 
