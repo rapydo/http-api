@@ -45,7 +45,7 @@ def find_process(process_name, keywords=None, prefix=None):
     for pid in psutil.pids():
 
         if pid == current_pid or not psutil.pid_exists(pid):
-            continue
+            continue  # pragma: no cover
         process = psutil.Process(pid)
 
         if process.name() != process_name:
@@ -97,7 +97,7 @@ def wait_socket(host, port, service_name, retries=DEFAULT_MAX_RETRIES):
                     f"{service_name} ({host}:{port}) unavailable after {t} seconds"
                 )
 
-            if counter % 15 == 0:
+            if counter % 15 == 0:  # pragma: no cover
                 log.warning(
                     "{} ({}:{}) is still unavailable after {} seconds",
                     service_name,

@@ -105,14 +105,16 @@ if TESTING:
 
     # Note: this endpoint requires a role that does not exist!
     class TestAuthenticationWithMissingRole(EndpointResource):
-        @decorators.auth.require_all("UnknownRole")
+        @decorators.auth.require_any("UnknownRole")
         @decorators.endpoint(
             path="/tests/unknownroleauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self) -> Response:
+        # no cover because this endpoint will be never called
+        # because it requires an Unknown Role to be accessed
+        def get(self) -> Response:  # pragma: no cover
             resp = {}
             resp["token"] = self.get_token()
             if user := self.get_user():
