@@ -173,7 +173,8 @@ def mywait():
             wait_socket(host, port, label)
 
             backend = variables.get("backend", "N/a")
-            if backend == "RABBIT":
+            # Rabbit is no longer used as backend due to the strong limitations
+            if backend == "RABBIT":  # pragma: no cover
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
                 service_vars = Env.load_variables_group(prefix="redis")

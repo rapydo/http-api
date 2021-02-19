@@ -89,17 +89,16 @@ if TESTING:
         @decorators.auth.require_any(Role.ADMIN, Role.USER)
         @decorators.endpoint(
             path="/tests/manyrolesauthentication",
-            summary="Only echos received token and corresponding user, if any",
+            summary="Only echos received token and corresponding user",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
         def get(self) -> Response:
+
             resp = {}
             resp["token"] = self.get_token()
-            if user := self.get_user():
-                resp["user"] = user.email
-            else:
-                resp["user"] = None
+            user = self.get_user()
+            resp["user"] = user.email
 
             return self.response(resp)
 
