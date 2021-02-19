@@ -167,7 +167,7 @@ class Neo4jChoice(fields.Field):
         return value
 
 
-class Neo4jRelationshipToList(fields.Nested):
+class Neo4jRelationshipToMany(fields.Nested):
     # nested_obj: StructuredRel
     def _serialize(self, nested_obj, attr, obj, **kwargs):
         self.many = True
