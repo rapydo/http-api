@@ -1,5 +1,5 @@
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
@@ -218,7 +218,7 @@ class TestApp(BaseTests):
         assert content["user"] == BaseAuthentication.default_user
 
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
-            uuid, data = self.create_user(client, roles=["normal_user"])
+            uuid, data = self.create_user(client, roles=[Role.USER])
             user_header, user_token = self.do_login(
                 client, data.get("email"), data.get("password")
             )

@@ -6,7 +6,7 @@ import urllib.parse
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import jwt
 import pyotp
@@ -24,7 +24,7 @@ from restapi.config import (
 )
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication, Payload
+from restapi.services.authentication import BaseAuthentication, Payload, Role
 from restapi.utilities.faker import get_faker
 from restapi.utilities.logs import log
 
@@ -268,7 +268,7 @@ class BaseTests:
         cls,
         client: FlaskClient,
         data: Optional[Dict[str, Any]] = None,
-        roles: List[str] = None,
+        roles: Optional[List[Union[str, Role]]] = None,
     ) -> Tuple[str, Dict[str, Any]]:
 
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
@@ -281,7 +281,12 @@ class BaseTests:
             user_data["email_notification"] = False
         user_data["is_active"] = True
         user_data["expiration"] = None
+
         if roles:
+            for idx, role in enumerate(roles):
+                if isinstance(role, Role):
+                    roles[idx] = role.value
+
             user_data["roles"] = json.dumps(roles)
 
         if data:
