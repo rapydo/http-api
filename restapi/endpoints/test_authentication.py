@@ -88,7 +88,26 @@ if TESTING:
     class TestAuthenticationWithMultipleRoles(EndpointResource):
         @decorators.auth.require_any(Role.ADMIN, Role.USER)
         @decorators.endpoint(
-            path="/tests/manyrolesuthentication",
+            path="/tests/manyrolesauthentication",
+            summary="Only echos received token and corresponding user, if any",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        def get(self) -> Response:
+            resp = {}
+            resp["token"] = self.get_token()
+            if user := self.get_user():
+                resp["user"] = user.email
+            else:
+                resp["user"] = None
+
+            return self.response(resp)
+
+    # Note: this endpoint requires a role that does not exist!
+    class TestAuthenticationWithMissingRole(EndpointResource):
+        @decorators.auth.require_all("UnknownRole")
+        @decorators.endpoint(
+            path="/tests/unknownroleauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},

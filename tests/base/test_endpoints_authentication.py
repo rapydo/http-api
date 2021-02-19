@@ -203,12 +203,17 @@ class TestApp(BaseTests):
 
     def test_authentication_with_multiple_roles(self, client: FlaskClient) -> None:
 
-        r = client.get(f"{API_URI}/tests/manyrolesuthentication")
+        r = client.get(f"{API_URI}/tests/manyrolesauthentication")
+        assert r.status_code == 401
+
+        r = client.get(f"{API_URI}/tests/unknownroleauthentication")
         assert r.status_code == 401
 
         admin_headers, admin_token = self.do_login(client, None, None)
 
-        r = client.get(f"{API_URI}/tests/manyrolesuthentication", headers=admin_headers)
+        r = client.get(
+            f"{API_URI}/tests/manyrolesauthentication", headers=admin_headers
+        )
         assert r.status_code == 200
         content = self.get_content(r)
         assert len(content) == 2
@@ -217,6 +222,11 @@ class TestApp(BaseTests):
         assert content["token"] == admin_token
         assert content["user"] == BaseAuthentication.default_user
 
+        r = client.get(
+            f"{API_URI}/tests/unknownroleauthentication", headers=admin_headers
+        )
+        assert r.status_code == 401
+
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
             uuid, data = self.create_user(client, roles=[Role.USER])
             user_header, user_token = self.do_login(
@@ -224,7 +234,7 @@ class TestApp(BaseTests):
             )
 
             r = client.get(
-                f"{API_URI}/tests/manyrolesuthentication", headers=user_header
+                f"{API_URI}/tests/manyrolesauthentication", headers=user_header
             )
             assert r.status_code == 200
             content = self.get_content(r)
@@ -233,5 +243,10 @@ class TestApp(BaseTests):
             assert "user" in content
             assert content["token"] == user_token
             assert content["user"] == data.get("email")
+
+            r = client.get(
+                f"{API_URI}/tests/unknownroleauthentication", headers=user_header
+            )
+            assert r.status_code == 401
 
             self.delete_user(client, uuid)
