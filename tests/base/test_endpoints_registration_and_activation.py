@@ -117,13 +117,13 @@ class TestApp(BaseTests):
         assert f"{proto}://localhost/public/register/" in body
 
         # This will fail because the user is not active
-        self.do_login(
+        _, error = self.do_login(
             client,
             registration_data["email"],
             registration_data["password"],
             status_code=403,
-            # error='Sorry, this account is not active'
         )
+        assert error == "Sorry, this account is not active"
 
         # Also password reset is not allowed
         data = {"reset_email": registration_data["email"]}

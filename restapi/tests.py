@@ -112,10 +112,9 @@ class BaseTests:
         USER: Optional[str],
         PWD: Optional[str],
         status_code: int = 200,
-        error: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
         test_failures: bool = False,
-    ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
+    ) -> Tuple[Optional[Dict[str, str]], str]:
         """
         Make login and return both token and authorization header
         """
@@ -144,7 +143,7 @@ class BaseTests:
 
             # This 403 is expected, return an invalid value or you can enter a loop!
             if status_code == 403:
-                return None, None
+                return None, content
 
             if isinstance(content, dict) and content.get("actions"):
                 actions = content.get("actions", [])
@@ -258,9 +257,6 @@ class BaseTests:
         #     log.error(c)
 
         assert r.status_code == status_code
-
-        if error:
-            assert content == error
 
         # when 200 OK content is the token
         assert content is not None

@@ -155,7 +155,6 @@ else:
                     registration_data["email"],
                     registration_data["password"],
                     status_code=403,
-                    # error='Sorry, this account is not active'
                 )
 
                 events = self.get_last_events(1)

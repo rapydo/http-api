@@ -27,14 +27,14 @@ class TestApp2(BaseTests):
         # But after N seconds the login will be refused
         time.sleep(expiration_time)
 
-        invalid_headers, _ = self.do_login(
+        invalid_headers, error = self.do_login(
             client,
             data["email"],
             data["password"],
             status_code=403,
-            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
+        assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
         assert events[0].event == Events.refused_login.value
@@ -74,14 +74,14 @@ class TestApp2(BaseTests):
         # But after N seconds the login will be refused again
         time.sleep(expiration_time)
 
-        invalid_headers, _ = self.do_login(
+        invalid_headers, error = self.do_login(
             client,
             data["email"],
             data["password"],
             status_code=403,
-            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
+        assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
         assert events[0].event == Events.refused_login.value
@@ -114,14 +114,14 @@ class TestApp2(BaseTests):
         assert r.status_code == 204
 
         # User is no longer valid
-        invalid_headers, _ = self.do_login(
+        invalid_headers, error = self.do_login(
             client,
             data["email"],
             data["password"],
             status_code=403,
-            error="Sorry, this account is expired",
         )
         assert invalid_headers is None
+        assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
         assert events[0].event == Events.refused_login.value
