@@ -153,7 +153,9 @@ class Uploader:
         )
 
     @staticmethod
-    def parse_content_range(range_header):
+    def parse_content_range(
+        range_header: Optional[str],
+    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
 
         if range_header is None:
             return None, None, None
@@ -197,27 +199,13 @@ class Uploader:
     ) -> Tuple[bool, Response]:
         filename = secure_filename(filename)
 
-        try:
-            range_header = request.headers.get("Content-Range", "")
-            # content_length = request.headers.get("Content-Length")
-            content_range = parse_content_range_header(range_header)
+        range_header = request.headers.get("Content-Range", "")
+        total_length, start, stop = self.parse_content_range(range_header)
 
-            if content_range is None:
-                log.error("Unable to parse Content-Range: {}", range_header)
-                completed = True
-                start = 0
-                total_length = int(range_header.split("/")[1])
-                stop = int(total_length)
-            else:
-                # log.warning(content_range)
-                start = int(content_range.start)
-                stop = int(content_range.stop)
-                total_length = int(content_range.length)
-                completed = stop >= total_length
-        except BaseException as e:
-            log.error("Unable to parse Content-Range: {}", range_header)
-            log.error(str(e))
+        if total_length is None or start is None or stop is None:
             raise BadRequest("Invalid request")
+
+        completed = stop >= total_length
 
         # Default chunk size, put this somewhere
         if chunk_size is None:
