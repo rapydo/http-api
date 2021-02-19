@@ -22,6 +22,15 @@ if TESTING:
             #     error="Invalid date",
             # ),
         )
+        myint_exclusive = fields.Int(
+            required=True, validate=validate.Range(min=1, max=10)
+        )
+        myint_inclusive = fields.Int(
+            required=True,
+            validate=validate.Range(
+                min=1, max=10, min_inclusive=True, max_inclusive=True
+            ),
+        )
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)

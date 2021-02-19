@@ -436,7 +436,8 @@ class TestApp(BaseTests):
         default_description = role.description
         new_description = faker.pystr()
         role.description = new_description
-        auth.save_role(role)
+        assert auth.save_role(role)
+        assert not auth.save_role(None)  # type: ignore
 
         # Create a new custom role
         new_role_name = faker.pystr()
