@@ -179,7 +179,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     default_password: Optional[str] = None
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
-    default_role: str = "normal_user"
+    default_role: str = Role.USER.value
 
     # To be stored on DB
     failed_logins: Dict[str, List[FailedLogin]] = {}
