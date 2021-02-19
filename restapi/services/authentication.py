@@ -551,7 +551,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 if role in current_roles:
                     return True
 
-            log.warning("Expected at least one roles from {}, found none", roles)
+            log.warning(
+                "Expected at least one roles from {}, found none in {}",
+                roles,
+                current_roles,
+            )
             return False
 
         log.critical("Unknown role authorization requirement: {}", required_roles)
