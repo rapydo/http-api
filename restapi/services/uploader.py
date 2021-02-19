@@ -48,7 +48,7 @@ class Uploader:
         if subfolder is not None:
             filename = os.path.join(subfolder, filename)
             subdir = os.path.join(UPLOAD_PATH, subfolder)
-            if not os.path.exists(subdir):
+            if not os.path.exists(subdir):  # pragma: no cover
                 os.makedirs(subdir)
         abs_file = os.path.join(UPLOAD_PATH, filename)
         if onlydir:
@@ -96,7 +96,7 @@ class Uploader:
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
-        except Exception:
+        except Exception:  # pragma: no cover
             raise ServiceUnavailable("Permission denied: failed to write the file")
 
         # Check exists - but it is basicaly a test that cannot fail...
@@ -123,7 +123,7 @@ class Uploader:
         self, upload_dir: str, filename: str, force: bool = True
     ) -> Response:
 
-        if not os.path.exists(upload_dir):
+        if not os.path.exists(upload_dir):  # pragma: no cover
             os.makedirs(upload_dir)
 
         filename = secure_filename(filename)

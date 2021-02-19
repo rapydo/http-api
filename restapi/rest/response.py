@@ -303,7 +303,7 @@ class ResponseMaker:
                     if validator.max is not None:
                         f["max"] = validator.max
                         if not validator.max_inclusive:
-                            f["max"] += 1
+                            f["max"] -= 1
 
                 elif isinstance(validator, validate.OneOf):
 

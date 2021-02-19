@@ -327,7 +327,7 @@ class Authentication(BaseAuthentication):
 
         try:
             token_entry = self.db.Token.objects.raw({"jti": jti}).first()
-        except self.db.Token.DoesNotExist:  # pragma: no cover
+        except self.db.Token.DoesNotExist:
             return False
 
         if token_entry.user_id is None or token_entry.user_id.email != user.email:
@@ -374,7 +374,7 @@ class Authentication(BaseAuthentication):
         elif user:
             try:
                 tokens = self.db.Token.objects.raw({"user_id": user.id}).all()
-            except self.db.Token.DoesNotExist:
+            except self.db.Token.DoesNotExist:  # pragma: no cover
                 pass
         elif token_jti:
             try:
