@@ -176,7 +176,7 @@ class RelationshipCounter(fields.Int):
 class RelationshipSingle(fields.Nested):
     # nested_obj: StructuredRel
     def _serialize(self, nested_obj, attr, obj, **kwargs):
-        return nested_obj.single()
+        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
 
 
 class UniqueDelimitedList(fields.DelimitedList):
