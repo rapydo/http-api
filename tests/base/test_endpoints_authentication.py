@@ -218,7 +218,7 @@ class TestApp(BaseTests):
         assert content["user"] == BaseAuthentication.default_user
 
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
-            uuid, data = self.create_user(client)
+            uuid, data = self.create_user(client, roles=["normal_user"])
             user_header, user_token = self.do_login(
                 client, data.get("email"), data.get("password")
             )

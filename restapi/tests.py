@@ -265,7 +265,10 @@ class BaseTests:
 
     @classmethod
     def create_user(
-        cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
+        cls,
+        client: FlaskClient,
+        data: Optional[Dict[str, Any]] = None,
+        roles: List[str] = None,
     ) -> Tuple[str, Dict[str, Any]]:
 
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
@@ -278,6 +281,9 @@ class BaseTests:
             user_data["email_notification"] = False
         user_data["is_active"] = True
         user_data["expiration"] = None
+        if roles:
+            user_data["roles"] = json.dumps(roles)
+
         if data:
             user_data.update(data)
         r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
