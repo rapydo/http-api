@@ -1,6 +1,7 @@
 import inspect
 import json
 import re
+from typing import Any, Optional, TypeVar, Union
 
 import simplejson
 from marshmallow import validate  # used as alias from endpoints
@@ -22,6 +23,8 @@ GET_SCHEMA_KEY = "get_schema"
 ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 log.debug("{} loaded", validate)
+
+_T = TypeVar("_T")
 
 
 @parser.location_loader("body")
@@ -165,6 +168,18 @@ class Neo4jChoice(fields.Field):
 
     def _deserialize(self, value, attr, data, **kwargs):
         return value
+
+
+class RelationshipCounter(fields.Int):
+    # value: StructuredRel
+    def _serialize(self, value, attr, obj, **kwargs):
+        return self._format_num(len(value))
+
+
+class RelationshipSingle(fields.Nested):
+    # nested_obj: StructuredRel
+    def _serialize(self, nested_obj, attr, obj, **kwargs):
+        return nested_obj.single()
 
 
 class UniqueDelimitedList(fields.DelimitedList):
