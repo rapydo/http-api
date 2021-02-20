@@ -47,7 +47,7 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is saved lowercase
-        assert users_list[0].get("email") == data.get("email", "MISSING").lower()
+        assert users_list.get("email") == data.get("email", "MISSING").lower()
 
         # Check duplicates
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
@@ -102,8 +102,8 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
-        assert users_list[0].get("email") != data.get("email", "MISSING").lower()
-        assert users_list[0].get("email") == data2.get("email", "MISSING").lower()
+        assert users_list.get("email") != data.get("email", "MISSING").lower()
+        assert users_list.get("email") == data2.get("email", "MISSING").lower()
 
         r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
         assert r.status_code == 404

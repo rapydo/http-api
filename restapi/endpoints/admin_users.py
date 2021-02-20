@@ -53,7 +53,7 @@ class Group(Schema):
     shortname = fields.Str()
 
 
-def get_output_schema():
+def get_output_schema(many=True):
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
 
@@ -77,7 +77,7 @@ def get_output_schema():
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes, name="UserData")
-    return schema(many=True)
+    return schema(many=many)
 
 
 auth = Connector.get_authentication_instance()
@@ -171,6 +171,34 @@ def getPUTInputSchema(request):
     return getInputSchema(request, False)
 
 
+class AdminSingleUser(EndpointResource):
+
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["admin"]
+    private = True
+
+    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.marshal_with(get_output_schema(many=False), code=200)
+    @decorators.endpoint(
+        path="/admin/users/<user_id>",
+        summary="Return information on a single user",
+        responses={200: "User information successfully retrieved"},
+    )
+    def get(self, user_id: str) -> Response:
+
+        user = self.auth.get_user(user_id=user_id)
+
+        if user is None:
+            raise NotFound("This user cannot be found or you are not authorized")
+
+        if Connector.authentication_service == "neo4j":
+            user.belongs_to = user.belongs_to.single()
+
+        self.log_event(self.events.access, user)
+
+        return self.response(user)
+
+
 class AdminUsers(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE"]
@@ -178,36 +206,19 @@ class AdminUsers(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.marshal_with(get_output_schema(), code=200)
+    @decorators.marshal_with(get_output_schema(many=True), code=200)
     @decorators.endpoint(
         path="/admin/users",
-        summary="List of users",
+        summary="Return the list of all defined users",
         responses={200: "List of users successfully retrieved"},
     )
-    @decorators.endpoint(
-        path="/admin/users/<user_id>",
-        summary="Obtain information on a single user",
-        responses={200: "User information successfully retrieved"},
-    )
-    def get(self, user_id: Optional[str] = None) -> Response:
+    def get(self) -> Response:
 
-        user = None
-        users = None
-
-        if not user_id:
-            users = self.auth.get_users()
-        elif user := self.auth.get_user(user_id=user_id):
-            users = [user]
-
-        if users is None:
-            raise NotFound("This user cannot be found or you are not authorized")
+        users = self.auth.get_users()
 
         if Connector.authentication_service == "neo4j":
             for u in users:
                 u.belongs_to = u.belongs_to.single()
-
-        if user:
-            self.log_event(self.events.access, user)
 
         return self.response(users)
 
