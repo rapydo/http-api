@@ -20,12 +20,11 @@ class Status(EndpointResource):
 class AuthStatus(EndpointResource):
     """ Check if APIs are online """
 
-    baseuri = "/auth"
     labels = ["helpers"]
 
     @decorators.auth.require()
     @decorators.endpoint(
-        path="/status",
+        path="/auth/status",
         summary="Check if the provided auth token is valid",
         description="Use this endpoint to verify if an auth token is valid",
         responses={200: "Auth token is valid"},

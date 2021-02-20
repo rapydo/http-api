@@ -12,18 +12,18 @@ if TESTING:
     class TestDownload(EndpointResource):
 
         labels = ["tests"]
-        # Set an invalid baseuri to test the automatic fallback to /api
-        baseuri = "/invalid"
 
         @decorators.use_kwargs({"stream": fields.Bool()}, location="query")
         @decorators.endpoint(
-            path="/tests/download",
+            # forget the initiali / to test the automatic fix
+            path="tests/download",
             summary="Test missing filename",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
         @decorators.endpoint(
-            path="/tests/download/<fname>",
+            # forget the initiali / to test the automatic fix
+            path="tests/download/<fname>",
             summary="Execute tests with the downloader",
             description="Only enabled in testing mode",
             responses={

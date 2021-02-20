@@ -17,13 +17,12 @@ if Connector.check_availability("smtp"):
 
     class ProfileRegistration(EndpointResource):
 
-        baseuri = "/auth"
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
         @decorators.use_kwargs(user_registration_input)
         @decorators.endpoint(
-            path="/profile",
+            path="/auth/profile",
             summary="Register new user",
             responses={
                 200: "The uuid of the new user is returned",

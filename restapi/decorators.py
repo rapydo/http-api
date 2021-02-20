@@ -9,7 +9,7 @@ from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
-from restapi.config import SENTRY_URL
+from restapi.config import API_URL, AUTH_URL, SENTRY_URL
 from restapi.exceptions import (
     BadRequest,
     Conflict,
@@ -70,6 +70,16 @@ def endpoint(
 
         if not hasattr(func, "uris"):
             setattr(func, "uris", [])
+
+        normalized_path = path
+
+        if not path.startswith("/"):
+            normalized_path = f"/{path}"
+        if not normalized_path.startswith(API_URL) and not normalized_path.startswith(
+            AUTH_URL
+        ):
+            normalized_path = f"{API_URL}{path}"
+
         getattr(func, "uris").append(path)
         inject_apispec_docs(func, specs, None)
 

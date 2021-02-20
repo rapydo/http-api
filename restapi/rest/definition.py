@@ -4,7 +4,6 @@ from flask import Response as FlaskResponse
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
-from restapi.config import API_URL
 from restapi.connectors import Connector
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
@@ -22,7 +21,6 @@ Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
 
 class EndpointResource(MethodResource, Resource):
 
-    baseuri = API_URL
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False

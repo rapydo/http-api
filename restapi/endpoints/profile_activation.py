@@ -53,11 +53,10 @@ def send_activation_link(smtp, auth, user):
 
 class ProfileActivation(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
-    baseuri = "/auth"
-    labels = ["base", "profiles"]
+    labels = ["base", "profile"]
 
     @decorators.endpoint(
-        path="/profile/activate/<token>",
+        path="/auth/profile/activate/<token>",
         summary="Activate your account by providing the activation token",
         responses={200: "Account successfully activated"},
     )
@@ -117,7 +116,7 @@ class ProfileActivation(EndpointResource):
 
     @decorators.use_kwargs({"username": fields.Email(required=True)})
     @decorators.endpoint(
-        path="/profile/activate",
+        path="/auth/profile/activate",
         summary="Ask a new activation link",
         responses={200: "A new activation link has been sent"},
     )

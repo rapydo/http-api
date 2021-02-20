@@ -15,18 +15,18 @@ if TESTING:
     class TestUpload(EndpointResource, Uploader):
 
         labels = ["tests"]
-        # Set an invalid baseuri to test the automatic fallback to /api
-        baseuri = "/invalid"
 
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            path="/tests/upload",
+            # forget the initiali / to test the automatic fix
+            path="tests/upload",
             summary="Execute tests with the uploader",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
         @decorators.endpoint(
-            path="/tests/upload/<chunked>",
+            # forget the initiali / to test the automatic fix
+            path="tests/upload/<chunked>",
             summary="Execute tests with the chunked uploader",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
@@ -50,7 +50,8 @@ if TESTING:
         @decorators.init_chunk_upload
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            path="/tests/upload",
+            # forget the initiali / to test the automatic fix
+            path="tests/upload",
             summary="Initialize tests on chunked upload",
             description="Only enabled in testing mode",
             responses={200: "Schema retrieved", 201: "Upload initialized"},

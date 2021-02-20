@@ -43,7 +43,6 @@ class EndpointElements:
     uris: List[str] = attribute(default=[])
     methods: Dict[str, List[str]] = attribute(default={})
     tags: List[str] = attribute(default=[])
-    base_uri: str = attribute(default="")
     private: bool = attribute(default=False)
 
 
@@ -181,20 +180,12 @@ class EndpointsLoader:
 
         for epclss in self.extract_endpoints(base_dir):
 
-            if epclss.baseuri in BASE_URLS:
-                base = epclss.baseuri
-            else:
-                log.warning("Invalid base {}", epclss.baseuri)
-                base = API_URL
-            base = base.strip("/")
-
             # Building endpoint
             endpoint = EndpointElements(
                 uris=[],
                 methods={},
                 cls=epclss,
                 tags=epclss.labels,
-                base_uri=base,
                 private=epclss.private,
             )
 
@@ -225,6 +216,7 @@ class EndpointsLoader:
                     )
                     continue
 
+                # Once dropped change uris: List into uri: str in decorators.endpoint
                 # Deprecated since 1.1
                 if len(fn.uris) > 1:  # pragma: no cover
                     log.warning(
@@ -236,10 +228,9 @@ class EndpointsLoader:
                 endpoint.methods[method_fn] = fn.uris
                 for uri in fn.uris:
 
-                    full_uri = f"/{endpoint.base_uri}{uri}"
-                    self.authenticated_endpoints.setdefault(full_uri, {})
+                    self.authenticated_endpoints.setdefault(uri, {})
                     # method_fn is equivalent to m.lower()
-                    self.authenticated_endpoints[full_uri].setdefault(
+                    self.authenticated_endpoints[uri].setdefault(
                         method_fn, auth_required
                     )
 
@@ -260,18 +251,16 @@ class EndpointsLoader:
                     inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                     # This will be used by server.py.add
-                    endpoint.uris.append(full_uri)
+                    endpoint.uris.append(uri)
 
-                    self.private_endpoints.setdefault(full_uri, {})
-                    self.private_endpoints[full_uri].setdefault(
-                        method_fn, endpoint.private
-                    )
+                    self.private_endpoints.setdefault(uri, {})
+                    self.private_endpoints[uri].setdefault(method_fn, endpoint.private)
 
                     # Used by server.py to remove unmapped methods
-                    self.uri2methods.setdefault(full_uri, [])
-                    self.uri2methods[full_uri].append(method_fn)
+                    self.uri2methods.setdefault(uri, [])
+                    self.uri2methods[uri].append(method_fn)
 
-                    # log.debug("Built definition '{}:{}'", m, full_uri)
+                    # log.debug("Built definition '{}:{}'", m, uri)
 
                     self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
@@ -301,7 +290,6 @@ class EndpointsLoader:
                 classes.setdefault(method, {})
 
                 for uri in uris:
-                    uri = f"/{endpoint.base_uri}{uri}"
                     if uri in mappings[method]:
                         log.warning(
                             "Endpoint redefinition: {} {} used from both {} and {}",

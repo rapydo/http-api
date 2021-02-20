@@ -37,13 +37,12 @@ if Connector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
 
-        baseuri = "/auth"
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
         labels = ["authentication"]
 
         @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
         @decorators.endpoint(
-            path="/reset",
+            path="/auth/reset",
             summary="Request password reset via email",
             description="Request password reset via email",
             responses={
@@ -110,7 +109,7 @@ if Connector.check_availability("smtp"):
             }
         )
         @decorators.endpoint(
-            path="/reset/<token>",
+            path="/auth/reset/<token>",
             summary="Change password as conseguence of a reset request",
             description="Change password as conseguence of a reset request",
             responses={

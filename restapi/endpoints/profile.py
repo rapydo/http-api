@@ -1,7 +1,6 @@
 from typing import Any, Optional
 
 from restapi import decorators
-from restapi.connectors import Connector
 from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
@@ -10,14 +9,13 @@ from restapi.utilities.logs import log
 
 class Profile(EndpointResource):
 
-    baseuri = "/auth"
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["profile"]
 
     @decorators.auth.require()
     @decorators.marshal_with(profile_output(), code=200)
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="List profile attributes",
         responses={200: "User profile is returned"},
     )
@@ -51,7 +49,7 @@ class Profile(EndpointResource):
     @decorators.auth.require()
     @decorators.use_kwargs(NewPassword)
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="Update user password",
         responses={204: "Password updated"},
     )
@@ -80,7 +78,7 @@ class Profile(EndpointResource):
     @decorators.auth.require()
     @decorators.use_kwargs(profile_patch_input())
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="Update profile information",
         responses={204: "Profile updated"},
     )

@@ -13,13 +13,12 @@ from restapi.utilities.time import EPOCH, get_now
 class Login(EndpointResource):
     """ Let a user login by using the configured method """
 
-    baseuri = "/auth"
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["authentication"]
 
     @decorators.use_kwargs(Credentials)
     @decorators.endpoint(
-        path="/login",
+        path="/auth/login",
         summary="Login with basic credentials",
         description="Login with normal credentials (username and password)",
         responses={
