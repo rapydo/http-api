@@ -1,8 +1,8 @@
 from typing import Any, List
 
 from restapi import decorators
-from restapi.config import get_project_configuration
-from restapi.connectors import Connector, smtp
+from restapi.connectors import Connector
+from restapi.connectors.smtp.notifications import notify_password_to_userf
 from restapi.endpoints.schemas import (
     admin_user_output,
     admin_user_post_input,
@@ -11,36 +11,9 @@ from restapi.endpoints.schemas import (
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
-from restapi.utilities.templates import get_html_template
 from restapi.utilities.time import date_lower_than as dt_lower
 
 # from restapi.utilities.logs import log
-
-
-def send_notification(smtp, user, unhashed_password, is_update=False):
-
-    title = get_project_configuration("project.title", default="Unkown title")
-
-    if is_update:
-        subject = f"{title}: password changed"
-        template = "update_credentials.html"
-    else:
-        subject = f"{title}: new credentials"
-        template = "new_credentials.html"
-
-    replaces = {"username": user.email, "password": unhashed_password}
-
-    html = get_html_template(template, replaces)
-
-    body = f"""
-Username: {user.email}
-Password: {unhashed_password}
-    """
-
-    if html is None:
-        smtp.send(body, subject, user.email)
-    else:
-        smtp.send(html, subject, user.email, plain_body=body)
 
 
 class AdminSingleUser(EndpointResource):
@@ -126,8 +99,7 @@ class AdminUsers(EndpointResource):
         self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            smtp_client = smtp.get_instance()
-            send_notification(smtp_client, user, unhashed_password, is_update=False)
+            notify_password_to_userf(user, unhashed_password, is_update=False)
 
         self.log_event(self.events.create, user, payload)
 
@@ -185,8 +157,7 @@ class AdminUsers(EndpointResource):
             self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            smtp_client = smtp.get_instance()
-            send_notification(smtp_client, user, unhashed_password, is_update=True)
+            notify_password_to_userf(user, unhashed_password, is_update=True)
 
         if user.expiration:
             # Set expiration on a previously non-expiring account

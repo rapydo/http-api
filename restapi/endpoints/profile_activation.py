@@ -1,54 +1,10 @@
-import os
-from typing import Optional
-
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
 from restapi import decorators
-from restapi.config import get_frontend_url, get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors.smtp.notifications import send_activation_link
 from restapi.exceptions import BadRequest
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
-from restapi.utilities.logs import log
-from restapi.utilities.templates import get_html_template
-
-
-def send_activation_link(smtp, auth, user):
-
-    title = get_project_configuration("project.title", default="Unkown title")
-
-    activation_token, payload = auth.create_temporary_token(user, auth.ACTIVATE_ACCOUNT)
-
-    server_url = get_frontend_url()
-
-    rt = activation_token.replace(".", "+")
-    log.debug("Activation token: {}", rt)
-    url = f"{server_url}/public/register/{rt}"
-    body: Optional[str] = f"Follow this link to activate your account: {url}"
-
-    # customized template
-    template_file = "activate_account.html"
-    html_body = get_html_template(
-        template_file,
-        {
-            "url": url,
-            "username": user.email,
-            "name": user.name,
-            "surname": user.surname,
-        },
-    )
-    if html_body is None:
-        html_body = body
-        body = None
-
-    default_subject = f"{title} account activation"
-    subject = os.getenv("EMAIL_ACTIVATION_SUBJECT", default_subject)
-
-    sent = smtp.send(html_body, subject, user.email, plain_body=body)
-    if not sent:  # pragma: no cover
-        raise BaseException("Error sending email, please retry")
-
-    auth.save_token(user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT)
 
 
 class ProfileActivation(EndpointResource):
@@ -129,8 +85,7 @@ class ProfileActivation(EndpointResource):
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-            smtp_client = smtp.get_instance()
-            send_activation_link(smtp_client, self.auth, user)
+            send_activation_link(user)
         msg = (
             "We are sending an email to your email address where "
             "you will find the link to activate your account"

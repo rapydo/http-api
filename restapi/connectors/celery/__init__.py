@@ -5,8 +5,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from celery import Celery
 
-from restapi.config import CUSTOM_PACKAGE, get_project_configuration
-from restapi.connectors import Connector, smtp
+from restapi.config import CUSTOM_PACKAGE
+from restapi.connectors import Connector
+from restapi.connectors.smtp.notifications import send_celery_error_notification
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
@@ -39,33 +40,18 @@ class CeleryExt(Connector):
 
                     task_id = self.request.id
                     task_name = self.request.task
+                    arguments = str(self.request.args)
+                    error_stack = traceback.format_exc()
 
                     log.error("Celery task {} ({}) failed", task_id, task_name)
-                    arguments = str(self.request.args)
                     log.error("Failed task arguments: {}", arguments[0:256])
-                    log.error("Task error: {}", traceback.format_exc())
+                    log.error("Task error: {}", error_stack)
 
                     if Connector.check_availability("smtp"):
                         log.info("Sending error report by email", task_id, task_name)
-
-                        body = f"""
-        Celery task {task_id} failed
-
-        Name: {task_name}
-
-        Arguments: {self.request.args}
-
-        Error: {traceback.format_exc()}
-        """
-
-                        project = get_project_configuration(
-                            "project.title",
-                            default="Unkown title",
+                        send_celery_error_notification(
+                            task_id, task_name, arguments, error_stack
                         )
-                        subject = f"{project}: task {task_name} failed"
-
-                        smtp_client = smtp.get_instance()
-                        smtp_client.send(body, subject)
 
             return wrapper
 
@@ -439,7 +425,7 @@ class CeleryExt(Connector):
 
 
 # Deprecated since 1.1
-def send_errors_by_email(func):
+def send_errors_by_email(func):  # pragma: no cover
     """
     Send a notification email to a given recipient to the
     system administrator with details about failure.

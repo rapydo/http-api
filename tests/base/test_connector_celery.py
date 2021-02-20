@@ -9,7 +9,7 @@ from flask import Flask
 
 from restapi.connectors import Connector
 from restapi.connectors import celery as connector
-from restapi.connectors.celery import CeleryExt, send_errors_by_email
+from restapi.connectors.celery import CeleryExt
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.tests import BaseTests
@@ -258,34 +258,34 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert os.environ["HOSTNAME"] == "backend-server"
     assert LOGS_FILE == "backend-server"
 
-    # this decorator is expected to be used in celery context, i.e. the self reference
-    # should contains a request, injected by celery. Let's mock this by injecting an
-    # artificial self
-    @send_errors_by_email
-    def this_function_raises_exceptions(self):
-        raise AttributeError("Just an exception")
+    # # this decorator is expected to be used in celery context, i.e. the self reference
+    # # should contains a request, injected by celery. Let's mock this by injecting an
+    # # artificial self
+    # @send_errors_by_email
+    # def this_function_raises_exceptions(self):
+    #     raise AttributeError("Just an exception")
 
-    class FakeRequest:
-        def __init__(self, task_id, task, args):
-            self.id = task_id
-            self.task = task
-            self.args = args
+    # class FakeRequest:
+    #     def __init__(self, task_id, task, args):
+    #         self.id = task_id
+    #         self.task = task
+    #         self.args = args
 
-    class FakeSelf:
-        def __init__(self, task_id, task, args):
-            self.request = FakeRequest(task_id, task, args)
+    # class FakeSelf:
+    #     def __init__(self, task_id, task, args):
+    #         self.request = FakeRequest(task_id, task, args)
 
-    task_id = faker.pystr()
-    task_name = faker.pystr()
-    task_args = [faker.pystr()]
+    # task_id = faker.pystr()
+    # task_name = faker.pystr()
+    # task_args = [faker.pystr()]
 
-    this_function_raises_exceptions(FakeSelf(task_id, task_name, task_args))
+    # this_function_raises_exceptions(FakeSelf(task_id, task_name, task_args))
 
-    mail = BaseTests.read_mock_email()
-    assert mail.get("body") is not None
+    # mail = BaseTests.read_mock_email()
+    # assert mail.get("body") is not None
 
-    assert f"Celery task {task_id} failed" in mail.get("body")
-    assert f"Name: {task_name}" in mail.get("body")
-    assert f"Arguments: {str(task_args)}" in mail.get("body")
-    assert "Error: Traceback (most recent call last):" in mail.get("body")
-    assert 'raise AttributeError("Just an exception")' in mail.get("body")
+    # assert f"Celery task {task_id} failed" in mail.get("body")
+    # assert f"Name: {task_name}" in mail.get("body")
+    # assert f"Arguments: {str(task_args)}" in mail.get("body")
+    # assert "Error: Traceback (most recent call last):" in mail.get("body")
+    # assert 'raise AttributeError("Just an exception")' in mail.get("body")

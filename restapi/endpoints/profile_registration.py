@@ -1,9 +1,11 @@
 from typing import Any
 
 from restapi import decorators
-from restapi.config import get_project_configuration
-from restapi.connectors import Connector, smtp
-from restapi.endpoints.profile_activation import send_activation_link
+from restapi.connectors import Connector
+from restapi.connectors.smtp.notifications import (
+    send_activation_link,
+    send_registration_notification,
+)
 from restapi.endpoints.schemas import user_registration_input
 from restapi.env import Env
 from restapi.exceptions import Conflict, ServiceUnavailable
@@ -60,18 +62,11 @@ if Connector.check_availability("smtp"):
             self.log_event(self.events.create, user, kwargs)
 
             try:
-                smtp_client = smtp.get_instance()
+                # Sending an email to the administrator
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
-                    # Sending an email to the administrator
-                    title = get_project_configuration(
-                        "project.title", default="Unkown title"
-                    )
-                    subject = f"{title} New credentials requested"
-                    body = f"New credentials request from {user.email}"
+                    send_registration_notification(user.email)
 
-                    smtp_client.send(body, subject)
-
-                send_activation_link(smtp_client, self.auth, user)
+                send_activation_link(user)
 
             except BaseException as e:  # pragma: no cover
                 self.auth.delete_user(user)
