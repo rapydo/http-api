@@ -1,19 +1,19 @@
-import os
 import time
 
 import pytest
+from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import sqlalchemy as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "sqlalchemy"
 
 
-def test_sqlalchemy(app):
+def test_sqlalchemy(app: Flask) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()
@@ -22,17 +22,11 @@ def test_sqlalchemy(app):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
 
-    detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
-    )
-
-    if os.getenv("ALCHEMY_DBTYPE") != "mysql+pymysql":
+    if not connector.SQLAlchemy.is_mysql():
         try:
             connector.get_instance(host="invalidhostname", port=123)
 
@@ -51,6 +45,12 @@ def test_sqlalchemy(app):
 
     obj = connector.get_instance()
     assert obj is not None
+
+    try:
+        obj.InvalidModel
+        pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
+    except AttributeError as e:
+        assert str(e) == "Model InvalidModel not found"
 
     obj.disconnect()
 

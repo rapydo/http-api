@@ -1,5 +1,6 @@
 import inspect
 import json
+import re
 
 import simplejson
 from marshmallow import validate  # used as alias from endpoints
@@ -10,6 +11,7 @@ from neomodel import StructuredNode, StructuredRel, properties
 from webargs import fields  # also imported from endpoints
 from webargs.flaskparser import parser
 
+from restapi.config import TESTING
 from restapi.utilities.logs import log
 
 # Note for SQL-Alchemy, consider to use:
@@ -165,6 +167,27 @@ class Neo4jChoice(fields.Field):
         return value
 
 
+class Neo4jRelationshipToMany(fields.Nested):
+    # nested_obj: StructuredRel
+    def _serialize(self, nested_obj, attr, obj, **kwargs):
+        self.many = True
+        return super()._serialize(nested_obj.all(), attr, obj, **kwargs)
+
+
+class Neo4jRelationshipToSingle(fields.Nested):
+    # nested_obj: StructuredRel
+    def _serialize(self, nested_obj, attr, obj, **kwargs):
+        self.many = False
+        self.schema.many = False
+        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
+
+
+class Neo4jRelationshipToCount(fields.Int):
+    # value: StructuredRel
+    def _serialize(self, value, attr, obj, **kwargs):
+        return self._format_num(len(value))
+
+
 class UniqueDelimitedList(fields.DelimitedList):
     def _deserialize(self, value, attr, data, **kwargs):
         values = super()._deserialize(value, attr, data, **kwargs)
@@ -197,7 +220,7 @@ class AdvancedList(fields.List):
 
         value = super()._deserialize(value, attr, data, **kwargs)
 
-        if not isinstance(value, list):
+        if not isinstance(value, list):  # pragma: no cover
             raise ValidationError("Invalid type")
 
         if self.unique:
@@ -207,5 +230,18 @@ class AdvancedList(fields.List):
             raise ValidationError(
                 f"Expected at least {self.min_items} items, received {len(value)}"
             )
+
+        return value
+
+
+class TOTP(fields.String):
+    def _deserialize(self, value, attr, data, **kwargs):
+
+        value = super()._deserialize(value, attr, data, **kwargs)
+
+        if not re.match(r"^[0-9]{6}$", value):
+            if TESTING:
+                log.error("Invalid TOTP format: {}", value)
+            raise ValidationError("Invalid TOTP format")
 
         return value

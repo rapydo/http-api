@@ -8,7 +8,8 @@ http://python-3-patterns-idioms-test.readthedocs.org/en/latest/Metaprogramming.h
 import inspect
 import pkgutil
 from importlib import import_module
-from typing import Any, Callable, Dict
+from types import ModuleType
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities import print_and_exit
@@ -19,7 +20,7 @@ class Meta:
     """Utilities with meta in mind"""
 
     @staticmethod
-    def get_classes_from_module(module):
+    def get_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
         """
         Find classes inside a python module file.
         """
@@ -36,27 +37,26 @@ class Meta:
         return {}
 
     @staticmethod
-    def get_new_classes_from_module(module):
+    def get_new_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
         """
         Skip classes not originated inside the module.
         """
 
         classes = {}
-        for key, value in Meta.get_classes_from_module(module).items():
+        for name, value in Meta.get_classes_from_module(module).items():
             if module.__name__ in value.__module__:
-                classes[key] = value
+                classes[name] = value
         return classes
 
     # Should return `from types import ModuleType` -> Optional[ModuleType]
     @staticmethod
-    def get_module_from_string(modulestring, prefix_package=False, exit_on_fail=False):
+    def get_module_from_string(
+        modulestring: str, exit_on_fail: bool = False
+    ) -> Optional[ModuleType]:
         """
         Getting a module import
         when your module is stored as a string in a variable
         """
-
-        if prefix_package:
-            modulestring = f"{BACKEND_PACKAGE}.{modulestring.lstrip('.')}"
 
         try:
             return import_module(modulestring)
@@ -72,7 +72,7 @@ class Meta:
             return None
 
     @staticmethod
-    def get_self_reference_from_args(*args):
+    def get_self_reference_from_args(*args: Any) -> Optional[Any]:
         """
         Useful in decorators:
         being able to call the internal method by getting
@@ -88,7 +88,9 @@ class Meta:
         return None
 
     @staticmethod
-    def import_models(name, package, exit_on_fail=True):
+    def import_models(
+        name: str, package: str, mandatory: bool = False
+    ) -> Dict[str, Type[Any]]:
 
         if package == BACKEND_PACKAGE:
             module_name = f"{package}.connectors.{name}.models"
@@ -98,41 +100,36 @@ class Meta:
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
         except BaseException as e:
-            log.error("Cannot load {} models from {}", name, module_name)
-            if exit_on_fail:
-                print_and_exit(e)
+            module = None
+            if mandatory:
+                log.critical(e)
 
-            log.warning(e)
+        if not module:
+            if mandatory:
+                print_and_exit("Cannot load {} models from {}", name, module_name)
+
             return {}
 
         return Meta.get_new_classes_from_module(module)
 
     @staticmethod
-    def get_authentication_module(auth_service):
-
-        module_name = f"connectors.{auth_service}"
-        module = Meta.get_module_from_string(
-            modulestring=module_name, prefix_package=True, exit_on_fail=True
-        )
-
-        return module
-
-    @staticmethod
-    def get_celery_tasks(package_name: str) -> Dict[str, Callable[..., Any]]:
+    def get_celery_tasks(package_name: str) -> List[Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
-        Celery tasks are functions decorated by @celery_app.task(...)
+        Celery tasks are functions decorated by @CeleryExt.celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
-        tasks: Dict[str, Callable[..., Any]] = {}
+        tasks: List[Callable[..., Any]] = []
         # package = tasks folder
         package = Meta.get_module_from_string(package_name)
         if package is None:
             return tasks
 
         # get all modules in package (i.e. py files)
-        for _, module_name, ispkg in pkgutil.iter_modules(package.__path__):
+        # my-py does not like accessing __path__
+        path = package.__path__  # type: ignore
+        for _, module_name, ispkg in pkgutil.iter_modules(path):
             # skip modules (i.e. subfolders)
             if ispkg:
                 continue
@@ -156,11 +153,14 @@ class Meta:
                 if obj_type.__module__ != "celery.local":
                     continue
 
-                tasks[func[0]] = func[1]
+                # This was a dict name => func
+                # tasks[func[0]] = func[1]
+                # Now it is a list
+                tasks.append(func[1])
         return tasks
 
     @staticmethod
-    def get_class(module_relpath, class_name):
+    def get_class(module_relpath: str, class_name: str) -> Optional[Any]:
 
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
@@ -176,7 +176,7 @@ class Meta:
         return getattr(module, class_name)
 
     @staticmethod
-    def get_instance(module_relpath, class_name, **kwargs):
+    def get_instance(module_relpath: str, class_name: str, **kwargs: Any) -> Any:
 
         MyClass = Meta.get_class(module_relpath, class_name)
 

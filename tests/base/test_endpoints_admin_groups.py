@@ -1,17 +1,18 @@
 import json
 
 import pytest
+from faker import Faker
 
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseTests
-from restapi.utilities.logs import log
+from restapi.services.authentication import BaseAuthentication
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import Events, log
 
 
 class TestApp(BaseTests):
-    def test_admin_groups(self, client, fake):
+    def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Adminer is always enabled during tests
-        if Env.get_bool("ADMINER_DISABLED"):  # pragma: no cover
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Skipping admin/users tests")
             return
 
@@ -22,6 +23,7 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/groups", headers)
         data = self.buildData(schema)
+        # Event 1: create
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
@@ -44,9 +46,10 @@ class TestApp(BaseTests):
         assert fullname is not None
 
         newdata = {
-            "shortname": fake.company(),
-            "fullname": fake.company(),
+            "shortname": faker.company(),
+            "fullname": faker.company(),
         }
+        # Event 2: modify
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
 
@@ -63,6 +66,7 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
         assert r.status_code == 404
 
+        # Event 3: delete
         r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
         assert r.status_code == 204
 
@@ -86,16 +90,69 @@ class TestApp(BaseTests):
 
         data = {
             "fullname": "Default group",
-            "shortname": fake.company(),
+            "shortname": faker.company(),
         }
-        r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
+
+        # Event 4: create
+        uuid, _ = self.create_group(client, data=data)
 
         data = {
             "group": uuid,
             # very important, otherwise the default user will lose its admin role
             "roles": json.dumps(["admin_root"]),
         }
+        headers, _ = self.do_login(client, None, None)
+        # Event 5: modify
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
+
+    def test_events_file(self):
+
+        events = self.get_last_events(4, filters={"target_type": "Group"})
+
+        # A new group is created
+        INDEX = 0
+        assert events[INDEX].event == Events.create.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
+
+        # Group modified (same target_id as above)
+        INDEX = 1
+        assert events[INDEX].event == Events.modify.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id == events[0].target_id
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
+
+        # Group is deleted (same target_id as above)
+        INDEX = 2
+        assert events[INDEX].event == Events.delete.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id == events[0].target_id
+        assert len(events[INDEX].payload) == 0
+
+        # A new group is created
+        INDEX = 3
+        assert events[INDEX].event == Events.create.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "Group"
+        assert events[INDEX].target_id != events[0].target_id
+        assert "fullname" in events[INDEX].payload
+        assert "shortname" in events[INDEX].payload
+        group_uuid = events[INDEX].target_id
+
+        events = self.get_last_events(1, filters={"target_type": "User"})
+
+        # User modified, payload contains the created group
+        INDEX = 0
+        assert events[INDEX].event == Events.modify.value
+        assert events[INDEX].user == BaseAuthentication.default_user
+        assert events[INDEX].target_type == "User"
+        assert "fullname" not in events[INDEX].payload
+        assert "shortname" not in events[INDEX].payload
+        assert "group" in events[INDEX].payload
+        assert events[INDEX].payload["group"] == group_uuid

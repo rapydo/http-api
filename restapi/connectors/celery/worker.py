@@ -1,23 +1,12 @@
-"""
-Celery pattern. Some interesting read here:
-
-http://blog.miguelgrinberg.com/post/celery-and-the-flask-application-factory-pattern
-
-Of course that discussion is not enough for
-a flask templating framework like ours.
-So we made some improvement along the code.
-
-"""
+from restapi.connectors import celery
 from restapi.server import ServerModes, create_app
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
-################################################
-# Reload Flask app code also for the worker
-# This is necessary to have the app context available
-app = create_app(mode=ServerModes.WORKER)
+instance = celery.get_instance()
+# Used by Celery to run the instance (--app app)
+celery_app = instance.celery_app
 
-celery_app = detector.get_connector("celery").celery_app
-celery_app.app = app
+# Reload Flask app code for the worker (needed to have the app context available)
+celery.CeleryExt.app = create_app(mode=ServerModes.WORKER)
 
 log.debug("Celery worker is ready {}", celery_app)

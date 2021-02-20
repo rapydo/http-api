@@ -3,7 +3,8 @@ import os
 import re
 import sys
 import urllib.parse
-from typing import Optional
+from enum import Enum
+from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
@@ -34,9 +35,26 @@ else:  # pragma: no cover
 
 
 LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
+EVENTS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, "security-events.log")
+
+
+class Events(str, Enum):
+    access = "access"
+    create = "create"
+    modify = "modify"
+    delete = "delete"
+    login = "login"
+    logout = "logout"
+    failed_login = "failed_login"
+    refused_login = "refused_login"
+    activation = "activation"
+    change_password = "change_password"
+    reset_password_request = "reset_password_request"
+
 
 log.level("VERBOSE", no=1, color="<fg #666>")
 log.level("INFO", color="<green>")
+log.level("EVENT", no=0)
 
 log.remove()
 
@@ -70,6 +88,24 @@ if LOGS_PATH is not None:
             # is not propagated to the caller, preventing your app to crash.
             # This is the case when picle fails to serialize before sending to the queue
             catch=True,
+        )
+
+        fmt = ""
+        fmt += "{time:YYYY-MM-DD HH:mm:ss,SSS} "
+        fmt += "{extra[ip]} "
+        fmt += "{extra[user]} "
+        fmt += "{extra[event]} "
+        fmt += "{extra[target_type]} "
+        fmt += "{extra[target_id]} "
+        fmt += "{extra[payload]} "
+        log.add(
+            EVENTS_PATH,
+            level=0,
+            rotation="1 month",
+            filter=lambda record: "event" in record["extra"],
+            format=fmt,
+            # Otherwise in case of missing extra fields the event will be simply ignored
+            catch=False,
         )
     except PermissionError as p:  # pragma: no cover
         log.error(p)
@@ -113,6 +149,10 @@ set_logger(log_level)
 
 # Logs utilities
 
+# Can't understand why mypy is unable to understand Env.get_int, since it is annotated
+# with `-> int` .. but mypy raises:
+# Cannot determine type of 'get_int'
+# mypy: ignore-errors
 MAX_CHAR_LEN = Env.get_int("MAX_LOGS_LENGTH", 200)
 OBSCURE_VALUE = "****"
 OBSCURED_FIELDS = [
@@ -124,6 +164,8 @@ OBSCURED_FIELDS = [
     "filename",
     "new_password",
     "password_confirm",
+    "totp",
+    "totp_code",
 ]
 
 
@@ -156,11 +198,11 @@ def handle_log_output(original_parameters_string):
     return obfuscate_dict(parameters, urlencoded=urlencoded)
 
 
-def obfuscate_url(url):
+def obfuscate_url(url: str) -> str:
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
-def obfuscate_dict(parameters, urlencoded=False):
+def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
 
     if not isinstance(parameters, dict):
         return parameters
@@ -178,11 +220,54 @@ def obfuscate_dict(parameters, urlencoded=False):
         else:
             value = str(value)
             try:
-                if len(value) > MAX_CHAR_LEN:
-                    value = value[:MAX_CHAR_LEN] + "..."
+                if len(value) > max_len:
+                    value = value[:max_len] + "..."
             except IndexError:
                 pass
 
         output[key] = value
 
     return output
+
+
+def parse_event_target(target: Any) -> Tuple[str, str]:
+    if not target:
+        return "", ""
+
+    target_type = type(target).__name__
+
+    if hasattr(target, "uuid"):
+        return target_type, getattr(target, "uuid")
+
+    if hasattr(target, "id"):
+        return target_type, getattr(target, "id")
+
+    return target_type, ""
+
+
+# Save a log entry in security-events.log
+def save_event_log(
+    event: Events,
+    target: Optional[Any] = None,
+    payload: Optional[Dict[str, Any]] = None,
+    user: Optional[Any] = None,
+    ip: str = "-",
+) -> None:
+
+    target_type, target_id = parse_event_target(target)
+
+    if payload:
+        p = json.dumps(obfuscate_dict(payload, max_len=999))
+    else:
+        p = ""
+
+    log.log(
+        "EVENT",
+        "",
+        event=event,
+        ip=ip,
+        user=user.email if user else "-",
+        target_id=target_id,
+        target_type=target_type,
+        payload=p,
+    )

@@ -4,21 +4,23 @@ from datetime import timedelta
 
 import celery
 import pytest
+from faker import Faker
+from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, send_errors_by_email
-from restapi.exceptions import ServiceUnavailable
+from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.server import ServerModes, create_app
-from restapi.services.detect import detector
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
 CONNECTOR = "celery"
 
 
-def test_celery(app, faker):
+def test_celery(app: Flask, faker: Faker) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()
@@ -27,22 +29,17 @@ def test_celery(app, faker):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
-    )
 
     obj = connector.get_instance()
     assert obj is not None
 
-    task_id = obj.test_task.apply_async().id
+    task = obj.celery_app.send_task("test_task")
 
-    assert task_id is not None
+    assert task is not None
+    assert task.id is not None
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
@@ -50,9 +47,7 @@ def test_celery(app, faker):
         )
     else:
         try:
-            task = obj.celery_app.AsyncResult(task_id)
-            assert task is not None
-            r = task.get(timeout=60)
+            r = task.get(timeout=10)
             assert r is not None
             # This is the task output, as defined in task_template.py.j2
             assert r == "Task executed!"
@@ -152,15 +147,6 @@ def test_celery(app, faker):
         assert not obj.delete_periodic_task("task2_bis")
 
         if CeleryExt.CELERYBEAT_SCHEDULER == "REDIS":
-            try:
-                obj.create_periodic_task(
-                    name="task3",
-                    task="task.does.not.exists",
-                    every="60",
-                    period="minutes",
-                )
-            except AttributeError as e:
-                assert str(e) == "Unsupported period minutes for redis beat"
 
             obj.create_periodic_task(
                 name="task3",
@@ -170,18 +156,59 @@ def test_celery(app, faker):
             assert obj.delete_periodic_task("task3")
 
             obj.create_periodic_task(
-                name="task4",
-                task="task.does.not.exists",
-                every=timedelta(seconds=60),
+                name="task4", task="task.does.not.exists", every=60, period="seconds"
             )
             assert obj.delete_periodic_task("task4")
 
+            obj.create_periodic_task(
+                name="task5", task="task.does.not.exists", every=60, period="minutes"
+            )
+            assert obj.delete_periodic_task("task5")
+
+            obj.create_periodic_task(
+                name="task6", task="task.does.not.exists", every=60, period="hours"
+            )
+            assert obj.delete_periodic_task("task6")
+
+            obj.create_periodic_task(
+                name="task7", task="task.does.not.exists", every=60, period="days"
+            )
+            assert obj.delete_periodic_task("task7")
+
             try:
                 obj.create_periodic_task(
-                    name="task5", task="task.does.not.exists", every=["60"]
+                    name="task8",
+                    task="task.does.not.exists",
+                    every="60",
+                    period="years",  # type: ignore
+                )
+            except BadRequest as e:
+                assert str(e) == "Invalid timedelta period: years"
+
+            obj.create_periodic_task(
+                name="task9",
+                task="task.does.not.exists",
+                every=timedelta(seconds=60),
+            )
+            assert obj.delete_periodic_task("task9")
+
+            try:
+                obj.create_periodic_task(
+                    name="task10",
+                    task="task.does.not.exists",
+                    every=["60"],  # type: ignore
                 )
             except AttributeError as e:
                 assert str(e) == "Invalid input parameter every = ['60'] (type list)"
+
+            try:
+                obj.create_periodic_task(
+                    name="task11",
+                    task="task.does.not.exists",
+                    every="invalid",
+                )
+            except AttributeError as e:
+                assert str(e) == "Invalid input parameter every = invalid (type str)"
 
         else:
             obj.create_periodic_task(

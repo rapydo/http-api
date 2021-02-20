@@ -1,4 +1,5 @@
-from flask import Response, request
+from flask import Response as FlaskResponse
+from flask import request
 from gripcontrol import (
     WebSocketEvent,
     create_grip_channel_header,
@@ -9,8 +10,8 @@ from gripcontrol import (
 
 from restapi import decorators
 from restapi.connectors import pushpin
-from restapi.exceptions import RestApiException
-from restapi.rest.definition import EndpointResource
+from restapi.exceptions import BadRequest
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 
@@ -24,17 +25,17 @@ class PushpinWebSocket(EndpointResource):
         description="Push to socket",
         responses={200: "Message sent"},
     )
-    def put(self, channel, sync):
+    def put(self, channel: str, sync: str) -> Response:
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
-        sync = sync == "1"
+        is_sync = sync == "1"
 
         p = pushpin.get_instance()
 
         message = "Hello, your job is completed!"
-        published = p.publish_on_socket(channel, message, sync=sync)
+        published = p.publish_on_socket(channel, message, sync=is_sync)
 
-        return self.response(f"Message received: {published} (sync={sync})")
+        return self.response(f"Message received: {published} (sync={is_sync})")
 
     @decorators.auth.require(allow_access_token_parameter=True)
     @decorators.endpoint(
@@ -42,22 +43,18 @@ class PushpinWebSocket(EndpointResource):
         description="Open a websocket",
         responses={200: "Websocket connection accepted"},
     )
-    def post(self, channel):
+    def post(self, channel: str) -> Response:
 
         try:
             # in_events = decode_websocket_events(request.get_data())
             in_events = decode_websocket_events(request.get_data())
         except ValueError as e:
             log.error(e)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid format", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid format")
 
         if in_events is None or len(in_events) <= 0:
             log.error("Websocket request: {}", request.data)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid in_event", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid in_event")
         in_events = in_events[0]
 
         event_type = None
@@ -66,12 +63,10 @@ class PushpinWebSocket(EndpointResource):
             event_type = in_events.type
         except BaseException as e:  # pragma: no cover
             log.error(e)
-            raise RestApiException(
-                "Cannot decode websocket request: invalid type", status_code=400
-            )
+            raise BadRequest("Cannot decode websocket request: invalid type")
 
         if event_type is None:  # pragma: no cover
-            raise RestApiException("Cannot decode websocket request, no event type")
+            raise BadRequest("Cannot decode websocket request, no event type")
 
         out_events = []
         if event_type == "OPEN":
@@ -84,7 +79,7 @@ class PushpinWebSocket(EndpointResource):
                 )
             )
             headers = {"Sec-WebSocket-Extensions": "grip"}
-            resp = Response(
+            resp = FlaskResponse(
                 encode_websocket_events(out_events),
                 mimetype="application/websocket-events",
                 headers=headers,
@@ -92,7 +87,7 @@ class PushpinWebSocket(EndpointResource):
             return resp
 
         log.error("Unknkown event type: {}", event_type)
-        raise RestApiException("Cannot understand websocket request", status_code=400)
+        raise BadRequest("Cannot understand websocket request")
 
 
 class PushpinHTTPStream(EndpointResource):
@@ -104,17 +99,17 @@ class PushpinHTTPStream(EndpointResource):
         description="Push to stream",
         responses={200: "Message sent"},
     )
-    def put(self, channel, sync):
+    def put(self, channel: str, sync: str) -> Response:
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
-        sync = sync == "1"
+        is_sync = sync == "1"
 
         p = pushpin.get_instance()
 
         message = "Hello, your job is completed!\n"
-        published = p.publish_on_stream(channel, message, sync=sync)
+        published = p.publish_on_stream(channel, message, sync=is_sync)
 
-        return self.response(f"Message received: {published} (sync={sync})")
+        return self.response(f"Message received: {published} (sync={is_sync})")
 
     @decorators.auth.require(allow_access_token_parameter=True)
     @decorators.endpoint(
@@ -122,13 +117,13 @@ class PushpinHTTPStream(EndpointResource):
         description="Open a HTTP Stream for Long polling",
         responses={200: "HTTP Stream connection accepted"},
     )
-    def post(self, channel):
+    def post(self, channel: str) -> Response:
 
         headers = {}
         headers["Grip-Hold"] = "stream"
         headers["Grip-Channel"] = create_grip_channel_header(channel)
 
-        resp = Response(
+        resp = FlaskResponse(
             "Stream opened, prepare yourself!\n",
             mimetype="text/plain",
             headers=headers,

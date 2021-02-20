@@ -1,18 +1,19 @@
 import time
 
 import pytest
+from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import pushpin as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "pushpin"
 
 
-def test_pushpin(app):
+def test_pushpin(app: Flask) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()
@@ -20,15 +21,9 @@ def test_pushpin(app):
         except ServiceUnavailable:
             pass
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
-    )
 
     try:
         connector.get_instance(host="invalidhostname", port=123)

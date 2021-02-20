@@ -2,16 +2,14 @@
 SECURITY ENDPOINTS CHECK
 Add auth checks called /checklogged and /testadmin
 """
-
 import abc
 import base64
-import hashlib
-import hmac
 import re
+import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
 import pyotp  # TOTP generation
@@ -37,19 +35,48 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
-from restapi.services.detect import Detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-NULL_IP = "0.0.0.0"
 ALL_ROLES = "all"
 ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
+DEFAULT_GROUP_NAME = "Default"
+DEFAULT_GROUP_DESCR = "Default group"
+
+Payload = Dict[str, Any]
+User = Any
+Group = Any
+RoleObj = Any
+
+DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
+MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
+MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+
+
+class Token(TypedDict, total=False):
+    id: str
+    token: str
+    token_type: str
+    emitted: datetime
+    last_access: datetime
+    expiration: datetime
+    IP: str
+    location: str
+    user: Optional[User]
+
+
+class FailedLogin(TypedDict):
+    progressive_count: int
+    username: str
+    date: datetime
+    IP: str
+    location: str
 
 
 class Role(Enum):
@@ -63,6 +90,31 @@ class InvalidToken(BaseException):
     pass
 
 
+# ##############################################################################
+# Utility functions used to adapt security settings to Testable values
+def get_timedelta(val: int, min_testing_val: int = 0) -> Optional[timedelta]:
+
+    if val == 0:
+        return None
+
+    if TESTING:
+        return timedelta(seconds=max(val, min_testing_val))
+    # Of course cannot be tested
+    return timedelta(days=val)  # pragma: no cover
+
+
+def get_max_login_attempts(val: int) -> int:
+
+    if TESTING and val:
+        # min 10 failures, otherwise normal tests will start to fail
+        return max(val, MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE)
+
+    return val
+
+
+# ##############################################################################
+
+
 class BaseAuthentication(metaclass=abc.ABCMeta):
 
     """
@@ -72,14 +124,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     """
 
     # Secret loaded from secret.key file
-    JWT_SECRET = None
+    JWT_SECRET: Optional[bytes] = None
     # JWT_ALGO = 'HS256'
     # Should be faster on 64bit machines
     JWT_ALGO = "HS512"
 
     # 1 month in seconds
     DEFAULT_TOKEN_TTL = Env.get_int("AUTH_JWT_TOKEN_TTL", 2_592_000)
-    GRACE_PERIOD = timedelta(seconds=7200)  # 2 hours in seconds
+    # Grace period before starting to evaluate IP address on token validation
+    GRACE_PERIOD = timedelta(seconds=Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD", 7200))
     SAVE_LAST_ACCESS_EVERY = timedelta(
         seconds=Env.get_int("AUTH_TOKEN_SAVE_FREQUENCY", 60)
     )
@@ -88,62 +141,58 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
     TOTP = "TOTP"
-    MIN_PASSWORD_LENGTH = 8
-    FORCE_FIRST_PASSWORD_CHANGE = False
-    VERIFY_PASSWORD_STRENGTH = False
-    MAX_PASSWORD_VALIDITY: Optional[timedelta] = None
-    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = None
-    REGISTER_FAILED_LOGIN = False
-    MAX_LOGIN_ATTEMPTS = 0
-    SECOND_FACTOR_AUTHENTICATION: Optional[str] = None
+    MIN_PASSWORD_LENGTH = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 8)
+
+    SECOND_FACTOR_AUTHENTICATION = Env.get_bool(
+        "AUTH_SECOND_FACTOR_AUTHENTICATION", False
+    )
+
+    # enabled if explicitly set or for 2FA is enabled
+    FORCE_FIRST_PASSWORD_CHANGE = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
+        "AUTH_FORCE_FIRST_PASSWORD_CHANGE", False
+    )
+
+    # enabled if explicitly set or for 2FA is enabled
+    VERIFY_PASSWORD_STRENGTH = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
+        "AUTH_VERIFY_PASSWORD_STRENGTH", False
+    )
+    MAX_PASSWORD_VALIDITY: Optional[timedelta] = get_timedelta(
+        Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0),
+        MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE,
+    )
+
+    DISABLE_UNUSED_CREDENTIALS_AFTER: Optional[timedelta] = get_timedelta(
+        Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER", 0),
+        # min 60 seconds are required when testing
+        DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE,
+    )
+
+    MAX_LOGIN_ATTEMPTS = get_max_login_attempts(
+        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+    )
+
+    FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
+        seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
+    )
 
     default_user: Optional[str] = None
     default_password: Optional[str] = None
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
-    default_role: Optional[str] = None
+    default_role: str = Role.USER.value
 
-    # Executed once by Detector in init_services
+    # To be stored on DB
+    failed_logins: Dict[str, List[FailedLogin]] = {}
+
+    # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:
         cls.load_default_user()
         cls.load_roles()
         cls.import_secret(SECRET_KEY_FILE)
 
-        variables = Env.load_variables_group(prefix="auth")
-
-        cls.MIN_PASSWORD_LENGTH = Env.to_int(variables.get("min_password_length", 8))
-        cls.FORCE_FIRST_PASSWORD_CHANGE = Env.to_bool(
-            variables.get("force_first_password_change")
-        )
-        cls.VERIFY_PASSWORD_STRENGTH = Env.to_bool(
-            variables.get("verify_password_strength")
-        )
-        if val := Env.to_int(variables.get("max_password_validity", 0)):
-            if TESTING:
-                cls.MAX_PASSWORD_VALIDITY = timedelta(seconds=val)
-            # Of course cannot be tested
-            else:  # pragma: no cover
-                cls.MAX_PASSWORD_VALIDITY = timedelta(days=val)
-
-        if val := Env.to_int(variables.get("disable_unused_credentials_after", 0)):
-            cls.DISABLE_UNUSED_CREDENTIALS_AFTER = timedelta(days=val)
-
-        cls.REGISTER_FAILED_LOGIN = Env.to_bool(variables.get("register_failed_login"))
-        cls.MAX_LOGIN_ATTEMPTS = Env.to_int(variables.get("max_login_attempts", 0))
-        cls.SECOND_FACTOR_AUTHENTICATION = variables.get("second_factor_authentication")
-
-        if cls.SECOND_FACTOR_AUTHENTICATION == "None":
-            cls.SECOND_FACTOR_AUTHENTICATION = None
-        elif not cls.FORCE_FIRST_PASSWORD_CHANGE:
-            log.error(
-                "{} cannot be enabled if AUTH_FORCE_FIRST_PASSWORD_CHANGE is False",
-                cls.SECOND_FACTOR_AUTHENTICATION,
-            )
-            cls.SECOND_FACTOR_AUTHENTICATION = None
-
     @staticmethod
-    def load_default_user():
+    def load_default_user() -> None:
 
         BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
         BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
@@ -154,7 +203,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             print_and_exit("Default credentials are unavailable!")
 
     @staticmethod
-    def load_roles():
+    def load_roles() -> None:
         BaseAuthentication.roles_data = get_project_configuration(
             "variables.roles"
         ).copy()
@@ -173,13 +222,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "Default role {} not available!", BaseAuthentication.default_role
             )
 
-    def failed_login(self, username):
-        # if self.REGISTER_FAILED_LOGIN and username is not None:
-        #     self.register_failed_login(username)
-
-        raise Unauthorized("Invalid username or password", is_warning=True)
-
-    def make_login(self, username, password):
+    def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
         """ The method which will check if credentials are good to go """
 
         try:
@@ -195,8 +238,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise ServiceUnavailable("Unable to connect to auth backend")
 
         if user is None:
-            # this can raise exceptions in case of errors
-            self.failed_login(username)
+            self.register_failed_login(username)
+
+            self.log_event(
+                Events.failed_login,
+                payload={"username": username},
+                user=user,
+            )
+
+            raise Unauthorized("Invalid access credentials", is_warning=True)
 
         # Check if Oauth2 is enabled
         if user.authmethod != "credentials":  # pragma: no cover
@@ -204,70 +254,31 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         # New hashing algorithm, based on bcrypt
         if self.verify_password(password, user.password):
-            payload, full_payload = self.fill_payload(user)
+            # Token expiration is capped by the user expiration date, if set
+            payload, full_payload = self.fill_payload(user, expiration=user.expiration)
             token = self.create_token(payload)
 
-            if token is None:
-                # this can raise exceptions in case of errors
-                self.failed_login(username)
-
+            self.log_event(Events.login, user=user)
             return token, full_payload, user
 
-        # old hashing; deprecated since 0.7.2. Removed me in a near future!!
-        # Probably when ALL users will be converted... uhm... never?? :-D
-        if self.check_old_password(user.password, password):  # pragma: no cover
-            log.warning(
-                "Old password encoding for user {}, automatic convertion", user.email
-            )
-
-            now = datetime.now(pytz.utc)
-            user.password = BaseAuthentication.get_password_hash(password)
-            user.last_password_change = now
-            self.save_user(user)
-
-            return self.make_login(username, password)
-
-        self.failed_login(username)
+        self.log_event(
+            Events.failed_login,
+            payload={"username": username},
+            user=user,
+        )
+        self.register_failed_login(username)
+        raise Unauthorized("Invalid access credentials", is_warning=True)
 
     @classmethod
-    def import_secret(cls, abs_filename):
+    def import_secret(cls, abs_filename: str) -> None:
         try:
             cls.JWT_SECRET = open(abs_filename, "rb").read()
-            return cls.JWT_SECRET
         except OSError:  # pragma: no cover
             print_and_exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
     # # Password handling #
     ####################
-    # Old hashing, deprecated since 0.7.2
-    @staticmethod
-    def encode_string(string):
-        """ Encodes a string to bytes, if it isn't already. """
-        if isinstance(string, str):
-            string = string.encode("utf-8")
-        return string
-
-    # Old hashing. Deprecated since 0.7.2
-    @staticmethod
-    def hash_password(password, salt="Unknown"):
-        """Original source:
-        # https://github.com/mattupstate/flask-security
-        #    /blob/develop/flask_security/utils.py#L110
-        """
-
-        h = hmac.new(
-            BaseAuthentication.encode_string(salt),
-            BaseAuthentication.encode_string(password),
-            hashlib.sha512,
-        )
-        return base64.b64encode(h.digest()).decode("ascii")
-
-    # Old hashing. Deprecated since 0.7.2
-    @staticmethod
-    def check_old_password(hashed_password, password):
-        return hashed_password == BaseAuthentication.hash_password(password)
-
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
@@ -283,93 +294,31 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise Unauthorized("Invalid password")
         return pwd_context.hash(password)
 
-    # ########################
-    # # Retrieve information #
-    # ########################
-
-    @abc.abstractmethod
-    def get_user(self, username=None, user_id=None):  # pragma: no cover
-        """
-        How to retrieve a single user from the current authentication db,
-        based on the unique username or the user_id
-        return None if no filter parameter is given
-        """
-        return
-
-    @abc.abstractmethod
-    def get_users(self):  # pragma: no cover
-        """
-        How to retrieve a list of all users from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def save_user(self, user):  # pragma: no cover
-        log.error("Users are not saved in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def delete_user(self, user):  # pragma: no cover
-        log.error("Users are not deleted in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def get_group(self, group_id=None, name=None):  # pragma: no cover
-        """
-        How to retrieve a single group from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def get_groups(self):  # pragma: no cover
-        """
-        How to retrieve groups list from the current authentication db,
-        """
-        return
-
-    @abc.abstractmethod
-    def save_group(self, group):  # pragma: no cover
-        log.error("Groups are not saved in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def delete_group(self, group):  # pragma: no cover
-        log.error("Groups are not deleted in base authentication")
-        return False
-
-    @abc.abstractmethod
-    def get_tokens(self, user=None, token_jti=None, get_all=False):  # pragma: no cover
-        """
-        Return the list of tokens
-        """
-        return
-
     @staticmethod
-    def get_remote_ip():  # pragma: no cover
+    def get_remote_ip() -> str:
         try:
             if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
                 # it can be something like: ['IP1, IP2']
-                return forwarded_ips[-1].split(",")[0].strip()
+                return str(forwarded_ips[-1].split(",")[0].strip())
 
-            if PRODUCTION and not TESTING:
+            if PRODUCTION and not TESTING:  # pragma: no cover
                 log.warning(
                     "Production mode is enabled, but X-Forwarded-For header is missing"
                 )
 
-            return request.remote_addr
+            if request.remote_addr:
+                return request.remote_addr
+
+        # Raised when get_remote_ip is executed outside request context
+        # For example when creating tokens in initialize_testing_environment
         except RuntimeError as e:
-            # When executed from tests it raises
-            # RuntimeError: Working outside of request context.
-            # Just mock an IP address (NULL_IP = 0.0.0.0)
-            if TESTING:
-                return NULL_IP
-            raise e
+            log.debug(e)
+
+        # Mocked IP to prevent tests failures when fn executed outside Flask context
+        return "0.0.0.0"
 
     @staticmethod
-    def localize_ip(ip):
-
-        if ip is None:
-            return None
+    def localize_ip(ip: str) -> Any:
 
         try:
             data = mem.geo_reader.get(ip)
@@ -402,52 +351,44 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Tokens handling #
     # ###################
     @classmethod
-    def create_token(cls, payload):
+    def create_token(cls, payload: Payload) -> str:
         """ Generate a byte token with JWT library to encrypt the payload """
         if cls.JWT_SECRET:
             return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
                 "ascii"
             )
-        print_and_exit(  # pragma: no cover
-            "Server misconfiguration, missing jwt configuration"
-        )
+        else:  # pragma: no cover
+            log.critical("Server misconfiguration, missing jwt configuration")
+            sys.exit(1)
 
-    def create_temporary_token(self, user, token_type, duration=86400):
+    def create_temporary_token(
+        self, user: User, token_type: str, duration: int = 86400
+    ) -> Tuple[str, Payload]:
         # invalidate previous tokens with same token_type
-        tokens = self.get_tokens(user=user)
-        for t in tokens:
+        for t in self.get_tokens(user=user):
             ttype = t.get("token_type")
-            if ttype is None:
+            if ttype is None:  # pragma: no cover
                 continue
             if ttype != token_type:
                 continue
 
             tok = t.get("token")
-            if self.invalidate_token(tok):
+            if tok and self.invalidate_token(tok):
                 log.info("Previous token invalidated: {}", tok)
 
-        expiration = timedelta(seconds=duration)
+        expiration = datetime.now(pytz.utc) + timedelta(seconds=duration)
         payload, full_payload = self.fill_payload(
             user, expiration=expiration, token_type=token_type
         )
         token = self.create_token(payload)
         return token, full_payload
 
-    @abc.abstractmethod
-    def verify_token_validity(self, jti, user):  # pragma: no cover
-        """
-        This method MUST be implemented by specific Authentication Methods
-        to add more specific validation contraints
-        """
-        return
-
     @classmethod
-    def unpack_token(cls, token, raiseErrors=False):
+    def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
 
-        payload = None
         try:
             if cls.JWT_SECRET:
-                payload = jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
+                return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
             else:
                 print_and_exit(  # pragma: no cover
                     "Server misconfiguration, missing jwt configuration"
@@ -471,13 +412,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             else:
                 log.warning("Unable to decode JWT token. {}", e)
 
-        return payload
+        return None
 
     @staticmethod
-    def unpacked_token(valid, token=None, jti=None, user=None):
+    def unpacked_token(
+        valid: bool,
+        token: Optional[str] = None,
+        jti: Optional[str] = None,
+        user: Optional[User] = None,
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
         return (valid, token, jti, user)
 
-    def verify_token(self, token, raiseErrors=False, token_type=None):
+    def verify_token(
+        self,
+        token: Optional[str],
+        raiseErrors: bool = False,
+        token_type: Optional[str] = None,
+    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
 
         if token is None:
             if raiseErrors:
@@ -519,19 +470,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
-    @abc.abstractmethod  # pragma: no cover
-    def save_token(self, user, token, payload, token_type=None):
-        log.debug("Tokens is not saved in base authentication")
-
-    @abc.abstractmethod
-    def invalidate_token(self, token):  # pragma: no cover
-        """
-        With this method the specified token must be invalidated
-        as expected after a user logout
-        """
-        return
-
-    def fill_payload(self, userobj, expiration=None, token_type=None):
+    def fill_payload(
+        self,
+        user: User,
+        expiration: Optional[datetime] = None,
+        token_type: Optional[str] = None,
+    ) -> Tuple[Payload, Payload]:
         """Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
@@ -541,7 +485,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        payload = {"user_id": userobj.uuid, "jti": getUUID()}
+        payload = {"user_id": user.uuid, "jti": getUUID()}
         full_payload = payload.copy()
 
         if not token_type:
@@ -554,15 +498,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         full_payload["t"] = token_type
 
-        if expiration is None:
-            expiration = timedelta(seconds=self.DEFAULT_TOKEN_TTL)
         now = datetime.now(pytz.utc)
+
+        if expiration is None:
+            expiration = now + timedelta(seconds=self.DEFAULT_TOKEN_TTL)
+
         full_payload["iat"] = now
-        full_payload["nbf"] = now  # you can add a timedelta
-        full_payload["exp"] = now + expiration
+        full_payload["nbf"] = now  # you may add a timedelta
+        full_payload["exp"] = expiration
 
         if not short_token:
-            now = datetime.now(pytz.utc)
             payload["iat"] = full_payload["iat"]
             payload["nbf"] = full_payload["nbf"]
             payload["exp"] = full_payload["exp"]
@@ -574,13 +519,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ##################
     # # Roles handling #
     # ##################
-    def verify_roles(self, user, roles, required_roles=None, warnings=True):
+    def verify_roles(
+        self,
+        user: User,
+        roles: Optional[List[Union[str, Role]]],
+        required_roles: str = ALL_ROLES,
+        warnings: bool = True,
+    ) -> bool:
 
         if not roles:
             return True
-
-        if required_roles is None:
-            required_roles = ALL_ROLES
 
         current_roles = self.get_roles_from_user(user)
 
@@ -602,41 +550,23 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
                 if role in current_roles:
                     return True
+
+            log.warning(
+                "Expected at least one roles from {}, found none in {}",
+                roles,
+                current_roles,
+            )
             return False
 
         log.critical("Unknown role authorization requirement: {}", required_roles)
         return False
 
-    @abc.abstractmethod
-    def get_roles(self):  # pragma: no cover
-        """
-        How to retrieve all the roles
-        """
-        return
-
-    @abc.abstractmethod
-    def get_roles_from_user(self, userobj):  # pragma: no cover
-        """
-        Retrieve roles from a user object from the current auth service
-        """
-        return
-
-    @abc.abstractmethod
-    def create_role(self, name, description):  # pragma: no cover
-        """
-        A method to create a new role
-        """
-        return
-
-    @abc.abstractmethod
-    def save_role(self, role):  # pragma: no cover
-        log.error("Roles are not saved in base authentication")
-        return False
-
     @staticmethod
-    def custom_user_properties_pre(userdata):
+    def custom_user_properties_pre(
+        userdata: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         try:
-            userdata = mem.customizer.custom_user_properties_pre(userdata)
+            userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
         except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
@@ -645,7 +575,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
 
-        return userdata
+        return userdata, extradata
 
     @staticmethod
     def custom_user_properties_post(user, userdata, extra_userdata, db):
@@ -660,86 +590,82 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return userdata
 
-    # ################
-    # # Create Users #
-    # ################
-    @abc.abstractmethod
-    def create_user(self, userdata, roles):  # pragma: no cover
-        """
-        A method to create a new user
-        """
-        return
-
-    @abc.abstractmethod
-    def link_roles(self, user, roles):  # pragma: no cover
-        """
-        A method to assign roles to a user
-        """
-        return
-
-    @abc.abstractmethod
-    def create_group(self, groupdata):  # pragma: no cover
-        """
-        A method to create a new group
-        """
-        return
-
-    @abc.abstractmethod
-    def add_user_to_group(self, user, group):  # pragma: no cover
-        """
-        Expand the group.members -> user relationship
-        """
-        return
-
     # ###########################
     # # Login attempts handling #
     # ###########################
 
-    # @staticmethod
-    # def register_failed_login(username):
-    #     log.critical("auth.register_failed_login: not implemented")
-    #     return True
+    @classmethod
+    def register_failed_login(cls, username: str) -> None:
+        ip = cls.get_remote_ip()
+        ip_loc = cls.localize_ip(ip)
+        cls.failed_logins.setdefault(username, [])
 
-    # @staticmethod
-    # def get_failed_login(username):
-    #     log.critical("auth.get_failed_login: not implemented")
-    #     return 0
+        count = len(cls.failed_logins[username])
+        cls.failed_logins[username].append(
+            {
+                "progressive_count": count + 1,
+                "username": username,
+                "date": datetime.now(pytz.utc),
+                "IP": ip,
+                "location": ip_loc,
+            }
+        )
 
-    @staticmethod
-    def get_secret(user):
+    @classmethod
+    def get_failed_login(cls, username: str) -> int:
 
-        return "base32secret3232"
-        # FIXME: use a real secret
-        # hashes does not works... maybe too long??
-        # import hashlib
-        # secret = hashlib.sha224(user.email.encode('utf-8'))
-        # return secret.hexdigest()
-        # same problem with str(user.uuid)
+        # username not listed or listed with an empty array
+        if not (events := cls.failed_logins.get(username, None)):
+            return 0
 
-        # neither email works (problems with the @ character?)
+        # Verify the last event
+        last_event = events[-1]
+        exp = last_event["date"] + cls.FAILED_LOGINS_EXPIRATION
+        if datetime.now(pytz.utc) > exp:
+            cls.flush_failed_logins(username)
+            return 0
 
-        # decoding errors...
-        # return str(user.name)
+        return last_event["progressive_count"]
 
-        # return base64.b32encode(user.name.encode('utf-8'))
+    @classmethod
+    def flush_failed_logins(cls, username: str) -> None:
+        cls.failed_logins.pop(username, None)
 
-    def verify_totp(self, user, totp_code):
+    def get_totp_secret(self, user: User) -> str:
+
+        if TESTING:  # pragma: no cover
+            if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
+                return p
+
+        if not user.mfa_hash:
+            # to be encrypted
+            user.mfa_hash = pyotp.random_base32()
+            self.save_user(user)
+
+        return cast(str, user.mfa_hash)
+
+    def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
         if totp_code is None:
-            raise Unauthorized("Invalid verification code")
-        secret = self.get_secret(user)
+            raise Unauthorized("Verification code is missing")
+        secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=1):
-            # if self.REGISTER_FAILED_LOGIN:
-            #     self.register_failed_login(user.email)
-            raise Unauthorized("Invalid verification code")
+
+            self.log_event(
+                Events.failed_login,
+                payload={"totp": totp_code},
+                user=user,
+            )
+
+            self.register_failed_login(user.email)
+            raise Unauthorized("Verification code is not valid")
 
         return True
 
-    @classmethod
-    def get_qrcode(cls, user):
+    def get_qrcode(self, user: User) -> str:
 
-        secret = cls.get_secret(user)
+        secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
 
         project_name = get_project_configuration("project.title", "No project name")
@@ -748,9 +674,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         qr_url = segno.make(otpauth_url)
         qr_stream = BytesIO()
         qr_url.save(qr_stream, kind="png", scale=5)
-        return otpauth_url, base64.b64encode(qr_stream.getvalue()).decode("utf-8")
+        return base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
-    def verify_password_strength(self, pwd, old_pwd):
+    def verify_password_strength(
+        self, pwd: str, old_pwd: Optional[str]
+    ) -> Tuple[bool, Optional[str]]:
 
         if old_pwd:
             if pwd == old_pwd:
@@ -777,7 +705,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         return True, None
 
-    def change_password(self, user, password, new_password, password_confirm):
+    def change_password(
+        self,
+        user: User,
+        password: str,
+        new_password: Optional[str],
+        password_confirm: Optional[str],
+    ) -> bool:
 
         if new_password is None:
             raise BadRequest("Missing new password")
@@ -799,51 +733,103 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         user.last_password_change = datetime.now(pytz.utc)
         self.save_user(user)
 
-        tokens = self.get_tokens(user=user)
-        for token in tokens:
+        self.log_event(Events.change_password, user=user)
+
+        for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.critical("Failed to invalidate token {}", e)
 
         return True
 
-    # def verify_blocked_username(self, username):
+    @classmethod
+    def verify_blocked_username(cls, username: str) -> None:
 
-    #     if not self.REGISTER_FAILED_LOGIN:
-    #         # We do not register failed login
-    #         return False
-    #     if self.MAX_LOGIN_ATTEMPTS <= 0:
-    #         # We register failed login, but we do not set a max num of failures
-    #         return False
-    #     # FIXME: implement get_failed_login
-    #     if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
-    #         # We register and set a max, but user does not reached it yet
-    #         return False
-    #     # Dear user, you have exceeded the limit
-    #     msg = f"""
-    #         Sorry, this account is temporarily blocked due to
-    #         more than {self.MAX_LOGIN_ATTEMPTS} failed login attempts.
-    #         Try again later"""
-    #     raise Unauthorized(msg)
+        # We do not count failed logins
+        if cls.MAX_LOGIN_ATTEMPTS <= 0:
+            return
 
-    def verify_blocked_user(self, user):
+        # We register failed logins but the user does not reached it yet
+        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
+            return
 
-        if self.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
+        cls.log_event(
+            Events.refused_login,
+            payload={
+                "username": username,
+                "motivation": "account blocked due to too many failed logins",
+            },
+        )
 
-            # offset-naive datetime to compare with MySQL
-            now = get_now(user.last_login.tzinfo)
+        # Dear user, you have exceeded the limit!
+        raise Forbidden(
+            "Sorry, this account is temporarily blocked "
+            "due to the number of failed login attempts."
+        )
 
-            if user.last_login + self.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
-                raise Unauthorized("Sorry, this account is blocked for inactivity")
-
-    @staticmethod
-    def verify_active_user(user):
+    @classmethod
+    def verify_user_status(cls, user: User) -> None:
 
         if not user.is_active:
+
+            cls.log_event(
+                Events.refused_login,
+                payload={"username": user.email, "motivation": "account not active"},
+            )
+
             # Beware, frontend leverages on this exact message,
             # do not modified it without fix also on frontend side
             raise Forbidden("Sorry, this account is not active")
+
+        now: Optional[datetime] = None
+
+        if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
+
+            if TESTING and user.email == cls.default_user:
+                log.info("Default user can't be blocked for inactivity during tests")
+            else:
+                now = get_now(user.last_login.tzinfo)
+                if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
+                    cls.log_event(
+                        Events.refused_login,
+                        payload={
+                            "username": user.email,
+                            "motivation": "account blocked due to inactivity",
+                        },
+                    )
+                    raise Forbidden("Sorry, this account is blocked for inactivity")
+
+        if user.expiration:
+            # Reuse the now instance, if previously inizialized
+            # tzinfo should be the same for both last_login and expiration fields
+            if not now:
+                now = get_now(user.expiration.tzinfo)
+
+            if user.expiration < now:
+                cls.log_event(
+                    Events.refused_login,
+                    payload={"username": user.email, "motivation": "account expired"},
+                )
+                raise Forbidden("Sorry, this account is expired")
+
+    # Mostly copied in definition.py
+    @classmethod
+    def log_event(
+        cls,
+        event: Events,
+        target: Optional[Any] = None,
+        payload: Optional[Dict[str, Any]] = None,
+        user: Optional[Any] = None,
+    ) -> None:
+
+        save_event_log(
+            event=event,
+            payload=payload,
+            user=user,
+            target=target,
+            ip=cls.get_remote_ip(),
+        )
 
     def init_auth_db(self, options):
 
@@ -855,7 +841,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             default_group, self.roles, force=options.get("force_user", False)
         )
 
-    def init_roles(self):
+    def init_roles(self) -> None:
         current_roles = {role.name: role for role in self.get_roles()}
 
         for role_name in self.roles:
@@ -878,19 +864,14 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             if r not in self.roles:
                 log.warning("Unknown role found: {}", r)
 
-        return self.roles
-
     def init_groups(self, force):
-
-        DEFAULT_GROUP_NAME = "Default"
-        DEFAULT_GROUP_DESCR = "Default group"
 
         create = False
         update = False
 
         default_group = self.get_group(name=DEFAULT_GROUP_NAME)
 
-        # If there are not groups, let's create the default group
+        # If there are no groups, let's create the default group
         if not self.get_groups():
             create = True
         # If there are some groups skip group creation in absence of a force flag
@@ -909,8 +890,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.info("Injected default group")
         elif update:
             log.info("Default group already exists, updating")
-            default_group.shortname = DEFAULT_GROUP_NAME
-            default_group.fullname = DEFAULT_GROUP_DESCR
+            # Added to make the life easier to mypy... but cannot be False
+            if default_group:
+                default_group.shortname = DEFAULT_GROUP_NAME
+                default_group.fullname = DEFAULT_GROUP_DESCR
+            else:  # pragma: no cover
+                log.critical("Default group not found")
             self.save_group(default_group)
         elif default_group:
             log.info("Default group already exists")
@@ -935,14 +920,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             create = default_user is None
             update = default_user is not None
 
+        if self.FORCE_FIRST_PASSWORD_CHANGE:
+            last_password_change = None
+        else:
+            last_password_change = datetime.now(pytz.utc)
+
         if create:
+
             default_user = self.create_user(
                 {
                     "email": self.default_user,
                     "name": "Default",
                     "surname": "User",
                     "password": self.default_password,
-                    "last_password_change": datetime.now(pytz.utc),
+                    "last_password_change": last_password_change,
                 },
                 roles=roles,
             )
@@ -952,15 +943,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             log.info("Injected default user")
 
         elif update:
-            log.info("Default user already exists, updating")
-            default_user.email = self.default_user
-            default_user.name = "Default"
-            default_user.surname = "User"
-            default_user.password = self.get_password_hash(self.default_password)
-            default_user.last_password_change = datetime.now(pytz.utc)
-            self.link_roles(default_user, roles)
-            self.add_user_to_group(default_user, default_group)
-            self.save_user(default_user)
+            # Added to make the life easier to mypy... but cannot be False
+            if default_user:
+                log.info("Default user already exists, updating")
+                default_user.email = self.default_user
+                default_user.name = "Default"
+                default_user.surname = "User"
+                default_user.password = self.get_password_hash(self.default_password)
+                default_user.last_password_change = last_password_change
+                self.link_roles(default_user, roles)
+                self.add_user_to_group(default_user, default_group)
+                self.save_user(default_user)
+            else:  # pragma: no cover
+                log.critical("Default user not found")
         elif default_user:
             log.info("Default user already exists")
         else:
@@ -972,3 +967,153 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 self.add_user_to_group(user, default_group)
 
         return default_user
+
+    # ########################
+    # #  Abstract methods  # #
+    # ########################
+
+    @abc.abstractmethod
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:  # pragma: no cover
+        """
+        How to retrieve a single user from the current authentication db,
+        based on the unique username or the user_id
+        return None if no filter parameter is given
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_users(self) -> List[User]:  # pragma: no cover
+        """
+        How to retrieve a list of all users from the current authentication db
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_user(self, user: User) -> bool:  # pragma: no cover
+        # log.error("Users are not saved in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def delete_user(self, user: User) -> bool:  # pragma: no cover
+        # log.error("Users are not deleted in base authentication")
+        ...
+
+    @abc.abstractmethod
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:  # pragma: no cover
+        """
+        How to retrieve a single group from the current authentication db,
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_groups(self) -> List[Group]:  # pragma: no cover
+        """
+        How to retrieve groups list from the current authentication db,
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_group(self, group: Group) -> bool:  # pragma: no cover
+        ...
+
+    @abc.abstractmethod
+    def delete_group(self, group: Group) -> bool:  # pragma: no cover
+        ...
+
+    @abc.abstractmethod
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:  # pragma: no cover
+        """
+        Return the list of tokens
+        """
+        ...
+
+    @abc.abstractmethod
+    def verify_token_validity(self, jti: str, user: User) -> bool:  # pragma: no cover
+        """
+        This method MUST be implemented by specific Authentication Methods
+        to add more specific validation contraints
+        """
+        ...
+
+    @abc.abstractmethod  # pragma: no cover
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
+        log.debug("Tokens is not saved in base authentication")
+
+    @abc.abstractmethod
+    def invalidate_token(self, token: str) -> bool:  # pragma: no cover
+        """
+        With this method the specified token must be invalidated
+        as expected after a user logout
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_roles(self) -> List[RoleObj]:  # pragma: no cover
+        """
+        How to retrieve all the roles
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_roles_from_user(
+        self, user: Optional[User]
+    ) -> List[str]:  # pragma: no cover
+        """
+        Retrieve roles from a user object from the current auth service
+        """
+        ...
+
+    @abc.abstractmethod
+    def create_role(self, name: str, description: str) -> None:  # pragma: no cover
+        """
+        A method to create a new role
+        """
+        ...
+
+    @abc.abstractmethod
+    def save_role(self, role: RoleObj) -> bool:  # pragma: no cover
+        ...
+
+    # ################
+    # # Create Users #
+    # ################
+    @abc.abstractmethod
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str]
+    ) -> User:  # pragma: no cover
+        """
+        A method to create a new user
+        """
+        ...
+
+    @abc.abstractmethod
+    def link_roles(self, user: User, roles: List[str]) -> None:  # pragma: no cover
+        """
+        A method to assign roles to a user
+        """
+        ...
+
+    @abc.abstractmethod
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:  # pragma: no cover
+        """
+        A method to create a new group
+        """
+        ...
+
+    @abc.abstractmethod
+    def add_user_to_group(self, user: User, group: Group) -> None:  # pragma: no cover
+        """
+        Expand the group.members -> user relationship
+        """
+        ...

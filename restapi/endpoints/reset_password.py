@@ -4,16 +4,15 @@ import jwt
 
 from restapi import decorators
 from restapi.config import get_frontend_url, get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors import Connector, smtp
 from restapi.env import Env
-from restapi.exceptions import BadRequest, Forbidden, RestApiException
+from restapi.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from restapi.models import fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
-auth = detector.get_authentication_instance()
+auth = Connector.get_authentication_instance()
 
 
 def send_password_reset_link(smtp, uri, title, reset_email):
@@ -30,11 +29,11 @@ def send_password_reset_link(smtp, uri, title, reset_email):
     c = smtp.send(html_body, subject, reset_email, plain_body=body)
     # it cannot fail during tests, because the email sending is mocked
     if not c:  # pragma: no cover
-        raise RestApiException("Error sending email, please retry")
+        raise ServiceUnavailable("Error sending email, please retry")
 
 
 # This endpoint require the server to send the reset token via email
-if detector.check_availability("smtp"):
+if Connector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
 
@@ -53,9 +52,11 @@ if detector.check_availability("smtp"):
                 403: "Account not found or already active",
             },
         )
-        def post(self, reset_email):
+        def post(self, reset_email: str) -> Response:
 
             reset_email = reset_email.lower()
+
+            self.auth.verify_blocked_username(reset_email)
 
             user = self.auth.get_user(username=reset_email)
 
@@ -64,10 +65,7 @@ if detector.check_availability("smtp"):
                     f"Sorry, {reset_email} is not recognized as a valid username",
                 )
 
-            if user.is_active is not None and not user.is_active:
-                # Beware, frontend leverages on this exact message,
-                # do not modified it without fix also on frontend side
-                raise Forbidden("Sorry, this account is not active")
+            self.auth.verify_user_status(user)
 
             title = get_project_configuration("project.title", default="Unkown title")
 
@@ -93,6 +91,8 @@ if detector.check_availability("smtp"):
 
             msg = "We'll send instructions to the email provided if it's associated "
             msg += "with an account. Please check your spam/junk folder."
+
+            self.log_event(self.events.reset_password_request, user=user)
             return self.response(msg)
 
         @decorators.use_kwargs(
@@ -118,7 +118,12 @@ if detector.check_availability("smtp"):
                 401: "Invalid reset token",
             },
         )
-        def put(self, token, new_password=None, password_confirm=None):
+        def put(
+            self,
+            token: str,
+            new_password: Optional[str] = None,
+            password_confirm: Optional[str] = None,
+        ) -> Response:
 
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
@@ -143,7 +148,8 @@ if detector.check_availability("smtp"):
             # Recovering token object from jti
             jti = unpacked_token[2]
             token_obj = self.auth.get_tokens(token_jti=jti)
-            if len(token_obj) == 0:
+            # Can't happen because the token is refused from verify_token function
+            if len(token_obj) == 0:  # pragma: no cover
                 raise BadRequest("Invalid reset token: this request is no longer valid")
 
             token_obj = token_obj.pop(0)
@@ -155,12 +161,14 @@ if detector.check_availability("smtp"):
             if user.last_login is not None:
                 last_change = user.last_login
             # If user changed the pwd after the token emission invalidate the token
-            elif user.last_password_change is not None:
+            # Can't happen because the change password also invalidated the token
+            elif user.last_password_change is not None:  # pragma: no cover
                 last_change = user.last_password_change
 
             if last_change is not None:
 
-                if last_change > emitted:
+                # Can't happen because the change password also invalidated the token
+                if last_change > emitted:  # pragma: no cover
                     self.auth.invalidate_token(token)
                     raise BadRequest(
                         "Invalid reset token: this request is no longer valid",

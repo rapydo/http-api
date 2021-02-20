@@ -1,7 +1,9 @@
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused
+from flask import request
 from flask_apispec import marshal_with  # also imported from endpoints
 from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
@@ -16,6 +18,7 @@ from restapi.exceptions import (
 )
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -24,6 +27,9 @@ log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
 
 SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
+
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 # same definition as in:
@@ -42,30 +48,37 @@ def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
     )
 
 
-def endpoint(path, summary=None, description=None, responses=None, **kwargs):
-    def decorator(func):
+def endpoint(
+    path: str,
+    summary: Optional[str] = None,
+    description: Optional[str] = None,
+    responses: Optional[Dict[Union[str, int], str]] = None,
+    **kwargs: Any,
+) -> Callable[[F], F]:
+    def decorator(func: F) -> F:
 
-        specs = {}
+        specs: Dict[str, Any] = {}
 
         specs["summary"] = summary
         specs["description"] = description
 
+        specs_responses: Dict[str, Dict[str, str]] = {}
         if responses:
-            for code in responses:
-                responses[code] = {"description": responses[code]}
-        specs["responses"] = responses
+            for code, message in responses.items():
+                specs_responses[str(code)] = {"description": message}
+        specs["responses"] = specs_responses
 
         if not hasattr(func, "uris"):
-            func.uris = []
-        func.uris.append(path)
+            setattr(func, "uris", [])
+        getattr(func, "uris").append(path)
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
 
-            return func(self, *args, **kwargs)
+            return cast(F, func(self, *args, **kwargs))
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
 
@@ -75,20 +88,44 @@ def cache_response_filter(response):
     if not isinstance(response, tuple):
         return True
 
-    if len(response) < 3:
+    if len(response) < 3:  # pragma: no cover
         return True
 
     return response[1] < 500
+
+
+# This is used to manipulate the function name to append a string depending
+# by the Bearer token. This way all cache entries for authenticated endpoints
+# will always user-dependent.
+def make_cache_function_name(name: str) -> str:
+
+    # Non authenticated endpoints do not valida the token.
+    # Function name is not expanded by any token that could be provided (are ignored)
+    if not request.environ.get(TOKEN_VALIDATED_KEY):
+        return name
+
+    # If the token is validated, the function name is expanded by a token-dependent key
+    token = auth.get_authorization_token(allow_access_token_parameter=True)
+    new_name = f"{name}-{hash(token)}"
+    return new_name
 
 
 # Used to cache endpoint with @decorators.cache(timeout=60)
 def cache(*args, **kwargs):
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
+    if "make_name" not in kwargs:
+        kwargs["make_name"] = make_cache_function_name
     return mem.cache.memoize(*args, **kwargs)
 
 
-def catch_graph_exceptions(func):
+# Deprecated since 1.0
+def catch_graph_exceptions(func):  # pragma: no cover
+
+    log.warning(
+        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it"
+    )
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
@@ -99,9 +136,13 @@ def catch_graph_exceptions(func):
 
         except DatabaseDuplicatedEntry as e:
 
+            log.critical("boh")
+
             raise Conflict(str(e))
 
         except RequiredProperty as e:
+
+            log.critical("Missing required")
 
             raise BadRequest(e)
 

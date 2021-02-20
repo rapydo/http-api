@@ -1,13 +1,15 @@
+from typing import Any, Dict, List, Optional, Union
+
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors import Connector, smtp
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
-from restapi.services.detect import detector
 from restapi.utilities.globals import mem
 from restapi.utilities.templates import get_html_template
+from restapi.utilities.time import date_lower_than as dt_lower
 
 # from restapi.utilities.logs import log
 
@@ -52,7 +54,8 @@ class Group(Schema):
 
 
 def get_output_schema():
-    attributes = {}
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
 
     attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
@@ -66,45 +69,43 @@ def get_output_schema():
     attributes["is_active"] = fields.Boolean()
     attributes["privacy_accepted"] = fields.Boolean()
     attributes["roles"] = fields.List(fields.Nested(Roles))
+    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
 
     attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes)
+    schema = Schema.from_dict(attributes, name="UserData")
     return schema(many=True)
+
+
+auth = Connector.get_authentication_instance()
 
 
 # Note that these are callables returning a model, not models!
 # They will be executed a runtime
-def getInputSchema(request):
+# Can't use request.method because it is not passed at loading time, i.e. the Specs will
+# be created with empty request
+def getInputSchema(request, is_post):
 
-    if not request:
-        return Schema.from_dict({})
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
+    if is_post:
+        attributes["email"] = fields.Email(required=is_post)
 
-    auth = detector.get_authentication_instance()
-
-    set_required = request.method == "POST"
-
-    attributes = {}
-    if request.method != "PUT":
-        attributes["email"] = fields.Email(required=set_required)
-
-    attributes["name"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1)
-    )
+    attributes["name"] = fields.Str(required=is_post, validate=validate.Length(min=1))
     attributes["surname"] = fields.Str(
-        required=set_required, validate=validate.Length(min=1)
+        required=is_post, validate=validate.Length(min=1)
     )
 
     attributes["password"] = fields.Str(
-        required=set_required,
+        required=is_post,
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
 
-    if detector.check_availability("smtp"):
+    if Connector.check_availability("smtp"):
         attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(
@@ -140,9 +141,18 @@ def getInputSchema(request):
         default_group = None
 
     attributes["group"] = fields.Str(
-        required=set_required,
+        label="Group",
+        description="The group to which the user belongs",
+        required=is_post,
         default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
+    )
+
+    attributes["expiration"] = fields.DateTime(
+        required=False,
+        allow_none=True,
+        label="Account expiration",
+        description="This user will be blocked after this date",
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(
@@ -150,12 +160,20 @@ def getInputSchema(request):
     ):
         attributes.update(custom_fields)
 
-    return Schema.from_dict(attributes)
+    return Schema.from_dict(attributes, name="UserDefinition")
+
+
+def getPOSTInputSchema(request):
+    return getInputSchema(request, True)
+
+
+def getPUTInputSchema(request):
+    return getInputSchema(request, False)
 
 
 class AdminUsers(EndpointResource):
 
-    depends_on = ["not ADMINER_DISABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["admin"]
     private = True
 
@@ -171,27 +189,30 @@ class AdminUsers(EndpointResource):
         summary="Obtain information on a single user",
         responses={200: "User information successfully retrieved"},
     )
-    def get(self, user_id=None):
+    def get(self, user_id: Optional[str] = None) -> Response:
 
+        user = None
         users = None
 
-        if user_id:
-            if user := self.auth.get_user(user_id=user_id):
-                users = [user]
-        else:
+        if not user_id:
             users = self.auth.get_users()
+        elif user := self.auth.get_user(user_id=user_id):
+            users = [user]
 
         if users is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
-        if detector.authentication_service == "neo4j":
+        if Connector.authentication_service == "neo4j":
             for u in users:
                 u.belongs_to = u.belongs_to.single()
+
+        if user:
+            self.log_event(self.events.access, user)
 
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(getPOSTInputSchema)
     @decorators.endpoint(
         path="/admin/users",
         summary="Create a new user",
@@ -200,9 +221,10 @@ class AdminUsers(EndpointResource):
             409: "This user already exists",
         },
     )
-    def post(self, **kwargs):
+    def post(self, **kwargs: Any) -> Response:
 
-        roles = kwargs.pop("roles", [])
+        roles: List[str] = kwargs.pop("roles", [])
+        payload = kwargs.copy()
         group_id = kwargs.pop("group")
 
         email_notification = kwargs.pop("email_notification", False)
@@ -216,13 +238,14 @@ class AdminUsers(EndpointResource):
             user = self.auth.create_user(kwargs, roles)
             self.auth.save_user(user)
         except DatabaseDuplicatedEntry as e:
-            if detector.authentication_service == "sqlalchemy":
+            if Connector.authentication_service == "sqlalchemy":
                 self.auth.db.session.rollback()
             raise Conflict(str(e))
 
         group = self.auth.get_group(group_id=group_id)
         if not group:
-            raise NotFound("This group cannot be found")
+            # Can't be reached because grup_id is prefiltered by marshmallow
+            raise NotFound("This group cannot be found")  # pragma: no cover
 
         self.auth.add_user_to_group(user, group)
 
@@ -230,16 +253,18 @@ class AdminUsers(EndpointResource):
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=False)
 
+        self.log_event(self.events.create, user, payload)
+
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getInputSchema)
+    @decorators.use_kwargs(getPUTInputSchema)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Modify a user",
         responses={200: "User successfully modified"},
     )
-    def put(self, user_id, **kwargs):
+    def put(self, user_id: str, **kwargs: Any) -> Response:
 
         user = self.auth.get_user(user_id=user_id)
 
@@ -254,7 +279,8 @@ class AdminUsers(EndpointResource):
         else:
             unhashed_password = None
 
-        roles = kwargs.pop("roles", [])
+        payload = kwargs.copy()
+        roles: List[str] = kwargs.pop("roles", [])
 
         group_id = kwargs.pop("group", None)
 
@@ -263,6 +289,8 @@ class AdminUsers(EndpointResource):
         self.auth.link_roles(user, roles)
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+
+        prev_expiration = user.expiration
 
         self.auth.db.update_properties(user, userdata)
 
@@ -275,13 +303,29 @@ class AdminUsers(EndpointResource):
         if group_id is not None:
             group = self.auth.get_group(group_id=group_id)
             if not group:
-                raise NotFound("This group cannot be found")
+                # Can't be reached because grup_id is prefiltered by marshmallow
+                raise NotFound("This group cannot be found")  # pragma: no cover
 
             self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
             smtp_client = smtp.get_instance()
             send_notification(smtp_client, user, unhashed_password, is_update=True)
+
+        if user.expiration:
+            # Set expiration on a previously non-expiring account
+            # or update the expiration by reducing the validity period
+            # In both cases tokens should be invalited to prevent to have tokens
+            # with TTL > account validity
+
+            # dt_lower (alias for date_lower_than) is a comparison fn that ignores tz
+            if prev_expiration is None or dt_lower(user.expiration, prev_expiration):
+                for token in self.auth.get_tokens(user=user):
+                    # Invalidate all tokens with expiration after the account expiration
+                    if dt_lower(user.expiration, token["expiration"]):
+                        self.auth.invalidate_token(token=token["token"])
+
+        self.log_event(self.events.modify, user, payload)
 
         return self.empty_response()
 
@@ -291,7 +335,7 @@ class AdminUsers(EndpointResource):
         summary="Delete a user",
         responses={200: "User successfully deleted"},
     )
-    def delete(self, user_id):
+    def delete(self, user_id: str) -> Response:
 
         user = self.auth.get_user(user_id=user_id)
 
@@ -299,5 +343,7 @@ class AdminUsers(EndpointResource):
             raise NotFound("This user cannot be found or you are not authorized")
 
         self.auth.delete_user(user)
+
+        self.log_event(self.events.delete, user)
 
         return self.empty_response()

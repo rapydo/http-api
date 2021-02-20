@@ -1,10 +1,10 @@
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 
 # from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_GET_specs(self, client):
+    def test_GET_specs(self, client: FlaskClient) -> None:
 
         # Alias for /api/specs
         r = client.get(f"{API_URI}/swagger")

@@ -1,16 +1,16 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pytz
 
 from restapi import decorators
+from restapi.connectors import Connector
 from restapi.exceptions import Forbidden
-from restapi.models import Schema, fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
+from restapi.models import TOTP, Schema, fields, validate
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.time import EPOCH, get_now
 
-auth = detector.get_authentication_instance()
+auth = Connector.get_authentication_instance()
 
 
 class Credentials(Schema):
@@ -31,7 +31,7 @@ class Credentials(Schema):
         password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = fields.Str(required=False)
+    totp_code = TOTP(required=False)
 
 
 class Login(EndpointResource):
@@ -46,35 +46,42 @@ class Login(EndpointResource):
         path="/login",
         summary="Login with basic credentials",
         description="Login with normal credentials (username and password)",
-        responses={200: "Credentials are valid", 401: "Invalid username or password"},
+        responses={
+            200: "Credentials are valid",
+            401: "Invalid access credentials",
+            403: "Access to this account is not allowed",
+        },
     )
     def post(
         self,
-        username,
-        password,
-        new_password=None,
-        password_confirm=None,
-        totp_code=None,
-    ):
+        username: str,
+        password: str,
+        new_password: Optional[str] = None,
+        password_confirm: Optional[str] = None,
+        totp_code: Optional[str] = None,
+    ) -> Response:
 
         username = username.lower()
 
         # ##################################################
         # Authentication control
-        # self.auth.verify_blocked_username(username)
+        self.auth.verify_blocked_username(username)
+
         token, payload, user = self.auth.make_login(username, password)
 
-        self.auth.verify_blocked_user(user)
-        self.auth.verify_active_user(user)
+        self.auth.verify_user_status(user)
 
-        totp_authentication = self.auth.SECOND_FACTOR_AUTHENTICATION == self.auth.TOTP
-
-        if totp_authentication:
+        if self.auth.SECOND_FACTOR_AUTHENTICATION:
 
             if totp_code is None:
-                message = self.check_password_validity(user, totp_authentication)
-                message["actions"].append(self.auth.SECOND_FACTOR_AUTHENTICATION)
-                message["errors"].append("You do not provided a valid second factor")
+                message = self.check_password_validity(
+                    user,
+                    totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
+                )
+                message["actions"].append("TOTP")
+                message["errors"].append(
+                    "You do not provided a valid verification code"
+                )
                 if message["errors"]:
                     raise Forbidden(message)
 
@@ -92,7 +99,9 @@ class Login(EndpointResource):
                 password = new_password
                 token, payload, user = self.auth.make_login(username, password)
 
-        message = self.check_password_validity(user, totp_authentication)
+        message = self.check_password_validity(
+            user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
+        )
         if message["errors"]:
             raise Forbidden(message)
 
@@ -103,6 +112,8 @@ class Login(EndpointResource):
             user.first_login = now
         user.last_login = now
         self.auth.save_token(user, token, payload)
+
+        self.auth.flush_failed_logins(username)
 
         return self.response(token)
 
@@ -124,10 +135,7 @@ class Login(EndpointResource):
 
             if totp_authentication:
 
-                qr_url, qr_code = self.auth.get_qrcode(user)
-
-                message["qr_code"] = qr_code
-                message["qr_url"] = qr_url
+                message["qr_code"] = self.auth.get_qrcode(user)
 
         elif self.auth.MAX_PASSWORD_VALIDITY:
 

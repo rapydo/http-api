@@ -1,21 +1,23 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from flask import Response
+from flask import Response as FlaskResponse
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
 from restapi.config import API_URL
+from restapi.connectors import Connector
 from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
-from restapi.services.authentication import Role
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.cache import Cache
-from restapi.services.detect import detector
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, save_event_log
 
 CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
 PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
+
+Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
 
 
 class EndpointResource(MethodResource, Resource):
@@ -24,6 +26,7 @@ class EndpointResource(MethodResource, Resource):
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False
+    events = Events
 
     def __init__(self):
         super().__init__()
@@ -37,7 +40,7 @@ class EndpointResource(MethodResource, Resource):
     @property
     def auth(self):
         if not self.__auth:
-            self.__auth = detector.get_authentication_instance()
+            self.__auth = Connector.get_authentication_instance()
 
         return self.__auth
 
@@ -59,13 +62,6 @@ class EndpointResource(MethodResource, Resource):
         """ Check if current user has Staff role """
         return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
 
-    def verify_local_admin(self):
-        # Deprecated since 0.9
-        log.warning(
-            "Deprecated use of verify_local_admin, switch to verify_staff instead"
-        )
-        return self.verify_staff()
-
     def verify_coordinator(self):
         return self.auth.verify_roles(
             self.get_user(), [Role.COORDINATOR], warnings=False
@@ -78,7 +74,7 @@ class EndpointResource(MethodResource, Resource):
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
         allow_html: bool = False,
-    ) -> Union[Response, Tuple[Any, int, Dict[str, str]]]:
+    ) -> Response:
 
         if headers is None:
             headers = {}
@@ -102,27 +98,34 @@ class EndpointResource(MethodResource, Resource):
         if allow_html:
             if "text/html" in ResponseMaker.get_accepted_formats():
                 content, headers = ResponseMaker.get_html(content, code, headers)
-                return Response(
+                return FlaskResponse(
                     content, mimetype="text/html", status=code, headers=headers
                 )
 
         return (content, code, headers)
 
-    def empty_response(self):
+    def empty_response(self) -> Response:
         """ Empty response as defined by the protocol """
         return self.response("", code=204)
 
     # This function has to be coupled with a marshal_with(TotalSchema, code=206)
-    def pagination_total(self, total):
+    def pagination_total(self, total: int) -> Response:
         return self.response({"total": total}, code=206)
 
-    def get_user_if_logged(self, allow_access_token_parameter=False):
+    # Deprecated since 1.0
+    def get_user_if_logged(
+        self, allow_access_token_parameter=False
+    ):  # pragma: no cover
         """
         Helper to be used inside an endpoint that doesn't explicitly
         ask for authentication, but might want to do some extra behaviour
         when a valid token is presented
         """
 
+        log.warning(
+            "Deprecated use of self.get_user_if_logged, "
+            "decorate the endpoint with @decorators.auth.optional() instead"
+        )
         auth_type, token = HTTPTokenAuth.get_authorization_token(
             allow_access_token_parameter=allow_access_token_parameter
         )
@@ -138,3 +141,23 @@ class EndpointResource(MethodResource, Resource):
 
     def clear_endpoint_cache(self):
         Cache.invalidate(self.get)
+
+    # Mostly copied in authentication.py
+    def log_event(
+        self,
+        event: Events,
+        target: Optional[Any] = None,
+        payload: Optional[Dict[str, Any]] = None,
+        user: Optional[Any] = None,
+    ) -> None:
+
+        if not user:
+            user = self.get_user()
+
+        save_event_log(
+            event=event,
+            target=target,
+            payload=payload,
+            user=user,
+            ip=BaseAuthentication.get_remote_ip(),
+        )

@@ -1,10 +1,8 @@
 """ Models for the relational database """
-import os
-
-from restapi.connectors.sqlalchemy import db
+from restapi.connectors.sqlalchemy import SQLAlchemy, db
 
 DEFAULT_COLLATION = None
-if os.getenv("ALCHEMY_DBTYPE") == "mysql+pymysql":
+if SQLAlchemy.is_mysql():
     # Required by MySQL to accept unicode strings (like chinese)
     DEFAULT_COLLATION = "utf8_unicode_ci"
 
@@ -33,15 +31,17 @@ class User(db.Model):
     surname = db.Column(db.String(255, collation=DEFAULT_COLLATION))
     authmethod = db.Column(db.String(20))
     password = db.Column(db.String(255))
+    mfa_hash = db.Column(db.String(255))
     first_login = db.Column(db.DateTime(timezone=True))
     last_login = db.Column(db.DateTime(timezone=True))
     last_password_change = db.Column(db.DateTime(timezone=True))
     is_active = db.Column(db.Boolean, default=True)
     privacy_accepted = db.Column(db.Boolean, default=True)
+    expiration = db.Column(db.DateTime(timezone=True))
+
     roles = db.relationship(
         "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
     )
-
     group_id = db.Column(db.Integer, db.ForeignKey("group.id"))
     belongs_to = db.relationship(
         "Group", backref=db.backref("members"), foreign_keys=[group_id]

@@ -1,27 +1,30 @@
+from typing import Any, Dict, Union
+
 from restapi import decorators
 from restapi.config import get_project_configuration
-from restapi.connectors import smtp
+from restapi.connectors import Connector, smtp
 from restapi.endpoints.profile_activation import send_activation_link
 from restapi.env import Env
-from restapi.exceptions import Conflict, RestApiException
+from restapi.exceptions import Conflict, ServiceUnavailable
 from restapi.models import Schema, fields, validate
-from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
+from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import DEFAULT_GROUP_NAME
 from restapi.utilities.globals import mem
 
-# This endpoint requires the server to send the activation token via email
-if detector.check_availability("smtp"):
+# from restapi.utilities.logs import log
 
-    auth = detector.get_authentication_instance()
+# This endpoint requires the server to send the activation token via email
+if Connector.check_availability("smtp"):
+
+    auth = Connector.get_authentication_instance()
 
     # Note that these are callables returning a model, not models!
     # They will be executed a runtime
     def getInputSchema(request):
 
-        if not request:
-            return Schema.from_dict({})
+        # as defined in Marshmallow.schema.from_dict
+        attributes: Dict[str, Union[fields.Field, type]] = {}
 
-        attributes = {}
         attributes["name"] = fields.Str(required=True)
         attributes["surname"] = fields.Str(required=True)
         attributes["email"] = fields.Email(
@@ -44,12 +47,12 @@ if detector.check_availability("smtp"):
         ):
             attributes.update(custom_fields)
 
-        return Schema.from_dict(attributes)
+        return Schema.from_dict(attributes, name="UserRegistration")
 
     class ProfileRegistration(EndpointResource):
 
         baseuri = "/auth"
-        depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
+        depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
         labels = ["profile"]
 
         @decorators.use_kwargs(getInputSchema)
@@ -61,7 +64,7 @@ if detector.check_availability("smtp"):
                 409: "This user already exists",
             },
         )
-        def post(self, **kwargs):
+        def post(self, **kwargs: Any) -> Response:
             """ Register new user """
 
             email = kwargs.get("email")
@@ -82,16 +85,16 @@ if detector.check_availability("smtp"):
                 if not check:
                     raise Conflict(msg)
 
-            userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
+            kwargs["is_active"] = False
+            user = self.auth.create_user(kwargs, [self.auth.default_role])
 
-            userdata["is_active"] = False
-            user = self.auth.create_user(userdata, [self.auth.default_role])
+            default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+            self.auth.add_user_to_group(user, default_group)
+            self.auth.save_user(user)
+
+            self.log_event(self.events.create, user, kwargs)
 
             try:
-                self.auth.custom_user_properties_post(
-                    user, userdata, extra_userdata, self.auth.db
-                )
-
                 smtp_client = smtp.get_instance()
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     # Sending an email to the administrator
@@ -105,9 +108,9 @@ if detector.check_availability("smtp"):
 
                 send_activation_link(smtp_client, self.auth, user)
 
-            except BaseException as e:
-                user.delete()
-                raise RestApiException(f"Errors during account registration: {e}")
+            except BaseException as e:  # pragma: no cover
+                self.auth.delete_user(user)
+                raise ServiceUnavailable(f"Errors during account registration: {e}")
 
             return self.response(
                 "We are sending an email to your email address where "

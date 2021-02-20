@@ -4,18 +4,20 @@ from datetime import datetime
 import dateutil.parser
 import pytest
 import pytz
+from faker import Faker
+from flask import Flask
 from neo4j.exceptions import CypherSyntaxError
 
+from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
-from restapi.tests import API_URI, BaseTests
+from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 CONNECTOR = "neo4j"
 
-if not detector.check_availability(CONNECTOR):
+if not Connector.check_availability(CONNECTOR):
 
     try:
         obj = connector.get_instance()
@@ -32,7 +34,7 @@ else:
     log.info("Executing {} tests", CONNECTOR)
 
     class TestNeo4j(BaseTests):
-        def test_endpoint(self, client):
+        def test_endpoint(self, client: FlaskClient) -> None:
             r = client.get(f"{API_URI}/tests/neo4j/1")
             assert r.status_code == 200
 
@@ -49,13 +51,7 @@ else:
             assert data["modified1"] < data["modified2"]
 
         @staticmethod
-        def test_connector(app, fake):
-
-            detector.init_services(
-                app=app,
-                project_init=False,
-                project_clean=False,
-            )
+        def test_connector(app: Flask, faker: Faker) -> None:
 
             try:
                 connector.get_instance(host="invalidhostname", port=123)
@@ -78,12 +74,18 @@ else:
             obj = connector.get_instance()
             assert obj is not None
 
+            try:
+                obj.InvalidModel
+                pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
+            except AttributeError as e:
+                assert str(e) == "Model InvalidModel not found"
+
             for row in obj.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = obj.User.inflate(row[0])
                 assert u.email is not None
                 break
 
-            v = fake.random_letters(24)
+            v = faker.random_letters(24)
             # Create a fake token and verify that is linked to nobody
             t = obj.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
             assert t.emitted_for.single() is None

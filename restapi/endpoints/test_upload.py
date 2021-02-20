@@ -1,7 +1,9 @@
+from typing import Any
+
 from restapi import decorators
 from restapi.config import TESTING, UPLOAD_PATH
 from restapi.models import PartialSchema, fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
@@ -29,7 +31,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def put(self, chunked=None, force=False):
+        def put(self, chunked: str = None, force: bool = False) -> Response:
 
             if chunked:
                 filename = "fixed.filename"
@@ -53,7 +55,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Schema retrieved", 201: "Upload initialized"},
         )
-        def post(self, force=False, **kwargs):
+        def post(self, force: bool = False, **kwargs: Any) -> Response:
 
             filename = "fixed.filename"
             return self.init_chunk_upload(UPLOAD_PATH, filename, force=force)

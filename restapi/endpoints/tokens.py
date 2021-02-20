@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.exceptions import BadRequest, Forbidden
 from restapi.models import ISO8601UTC, Schema, fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 # from restapi.utilities.logs import log
 
@@ -29,7 +29,7 @@ class Tokens(EndpointResource):
         summary="Retrieve all tokens emitted for logged user",
         responses={200: "List of tokens"},
     )
-    def get(self):
+    def get(self) -> Response:
 
         user = self.get_user()
 
@@ -44,7 +44,7 @@ class Tokens(EndpointResource):
         summary="Remove specified token and make it invalid from now on",
         responses={204: "Token has been invalidated"},
     )
-    def delete(self, token_id):
+    def delete(self, token_id: str) -> Response:
 
         user = self.get_user()
         tokens = self.auth.get_tokens(user=user)

@@ -1,5 +1,4 @@
 from marshmallow import Schema
-from telegram.ext.dispatcher import run_async
 from webargs import fields, validate
 
 from restapi.exceptions import RestApiException
@@ -27,14 +26,13 @@ def my_self(update, context):
     )
 
 
-@bot.command("status", help="get server status")
+@bot.command("status", help="get server status", run_async=True)
 @bot.restricted_to_users
-@run_async
 def status(update, context):
     try:
         out = bot.api.get("status")
         bot.send_markdown(out, update)
-    except RestApiException as e:
+    except RestApiException as e:  # pragma: no cover
         bot.send_markdown(str(e), update)
 
 
@@ -47,15 +45,15 @@ class Stats(Schema):
     )
 
 
-@bot.command("monitor", help="get server monitoring stats")
+@bot.command("monitor", help="get server monitoring stats", run_async=True)
 @bot.restricted_to_admins
 @bot.parameters(Stats())
-@run_async
 def monitor(update, context, param):
 
     bot.send_markdown(f"You asked: {param}", update)
     try:
         out = bot.api.get("admin/stats")
-        bot.send_markdown(out, update)
+        # Not testable for now since token sharing is not implemented
+        bot.send_markdown(out, update)  # pragma: no cover
     except RestApiException as e:
         bot.send_markdown(str(e), update)

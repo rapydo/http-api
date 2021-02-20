@@ -1,18 +1,20 @@
-from restapi.services.detect import detector
-from restapi.tests import API_URI, BaseTests
+from faker import Faker
+
+from restapi.connectors import Connector
+from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_websockets(self, client, fake):
+    def test_websockets(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not detector.check_availability("pushpin"):
+        if not Connector.check_availability("pushpin"):
             log.warning("Skipping websockets test: pushpin service not available")
-            return False
+            return
 
         log.info("Executing websockets tests")
 
-        channel = fake.pystr()
+        channel = faker.pystr()
         r = client.post(f"{API_URI}/socket/{channel}")
         assert r.status_code == 401
 
@@ -20,6 +22,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         headers, _ = self.do_login(client, None, None)
+        assert headers is not None
         headers["Content-Type"] = "application/websocket-events"
 
         r = client.post(f"{API_URI}/socket/{channel}", headers=headers)
@@ -65,7 +68,7 @@ class TestApp(BaseTests):
         assert self.get_content(r) == "Message received: True (sync=False)"
 
         # send message on a different channel
-        channel = fake.pystr()
+        channel = faker.pystr()
         r = client.put(f"{API_URI}/socket/{channel}/1", headers=headers)
         assert r.status_code == 200
         assert self.get_content(r) == "Message received: True (sync=True)"

@@ -6,9 +6,9 @@ from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from restapi import decorators
 from restapi.config import get_frontend_url, get_project_configuration
 from restapi.connectors import smtp
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest
 from restapi.models import fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
 
@@ -28,7 +28,15 @@ def send_activation_link(smtp, auth, user):
 
     # customized template
     template_file = "activate_account.html"
-    html_body = get_html_template(template_file, {"url": url})
+    html_body = get_html_template(
+        template_file,
+        {
+            "url": url,
+            "username": user.email,
+            "name": user.name,
+            "surname": user.surname,
+        },
+    )
     if html_body is None:
         html_body = body
         body = None
@@ -44,7 +52,7 @@ def send_activation_link(smtp, auth, user):
 
 
 class ProfileActivation(EndpointResource):
-    depends_on = ["not PROFILE_DISABLED", "ALLOW_REGISTRATION"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
     baseuri = "/auth"
     labels = ["base", "profiles"]
 
@@ -53,7 +61,7 @@ class ProfileActivation(EndpointResource):
         summary="Activate your account by providing the activation token",
         responses={200: "Account successfully activated"},
     )
-    def put(self, token):
+    def put(self, token: str) -> Response:
 
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
@@ -64,18 +72,20 @@ class ProfileActivation(EndpointResource):
 
         # If token is expired
         except ExpiredSignatureError:
-            raise RestApiException(
+            raise BadRequest(
                 "Invalid activation token: this request is expired",
-                status_code=400,
             )
 
         # if token is not yet active
         except ImmatureSignatureError:
-            raise RestApiException("Invalid activation token", status_code=400)
+            raise BadRequest("Invalid activation token")
 
         # if token does not exist (or other generic errors)
         except BaseException:
-            raise RestApiException("Invalid activation token", status_code=400)
+            raise BadRequest("Invalid activation token")
+
+        user = unpacked_token[3]
+        self.auth.verify_blocked_username(user.email)
 
         # Recovering token object from jti
         jti = unpacked_token[2]
@@ -83,18 +93,15 @@ class ProfileActivation(EndpointResource):
         # Cannot be tested, this is an extra test to prevent any unauthorized access...
         # but invalid tokens are already refused above, with auth.verify_token
         if len(token_obj) == 0:  # pragma: no cover
-            raise RestApiException(
-                "Invalid activation token: this request is no longer valid",
-                status_code=400,
+            raise BadRequest(
+                "Invalid activation token: this request is no longer valid"
             )
 
-        user = unpacked_token[3]
         # If user logged is already active, invalidate the token
         if user.is_active:
             self.auth.invalidate_token(token)
-            raise RestApiException(
-                "Invalid activation token: this request is no longer valid",
-                status_code=400,
+            raise BadRequest(
+                "Invalid activation token: this request is no longer valid"
             )
 
         # The activation token is valid, do something
@@ -104,6 +111,8 @@ class ProfileActivation(EndpointResource):
         # Bye bye token (activation tokens are valid only once)
         self.auth.invalidate_token(token)
 
+        self.log_event(self.events.activation, user=user, target=user)
+
         return self.response("Account activated")
 
     @decorators.use_kwargs({"username": fields.Email(required=True)})
@@ -112,7 +121,9 @@ class ProfileActivation(EndpointResource):
         summary="Ask a new activation link",
         responses={200: "A new activation link has been sent"},
     )
-    def post(self, username):
+    def post(self, username: str) -> Response:
+
+        self.auth.verify_blocked_username(username)
 
         user = self.auth.get_user(username=username)
 

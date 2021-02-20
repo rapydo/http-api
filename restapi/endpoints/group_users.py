@@ -1,6 +1,5 @@
 # from restapi import decorators
 # from restapi.rest.definition import EndpointResource
-# from restapi.services.detect import detector
 # from restapi.endpoints.admin_users import get_output_schema
 # from restapi.services.authentication import Role
 
@@ -12,7 +11,7 @@
 
 # class GroupUsers(EndpointResource):
 
-#     depends_on = ["not ADMINER_DISABLED"]
+#     depends_on = ["MAIN_LOGIN_ENABLE"]
 #     labels = ["admin"]
 
 #     @decorators.auth.require_all(Role.COORDINATOR)
@@ -29,14 +28,14 @@
 #         users = self.auth.get_users()
 #         current_user = self.get_user()
 
-#         if detector.authentication_service == "neo4j":
+#         if Connector.authentication_service == "neo4j":
 #             current_user.belongs_to = current_user.belongs_to.single()
 
 #         data = []
 #         # Should iterate over current_user.belong_to.users instead of on all
 #         for user in users:
 
-#             if detector.authentication_service == "neo4j":
+#             if Connector.authentication_service == "neo4j":
 #                 user.belongs_to = user.belongs_to.single()
 
 #             if current_user.belongs_to != user.belongs_to:
@@ -73,7 +72,7 @@
 
 
 # def get_groups():
-#     auth_service = detector.authentication_service
+#     auth_service = Connector.authentication_service
 
 #     if auth_service == 'neo4j':
 
@@ -135,9 +134,10 @@
 # def get_input_schema(strip_required=false, exclude_email=False):
 
 #     set_required = not strip_required
-#     auth = detector.get_authentication_instance()
+#     auth = Connector.get_authentication_instance()
 
-#     attributes = {}
+#     # as defined in Marshmallow.schema.from_dict
+#     attributes: Dict[str, Union[fields.Field, type]] = {}
 #     if not exclude_email:
 #         attributes["email"] = fields.Email(required=set_required)
 #     attributes["password"] = fields.Str(
@@ -167,12 +167,12 @@
 #     ):
 #         attributes.update(custom_fields)
 
-#     if detector.check_availability("smtp"):
+#     if Connector.check_availability("smtp"):
 #         attributes["email_notification"] = fields.Bool(
 #             label="Notify password by email"
 #         )
 
-#     return Schema.from_dict(attributes)
+#     return Schema.from_dict(attributes, name="GroupDefinition")
 
 #     def is_authorized(self, current_user, user, is_admin):
 
@@ -267,7 +267,7 @@
 #         email_notification = kwargs.get('email_notification', False)
 #         if email_notification and unhashed_password is not None:
 #             send_notification(user, unhashed_password, is_update=False)
-
+#         self.log_event(self.events.create, user, kwargs)
 #         return self.response(user.uuid)
 
 #     @decorators.auth.require_all(Role.COORDINATOR)
@@ -347,7 +347,7 @@
 #         email_notification = kwargs.get('email_notification', False)
 #         if email_notification and unhashed_password is not None:
 #             send_notification(user, unhashed_password, is_update=True)
-
+#         self.log_event(self.events.modifiy, user, kwargs)
 #         return self.empty_response()
 
 #     @decorators.auth.require_all(Role.COORDINATOR)
@@ -386,5 +386,5 @@
 #             user.delete()
 #         else:
 #             raise RestApiException("Invalid auth backend, all known db are disabled")
-
+#         self.log_event(self.events.delete, user)
 #         return self.empty_response()

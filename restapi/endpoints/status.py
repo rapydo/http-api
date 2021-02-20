@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 
 class Status(EndpointResource):
@@ -13,8 +13,7 @@ class Status(EndpointResource):
         description="Use this endpoint to monitor network or server problems",
         responses={200: "Server is alive"},
     )
-    def get(self, service=None):
-
+    def get(self, service: str = None) -> Response:
         return self.response("Server is alive", allow_html=True)
 
 
@@ -31,6 +30,6 @@ class AuthStatus(EndpointResource):
         description="Use this endpoint to verify if an auth token is valid",
         responses={200: "Auth token is valid"},
     )
-    def get(self, service=None):
+    def get(self, service: str = None) -> Response:
 
         return self.response(True)

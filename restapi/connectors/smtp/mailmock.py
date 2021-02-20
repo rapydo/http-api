@@ -14,10 +14,10 @@ class SMTP:
         log.info("Mail mock initialized with host = {}", host)
         self.disconnected = False
 
-    def __enter__(self):
+    def __enter__(self):  # pragma: no cover
         return self
 
-    def __exit__(self, _type, value, tb):
+    def __exit__(self, _type, value, tb):  # pragma: no cover
         pass
 
     @staticmethod
@@ -74,7 +74,7 @@ class SMTP:
 
     def noop(self):
         if self.disconnected:
-            raise SMTPServerDisconnected
+            raise SMTPServerDisconnected  # pragma: no cover
 
         return (250,)
 

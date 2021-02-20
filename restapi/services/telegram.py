@@ -17,7 +17,7 @@ from telegram.ext import (
 
 from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.models import validate
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -42,11 +42,12 @@ class Bot:
     def __init__(self):
         self.commands = {}
         self.variables = Env.load_variables_group(prefix="telegram")
-        if not self.variables.get("api_key"):
-            raise RestApiException("Missing API KEY", status_code=503)
+        if not self.variables.get("api_key"):  # pragma: no cover
+            raise ServiceUnavailable("Missing API KEY")
         self.updater = Updater(
             self.variables.get("api_key"),
-            use_context=True,
+            # Starting from v13 use_context is True by default
+            # use_context=True,
             workers=Env.to_int(self.variables.get("workers"), default=1),
         )
 
@@ -95,17 +96,17 @@ class Bot:
         self.admins_broadcast("Bot is ready to accept requests")
         log.info("Bot is ready to accept requests")
         self.updater.idle()
-        print_and_exit("Bot closed")
+        print_and_exit("Bot closed")  # pragma: no cover
 
     ##################
     #    DECORATORS
     ##################
 
-    def command(self, cmd, help="N/A"):
+    def command(self, cmd, help="N/A", run_async=False):
         def decorator(func):
             log.info("Registering {}", cmd)
             self.updater.dispatcher.add_handler(
-                CommandHandler(cmd, func, pass_args=True)
+                CommandHandler(cmd, func, pass_args=True, run_async=run_async)
             )
             self.commands[cmd] = help
 
@@ -162,7 +163,7 @@ class Bot:
                     # listed before error2, a match against schema.declared_fields is
                     # Needed to guarantee the right order
                     for param, definition in schema.declared_fields.items():
-                        if param not in e.messages:
+                        if param not in e.messages:  # pragma: no cover
                             continue
                         # This is the first parameter raising validation errors. In case
                         # of enums a InlineKeyboardButton will be shown and the result
@@ -191,7 +192,7 @@ class Bot:
     ##################
 
     def send_markdown(self, msg, update):
-        if not msg.strip():
+        if not msg.strip():  # pragma: no cover
             return
 
         self.updater.bot.send_message(
@@ -213,11 +214,13 @@ class Bot:
         # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
         if isinstance(context.error, TooManyInputs):
             update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
-        elif isinstance(context.error, TelegramConflict):
+        # Two instances running on the same account
+        elif isinstance(context.error, TelegramConflict):  # pragma: no cover
             self.admins_broadcast(str(context.error))
             log.warning("Stopping bot...")
             self.shutdown()
-        else:
+        # Never happens during tests... how to test it?
+        else:  # pragma: no cover
             log.error(context.error)
             self.admins_broadcast(str(context.error))
 
@@ -237,7 +240,7 @@ class Bot:
         # Parameters without description should raise some kind of errors/warnings?
         if "description" in definition.metadata:
             description = definition.metadata["description"]
-        else:
+        else:  # pragma: no cover
             description = "???"
 
         # Enum -> InlineKeyboardButton
@@ -270,12 +273,14 @@ class Bot:
 
             update.message.reply_text(description, reply_markup=reply_markup)
         # Other errors
-        else:
+        # Never raised during tests
+        else:  # pragma: no cover
             update.message.reply_text(f"{description}\n{param}: {error[0]}")
 
     # Callback used by ALL inline keyboard button. It will received a data_key
     # as callback_data to access to data from the specific commands
-    def inline_keyboard_button(self, update, context):
+    # Not called during tests... how to test it?
+    def inline_keyboard_button(self, update, context):  # pragma: no cover
         query = update.callback_query
 
         # Callback queries need to be answered, even if no notification to the user
@@ -355,22 +360,26 @@ class BotApiClient:
     def get(path, base="api"):
         return BotApiClient.api(path, "GET", base=base)
 
+    # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def put(path, base="api"):
+    def put(path, base="api"):  # pragma: no cover
         return BotApiClient.api(path, "PUT", base=base)
 
+    # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def patch(path, base="api"):
+    def patch(path, base="api"):  # pragma: no cover
         return BotApiClient.api(path, "PATCH", base=base)
 
+    # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def post(path, base="api", payload=None):
+    def post(path, base="api", payload=None):  # pragma: no cover
         if payload:
             payload = json.dumps(payload)
         return BotApiClient.api(path, "POST", base=base, payload=payload)
 
+    # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def delete(path, base="api"):
+    def delete(path, base="api"):  # pragma: no cover
         return BotApiClient.api(path, "DELETE", base=base)
 
     @staticmethod
@@ -385,7 +394,8 @@ class BotApiClient:
             response = requests.request(method, url=url, data=payload)
 
             out = response.json()
-        except Exception as e:
+        # Never raised during tests: how to test it?
+        except Exception as e:  # pragma: no cover
             log.error(f"API call failed: {e}")
             raise RestApiException(str(e), status_code=500)
 

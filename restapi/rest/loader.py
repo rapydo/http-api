@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Set, Type
 
 from attr import ib as attribute
@@ -21,14 +22,11 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
-from restapi.services.detect import detector  # do not remove this unused import
 from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
-
-CONF_FOLDERS = Env.load_group(label="project_confs")
 
 ERR401 = {"description": "This endpoint requires a valid authorization token"}
 ERR400 = {"description": "The request cannot be satisfied due to malformed syntax"}
@@ -36,8 +34,6 @@ ERR404 = {"description": "The requested resource cannot be found"}
 ERR404_AUTH = {"description": "The resource cannot be found or you are not authorized"}
 
 uri_pattern = re.compile(r"\<([^\>]+)\>")
-
-log.debug("Detector loaded: {}", detector)
 
 
 @ClassOfAttributes
@@ -70,11 +66,13 @@ class EndpointsLoader:
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
-        confs_path = os.path.join(os.curdir, CONF_PATH)
-        defaults_path = CONF_FOLDERS.get("defaults_path", confs_path)
-        base_path = CONF_FOLDERS.get("base_path", confs_path)
-        projects_path = CONF_FOLDERS.get("projects_path", confs_path)
-        submodules_path = CONF_FOLDERS.get("submodules_path", confs_path)
+        confs_path = Path(os.curdir).joinpath(CONF_PATH)
+
+        CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
+        defaults_path = Path(CONF_FOLDERS.get("defaults_path", confs_path))
+        base_path = Path(CONF_FOLDERS.get("base_path", confs_path))
+        projects_path = Path(CONF_FOLDERS.get("projects_path", confs_path))
+        submodules_path = Path(CONF_FOLDERS.get("submodules_path", confs_path))
 
         try:
             configuration, self._extended_project, _ = read_configuration(
@@ -153,7 +151,9 @@ class EndpointsLoader:
             )
 
             # Extract classes from the module
-            classes = Meta.get_new_classes_from_module(module)
+            # module can't be none because of exit_on_fail=True...
+            # but my-py can't understand this
+            classes = Meta.get_new_classes_from_module(module)  # type: ignore
             for class_name, epclss in classes.items():
                 # Filtering out classes without expected data
                 if not hasattr(epclss, "methods") or epclss.methods is None:
@@ -214,6 +214,9 @@ class EndpointsLoader:
                 # auth.required injected by the required decorator in bearer.py
                 auth_required = fn.__dict__.get("auth.required", False)
 
+                # auth.optional injected by the optional decorator in bearer.py
+                auth_optional = fn.__dict__.get("auth.optional", False)
+
                 if not hasattr(fn, "uris"):  # pragma: no cover
                     print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
@@ -239,6 +242,9 @@ class EndpointsLoader:
                     if auth_required:
                         responses.setdefault("401", ERR401)
                         responses.setdefault("404", ERR404_AUTH)
+                    elif auth_optional:
+                        responses.setdefault("401", ERR401)
+                        responses.setdefault("404", ERR404)
                     else:
                         responses.setdefault("404", ERR404)
                     # inject _METHOD dictionaries into __apispec__ attribute

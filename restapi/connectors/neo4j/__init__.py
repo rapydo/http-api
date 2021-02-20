@@ -4,7 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -18,13 +18,25 @@ from neomodel import (  # install_all_labels,
     install_labels,
     remove_all_labels,
 )
-from neomodel.exceptions import DeflateError, DoesNotExist, UniqueProperty
+from neomodel.exceptions import (
+    DeflateError,
+    DoesNotExist,
+    RequiredProperty,
+    UniqueProperty,
+)
 from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry
-from restapi.services.authentication import NULL_IP, BaseAuthentication
-from restapi.utilities.logs import log
+from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
+from restapi.services.authentication import (
+    BaseAuthentication,
+    Group,
+    Payload,
+    RoleObj,
+    Token,
+    User,
+)
+from restapi.utilities.logs import Events, log
 
 
 def catch_db_exceptions(func):
@@ -57,13 +69,29 @@ def catch_db_exceptions(func):
             # Can't be tested, should never happen except in case of new neo4j version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+        except RequiredProperty as e:
+
+            # message = property 'xyz' on objects of class XYZ
+
+            message = str(e)
+            m = re.search(r"property '(.*)' on objects of class (.*)", str(e))
+            if m:
+                missing_property = m.group(1)
+                model = m.group(2)
+                message = f"Missing property {missing_property} required by {model}"
+
+            raise BadRequest(message)
         except DeflateError as e:
             log.warning(e)
             return None
 
-        except ServiceUnavailable as e:
+        except ServiceUnavailable:  # pragma: no cover
             # refresh_connection()
-            raise e
+            raise
+
+        # Catched in case of re-raise for example RequiredProperty -> BadRequest
+        except RestApiException:  # pragma: no cover
+            raise
 
         except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
@@ -72,37 +100,14 @@ def catch_db_exceptions(func):
     return wrapper
 
 
-# Deprecated since 0.7.6
-def graph_transactions(func):  # pragma: no cover
-
-    log.warning(
-        "Deprecated use of graph_transactions from neo4j, use from @decorators instead"
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        try:
-
-            db.begin()
-
-            out = func(self, *args, **kwargs)
-
-            db.commit()
-
-            return out
-        except Exception as e:
-            log.debug("Neomodel transaction ROLLBACK")
-            try:
-                db.rollback()
-            except Exception as sub_ex:
-                log.warning("Exception raised during rollback: {}", sub_ex)
-            raise e
-
-    return wrapper
-
-
 class NeoModel(Connector):
+
+    # This is used to return Models in a type-safe way
+    def __getattr__(self, name: str) -> StructuredNode:
+        if name in self._models:
+            return self._models[name]
+        raise AttributeError(f"Model {name} not found")
+
     def get_connection_exception(self):
 
         return (
@@ -142,11 +147,11 @@ class NeoModel(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("neo4j.is_connected method is not implemented")
         return not self.disconnected
 
-    def initialize(self):
+    def initialize(self) -> None:
 
         if self.app:
             with self.app.app_context():
@@ -160,10 +165,10 @@ class NeoModel(Connector):
                 #     {message: An equivalent constraint already exists,
                 #         'Constraint( type='UNIQUENESS', schema=(:XYZ {uuid}), [...]
                 # This loop with install_labels prevent errors
-                for model in self.models.values():
+                for model in self._models.values():
                     install_labels(model, quiet=False)
 
-    def destroy(self):
+    def destroy(self) -> None:
 
         graph = self.get_instance()
 
@@ -233,7 +238,9 @@ class Authentication(BaseAuthentication):
     def __init__(self):
         self.db = get_instance()
 
-    def get_user(self, username=None, user_id=None):
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:
 
         if username:
             return self.db.User.nodes.get_or_none(email=username)
@@ -241,25 +248,29 @@ class Authentication(BaseAuthentication):
         if user_id:
             return self.db.User.nodes.get_or_none(uuid=user_id)
 
-        # only reached if both username and user_id are None
+        # reached if both username and user_id are None
         return None
 
-    def get_users(self):
-        return self.db.User.nodes.all()
+    def get_users(self) -> List[User]:
+        return cast(List[User], self.db.User.nodes.all())
 
-    def save_user(self, user):
-        if user:
-            user.save()
-            return True
-        return False
+    def save_user(self, user: User) -> bool:
+        if not user:
+            return False
 
-    def delete_user(self, user):
-        if user:
-            user.delete()
-            return True
-        return False
+        user.save()
+        return True
 
-    def get_group(self, group_id=None, name=None):
+    def delete_user(self, user: User) -> bool:
+        if not user:
+            return False
+
+        user.delete()
+        return True
+
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:
         if group_id:
             return self.db.Group.nodes.get_or_none(uuid=group_id)
 
@@ -268,22 +279,24 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self):
-        return self.db.Group.nodes.all()
+    def get_groups(self) -> List[Group]:
+        return cast(List[Group], self.db.Group.nodes.all())
 
-    def save_group(self, group):
-        if group:
-            group.save()
-            return True
-        return False
+    def save_group(self, group: Group) -> bool:
+        if not group:
+            return False
 
-    def delete_group(self, group):
-        if group:
-            group.delete()
-            return True
-        return False
+        group.save()
+        return True
 
-    def get_roles(self):
+    def delete_group(self, group: Group) -> bool:
+        if not group:
+            return False
+
+        group.delete()
+        return True
+
+    def get_roles(self) -> List[RoleObj]:
         roles = []
         for role in self.db.Role.nodes.all():
             if role:
@@ -291,26 +304,26 @@ class Authentication(BaseAuthentication):
 
         return roles
 
-    def get_roles_from_user(self, userobj):
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
 
-        # No user for on authenticated endpoints -> return no role
-        if userobj is None:
+        # No user for non authenticated endpoints -> return no role
+        if user is None:
             return []
 
-        return [role.name for role in userobj.roles.all()]
+        return [role.name for role in user.roles.all()]
 
-    def create_role(self, name, description):
+    def create_role(self, name: str, description: str) -> None:
         role = self.db.Role(name=name, description=description)
         role.save()
 
-    def save_role(self, role):
+    def save_role(self, role: RoleObj) -> bool:
         if role:
             role.save()
             return True
         return False
 
     # Also used by POST user
-    def create_user(self, userdata, roles):
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
 
         userdata.setdefault("authmethod", "credentials")
 
@@ -329,7 +342,7 @@ class Authentication(BaseAuthentication):
         return user
 
     # Also used by PUT user
-    def link_roles(self, user, roles):
+    def link_roles(self, user: User, roles: List[str]) -> None:
 
         if not roles:
             roles = [self.default_role]
@@ -341,16 +354,16 @@ class Authentication(BaseAuthentication):
             log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
-            except self.db.Role.DoesNotExist:
+            except self.db.Role.DoesNotExist:  # pragma: no cover
                 raise Exception(f"Graph role {role} does not exist")
             user.roles.connect(role_obj)
 
-    def create_group(self, groupdata):
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
         group = self.db.Group(**groupdata).save()
 
         return group
 
-    def add_user_to_group(self, user, group):
+    def add_user_to_group(self, user: User, group: Group) -> None:
 
         if user and group:
             prev_group = user.belongs_to.single()
@@ -362,10 +375,12 @@ class Authentication(BaseAuthentication):
             else:
                 user.belongs_to.connect(group)
 
-    def save_token(self, user, token, payload, token_type=None):
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
 
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
+        ip_address = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -380,7 +395,7 @@ class Authentication(BaseAuthentication):
         token_node.creation = now
         token_node.last_access = now
         token_node.expiration = exp
-        token_node.IP = ip or NULL_IP
+        token_node.IP = ip_address
         token_node.location = ip_loc or "Unknown"
 
         token_node.save()
@@ -388,14 +403,14 @@ class Authentication(BaseAuthentication):
         user.save()
         token_node.emitted_for.connect(user)
 
-    def verify_token_validity(self, jti, user):
+    def verify_token_validity(self, jti: str, user: User) -> bool:
 
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
         except self.db.Token.DoesNotExist:
             return False
 
-        if not token_node.emitted_for.is_connected(user):
+        if not token_node.emitted_for.is_connected(user):  # pragma: no cover
             return False
 
         now = datetime.now(pytz.utc)
@@ -409,7 +424,7 @@ class Authentication(BaseAuthentication):
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_node.last_access + self.GRACE_PERIOD < now:
+        if token_node.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_node.IP != ip:
                 log.error(
@@ -425,9 +440,14 @@ class Authentication(BaseAuthentication):
 
         return True
 
-    def get_tokens(self, user=None, token_jti=None, get_all=False):
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:
 
-        tokens_list = []
+        tokens_list: List[Token] = []
         tokens = None
 
         if get_all:
@@ -442,16 +462,16 @@ class Authentication(BaseAuthentication):
 
         if tokens:
             for token in tokens:
-                t = {}
-
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation
-                t["last_access"] = token.last_access
-                t["expiration"] = token.expiration
-                t["IP"] = token.IP
-                t["location"] = token.location
+                t: Token = {
+                    "id": token.jti,
+                    "token": token.token,
+                    "token_type": token.token_type,
+                    "emitted": token.creation,
+                    "last_access": token.last_access,
+                    "expiration": token.expiration,
+                    "IP": token.IP,
+                    "location": token.location,
+                }
                 if get_all:
                     t["user"] = token.emitted_for.single()
 
@@ -459,10 +479,11 @@ class Authentication(BaseAuthentication):
 
         return tokens_list
 
-    def invalidate_token(self, token):
+    def invalidate_token(self, token: str) -> bool:
         try:
             token_node = self.db.Token.nodes.get(token=token)
             token_node.delete()
+            self.log_event(Events.delete, target=token_node)
         except self.db.Token.DoesNotExist:
             log.warning("Unable to invalidate, token not found: {}", token)
             return False

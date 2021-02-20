@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -68,12 +68,16 @@ jobs:
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
           rapydo --testing --project prj init
-          rapydo pull
+          rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
           rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
+
+          LOGURU_LEVEL=WARNING rapydo list services
+          # This should fail if at least one container is in Exit status
+          [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
           rapydo dump
@@ -87,12 +91,12 @@ jobs:
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
           rapydo --production --testing --project prj init --force
-          rapydo pull
+          rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile
           rapydo start
-          # wait for all services to start (25 failed sometimes)
-          sleep 30
+          # wait for all services to start (25 and 30 failed sometimes, in particular with rabbit)
+          sleep 35
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
@@ -103,6 +107,12 @@ jobs:
 
           # Tests in production mode
           rapydo shell --no-tty backend 'restapi tests --core --wait'
+
+          LOGURU_LEVEL=WARNING rapydo list services
+          # This should fail if at least one container is in Exit status
+          # Except for frontend that is expected to be exited in prod mode
+          [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
+
           # Send coverage
           rapydo dump
           backend_container=$(docker-compose ps -q backend)
@@ -111,5 +121,15 @@ jobs:
 
       - name: Print Logs
         if: failure()
+        run: tail -200 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log
+
+      - name: Print Events
+        if: failure()
+        run: tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/security-events.log
+
+      - name: Docker Logs
+        if: failure()
         run: |
-          tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/backend-server.log
+          cd ${{ matrix.template }}.${{ matrix.mode }}
+
+          rapydo logs

@@ -1,18 +1,19 @@
 import pytest
+from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
-from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests
-from restapi.utilities.logs import log
+from restapi.tests import API_URI, AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 
 class TestApp(BaseTests):
-    def test_registration(self, client, fake):
+    def test_registration(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enabled during core tests
         if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
             log.warning("User registration is disabled, skipping tests")
-            return True
+            return
 
         project_tile = get_project_configuration("project.title", default="YourProject")
         proto = "https" if PRODUCTION else "http"
@@ -25,63 +26,63 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
         assert r.status_code == 400
         registration_data = {}
-        registration_data["password"] = fake.password(5)
+        registration_data["password"] = faker.password(5)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
         registration_data["email"] = BaseAuthentication.default_user
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
-        registration_data["name"] = fake.first_name()
+        registration_data["name"] = faker.first_name()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["surname"] = fake.last_name()
+        registration_data["surname"] = faker.last_name()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["password_confirm"] = fake.password(strong=True)
+        registration_data["password_confirm"] = faker.password(strong=True)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
-        registration_data["password"] = fake.password(min_pwd_len - 1)
+        registration_data["password"] = faker.password(min_pwd_len - 1)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["password"] = fake.password(min_pwd_len)
+        registration_data["password"] = faker.password(min_pwd_len)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
-        registration_data["email"] = fake.ascii_email()
+        registration_data["email"] = faker.ascii_email()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
 
-        registration_data["password"] = fake.password(min_pwd_len, low=False, up=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=False, up=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing lower case letters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(min_pwd_len, low=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing upper case letters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(min_pwd_len, low=True, up=True)
+        registration_data["password"] = faker.password(min_pwd_len, low=True, up=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing numbers"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(
+        registration_data["password"] = faker.password(
             min_pwd_len, low=True, up=True, digits=True
         )
         registration_data["password_confirm"] = registration_data["password"]
@@ -90,7 +91,7 @@ class TestApp(BaseTests):
         m = "Password is too weak, missing special characters"
         assert self.get_content(r) == m
 
-        registration_data["password"] = fake.password(strong=True)
+        registration_data["password"] = faker.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
@@ -98,6 +99,14 @@ class TestApp(BaseTests):
         registration_message = "We are sending an email to your email address where "
         registration_message += "you will find the link to activate your account"
         assert self.get_content(r) == registration_message
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.create.value
+        assert events[0].user == "-"
+        assert events[0].target_type == "User"
+        assert "name" in events[0].payload
+        assert "password" in events[0].payload
+        assert events[0].payload["password"] == OBSCURE_VALUE
 
         mail = self.read_mock_email()
         body = mail.get("body")
@@ -108,54 +117,56 @@ class TestApp(BaseTests):
         assert f"{proto}://localhost/public/register/" in body
 
         # This will fail because the user is not active
-        self.do_login(
+        _, error = self.do_login(
             client,
             registration_data["email"],
             registration_data["password"],
             status_code=403,
-            # error='Sorry, this account is not active'
         )
+        assert error == "Sorry, this account is not active"
+
         # Also password reset is not allowed
         data = {"reset_email": registration_data["email"]}
         r = client.post(f"{AUTH_URI}/reset", data=data)
         assert r.status_code == 403
         assert self.get_content(r) == "Sorry, this account is not active"
 
+        events = self.get_last_events(2)
+        assert events[0].event == Events.refused_login.value
+        assert events[0].payload["username"] == data["reset_email"]
+        assert events[0].payload["motivation"] == "account not active"
+
+        assert events[1].event == Events.refused_login.value
+        assert events[1].payload["username"] == data["reset_email"]
+        assert events[1].payload["motivation"] == "account not active"
+
         # Activation, missing or wrong information
         r = client.post(f"{AUTH_URI}/profile/activate")
         assert r.status_code == 400
-        r = client.post(f"{AUTH_URI}/profile/activate", data=fake.pydict(2))
+        r = client.post(f"{AUTH_URI}/profile/activate", data=faker.pydict(2))
         assert r.status_code == 400
         # It isn't an email
-        invalid = fake.pystr(10)
+        invalid = faker.pystr(10)
         r = client.post(f"{AUTH_URI}/profile/activate", data={"username": invalid})
         assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
 
-        # Save the current number of tokens to verify the creation of activation tokens
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens_snapshot = self.get_content(r)
-        num_tokens = len(tokens_snapshot)
-
         activation_message = "We are sending an email to your email address where "
         activation_message += "you will find the link to activate your account"
         # request activation, wrong username
         r = client.post(
-            f"{AUTH_URI}/profile/activate", data={"username": fake.ascii_email()}
+            f"{AUTH_URI}/profile/activate", data={"username": faker.ascii_email()}
         )
         # return is 200, but no token will be generated and no mail will be sent
         # but it respond with the activation msg and hides the non existence of the user
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
 
-        assert self.read_mock_email() is None
+        events = self.get_last_events(1)
+        assert events[0].event != Events.activation.value
 
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-        assert len(tokens) == num_tokens
+        assert self.read_mock_email() is None
 
         # request activation, correct username
         r = client.post(
@@ -164,13 +175,6 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
-
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers)
-        assert r.status_code == 200
-        tokens = self.get_content(r)
-
-        # to be enabled
-        # assert len(tokens) == num_tokens + 1
 
         mail = self.read_mock_email()
         body = mail.get("body")
@@ -192,6 +196,11 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
         assert r.status_code == 200
         assert self.get_content(r) == "Account activated"
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.activation.value
+        assert events[0].user == registration_data["email"]
+        assert events[0].target_type == "User"
 
         # Activation token is no longer valid
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
@@ -256,7 +265,7 @@ class TestApp(BaseTests):
         # 2 - user activation using unconventional channel, e.g. by admins
         # 3 - user tries to activate and fails because already active
 
-        registration_data["email"] = fake.ascii_email()
+        registration_data["email"] = faker.ascii_email()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200

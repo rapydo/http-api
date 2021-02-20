@@ -1,9 +1,9 @@
-from restapi.tests import API_URI, AUTH_URI, BaseTests
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
-    def test_GET_status(self, client):
+    def test_GET_status(self, client: FlaskClient) -> None:
         """ Test that the flask server is running and reachable """
 
         # Check success

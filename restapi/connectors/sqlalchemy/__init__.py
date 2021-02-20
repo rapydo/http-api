@@ -9,11 +9,12 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pytz
 import sqlalchemy
 from flask_migrate import Migrate
+from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
@@ -27,11 +28,18 @@ from sqlalchemy.exc import (
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-# from restapi.config import TESTING
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
-from restapi.services.authentication import NULL_IP, BaseAuthentication
-from restapi.utilities.logs import log
+from restapi.services.authentication import (
+    BaseAuthentication,
+    Group,
+    Payload,
+    RoleObj,
+    Token,
+    User,
+)
+from restapi.utilities.logs import Events, log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -125,7 +133,7 @@ def catch_db_exceptions(func):
 
             raise
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
@@ -136,12 +144,25 @@ class SQLAlchemy(Connector):
     # Used to suppress ProgrammingError raised by MySQL during DB initialization
     DB_INITIALIZING = False
 
-    def __init__(self, app=None):
+    def __init__(self) -> None:
         self.db: OriginalAlchemy = None
-        super().__init__(app)
+        super().__init__()
 
-    def is_mysql(self) -> bool:
-        return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
+    # This is used to return Models in a type-safe way
+    def __getattr__(self, name: str) -> Model:
+        if name in self._models:
+            return self._models[name]
+        raise AttributeError(f"Model {name} not found")
+
+    @staticmethod
+    def is_mysql() -> bool:
+        # could be based on self.variables but this version Env based
+        # can be used as static method and be used before creating instances
+        return (
+            Env.get("AUTH_SERVICE", "NO_AUTHENTICATION") == "sqlalchemy"
+            and Env.get("ALCHEMY_DBTYPE", "postgresql") == "mysql+pymysql"
+        )
+        # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
     def get_connection_exception(self):
         return (OperationalError,)
@@ -185,13 +206,13 @@ class SQLAlchemy(Connector):
 
         db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_db_exceptions(db.session.commit)
-        db.session.flush = catch_db_exceptions(db.session.flush)
+        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
+        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
 
-        Connection.execute = catch_db_exceptions(Connection.execute)
+        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
@@ -221,11 +242,11 @@ class SQLAlchemy(Connector):
             self.db.session.close()
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("sqlalchemy.is_connected method is not implemented")
         return not self.disconnected
 
-    def initialize(self):
+    def initialize(self) -> None:
 
         instance = self.get_instance()
 
@@ -239,7 +260,7 @@ class SQLAlchemy(Connector):
                 instance.db.create_all()
                 SQLAlchemy.DB_INITIALIZING = False
 
-    def destroy(self):
+    def destroy(self) -> None:
 
         instance = self.get_instance()
 
@@ -267,7 +288,7 @@ class Authentication(BaseAuthentication):
         self.db = get_instance()
 
     # Also used by POST user
-    def create_user(self, userdata, roles):
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
 
         userdata.setdefault("authmethod", "credentials")
         userdata.setdefault("uuid", getUUID())
@@ -286,7 +307,7 @@ class Authentication(BaseAuthentication):
 
         return user
 
-    def link_roles(self, user, roles):
+    def link_roles(self, user: User, roles: List[str]) -> None:
 
         if not roles:
             roles = [BaseAuthentication.default_role]
@@ -297,7 +318,7 @@ class Authentication(BaseAuthentication):
             sqlrole = self.db.Role.query.filter_by(name=role).first()
             user.roles.append(sqlrole)
 
-    def create_group(self, groupdata):
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
 
         groupdata.setdefault("uuid", getUUID())
 
@@ -308,7 +329,7 @@ class Authentication(BaseAuthentication):
 
         return group
 
-    def add_user_to_group(self, user, group):
+    def add_user_to_group(self, user: User, group: Group) -> None:
 
         if user and group:
             user.belongs_to = group
@@ -316,8 +337,9 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-    def get_user(self, username=None, user_id=None):
-
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:
         try:
             if username:
                 return self.db.User.query.filter_by(email=username).first()
@@ -328,30 +350,37 @@ class Authentication(BaseAuthentication):
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
             log.error(e)
             raise ServiceUnavailable("Backend database is unavailable")
-        except (sqlalchemy.exc.DatabaseError, sqlalchemy.exc.OperationalError) as e:
+        except (
+            sqlalchemy.exc.DatabaseError,
+            sqlalchemy.exc.OperationalError,
+        ) as e:  # pragma: no cover
             raise e
 
         # only reached if both username and user_id are None
         return None
 
-    def get_users(self):
-        return self.db.User.query.all()
+    def get_users(self) -> List[User]:
+        return cast(List[User], self.db.User.query.all())
 
-    def save_user(self, user):
-        if user:
-            self.db.session.add(user)
-            self.db.session.commit()
-            return True
-        return False
+    def save_user(self, user: User) -> bool:
+        if not user:
+            return False
 
-    def delete_user(self, user):
-        if user:
-            self.db.session.delete(user)
-            self.db.session.commit()
-            return True
-        return False
+        self.db.session.add(user)
+        self.db.session.commit()
+        return True
 
-    def get_group(self, group_id=None, name=None):
+    def delete_user(self, user: User) -> bool:
+        if not user:
+            return False
+
+        self.db.session.delete(user)
+        self.db.session.commit()
+        return True
+
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:
         if group_id:
             return self.db.Group.query.filter_by(uuid=group_id).first()
 
@@ -360,56 +389,59 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self):
-        return self.db.Group.query.all()
+    def get_groups(self) -> List[Group]:
+        return cast(List[Group], self.db.Group.query.all())
 
-    def save_group(self, group):
-        if group:
-            self.db.session.add(group)
-            self.db.session.commit()
-            return True
-        return False
+    def save_group(self, group: Group) -> bool:
+        if not group:
+            return False
 
-    def delete_group(self, group):
-        if group:
-            self.db.session.delete(group)
-            self.db.session.commit()
-            return True
-        return False
+        self.db.session.add(group)
+        self.db.session.commit()
+        return True
 
-    def get_roles(self):
+    def delete_group(self, group: Group) -> bool:
+        if not group:
+            return False
+
+        self.db.session.delete(group)
+        self.db.session.commit()
+        return True
+
+    def get_roles(self) -> List[RoleObj]:
         roles = []
-        for role_name in self.roles:
-            role = self.db.Role.query.filter_by(name=role_name).first()
+        for role in self.db.Role.query.all():
             if role:
                 roles.append(role)
 
         return roles
 
-    def get_roles_from_user(self, userobj):
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
 
-        # No user for on authenticated endpoints -> return no role
-        if userobj is None:
+        # No user for non authenticated endpoints -> return no role
+        if user is None:
             return []
 
-        return [role.name for role in userobj.roles]
+        return [role.name for role in user.roles]
 
-    def create_role(self, name, description):
+    def create_role(self, name: str, description: str) -> None:
         role = self.db.Role(name=name, description=description)
         self.db.session.add(role)
         self.db.session.commit()
 
-    def save_role(self, role):
+    def save_role(self, role: RoleObj) -> bool:
         if role:
             self.db.session.add(role)
             self.db.session.commit()
             return True
         return False
 
-    def save_token(self, user, token, payload, token_type=None):
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
 
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
+        ip_address = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -424,7 +456,7 @@ class Authentication(BaseAuthentication):
             creation=now,
             last_access=now,
             expiration=exp,
-            IP=ip or NULL_IP,
+            IP=ip_address,
             location=ip_loc or "Unknown",
             # the following two are equivalent
             # user_id=user.id,
@@ -437,11 +469,11 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-    def verify_token_validity(self, jti, user):
+    def verify_token_validity(self, jti: str, user: User) -> bool:
 
         token_entry = self.db.Token.query.filter_by(jti=jti).first()
 
@@ -462,7 +494,7 @@ class Authentication(BaseAuthentication):
             return False
 
         # Verify IP validity only after grace period is expired
-        if token_entry.last_access + self.GRACE_PERIOD < now:
+        if token_entry.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
                 log.error(
@@ -478,15 +510,20 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.add(token_entry)
                 self.db.session.commit()
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("DB error ({}), rolling back", e)
                 self.db.session.rollback()
 
         return True
 
-    def get_tokens(self, user=None, token_jti=None, get_all=False):
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:
 
-        tokens_list = []
+        tokens_list: List[Token] = []
         tokens = None
 
         if get_all:
@@ -502,31 +539,32 @@ class Authentication(BaseAuthentication):
                 if token is None:
                     continue
 
-                t = {}
-
-                t["id"] = token.jti
-                t["token"] = token.token
-                t["token_type"] = token.token_type
-                t["emitted"] = token.creation
-                t["last_access"] = token.last_access
-                t["expiration"] = token.expiration
-                t["IP"] = token.IP
-                t["location"] = token.location
+                t: Token = {
+                    "id": token.jti,
+                    "token": token.token,
+                    "token_type": token.token_type,
+                    "emitted": token.creation,
+                    "last_access": token.last_access,
+                    "expiration": token.expiration,
+                    "IP": token.IP,
+                    "location": token.location,
+                }
                 if get_all:
                     t["user"] = token.emitted_for
                 tokens_list.append(t)
 
         return tokens_list
 
-    def invalidate_token(self, token):
+    def invalidate_token(self, token: str) -> bool:
 
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry:
             try:
                 self.db.session.delete(token_entry)
                 self.db.session.commit()
+                self.log_event(Events.delete, target=token_entry)
                 return True
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.error("Could not invalidate token ({}), rolling back", e)
                 self.db.session.rollback()
                 return False

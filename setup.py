@@ -13,7 +13,9 @@ setup(
     license="MIT",
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
     packages=find_packages(where=".", exclude=["tests*"]),
-    package_data={main_package: ["templates/index.html"]},
+    package_data={main_package: ["templates/index.html", "py.typed"]},
+    # python_requires=">=3.9.0",
+    # Due to mistral (also removed str.removeprefix)
     python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]
@@ -21,17 +23,19 @@ setup(
     """,
     # Remember to update mypy.additional_dependencies
     install_requires=[
-        # Flask and plugins
+        # Flask, plugins and webservers
         "Flask==1.1.2",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.9.0",
-        "Flask-Cors==3.0.9",
+        "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.4.4",
-        "Flask-Migrate==2.5.3",
+        "Flask-Migrate==2.6.0",
         "PyJWT",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
+        "meinheld==1.0.2",
+        "gunicorn==20.0.4",
         # DB and services drivers
         "neomodel==4.0.1",
         "psycopg2-binary",
@@ -39,13 +43,15 @@ setup(
         "PyMySQL",
         "redis",
         "pika",
-        "celery==4.4.7",
+        "celery[redis]==5.0.4",
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.0",
+        # 5.0.3 raises errors on ssl context due to new defaults
+        "amqp==5.0.2",
+        "python-telegram-bot==13.1",
         # TOTP
-        "pyotp==2.4.1",
+        "pyotp==2.6.0",
         "segno==1.3.1",
         # Utilities
         "PyYAML==5.3.1",
@@ -59,20 +65,20 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.19.1",
+        "sentry-sdk[flask]==0.19.5",
         # Tests
-        "pytest-flask==1.0.0",
+        "pytest-flask==1.1.0",
         "pytest-cov==2.10.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==2.7.1",
-        "Faker==4.14.0",
-        "Telethon==1.17.5",
+        "schemathesis==3.0.3",
+        "Faker==5.6.1",
+        "Telethon==1.19.0",
     ],
     classifiers=[
         "Programming Language :: Python",
         "Intended Audience :: Developers",
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )

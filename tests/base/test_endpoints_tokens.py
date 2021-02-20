@@ -1,8 +1,12 @@
-from restapi.tests import API_URI, AUTH_URI, BaseTests
+from faker import Faker
+
+from restapi.env import Env
+from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import Events
 
 
 class TestApp(BaseTests):
-    def test_tokens(self, client, fake):
+    def test_tokens(self, client: FlaskClient, faker: Faker) -> None:
 
         last_token = None
         last_tokens_header = None
@@ -21,7 +25,7 @@ class TestApp(BaseTests):
         # Probably due to password expiration:
         # change password invalidated tokens created before
         # => create tokens again
-        if len(content) < 3:
+        if len(content) < 3:  # pragma: no cover
 
             for _ in range(3):
                 header, token = self.do_login(client, None, None)
@@ -71,7 +75,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            query_string={"get_total": True, "input_filter": fake.pystr()},
+            query_string={"get_total": True, "input_filter": faker.pystr()},
             headers=last_tokens_header,
         )
         assert r.status_code == 206
@@ -137,7 +141,7 @@ class TestApp(BaseTests):
 
         r = client.get(
             f"{API_URI}/admin/tokens",
-            query_string={"page": 1, "size": 20, "input_filter": fake.pystr()},
+            query_string={"page": 1, "size": 20, "input_filter": faker.pystr()},
             headers=last_tokens_header,
         )
         assert r.status_code == 200
@@ -218,6 +222,13 @@ class TestApp(BaseTests):
         r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.delete.value
+        assert events[0].target_type == "Token"
+        # Tokens does not have a uuid...
+        # assert events[0].target_id == token_id
+        assert events[0].user == "-"
+
         # TEST AN ALREADY DELETED TOKEN
         r = client.delete(f"{AUTH_URI}/tokens/{token_id}", headers=last_tokens_header)
         assert r.status_code == 403
@@ -230,15 +241,20 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
         assert r.status_code == 200
 
-        # TEST TOKEN DELETION VIA ADMIN ENDPOINT
-        # This will be used to authenticate the requests. A new last_tokens is required
-        # because the login could invalidate previous tokens due to password expiration
-        last_tokens_header, last_token = self.do_login(client, None, None)
-        # This will be used as target for deletion
-        header, token = self.do_login(client, None, None)
+        # user_header will be used as target for deletion
+        # Always enabled in core tests
+        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+            uuid = None
+            user_header, token = self.do_login(client, None, None)
+        else:
+            uuid, data = self.create_user(client)
+            user_header, token = self.do_login(client, data["email"], data["password"])
+
+        r = client.get(f"{AUTH_URI}/status", headers=user_header)
+        assert r.status_code == 200
 
         # TEST GET ALL TOKENS
-        r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
+        r = client.get(f"{AUTH_URI}/tokens", headers=user_header)
         content = self.get_content(r)
         assert r.status_code == 200
 
@@ -250,12 +266,27 @@ class TestApp(BaseTests):
 
         assert token_id is not None
 
+        last_tokens_header, _ = self.do_login(client, None, None)
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.delete.value
+        assert events[0].target_type == "Token"
+        # Tokens does not have a uuid...
+        # assert events[0].target_id == token_id
+        assert events[0].user == "-"
+
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header
         )
         assert r.status_code == 404
+
+        r = client.get(f"{AUTH_URI}/status", headers=user_header)
+        assert r.status_code == 401
+
+        # Goodbye temporary user (if previously created)
+        if uuid:
+            self.delete_user(client, uuid)

@@ -1,18 +1,29 @@
 import os
 import tempfile
 import time
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict
 
 import psutil
 import pytest
+from faker import Faker
 from marshmallow.exceptions import ValidationError
 
 from restapi.env import Env
-from restapi.exceptions import ServiceUnavailable
+from restapi.exceptions import (
+    BadRequest,
+    Conflict,
+    Forbidden,
+    NotFound,
+    RestApiException,
+    ServerError,
+    ServiceUnavailable,
+    Unauthorized,
+)
 from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
+from restapi.rest.definition import EndpointResource
 from restapi.rest.response import ResponseMaker
-from restapi.services.detect import detector
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -26,10 +37,15 @@ from restapi.utilities.processes import (
     wait_socket,
 )
 from restapi.utilities.templates import get_html_template
+from restapi.utilities.time import get_timedelta
 
 
 class TestApp(BaseTests):
-    def test_libs(self, faker):
+
+    # #######################################
+    # ####      Env
+    #########################################
+    def test_env(self, faker: Faker) -> None:
 
         assert not Env.to_bool(None)
         assert Env.to_bool(None, True)
@@ -61,45 +77,6 @@ class TestApp(BaseTests):
         assert Env.to_int(faker.pystr(), random_default) == random_default
         assert Env.to_bool(object) == 0
 
-        f = "myfield"
-        assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
-        assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
-        assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
-        assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.DateTime()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.AwareDateTime()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.NaiveDateTime()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.Decimal()) == "number"
-        assert ResponseMaker.get_schema_type(f, fields.Email()) == "email"
-        assert ResponseMaker.get_schema_type(f, fields.Float()) == "number"
-        assert ResponseMaker.get_schema_type(f, fields.Int()) == "int"
-        assert ResponseMaker.get_schema_type(f, fields.Integer()) == "int"
-        assert ResponseMaker.get_schema_type(f, fields.Number()) == "number"
-        assert ResponseMaker.get_schema_type(f, fields.Str()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.String()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Dict()) == "dictionary"
-        assert ResponseMaker.get_schema_type(f, fields.List(fields.Str())) == "string[]"
-        assert ResponseMaker.get_schema_type(f, fields.Nested(fields.Str())) == "nested"
-        # Unsupported types, fallback to string
-        assert ResponseMaker.get_schema_type(f, fields.URL()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Url()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.UUID()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Constant("x")) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Field()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Function()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Mapping()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Method()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
-
-        assert not find_process("this-should-not-exist")
-        assert find_process("restapi")
-        assert find_process("dumb-init")
-        # current process is not retrieved by find_process
-        current_pid = os.getpid()
-        process = psutil.Process(current_pid)
-        assert not find_process(process.name())
-
         prefix = faker.pystr().lower()
         var1 = faker.pystr()
         var2 = faker.pystr().lower()
@@ -122,6 +99,99 @@ class TestApp(BaseTests):
         assert variables.get(var2.lower()) == val2
         assert variables.get(var3.lower()) == val3
 
+    # #######################################
+    # ####      Responses
+    #########################################
+    def test_responses(self, faker: Faker) -> None:
+        class MySchema(Schema):
+            name = fields.Str()
+
+        f = "myfield"
+        assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
+        assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
+        assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
+        assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
+        assert ResponseMaker.get_schema_type(f, fields.DateTime()) == "date"
+        assert ResponseMaker.get_schema_type(f, fields.AwareDateTime()) == "date"
+        assert ResponseMaker.get_schema_type(f, fields.NaiveDateTime()) == "date"
+        assert ResponseMaker.get_schema_type(f, fields.Decimal()) == "number"
+        assert ResponseMaker.get_schema_type(f, fields.Email()) == "email"
+        assert ResponseMaker.get_schema_type(f, fields.Float()) == "number"
+        assert ResponseMaker.get_schema_type(f, fields.Int()) == "int"
+        assert ResponseMaker.get_schema_type(f, fields.Integer()) == "int"
+        assert ResponseMaker.get_schema_type(f, fields.Number()) == "number"
+        assert ResponseMaker.get_schema_type(f, fields.Str()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.String()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Dict()) == "dictionary"
+        assert ResponseMaker.get_schema_type(f, fields.List(fields.Str())) == "string[]"
+        assert ResponseMaker.get_schema_type(f, fields.Nested(MySchema())) == "nested"
+        # Unsupported types, fallback to string
+        assert ResponseMaker.get_schema_type(f, fields.URL()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Url()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.UUID()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Constant("x")) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Field()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Function()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Mapping()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Method()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
+        assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
+
+        assert not ResponseMaker.is_binary(None)  # type: ignore
+        assert not ResponseMaker.is_binary("")
+        assert not ResponseMaker.is_binary("application/json")
+        assert ResponseMaker.is_binary("application/octet-stream")
+        assert ResponseMaker.is_binary("application/x-bzip")
+        assert ResponseMaker.is_binary("application/x-bzip2")
+        assert ResponseMaker.is_binary("application/pdf")
+        assert ResponseMaker.is_binary("application/msword")
+        assert ResponseMaker.is_binary("application/rtf")
+        assert ResponseMaker.is_binary("application/x-tar")
+        assert ResponseMaker.is_binary("application/gzip")
+        assert ResponseMaker.is_binary("application/zip")
+        assert ResponseMaker.is_binary("application/x-7z-compressed")
+        assert not ResponseMaker.is_binary("text/plain")
+        assert not ResponseMaker.is_binary("text/css")
+        assert not ResponseMaker.is_binary("text/csv")
+        assert not ResponseMaker.is_binary("text/html")
+        assert not ResponseMaker.is_binary("text/javascript")
+        assert not ResponseMaker.is_binary("text/xml")
+        assert ResponseMaker.is_binary("image/gif")
+        assert ResponseMaker.is_binary("image/jpeg")
+        assert ResponseMaker.is_binary("image/png")
+        assert ResponseMaker.is_binary("image/svg+xml")
+        assert ResponseMaker.is_binary("image/tiff")
+        assert ResponseMaker.is_binary("image/webp")
+        assert ResponseMaker.is_binary("image/bmp")
+        assert ResponseMaker.is_binary("image/aac")
+        assert ResponseMaker.is_binary("audio/midi")
+        assert ResponseMaker.is_binary("audio/mpeg")
+        assert ResponseMaker.is_binary("audio/wav")
+        assert ResponseMaker.is_binary("audio/anyother")
+        assert ResponseMaker.is_binary("video/mpeg")
+        assert ResponseMaker.is_binary("video/ogg")
+        assert ResponseMaker.is_binary("video/webm")
+        assert ResponseMaker.is_binary("video/anyother")
+        assert ResponseMaker.is_binary("video/anyother")
+        assert not ResponseMaker.is_binary(faker.pystr())
+
+        assert EndpointResource.response("", code=200)[1] == 200  # type: ignore
+        assert EndpointResource.response(None, code=200)[1] == 204  # type: ignore
+        assert EndpointResource.response(None, code=200, head_method=True)[1] == 200  # type: ignore
+
+    # #######################################
+    # ####      Processes
+    #########################################
+    def test_processes(self) -> None:
+
+        assert not find_process("this-should-not-exist")
+        assert find_process("restapi")
+        assert find_process("dumb-init")
+        # current process is not retrieved by find_process
+        current_pid = os.getpid()
+        process = psutil.Process(current_pid)
+        assert not find_process(process.name())
+
         start_timeout(15)
         try:
             wait_socket("invalid", 123, service_name="test")
@@ -138,18 +208,23 @@ class TestApp(BaseTests):
         except Timeout:  # pragma: no cover
             pytest.fail("Reached Timeout, max retries not worked?")
 
+    # #######################################
+    # ####      Meta
+    #########################################
+    def test_meta(self) -> None:
+
         # This is a valid package containing other packages... but no task will be found
-        s = Meta.get_celery_tasks("restapi.utilities")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        tasks = Meta.get_celery_tasks("restapi.utilities")
+        assert isinstance(tasks, list)
+        assert len(tasks) == 0
 
-        s = Meta.get_celery_tasks("this-should-not-exist")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        tasks = Meta.get_celery_tasks("this-should-not-exist")
+        assert isinstance(tasks, list)
+        assert len(tasks) == 0
 
-        s = Meta.get_classes_from_module("this-should-not-exist")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        mcls = Meta.get_classes_from_module("this-should-not-exist")  # type: ignore
+        assert isinstance(mcls, dict)
+        assert len(mcls) == 0
 
         assert not Meta.get_module_from_string("this-should-not-exist")
 
@@ -165,31 +240,39 @@ class TestApp(BaseTests):
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
         assert not Meta.get_self_reference_from_args()
-        s = Meta.get_self_reference_from_args("test")
-        assert s == "test"
+        selfref = Meta.get_self_reference_from_args("test")
+        assert selfref == "test"
 
-        s = Meta.import_models("this-should", "not-exist", exit_on_fail=False)
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        models = Meta.import_models("this-should", "not-exist", mandatory=False)
+        assert isinstance(models, dict)
+        assert len(models) == 0
 
         try:
-            Meta.import_models("this-should", "not-exist", exit_on_fail=True)
+            Meta.import_models("this-should", "not-exist", mandatory=True)
             pytest.fail("SystemExit not raised")  # pragma: no cover
         except SystemExit:
             pass
 
         # Check exit_on_fail default value
-        try:
-            Meta.import_models("this-should", "not-exist")
-            pytest.fail("SystemExit not raised")  # pragma: no cover
-        except SystemExit:
-            pass
+        models = Meta.import_models("this-should", "not-exist")
+        assert isinstance(models, dict)
+        assert len(models) == 0
 
         assert Meta.get_instance("invalid.path", "InvalidClass") is None
         assert Meta.get_instance("customization", "InvalidClass") is None
         assert Meta.get_instance("customization", "Customizer") is not None
 
+    # #######################################
+    # ####      Templates
+    #########################################
+    def test_templates(self) -> None:
+
         assert get_html_template("this-should-not-exist", {}) is None
+
+    # #######################################
+    # ####      Timeouts
+    #########################################
+    def test_timeouts(self) -> None:
 
         start_timeout(1)
         try:
@@ -207,13 +290,18 @@ class TestApp(BaseTests):
         except BaseException:  # pragma: no cover
             pytest.fail("Operation interrupted")
 
-        s = handle_log_output(None)
-        assert isinstance(s, dict)
-        assert len(s) == 0
+    # #######################################
+    # ####      Logging
+    #########################################
+    def test_logging(self) -> None:
 
-        s = handle_log_output(" ")
-        assert isinstance(s, dict)
-        assert len(s) == 0
+        log_output = handle_log_output(None)
+        assert isinstance(log_output, dict)
+        assert len(log_output) == 0
+
+        log_output = handle_log_output(" ")
+        assert isinstance(log_output, dict)
+        assert len(log_output) == 0
 
         # obfuscate_dict only accepts dict
         assert obfuscate_dict(None) is None
@@ -229,6 +317,11 @@ class TestApp(BaseTests):
         assert obfuscate_dict({"filename": "y"}) == {"filename": "****"}
         assert obfuscate_dict({"new_password": "y"}) == {"new_password": "****"}
         assert obfuscate_dict({"password_confirm": "y"}) == {"password_confirm": "****"}
+
+    # #######################################
+    # ####      YAML data load and mix
+    #########################################
+    def test_yaml(self) -> None:
 
         data: Dict[str, Any] = {"a": 1}
         assert mix({}, data) == data
@@ -249,6 +342,40 @@ class TestApp(BaseTests):
         expected = {"a": [1, 2, 3, 4]}
 
         assert mix(data1, data2) == expected
+
+        # Invalid file / path
+        try:
+            load_yaml_file(Path("invalid"), Path("path"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        try:
+            load_yaml_file(Path("invalid"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        # Valid path, but not in yaml format
+        try:
+            load_yaml_file(Path("conftest.py"), Path("tests"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+
+        # File is empty
+        tmpf = tempfile.NamedTemporaryFile()
+        try:
+            load_yaml_file(Path(tmpf.name), Path("."))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except AttributeError:
+            pass
+        tmpf.close()
+
+    # #######################################
+    # ####      Uploader
+    #########################################
+    def test_uploader(self) -> None:
 
         meta = Uploader.get_file_metadata("invalid_file")
         assert isinstance(meta, dict)
@@ -310,42 +437,122 @@ class TestApp(BaseTests):
         assert start == 0
         assert end == 1000
 
-        # Invalid file / path
+    # #######################################
+    # ####      Time
+    #########################################
+    def test_time(self, faker: Faker) -> None:
+
+        every = faker.pyint()
+
+        t = get_timedelta(every, "seconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert 86400 * t.days + t.seconds == every
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "days")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == every
+        assert t.seconds == 0
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "microseconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert 1_000_000 * t.seconds + t.microseconds == every
+
+        t = get_timedelta(every, "milliseconds")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == 0
+        assert 1_000_000 * t.seconds + t.microseconds == every * 1000
+
+        t = get_timedelta(every, "minutes")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert 86400 * t.days + t.seconds == every * 60
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "hours")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert 86400 * t.days + t.seconds == every * 3600
+        assert t.microseconds == 0
+
+        t = get_timedelta(every, "weeks")
+        assert t is not None
+        assert isinstance(t, timedelta)
+        assert t.days == every * 7
+        assert t.seconds == 0
+        assert t.microseconds == 0
+
         try:
-            load_yaml_file(Path("invalid"), Path("path"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
+            get_timedelta(every, "months")  # type: ignore
+            pytest.fail(
+                "No exception raised from get_timedelta with period=months"
+            )  # pragma: no cover
+        except BadRequest:
             pass
 
         try:
-            load_yaml_file(Path("invalid"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
+            get_timedelta(every, "years")  # type: ignore
+            pytest.fail(
+                "No exception raised from get_timedelta with period=years"
+            )  # pragma: no cover
+        except BadRequest:
             pass
-
-        # Valid path, but not in yaml format
-        try:
-            load_yaml_file(Path("conftest.py"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-
-        # File is empty
-        tmpf = tempfile.NamedTemporaryFile()
-        try:
-            load_yaml_file(Path(tmpf.name), Path("."))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
-        tmpf.close()
 
         try:
-            detector.get_connector(faker.pystr())
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
+            get_timedelta(every, faker.pystr())  # type: ignore
+            pytest.fail(
+                "No exception raised from get_timedelta with period=randomstr"
+            )  # pragma: no cover
+        except BadRequest:
             pass
 
-    def test_marshmallow_schemas(self):
+    # #######################################
+    # ####      Exceptions
+    #########################################
+    def test_exceptions(self) -> None:
+
+        try:
+            raise BadRequest("test")
+        except RestApiException as e:
+            assert e.status_code == 400
+
+        try:
+            raise Unauthorized("test")
+        except RestApiException as e:
+            assert e.status_code == 401
+
+        try:
+            raise Forbidden("test")
+        except RestApiException as e:
+            assert e.status_code == 403
+
+        try:
+            raise NotFound("test")
+        except RestApiException as e:
+            assert e.status_code == 404
+
+        try:
+            raise Conflict("test")
+        except RestApiException as e:
+            assert e.status_code == 409
+
+        try:
+            raise ServerError("test")
+        except RestApiException as e:
+            assert e.status_code == 500
+
+        try:
+            raise ServiceUnavailable("test")
+        except RestApiException as e:
+            assert e.status_code == 503
+
+    def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
             unique_delimited_list = UniqueDelimitedList(
                 fields.Str(), delimiter=",", required=True

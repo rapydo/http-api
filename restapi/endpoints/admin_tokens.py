@@ -4,7 +4,7 @@ from restapi import decorators
 from restapi.endpoints.tokens import TokenSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.models import Schema, TotalSchema, fields
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log
 
@@ -38,7 +38,15 @@ class AdminTokens(EndpointResource):
             206: "Total number of elements is returned",
         },
     )
-    def get(self, get_total, page, size, sort_by, sort_order, input_filter):
+    def get(
+        self,
+        get_total: bool,
+        page: int,
+        size: int,
+        sort_by: str,
+        sort_order: str,
+        input_filter: str,
+    ) -> Response:
 
         tokens = self.auth.get_tokens(get_all=True)
 
@@ -91,7 +99,7 @@ class AdminTokens(EndpointResource):
             400: "Token invalidation is failed",
         },
     )
-    def delete(self, token_id):
+    def delete(self, token_id: str) -> Response:
 
         tokens = self.auth.get_tokens(token_jti=token_id)
 

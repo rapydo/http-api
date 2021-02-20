@@ -1,18 +1,19 @@
 import time
 
 import pytest
+from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.connectors import mongo as connector
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.detect import detector
 from restapi.utilities.logs import log
 
 CONNECTOR = "mongo"
 
 
-def test_mongo(app):
+def test_mongo(app: Flask) -> None:
 
-    if not detector.check_availability(CONNECTOR):
+    if not Connector.check_availability(CONNECTOR):
 
         try:
             obj = connector.get_instance()
@@ -21,15 +22,9 @@ def test_mongo(app):
             pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return False
+        return None
 
     log.info("Executing {} tests", CONNECTOR)
-
-    detector.init_services(
-        app=app,
-        project_init=False,
-        project_clean=False,
-    )
 
     try:
         obj = connector.get_instance(host="invalidhostname", port=123)
@@ -43,6 +38,12 @@ def test_mongo(app):
 
     obj = connector.get_instance()
     assert obj is not None
+
+    try:
+        obj.InvalidModel
+        pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
+    except AttributeError as e:
+        assert str(e) == "Model InvalidModel not found"
 
     obj.disconnect()
 

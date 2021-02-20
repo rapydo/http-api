@@ -21,21 +21,24 @@ from restapi.utilities.logs import log
 
 
 class Mail(Connector):
-    def __init__(self, app=None):
+    def __init__(self) -> None:
         self.smtp = None
-        super().__init__(app)
+        super().__init__()
+        # instance_variables is updated with custom variabiles in connect
+        # and the used in the send method.
+        # This way the send method will be able to use variabiles overridden in connect
+        self.instance_variables = self.variables.copy()
 
     def get_connection_exception(self):
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):
-        self.variables = self.variables.copy()
-        self.variables.update(kwargs)
+        self.instance_variables.update(kwargs)
 
-        if port := self.variables.get("port"):
+        if port := self.instance_variables.get("port"):
             port = Env.to_int(port)
 
-        host = self.variables.get("host")
+        host = self.instance_variables.get("host")
 
         if not port:
             smtp = SMTP(host)
@@ -51,8 +54,13 @@ class Mail(Connector):
             smtp.connect(host, port)
             smtp.ehlo()
 
-        if self.variables.get("username") and self.variables.get("password"):
-            smtp.login(self.variables.get("username"), self.variables.get("password"))
+        if self.instance_variables.get("username") and self.instance_variables.get(
+            "password"
+        ):
+            smtp.login(
+                self.instance_variables.get("username"),
+                self.instance_variables.get("password"),
+            )
 
         self.smtp = smtp
         return self
@@ -94,15 +102,15 @@ class Mail(Connector):
     ):
 
         if not to_address:
-            to_address = self.variables.get("admin")
+            to_address = self.instance_variables.get("admin")
         if not to_address:
             log.error("Skipping send email: destination address not configured")
             return False
 
         if not from_address:
-            from_address = self.variables.get("noreply")
+            from_address = self.instance_variables.get("noreply")
         if not from_address:
-            from_address = self.variables.get("admin")
+            from_address = self.instance_variables.get("admin")
         if not from_address:
             log.error("Skipping send email: from address not configured")
             return False

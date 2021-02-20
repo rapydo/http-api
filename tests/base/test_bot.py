@@ -15,11 +15,11 @@ from restapi.utilities.processes import Timeout, start_timeout, stop_timeout
 PERMISSION_DENIED = "Permission denied, you are not authorized to execute this command"
 
 
-def test_bot():
+def test_bot() -> None:
 
     if not Env.get_bool("TELEGRAM_ENABLE"):
         log.warning("Skipping BOT tests: service not available")
-        return False
+        return
 
     runner = CliRunner()
 

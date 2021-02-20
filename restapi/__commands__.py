@@ -4,10 +4,10 @@ import time
 
 import click
 from flask.cli import FlaskGroup
-from glom import glom
 
 from restapi import __package__ as current_package
 from restapi.config import CUSTOM_PACKAGE, PRODUCTION
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -68,11 +68,11 @@ def launch():  # pragma: no cover
         log.warning("Server shutdown")
 
 
+# Multiple is not used, should be removed by fixing verify command
 @cli.command()
 @click.option("--services", "-s", multiple=True, default=[])
 def verify(services):
     """Verify connected service"""
-    from restapi.services.detect import detector
 
     if len(services) == 0:
         log.warning("Empty list of services, nothing to be verified.")
@@ -80,11 +80,12 @@ def verify(services):
 
     for service in services:
 
-        myclass = glom(detector.services, f"{service}.class", default=None)
-        if myclass is None:
+        if not Connector.check_availability(service):
             print_and_exit("Service {} not detected", service)
+
         log.info("Verifying service: {}", service)
-        host, port = get_service_address(myclass.variables, "host", "port", service)
+        variables = Connector.services.get(service, {})
+        host, port = get_service_address(variables, "host", "port", service)
         wait_socket(host, port, service)
 
     log.info("Completed successfully")
@@ -150,17 +151,14 @@ def mywait():
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
     """
-    from restapi.services.detect import detector
+    for name, variables in Connector.services.items():
 
-    for name, service in detector.services.items():
-
-        myclass = service.get("class")
-        if myclass is None:
+        if name == "smtp":
             continue
 
         if name == "celery":
 
-            broker = myclass.variables.get("broker")
+            broker = variables.get("broker", "N/A")
 
             if broker == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -169,12 +167,14 @@ def mywait():
             else:
                 print_and_exit("Invalid celery broker: {}", broker)  # pragma: no cover
 
-            host, port = get_service_address(service_vars, "host", "port", broker)
+            label = f"{broker.lower()} as celery broker"
+            host, port = get_service_address(service_vars, "host", "port", label)
 
-            wait_socket(host, port, broker)
+            wait_socket(host, port, label)
 
-            backend = myclass.variables.get("backend")
-            if backend == "RABBIT":
+            backend = variables.get("backend", "N/a")
+            # Rabbit is no longer used as backend due to the strong limitations
+            if backend == "RABBIT":  # pragma: no cover
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
                 service_vars = Env.load_variables_group(prefix="redis")
@@ -185,14 +185,13 @@ def mywait():
                     "Invalid celery backend: {}", backend
                 )  # pragma: no cover
 
-            host, port = get_service_address(service_vars, "host", "port", backend)
+            label = f"{backend.lower()} as celery backend"
+            host, port = get_service_address(service_vars, "host", "port", label)
 
-            wait_socket(host, port, backend)
-        elif name == "smtp":
-            pass
+            wait_socket(host, port, label)
 
         else:
-            host, port = get_service_address(myclass.variables, "host", "port", name)
+            host, port = get_service_address(variables, "host", "port", name)
 
             wait_socket(host, port, name)
 
@@ -264,6 +263,8 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
         parameters.append(CUSTOM_PACKAGE)
 
     if file is not None:
+        # Can't be enabled due to mistral stuck at py38
+        # file = file.removeprefix("tests/")
         if file.startswith("tests/"):
             file = file[6:]
 

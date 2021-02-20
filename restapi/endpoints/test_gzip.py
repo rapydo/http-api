@@ -1,7 +1,7 @@
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.exceptions import RestApiException
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
@@ -18,7 +18,7 @@ if TESTING:
                 416: "Invalid size",
             },
         )
-        def get(self, size):
+        def get(self, size: str) -> Response:
 
             # No type check... but it is only used from a very specific test...
             # So... who cares?? :-)

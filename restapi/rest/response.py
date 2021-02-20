@@ -24,11 +24,11 @@ def handle_marshmallow_errors(error):
     try:
 
         if request.args:
-            if request.args.get(GET_SCHEMA_KEY, False):
+            if request.args.get(GET_SCHEMA_KEY, False):  # pragma: no cover
                 return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
         elif j := request.get_json():
-            if j.get(GET_SCHEMA_KEY, False):
+            if j.get(GET_SCHEMA_KEY, False):  # pragma: no cover
                 return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
         elif request.form:
@@ -147,7 +147,7 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
-    def is_binary(content_type):
+    def is_binary(content_type: str) -> bool:
         if not content_type:
             return False
 
@@ -175,7 +175,7 @@ class ResponseMaker:
     @staticmethod
     def get_html(content, code, headers):
 
-        if isinstance(content, list):
+        if isinstance(content, list):  # pragma: no cover
             content = content.pop()
 
         headers["Content-Type"] = "text/html; charset=UTF-8"
@@ -191,7 +191,7 @@ class ResponseMaker:
             return None, {}
 
         # Do not compress binary contents (like images) due to small benefits expected
-        if ResponseMaker.is_binary(content_type):
+        if ResponseMaker.is_binary(content_type):  # pragma: no cover
             # log.warning("Skipping gzip compression on {}", content_type)
             return None, {}
 
@@ -269,10 +269,10 @@ class ResponseMaker:
             if field_def.metadata.get("multiple"):
                 f["multiple"] = True
 
-            if not isinstance(field_def.missing, _Missing):
-                f["default"] = field_def.missing
-            elif not isinstance(field_def.default, _Missing):
+            if not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default
+            elif not isinstance(field_def.missing, _Missing):  # pragma: no cover
+                f["default"] = field_def.missing
 
             validators = []
             if field_def.validate:
@@ -287,9 +287,9 @@ class ResponseMaker:
 
                     if validator.min is not None:
                         f["min"] = validator.min
-                    if validator.max is not None:
+                    if validator.max is not None:  # pragma: no cover
                         f["max"] = validator.max
-                    if validator.equal is not None:
+                    if validator.equal is not None:  # pragma: no cover
                         f["min"] = validator.equal
                         f["max"] = validator.equal
 
@@ -303,17 +303,17 @@ class ResponseMaker:
                     if validator.max is not None:
                         f["max"] = validator.max
                         if not validator.max_inclusive:
-                            f["max"] += 1
+                            f["max"] -= 1
 
                 elif isinstance(validator, validate.OneOf):
 
                     choices = validator.choices
                     labels = validator.labels
-                    if len(tuple(labels)) != len(tuple(choices)):
+                    if len(tuple(labels)) != len(tuple(choices)):  # pragma: no cover
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 
-                else:
+                else:  # pragma: no cover
 
                     log.warning(
                         "Unsupported validation schema: {}.{}",
@@ -387,6 +387,7 @@ class ResponseMaker:
         # if isinstance(schema, fields.TimeDelta):
         #     return 'any'
 
+        # Reached with lists of custom types
         if default:
             return default
 

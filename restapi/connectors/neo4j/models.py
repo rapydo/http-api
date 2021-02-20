@@ -32,12 +32,15 @@ class User(UserCustomClass):
     name = StringProperty(required=True)
     surname = StringProperty(required=True)
     authmethod = StringProperty(required=True)
-    password = StringProperty()  # Hashed by a custom function
+    password = StringProperty()
+    mfa_hash = StringProperty()
     first_login = DateTimeProperty()
     last_login = DateTimeProperty()
     last_password_change = DateTimeProperty()
     is_active = BooleanProperty(default=True)
     privacy_accepted = BooleanProperty(default=True)
+    expiration = DateTimeProperty()
+
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")

@@ -1,13 +1,12 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.connectors import neo4j
-from restapi.exceptions import RestApiException
+from restapi.connectors import Connector, neo4j
+from restapi.exceptions import BadRequest
 from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
-from restapi.rest.definition import EndpointResource
-from restapi.services.detect import detector
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
-if TESTING and detector.check_availability("neo4j"):
+if TESTING and Connector.check_availability("neo4j"):
 
     from restapi.connectors.neo4j.models import Group, User
 
@@ -54,7 +53,7 @@ if TESTING and detector.check_availability("neo4j"):
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self, test):
+        def get(self, test: str) -> Response:
             self.neo4j = neo4j.get_instance()
             try:
                 if test == "1":
@@ -73,9 +72,9 @@ if TESTING and detector.check_availability("neo4j"):
                     data["modified1"] = n.modified
                     n.save()
                     data["modified2"] = n.modified
-                    return data
+                    return self.response(data)
                 else:
                     log.info("No Test")
             except Exception as e:
-                raise RestApiException(str(e), status_code=400)
-            return {"val": 1}
+                raise BadRequest(str(e))
+            return self.response({"val": 1})

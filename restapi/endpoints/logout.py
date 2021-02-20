@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 
 
 class Logout(EndpointResource):
@@ -15,6 +15,9 @@ class Logout(EndpointResource):
         description="Invalidate current registered token",
         responses={204: "Token correctly removed"},
     )
-    def get(self):
-        self.auth.invalidate_token(token=self.get_token())
+    def get(self) -> Response:
+
+        token = self.get_token()
+        self.auth.invalidate_token(token)
+        self.log_event(self.events.logout)
         return self.empty_response()

@@ -11,7 +11,7 @@ http://stackoverflow.com/a/9533843/2114395
 """
 
 import os
-from typing import List
+from typing import List, Optional, Tuple
 
 from flask import request
 from plumbum.cmd import file
@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
 from restapi.exceptions import BadRequest, ServiceUnavailable
-from restapi.rest.definition import EndpointResource
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 
@@ -42,12 +42,15 @@ class Uploader:
 
     @staticmethod
     def absolute_upload_file(filename, subfolder=None, onlydir=False):
+
+        filename = secure_filename(filename)
+
         if subfolder is not None:
             filename = os.path.join(subfolder, filename)
             subdir = os.path.join(UPLOAD_PATH, subfolder)
-            if not os.path.exists(subdir):
+            if not os.path.exists(subdir):  # pragma: no cover
                 os.makedirs(subdir)
-        abs_file = os.path.join(UPLOAD_PATH, filename)  # filename.lower())
+        abs_file = os.path.join(UPLOAD_PATH, filename)
         if onlydir:
             return os.path.dirname(abs_file)
         return abs_file
@@ -65,7 +68,7 @@ class Uploader:
             return {}
 
     # this method is used by b2stage and mistral
-    def upload(self, subfolder=None, force=False):
+    def upload(self, subfolder: Optional[str] = None, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
@@ -93,7 +96,7 @@ class Uploader:
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
-        except Exception:
+        except Exception:  # pragma: no cover
             raise ServiceUnavailable("Permission denied: failed to write the file")
 
         # Check exists - but it is basicaly a test that cannot fail...
@@ -116,9 +119,11 @@ class Uploader:
     # Compatible with
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
     # and with https://www.npmjs.com/package/ngx-uploadx and with
-    def init_chunk_upload(self, upload_dir, filename, force=True):
+    def init_chunk_upload(
+        self, upload_dir: str, filename: str, force: bool = True
+    ) -> Response:
 
-        if not os.path.exists(upload_dir):
+        if not os.path.exists(upload_dir):  # pragma: no cover
             os.makedirs(upload_dir)
 
         filename = secure_filename(filename)
@@ -148,7 +153,9 @@ class Uploader:
         )
 
     @staticmethod
-    def parse_content_range(range_header):
+    def parse_content_range(
+        range_header: Optional[str],
+    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
 
         if range_header is None:
             return None, None, None
@@ -187,30 +194,18 @@ class Uploader:
 
         return total_length, start, stop
 
-    def chunk_upload(self, upload_dir, filename, chunk_size=None):
+    def chunk_upload(
+        self, upload_dir: str, filename: str, chunk_size: Optional[int] = None
+    ) -> Tuple[bool, Response]:
         filename = secure_filename(filename)
 
-        try:
-            range_header = request.headers.get("Content-Range", "")
-            # content_length = request.headers.get("Content-Length")
-            content_range = parse_content_range_header(range_header)
+        range_header = request.headers.get("Content-Range", "")
+        total_length, start, stop = self.parse_content_range(range_header)
 
-            if content_range is None:
-                log.error("Unable to parse Content-Range: {}", range_header)
-                completed = True
-                start = 0
-                total_length = int(range_header.split("/")[1])
-                stop = int(total_length)
-            else:
-                # log.warning(content_range)
-                start = int(content_range.start)
-                stop = int(content_range.stop)
-                total_length = int(content_range.length)
-                completed = stop >= total_length
-        except BaseException as e:
-            log.error("Unable to parse Content-Range: {}", range_header)
-            log.error(str(e))
+        if total_length is None or start is None or stop is None:
             raise BadRequest("Invalid request")
+
+        completed = stop >= total_length
 
         # Default chunk size, put this somewhere
         if chunk_size is None:

@@ -1,31 +1,53 @@
 import base64
 import time
 
+from faker import Faker
+
 from restapi.env import Env
-from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests
-from restapi.utilities.logs import log
+from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
+from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 
 class TestApp(BaseTests):
-    def test_01_login(self, client, fake):
+    def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
         """ Check that you can login and receive back your token """
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
-        BaseAuthentication.load_default_user()
-        BaseAuthentication.load_roles()
+        # BaseAuthentication.load_default_user()
+        # BaseAuthentication.load_roles()
         USER = BaseAuthentication.default_user or "just-to-prevent-None"
         PWD = BaseAuthentication.default_password or "just-to-prevent-None"
+
+        # Login by using upper case username
         self.do_login(client, USER.upper(), PWD)
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
+
+        # Wrong credentials
         # Off course PWD cannot be upper :D
         self.do_login(client, USER, PWD.upper(), status_code=401)
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.failed_login.value
+        assert events[0].payload["username"] == USER
+
         log.info("*** VERIFY valid credentials")
+        # Login by using normal username (no upper case)
         headers, _ = self.do_login(client, None, None)
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
 
         time.sleep(5)
         # Verify MAX_PASSWORD_VALIDITY, if set
         headers, token = self.do_login(client, None, None)
+
+        events = self.get_last_events(1)
+        assert events[0].event == Events.login.value
+        assert events[0].user == USER
 
         self.save("auth_header", headers)
         self.save("auth_token", token)
@@ -50,14 +72,19 @@ class TestApp(BaseTests):
         # Check failure
         log.info("*** VERIFY invalid credentials")
 
+        random_email = faker.ascii_email()
         self.do_login(
             client,
-            fake.ascii_email(),
-            fake.password(strong=True),
+            random_email,
+            faker.password(strong=True),
             status_code=401,
         )
 
-    def test_02_GET_profile(self, client, fake):
+        events = self.get_last_events(1)
+        assert events[0].event == Events.failed_login.value
+        assert events[0].payload["username"] == random_email
+
+    def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
 
         # Check success
@@ -118,7 +145,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-        headers = {"Authorization": f"Bearer '{fake.pystr()}"}
+        headers = {"Authorization": f"Bearer '{faker.pystr()}"}
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
@@ -160,12 +187,12 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-    def test_03_change_profile(self, client, fake):
+    def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enable during core tests
         if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
             log.warning("Profile is disabled, skipping tests")
-            return True
+            return
 
         headers, _ = self.do_login(client, None, None)
 
@@ -180,8 +207,17 @@ class TestApp(BaseTests):
         r = client.patch(f"{AUTH_URI}/profile", data={}, headers=headers)
         assert r.status_code == 204
 
-        newname = fake.name()
-        newuuid = fake.pystr()
+        events = self.get_last_events(1)
+        assert events[0].event == Events.modify.value
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "User"
+        # It is true in the core, but projects may introduce additional values
+        # and expand the input dictionary even if initially empty
+        # e.g. meteohub adds here the requests_expiration_days parameter
+        # assert len(events[0].payload) == 0
+
+        newname = faker.name()
+        newuuid = faker.pystr()
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
@@ -200,6 +236,16 @@ class TestApp(BaseTests):
         r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
 
+        events = self.get_last_events(1)
+        assert events[0].event == Events.modify.value
+        assert events[0].user == BaseAuthentication.default_user
+        assert events[0].target_type == "User"
+        # It is true in the core, but projects may introduce additional values
+        # and expand the input dictionary even if initially empty
+        # e.g. meteohub adds here the requests_expiration_days parameter
+        # assert len(events[0].payload) == 1
+        assert "name" in events[0].payload
+
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
@@ -210,7 +256,7 @@ class TestApp(BaseTests):
         r = client.put(f"{AUTH_URI}/profile", data={}, headers=headers)
         assert r.status_code == 400
         # Sending a new_password and/or password_confirm without a password
-        newpassword = fake.password()
+        newpassword = faker.password()
         data = {"new_password": newpassword}
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
@@ -222,15 +268,15 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         data = {}
-        data["password"] = fake.password(length=5)
+        data["password"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
-        data["new_password"] = fake.password(length=5)
+        data["new_password"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
-        data["password_confirm"] = fake.password(length=5)
+        data["password_confirm"] = faker.password(length=5)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 400
 
@@ -247,17 +293,30 @@ class TestApp(BaseTests):
         data["password_confirm"] = data["password"]
         data["new_password"] = data["password"]
 
-        if BaseTests.TOTP:
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 409
 
         # Change the password
-        data["new_password"] = fake.password(strong=True)
+        data["new_password"] = faker.password(strong=True)
         data["password_confirm"] = data["new_password"]
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
+
+        # After a change password a spam of delete Token is expected
+        # Reverse the list and skip all delete tokens to find the change password event
+        events = self.get_last_events(100)
+        events.reverse()
+        for event in events:
+            if event.event == Events.delete.value:
+                assert event.target_type == "Token"
+                continue
+
+            assert event.event == Events.change_password.value
+            assert event.user == BaseAuthentication.default_user
+            break
 
         # verify the new password
         headers, _ = self.do_login(
@@ -268,10 +327,23 @@ class TestApp(BaseTests):
         data["password"] = data["new_password"]
         data["new_password"] = BaseAuthentication.default_password
         data["password_confirm"] = BaseAuthentication.default_password
-        if BaseTests.TOTP:
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
         r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
         assert r.status_code == 204
+
+        # After a change password a spam of delete Token is expected
+        # Reverse the list and skip all delete tokens to find the change password event
+        events = self.get_last_events(100)
+        events.reverse()
+        for event in events:
+            if event.event == Events.delete.value:
+                assert event.target_type == "Token"
+                continue
+
+            assert event.event == Events.change_password.value
+            assert event.user == BaseAuthentication.default_user
+            break
 
         # verify the new password
         headers, _ = self.do_login(
@@ -280,7 +352,7 @@ class TestApp(BaseTests):
 
         self.save("auth_header", headers)
 
-    def test_04_logout(self, client):
+    def test_04_logout(self, client: FlaskClient) -> None:
         """ Check that you can logout with a valid token """
 
         # Check success
@@ -288,7 +360,240 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/logout", headers=self.get("auth_header"))
         assert r.status_code == 204
 
+        events = self.get_last_events(2)
+
+        assert events[0].event == Events.delete.value
+        assert events[0].user == "-"
+        assert events[0].target_type == "Token"
+
+        assert events[1].event == Events.logout.value
+        assert events[1].user == BaseAuthentication.default_user
+
         # Check failure
         log.info("*** VERIFY invalid token")
         r = client.get(f"{AUTH_URI}/logout")
         assert r.status_code == 401
+
+    def test_05_login_failures(self, client: FlaskClient) -> None:
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
+            # Create a new user on the fly to test the cached endpoint
+            _, data = self.create_user(client)
+            headers, _ = self.do_login(
+                client, data["email"], data["password"], test_failures=True
+            )
+            r = client.get(f"{AUTH_URI}/logout", headers=headers)
+            assert r.status_code == 204
+
+    def test_06_token_ip_validity(self, client: FlaskClient, faker: Faker) -> None:
+
+        if Env.get_bool("MAIN_LOGIN_ENABLE"):
+            if Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD") < 10:
+                headers, _ = self.do_login(client, None, None)
+
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
+                assert r.status_code == 200
+
+                r = client.get(
+                    f"{AUTH_URI}/status",
+                    headers=headers,
+                    environ_base={"REMOTE_ADDR": faker.ipv4()},
+                )
+                assert r.status_code == 200
+
+                time.sleep(Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD"))
+
+                r = client.get(
+                    f"{AUTH_URI}/status",
+                    headers=headers,
+                    environ_base={"REMOTE_ADDR": faker.ipv4()},
+                )
+                log.error("DEBUG CODE: this 401 should be due to invalid IP address")
+                assert r.status_code == 401
+
+                # After the failure the token is still valid if used from the corret IP
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
+                assert r.status_code == 200
+
+                # Another option to provide IP is through the header passed by nginx
+                headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
+                r = client.get(f"{AUTH_URI}/status", headers=headers)
+                assert r.status_code == 401
+
+    if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
+
+        def test_07_totp_failures(self, client: FlaskClient, faker: Faker) -> None:
+
+            uuid, data = self.create_user(client)
+
+            username = data["email"]
+            password = data["password"]
+            new_password = faker.password(strong=True)
+
+            invalid_totp = (
+                str(faker.pyint(min_value=0, max_value=9)),
+                str(faker.pyint(min_value=10, max_value=99)),
+                str(faker.pyint(min_value=100, max_value=999)),
+                str(faker.pyint(min_value=1000, max_value=9999)),
+                str(faker.pyint(min_value=10000, max_value=99999)),
+                str(faker.pyint(min_value=1000000, max_value=9999999)),
+                faker.pystr(6),
+            )
+            ###################################
+            # Test first password change
+            ###################################
+
+            data = {
+                "username": username,
+                "password": password,
+                "new_password": new_password,
+                "password_confirm": new_password,
+            }
+
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 403
+            resp = self.get_content(r)
+
+            assert "actions" in resp
+            assert "errors" in resp
+            assert "FIRST LOGIN" in resp["actions"]
+            assert "TOTP" in resp["actions"]
+            assert "Please change your temporary password" in resp["errors"]
+            assert "You do not provided a valid verification code" in resp["errors"]
+
+            # validate that the QR code is a valid PNG image
+            # ... not implemented
+
+            data["totp_code"] = "000000"
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
+            for totp in invalid_totp:
+                data["totp_code"] = totp
+                r = client.post(f"{AUTH_URI}/login", data=data)
+                assert r.status_code == 400
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
+
+            data["totp_code"] = self.generate_totp(username)
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 200
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == username
+
+            password = new_password
+
+            ###################################
+            # Test login
+            ###################################
+
+            data = {
+                "username": username,
+                "password": password,
+            }
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 403
+            resp = self.get_content(r)
+            assert "actions" in resp
+            assert "errors" in resp
+            assert "TOTP" in resp["actions"]
+            assert "You do not provided a valid verification code" in resp["errors"]
+
+            data["totp_code"] = "000000"
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
+            for totp in invalid_totp:
+                data["totp_code"] = totp
+                r = client.post(f"{AUTH_URI}/login", data=data)
+                assert r.status_code == 400
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
+
+            data["totp_code"] = self.generate_totp(username)
+            r = client.post(f"{AUTH_URI}/login", data=data)
+            assert r.status_code == 200
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login.value
+            assert events[0].user == username
+
+            ###################################
+            # Test password change
+            ###################################
+            new_password = faker.password(strong=True)
+            headers, _ = self.do_login(client, username, password)
+
+            data = {
+                "password": password,
+                "new_password": new_password,
+                "password_confirm": new_password,
+            }
+
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is missing"
+
+            data["totp_code"] = "000000"
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 401
+            assert self.get_content(r) == "Verification code is not valid"
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.failed_login.value
+            assert events[0].user == username
+            assert "totp" in events[0].payload
+            assert events[0].payload["totp"] == OBSCURE_VALUE
+
+            for totp in invalid_totp:
+                data["totp_code"] = totp
+                r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+                assert r.status_code == 400
+                resp = self.get_content(r)
+                assert "totp_code" in resp
+                assert "Invalid TOTP format" in resp["totp_code"]
+
+            data["totp_code"] = self.generate_totp(username)
+            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            assert r.status_code == 204
+
+            # After a change password a spam of delete Token is expected
+            # Reverse the list and skip all delete tokens to find the change pwd event
+            events = self.get_last_events(100)
+            events.reverse()
+            for event in events:
+                if event.event == Events.delete.value:
+                    assert event.target_type == "Token"
+                    continue
+
+                assert event.event == Events.change_password.value
+                assert event.user == username
+                break
+
+            # verify the new password
+            headers, _ = self.do_login(client, username, new_password)
+
+            assert headers is not None
+
+            ###################################
+            # Goodbye temporary user
+            ###################################
+
+            self.delete_user(client, uuid)

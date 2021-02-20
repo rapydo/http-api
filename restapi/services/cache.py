@@ -2,6 +2,7 @@ from typing import Dict, Optional, Union
 
 from flask_caching import Cache as FlaskCache
 
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities.globals import mem
 
@@ -17,7 +18,8 @@ class Cache:
                 "CACHE_REDIS_HOST": redis.get("host"),
                 "CACHE_REDIS_PORT": redis.get("port"),
                 "CACHE_REDIS_PASSWORD": redis.get("password"),
-                "CACHE_REDIS_DB": redis.get("1"),
+                # Usually 0=celery, 1=celery-beat
+                "CACHE_REDIS_DB": "2",
                 # "CACHE_REDIS_URL": redis.get(""),
             }
 
@@ -29,7 +31,7 @@ class Cache:
         }
 
     @staticmethod
-    def get_instance(app, detector):
+    def get_instance(app):
 
         # This check prevent KeyError raised during tests
         # Exactly as reported here:
@@ -37,7 +39,7 @@ class Cache:
         if not hasattr(mem, "cache"):
 
             cache_config = Cache.get_config(
-                use_redis=detector.check_availability("redis")
+                use_redis=Connector.check_availability("redis")
             )
             mem.cache = FlaskCache(config=cache_config)
 

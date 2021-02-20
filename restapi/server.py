@@ -10,7 +10,7 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -33,12 +33,11 @@ from restapi.config import (
     get_backend_url,
     get_project_configuration,
 )
+from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
-from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.cache import Cache
-from restapi.services.detect import detector
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -54,22 +53,25 @@ class ServerModes(int, Enum):
     WORKER = 3
 
 
-def teardown_handler(signal, frame):
+def teardown_handler(signal, frame):  # pragma: no cover
     with lock:
-        from restapi.connectors import Connector
 
         Connector.disconnect_all()
 
-        # This is needed to let connectors to complete the disconnection and prevent
-        # errors like this on rabbitMQ:
-        # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
-        # client unexpectedly closed TCP connection
+    # This is needed to let connectors to complete the disconnection and prevent
+    # errors like this on rabbitMQ:
+    # closing AMQP connection <0.2684.0> ([...], vhost: '/', user: [...]):
+    # client unexpectedly closed TCP connection
     time.sleep(1)
     print("Disconnection completed")
     sys.exit(0)
 
 
-def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
+def create_app(
+    name: str = __name__,
+    mode: ServerModes = ServerModes.NORMAL,
+    options: Optional[Dict[str, bool]] = None,
+) -> Flask:
     """ Create the server istance for Flask application """
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
@@ -116,28 +118,28 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
     mem.configuration = endpoints_loader.load_configuration()
 
     mem.initializer = Meta.get_class("initialization", "Initializer")
-    if not mem.initializer:
+    if not mem.initializer:  # pragma: no cover
         print_and_exit("Invalid Initializer class")
 
     mem.customizer = Meta.get_instance("customization", "Customizer")
-    if not mem.customizer:
+    if not mem.customizer:  # pragma: no cover
         print_and_exit("Invalid Customizer class")
 
-    if not isinstance(mem.customizer, BaseCustomizer):
+    if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    detector.init_services(
-        app=microservice,
-        project_init=(mode == ServerModes.INIT),
-        project_clean=(mode == ServerModes.DESTROY),
-        worker_mode=(mode == ServerModes.WORKER),
-        options=options,
-    )
+    Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
     # when to close??
     # geolite2.close()
+
+    if mode == ServerModes.INIT:
+        Connector.project_init(options=options)
+
+    if mode == ServerModes.DESTROY:
+        Connector.project_clean()
 
     # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
     if mode == ServerModes.NORMAL:
@@ -147,7 +149,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        mem.cache = Cache.get_instance(microservice, detector)
+        mem.cache = Cache.get_instance(microservice)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
@@ -229,7 +231,7 @@ def create_app(name=__name__, mode=ServerModes.NORMAL, options=None):
             for endpoint in endpoints_loader.endpoints:
                 try:
                     mem.docs.register(endpoint.cls)
-                except TypeError as e:
+                except TypeError as e:  # pragma: no cover
                     print(e)
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 

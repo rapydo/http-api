@@ -35,7 +35,7 @@ class PushpinExt(Connector):
     def disconnect(self) -> None:
         self.disconnected = True
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         log.warning("pushpin.is_connected method is not implemented")
         return not self.disconnected
 
@@ -43,7 +43,7 @@ class PushpinExt(Connector):
     def callback(result, message):
         if result:
             log.debug("Message successfully published on pushpin")
-        else:
+        else:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
 
     def publish_on_stream(self, channel, message, sync=False):

@@ -10,15 +10,20 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <meta name="description" content="" />
     <meta name="author" content="" />
+    <style>
+      .red {
+        color: red;
+      }
+    </style>
   </head>
   <body>
     {% if is_error %}
 
-    <main style="color: red">{{ body_content }}<br /></main>
+    <main class="red">{{ body_content }}<br /></main>
 
     {% elif body_content is mapping %} {% for key, value in body_content.items()
     %}
-    <b>{{ key }}</b>: {{ value }}<br />
+    <strong>{{ key }}</strong>: {{ value }}<br />
     {% endfor %} {% else %}
     <main>{{ body_content }}</main>
     {% endif %}

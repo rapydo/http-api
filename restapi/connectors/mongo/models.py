@@ -35,11 +35,14 @@ class User(MongoModel):
     surname = fields.CharField()
     authmethod = fields.CharField()
     password = fields.CharField(required=True)
-    first_login = fields.DateTimeField()
-    last_login = fields.DateTimeField()
-    last_password_change = fields.DateTimeField()
+    mfa_hash = fields.CharField()
+    first_login = fields.DateTimeField(blank=True)
+    last_login = fields.DateTimeField(blank=True)
+    last_password_change = fields.DateTimeField(blank=True)
     is_active = fields.BooleanField(default=True)
     privacy_accepted = fields.BooleanField(default=True)
+    expiration = fields.DateTimeField(blank=True)
+
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
     belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
 
