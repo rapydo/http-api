@@ -407,7 +407,6 @@ class TestApp(BaseTests):
                     headers=headers,
                     environ_base={"REMOTE_ADDR": faker.ipv4()},
                 )
-                log.error("DEBUG CODE: this 401 should be due to invalid IP address")
                 assert r.status_code == 401
 
                 # After the failure the token is still valid if used from the corret IP
