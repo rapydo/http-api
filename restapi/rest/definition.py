@@ -52,19 +52,19 @@ class EndpointResource(MethodResource, Resource):
         return self.unpacked_token[3]
 
     # Deprecated since 1.1
-    def verify_admin(self):
+    def verify_admin(self):  # pragma: no cover
         """ Check if current user has Administration role """
         log.warning("Deprecated use of verify_admin, use auth.is_admin(user) instead")
         return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
 
     # Deprecated since 1.1
-    def verify_staff(self):
+    def verify_staff(self):  # pragma: no cover
         """ Check if current user has Staff role """
         log.warning("Deprecated use of verify_staff, use auth.is_staff(user) instead")
         return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
 
     # Deprecated since 1.1
-    def verify_coordinator(self):
+    def verify_coordinator(self):  # pragma: no cover
         log.warning(
             "Deprecated use of verify_coordinator use auth.is_coordinator(user) instead"
         )
