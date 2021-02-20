@@ -63,10 +63,6 @@ class PartialSchema(Schema):
         unknown = EXCLUDE
 
 
-class TotalSchema(Schema):
-    total = fields.Int()
-
-
 class Neo4jSchema(Schema):
     def __init__(self, model, fields, *args, **kwargs):
         super().__init__(**kwargs)

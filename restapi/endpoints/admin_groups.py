@@ -1,31 +1,10 @@
 from typing import Any
 
 from restapi import decorators
+from restapi.endpoints.schemas import AdminGroupInput, GroupWithMembers
 from restapi.exceptions import NotFound
-from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
-
-
-class User(Schema):
-    uuid = fields.UUID()
-    email = fields.Email()
-    name = fields.String()
-    surname = fields.String()
-
-
-# Output Schema
-class Group(Schema):
-    uuid = fields.UUID()
-    fullname = fields.Str()
-    shortname = fields.Str()
-
-    members = fields.Nested(User(many=True))
-
-
-class GroupInput(Schema):
-    shortname = fields.Str(required=True, description="Short name")
-    fullname = fields.Str(required=True, description="Full name")
 
 
 class AdminGroups(EndpointResource):
@@ -34,7 +13,7 @@ class AdminGroups(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.marshal_with(Group(many=True), code=200)
+    @decorators.marshal_with(GroupWithMembers(many=True), code=200)
     @decorators.endpoint(
         path="/admin/groups",
         summary="List of groups",
@@ -50,7 +29,7 @@ class AdminGroups(EndpointResource):
         return self.response(groups)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(GroupInput)
+    @decorators.use_kwargs(AdminGroupInput)
     @decorators.endpoint(
         path="/admin/groups",
         summary="Create a new group",
@@ -69,7 +48,7 @@ class AdminGroups(EndpointResource):
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(GroupInput)
+    @decorators.use_kwargs(AdminGroupInput)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",
         summary="Modify a group",

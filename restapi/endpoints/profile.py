@@ -1,89 +1,11 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional
 
 from restapi import decorators
 from restapi.connectors import Connector
-from restapi.models import ISO8601UTC, TOTP, Schema, fields, validate
+from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
-
-auth = Connector.get_authentication_instance()
-
-
-class NewPassword(Schema):
-    password = fields.Str(
-        required=True,
-        password=True,
-        # Not needed to check the length of the current password... if set...
-        # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    new_password = fields.Str(
-        required=True,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    password_confirm = fields.Str(
-        required=True,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    totp_code = TOTP(required=False)
-
-
-def patchUserProfile():
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["name"] = fields.Str()
-    attributes["surname"] = fields.Str()
-    attributes["privacy_accepted"] = fields.Boolean()
-
-    if custom_fields := mem.customizer.get_custom_input_fields(
-        request=None, scope=mem.customizer.PROFILE
-    ):
-        attributes.update(custom_fields)
-
-    schema = Schema.from_dict(attributes, name="UserProfileEdit")
-    return schema()
-
-
-# Duplicated in admin_users.py
-class Group(Schema):
-    uuid = fields.UUID()
-    shortname = fields.Str()
-    fullname = fields.Str()
-
-
-def getProfileData():
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["uuid"] = fields.UUID(required=True)
-    attributes["email"] = fields.Email(required=True)
-    attributes["name"] = fields.Str(required=True)
-    attributes["surname"] = fields.Str(required=True)
-    attributes["isAdmin"] = fields.Boolean(required=True)
-    attributes["isStaff"] = fields.Boolean(required=True)
-    attributes["isCoordinator"] = fields.Boolean(required=True)
-    attributes["privacy_accepted"] = fields.Boolean(required=True)
-    attributes["is_active"] = fields.Boolean(required=True)
-    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
-    attributes["roles"] = fields.Dict(required=True)
-    attributes["last_password_change"] = fields.DateTime(
-        required=True, format=ISO8601UTC
-    )
-    attributes["first_login"] = fields.DateTime(required=True, format=ISO8601UTC)
-    attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
-
-    attributes["group"] = fields.Nested(Group)
-
-    attributes["two_factor_enabled"] = fields.Boolean(required=True)
-
-    if custom_fields := mem.customizer.get_custom_output_fields(None):
-        attributes.update(custom_fields)
-
-    schema = Schema.from_dict(attributes, name="UserProfile")
-    return schema()
 
 
 class Profile(EndpointResource):
@@ -93,7 +15,7 @@ class Profile(EndpointResource):
     labels = ["profile"]
 
     @decorators.auth.require()
-    @decorators.marshal_with(getProfileData(), code=200)
+    @decorators.marshal_with(profile_output(), code=200)
     @decorators.endpoint(
         path="/profile",
         summary="List profile attributes",
@@ -120,6 +42,7 @@ class Profile(EndpointResource):
             "roles": {role.name: role.description for role in current_user.roles},
         }
 
+        # To be replaced with Neo4jRelationshipToSingle
         if Connector.authentication_service == "neo4j":
             data["group"] = current_user.belongs_to.single()
         else:
@@ -161,7 +84,7 @@ class Profile(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require()
-    @decorators.use_kwargs(patchUserProfile())
+    @decorators.use_kwargs(profile_patch_input())
     @decorators.endpoint(
         path="/profile",
         summary="Update profile information",

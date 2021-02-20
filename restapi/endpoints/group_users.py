@@ -29,6 +29,7 @@
 #         current_user = self.get_user()
 
 #         if Connector.authentication_service == "neo4j":
+#             # To be replaced with Neo4jRelationshipToSingle
 #             current_user.belongs_to = current_user.belongs_to.single()
 
 #         data = []
@@ -36,6 +37,7 @@
 #         for user in users:
 
 #             if Connector.authentication_service == "neo4j":
+#                 # To be replaced with Neo4jRelationshipToSingle
 #                 user.belongs_to = user.belongs_to.single()
 
 #             if current_user.belongs_to != user.belongs_to:

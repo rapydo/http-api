@@ -1,20 +1,16 @@
-from typing import Any, Dict, List, Union
+from typing import Any, List
 
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.connectors import Connector, smtp
-from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
-from restapi.models import (
-    ISO8601UTC,
-    AdvancedList,
-    Neo4jRelationshipToSingle,
-    Schema,
-    fields,
-    validate,
+from restapi.endpoints.schemas import (
+    admin_user_output,
+    admin_user_post_input,
+    admin_user_put_input,
 )
+from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
-from restapi.utilities.globals import mem
 from restapi.utilities.templates import get_html_template
 from restapi.utilities.time import date_lower_than as dt_lower
 
@@ -47,140 +43,6 @@ Password: {unhashed_password}
         smtp.send(html, subject, user.email, plain_body=body)
 
 
-class Roles(Schema):
-
-    name = fields.Str()
-    description = fields.Str()
-
-
-# Duplicated in profile.py
-class Group(Schema):
-    uuid = fields.UUID()
-    fullname = fields.Str()
-    shortname = fields.Str()
-
-
-def get_output_schema(many=True):
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["uuid"] = fields.UUID()
-    attributes["email"] = fields.Email()
-    attributes["name"] = fields.Str()
-    attributes["surname"] = fields.Str()
-    attributes["first_login"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
-    attributes["last_login"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
-    attributes["last_password_change"] = fields.DateTime(
-        allow_none=True, format=ISO8601UTC
-    )
-    attributes["is_active"] = fields.Boolean()
-    attributes["privacy_accepted"] = fields.Boolean()
-    attributes["roles"] = fields.List(fields.Nested(Roles))
-    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
-
-    if Connector.authentication_service == "neo4j":
-        attributes["belongs_to"] = Neo4jRelationshipToSingle(Group, data_key="group")
-    else:
-        attributes["belongs_to"] = fields.Nested(Group, data_key="group")
-
-    if custom_fields := mem.customizer.get_custom_output_fields(None):
-        attributes.update(custom_fields)
-
-    schema = Schema.from_dict(attributes, name="UserData")
-    return schema(many=many)
-
-
-auth = Connector.get_authentication_instance()
-
-
-# Note that these are callables returning a model, not models!
-# They will be executed a runtime
-# Can't use request.method because it is not passed at loading time, i.e. the Specs will
-# be created with empty request
-def getInputSchema(request, is_post):
-
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-    if is_post:
-        attributes["email"] = fields.Email(required=is_post)
-
-    attributes["name"] = fields.Str(required=is_post, validate=validate.Length(min=1))
-    attributes["surname"] = fields.Str(
-        required=is_post, validate=validate.Length(min=1)
-    )
-
-    attributes["password"] = fields.Str(
-        required=is_post,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-
-    if Connector.check_availability("smtp"):
-        attributes["email_notification"] = fields.Bool(label="Notify password by email")
-
-    attributes["is_active"] = fields.Bool(
-        label="Activate user", default=True, required=False
-    )
-
-    roles = {r.name: r.description for r in auth.get_roles()}
-
-    attributes["roles"] = AdvancedList(
-        fields.Str(
-            validate=validate.OneOf(
-                choices=[r for r in roles.keys()],
-                labels=[r for r in roles.values()],
-            )
-        ),
-        required=False,
-        label="Roles",
-        description="",
-        unique=True,
-        multiple=True,
-    )
-
-    group_keys = []
-    group_labels = []
-
-    for g in auth.get_groups():
-        group_keys.append(g.uuid)
-        group_labels.append(f"{g.shortname} - {g.fullname}")
-
-    if len(group_keys) == 1:
-        default_group = group_keys[0]
-    else:
-        default_group = None
-
-    attributes["group"] = fields.Str(
-        label="Group",
-        description="The group to which the user belongs",
-        required=is_post,
-        default=default_group,
-        validate=validate.OneOf(choices=group_keys, labels=group_labels),
-    )
-
-    attributes["expiration"] = fields.DateTime(
-        required=False,
-        allow_none=True,
-        label="Account expiration",
-        description="This user will be blocked after this date",
-    )
-
-    if custom_fields := mem.customizer.get_custom_input_fields(
-        request=request, scope=mem.customizer.ADMIN
-    ):
-        attributes.update(custom_fields)
-
-    return Schema.from_dict(attributes, name="UserDefinition")
-
-
-def getPOSTInputSchema(request):
-    return getInputSchema(request, True)
-
-
-def getPUTInputSchema(request):
-    return getInputSchema(request, False)
-
-
 class AdminSingleUser(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE"]
@@ -188,7 +50,7 @@ class AdminSingleUser(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.marshal_with(get_output_schema(many=False), code=200)
+    @decorators.marshal_with(admin_user_output(many=False), code=200)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Return information on a single user",
@@ -213,7 +75,7 @@ class AdminUsers(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.marshal_with(get_output_schema(many=True), code=200)
+    @decorators.marshal_with(admin_user_output(many=True), code=200)
     @decorators.endpoint(
         path="/admin/users",
         summary="Return the list of all defined users",
@@ -226,7 +88,7 @@ class AdminUsers(EndpointResource):
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getPOSTInputSchema)
+    @decorators.use_kwargs(admin_user_post_input)
     @decorators.endpoint(
         path="/admin/users",
         summary="Create a new user",
@@ -272,7 +134,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(getPUTInputSchema)
+    @decorators.use_kwargs(admin_user_put_input)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Modify a user",

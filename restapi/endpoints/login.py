@@ -4,34 +4,10 @@ from typing import Dict, List, Optional
 import pytz
 
 from restapi import decorators
-from restapi.connectors import Connector
+from restapi.endpoints.schemas import Credentials
 from restapi.exceptions import Forbidden
-from restapi.models import TOTP, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.time import EPOCH, get_now
-
-auth = Connector.get_authentication_instance()
-
-
-class Credentials(Schema):
-    username = fields.Email(required=True)
-    password = fields.Str(
-        required=True,
-        password=True,
-        # Otherwise default testing password, like test, will fail
-        # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
-    )
-    new_password = fields.Str(
-        required=False,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    password_confirm = fields.Str(
-        required=False,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    totp_code = TOTP(required=False)
 
 
 class Login(EndpointResource):

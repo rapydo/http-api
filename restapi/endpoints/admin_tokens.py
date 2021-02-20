@@ -1,23 +1,11 @@
 from glom import glom
 
 from restapi import decorators
-from restapi.endpoints.tokens import TokenSchema
+from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
-from restapi.models import Schema, TotalSchema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log
-
-
-class User(Schema):
-    email = fields.Email()
-    name = fields.Str()
-    surname = fields.Str()
-
-
-class TokenAdminSchema(TokenSchema):
-    # token_type = fields.Str()
-    user = fields.Nested(User)
 
 
 class AdminTokens(EndpointResource):
