@@ -21,28 +21,28 @@ class Profile(EndpointResource):
     )
     def get(self) -> Response:
 
-        current_user = self.get_user()
+        user = self.get_user()
         data = {
-            "uuid": current_user.uuid,
-            "email": current_user.email,
-            "name": current_user.name,
-            "surname": current_user.surname,
-            "isAdmin": self.verify_admin(),
-            "isStaff": self.verify_staff(),
-            "isCoordinator": self.verify_coordinator(),
-            "privacy_accepted": current_user.privacy_accepted,
-            "last_password_change": current_user.last_password_change,
-            "first_login": current_user.first_login,
-            "last_login": current_user.last_login,
-            "is_active": current_user.is_active,
-            "expiration": current_user.expiration,
-            "belongs_to": current_user.belongs_to,
+            "uuid": user.uuid,
+            "email": user.email,
+            "name": user.name,
+            "surname": user.surname,
+            "isAdmin": self.auth.is_admin(user),
+            "isStaff": self.auth.is_staff(user),
+            "isCoordinator": self.auth.is_coordinator(user),
+            "privacy_accepted": user.privacy_accepted,
+            "last_password_change": user.last_password_change,
+            "first_login": user.first_login,
+            "last_login": user.last_login,
+            "is_active": user.is_active,
+            "expiration": user.expiration,
+            "belongs_to": user.belongs_to,
             # Convert list of Roles into a dict with name: description
-            "roles": {role.name: role.description for role in current_user.roles},
+            "roles": {role.name: role.description for role in user.roles},
             "two_factor_enabled": self.auth.SECOND_FACTOR_AUTHENTICATION,
         }
 
-        data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
+        data = mem.customizer.manipulate_profile(ref=self, user=user, data=data)
 
         return self.response(data)
 

@@ -516,9 +516,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # second used to store information on backend DB
         return payload, full_payload
 
-    # ##################
-    # # Roles handling #
-    # ##################
+    # ###############################
+    # #####   Roles handling   ######
+    # ###############################
+    def is_admin(self, user: User) -> bool:
+        """ Check if current user has Administration role """
+        return self.verify_roles(user, [Role.ADMIN], warnings=False)
+
+    def is_staff(self, user: User) -> bool:
+        """ Check if current user has Staff role """
+        return self.verify_roles(user, [Role.STAFF], warnings=False)
+
+    def is_coordinator(self, user: User) -> bool:
+        """ Check if current user has Coordinator role """
+        return self.verify_roles(user, [Role.COORDINATOR], warnings=False)
+
     def verify_roles(
         self,
         user: User,

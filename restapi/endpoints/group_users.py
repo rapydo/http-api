@@ -291,7 +291,7 @@
 #             )
 
 #         current_user = self.get_user()
-#         is_admin = self.verify_admin()
+#         is_admin = self.auth.is_admin(current_user)
 #         if not self.is_authorized(current_user, user, is_admin):
 #             raise RestApiException(
 #                 "This user cannot be found or you are not authorized"
@@ -362,7 +362,7 @@
 #     )
 #     def delete(self, user_id):
 
-#         is_admin = self.verify_admin()
+#         is_admin = self.auth.is_admin(self.get_user())
 #         if self.neo4j_enabled:
 #             graph = neo4j.get_instance()
 
