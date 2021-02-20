@@ -17,11 +17,6 @@ class NewSwaggerSpecifications(EndpointResource):
 
     @decorators.auth.optional(allow_access_token_parameter=True)
     @decorators.endpoint(
-        path="/swagger",
-        summary="Endpoints specifications based on OpenAPI format",
-        responses={200: "Endpoints JSON based on OpenAPI Specifications"},
-    )
-    @decorators.endpoint(
         path="/specs",
         summary="Endpoints specifications based on OpenAPI format",
         responses={200: "Endpoints JSON based on OpenAPI Specifications"},

@@ -6,10 +6,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 class TestApp(BaseTests):
     def test_GET_specs(self, client: FlaskClient) -> None:
 
-        # Alias for /api/specs
-        r = client.get(f"{API_URI}/swagger")
-        assert r.status_code == 200
-
         r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
         content = self.get_content(r)
@@ -36,7 +32,7 @@ class TestApp(BaseTests):
         assert "Bearer" in content["securityDefinitions"]
 
         headers, _ = self.do_login(client, None, None)
-        r = client.get(f"{API_URI}/swagger", headers=headers)
+        r = client.get(f"{API_URI}/specs", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
         assert "host" in content
