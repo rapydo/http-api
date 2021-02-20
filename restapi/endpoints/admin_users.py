@@ -1,10 +1,17 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 from restapi import decorators
 from restapi.config import get_project_configuration
 from restapi.connectors import Connector, smtp
 from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
-from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
+from restapi.models import (
+    ISO8601UTC,
+    AdvancedList,
+    Neo4jRelationshipToSingle,
+    Schema,
+    fields,
+    validate,
+)
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.globals import mem
@@ -71,7 +78,10 @@ def get_output_schema(many=True):
     attributes["roles"] = fields.List(fields.Nested(Roles))
     attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
 
-    attributes["belongs_to"] = fields.Nested(Group, data_key="group")
+    if Connector.authentication_service == "neo4j":
+        attributes["belongs_to"] = Neo4jRelationshipToSingle(Group, data_key="group")
+    else:
+        attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
@@ -191,9 +201,6 @@ class AdminSingleUser(EndpointResource):
         if user is None:
             raise NotFound("This user cannot be found or you are not authorized")
 
-        if Connector.authentication_service == "neo4j":
-            user.belongs_to = user.belongs_to.single()
-
         self.log_event(self.events.access, user)
 
         return self.response(user)
@@ -215,10 +222,6 @@ class AdminUsers(EndpointResource):
     def get(self) -> Response:
 
         users = self.auth.get_users()
-
-        if Connector.authentication_service == "neo4j":
-            for u in users:
-                u.belongs_to = u.belongs_to.single()
 
         return self.response(users)
 
