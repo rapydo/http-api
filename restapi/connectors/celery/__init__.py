@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from celery import Celery
 
 from restapi.config import CUSTOM_PACKAGE, get_project_configuration
-from restapi.connectors import Connector
+from restapi.connectors import Connector, smtp
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
@@ -21,20 +21,55 @@ class CeleryExt(Connector):
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
+    # This decorator replaces:
+    # - CeleryExt.celery_app.task(func, bind=True, name="{{name}}")
+    # - send_errors_by_email
+    # - with CeleryExt.app.app_context():
     @staticmethod
     def task(name):
         def decorator(func):
+            @CeleryExt.celery_app.task(bind=True, name=name)
             @wraps(func)
             def wrapper(self, *args, **kwargs):
 
-                with CeleryExt.app.app_context():
-                    out = func(*args, **kwargs)
+                try:
+                    with CeleryExt.app.app_context():
+                        return func(self, *args, **kwargs)
+                except BaseException:
 
-                    return out
+                    task_id = self.request.id
+                    task_name = self.request.task
+
+                    log.error("Celery task {} ({}) failed", task_id, task_name)
+                    arguments = str(self.request.args)
+                    log.error("Failed task arguments: {}", arguments[0:256])
+                    log.error("Task error: {}", traceback.format_exc())
+
+                    if Connector.check_availability("smtp"):
+                        log.info("Sending error report by email", task_id, task_name)
+
+                        body = f"""
+        Celery task {task_id} failed
+
+        Name: {task_name}
+
+        Arguments: {self.request.args}
+
+        Error: {traceback.format_exc()}
+        """
+
+                        project = get_project_configuration(
+                            "project.title",
+                            default="Unkown title",
+                        )
+                        subject = f"{project}: task {task_name} failed"
+
+                        smtp_client = smtp.get_instance()
+                        smtp_client.send(body, subject)
 
             return wrapper
 
-        return CeleryExt.celery_app.task(decorator, bind=True, name=name)
+        return decorator
 
     def get_connection_exception(self):
         return None
@@ -403,50 +438,19 @@ class CeleryExt(Connector):
             )
 
 
+# Deprecated since 1.1
 def send_errors_by_email(func):
     """
     Send a notification email to a given recipient to the
     system administrator with details about failure.
     """
 
+    log.warning("Deprecated use of send_errors_by_email decorator, you can remove it")
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        try:
-            return func(self, *args, **kwargs)
-
-        except BaseException:
-
-            task_id = self.request.id
-            task_name = self.request.task
-
-            log.error("Celery task {} failed ({})", task_id, task_name)
-            arguments = str(self.request.args)
-            log.error("Failed task arguments: {}", arguments[0:256])
-            log.error("Task error: {}", traceback.format_exc())
-
-            if Connector.check_availability("smtp"):
-                log.info("Sending error report by email", task_id, task_name)
-
-                body = f"""
-Celery task {task_id} failed
-
-Name: {task_name}
-
-Arguments: {self.request.args}
-
-Error: {traceback.format_exc()}
-"""
-
-                project = get_project_configuration(
-                    "project.title",
-                    default="Unkown title",
-                )
-                subject = f"{project}: task {task_name} failed"
-                from restapi.connectors import smtp
-
-                smtp_client = smtp.get_instance()
-                smtp_client.send(body, subject)
+        return func(self, *args, **kwargs)
 
     return wrapper
 
