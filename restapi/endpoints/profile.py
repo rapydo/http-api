@@ -42,12 +42,6 @@ class Profile(EndpointResource):
             "roles": {role.name: role.description for role in current_user.roles},
         }
 
-        # To be replaced with Neo4jRelationshipToSingle
-        if Connector.authentication_service == "neo4j":
-            data["group"] = current_user.belongs_to.single()
-        else:
-            data["group"] = current_user.belongs_to
-
         data["two_factor_enabled"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)

@@ -20,6 +20,7 @@ auth = Connector.get_authentication_instance()
 # #############   Schemas   #############
 #########################################
 
+
 class User(Schema):
     email = fields.Email()
     name = fields.Str()
@@ -124,6 +125,7 @@ class NewPassword(Schema):
 
 # Note that these are callables returning a model, not models!
 # They will be executed a runtime
+
 
 def admin_user_output(many=True):
     # as defined in Marshmallow.schema.from_dict
@@ -279,7 +281,10 @@ def profile_output():
     attributes["first_login"] = fields.DateTime(required=True, format=ISO8601UTC)
     attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
 
-    attributes["group"] = fields.Nested(Group)
+    if Connector.authentication_service == "neo4j":
+        attributes["belongs_to"] = Neo4jRelationshipToSingle(Group, data_key="group")
+    else:
+        attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
     attributes["two_factor_enabled"] = fields.Boolean(required=True)
 
@@ -297,9 +302,7 @@ def user_registration_input(request):
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
-    attributes["email"] = fields.Email(
-        required=True, label="Username (email address)"
-    )
+    attributes["email"] = fields.Email(required=True, label="Username (email address)")
     attributes["password"] = fields.Str(
         required=True,
         password=True,
@@ -318,6 +321,8 @@ def user_registration_input(request):
         attributes.update(custom_fields)
 
     return Schema.from_dict(attributes, name="UserRegistration")
+
+
 #########################################
 # ##########   Stats Schemas   ##########
 #########################################
