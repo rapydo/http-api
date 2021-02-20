@@ -5,7 +5,6 @@ from flask_apispec import MethodResource
 from flask_restful import Resource
 
 from restapi.connectors import Connector
-from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.services.cache import Cache
@@ -117,33 +116,6 @@ class EndpointResource(MethodResource, Resource):
     # This function has to be coupled with a marshal_with(TotalSchema, code=206)
     def pagination_total(self, total: int) -> Response:
         return self.response({"total": total}, code=206)
-
-    # Deprecated since 1.0
-    def get_user_if_logged(
-        self, allow_access_token_parameter=False
-    ):  # pragma: no cover
-        """
-        Helper to be used inside an endpoint that doesn't explicitly
-        ask for authentication, but might want to do some extra behaviour
-        when a valid token is presented
-        """
-
-        log.warning(
-            "Deprecated use of self.get_user_if_logged, "
-            "decorate the endpoint with @decorators.auth.optional() instead"
-        )
-        auth_type, token = HTTPTokenAuth.get_authorization_token(
-            allow_access_token_parameter=allow_access_token_parameter
-        )
-
-        if auth_type is None:
-            return None
-
-        unpacked_token = self.auth.verify_token(token)
-        if not unpacked_token[0]:
-            return None
-
-        return unpacked_token[3]
 
     def clear_endpoint_cache(self):
         Cache.invalidate(self.get)
