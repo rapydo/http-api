@@ -71,16 +71,17 @@ def endpoint(
         if not hasattr(func, "uris"):
             setattr(func, "uris", [])
 
-        normalized_path = path
-
         if not path.startswith("/"):
             normalized_path = f"/{path}"
+        else:
+            normalized_path = path
+
         if not normalized_path.startswith(API_URL) and not normalized_path.startswith(
             AUTH_URL
         ):
-            normalized_path = f"{API_URL}{path}"
+            normalized_path = f"{API_URL}{normalized_path}"
 
-        getattr(func, "uris").append(path)
+        getattr(func, "uris").append(normalized_path)
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)

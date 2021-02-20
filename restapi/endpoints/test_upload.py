@@ -18,14 +18,14 @@ if TESTING:
 
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            # forget the initiali / to test the automatic fix
+            # forget the leading slash to test the automatic fix
             path="tests/upload",
             summary="Execute tests with the uploader",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
         @decorators.endpoint(
-            # forget the initiali / to test the automatic fix
+            # forget the leading slash to test the automatic fix
             path="tests/upload/<chunked>",
             summary="Execute tests with the chunked uploader",
             description="Only enabled in testing mode",
@@ -50,7 +50,7 @@ if TESTING:
         @decorators.init_chunk_upload
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            # forget the initiali / to test the automatic fix
+            # forget the leading slash to test the automatic fix
             path="tests/upload",
             summary="Initialize tests on chunked upload",
             description="Only enabled in testing mode",

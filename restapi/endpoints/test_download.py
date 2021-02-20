@@ -15,14 +15,14 @@ if TESTING:
 
         @decorators.use_kwargs({"stream": fields.Bool()}, location="query")
         @decorators.endpoint(
-            # forget the initiali / to test the automatic fix
+            # forget the leading slash to test the automatic fix
             path="tests/download",
             summary="Test missing filename",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
         @decorators.endpoint(
-            # forget the initiali / to test the automatic fix
+            # forget the leading slash to test the automatic fix
             path="tests/download/<fname>",
             summary="Execute tests with the downloader",
             description="Only enabled in testing mode",
