@@ -225,6 +225,14 @@ class EndpointsLoader:
                     )
                     continue
 
+                # Deprecated since 1.1
+                if len(fn.uris) > 1:  # pragma: no cover
+                    log.warning(
+                        "Deprecated multiple URI mapping set on {}.{}",
+                        epclss.__name__,
+                        method_fn,
+                    )
+
                 endpoint.methods[method_fn] = fn.uris
                 for uri in fn.uris:
 
