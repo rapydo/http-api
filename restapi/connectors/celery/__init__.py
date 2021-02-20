@@ -16,6 +16,21 @@ from restapi.utilities.time import AllowedTimedeltaPeriods, get_timedelta
 REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 
+def task(name):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+
+            with CeleryExt.app.app_context():
+                out = func(*args, **kwargs)
+
+                return out
+
+        return wrapper
+
+    return CeleryExt.celery_app.task(decorator, bind=True, name=name)
+
+
 class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER: Optional[str] = None
