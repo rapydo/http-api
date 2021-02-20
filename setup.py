@@ -49,7 +49,7 @@ setup(
         "celerybeat-mongo==0.2.0",
         # 5.0.3 raises errors on ssl context due to new defaults
         "amqp==5.0.2",
-        "python-telegram-bot==13.1",
+        "python-telegram-bot==13.3",
         # TOTP
         "pyotp==2.6.0",
         "segno==1.3.1",
@@ -72,7 +72,7 @@ setup(
         "pytest-timeout==1.4.2",
         "schemathesis==3.0.3",
         "Faker==5.6.1",
-        "Telethon==1.19.0",
+        "Telethon==1.19.5",
     ],
     classifiers=[
         "Programming Language :: Python",
