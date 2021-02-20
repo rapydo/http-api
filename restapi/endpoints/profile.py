@@ -36,11 +36,11 @@ class Profile(EndpointResource):
             "last_login": current_user.last_login,
             "is_active": current_user.is_active,
             "expiration": current_user.expiration,
+            "belongs_to": current_user.belongs_to,
             # Convert list of Roles into a dict with name: description
             "roles": {role.name: role.description for role in current_user.roles},
+            "two_factor_enabled": self.auth.SECOND_FACTOR_AUTHENTICATION,
         }
-
-        data["two_factor_enabled"] = self.auth.SECOND_FACTOR_AUTHENTICATION
 
         data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
 
