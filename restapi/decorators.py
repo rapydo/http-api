@@ -165,6 +165,7 @@ def database_transaction(func):
 
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
+        # ... are transactions supported !?
         mongo_enabled = Connector.check_availability("mongo")
 
         if neo4j_enabled:
@@ -195,7 +196,7 @@ def database_transaction(func):
                 neo4j_db.commit()
 
             if sqlalchemy_enabled:
-                alchemy_db.commit()
+                alchemy_db.session.commit()
 
             if mongo_enabled:
                 # mongoDB transaction commit not implemented yet
@@ -210,7 +211,7 @@ def database_transaction(func):
                     neo4j_db.rollback()
 
                 if sqlalchemy_enabled:
-                    alchemy_db.rollback()
+                    alchemy_db.session.rollback()
 
                 if mongo_enabled:
                     # mongoDB transaction rollback not implemented yet
