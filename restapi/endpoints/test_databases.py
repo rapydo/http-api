@@ -1,6 +1,8 @@
 from restapi import decorators
 from restapi.config import TESTING
+from restapi.exceptions import DatabaseDuplicatedEntry
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import DEFAULT_GROUP_NAME
 
 # from restapi.utilities.logs import log
 
@@ -21,5 +23,28 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def post(self, data: str) -> Response:
-            # self.neo4j = neo4j.get_instance()
-            return self.response(True)
+
+            # Only DatabaseDuplicatedEntry will be raised by this endpoint
+            # Any other exceptions will be suppressed. This will ensure that
+            # DatabaseDuplicatedEntry is raised and no others.
+            # As a side effect this endpoint will modifiy the fullname of the default
+            # Group if the exception is not raised. Otherwise this modification will
+            # be undo by the database_transaction decorator
+            try:
+
+                default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+
+                default_group.fullname = f"{default_group.fullname}_exteded"
+                self.auth.save_group(default_group)
+
+                # This can fail if data is a duplicate of a already created group
+                # In this case a DatabaseDuplicatedEntry excepton will be raised and the
+                # database_transaction decorator will undo the change on the default grp
+                group = self.auth.create_group({"shortname": data, "fullname": data})
+                self.auth.save_group(group)
+
+                return self.response("1")
+            except DatabaseDuplicatedEntry:
+                raise
+            except BaseException:  # pragma: no cover
+                return self.response("0")
