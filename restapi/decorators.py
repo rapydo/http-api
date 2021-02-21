@@ -152,8 +152,6 @@ def catch_graph_exceptions(func):  # pragma: no cover
 
         except RequiredProperty as e:
 
-            log.critical("Missing required")
-
             raise BadRequest(e)
 
     return wrapper
@@ -212,7 +210,6 @@ def database_transaction(func):
             log.debug("Rolling backend database transaction")
             try:
 
-                log.error("Rolling-back due to {}", e)
                 if neo4j_enabled:
                     neo4j_db.rollback()
 
