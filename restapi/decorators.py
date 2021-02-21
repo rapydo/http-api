@@ -10,6 +10,7 @@ from marshmallow import post_load
 from sentry_sdk import capture_exception
 
 from restapi.config import API_URL, AUTH_URL, SENTRY_URL
+from restapi.connectors import Connector
 from restapi.exceptions import (
     BadRequest,
     Conflict,
@@ -164,21 +165,54 @@ def database_transaction(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        from neomodel import db
+        neo4j_enabled = Connector.check_availability("neo4j")
+        sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
+        mongo_enabled = Connector.check_availability("mongo")
 
         try:
 
-            db.begin()
+            if neo4j_enabled:
+                from neomodel import db
+
+                db.begin()
+
+            if sqlalchemy_enabled:
+                # alchemy transaction begin not implemented yet
+                pass
+
+            if mongo_enabled:
+                # mongoDB transaction begin not implemented yet
+                pass
 
             out = func(self, *args, **kwargs)
 
-            db.commit()
+            if neo4j_enabled:
+                db.commit()
+
+            if sqlalchemy_enabled:
+                # alchemy transaction commit not implemented yet
+                pass
+
+            if mongo_enabled:
+                # mongoDB transaction commit not implemented yet
+                pass
 
             return out
         except Exception as e:
-            log.debug("Neomodel transaction ROLLBACK")
+            log.debug("Rolling backend database transaction")
             try:
-                db.rollback()
+
+                if neo4j_enabled:
+                    db.rollback()
+
+                if sqlalchemy_enabled:
+                    # alchemy transaction rollback not implemented yet
+                    pass
+
+                if mongo_enabled:
+                    # mongoDB transaction rollback not implemented yet
+                    pass
+
             except Exception as sub_ex:
                 log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
