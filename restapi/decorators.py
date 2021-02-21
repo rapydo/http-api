@@ -175,8 +175,7 @@ def database_transaction(func):
                 db.begin()
 
             if sqlalchemy_enabled:
-                # alchemy transaction begin not implemented yet
-                pass
+                from connectors.sqlalchemy import db
 
             if mongo_enabled:
                 # mongoDB transaction begin not implemented yet
@@ -188,7 +187,7 @@ def database_transaction(func):
                 db.commit()
 
             if sqlalchemy_enabled:
-                # alchemy transaction commit not implemented yet
+                db.commit()
                 pass
 
             if mongo_enabled:
@@ -204,7 +203,7 @@ def database_transaction(func):
                     db.rollback()
 
                 if sqlalchemy_enabled:
-                    # alchemy transaction rollback not implemented yet
+                    db.rollback()
                     pass
 
                 if mongo_enabled:
