@@ -31,8 +31,10 @@ if TESTING:
 
             # Special value! This will try to create a group without shortname
             # A BadRequest will be raised due to the missing property
-
             if data == "400":
+                from restapi.utilities.logs import log
+
+                log.error("Debug code! data == '400'")
                 group = self.auth.create_group({"fullname": data})
                 self.auth.save_group(group)
                 return self.response("0")
