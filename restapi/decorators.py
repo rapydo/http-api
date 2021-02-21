@@ -212,6 +212,7 @@ def database_transaction(func):
             log.debug("Rolling backend database transaction")
             try:
 
+                log.error("Rolling-back due to {}", e)
                 if neo4j_enabled:
                     neo4j_db.rollback()
 
