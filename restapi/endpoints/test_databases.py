@@ -21,9 +21,21 @@ if TESTING:
             path="/tests/database/<data>",
             summary="Execute tests on database functionalities",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed", 409: "Group already exists"},
+            responses={
+                200: "Tests executed",
+                400: "Bad input",
+                409: "Group already exists",
+            },
         )
         def post(self, data: str) -> Response:
+
+            # Special value! This will try to create a group without fullname
+            # A BadRequest will be raised due to the missing property
+
+            if data == "400":
+                group = self.auth.create_group({"shortname": data})
+                self.auth.save_group(group)
+                return self.response("0")
 
             # Only DatabaseDuplicatedEntry will be raised by this endpoint
             # Any other exceptions will be suppressed. This will ensure that

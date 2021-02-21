@@ -70,7 +70,7 @@ class AdminTokens(EndpointResource):
         start = end - size
         response = []
         for t in tokens[start:end]:
-            if t.get("user") is None:
+            if t.get("user") is None:  # pragma: no cover
                 log.error("Found a token without any user assigned: {}", t["id"])
                 continue
             response.append(t)
@@ -96,5 +96,7 @@ class AdminTokens(EndpointResource):
         token = tokens[0]
 
         if not self.auth.invalidate_token(token=token["token"]):
-            raise BadRequest(f"Failed token invalidation: '{token}'")
+            raise BadRequest(
+                f"Failed token invalidation: '{token}'"
+            )  # pragma: no cover
         return self.empty_response()

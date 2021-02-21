@@ -220,7 +220,7 @@ def database_transaction(func):
                     # mongoDB transaction rollback not implemented yet
                     pass
 
-            except Exception as sub_ex:
+            except Exception as sub_ex:  # pragma: no cover
                 log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 

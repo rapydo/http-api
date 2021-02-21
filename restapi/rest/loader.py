@@ -155,7 +155,9 @@ class EndpointsLoader:
             classes = Meta.get_new_classes_from_module(module)  # type: ignore
             for class_name, epclss in classes.items():
                 # Filtering out classes without expected data
-                if not hasattr(epclss, "methods") or epclss.methods is None:
+                if (
+                    not hasattr(epclss, "methods") or epclss.methods is None
+                ):  # pragma: no cover
                     continue
 
                 log.debug("Importing {} from {}.{}", class_name, apis_dir, module_file)
