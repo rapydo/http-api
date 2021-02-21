@@ -148,8 +148,6 @@ def catch_graph_exceptions(func):  # pragma: no cover
 
         except DatabaseDuplicatedEntry as e:
 
-            log.critical("boh")
-
             raise Conflict(str(e))
 
         except RequiredProperty as e:
@@ -318,6 +316,10 @@ def catch_exceptions(**kwargs):
                     log.error(e)
 
                 return self.response(e.args[0], code=e.status_code)
+
+            except DatabaseDuplicatedEntry as e:
+
+                return self.response(str(e), code=409)
 
             except werkzeug.exceptions.BadRequest:  # pragma: no cover
                 # do not stop werkzeug BadRequest
