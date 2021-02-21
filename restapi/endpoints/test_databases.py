@@ -21,7 +21,7 @@ if TESTING:
             path="/tests/database/<data>",
             summary="Execute tests on database functionalities",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={200: "Tests executed", 409: "Group already exists"},
         )
         def post(self, data: str) -> Response:
 
