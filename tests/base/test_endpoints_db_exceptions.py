@@ -12,7 +12,8 @@ class TestApp(BaseTests):
         # shortname. A BadRequest is expected because the database should refuse the
         # entry due to the missing property
         r = client.post(f"{API_URI}/tests/database/400")
-        assert r.status_code == 400
+        if not Connector.check_availability("sqlalchemy"):
+            assert r.status_code == 400
 
         auth = Connector.get_authentication_instance()
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
