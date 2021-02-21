@@ -160,7 +160,7 @@ def catch_graph_exceptions(func):  # pragma: no cover
     return wrapper
 
 
-def graph_transactions(func):
+def database_transaction(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 

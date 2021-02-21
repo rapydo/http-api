@@ -45,7 +45,7 @@ if TESTING and Connector.check_availability("neo4j"):
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
-        @decorators.graph_transactions
+        @decorators.database_transaction
         @decorators.marshal_with(Output, code=200)
         @decorators.endpoint(
             path="/tests/neo4j/<test>",
