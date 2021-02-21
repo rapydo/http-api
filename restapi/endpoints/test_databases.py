@@ -37,7 +37,7 @@ if TESTING:
 
                 default_group.fullname = f"{default_group.fullname}_exteded"
                 # Don't commit with alchemy or the transaction can't be rollbacked
-                if Connector.authentication_service == "sqlalchemy":
+                if Connector.authentication_service != "sqlalchemy":
                     self.auth.save_group(default_group)
 
                 # This can fail if data is a duplicate of a already created group
@@ -45,7 +45,7 @@ if TESTING:
                 # database_transaction decorator will undo the change on the default grp
                 group = self.auth.create_group({"shortname": data, "fullname": data})
                 # Don't commit with alchemy or the transaction can't be rollbacked
-                if Connector.authentication_service == "sqlalchemy":
+                if Connector.authentication_service != "sqlalchemy":
                     self.auth.save_group(group)
 
                 return self.response("1")
