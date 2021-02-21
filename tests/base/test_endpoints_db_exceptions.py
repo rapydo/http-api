@@ -9,7 +9,7 @@ class TestApp(BaseTests):
     def test_database_exceptions(self, client: FlaskClient, faker: Faker) -> None:
 
         # This is a special value. The endpoint will try to create a group without
-        # fullname. A BadRequest is expected because the database has to refused the
+        # shortname. A BadRequest is expected because the database has to refused the
         # entry due to the missing property
         r = client.post(f"{API_URI}/tests/database/400")
         assert r.status_code == 400
