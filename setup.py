@@ -54,7 +54,7 @@ setup(
         "pyotp==2.6.0",
         "segno==1.3.1",
         # Utilities
-        "PyYAML==5.3.1",
+        "PyYAML==5.4.1",
         "loguru",
         "glom",
         "psutil",
