@@ -19,18 +19,18 @@ roles_users = db.Table(
 # Define models
 class Role(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80, required=True), unique=True)
-    description = db.Column(db.String(255, required=True))
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.String(255), nullable=False)
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(36, required=True), unique=True)
-    email = db.Column(db.String(100, required=True), unique=True)
-    name = db.Column(db.String(255, collation=DEFAULT_COLLATION, required=True))
-    surname = db.Column(db.String(255, collation=DEFAULT_COLLATION, required=True))
-    authmethod = db.Column(db.String(20, required=True))
-    password = db.Column(db.String(255, required=True))
+    uuid = db.Column(db.String(36), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(255, collation=DEFAULT_COLLATION), nullable=False)
+    surname = db.Column(db.String(255, collation=DEFAULT_COLLATION), nullable=False)
+    authmethod = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     mfa_hash = db.Column(db.String(255))
     first_login = db.Column(db.DateTime(timezone=True))
     last_login = db.Column(db.DateTime(timezone=True))
@@ -50,11 +50,11 @@ class User(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jti = db.Column(db.String(36, required=True), unique=True)
+    jti = db.Column(db.String(36), unique=True, nullable=False)
     # token = db.Column(db.String(360), unique=True)
-    token = db.Column(db.Text(required=True))
-    token_type = db.Column(db.String(1, required=True))
-    creation = db.Column(db.DateTime(timezone=True, required=True))
+    token = db.Column(db.Text(), nullable=False)
+    token_type = db.Column(db.String(1), nullable=False)
+    creation = db.Column(db.DateTime(timezone=True), nullable=False)
     expiration = db.Column(db.DateTime(timezone=True))
     last_access = db.Column(db.DateTime(timezone=True))
     IP = db.Column(db.String(46))
@@ -67,8 +67,8 @@ class Token(db.Model):
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(36, required=True), unique=True)
-    shortname = db.Column(db.String(64, required=True), unique=True)
-    fullname = db.Column(db.String(256, required=True))
+    uuid = db.Column(db.String(36), unique=True, nullable=False)
+    shortname = db.Column(db.String(64), unique=True, nullable=False)
+    fullname = db.Column(db.String(256), nullable=False)
 
     # + has `members` backref from User
