@@ -167,15 +167,23 @@ def database_transaction(func):
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
         mongo_enabled = Connector.check_availability("mongo")
 
+        if neo4j_enabled:
+            from neomodel import db as neo4j_db
+
+        if sqlalchemy_enabled:
+            from restapi.connectors.sqlalchemy import db as alchemy_db
+
+        # if mongo_enabled:
+        #     from .... import ... as mongo_db
+
         try:
 
             if neo4j_enabled:
-                from neomodel import db
+                neo4j_db.begin()
 
-                db.begin()
-
-            if sqlalchemy_enabled:
-                from connectors.sqlalchemy import db
+            # Transaction is already open...
+            # if sqlalchemy_enabled:
+            #     pass
 
             if mongo_enabled:
                 # mongoDB transaction begin not implemented yet
@@ -184,11 +192,10 @@ def database_transaction(func):
             out = func(self, *args, **kwargs)
 
             if neo4j_enabled:
-                db.commit()
+                neo4j_db.commit()
 
             if sqlalchemy_enabled:
-                db.commit()
-                pass
+                alchemy_db.commit()
 
             if mongo_enabled:
                 # mongoDB transaction commit not implemented yet
@@ -200,11 +207,10 @@ def database_transaction(func):
             try:
 
                 if neo4j_enabled:
-                    db.rollback()
+                    neo4j_db.rollback()
 
                 if sqlalchemy_enabled:
-                    db.rollback()
-                    pass
+                    alchemy_db.rollback()
 
                 if mongo_enabled:
                     # mongoDB transaction rollback not implemented yet

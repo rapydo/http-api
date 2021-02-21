@@ -18,7 +18,7 @@ class TestApp(BaseTests):
 
         random_name = faker.pystr()
 
-        # This will crete a new group with short/full name == random_name
+        # This will create a new group with short/full name == random_name
 
         r = client.post(f"{API_URI}/tests/database/{random_name}")
         assert r.status_code == 200
