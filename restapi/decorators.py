@@ -159,6 +159,7 @@ def catch_graph_exceptions(func):  # pragma: no cover
     return wrapper
 
 
+# This decorator is still a work in progress, in particular for MongoDB
 def database_transaction(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -172,7 +173,11 @@ def database_transaction(func):
             from neomodel import db as neo4j_db
 
         if sqlalchemy_enabled:
-            from restapi.connectors.sqlalchemy import db as alchemy_db
+            # thanks to connectors cache this should always match the
+            # same instance that will be used from inside the endpoint
+            from restapi.connectors import sqlalchemy
+
+            alchemy_db = sqlalchemy.get_instance()
 
         # if mongo_enabled:
         #     from .... import ... as mongo_db
