@@ -18,7 +18,7 @@ class IdentifiedNode(StructuredNode):
     # These are not compatible with marshmallow that serializes with UUID(value) so that
     # hex uuids are serialized with hyphes and this create divergences
     # uuid = UniqueIdProperty()
-    uuid = StringProperty(default=getUUID, unique_index=True, required=True)
+    uuid = StringProperty(default=getUUID, unique_index=True)
 
 
 class TimestampedNode(IdentifiedNode):
