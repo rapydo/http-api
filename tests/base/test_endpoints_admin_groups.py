@@ -34,6 +34,12 @@ class TestApp(BaseTests):
         assert groups
         assert len(groups) > 0
 
+        assert "uuid" in groups[0]
+        assert "shortname" in groups[0]
+        assert "fullname" in groups[0]
+        assert "members" in groups[0]
+        assert groups[0]["members"] > 0
+
         fullname = None
         for g in groups:
             if g.get("uuid") == uuid:

@@ -266,6 +266,7 @@ class Authentication(BaseAuthentication):
         return None
 
     def get_groups(self) -> List[Group]:
+        # should be expanded with members ...
         return list(self.db.Group.objects.all())
 
     def save_group(self, group: Group) -> bool:
