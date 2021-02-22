@@ -100,6 +100,18 @@ def parse_postgres_missing_error(excpt: List[str]) -> Optional[str]:
 
         return f"Missing property {prop} required by {table.title()}"
 
+    if m0 := re.search(r".*Column '(.*)' cannot be null.*", excpt[0]):
+
+        prop = m0.group(1)
+
+        # table name can be "tablename" or "`tablename`"
+        # => match all non-space and non-backticks characters optioanlly wrapped among `
+        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
+
+        if m:
+            table = m.group(1)
+            return f"Missing property {prop} required by {table.title()}"
+
     return None
 
 
@@ -124,7 +136,7 @@ def catch_db_exceptions(func):
             if error := parse_postgres_missing_error(message):
                 raise DatabaseMissingRequiredProperty(error)
 
-            # Should never happen except in case of new alchemy version
+            # Should never happen except in case of a new alchemy version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise ServiceUnavailable("Duplicated entry")  # pragma: no cover
 

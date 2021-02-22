@@ -6,10 +6,15 @@ from typing import Any, Dict, List, Optional, Union
 from pymodm import MongoModel
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
+from pymodm.errors import ValidationError
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
 from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
+from restapi.exceptions import (
+    BadRequest,
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -50,9 +55,23 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
-        # except ValidationError as e:
-        #     # not handled
-        #     raise e
+        except ValidationError as e:
+
+            # {'shortname': ['field is required.']}
+            for prop, error in e.message.items():
+                if error[0] == "field is required.":
+
+                    # table is not available in the message... :-(
+
+                    raise DatabaseMissingRequiredProperty(
+                        # f"Missing property {prop} required by {table.title()}"
+                        f"Missing property {prop} required by database constraints"
+                    )
+
+            # Should never happen except in case of a new mongo version
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise e  # pragma: no cover
+
         except RecursionError as e:  # pragma: no cover
             # Got some circular references? Let's try to break them,
             # but the cause is still unknown...
