@@ -40,8 +40,8 @@ if TESTING:
 
             # This is just to limit schemathesis to create troubles
 
-            if not re.match(r"^[a-z]+$", data):
-                raise BadRequest("Invalid input name")
+            if not re.match(r"^[A-Za-z]+$", data):
+                raise BadRequest(f"Invalid input name {data}")
 
             # Only DatabaseDuplicatedEntry will be raised by this endpoint
             # Any other exceptions will be suppressed. This will ensure that
