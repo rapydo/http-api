@@ -34,6 +34,9 @@ def get_html_template(
         return None, None
 
     try:
+
+        log.warning("Debug code: template path = {}", os.path.dirname(template_path))
+        log.warning("Debug code: template file = {}", template_file)
         templateLoader = jinja2.FileSystemLoader(
             searchpath=os.path.dirname(template_path)
         )
@@ -42,7 +45,8 @@ def get_html_template(
 
         html_body = template.render(**replaces)
         plain_body = html2text.html2text(html_body)
-        log.warning("Debug code: {}", plain_body)
+        log.warning("Debug code html body: {}", html_body)
+        log.warning("Debug code plain body: {}", plain_body)
 
         return html_body, plain_body
     except BaseException as e:
