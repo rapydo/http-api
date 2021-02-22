@@ -14,11 +14,12 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/database/400")
         assert r.status_code == 400
         # This is the message of a DatabaseMissingRequiredProperty
-        error = self.get_content(r)
-        if not Connector.check_availability("mongo"):
-            error == "Missing property shortname required by database constraints"
+        err = self.get_content(r)
+        # table name not available in mongo error... :-(
+        if Connector.check_availability("mongo"):
+            assert err == "Missing property shortname required by database constraints"
         else:
-            error == "Missing property shortname required by Group"
+            assert err == "Missing property shortname required by Group"
 
         auth = Connector.get_authentication_instance()
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
