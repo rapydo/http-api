@@ -46,6 +46,8 @@ class User(MongoModel):
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
     belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
 
+    coordinator_for = fields.EmbeddedDocumentField("Group", blank=True)
+
     class Meta:
         # write_concern = WriteConcern(j=True)
         connection_alias = AUTH_DB
@@ -79,6 +81,8 @@ class Group(MongoModel):
     uuid = fields.CharField(required=True)
     shortname = fields.CharField(required=True)
     fullname = fields.CharField(required=True)
+
+    coordinator = fields.ReferenceField(User, blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)

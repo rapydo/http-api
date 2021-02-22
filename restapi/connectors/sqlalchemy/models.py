@@ -47,6 +47,8 @@ class User(db.Model):
         "Group", backref=db.backref("members"), foreign_keys=[group_id]
     )
 
+    # + has `coordinator_for` backref from Group
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,5 +72,10 @@ class Group(db.Model):
     uuid = db.Column(db.String(36), unique=True, nullable=False)
     shortname = db.Column(db.String(64), unique=True, nullable=False)
     fullname = db.Column(db.String(256), nullable=False)
+
+    coordinator_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    coordinator = db.relationship(
+        "User", backref=db.backref("coordinator_for"), foreign_keys=[coordinator_id]
+    )
 
     # + has `members` backref from User
