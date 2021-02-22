@@ -57,5 +57,5 @@ class TestApp(BaseTests):
         assert default_group is not None
 
         # This cannot be verified with mongo because transactions are not implemented
-        if Connector.authentication_service == "mongo":
+        if Connector.authentication_service != "mongo":
             assert default_group.fullname == new_fullname
