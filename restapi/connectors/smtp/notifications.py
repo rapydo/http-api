@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from restapi.config import get_project_configuration
 from restapi.connectors import smtp
-from restapi.exceptions import ServiceUnavailable
+from restapi.services.authentication import User
 from restapi.utilities.templates import get_html_template
 
 
@@ -34,9 +34,9 @@ def send_email(
     )
 
 
-def send_registration_notification(username: str) -> None:
+def send_registration_notification(username: str) -> bool:
 
-    send_email(
+    return send_email(
         body=f"New credentials request from {username}",
         subject="New credentials requested",
         to_address=None,
@@ -45,7 +45,7 @@ def send_registration_notification(username: str) -> None:
     )
 
 
-def send_activation_link(user, url):
+def send_activation_link(user: User, url: str) -> bool:
 
     data = {
         "url": url,
@@ -54,7 +54,7 @@ def send_activation_link(user, url):
         "surname": user.surname,
     }
 
-    sent = send_email(
+    return send_email(
         body=f"Follow this link to activate your account: {url}",
         subject=os.getenv("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
         to_address=user.email,
@@ -62,13 +62,10 @@ def send_activation_link(user, url):
         data=data,
     )
 
-    if not sent:  # pragma: no cover
-        raise ServiceUnavailable("Error sending email, please retry")
 
+def send_password_reset_link(uri: str, reset_email: str) -> bool:
 
-def send_password_reset_link(uri: str, reset_email: str) -> None:
-
-    sent = send_email(
+    return send_email(
         body=f"Follow this link to reset your password: {uri}",
         subject="Password Reset",
         to_address=reset_email,
@@ -76,11 +73,10 @@ def send_password_reset_link(uri: str, reset_email: str) -> None:
         data={"url": uri},
     )
 
-    if not sent:  # pragma: no cover
-        raise ServiceUnavailable("Error sending email, please retry")
 
-
-def notify_password_to_userf(user, unhashed_password, is_update=False):
+def notify_password_to_userf(
+    user: User, unhashed_password: str, is_update: bool = False
+) -> bool:
 
     if is_update:
         subject = "Password changed"
@@ -94,7 +90,7 @@ Username: {user.email}
 Password: {unhashed_password}
     """
 
-    send_email(
+    return send_email(
         body=body,
         subject=subject,
         to_address=user.email,
@@ -105,7 +101,7 @@ Password: {unhashed_password}
 
 def send_celery_error_notification(
     task_id: str, task_name: str, arguments: str, error_stack: Any
-) -> None:
+) -> bool:
     body = f"""
 Celery task {task_id} failed
 
@@ -116,7 +112,7 @@ Arguments: {arguments}
 Error: {error_stack}
 """
 
-    send_email(
+    return send_email(
         body=body,
         subject=f"Task {task_name} failed",
         to_address=None,

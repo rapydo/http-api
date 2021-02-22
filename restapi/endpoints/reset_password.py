@@ -7,7 +7,7 @@ from restapi.config import get_frontend_url
 from restapi.connectors import Connector
 from restapi.connectors.smtp.notifications import send_password_reset_link
 from restapi.env import Env
-from restapi.exceptions import BadRequest, Forbidden
+from restapi.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
@@ -60,7 +60,10 @@ if Connector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            send_password_reset_link(complete_uri, reset_email)
+            sent = send_password_reset_link(complete_uri, reset_email)
+
+            if not sent:  # pragma: no cover
+                raise ServiceUnavailable("Error sending email, please retry")
 
             ##################
             # Completing the reset task

@@ -78,7 +78,10 @@ if Connector.check_availability("smtp"):
                 log.debug("Activation token: {}", rt)
                 url = f"{server_url}/public/register/{rt}"
 
-                send_activation_link(user, url)
+                sent = send_activation_link(user, url)
+
+                if not sent:  # pragma: no cover
+                    raise ServiceUnavailable("Error sending email, please retry")
 
                 auth.save_token(
                     user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT

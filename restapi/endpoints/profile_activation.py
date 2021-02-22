@@ -4,7 +4,7 @@ from restapi import decorators
 from restapi.config import get_frontend_url
 from restapi.connectors import Connector
 from restapi.connectors.smtp.notifications import send_activation_link
-from restapi.exceptions import BadRequest
+from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
@@ -101,7 +101,10 @@ class ProfileActivation(EndpointResource):
             log.debug("Activation token: {}", rt)
             url = f"{server_url}/public/register/{rt}"
 
-            send_activation_link(user, url)
+            sent = send_activation_link(user, url)
+
+            if not sent:  # pragma: no cover
+                raise ServiceUnavailable("Error sending email, please retry")
 
             auth.save_token(
                 user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT
