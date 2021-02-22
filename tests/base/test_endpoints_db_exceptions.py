@@ -16,7 +16,7 @@ class TestApp(BaseTests):
         # This is the message of a DatabaseMissingRequiredProperty
         err = self.get_content(r)
         # table name not available in mongo error... :-(
-        if Connector.check_availability("mongo"):
+        if Connector.authentication_service == "mongo":
             assert err == "Missing property shortname required by database constraints"
         else:
             assert err == "Missing property shortname required by Group"
@@ -57,5 +57,5 @@ class TestApp(BaseTests):
         assert default_group is not None
 
         # This cannot be verified with mongo because transactions are not implemented
-        if not Connector.check_availability("mongo"):
+        if Connector.authentication_service == "mongo":
             assert default_group.fullname == new_fullname
