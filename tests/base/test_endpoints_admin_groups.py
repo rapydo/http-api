@@ -38,7 +38,7 @@ class TestApp(BaseTests):
         assert "shortname" in groups[0]
         assert "fullname" in groups[0]
         assert "members" in groups[0]
-        assert groups[0]["members"] > 0
+        assert len(groups[0]["members"]) > 0
 
         fullname = None
         for g in groups:
