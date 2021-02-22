@@ -126,7 +126,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: password changed" in mail.get("headers")
+        assert f"Subject: {project_tile}: Password changed" in mail.get("headers")
         assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {newpwd}" in mail.get("body")
 
