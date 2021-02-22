@@ -1,7 +1,9 @@
+import re
+
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector
-from restapi.exceptions import DatabaseDuplicatedEntry
+from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import DEFAULT_GROUP_NAME
 
@@ -35,6 +37,11 @@ if TESTING:
                 group = self.auth.create_group({"fullname": data})
                 self.auth.save_group(group)
                 return self.response("0")
+
+            # This is just to limit schemathesis to create troubles
+
+            if not re.match(r"^[a-z]+$", data):
+                raise BadRequest("Invalid input name")
 
             # Only DatabaseDuplicatedEntry will be raised by this endpoint
             # Any other exceptions will be suppressed. This will ensure that
