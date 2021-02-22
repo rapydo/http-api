@@ -60,7 +60,7 @@ if Connector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            sent = send_password_reset_link(complete_uri, reset_email)
+            sent = send_password_reset_link(user, complete_uri, reset_email)
 
             if not sent:  # pragma: no cover
                 raise ServiceUnavailable("Error sending email, please retry")

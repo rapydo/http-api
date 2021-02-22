@@ -64,7 +64,7 @@ if Connector.check_availability("smtp"):
             try:
                 # Sending an email to the administrator
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
-                    send_registration_notification(user.email)
+                    send_registration_notification(user)
 
                 auth = Connector.get_authentication_instance()
 

@@ -13,9 +13,20 @@ def send_email(
     to_address: Optional[str] = None,
     template: Optional[str] = None,
     data: Optional[Dict[str, Any]] = None,
+    user: Optional[User] = None,
 ) -> bool:
 
     title = get_project_configuration("project.title", default="Unkown title")
+
+    if data is None:
+        data = {}
+
+    data.setdefault("project", title)
+
+    if user:
+        data.setdefault("username", user.email)
+        data.setdefault("name", user.name)
+        data.setdefault("surname", user.surname)
 
     html_body = None
     plain_body = None
@@ -34,36 +45,31 @@ def send_email(
     )
 
 
-def send_registration_notification(username: str) -> bool:
+def send_registration_notification(user: User) -> bool:
 
     return send_email(
         subject="New user registered",
-        body=f"A new user registered from {username}",
+        body=f"A new user registered from {user.email}",
         to_address=None,
         template="new_user_registered.html",
-        data={"username": username},
+        data=None,
+        user=user,
     )
 
 
 def send_activation_link(user: User, url: str) -> bool:
-
-    data = {
-        "url": url,
-        "username": user.email,
-        "name": user.name,
-        "surname": user.surname,
-    }
 
     return send_email(
         subject=os.getenv("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
         body=f"Follow this link to activate your account: {url}",
         to_address=user.email,
         template="activate_account.html",
-        data=data,
+        data={"url": url},
+        user=user,
     )
 
 
-def send_password_reset_link(uri: str, reset_email: str) -> bool:
+def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 
     return send_email(
         subject="Password Reset",
@@ -71,6 +77,7 @@ def send_password_reset_link(uri: str, reset_email: str) -> bool:
         to_address=reset_email,
         template="reset_password.html",
         data={"url": uri},
+        user=user,
     )
 
 
@@ -86,7 +93,8 @@ Password: {unhashed_password}
         body=body,
         to_address=user.email,
         template="new_credentials.html",
-        data={"username": user.email, "password": unhashed_password},
+        data={"password": unhashed_password},
+        user=user,
     )
 
 
@@ -102,7 +110,8 @@ Password: {unhashed_password}
         body=body,
         to_address=user.email,
         template="update_credentials.html",
-        data={"username": user.email, "password": unhashed_password},
+        data={"password": unhashed_password},
+        user=user,
     )
 
 
@@ -130,4 +139,5 @@ Error: {error_stack}
             "arguments": arguments,
             "error_stack": error_stack,
         },
+        user=None,
     )
