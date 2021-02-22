@@ -8,8 +8,8 @@ from restapi.utilities.templates import get_html_template
 
 
 def send_email(
-    body: str,
     subject: str,
+    body: str,
     to_address: Optional[str] = None,
     template: Optional[str] = None,
     data: Optional[Dict[str, Any]] = None,
@@ -30,15 +30,15 @@ def send_email(
     subject = f"{title}: {subject}"
     smtp_client = smtp.get_instance()
     return smtp_client.send(
-        body=body, subject=subject, to_address=to_address, plain_body=plain_body
+        subject=subject, body=body, to_address=to_address, plain_body=plain_body
     )
 
 
 def send_registration_notification(username: str) -> bool:
 
     return send_email(
-        body=f"A new user registered from {username}",
         subject="New user registered",
+        body=f"A new user registered from {username}",
         to_address=None,
         template="new_user_registered.html",
         data={"username": username},
@@ -55,8 +55,8 @@ def send_activation_link(user: User, url: str) -> bool:
     }
 
     return send_email(
-        body=f"Follow this link to activate your account: {url}",
         subject=os.getenv("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
+        body=f"Follow this link to activate your account: {url}",
         to_address=user.email,
         template="activate_account.html",
         data=data,
@@ -66,8 +66,8 @@ def send_activation_link(user: User, url: str) -> bool:
 def send_password_reset_link(uri: str, reset_email: str) -> bool:
 
     return send_email(
-        body=f"Follow this link to reset your password: {uri}",
         subject="Password Reset",
+        body=f"Follow this link to reset your password: {uri}",
         to_address=reset_email,
         template="reset_password.html",
         data={"url": uri},
@@ -82,8 +82,8 @@ Password: {unhashed_password}
     """
 
     return send_email(
-        body=body,
         subject="New credentials",
+        body=body,
         to_address=user.email,
         template="new_credentials.html",
         data={"username": user.email, "password": unhashed_password},
@@ -98,8 +98,8 @@ Password: {unhashed_password}
     """
 
     return send_email(
-        body=body,
         subject="Password changed",
+        body=body,
         to_address=user.email,
         template="update_credentials.html",
         data={"username": user.email, "password": unhashed_password},
@@ -120,8 +120,8 @@ Error: {error_stack}
 """
 
     return send_email(
-        body=body,
         subject=f"Task {task_name} failed",
+        body=body,
         to_address=None,
         template="celery_error_notification.html",
         data={
