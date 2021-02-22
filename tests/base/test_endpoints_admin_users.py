@@ -37,7 +37,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
         assert f"Username: {data.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {data.get('password')}" in mail.get("body")
 
@@ -68,7 +68,7 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
         assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
         assert f"Password: {data2.get('password')}" in mail.get("body")
 
