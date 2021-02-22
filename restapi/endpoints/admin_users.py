@@ -1,14 +1,16 @@
 from typing import Any, List
 
 from restapi import decorators
-from restapi.connectors import Connector
-from restapi.connectors.smtp.notifications import notify_password_to_userf
+from restapi.connectors.smtp.notifications import (
+    notify_new_credentials_to_user,
+    notify_update_credentials_to_user,
+)
 from restapi.endpoints.schemas import (
     admin_user_output,
     admin_user_post_input,
     admin_user_put_input,
 )
-from restapi.exceptions import Conflict, DatabaseDuplicatedEntry, NotFound
+from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.time import date_lower_than as dt_lower
@@ -95,7 +97,7 @@ class AdminUsers(EndpointResource):
         self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            notify_password_to_userf(user, unhashed_password, is_update=False)
+            notify_new_credentials_to_user(user, unhashed_password)
 
         self.log_event(self.events.create, user, payload)
 
@@ -154,7 +156,7 @@ class AdminUsers(EndpointResource):
             self.auth.add_user_to_group(user, group)
 
         if email_notification and unhashed_password is not None:
-            notify_password_to_userf(user, unhashed_password, is_update=True)
+            notify_update_credentials_to_user(user, unhashed_password)
 
         if user.expiration:
             # Set expiration on a previously non-expiring account

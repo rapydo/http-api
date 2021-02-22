@@ -37,10 +37,10 @@ def send_email(
 def send_registration_notification(username: str) -> bool:
 
     return send_email(
-        body=f"New credentials request from {username}",
-        subject="New credentials requested",
+        body=f"A new user registered from {username}",
+        subject="New user registered",
         to_address=None,
-        template="new_credentials_notification.html",
+        template="new_user_registered.html",
         data={"username": username},
     )
 
@@ -74,16 +74,7 @@ def send_password_reset_link(uri: str, reset_email: str) -> bool:
     )
 
 
-def notify_password_to_userf(
-    user: User, unhashed_password: str, is_update: bool = False
-) -> bool:
-
-    if is_update:
-        subject = "Password changed"
-        template = "update_credentials.html"
-    else:
-        subject = "New credentials"
-        template = "new_credentials.html"
+def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
 
     body = f"""
 Username: {user.email}
@@ -92,9 +83,25 @@ Password: {unhashed_password}
 
     return send_email(
         body=body,
-        subject=subject,
+        subject="New credentials",
         to_address=user.email,
-        template=template,
+        template="new_credentials.html",
+        data={"username": user.email, "password": unhashed_password},
+    )
+
+
+def notify_update_credentials_to_user(user: User, unhashed_password: str) -> bool:
+
+    body = f"""
+Username: {user.email}
+Password: {unhashed_password}
+    """
+
+    return send_email(
+        body=body,
+        subject="Password changed",
+        to_address=user.email,
+        template="update_credentials.html",
         data={"username": user.email, "password": unhashed_password},
     )
 
