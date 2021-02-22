@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 import html2text
 import jinja2
 
-from restapi.config import ABS_RESTAPI_PATH, BACKEND_PACKAGE, CUSTOM_PACKAGE, MODELS_DIR
+from restapi.config import ABS_RESTAPI_PATH, CUSTOM_PACKAGE, MODELS_DIR
 from restapi.connectors import CONNECTORS_FOLDER
 from restapi.utilities.logs import log
 
@@ -18,27 +18,22 @@ def get_html_template(
         os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
     )
 
-    log.warning("Debug code [¹]: {}", template_path)
     if not os.path.exists(template_path):
         # Core templates from restapi/connectors/smtp/templates/
         template_path = os.path.join(
             ABS_RESTAPI_PATH,
-            BACKEND_PACKAGE,
             CONNECTORS_FOLDER,
             "smtp",
             "templates",
             template_file,
         )
 
-    log.warning("Debug code [²]: {}", template_path)
     if not os.path.exists(template_path):
         log.info("Template not found: {}", template_file)
         return None, None
 
     try:
 
-        log.warning("Debug code: template path = {}", os.path.dirname(template_path))
-        log.warning("Debug code: template file = {}", template_file)
         templateLoader = jinja2.FileSystemLoader(
             searchpath=os.path.dirname(template_path)
         )
@@ -47,8 +42,6 @@ def get_html_template(
 
         html_body = template.render(**replaces)
         plain_body = html2text.html2text(html_body)
-        log.warning("Debug code html body: {}", html_body)
-        log.warning("Debug code plain body: {}", plain_body)
 
         return html_body, plain_body
     except BaseException as e:
