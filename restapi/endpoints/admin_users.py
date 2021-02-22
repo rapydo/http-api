@@ -61,6 +61,7 @@ class AdminUsers(EndpointResource):
         return self.response(users)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.database_transaction
     @decorators.use_kwargs(admin_user_post_input)
     @decorators.endpoint(
         path="/admin/users",
@@ -101,6 +102,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.database_transaction
     @decorators.use_kwargs(admin_user_put_input)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
@@ -146,7 +148,7 @@ class AdminUsers(EndpointResource):
         if group_id is not None:
             group = self.auth.get_group(group_id=group_id)
             if not group:
-                # Can't be reached because grup_id is prefiltered by marshmallow
+                # Can't be reached because group_id is prefiltered by marshmallow
                 raise NotFound("This group cannot be found")  # pragma: no cover
 
             self.auth.add_user_to_group(user, group)
