@@ -60,6 +60,7 @@ setup(
         "psutil",
         "plumbum",
         "maxminddb-geolite2",
+        "html2text",
         # Used by Marshmallow to serialize Decimals
         "simplejson",
         # Web sockets and others

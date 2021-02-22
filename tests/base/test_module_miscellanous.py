@@ -267,7 +267,9 @@ class TestApp(BaseTests):
     #########################################
     def test_templates(self) -> None:
 
-        assert get_html_template("this-should-not-exist", {}) is None
+        h, p = get_html_template("this-should-not-exist", {})
+        assert h is None
+        assert p is None
 
     # #######################################
     # ####      Timeouts
