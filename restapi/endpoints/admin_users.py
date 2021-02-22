@@ -83,13 +83,8 @@ class AdminUsers(EndpointResource):
         # If created by admins users must accept privacy at first login
         kwargs["privacy_accepted"] = False
 
-        try:
-            user = self.auth.create_user(kwargs, roles)
-            self.auth.save_user(user)
-        except DatabaseDuplicatedEntry as e:
-            if Connector.authentication_service == "sqlalchemy":
-                self.auth.db.session.rollback()
-            raise Conflict(str(e))
+        user = self.auth.create_user(kwargs, roles)
+        self.auth.save_user(user)
 
         group = self.auth.get_group(group_id=group_id)
         if not group:

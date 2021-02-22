@@ -242,14 +242,8 @@
 #         # If created by admins users must accept privacy at first login
 #         kwargs['privacy_accepted'] = False
 
-#         try:
-#             user = self.auth.create_user(kwargs, roles)
-#             if self.sql_enabled:
-#                 self.auth.db.session.commit()
-#         except DatabaseDuplicatedEntry as e:
-#             if self.sql_enabled:
-#                 self.auth.db.session.rollback()
-#             raise RestApiException(str(e), status_code=409)
+#         user = self.auth.create_user(kwargs, roles)
+#         self.auth.save_user(user)
 
 #         # FIXME: groups management is only implemented for neo4j
 #         if 'group' in kwargs and self.neo4j_enabled:
