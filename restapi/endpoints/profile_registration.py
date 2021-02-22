@@ -1,6 +1,7 @@
 from typing import Any
 
 from restapi import decorators
+from restapi.config import get_frontend_url
 from restapi.connectors import Connector
 from restapi.connectors.smtp.notifications import (
     send_activation_link,
@@ -11,8 +12,7 @@ from restapi.env import Env
 from restapi.exceptions import Conflict, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import DEFAULT_GROUP_NAME
-
-# from restapi.utilities.logs import log
+from restapi.utilities.logs import log
 
 # This endpoint needs to send the activation token via email
 if Connector.check_availability("smtp"):
@@ -66,7 +66,23 @@ if Connector.check_availability("smtp"):
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     send_registration_notification(user.email)
 
-                send_activation_link(user)
+                auth = Connector.get_authentication_instance()
+
+                activation_token, payload = auth.create_temporary_token(
+                    user, auth.ACTIVATE_ACCOUNT
+                )
+
+                server_url = get_frontend_url()
+
+                rt = activation_token.replace(".", "+")
+                log.debug("Activation token: {}", rt)
+                url = f"{server_url}/public/register/{rt}"
+
+                send_activation_link(user, url)
+
+                auth.save_token(
+                    user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT
+                )
 
             except BaseException as e:  # pragma: no cover
                 self.auth.delete_user(user)

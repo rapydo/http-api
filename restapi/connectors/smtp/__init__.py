@@ -3,7 +3,7 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import pytz
 
@@ -92,14 +92,14 @@ class Mail(Connector):
 
     def send(
         self,
-        body,
-        subject,
-        to_address=None,
-        from_address=None,
-        cc=None,
-        bcc=None,
-        plain_body=None,
-    ):
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+    ) -> bool:
 
         if not to_address:
             to_address = self.instance_variables.get("admin")

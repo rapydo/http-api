@@ -1,10 +1,13 @@
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
 from restapi import decorators
+from restapi.config import get_frontend_url
+from restapi.connectors import Connector
 from restapi.connectors.smtp.notifications import send_activation_link
 from restapi.exceptions import BadRequest
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
+from restapi.utilities.logs import log
 
 
 class ProfileActivation(EndpointResource):
@@ -85,7 +88,25 @@ class ProfileActivation(EndpointResource):
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-            send_activation_link(user)
+
+            auth = Connector.get_authentication_instance()
+
+            activation_token, payload = auth.create_temporary_token(
+                user, auth.ACTIVATE_ACCOUNT
+            )
+
+            server_url = get_frontend_url()
+
+            rt = activation_token.replace(".", "+")
+            log.debug("Activation token: {}", rt)
+            url = f"{server_url}/public/register/{rt}"
+
+            send_activation_link(user, url)
+
+            auth.save_token(
+                user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT
+            )
+
         msg = (
             "We are sending an email to your email address where "
             "you will find the link to activate your account"

@@ -3,7 +3,7 @@ from typing import Optional
 import jwt
 
 from restapi import decorators
-from restapi.config import get_frontend_url, get_project_configuration
+from restapi.config import get_frontend_url
 from restapi.connectors import Connector
 from restapi.connectors.smtp.notifications import send_password_reset_link
 from restapi.env import Env
@@ -49,8 +49,6 @@ if Connector.check_availability("smtp"):
 
             self.auth.verify_user_status(user)
 
-            title = get_project_configuration("project.title", default="Unkown title")
-
             reset_token, payload = self.auth.create_temporary_token(
                 user, self.auth.PWD_RESET
             )
@@ -62,7 +60,7 @@ if Connector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            send_password_reset_link(complete_uri, title, reset_email)
+            send_password_reset_link(complete_uri, reset_email)
 
             ##################
             # Completing the reset task
