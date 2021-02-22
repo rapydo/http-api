@@ -12,6 +12,7 @@ from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
+from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -87,7 +88,12 @@ else:
 
             v = faker.random_letters(24)
             # Create a fake token and verify that is linked to nobody
-            t = obj.Token(jti=v, token=v, creation=datetime.now(pytz.utc)).save()
+            t = obj.Token(
+                jti=v,
+                token=v,
+                token_type=BaseAuthentication.FULL_TOKEN,
+                creation=datetime.now(pytz.utc),
+            ).save()
             assert t.emitted_for.single() is None
             t.delete()
 
