@@ -11,7 +11,7 @@ def send_email(
     subject: str,
     body: str,
     to_address: Optional[str] = None,
-    template: Optional[str] = None,
+    template: str = None,
     data: Optional[Dict[str, Any]] = None,
     user: Optional[User] = None,
 ) -> bool:
