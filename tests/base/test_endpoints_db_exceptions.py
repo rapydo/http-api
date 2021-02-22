@@ -13,6 +13,8 @@ class TestApp(BaseTests):
         # entry due to the missing property
         r = client.post(f"{API_URI}/tests/database/400")
         assert r.status_code == 400
+        # This is the message of a DatabaseMissingRequiredProperty
+        self.get_content(r) == "Missing property shortname required by Group"
 
         auth = Connector.get_authentication_instance()
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
@@ -42,13 +44,13 @@ class TestApp(BaseTests):
         # but this will fail due to unique keys
         r = client.post(f"{API_URI}/tests/database/{random_name}")
         assert r.status_code == 409
-
+        # This is the message of a DatabaseDuplicatedEntry
+        self.get_content(r) == "A Group already exists with 'shortname': '400'"
         # The default group will not change again because the
         # database_transaction decorator will undo the change
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
         assert default_group is not None
 
         # This cannot be verified with mongo because transactions are not implemented
-
         if not Connector.check_availability("mongo"):
             assert default_group.fullname == new_fullname

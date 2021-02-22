@@ -59,7 +59,11 @@ class ServiceUnavailable(RestApiException):
         super().__init__(exception, status_code=503, is_warning=is_warning)
 
 
-class DatabaseDuplicatedEntry(Exception):
+class DatabaseDuplicatedEntry(Conflict):
+    pass
+
+
+class DatabaseMissingRequiredProperty(BadRequest):
     pass
 
 

@@ -27,7 +27,12 @@ from neomodel.exceptions import (
 from neomodel.match import NodeSet
 
 from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
+from restapi.exceptions import (
+    BadRequest,
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+    RestApiException,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -80,7 +85,7 @@ def catch_db_exceptions(func):
                 model = m.group(2)
                 message = f"Missing property {missing_property} required by {model}"
 
-            raise BadRequest(message)
+            raise DatabaseMissingRequiredProperty(message)
         except DeflateError as e:
             log.warning(e)
             return None

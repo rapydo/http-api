@@ -29,7 +29,6 @@ from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
     Conflict,
-    DatabaseDuplicatedEntry,
     Forbidden,
     RestApiException,
     ServiceUnavailable,
@@ -579,7 +578,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         try:
             userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
-        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+        except RestApiException:  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
             raise BadRequest(f"Unable to pre-customize user properties: {e}")
@@ -595,7 +594,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             mem.customizer.custom_user_properties_post(
                 user, userdata, extra_userdata, db
             )
-        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+        except RestApiException:  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
             raise BadRequest(f"Unable to post-customize user properties: {e}")

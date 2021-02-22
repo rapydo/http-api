@@ -30,7 +30,13 @@ from sqlalchemy.orm.attributes import set_attribute
 
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
+from restapi.exceptions import (
+    BadRequest,
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+    RestApiException,
+    ServiceUnavailable,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -47,8 +53,7 @@ from restapi.utilities.uuid import getUUID
 db = OriginalAlchemy()
 
 
-def parse_postgres_error(excpt):
-
+def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
     if m0 := re.search(
         r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
     ):
@@ -66,7 +71,7 @@ def parse_postgres_error(excpt):
     return None
 
 
-def parse_mysql_error(excpt):
+def parse_mysql_duplication_error(excpt: List[str]) -> Optional[str]:
 
     if m0 := re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0]):
 
@@ -84,28 +89,44 @@ def parse_mysql_error(excpt):
     return None  # pragma: no cover
 
 
+def parse_postgres_missing_error(excpt: List[str]) -> Optional[str]:
+
+    if m := re.search(
+        r"null value in column \"(.*)\" of relation \"(.*)\" violates not-null constraint",
+        excpt[0],
+    ):
+        prop = m.group(1)
+        table = m.group(2)
+
+        return f"Missing property {prop} required by {table.title()}"
+
+    return None
+
+
 def catch_db_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
 
         try:
             return func(*args, **kwargs)
-        except (DatabaseDuplicatedEntry, BadRequest):
+        except RestApiException:
             # already catched and parser, raise up
             raise
         except IntegrityError as e:
             message = str(e).split("\n")
 
-            error = parse_postgres_error(message)
-            if not error:
-                error = parse_mysql_error(message)
+            if error := parse_postgres_duplication_error(message):
+                raise DatabaseDuplicatedEntry(error)
+
+            if error := parse_mysql_duplication_error(message):
+                raise DatabaseDuplicatedEntry(error)
+
+            if error := parse_postgres_missing_error(message):
+                raise DatabaseMissingRequiredProperty(error)
 
             # Should never happen except in case of new alchemy version
-            if not error:  # pragma: no cover
-                log.error("Unrecognized error message: {}", e)
-                raise DatabaseDuplicatedEntry("Duplicated entry")
-
-            raise DatabaseDuplicatedEntry(error)
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise ServiceUnavailable("Duplicated entry")  # pragma: no cover
 
         except InternalError as e:  # pragma: no cover
 

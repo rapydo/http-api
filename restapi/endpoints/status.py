@@ -15,9 +15,6 @@ class Status(EndpointResource):
     )
     def get(self, service: str = None) -> Response:
 
-        # from restapi.connectors import sqlalchemy
-        # sql = sqlalchemy.get_instance()
-        self.auth.create_group({"fullname": "boh"})
         return self.response("Server is alive", allow_html=True)
 
 

@@ -11,12 +11,7 @@ from sentry_sdk import capture_exception
 
 from restapi.config import API_URL, AUTH_URL, SENTRY_URL
 from restapi.connectors import Connector
-from restapi.exceptions import (
-    BadRequest,
-    Conflict,
-    DatabaseDuplicatedEntry,
-    RestApiException,
-)
+from restapi.exceptions import BadRequest, Conflict, RestApiException
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
@@ -142,6 +137,8 @@ def catch_graph_exceptions(func):  # pragma: no cover
     def wrapper(self, *args, **kwargs):
 
         from neomodel.exceptions import RequiredProperty
+
+        from restapi.exceptions import DatabaseDuplicatedEntry
 
         try:
             return func(self, *args, **kwargs)
@@ -325,10 +322,6 @@ def catch_exceptions(**kwargs):
                     log.error(e)
 
                 return self.response(e.args[0], code=e.status_code)
-
-            except DatabaseDuplicatedEntry as e:
-
-                return self.response(str(e), code=409)
 
             except werkzeug.exceptions.BadRequest:  # pragma: no cover
                 # do not stop werkzeug BadRequest
