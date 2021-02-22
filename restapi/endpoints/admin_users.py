@@ -89,7 +89,7 @@ class AdminUsers(EndpointResource):
 
         group = self.auth.get_group(group_id=group_id)
         if not group:
-            # Can't be reached because grup_id is prefiltered by marshmallow
+            # Can't be reached because group_id is prefiltered by marshmallow
             raise NotFound("This group cannot be found")  # pragma: no cover
 
         self.auth.add_user_to_group(user, group)

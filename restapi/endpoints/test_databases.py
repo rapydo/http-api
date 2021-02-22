@@ -38,8 +38,7 @@ if TESTING:
                 self.auth.save_group(group)
                 return self.response("0")
 
-            # This is just to limit schemathesis to create troubles
-
+            # This is just to limit schemathesis to create troubles :-)
             if not re.match(r"^[A-Za-z]+$", data):
                 raise BadRequest(f"Invalid input name {data}")
 

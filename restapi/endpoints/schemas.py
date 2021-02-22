@@ -52,11 +52,7 @@ class GroupWithMembers(Schema):
     shortname = fields.Str()
 
     members = fields.Nested(UserWithUUID(many=True))
-
-
-class AdminGroupInput(Schema):
-    shortname = fields.Str(required=True, description="Short name")
-    fullname = fields.Str(required=True, description="Full name")
+    coordinator = fields.Nested(UserWithUUID)
 
 
 class TokenSchema(Schema):
@@ -241,6 +237,30 @@ def admin_user_post_input(request):
 
 def admin_user_put_input(request):
     return admin_user_input(request, False)
+
+
+def admin_group_input(request):
+
+    # as defined in Marshmallow.schema.from_dict
+    attributes: Dict[str, Union[fields.Field, type]] = {}
+
+    attributes["shortname"] = fields.Str(required=True, description="Short name")
+    attributes["fullname"] = fields.Str(required=True, description="Full name")
+
+    users_keys = []
+    users_labels = []
+
+    for u in auth.get_users():
+        users_keys.append(u.uuid)
+        users_labels.append(f"{u.name} - {u.surname} ({u.email})")
+
+    attributes["coordinator"] = fields.Str(
+        required=True,
+        description="Coordinator",
+        validate=validate.OneOf(choices=users_keys, labels=users_labels),
+    )
+
+    return Schema.from_dict(attributes, name="GroupDefinition")
 
 
 def profile_patch_input():

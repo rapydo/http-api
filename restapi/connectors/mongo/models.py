@@ -45,7 +45,6 @@ class User(MongoModel):
 
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
     belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
-
     coordinator_for = fields.EmbeddedDocumentField("Group", blank=True)
 
     class Meta:
