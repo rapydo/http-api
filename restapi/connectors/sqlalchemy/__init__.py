@@ -371,13 +371,13 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-    def set_group_coordinator(self, group: Group, user: User) -> None:
+    # def set_group_coordinator(self, group: Group, user: User) -> None:
 
-        if group and user:
-            group.coordinator = user
+    #     if group and user:
+    #         group.coordinator = user
 
-            self.db.session.add(group)
-            self.db.session.commit()
+    #         self.db.session.add(group)
+    #         self.db.session.commit()
 
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None

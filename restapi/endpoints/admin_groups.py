@@ -42,17 +42,17 @@ class AdminGroups(EndpointResource):
     def post(self, **kwargs: Any) -> Response:
 
         payload = kwargs.copy()
-        coordinator_id = kwargs.pop("coordinator", None)
+        # coordinator_id = kwargs.pop("coordinator", None)
         group = self.auth.create_group(kwargs)
 
         self.auth.save_group(group)
 
-        if coordinator_id:
-            coordinator = self.auth.get_user(user_id=coordinator_id)
-            if not coordinator:
-                # Can't be reached because coordinator_id is prefiltered by marshmallow
-                raise NotFound("This user cannot be found")  # pragma: no cover
-            self.auth.set_group_coordinator(group, coordinator)
+        # if coordinator_id:
+        #     coordinator = self.auth.get_user(user_id=coordinator_id)
+        #     if not coordinator:
+        #         # Can't be reached because coordinator_id is prefiltered by marshmallow
+        #         raise NotFound("This user cannot be found")  # pragma: no cover
+        #     self.auth.set_group_coordinator(group, coordinator)
 
         self.log_event(self.events.create, group, payload)
         return self.response(group.uuid)
@@ -72,19 +72,19 @@ class AdminGroups(EndpointResource):
             raise NotFound("This group cannot be found")
 
         payload = kwargs.copy()
-        coordinator_id = kwargs.pop("coordinator", None)
+        # coordinator_id = kwargs.pop("coordinator", None)
 
         self.auth.db.update_properties(group, kwargs)
 
         self.auth.save_group(group)
 
-        if coordinator_id:
-            coordinator = self.auth.get_user(user_id=coordinator_id)
-            if not coordinator:
-                # Can't be reached because coordinator_id is prefiltered by marshmallow
-                raise NotFound("This user cannot be found")  # pragma: no cover
+        # if coordinator_id:
+        #     coordinator = self.auth.get_user(user_id=coordinator_id)
+        #     if not coordinator:
+        #         # Can't be reached because coordinator_id is prefiltered by marshmallow
+        #         raise NotFound("This user cannot be found")  # pragma: no cover
 
-            self.auth.set_group_coordinator(group, coordinator)
+        #     self.auth.set_group_coordinator(group, coordinator)
 
         self.log_event(self.events.modify, group, payload)
 

@@ -52,7 +52,7 @@ class GroupWithMembers(Schema):
     shortname = fields.Str()
 
     members = fields.Nested(UserWithUUID(many=True))
-    coordinator = fields.Nested(UserWithUUID)
+    # coordinator = Neo4jRelationshipToSingle(UserWithUUID)
 
 
 class TokenSchema(Schema):
@@ -247,18 +247,18 @@ def admin_group_input(request):
     attributes["shortname"] = fields.Str(required=True, description="Short name")
     attributes["fullname"] = fields.Str(required=True, description="Full name")
 
-    users_keys = []
-    users_labels = []
+    # users_keys = []
+    # users_labels = []
 
-    for u in auth.get_users():
-        users_keys.append(u.uuid)
-        users_labels.append(f"{u.name} - {u.surname} ({u.email})")
+    # for u in auth.get_users():
+    #     users_keys.append(u.uuid)
+    #     users_labels.append(f"{u.name} - {u.surname} ({u.email})")
 
-    attributes["coordinator"] = fields.Str(
-        required=True,
-        description="Coordinator",
-        validate=validate.OneOf(choices=users_keys, labels=users_labels),
-    )
+    # attributes["coordinator"] = fields.Str(
+    #     required=True,
+    #     description="Coordinator",
+    #     validate=validate.OneOf(choices=users_keys, labels=users_labels),
+    # )
 
     return Schema.from_dict(attributes, name="GroupDefinition")
 

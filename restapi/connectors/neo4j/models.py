@@ -44,7 +44,7 @@ class User(UserCustomClass):
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")
-    coordinator_for = RelationshipFrom("Group", "COORDINATED_BY", cardinality=ZeroOrOne)
+    # coordinator_for = RelationshipFrom("Group", "COORDINATED_BY", cardinality=ZeroOrOne)
 
 
 class Group(GroupCustomClass):
@@ -53,7 +53,7 @@ class Group(GroupCustomClass):
 
     members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
 
-    coordinator = RelationshipTo("User", "COORDINATED_BY", cardinality=ZeroOrOne)
+    # coordinator = RelationshipTo("User", "COORDINATED_BY", cardinality=ZeroOrOne)
 
 
 class Token(StructuredNode):

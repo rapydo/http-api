@@ -1129,11 +1129,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         ...
 
-    @abc.abstractmethod
-    def set_group_coordinator(
-        self, group: Group, user: User
-    ) -> None:  # pragma: no cover
-        """
-        Save the group.coordinator -> user relationship
-        """
-        ...
+    # @abc.abstractmethod
+    # def set_group_coordinator(
+    #     self, group: Group, user: User
+    # ) -> None:  # pragma: no cover
+    #     """
+    #     Save the group.coordinator -> user relationship
+    #     """
+    #     ...
