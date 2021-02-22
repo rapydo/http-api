@@ -4,8 +4,8 @@ from typing import Any, Dict, Optional
 from restapi.config import get_project_configuration
 from restapi.connectors import smtp
 from restapi.services.authentication import User
+from restapi.utilities.logs import log
 from restapi.utilities.templates import get_html_template
-from restapi.utlities.logs import log
 
 
 def send_email(
