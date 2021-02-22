@@ -398,15 +398,13 @@ class BaseTests:
                 "utf-8"
             )
 
+        log.warning("Debug code: {}", data)
         os.unlink(fpath)
         return data
 
     @staticmethod
     def get_token_from_body(body: str) -> Optional[str]:
         token = None
-
-        # Debug code:
-        log.warning("Inspecting email body: {}", body)
 
         # if a token is not found the email is considered to be plain text
         if "</a>" not in body:
