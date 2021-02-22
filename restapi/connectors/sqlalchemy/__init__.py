@@ -89,10 +89,11 @@ def parse_mysql_duplication_error(excpt: List[str]) -> Optional[str]:
     return None  # pragma: no cover
 
 
-def parse_postgres_missing_error(excpt: List[str]) -> Optional[str]:
+def parse_missing_error(excpt: List[str]) -> Optional[str]:
 
     if m := re.search(
-        r"null value in column \"(.*)\" of relation \"(.*)\" violates not-null constraint",
+        r"null value in column \"(.*)\" of relation \"(.*)\" "
+        "violates not-null constraint",
         excpt[0],
     ):
         prop = m.group(1)
@@ -133,7 +134,7 @@ def catch_db_exceptions(func):
             if error := parse_mysql_duplication_error(message):
                 raise DatabaseDuplicatedEntry(error)
 
-            if error := parse_postgres_missing_error(message):
+            if error := parse_missing_error(message):
                 raise DatabaseMissingRequiredProperty(error)
 
             # Should never happen except in case of a new alchemy version
