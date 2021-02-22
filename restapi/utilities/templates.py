@@ -18,6 +18,7 @@ def get_html_template(
         os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
     )
 
+    log.warning("Debug code [¹]: {}", template_path)
     if not os.path.exists(template_path):
         # Core templates from restapi/connectors/smtp/templates/
         template_path = os.path.join(
@@ -29,6 +30,7 @@ def get_html_template(
             template_file,
         )
 
+    log.warning("Debug code [²]: {}", template_path)
     if not os.path.exists(template_path):
         log.info("Template not found: {}", template_file)
         return None, None
