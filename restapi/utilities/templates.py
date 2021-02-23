@@ -41,7 +41,12 @@ def get_html_template(
         template = templateEnv.get_template(template_file)
 
         html_body = template.render(**replaces)
-        plain_body = html2text.html2text(html_body)
+
+        h2t = html2text.HTML2Text()
+        h2t.unicode_snob = 1
+        h2t.ignore_emphasis = True
+        h2t.single_line_break = True
+        plain_body = h2t.handle(html_body)
 
         return html_body, plain_body
     except BaseException as e:
