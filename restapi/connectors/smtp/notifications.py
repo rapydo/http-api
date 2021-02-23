@@ -1,14 +1,67 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
-from restapi.config import get_project_configuration
-from restapi.connectors import smtp
+import html2text
+import jinja2
+
+from restapi.config import (
+    ABS_RESTAPI_PATH,
+    CUSTOM_PACKAGE,
+    MODELS_DIR,
+    get_project_configuration,
+)
+from restapi.connectors import CONNECTORS_FOLDER, smtp
 from restapi.services.authentication import User
 from restapi.utilities.logs import log
-from restapi.utilities.templates import get_html_template
 
 
-def send_email(
+def get_html_template(
+    template_file: str, replaces: Dict[str, Any]
+) -> Tuple[Optional[str], Optional[str]]:
+
+    # Custom templates from project backend/models/email/
+    template_path = os.path.join(
+        os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
+    )
+
+    if not os.path.exists(template_path):
+        # Core templates from restapi/connectors/smtp/templates/
+        template_path = os.path.join(
+            ABS_RESTAPI_PATH,
+            CONNECTORS_FOLDER,
+            "smtp",
+            "templates",
+            template_file,
+        )
+
+    if not os.path.exists(template_path):
+        log.info("Template not found: {}", template_file)
+        return None, None
+
+    try:
+
+        templateLoader = jinja2.FileSystemLoader(
+            searchpath=os.path.dirname(template_path)
+        )
+        templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
+        template = templateEnv.get_template(template_file)
+
+        html_body = template.render(**replaces)
+
+        h2t = html2text.HTML2Text()
+        h2t.unicode_snob = 1
+        h2t.ignore_emphasis = True
+        h2t.single_line_break = True
+        h2t.ignore_images = True
+        plain_body = h2t.handle(html_body)
+
+        return html_body, plain_body
+    except BaseException as e:
+        log.error("Error loading template {}: {}", template_file, e)
+        return None, None
+
+
+def send_notification(
     subject: str,
     template: str,
     # if None will be sent to the administrator
@@ -44,7 +97,7 @@ def send_email(
 
 def send_registration_notification(user: User) -> bool:
 
-    return send_email(
+    return send_notification(
         subject="New user registered",
         template="new_user_registered.html",
         to_address=None,
@@ -55,7 +108,7 @@ def send_registration_notification(user: User) -> bool:
 
 def send_activation_link(user: User, url: str) -> bool:
 
-    return send_email(
+    return send_notification(
         subject=os.getenv("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
         template="activate_account.html",
         to_address=user.email,
@@ -66,7 +119,7 @@ def send_activation_link(user: User, url: str) -> bool:
 
 def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 
-    return send_email(
+    return send_notification(
         subject="Password Reset",
         template="reset_password.html",
         to_address=reset_email,
@@ -77,7 +130,7 @@ def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 
 def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
 
-    return send_email(
+    return send_notification(
         subject="New credentials",
         template="new_credentials.html",
         to_address=user.email,
@@ -88,7 +141,7 @@ def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
 
 def notify_update_credentials_to_user(user: User, unhashed_password: str) -> bool:
 
-    return send_email(
+    return send_notification(
         subject="Password changed",
         template="update_credentials.html",
         to_address=user.email,
@@ -101,7 +154,7 @@ def send_celery_error_notification(
     task_id: str, task_name: str, arguments: str, error_stack: Any
 ) -> bool:
 
-    return send_email(
+    return send_notification(
         subject=f"Task {task_name} failed",
         template="celery_error_notification.html",
         to_address=None,
