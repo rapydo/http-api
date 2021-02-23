@@ -324,14 +324,17 @@ class Connector(metaclass=abc.ABCMeta):
                 authentication_instance.init_auth_db(options)
                 log.info("Initialized authentication module")
 
-            if mem.initializer(app=Connector.app):
+            initializer = mem.initializer(app=Connector.app)
+            if initializer:
                 log.info("Vanilla project has been initialized")
             else:  # pragma: no cover
                 log.error("Errors during custom initialization")
 
             if TESTING:
+                # Core test initialization
                 initialize_testing_environment(authentication_instance)
-                # TODO: also call project defined testing initialization
+                # Custom test initialization
+                initializer.initialize_testing_environment()
 
     @staticmethod
     def project_clean() -> None:
