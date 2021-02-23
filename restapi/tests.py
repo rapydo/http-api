@@ -380,7 +380,7 @@ class BaseTests:
         with open(fpath) as file:
             data = json.load(file)
 
-            log.warning("Inspecting Email: {}", data)
+            log.warning("Debug code: Inspecting Email: {}", data)
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
@@ -388,11 +388,11 @@ class BaseTests:
             data["body"] = "".join(tokens[1:])
 
         # Longer email are base64 encoded
-        # It happens with activation email from MeteoHub
         if "Content-Transfer-Encoding: base64" in data["body"]:  # pragma: no cover
             encodings = data["body"].split("Content-Transfer-Encoding: base64")
-            base64_body = re.sub(r"--===============.*$", "", encodings[1])
-
+            # Get the last message... should the be the html content
+            # A proper email parser would be need to improve this part
+            base64_body = re.sub(r"--===============.*$", "", encodings[-1])
             base64_body = base64_body.replace("\n", "")
             log.warning("Debug code: base64_body = {}", base64_body)
 
