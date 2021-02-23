@@ -53,6 +53,8 @@ def get_html_template(
         h2t.ignore_emphasis = True
         h2t.single_line_break = True
         h2t.ignore_images = True
+        # zero for no wrap of long lines [otherwise tokens in urls will be broken]
+        h2t.body_width = 0
         plain_body = h2t.handle(html_body)
 
         return html_body, plain_body
