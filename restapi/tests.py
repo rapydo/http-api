@@ -393,10 +393,11 @@ class BaseTests:
             encodings = data["body"].split("Content-Transfer-Encoding: base64")
             base64_body = re.sub(r"--===============.*$", "", encodings[1])
 
-            # b64decode gives as output bytes, decode("utf-8") needed to get string
-            data["body"] = base64.b64decode(base64_body.replace("\n", "")).decode(
-                "utf-8"
-            )
+            base64_body = base64_body.replace("\n", "")
+            log.warning("Debug code: base64_body = {}", base64_body)
+
+            # b64decode gives as output bytes, decode("utf-8") needed to get a string
+            data["body"] = base64.b64decode(base64_body).decode("utf-8")
 
         log.warning("Debug code: {}", data)
         os.unlink(fpath)
