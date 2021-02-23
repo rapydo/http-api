@@ -1,6 +1,7 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from restapi import decorators
+from restapi.connectors import Connector
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
@@ -24,7 +25,25 @@ class AdminGroups(EndpointResource):
     )
     def get(self) -> Response:
 
-        groups = self.auth.get_groups()
+        groups: List[Dict[str, Any]] = []
+
+        for g in self.auth.get_groups():
+
+            if Connector.authentication_service == "mongo":
+                members = self.auth.db.User.objects.raw({"belongs_to": g.id}).all()
+            else:
+                members = list(g.members)
+            coordinators = [u for u in members if self.auth.is_coordinator(u)]
+
+            groups.append(
+                {
+                    "uuid": g.uuid,
+                    "shortname": g.shortname,
+                    "fullname": g.fullname,
+                    "members": members,
+                    "coordinators": coordinators,
+                }
+            )
 
         return self.response(groups)
 
@@ -41,20 +60,11 @@ class AdminGroups(EndpointResource):
     )
     def post(self, **kwargs: Any) -> Response:
 
-        payload = kwargs.copy()
-        # coordinator_id = kwargs.pop("coordinator", None)
         group = self.auth.create_group(kwargs)
 
         self.auth.save_group(group)
 
-        # if coordinator_id:
-        #     coordinator = self.auth.get_user(user_id=coordinator_id)
-        #     if not coordinator:
-        #         # Can't be reached because coordinator_id is prefiltered by marshmallow
-        #         raise NotFound("This user cannot be found")  # pragma: no cover
-        #     self.auth.set_group_coordinator(group, coordinator)
-
-        self.log_event(self.events.create, group, payload)
+        self.log_event(self.events.create, group, kwargs)
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -71,22 +81,11 @@ class AdminGroups(EndpointResource):
         if not group:
             raise NotFound("This group cannot be found")
 
-        payload = kwargs.copy()
-        # coordinator_id = kwargs.pop("coordinator", None)
-
         self.auth.db.update_properties(group, kwargs)
 
         self.auth.save_group(group)
 
-        # if coordinator_id:
-        #     coordinator = self.auth.get_user(user_id=coordinator_id)
-        #     if not coordinator:
-        #         # Can't be reached because coordinator_id is prefiltered by marshmallow
-        #         raise NotFound("This user cannot be found")  # pragma: no cover
-
-        #     self.auth.set_group_coordinator(group, coordinator)
-
-        self.log_event(self.events.modify, group, payload)
+        self.log_event(self.events.modify, group, kwargs)
 
         return self.empty_response()
 

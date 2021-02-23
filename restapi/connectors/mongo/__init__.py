@@ -214,12 +214,6 @@ class Authentication(BaseAuthentication):
             user.belongs_to = group
             user.save()
 
-    # def set_group_coordinator(self, group: Group, user: User) -> None:
-
-    #     if group and user:
-    #         group.coordinator = user
-    #         group.save()
-
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
     ) -> Optional[User]:

@@ -52,7 +52,7 @@ class GroupWithMembers(Schema):
     shortname = fields.Str()
 
     members = fields.Nested(UserWithUUID(many=True))
-    # coordinator = Neo4jRelationshipToSingle(UserWithUUID)
+    coordinators = fields.Nested(UserWithUUID(many=True))
 
 
 class TokenSchema(Schema):

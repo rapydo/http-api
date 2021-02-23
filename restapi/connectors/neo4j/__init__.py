@@ -378,16 +378,6 @@ class Authentication(BaseAuthentication):
             else:
                 user.belongs_to.connect(group)
 
-    # def set_group_coordinator(self, group: Group, user: User) -> None:
-
-    #     if group and user:
-    #         prev_coordinator = user.coordinator_for.single()
-
-    #         if prev_coordinator is not None:
-    #             group.coordinator.reconnect(prev_coordinator, user)
-    #         else:
-    #             group.coordinator.connect(user)
-
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
