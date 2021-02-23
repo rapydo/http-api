@@ -189,6 +189,7 @@ def admin_user_input(request, is_post):
                 labels=[r for r in roles.values()],
             )
         ),
+        default=[auth.default_role],
         required=False,
         label="Roles",
         description="",
