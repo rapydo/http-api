@@ -63,9 +63,15 @@ class SMTP:
         if b.is_multipart():
             # get the first payload (the non html version)
             first_payload = b.get_payload()[0]
-            payload = first_payload.get_payload(decode=True)
+            # This is enough when the message is not based64-encoded
+            payload = first_payload.get_payload()
+            # Otherwise this is needed:
+            payload = first_payload.get_payload(decode=True).decode("utf-8")
         else:
-            payload = b.get_payload(decode=True)
+            # This is enough when the message is not based64-encoded
+            # payload = b.get_payload()
+            # Otherwise this is needed:
+            payload = b.get_payload(decode=True).decode("utf-8")
 
         with open(fpath, "w+") as file:
             file.write(payload)
