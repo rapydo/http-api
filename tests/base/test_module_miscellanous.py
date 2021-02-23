@@ -10,6 +10,7 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
+from restapi.connectors.smtp.notifications import get_html_template
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -36,7 +37,6 @@ from restapi.utilities.processes import (
     stop_timeout,
     wait_socket,
 )
-from restapi.utilities.templates import get_html_template
 from restapi.utilities.time import get_timedelta
 
 
