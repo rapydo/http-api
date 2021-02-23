@@ -49,7 +49,7 @@ def get_html_template(
         html_body = template.render(**replaces)
 
         h2t = html2text.HTML2Text()
-        h2t.unicode_snob = True
+        h2t.unicode_snob = False
         h2t.ignore_emphasis = True
         h2t.single_line_break = True
         h2t.ignore_images = True
