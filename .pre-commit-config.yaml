@@ -61,7 +61,7 @@ repos:
             "pytest-cov==2.11.1",
             "pytest-timeout==1.4.2",
             "schemathesis==2.7.1",
-            "Faker==6.5.0",
+            "Faker==4.14.0",
             "Telethon==1.17.5",
 
             # Extra dependencies
