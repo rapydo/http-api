@@ -38,8 +38,8 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
-        assert f"Username: {data.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {data.get('password')}" in mail.get("body")
+        assert data.get("email", "MISSING").lower() in mail.get("body")
+        assert data.get("password") in mail.get("body")
 
         # Event 2: read
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
@@ -69,8 +69,8 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
-        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {data2.get('password')}" in mail.get("body")
+        assert data2.get("email", "MISSING").lower() in mail.get("body")
+        assert data2.get("password") in mail.get("body")
 
         # send and invalid user_id
         r = client.put(
@@ -127,8 +127,8 @@ class TestApp(BaseTests):
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
         assert f"Subject: {project_tile}: Password changed" in mail.get("headers")
-        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {newpwd}" in mail.get("body")
+        assert data2.get("email", "MISSING").lower() in mail.get("body")
+        assert newpwd in mail.get("body")
 
         # login with a newly created user
         headers2, _ = self.do_login(client, data2.get("email"), newpwd)
