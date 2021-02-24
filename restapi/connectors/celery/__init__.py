@@ -26,10 +26,13 @@ class CeleryExt(Connector):
     # - CeleryExt.celery_app.task(func, bind=True, name="{{name}}")
     # - send_errors_by_email
     # - with CeleryExt.app.app_context():
+    # Use with
+    # @CeleryExt.task() [to automatically use function name]
+    # or: CeleryExt.task(name="your_custom_name")
     @staticmethod
-    def task(name):
+    def task(name=None):
         def decorator(func):
-            @CeleryExt.celery_app.task(bind=True, name=name)
+            @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
             @wraps(func)
             def wrapper(self, *args, **kwargs):
 
