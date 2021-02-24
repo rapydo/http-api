@@ -393,6 +393,9 @@ class TestApp(BaseTests):
                 r = client.get(f"{AUTH_URI}/status", headers=headers)
                 assert r.status_code == 200
 
+                log.warning(
+                    "Debug code: using token from a new ip during the grace period"
+                )
                 r = client.get(
                     f"{AUTH_URI}/status",
                     headers=headers,
@@ -402,6 +405,10 @@ class TestApp(BaseTests):
 
                 time.sleep(Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD"))
 
+                log.warning(
+                    "Debug code: using token from a new ip after the grace period"
+                )
+
                 r = client.get(
                     f"{AUTH_URI}/status",
                     headers=headers,
@@ -409,9 +416,17 @@ class TestApp(BaseTests):
                 )
                 assert r.status_code == 401
 
-                # After the failure the token is still valid if used from the corret IP
+                log.warning(
+                    "Debug code: using token from the correct ip after the grace period"
+                )
+
+                # After the failure the token is still valid if used from the correct IP
                 r = client.get(f"{AUTH_URI}/status", headers=headers)
                 assert r.status_code == 200
+
+                log.warning(
+                    "Debug code: using token from a new ip after the grace period"
+                )
 
                 # Another option to provide IP is through the header passed by nginx
                 headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore

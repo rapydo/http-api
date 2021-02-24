@@ -35,8 +35,10 @@ if TESTING:
             # A BadRequest will be raised due to the missing property
             if data == "400":
                 group = self.auth.create_group({"fullname": data})
-                self.auth.save_group(group)
-                return self.response("0")
+                # The following two lines will be never executed because the
+                # create group above is intended to fail due to the missing property
+                self.auth.save_group(group)  # pragma: no cover
+                return self.response("0")  # pragma: no cover
 
             # This is just to limit schemathesis to create troubles :-)
             if not re.match(r"^[A-Za-z]+$", data):
