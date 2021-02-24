@@ -380,8 +380,6 @@ class BaseTests:
         with open(fpath) as file:
             data = json.load(file)
 
-            log.warning("Debug code: Inspecting Email: {}", data)
-
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
             data["headers"] = tokens[0]
@@ -394,12 +392,10 @@ class BaseTests:
             # A proper email parser would be need to improve this part
             base64_body = re.sub(r"--===============.*$", "", encodings[-1])
             base64_body = base64_body.replace("\n", "")
-            log.warning("Debug code: base64_body = {}", base64_body)
 
             # b64decode gives as output bytes, decode("utf-8") needed to get a string
             data["body"] = base64.b64decode(base64_body).decode("utf-8")
 
-        log.warning("Debug code: {}", data)
         os.unlink(fpath)
         return data
 
