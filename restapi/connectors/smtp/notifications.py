@@ -35,7 +35,7 @@ def get_html_template(
         )
 
     if not os.path.exists(template_path):
-        log.info("Template not found: {}", template_file)
+        log.info("Template not found: {}", template_path)
         return None, None
 
     try:
