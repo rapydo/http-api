@@ -113,7 +113,7 @@ def parse_missing_error(excpt: List[str]) -> Optional[str]:
             table = m.group(1)
             return f"Missing property {prop} required by {table.title()}"
 
-    return None
+    return None  # pragma: no cover
 
 
 def catch_db_exceptions(func):
