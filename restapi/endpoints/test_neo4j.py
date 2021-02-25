@@ -23,7 +23,9 @@ if TESTING and Connector.check_availability("neo4j"):
     class Custom(StructuredNode):
         custom = StringProperty(required=True, choices=CHOICES_tuple)
         myint = IntegerProperty(required=True)
-        myuuid = UniqueIdProperty(required=True)
+        # do not set it as required because:
+        # ValueError: required argument ignored by UniqueIdProperty
+        myuuid = UniqueIdProperty()
 
     class Output(Schema):
         val = fields.Integer()

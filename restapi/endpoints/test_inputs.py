@@ -10,6 +10,9 @@ from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
 
+    class Nested(Schema):
+        nestedstr = fields.Str(required=True)
+
     class InputSchema(Schema):
         # lowercase key without label defined. label will be key.title() in schema
         mystr = fields.Str(required=True, validate=validate.Length(min=4))
@@ -56,10 +59,11 @@ if TESTING:
 
         myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
 
-        # Add nested
-        # Add an array of base fields
-        # Add an array with a custom field
-        # Add some neo4j related field
+        mynested = fields.Nested(Nested, required=True)
+
+        mylist = fields.List(fields.Str(), required=True)
+
+        mylist2 = fields.List(Nested, required=True)
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)

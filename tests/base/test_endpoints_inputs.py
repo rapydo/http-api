@@ -8,7 +8,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        NUM_FIELDS = 8
+        NUM_FIELDS = 11
         assert len(schema) == NUM_FIELDS
         for field in schema:
 
@@ -120,8 +120,6 @@ class TestApp(BaseTests):
         assert len(field) == 6  # 5 mandatory fields + max
         assert field["key"] == "mymaxstr"
         assert field["type"] == "string"
-        # This is the default case: both label and description are not explicitly set
-        # if key is lower-cased the corrisponding label will be titled
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
@@ -133,8 +131,6 @@ class TestApp(BaseTests):
         assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myequalstr"
         assert field["type"] == "string"
-        # This is the default case: both label and description are not explicitly set
-        # if key is lower-cased the corrisponding label will be titled
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
@@ -142,6 +138,30 @@ class TestApp(BaseTests):
         assert "max" in field
         assert field["min"] == 6
         assert field["max"] == 6
+
+        field = schema[8]
+        assert len(field) == 5  # 5 mandatory fields
+        assert field["key"] == "mynested"
+        assert field["type"] == "nested"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+
+        field = schema[9]
+        assert len(field) == 5  # 5 mandatory fields
+        assert field["key"] == "mylist"
+        assert field["type"] == "string[]"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+
+        field = schema[10]
+        assert len(field) == 5  # 5 mandatory fields
+        assert field["key"] == "mylist2"
+        assert field["type"] == "Nested[]"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
 
         data = self.buildData(schema)
 
