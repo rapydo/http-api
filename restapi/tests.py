@@ -339,22 +339,17 @@ class BaseTests:
 
             key = d.get("key")
             field_type = d.get("type")
-            is_array = False
 
-            if field_type.endswith("[]"):
-                log.warning("DEBUG CODE: {} is an array", field_type)
-                is_array = True
+            if is_array := field_type.endswith("[]"):
                 # py39:
                 # field_type.removesuffix("[]")
                 field_type = field_type[0:-2]
-                log.warning("DEBUG CODE: {}", schema)
 
             if "options" in d:
                 if len(d["options"]) > 0:
                     keys = list(d["options"].keys())
                     if d.get("multiple", False):
-                        # requests is unable to send lists, if not json-dumped
-                        data[key] = json.dumps([cls.faker.random_element(keys)])
+                        data[key] = [cls.faker.random_element(keys)]
                     else:
                         data[key] = cls.faker.random_element(keys)
                 # else:  # pragma: no cover
@@ -406,7 +401,6 @@ class BaseTests:
                 continue
 
             if is_array:
-                log.warning("DEBUG CODE: json-dumping {}", key)
                 # requests is unable to send lists, if not json-dumped
                 data[key] = json.dumps([data[key]])
 
