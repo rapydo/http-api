@@ -405,7 +405,7 @@ class BaseTests:
                     data[key] = [data[key]]
 
                 # requests is unable to send lists, if not json-dumped
-                data[key] = json.dumps([data[key]])
+                data[key] = json.dumps(data[key])
 
         return data
 
