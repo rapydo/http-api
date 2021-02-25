@@ -347,6 +347,7 @@ class BaseTests:
                 # py39:
                 # field_type.removesuffix("[]")
                 field_type = field_type[0:-2]
+                log.warning("DEBUG CODE: {}", schema)
 
             if "options" in d:
                 if len(d["options"]) > 0:
