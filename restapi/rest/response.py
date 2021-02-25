@@ -313,7 +313,7 @@ class ResponseMaker:
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 
-                else:
+                else:  # pragma: no cover
 
                     log.warning(
                         "Unsupported validation schema: {}.{}",

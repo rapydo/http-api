@@ -40,6 +40,27 @@ if TESTING:
             validate=validate.Range(min=1, max=10),
         )
 
+        myselect = fields.Str(
+            required=True,
+            validate=validate.OneOf(choices=["a", "b"], labels=["A", "B"]),
+        )
+
+        myselect2 = fields.Str(
+            required=True,
+            # Wrong definition, number labels < number of choices
+            # Labels will be ignored and replaced by choices
+            validate=validate.OneOf(choices=["a", "b"], labels=["A"]),
+        )
+
+        # Add a select
+        # Add select with wrong choices to verify the auto correction
+        # Add string with max validator
+        # Add string with equal validator
+        # Add nested with base field
+        # Add nested with a custom field
+        # Add an array
+        # Add some neo4j related field
+
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)
         @decorators.endpoint(

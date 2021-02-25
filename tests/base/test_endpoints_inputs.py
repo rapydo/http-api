@@ -8,7 +8,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        NUM_FIELDS = 4
+        NUM_FIELDS = 6
         assert len(schema) == NUM_FIELDS
         for field in schema:
 
@@ -83,6 +83,38 @@ class TestApp(BaseTests):
         assert field["min"] == 1
         assert "max" in field
         assert field["max"] == 10
+
+        field = schema[4]
+        assert len(field) == 6  # 5 mandatory fields + options
+        assert field["key"] == "myselect"
+        assert field["type"] == "string"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+        assert "options" in field
+        assert isinstance(field["options"], dict)
+        assert len(field["options"]) == 2
+        assert "a" in field["options"]
+        assert "b" in field["options"]
+        # The field defines labels and keys for all options
+        assert field["options"]["a"] == "A"
+        assert field["options"]["b"] == "B"
+
+        field = schema[5]
+        assert len(field) == 6  # 5 mandatory fields + options
+        assert field["key"] == "myselect2"
+        assert field["type"] == "string"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+        assert "options" in field
+        assert isinstance(field["options"], dict)
+        assert len(field["options"]) == 2
+        assert "a" in field["options"]
+        assert "b" in field["options"]
+        # The field wrongly defines labels, so are defaulted to keys
+        assert field["options"]["a"] == "a"
+        assert field["options"]["b"] == "b"
 
         data = self.buildData(schema)
 
