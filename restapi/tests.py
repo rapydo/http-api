@@ -334,11 +334,16 @@ class BaseTests:
         Input: a Marshmallow schema
         Output: a dictionary of random data
         """
-        data = {}
+        data: Dict[str, Any] = {}
         for d in schema:
 
             key = d.get("key")
             field_type = d.get("type")
+
+            if is_array := field_type.endswith("[]"):
+                # py39
+                # field_type.removesuffix("[]")
+                field_type = field_type[0:-2]
 
             if "options" in d:
                 if len(d["options"]) > 0:
@@ -392,6 +397,9 @@ class BaseTests:
                 data[key] = "not implemented"
             else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
+
+            if is_array:
+                data[key] = [data[key]]
 
         return data
 
