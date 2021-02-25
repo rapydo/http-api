@@ -159,7 +159,8 @@ class TestApp(BaseTests):
         field = schema[10]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist2"
-        assert field["type"] == "CustomString[]"
+        # The list is defined as List(CustomInt) and CustomInt is resolved as int
+        assert field["type"] == "int[]"
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]

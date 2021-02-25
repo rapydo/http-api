@@ -13,7 +13,7 @@ if TESTING:
     class Nested(Schema):
         nestedstr = fields.Str(required=True)
 
-    class CustomString(fields.Str):
+    class CustomInt(fields.Int):
         pass
 
     class CustomGenericField(fields.Field):
@@ -67,8 +67,11 @@ if TESTING:
 
         mynested = fields.Nested(Nested, required=True)
 
+        # In json model the type of this field will be resolved as string[]
         mylist = fields.List(fields.Str(), required=True)
-        mylist2 = fields.List(CustomString, required=True)
+        # In json model the type of this field will be resolved as int[]
+        mylist2 = fields.List(CustomInt, required=True)
+        # In json model the type of this field will be resolved as CustomGenericField[]
         mylist3 = fields.List(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
