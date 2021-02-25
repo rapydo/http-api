@@ -36,7 +36,7 @@ if TESTING:
             required=True,
             # Both label and description explicit definition
             label="Int inclusive field",
-            description="This field will accept values amongo a defined range",
+            description="This field accepts values in a defined range",
             validate=validate.Range(min=1, max=10),
         )
 

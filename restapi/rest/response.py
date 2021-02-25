@@ -287,9 +287,9 @@ class ResponseMaker:
 
                     if validator.min is not None:
                         f["min"] = validator.min
-                    if validator.max is not None:  # pragma: no cover
+                    if validator.max is not None:
                         f["max"] = validator.max
-                    if validator.equal is not None:  # pragma: no cover
+                    if validator.equal is not None:
                         f["min"] = validator.equal
                         f["max"] = validator.equal
 
@@ -309,11 +309,11 @@ class ResponseMaker:
 
                     choices = validator.choices
                     labels = validator.labels
-                    if len(tuple(labels)) != len(tuple(choices)):  # pragma: no cover
+                    if len(tuple(labels)) != len(tuple(choices)):
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 
-                else:  # pragma: no cover
+                else:
 
                     log.warning(
                         "Unsupported validation schema: {}.{}",

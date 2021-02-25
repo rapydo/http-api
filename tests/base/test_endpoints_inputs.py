@@ -11,16 +11,24 @@ class TestApp(BaseTests):
         NUM_FIELDS = 4
         assert len(schema) == NUM_FIELDS
         for field in schema:
+
+            # Always in the schema
             assert "key" in field
             assert "type" in field
             assert "label" in field
             assert "description" in field
             assert "required" in field
-            # This will fail in case of select and validations...
-            # it is just to stop the tests and improve this part
-            assert len(field) == 5
+
+            # Other optional keys
+            # - default
+            # - multiple: True|False
+            # - min
+            # - max
+            # - options
+            # - schema in case of nested fields
 
         field = schema[0]
+        assert len(field) == 6  # 5 mandatory fields + min
         assert field["key"] == "mystr"
         assert field["type"] == "string"
         # This is the default case: both label and description are not explicitly set
@@ -28,8 +36,12 @@ class TestApp(BaseTests):
         assert field["label"] == field["type"].title()
         assert field["description"] == field["label"]
         assert field["required"]
+        assert "min" in field
+        assert field["min"] == 1
+        assert "max" not in field
 
         field = schema[1]
+        assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "MYDATE"
         assert field["type"] == "date"
         # Here the key is not lower cased and the label is not explicitly set
@@ -38,8 +50,11 @@ class TestApp(BaseTests):
         assert field["label"] != field["type"].title()
         assert field["description"] == field["label"]
         assert field["required"]
+        assert "min" not in field
+        assert "max" not in field
 
         field = schema[2]
+        assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myint_exclusive"
         assert field["type"] == "int"
         # Here an explicit label is defined but not a description, so is == to the label
@@ -48,8 +63,13 @@ class TestApp(BaseTests):
         assert field["label"] == "Int exclusive field"
         assert field["description"] == field["label"]
         assert field["required"]
+        assert "min" in field
+        assert field["min"] == 2
+        assert "max" in field
+        assert field["max"] == 9
 
         field = schema[3]
+        assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myint_inclusive"
         assert field["type"] == "int"
         # Here both label and description are explicitly set
@@ -57,11 +77,12 @@ class TestApp(BaseTests):
         assert field["label"] != field["type"].title()
         assert field["label"] == "Int inclusive field"
         assert field["description"] != field["label"]
-        assert (
-            field["description"]
-            == "This field will accept values amongo a defined range"
-        )
+        assert field["description"] == "This field accepts values in a defined range"
         assert field["required"]
+        assert "min" in field
+        assert field["min"] == 1
+        assert "max" in field
+        assert field["max"] == 10
 
         data = self.buildData(schema)
 
