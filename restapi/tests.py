@@ -402,6 +402,8 @@ class BaseTests:
                 continue
 
             if is_array:
+                log.warning("DEBUG CODE: json-dumping {}", key)
+                # requests is unable to send lists, if not json-dumped
                 data[key] = json.dumps([data[key]])
 
         return data
