@@ -1,3 +1,5 @@
+import json
+
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
@@ -176,6 +178,10 @@ class TestApp(BaseTests):
         assert field["required"]
 
         data = self.buildData(schema)
+
+        # mylist3 is a list of custom field, buildData can't automatically set a value
+        assert "mylist3" not in data
+        data["mylist3"] = json.dumps(["mycustominputvalue"])
 
         r = client.post(f"{API_URI}/tests/inputs", data=data)
         assert r.status_code == 204

@@ -402,7 +402,7 @@ class BaseTests:
                 continue
 
             if is_array:
-                data[key] = [data[key]]
+                data[key] = json.dumps([data[key]])
 
         return data
 
