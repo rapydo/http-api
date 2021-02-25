@@ -167,7 +167,7 @@ class TestApp(BaseTests):
 
         field = schema[11]
         assert len(field) == 5  # 5 mandatory fields
-        assert field["key"] == "mylist2"
+        assert field["key"] == "mylist3"
         assert field["type"] == "CustomGenericField[]"
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
