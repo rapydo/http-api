@@ -391,9 +391,7 @@ class BaseTests:
             elif field_type == "nested":
                 assert "schema" in d
                 # build a sub-schema based on d["schema"]
-                log.warning("DEBUG CODE nested schema = {}", d["schema"])
                 nested_data = cls.buildData(d["schema"])
-                log.warning("DEBUG CODE nested value = {}", nested_data)
                 data[key] = json.dumps(nested_data)
             else:
                 # Reached for example with lists of custom fields. In this case

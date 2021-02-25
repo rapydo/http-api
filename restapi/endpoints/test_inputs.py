@@ -5,7 +5,14 @@ from typing import Any
 
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
+from restapi.models import (
+    ISO8601UTC,
+    AdvancedList,
+    AdvancedNested,
+    Schema,
+    fields,
+    validate,
+)
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
@@ -65,7 +72,9 @@ if TESTING:
 
         myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
 
-        mynested = fields.Nested(Nested, required=True)
+        # AdvancedNested is a normal Nested field, but with the ability to received
+        # json.dumped data from requests
+        mynested = AdvancedNested(Nested, required=True)
 
         # Note: I'm using AdvancedList instead of fields.List only because
         # this custom type is able to get inputs from requests.
