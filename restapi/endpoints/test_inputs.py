@@ -11,8 +11,10 @@ from restapi.rest.definition import EndpointResource, Response
 if TESTING:
 
     class InputSchema(Schema):
+        # lowercase key without label defined. label will be key.title() in schema
         mystr = fields.Str(required=True, validate=validate.Length(min=1))
-        mydate = fields.DateTime(
+        # non-lowercase key without label defined. label will be == to key in schema
+        MYDATE = fields.DateTime(
             required=True,
             format=ISO8601UTC,
             # validate=validate.Range(
@@ -24,12 +26,17 @@ if TESTING:
         )
         myint_exclusive = fields.Int(
             required=True,
+            # Explicit label definition... but missing description
+            label="Int exclusive field",
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
         )
         myint_inclusive = fields.Int(
             required=True,
+            # Both label and description explicit definition
+            label="Int inclusive field",
+            description="This field will accept values amongo a defined range",
             validate=validate.Range(min=1, max=10),
         )
 

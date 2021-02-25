@@ -404,7 +404,8 @@ class BaseTests:
         token = None
 
         # if a token is not found the email is considered to be plain text
-        if "</a>" not in body:
+        # Emails are always html now
+        if "</a>" not in body:  # pragma: no cover
             token = body[1 + body.rfind("/") :]
         # if a token is found the email is considered to be html
         else:
