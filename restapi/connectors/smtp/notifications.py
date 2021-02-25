@@ -58,7 +58,7 @@ def get_html_template(
         plain_body = h2t.handle(html_body)
 
         return html_body, plain_body
-    except BaseException as e:
+    except BaseException as e:  # pragma: no cover
         log.error("Error loading template {}: {}", template_file, e)
         return None, None
 
@@ -167,4 +167,4 @@ def send_celery_error_notification(
             "error_stack": error_stack,
         },
         user=None,
-    )
+    )  # pragma: no cover

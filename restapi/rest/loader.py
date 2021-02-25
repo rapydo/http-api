@@ -271,7 +271,7 @@ class EndpointsLoader:
     def remove_unused_tags(all_tags, used_tags):
         tags = []
         for tag, desc in all_tags.items():
-            if tag not in used_tags:
+            if tag not in used_tags:  # pragma: no cover
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({"name": tag, "description": desc})
@@ -292,7 +292,7 @@ class EndpointsLoader:
                 classes.setdefault(method, {})
 
                 for uri in uris:
-                    if uri in mappings[method]:
+                    if uri in mappings[method]:  # pragma: no cover
                         log.warning(
                             "Endpoint redefinition: {} {} used from both {} and {}",
                             method.upper(),
@@ -335,7 +335,7 @@ class EndpointsLoader:
                         if t1 != t2 and fixed_token1 and fixed_token2:
                             is_safe = True
                             break
-                    if not is_safe:
+                    if not is_safe:  # pragma: no cover
                         log.warning(
                             "Endpoint shadowing detected: {}({m} {}) and {}({m} {})",
                             classes[method][u1].__name__,

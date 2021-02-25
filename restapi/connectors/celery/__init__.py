@@ -32,9 +32,11 @@ class CeleryExt(Connector):
     @staticmethod
     def task(name=None):
         def decorator(func):
+            # This decorated is not covered by tests because can't be tested on backend
+            # However it is tested on celery so... even if not covered it is ok
             @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
             @wraps(func)
-            def wrapper(self, *args, **kwargs):
+            def wrapper(self, *args, **kwargs):  # pragma: no cover
 
                 try:
                     with CeleryExt.app.app_context():

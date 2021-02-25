@@ -74,7 +74,7 @@ class Mail(Connector):
         try:
             self.smtp.quit()
             self.smtp = None
-        except SMTPServerDisconnected:
+        except SMTPServerDisconnected:  # pragma: no cover
             log.debug("SMTP is already disconnected")
 
         return None
@@ -87,7 +87,7 @@ class Mail(Connector):
         try:
             status = self.smtp.noop()[0]
             return status == 250
-        except SMTPServerDisconnected:
+        except SMTPServerDisconnected:  # pragma: no cover
             return False
 
     def send(

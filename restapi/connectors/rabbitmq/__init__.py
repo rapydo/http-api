@@ -53,13 +53,13 @@ class RabbitExt(Connector):
 
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
-        if (host := variables.get("host")) is None:
+        if (host := variables.get("host")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing hostname")
 
-        if (user := variables.get("user")) is None:
+        if (user := variables.get("user")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing credentials")
 
-        if (password := variables.get("password")) is None:
+        if (password := variables.get("password")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing credentials")
 
         port = int(variables.get("port", "0"))
@@ -306,11 +306,11 @@ class RabbitExt(Connector):
         except UnroutableError as e:
             log.error(e)
 
-        except ConnectionClosed as e:
+        except ConnectionClosed as e:  # pragma: no cover
             # TODO: This happens often. Check if heartbeat solves problem.
             log.error("Failed to write message, connection is dead ({})", e)
 
-        except AMQPConnectionError as e:
+        except AMQPConnectionError as e:  # pragma: no cover
             log.error("Failed to write message, connection failed ({})", e)
 
         except AMQPChannelError as e:
@@ -331,7 +331,7 @@ class RabbitExt(Connector):
         :raises: AttributeError if the connection is None.
         """
 
-        if not self.connection:
+        if not self.connection:  # pragma: no cover
             raise ServiceUnavailable(f"Service {self.name} is not available")
 
         if self.channel is None:

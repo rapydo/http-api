@@ -64,7 +64,7 @@ class Meta:
             if exit_on_fail:
                 raise e
             return None
-        except BaseException as e:
+        except BaseException as e:  # pragma: no cover
             if exit_on_fail:
                 raise e
             log.error("Module {} not found.\nError: {}", modulestring, e)
@@ -131,7 +131,7 @@ class Meta:
         path = package.__path__  # type: ignore
         for _, module_name, ispkg in pkgutil.iter_modules(path):
             # skip modules (i.e. subfolders)
-            if ispkg:
+            if ispkg:  # pragma: no cover
                 continue
 
             module_path = f"{package_name}.{module_name}"

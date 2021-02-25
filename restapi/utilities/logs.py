@@ -222,7 +222,7 @@ def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
             try:
                 if len(value) > max_len:
                     value = value[:max_len] + "..."
-            except IndexError:
+            except IndexError:  # pragma: no cover
                 pass
 
         output[key] = value

@@ -73,7 +73,7 @@ if TESTING:
         myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
 
         # AdvancedNested is a normal Nested field, but with the ability to received
-        # json.dumped data from requests
+        # json.dumped data from requests or pytest
         mynested = AdvancedNested(Nested, required=True)
 
         # Note: I'm using AdvancedList instead of fields.List only because

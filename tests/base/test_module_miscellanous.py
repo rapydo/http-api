@@ -305,6 +305,8 @@ class TestApp(BaseTests):
         assert isinstance(log_output, dict)
         assert len(log_output) == 0
 
+        assert handle_log_output(1) == 1
+
         # obfuscate_dict only accepts dict
         assert obfuscate_dict(None) is None
         assert obfuscate_dict(10) == 10

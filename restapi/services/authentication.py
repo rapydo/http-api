@@ -438,7 +438,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
             if raiseErrors:
-                raise InvalidToken("Invalid payload")
+                raise InvalidToken("Invalid payload")  # pragma: no cover
             return self.unpacked_token(False)
 
         payload_type = payload.get("t", self.FULL_TOKEN)

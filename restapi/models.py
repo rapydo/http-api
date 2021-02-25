@@ -233,12 +233,11 @@ class AdvancedList(fields.List):
 class AdvancedNested(fields.Nested):
     def _deserialize(self, value, attr, data, **kwargs):
 
-        # this is the case when requests (or pytest) send some json-dumped lists
-        # for example for a multi-value select
+        # this is the case when requests (or pytest) send some json-dumped object
         if isinstance(value, str):
             try:
                 value = json.loads(value)
-            except BaseException as e:
+            except BaseException as e:  # pragma: no cover
                 log.warning(e)
         super()._deserialize(value, attr, data, **kwargs)
 
