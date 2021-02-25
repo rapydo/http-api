@@ -46,7 +46,7 @@ class TestApp(BaseTests):
         assert field["type"] == "date"
         # Here the key is not lower cased and the label is not explicitly set
         # So the label will exactly match the key (without additiona of .title)
-        assert field["label"] == field["type"]
+        assert field["label"] == field["key"]
         assert field["label"] != field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
@@ -58,7 +58,7 @@ class TestApp(BaseTests):
         assert field["key"] == "myint_exclusive"
         assert field["type"] == "int"
         # Here an explicit label is defined but not a description, so is == to the label
-        assert field["label"] != field["type"]
+        assert field["label"] != field["key"]
         assert field["label"] != field["key"].title()
         assert field["label"] == "Int exclusive field"
         assert field["description"] == field["label"]
@@ -73,7 +73,7 @@ class TestApp(BaseTests):
         assert field["key"] == "myint_inclusive"
         assert field["type"] == "int"
         # Here both label and description are explicitly set
-        assert field["label"] != field["type"]
+        assert field["label"] != field["key"]
         assert field["label"] != field["key"].title()
         assert field["label"] == "Int inclusive field"
         assert field["description"] != field["label"]
