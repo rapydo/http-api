@@ -391,9 +391,7 @@ class BaseTests:
             elif field_type == "nested":
                 assert "schema" in d
                 # build a sub-schema based on d["schema"]
-
-                # data[key] = cls.buildData(d["schema"]) ???????????
-                data[key] = "not implemented"
+                data[key] = cls.buildData(d["schema"])
             else:
                 # Reached for example with lists of custom fields. In this case
                 # the input can't be automatically set and here is simply ignored
