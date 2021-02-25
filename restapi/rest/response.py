@@ -69,6 +69,27 @@ def obfuscate_query_parameters(raw_url):
     return urllib_parse.urlunparse(url)
 
 
+def get_data_from_request() -> str:
+    # If it is an upload, DO NOT consume request.data or request.json,
+    # otherwise the content gets lost
+    try:
+        if request.mimetype in ["application/octet-stream", "multipart/form-data"]:
+            return " STREAM_UPLOAD"
+
+        if request.data:
+            if data := handle_log_output(request.data):
+                return f" {data}"
+
+        if request.form:
+            if data := obfuscate_dict(request.form):
+                return f" {data}"
+
+    except Exception as e:  # pragma: no cover
+        log.debug(e)
+
+    return ""
+
+
 def handle_response(response):
 
     response.headers["_RV"] = str(version)
@@ -76,23 +97,8 @@ def handle_response(response):
     PROJECT_VERSION = get_project_configuration("project.version", default=None)
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
-    # If it is an upload, DO NOT consume request.data or request.json,
-    # otherwise the content gets lost
-    try:
-        if request.mimetype in ["application/octet-stream", "multipart/form-data"]:
-            data = "STREAM_UPLOAD"
-        elif request.data:
-            data = handle_log_output(request.data)
-        elif request.form:
-            data = obfuscate_dict(request.form)
-        else:
-            data = ""
 
-        if data:
-            data = f" {data}"
-    except Exception as e:  # pragma: no cover
-        log.debug(e)
-        data = ""
+    data = get_data_from_request()
 
     url = obfuscate_query_parameters(request.url)
 
