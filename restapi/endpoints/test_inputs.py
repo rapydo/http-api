@@ -13,6 +13,12 @@ if TESTING:
     class Nested(Schema):
         nestedstr = fields.Str(required=True)
 
+    class CustomString(fields.Str):
+        pass
+
+    class CustomGenericField(fields.Field):
+        pass
+
     class InputSchema(Schema):
         # lowercase key without label defined. label will be key.title() in schema
         mystr = fields.Str(required=True, validate=validate.Length(min=4))
@@ -62,8 +68,8 @@ if TESTING:
         mynested = fields.Nested(Nested, required=True)
 
         mylist = fields.List(fields.Str(), required=True)
-
-        mylist2 = fields.List(Nested, required=True)
+        mylist2 = fields.List(CustomString, required=True)
+        mylist3 = fields.List(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)

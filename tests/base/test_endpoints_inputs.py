@@ -8,7 +8,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        NUM_FIELDS = 11
+        NUM_FIELDS = 12
         assert len(schema) == NUM_FIELDS
         for field in schema:
 
@@ -158,7 +158,15 @@ class TestApp(BaseTests):
         field = schema[10]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist2"
-        assert field["type"] == "Nested[]"
+        assert field["type"] == "CustomString[]"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+
+        field = schema[11]
+        assert len(field) == 5  # 5 mandatory fields
+        assert field["key"] == "mylist2"
+        assert field["type"] == "CustomGenericField[]"
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
