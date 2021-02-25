@@ -5,7 +5,7 @@ from typing import Any
 
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.models import ISO8601UTC, Schema, fields, validate
+from restapi.models import ISO8601UTC, AdvancedList, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
@@ -67,13 +67,18 @@ if TESTING:
 
         mynested = fields.Nested(Nested, required=True)
 
+        # Note: I'm using AdvancedList instead of fields.List only because
+        # this custom type is able to get inputs from requests.
+        # Requests has to json-dump the arrays, but the normal Marshmallow List field
+        # does not json-load the array as AdvancedList does
+
         # In json model the type of this field will be resolved as string[]
-        mylist = fields.List(fields.Str(), required=True)
+        mylist = AdvancedList(fields.Str(), required=True)
         # In json model the type of this field will be resolved as int[]
-        mylist2 = fields.List(CustomInt, required=True)
+        mylist2 = AdvancedList(CustomInt, required=True)
         # In json model the type of this field will be resolved as mylist3[]
         # The type is key[] ... should be something more explicative like FieldName[]
-        mylist3 = fields.List(CustomGenericField, required=True)
+        mylist3 = AdvancedList(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)
