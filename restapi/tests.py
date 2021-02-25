@@ -395,8 +395,11 @@ class BaseTests:
 
                 # data[key] = cls.buildData(d["schema"]) ???????????
                 data[key] = "not implemented"
-            else:  # pragma: no cover
-                pytest.fail(f"BuildData for {key}: unknow type {field_type}")
+            else:
+                # Reached for example with lists of custom fields. In this case
+                # the input can't be automatically set and here is simply ignored
+                log.warning("BuildData for {key}: unknow type {field_type}")
+                continue
 
             if is_array:
                 data[key] = [data[key]]
