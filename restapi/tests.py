@@ -400,7 +400,10 @@ class BaseTests:
                 log.warning("BuildData for {key}: unknow type {field_type}")
                 continue
 
-            if is_array:
+            if is_array:  # i.e. the field type is something[]
+                if not isinstance(data[key], list):
+                    data[key] = [data[key]]
+
                 # requests is unable to send lists, if not json-dumped
                 data[key] = json.dumps([data[key]])
 
