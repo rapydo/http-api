@@ -71,7 +71,8 @@ if TESTING:
         mylist = fields.List(fields.Str(), required=True)
         # In json model the type of this field will be resolved as int[]
         mylist2 = fields.List(CustomInt, required=True)
-        # In json model the type of this field will be resolved as CustomGenericField[]
+        # In json model the type of this field will be resolved as mylist3[]
+        # The type is key[] ... should be something more explicative like FieldName[]
         mylist3 = fields.List(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
