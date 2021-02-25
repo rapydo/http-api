@@ -140,12 +140,13 @@ class TestApp(BaseTests):
         assert field["max"] == 6
 
         field = schema[8]
-        assert len(field) == 5  # 5 mandatory fields
+        assert len(field) == 6  # 5 mandatory fields + schema
         assert field["key"] == "mynested"
         assert field["type"] == "nested"
         assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
+        assert "schema" in field
 
         field = schema[9]
         assert len(field) == 5  # 5 mandatory fields
