@@ -365,8 +365,23 @@ class BaseTests:
             elif field_type == "password":
                 data[key] = cls.faker.password(strong=True)
             elif field_type == "string":
-                min_value = d.get("min", 16)
-                max_value = d.get("max", 32)
+                min_value = d.get("min")
+                max_value = d.get("max")
+
+                # No min/max validation
+                if min_value is None and max_value is None:
+                    min_value = 16
+                    max_value = 32
+                # Only min value provided
+                elif max_value is None:
+                    assert min_value is not None
+                    # max(min_value, 1) is need in case of min_value == 0
+                    max_value = max(min_value, 1) * 2
+                # Only max value provided
+                else:
+                    assert max_value is not None
+                    min_value = 1
+
                 data[key] = cls.faker.pystr(min_chars=min_value, max_chars=max_value)
             else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
