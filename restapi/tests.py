@@ -378,9 +378,10 @@ class BaseTests:
                     # max(min_value, 1) is need in case of min_value == 0
                     max_value = max(min_value, 1) * 2
                 # Only max value provided
-                else:
+                elif min_value is None:
                     assert max_value is not None
                     min_value = 1
+                # Otherwise both min and max values provided => nothing to do
 
                 data[key] = cls.faker.pystr(min_chars=min_value, max_chars=max_value)
             else:  # pragma: no cover

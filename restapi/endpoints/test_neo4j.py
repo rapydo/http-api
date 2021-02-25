@@ -8,10 +8,22 @@ from restapi.utilities.logs import log
 
 if TESTING and Connector.check_availability("neo4j"):
 
+    from neomodel import (
+        IntegerProperty,
+        StringProperty,
+        StructuredNode,
+        UniqueIdProperty,
+    )
+
     from restapi.connectors.neo4j.models import Group, User
 
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
+
+    class Custom(StructuredNode):
+        custom = StringProperty(required=True, choices=CHOICES_tuple)
+        myint = IntegerProperty(required=True)
+        myuuid = UniqueIdProperty(required=True)
 
     class Output(Schema):
         val = fields.Integer()
@@ -36,6 +48,7 @@ if TESTING and Connector.check_availability("neo4j"):
         group5 = Neo4jSchema(Group, fields=["fullname", "shortname"])
         group6 = Neo4jSchema(Group, fields="")
         group7 = Neo4jSchema(Group, fields=None)
+        custom = Neo4jSchema(Custom, fields="*")
 
         choices1 = Neo4jChoice(CHOICES_tuple)
         choices2 = Neo4jChoice(CHOICES_dict)

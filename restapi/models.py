@@ -128,8 +128,7 @@ class Neo4jSchema(Schema):
                     self.declared_fields[attribute] = fields.Email()
                 elif isinstance(prop, properties.DateTimeProperty):
                     self.declared_fields[attribute] = fields.AwareDateTime()
-                # neomodel uuid are no longer used 'cause non standard (lack of hyphens)
-                elif isinstance(prop, properties.UniqueIdProperty):  # pragma: no cover
+                elif isinstance(prop, properties.UniqueIdProperty):
                     self.declared_fields[attribute] = fields.Str()
                 else:  # pragma: no cover
                     log.error(
