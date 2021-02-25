@@ -169,7 +169,7 @@ OBSCURED_FIELDS = [
 ]
 
 
-def handle_log_output(original_parameters_string):
+def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
     """ Avoid printing passwords! """
     if original_parameters_string is None:
         return {}
@@ -191,7 +191,7 @@ def handle_log_output(original_parameters_string):
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True
-        except BaseException:
+        except BaseException:  # pragma: no cover
 
             return original_parameters_string
 
@@ -202,7 +202,9 @@ def obfuscate_url(url: str) -> str:
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
-def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
+def obfuscate_dict(
+    parameters: Dict[str, Any], urlencoded: bool = False, max_len: int = MAX_CHAR_LEN
+) -> Dict[str, Any]:
 
     if not isinstance(parameters, dict):
         return parameters
