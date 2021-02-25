@@ -33,7 +33,7 @@ class TestApp(BaseTests):
         assert field["type"] == "string"
         # This is the default case: both label and description are not explicitly set
         # if key is lower-cased the corrisponding label will be titled
-        assert field["label"] == field["type"].title()
+        assert field["label"] == field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
         assert "min" in field
@@ -47,7 +47,7 @@ class TestApp(BaseTests):
         # Here the key is not lower cased and the label is not explicitly set
         # So the label will exactly match the key (without additiona of .title)
         assert field["label"] == field["type"]
-        assert field["label"] != field["type"].title()
+        assert field["label"] != field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
         assert "min" not in field
@@ -59,7 +59,7 @@ class TestApp(BaseTests):
         assert field["type"] == "int"
         # Here an explicit label is defined but not a description, so is == to the label
         assert field["label"] != field["type"]
-        assert field["label"] != field["type"].title()
+        assert field["label"] != field["key"].title()
         assert field["label"] == "Int exclusive field"
         assert field["description"] == field["label"]
         assert field["required"]
@@ -74,7 +74,7 @@ class TestApp(BaseTests):
         assert field["type"] == "int"
         # Here both label and description are explicitly set
         assert field["label"] != field["type"]
-        assert field["label"] != field["type"].title()
+        assert field["label"] != field["key"].title()
         assert field["label"] == "Int inclusive field"
         assert field["description"] != field["label"]
         assert field["description"] == "This field accepts values in a defined range"
