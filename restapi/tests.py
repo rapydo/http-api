@@ -384,6 +384,12 @@ class BaseTests:
                 # Otherwise both min and max values provided => nothing to do
 
                 data[key] = cls.faker.pystr(min_chars=min_value, max_chars=max_value)
+            elif field_type == "nested":
+                assert "schema" in d
+                # build a sub-schema based on d["schema"]
+
+                # data[key] = cls.buildData(d["schema"]) ???????????
+                data[key] = "not implemented"
             else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 
