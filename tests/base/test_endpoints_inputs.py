@@ -37,7 +37,7 @@ class TestApp(BaseTests):
         assert field["description"] == field["label"]
         assert field["required"]
         assert "min" in field
-        assert field["min"] == 1
+        assert field["min"] == 4
         assert "max" not in field
 
         field = schema[1]

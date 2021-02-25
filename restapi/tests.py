@@ -365,7 +365,9 @@ class BaseTests:
             elif field_type == "password":
                 data[key] = cls.faker.password(strong=True)
             elif field_type == "string":
-                data[key] = cls.faker.pystr(min_chars=16, max_chars=32)
+                min_value = d.get("min", 16)
+                max_value = d.get("max", 32)
+                data[key] = cls.faker.pystr(min_chars=min_value, max_chars=max_value)
             else:  # pragma: no cover
                 pytest.fail(f"BuildData for {key}: unknow type {field_type}")
 

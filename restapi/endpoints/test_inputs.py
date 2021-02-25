@@ -12,7 +12,7 @@ if TESTING:
 
     class InputSchema(Schema):
         # lowercase key without label defined. label will be key.title() in schema
-        mystr = fields.Str(required=True, validate=validate.Length(min=1))
+        mystr = fields.Str(required=True, validate=validate.Length(min=4))
         # non-lowercase key without label defined. label will be == to key in schema
         MYDATE = fields.DateTime(
             required=True,
@@ -56,9 +56,9 @@ if TESTING:
 
         myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
 
-        # Add nested with base field
-        # Add nested with a custom field
-        # Add an array
+        # Add nested
+        # Add an array of base fields
+        # Add an array with a custom field
         # Add some neo4j related field
 
     class TestInputs(EndpointResource):
