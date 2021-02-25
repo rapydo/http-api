@@ -52,10 +52,10 @@ if TESTING:
             validate=validate.OneOf(choices=["a", "b"], labels=["A"]),
         )
 
-        # Add a select
-        # Add select with wrong choices to verify the auto correction
-        # Add string with max validator
-        # Add string with equal validator
+        mymaxstr = fields.Str(required=True, validate=validate.Length(max=7))
+
+        myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
+
         # Add nested with base field
         # Add nested with a custom field
         # Add an array

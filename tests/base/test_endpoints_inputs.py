@@ -8,7 +8,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        NUM_FIELDS = 6
+        NUM_FIELDS = 8
         assert len(schema) == NUM_FIELDS
         for field in schema:
 
@@ -115,6 +115,33 @@ class TestApp(BaseTests):
         # The field wrongly defines labels, so are defaulted to keys
         assert field["options"]["a"] == "a"
         assert field["options"]["b"] == "b"
+
+        field = schema[6]
+        assert len(field) == 6  # 5 mandatory fields + max
+        assert field["key"] == "mymaxstr"
+        assert field["type"] == "string"
+        # This is the default case: both label and description are not explicitly set
+        # if key is lower-cased the corrisponding label will be titled
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+        assert "min" not in field
+        assert "max" in field
+        assert field["max"] == 7
+
+        field = schema[7]
+        assert len(field) == 7  # 5 mandatory fields + min + max
+        assert field["key"] == "myequalstr"
+        assert field["type"] == "string"
+        # This is the default case: both label and description are not explicitly set
+        # if key is lower-cased the corrisponding label will be titled
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+        assert "min" in field
+        assert "max" in field
+        assert field["min"] == 6
+        assert field["max"] == 6
 
         data = self.buildData(schema)
 
