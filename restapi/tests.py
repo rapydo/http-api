@@ -339,9 +339,12 @@ class BaseTests:
 
             key = d.get("key")
             field_type = d.get("type")
+            is_array = False
 
-            if is_array := field_type.endswith("[]"):
-                # py39
+            if field_type.endswith("[]"):
+                log.warning("DEBUG CODE: {} is an array", field_type)
+                is_array = True
+                # py39:
                 # field_type.removesuffix("[]")
                 field_type = field_type[0:-2]
 
