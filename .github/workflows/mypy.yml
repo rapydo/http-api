@@ -63,3 +63,9 @@ jobs:
           # --disallow-any-unimported
           mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report . --html-report . restapi/
           cat index.txt
+
+      - name: Save Report
+        uses: actions/upload-artifact@v1
+        with:
+          name: mypy-report
+          path: index.html
