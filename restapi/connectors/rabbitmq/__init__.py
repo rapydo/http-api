@@ -208,8 +208,9 @@ class RabbitExt(Connector):
         )
         response = r.json()
         if r.status_code != 200:  # pragma: no cover
+            err = response.get("error", "Unknown error")
             raise RestApiException(
-                {"RabbitMQ": response.get("error", "Unknown error")},
+                f"RabbitMQ: {err}",
                 status_code=r.status_code,
             )
 

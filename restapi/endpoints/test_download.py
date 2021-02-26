@@ -38,4 +38,4 @@ if TESTING:
             if fname == "SPECIAL-VALUE-FOR-NONE":
                 return Downloader.download(None)
 
-            return Downloader.download(fname)
+            return Downloader.download(fname, subfolder=Path("fixsubfolder"))

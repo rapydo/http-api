@@ -689,7 +689,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
     def verify_password_strength(
         self, pwd: str, old_pwd: Optional[str]
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> Tuple[bool, str]:
 
         if old_pwd:
             if pwd == old_pwd:
@@ -714,7 +714,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not re.search(special_characters, pwd):
             return False, "Password is too weak, missing special characters"
 
-        return True, None
+        return True, ""
 
     def change_password(
         self,
