@@ -13,7 +13,13 @@ setup(
     license="MIT",
     keywords=["http", "api", "rest", "web", "backend", "rapydo"],
     packages=find_packages(where=".", exclude=["tests*"]),
-    package_data={main_package: ["templates/index.html", "py.typed"]},
+    package_data={
+        main_package: [
+            "templates/index.html",
+            "py.typed",
+            "connectors/smtp/templates/*.html",
+        ]
+    },
     # python_requires=">=3.9.0",
     # Due to mistral (also removed str.removeprefix)
     python_requires=">=3.8.0",
