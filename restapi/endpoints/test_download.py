@@ -17,7 +17,7 @@ if TESTING:
         @decorators.use_kwargs({"stream": fields.Bool()}, location="query")
         @decorators.endpoint(
             # forgot the leading slash to test the automatic fix
-            path="tests/download/<fname>",
+            path="tests/download/<folder>/<fname>",
             summary="Execute tests with the downloader",
             description="Only enabled in testing mode",
             responses={
@@ -26,16 +26,16 @@ if TESTING:
                 416: "Range Not Satisfiable",
             },
         )
-        def get(self, fname: str, stream: bool = False) -> Response:
+        def get(self, folder: str, fname: str, stream: bool = False) -> Response:
             if stream:
                 fpath = Uploader.absolute_upload_file(
                     fname,
                     # The same defined in test_upload
-                    subfolder=Path("fixsubfolder"),
+                    subfolder=Path(folder),
                 )
                 return Downloader.send_file_streamed(fpath)
 
             if fname == "SPECIAL-VALUE-FOR-NONE":
                 return Downloader.download(None)
 
-            return Downloader.download(fname, subfolder=Path("fixsubfolder"))
+            return Downloader.download(fname, subfolder=Path(folder))

@@ -81,16 +81,18 @@ class TestUploadAndDownload(BaseTests):
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
+        # as defined in test_upload.py for normal uploads
+        upload_folder = "fixsubfolder"
 
-        r = client.get(f"{API_URI}/tests/download/doesnotexist")
+        r = client.get(f"{API_URI}/tests/download/folder/doesnotexist")
         assert r.status_code == 400
 
         # this is a special case introduced for testing purpose
         # this special file name will be converted to None into the endpoint
-        r = client.get(f"{API_URI}/tests/download/SPECIAL-VALUE-FOR-NONE")
+        r = client.get(f"{API_URI}/tests/download/folder/SPECIAL-VALUE-FOR-NONE")
         assert r.status_code == 400
 
-        r = client.get(f"{API_URI}/tests/download/{self.fname}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == self.fcontent
@@ -105,21 +107,23 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        r = client.get(f"{API_URI}/tests/download/{self.fname}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content != self.fcontent
         assert content == new_content
 
         r = client.get(
-            f"{API_URI}/tests/download/{self.fname}", query_string={"stream": True}
+            f"{API_URI}/tests/download/{upload_folder}/{self.fname}",
+            query_string={"stream": True},
         )
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == new_content
 
         r = client.get(
-            f"{API_URI}/tests/download/doesnotexist", query_string={"stream": True}
+            f"{API_URI}/tests/download/{upload_folder}/doesnotexist",
+            query_string={"stream": True},
         )
         assert r.status_code == 400
 
@@ -127,6 +131,9 @@ class TestUploadAndDownload(BaseTests):
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
+
+        # as defined in test_upload.py for chunked uploads
+        upload_folder = "fixed"
 
         r = client.post(f"{API_URI}/tests/chunkedupload", data={"force": True})
         assert r.status_code == 400
@@ -182,29 +189,30 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") == "us-ascii"
         assert meta.get("type") == "text/plain"
 
-        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == up_data
 
-        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == up_data
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}", headers={"Range": ""}
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
+            headers={"Range": ""},
         )
         assert r.status_code == 416
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"0-{STR_LEN - 1}"},
         )
         assert r.status_code == 416
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-9999999999999999"},
         )
 
@@ -217,7 +225,7 @@ class TestUploadAndDownload(BaseTests):
             assert r.status_code == 206
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-4"},
         )
         assert r.status_code == 206
@@ -225,7 +233,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[0:5]
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=5-{STR_LEN - 1}"},
         )
         assert r.status_code == 206
@@ -233,7 +241,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[5:]
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
         # Back-compatibility check for B2STAGE
@@ -262,7 +270,9 @@ class TestUploadAndDownload(BaseTests):
         # assert meta.get('charset') == 'us-ascii'
         # assert meta.get('type') == 'text/plain'
 
-        # r = client.get(f'{API_URI}/tests/download/{uploaded_filename}')
+        # r = client.get(
+        #     f'{API_URI}/tests/download/{upload_folder}/{uploaded_filename}'
+        # )
         # assert r.status_code == 200
         # content = r.data.decode('utf-8')
         # # Uhmmm... should not be up_data2 + up_data ??
