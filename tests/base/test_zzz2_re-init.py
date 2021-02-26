@@ -47,7 +47,11 @@ def test_init() -> None:
         # sql.session.remove()
         # sql.session.close_all()
 
-    create_app(mode=ServerModes.INIT)
+    try:
+        create_app(mode=ServerModes.INIT)
+        # This is only a rough retry to prevent random errors from sqlalchemy
+    except Exception:
+        create_app(mode=ServerModes.INIT)
 
     auth = Connector.get_authentication_instance()
     try:
