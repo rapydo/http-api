@@ -30,7 +30,7 @@ if TESTING:
             # This is just to test the allowed exts without adding a new parameter..
             if not force:
                 self.set_allowed_exts(["txt"])
-            response = self.upload(force=force, subfolder=Path("fixsubfolder"))
+            response = self.upload(subfolder=Path("fixsubfolder"), force=force)
             return response
 
     class TestChunkedUpload(EndpointResource, Uploader):

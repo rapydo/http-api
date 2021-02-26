@@ -97,7 +97,7 @@ class Uploader:
 
         # Save the file
         try:
-            myfile.save(abs_file)
+            myfile.save(str(abs_file))
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception as e:  # pragma: no cover
             log.error(e)
