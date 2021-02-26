@@ -1,7 +1,7 @@
-# from datetime import datetime
-
-# import pytz
+from datetime import datetime
 from typing import Any
+
+import pytz
 
 from restapi import decorators
 from restapi.config import TESTING
@@ -33,12 +33,12 @@ if TESTING:
         MYDATE = fields.DateTime(
             required=True,
             format=ISO8601UTC,
-            # validate=validate.Range(
-            #     max=datetime.now(pytz.utc).replace(hour=23, minute=59, second=59),
-            #     min=datetime(1900, 1, 1, tzinfo=pytz.utc),
-            #     max_inclusive=True,
-            #     error="Invalid date",
-            # ),
+            validate=validate.Range(
+                max=datetime.now(pytz.utc).replace(hour=23, minute=59, second=59),
+                min=datetime(1900, 1, 1, tzinfo=pytz.utc),
+                max_inclusive=True,
+                error="Invalid date",
+            ),
         )
         myint_exclusive = fields.Int(
             required=True,

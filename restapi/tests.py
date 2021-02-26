@@ -359,9 +359,25 @@ class BaseTests:
                 max_value = d.get("max", 9999)
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
+
+                # Fri, 26 Feb 2021 23:59:59 GMT
+                fmt = "%a, %d %b %Y %H:%M:%S %Z"
                 # d = cls.faker.date(pattern="%Y-%m-%d")
                 # data[key] = f"{d}T00:00:00.000Z"
-                data[key] = f"{cls.faker.iso8601()}.000Z"
+
+                min_date = None
+                max_date = None
+
+                if min_value := d.get("x-maximum"):
+                    min_date = datetime.strptime(min_value, fmt)
+
+                if max_value := d.get("x-minimum"):
+                    max_date = datetime.strptime(max_value, fmt)
+
+                d = cls.faker.date_time_between_dates(
+                    datetime_start=min_date, datetime_end=max_date
+                )
+                data[key] = f"{d.isoformat()}.000Z"
             elif field_type == "email":
                 data[key] = cls.faker.ascii_email()
             elif field_type == "boolean":
