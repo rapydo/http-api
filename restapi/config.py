@@ -62,7 +62,7 @@ def get_project_configuration(key, default=None):
 
 
 @lru_cache
-def get_backend_url():
+def get_backend_url() -> str:
     domain = os.getenv("DOMAIN")
     if PRODUCTION:
         return f"https://{domain}"
@@ -72,7 +72,7 @@ def get_backend_url():
 
 
 @lru_cache
-def get_frontend_url():
+def get_frontend_url() -> str:
     domain = os.getenv("DOMAIN")
     protocol = "https" if PRODUCTION else "http"
 

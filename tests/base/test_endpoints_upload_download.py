@@ -279,12 +279,12 @@ class TestUploadAndDownload(BaseTests):
         # assert content == up_data + up_data2
 
         data["force"] = False
-        r = client.post(f"{API_URI}/chunkedupload", data=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 400
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
         data["force"] = True
-        r = client.post(f"{API_URI}/chunkedupload", data=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
