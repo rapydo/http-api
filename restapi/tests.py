@@ -368,10 +368,10 @@ class BaseTests:
                 min_date = None
                 max_date = None
 
-                if min_value := d.get("x-minimum"):
+                if min_value := d.get("min"):
                     min_date = datetime.strptime(min_value, fmt)
 
-                if max_value := d.get("x-maximum"):
+                if max_value := d.get("max"):
                     max_date = datetime.strptime(max_value, fmt)
 
                 d = cls.faker.date_time_between_dates(

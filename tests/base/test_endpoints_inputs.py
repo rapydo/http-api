@@ -43,7 +43,7 @@ class TestApp(BaseTests):
         assert "max" not in field
 
         field = schema[1]
-        assert len(field) == 7  # 5 mandatory fields + x-minimum + x-maximum
+        assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "MYDATE"
         assert field["type"] == "date"
         # Here the key is not lower cased and the label is not explicitly set
@@ -52,10 +52,8 @@ class TestApp(BaseTests):
         assert field["label"] != field["key"].title()
         assert field["description"] == field["label"]
         assert field["required"]
-        assert "min" not in field
-        assert "max" not in field
-        assert "x-minimum" not in field
-        assert "x-maximum" not in field
+        assert "min" in field
+        assert "max" in field
 
         field = schema[2]
         assert len(field) == 7  # 5 mandatory fields + min + max
