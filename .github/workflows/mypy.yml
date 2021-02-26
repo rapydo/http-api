@@ -68,4 +68,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: mypy-report
-          path: index.html
+          path: |
+            index.txt
+            index.html
+            html
