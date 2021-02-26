@@ -127,7 +127,7 @@ class TestUploadAndDownload(BaseTests):
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
 
-        r = client.post(f"{API_URI}/tests/upload", data={"force": True})
+        r = client.post(f"{API_URI}/tests/chunkedupload", data={"force": True})
         assert r.status_code == 400
 
         data = {
@@ -137,18 +137,18 @@ class TestUploadAndDownload(BaseTests):
             "mimeType": "application/zip",
             "lastModified": 1590302749209,
         }
-        r = client.post(f"{API_URI}/tests/upload", data=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
 
         with io.StringIO(faker.text()) as f:
-            r = client.put(f"{API_URI}/tests/upload/chunked", data=f)
+            r = client.put(f"{API_URI}/tests/chunkedupload", data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                f"{API_URI}/tests/chunkedupload",
                 data=f,
                 headers={"Content-Range": "!"},
             )
@@ -159,7 +159,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                f"{API_URI}/tests/chunkedupload",
                 data=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
@@ -168,7 +168,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                f"{API_URI}/tests/chunkedupload",
                 data=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
@@ -248,7 +248,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                f"{API_URI}/tests/chunkedupload",
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
@@ -268,12 +268,12 @@ class TestUploadAndDownload(BaseTests):
         # assert content == up_data + up_data2
 
         data["force"] = False
-        r = client.post(f"{API_URI}/tests/upload", data=data)
+        r = client.post(f"{API_URI}/chunkedupload", data=data)
         assert r.status_code == 400
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
         data["force"] = True
-        r = client.post(f"{API_URI}/tests/upload", data=data)
+        r = client.post(f"{API_URI}/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""

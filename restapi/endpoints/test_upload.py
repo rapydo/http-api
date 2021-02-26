@@ -25,35 +25,42 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
+        def put(self, force: bool = False) -> Response:
+
+            # This is just to test the allowed exts without adding a new parameter..
+            if not force:
+                self.set_allowed_exts(["txt"])
+            response = self.upload(force=force, subfolder=Path("fixsubfolder"))
+            return response
+
+    class TestChunkedUpload(EndpointResource, Uploader):
+
+        labels = ["tests"]
+
+        @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            # forget the leading slash to test the automatic fix
-            path="tests/upload/<chunked>",
+            # forgot the leading slash to test the automatic fix
+            path="tests/chunkedupload",
             summary="Execute tests with the chunked uploader",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def put(self, chunked: str = None, force: bool = False) -> Response:
+        def put(self, force: bool = False) -> Response:
 
-            if chunked:
-                filename = "fixed.filename"
-                path = UPLOAD_PATH.joinpath("fixed")
-                completed, response = self.chunk_upload(path, filename)
+            filename = "fixed.filename"
+            path = UPLOAD_PATH.joinpath("fixed")
+            completed, response = self.chunk_upload(path, filename)
 
-                if completed:
-                    log.info("Upload completed")
+            if completed:
+                log.info("Upload completed")
 
-            else:
-                # This is just to test the allowed exts without adding a new parameter..
-                if not force:
-                    self.set_allowed_exts(["txt"])
-                response = self.upload(force=force, subfolder=Path("fixsubfolder"))
             return response
 
         @decorators.init_chunk_upload
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
-            # forget the leading slash to test the automatic fix
-            path="tests/upload",
+            # forgot the leading slash to test the automatic fix
+            path="tests/chunkedupload",
             summary="Initialize tests on chunked upload",
             description="Only enabled in testing mode",
             responses={200: "Schema retrieved", 201: "Upload initialized"},
