@@ -10,8 +10,8 @@ http://stackoverflow.com/a/9533843/2114395
 
 """
 
-import os
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 from flask import request
 from plumbum.cmd import file
@@ -30,10 +30,10 @@ class Uploader:
 
     allowed_exts: List[str] = []
 
-    def set_allowed_exts(self, exts):
+    def set_allowed_exts(self, exts: List[str]) -> None:
         self.allowed_exts = exts
 
-    def allowed_file(self, filename):
+    def allowed_file(self, filename: str) -> bool:
         if not self.allowed_exts:
             return True
         return (
@@ -41,34 +41,37 @@ class Uploader:
         )
 
     @staticmethod
-    def absolute_upload_file(filename, subfolder=None, onlydir=False):
+    def absolute_upload_file(
+        filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
+    ) -> Path:
+
+        if subfolder is None:
+            root_path = UPLOAD_PATH
+        else:
+            root_path = UPLOAD_PATH.joinpath(subfolder)
+            if not root_path.exists():
+                root_path.mkdir(parents=True, exist_ok=True)
+
+        if onlydir:
+            return root_path
 
         filename = secure_filename(filename)
-
-        if subfolder is not None:
-            filename = os.path.join(subfolder, filename)
-            subdir = os.path.join(UPLOAD_PATH, subfolder)
-            if not os.path.exists(subdir):  # pragma: no cover
-                os.makedirs(subdir)
-        abs_file = os.path.join(UPLOAD_PATH, filename)
-        if onlydir:
-            return os.path.dirname(abs_file)
-        return abs_file
+        return root_path.joinpath(filename)
 
     @staticmethod
-    def get_file_metadata(abs_file):
+    def get_file_metadata(abs_file: Path) -> Dict[str, str]:
         try:
             # Check the type
             # Example of output:
             # text/plain; charset=us-ascii
-            out = file["-ib", abs_file]().split(";")
+            out = file["-ib", abs_file.resolve()]().split(";")
             return {"type": out[0].strip(), "charset": out[1].split("=")[1].strip()}
         except Exception:
             log.warning("Unknown type for '{}'", abs_file)
             return {}
 
     # this method is used by b2stage and mistral
-    def upload(self, subfolder: Optional[str] = None, force: bool = False) -> Response:
+    def upload(self, subfolder: Optional[Path] = None, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
@@ -84,12 +87,12 @@ class Uploader:
         abs_file = Uploader.absolute_upload_file(fname, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
-        if os.path.exists(abs_file):
+        if abs_file.exists():
             if not force:
                 raise BadRequest(
                     f"File '{fname}' already exists, use force parameter to overwrite"
                 )
-            os.remove(abs_file)
+            abs_file.unlink()
             log.debug("Already exists, forced removal")
 
         # Save the file
@@ -101,7 +104,7 @@ class Uploader:
 
         # Check exists - but it is basicaly a test that cannot fail...
         # The has just been uploaded!
-        if not os.path.exists(abs_file):  # pragma: no cover
+        if not abs_file.exists():  # pragma: no cover
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################
@@ -120,20 +123,20 @@ class Uploader:
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
     # and with https://www.npmjs.com/package/ngx-uploadx and with
     def init_chunk_upload(
-        self, upload_dir: str, filename: str, force: bool = True
+        self, upload_dir: Path, filename: str, force: bool = True
     ) -> Response:
 
-        if not os.path.exists(upload_dir):  # pragma: no cover
-            os.makedirs(upload_dir)
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True, exist_ok=True)
 
         filename = secure_filename(filename)
 
-        file_path = os.path.join(upload_dir, filename)
+        file_path = upload_dir.joinpath(filename)
 
-        if os.path.exists(file_path):
+        if file_path.exists():
             log.warning("File already exists")
             if force:
-                os.remove(file_path)
+                file_path.unlink()
                 log.debug("Forced removal")
             else:
                 return EndpointResource.response(
@@ -195,7 +198,7 @@ class Uploader:
         return total_length, start, stop
 
     def chunk_upload(
-        self, upload_dir: str, filename: str, chunk_size: Optional[int] = None
+        self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
         filename = secure_filename(filename)
 
@@ -211,7 +214,7 @@ class Uploader:
         if chunk_size is None:
             chunk_size = 1048576
 
-        file_path = os.path.join(upload_dir, filename)
+        file_path = upload_dir.joinpath(filename)
         with open(file_path, "ab") as f:
             while True:
                 chunk = request.stream.read(chunk_size)

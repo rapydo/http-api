@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 from restapi import decorators
@@ -35,7 +36,8 @@ if TESTING:
 
             if chunked:
                 filename = "fixed.filename"
-                completed, response = self.chunk_upload(UPLOAD_PATH, filename)
+                path = UPLOAD_PATH.joinpath("fixed")
+                completed, response = self.chunk_upload(path, filename)
 
                 if completed:
                     log.info("Upload completed")
@@ -44,7 +46,7 @@ if TESTING:
                 # This is just to test the allowed exts without adding a new parameter..
                 if not force:
                     self.set_allowed_exts(["txt"])
-                response = self.upload(force=force)
+                response = self.upload(force=force, subfolder=Path("fixsubfolder"))
             return response
 
         @decorators.init_chunk_upload
@@ -59,4 +61,5 @@ if TESTING:
         def post(self, force: bool = False, **kwargs: Any) -> Response:
 
             filename = "fixed.filename"
-            return self.init_chunk_upload(UPLOAD_PATH, filename, force=force)
+            path = UPLOAD_PATH.joinpath("fixed")
+            return self.init_chunk_upload(path, filename, force=force)
