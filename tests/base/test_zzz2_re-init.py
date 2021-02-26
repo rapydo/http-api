@@ -37,6 +37,16 @@ def test_init() -> None:
 
         # sql = sqlalchemy.get_instance()
 
+    if Connector.check_availability("sqlalchemy"):
+        # Prevents errors like:
+        # sqlalchemy.exc.ResourceClosedError: This Connection is closed
+        Connector.disconnect_all()
+
+        # sql = sqlalchemy.get_instance()
+        # # Close previous connections, otherwise the new create_app will hang
+        # sql.session.remove()
+        # sql.session.close_all()
+
     create_app(mode=ServerModes.INIT)
 
     auth = Connector.get_authentication_instance()

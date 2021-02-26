@@ -98,7 +98,7 @@ def handle_response(response):
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
 
-    data = get_data_from_request()
+    data_string = get_data_from_request()
 
     url = obfuscate_query_parameters(request.url)
 
@@ -126,7 +126,7 @@ def handle_response(response):
         BaseAuthentication.get_remote_ip(),
         request.method,
         url,
-        data,
+        data_string,
         resp,
     )
 
