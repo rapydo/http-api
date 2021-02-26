@@ -1,11 +1,14 @@
 import abc
 from typing import Any, Dict, Tuple
 
+from flask import Flask
+
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import User
 
 Props = Dict[str, Any]
 FlaskRequest = Any
+FlaskApp = Flask
 
 
 class BaseCustomizer(metaclass=abc.ABCMeta):
