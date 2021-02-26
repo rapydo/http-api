@@ -93,7 +93,7 @@ class TestApp(BaseTests):
         pwd = faker.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
         ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
         assert ret_val
-        assert ret_text is None
+        assert ret_text == ""
 
         # How to retrieve a generic user?
         user = None
