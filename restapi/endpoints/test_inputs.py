@@ -30,9 +30,10 @@ if TESTING:
         # lowercase key without label defined. label will be key.title() in schema
         mystr = fields.Str(required=True, validate=validate.Length(min=4))
         # non-lowercase key without label defined. label will be == to key in schema
-        MYDATE = fields.DateTime(
+        MYDATE = fields.AwareDateTime(
             required=True,
             format=ISO8601UTC,
+            default_timezone=pytz.utc,
             validate=validate.Range(
                 max=datetime.now(pytz.utc).replace(hour=23, minute=59, second=59),
                 min=datetime(1900, 1, 1, tzinfo=pytz.utc),
