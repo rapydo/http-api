@@ -85,8 +85,9 @@ class TestUploadAndDownload(BaseTests):
         r = client.get(f"{API_URI}/tests/download/doesnotexist")
         assert r.status_code == 400
 
-        # no filename provided
-        r = client.get(f"{API_URI}/tests/download")
+        # this is a special case introduced for testing purpose
+        # this special file name will be converted to None into the endpoint
+        r = client.get(f"{API_URI}/tests/download/SPECIAL-VALUE-FOR-NONE")
         assert r.status_code == 400
 
         r = client.get(f"{API_URI}/tests/download/{self.fname}")

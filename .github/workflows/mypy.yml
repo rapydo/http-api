@@ -71,4 +71,5 @@ jobs:
           path: |
             index.txt
             index.html
+            mypy-html.css
             html

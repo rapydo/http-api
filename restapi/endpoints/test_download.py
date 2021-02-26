@@ -1,7 +1,8 @@
+from pathlib import Path
 from typing import Optional
 
 from restapi import decorators
-from restapi.config import TESTING, UPLOAD_PATH
+from restapi.config import TESTING
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.download import Downloader
@@ -15,14 +16,7 @@ if TESTING:
 
         @decorators.use_kwargs({"stream": fields.Bool()}, location="query")
         @decorators.endpoint(
-            # forget the leading slash to test the automatic fix
-            path="tests/download",
-            summary="Test missing filename",
-            description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
-        )
-        @decorators.endpoint(
-            # forget the leading slash to test the automatic fix
+            # forgot the leading slash to test the automatic fix
             path="tests/download/<fname>",
             summary="Execute tests with the downloader",
             description="Only enabled in testing mode",
@@ -32,10 +26,16 @@ if TESTING:
                 416: "Range Not Satisfiable",
             },
         )
-        def get(self, fname: Optional[str] = None, stream: bool = False) -> Response:
-
+        def get(self, fname: str, stream: bool = False) -> Response:
             if stream:
-                fpath = Uploader.absolute_upload_file(fname, subfolder=UPLOAD_PATH)
+                fpath = Uploader.absolute_upload_file(
+                    fname,
+                    # The same defined in test_upload
+                    subfolder=Path("fixsubfolder"),
+                )
                 return Downloader.send_file_streamed(fpath)
+
+            if fname == "SPECIAL-VALUE-FOR-NONE":
+                return Downloader.download(None)
 
             return Downloader.download(fname)

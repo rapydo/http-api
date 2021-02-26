@@ -2,6 +2,7 @@
 Download data from APIs
 """
 from mimetypes import MimeTypes
+from pathlib import Path
 from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
@@ -19,7 +20,7 @@ class Downloader:
     @staticmethod
     def download(
         filename: Optional[str] = None,
-        subfolder: Optional[str] = None,
+        subfolder: Optional[Path] = None,
         mime: Optional[str] = None,
     ) -> Response:
 
@@ -49,9 +50,11 @@ class Downloader:
     # this is good for large files
     # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
-    def send_file_streamed(path: str, mime: Optional[str] = None) -> Response:
+    def send_file_streamed(path: Path, mime: Optional[str] = None) -> Response:
         if mime is None:
-            mime_type = MimeTypes().guess_type(path)
+            # guess_type expects a str as argument because
+            # it is intended to be used with urls and not with paths
+            mime_type = MimeTypes().guess_type(str(path))
             mime = mime_type[0]
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
