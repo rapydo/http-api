@@ -99,7 +99,8 @@ class Uploader:
         try:
             myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
-        except Exception:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
+            log.error(e)
             raise ServiceUnavailable("Permission denied: failed to write the file")
 
         # Check exists - but it is basicaly a test that cannot fail...
