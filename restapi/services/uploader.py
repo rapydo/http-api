@@ -64,7 +64,7 @@ class Uploader:
             # Check the type
             # Example of output:
             # text/plain; charset=us-ascii
-            out = file["-ib", abs_file.resolve()]().split(";")
+            out = file["-ib", str(abs_file)]().split(";")
             return {"type": out[0].strip(), "charset": out[1].split("=")[1].strip()}
         except Exception:
             log.warning("Unknown type for '{}'", abs_file)
