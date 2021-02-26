@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Any, Dict, List, Optional, Union
 
 from celery import Celery
+from celery.app.task import Task
 
 from restapi.config import CUSTOM_PACKAGE
 from restapi.connectors import Connector
@@ -19,6 +20,7 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 class CeleryExt(Connector):
 
+    TaskType = Task
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
