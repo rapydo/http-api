@@ -113,6 +113,24 @@ class TestApp(BaseTests):
         assert ret_val
         assert ret_text == ""
 
+        password_with_name = [
+            name,
+            surname,
+            f"{faker.pystr()}{name}{faker.pystr()}"
+            f"{faker.pystr()}{surname}{faker.pystr()}"
+            f"{name}{faker.pyint(1, 99)}",
+        ]
+        log.warning("Debug code: Name Surname = {} {}", name, surname)
+        for p in password_with_name:
+            for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is to prevent failures for other reasons like length of chars
+                pp += "+ABCabc123!"
+                val, text = auth.verify_password_strength(
+                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
+                )
+                assert not val
+                assert text == "Password is too weak, can't contain your name"
+
         email_local = email.split("@")[0]
         password_with_email = [
             email,
@@ -131,24 +149,6 @@ class TestApp(BaseTests):
                 )
                 assert not val
                 assert txt == "Password is too weak, can't contain your email address"
-
-        password_with_name = [
-            name,
-            surname,
-            f"{faker.pystr()}{name}{faker.pystr()}"
-            f"{faker.pystr()}{surname}{faker.pystr()}"
-            f"{name}{faker.pyint(1, 99)}",
-        ]
-        log.warning("Debug code: Name Surname = {} {}", name, surname)
-        for p in password_with_name:
-            for pp in [p, p.lower(), p.upper(), p.title()]:
-                # This is to prevent failures for other reasons like length of chars
-                pp += "+ABCabc123!"
-                val, text = auth.verify_password_strength(
-                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
-                )
-                assert not val
-                assert text == "Password is too weak, can't contain your name"
 
         # Short names are not inspected for containing checks
         ret_val, ret_text = auth.verify_password_strength(
