@@ -123,7 +123,7 @@ class TestApp(BaseTests):
 
         for p in password_with_email:
             for pp in [p, p.lower(), p.upper(), p.title()]:
-                # This is to prevent faillures for other reasons like length of chars
+                # This is to prevent failures for other reasons like length of chars
                 pp += "ABCabc123!"
                 val, txt = auth.verify_password_strength(
                     pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
@@ -138,15 +138,23 @@ class TestApp(BaseTests):
             f"{faker.pystr()}{surname}{faker.pystr()}"
             f"{name}{faker.pyint(1, 99)}",
         ]
+        log.warning("Debug code: Name Surname = {} {}", name, surname)
         for p in password_with_name:
             for pp in [p, p.lower(), p.upper(), p.title()]:
-                # This is to prevent faillures for other reasons like length of chars
+                # This is to prevent failures for other reasons like length of chars
                 pp += "ABCabc123!"
                 val, text = auth.verify_password_strength(
                     pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
                 )
                 assert not val
                 assert text == "Password is too weak, can't contain your name"
+
+        # Short names are not inspected for containing checks
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd="Bob1234567!", old_pwd=old_pwd, email=email, name="Bob", surname=surname
+        )
+        assert ret_val
+        assert ret_text == ""
 
         user = auth.get_user(username=BaseAuthentication.default_user)
         pwd = faker.password(min_pwd_len - 1)
