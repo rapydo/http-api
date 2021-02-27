@@ -328,6 +328,24 @@ class BaseTests:
 
         return uuid, group_data
 
+    # Simple wrappers to ensure names and surnames longer than 3 characters
+    # Note: short names/surnamed are not verified for password strenght checks
+    @classmethod
+    def get_first_name(cls, faker: Faker) -> str:
+        name = faker.first_name()
+        if len(name) > 3:
+            # Please Faker, add some types hints!
+            return name  # type: ignore
+        return cls.get_first_name(faker)
+
+    @classmethod
+    def get_last_name(cls, faker: Faker) -> str:
+        surname = faker.last_name()
+        if len(surname) > 3:
+            # Please Faker, add some types hints!
+            return surname  # type: ignore
+        return cls.get_last_name(faker)
+
     @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:
         """

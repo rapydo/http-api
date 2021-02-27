@@ -25,23 +25,21 @@ class TestApp(BaseTests):
         # registration, missing information
         r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
         assert r.status_code == 400
+
         registration_data = {}
         registration_data["password"] = faker.password(5)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
+
         registration_data["email"] = BaseAuthentication.default_user
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
-        registration_data["name"] = faker.first_name()
-        while len(registration_data["name"]) < 3:
-            registration_data["name"] = faker.first_name()
 
+        registration_data["name"] = self.get_first_name(faker)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["surname"] = faker.last_name()
-        while len(registration_data["surname"]) < 3:
-            registration_data["surname"] = faker.last_name()
+        registration_data["surname"] = self.get_last_name(faker)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 

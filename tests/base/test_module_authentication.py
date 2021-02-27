@@ -55,8 +55,9 @@ class TestApp(BaseTests):
             return
 
         email = faker.ascii_email()
-        name = faker.first_name()
-        surname = faker.last_name()
+        # Ensure name and surname longer than 3
+        name = self.get_first_name(faker)
+        surname = self.get_last_name(faker)
         auth = Connector.get_authentication_instance()
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
