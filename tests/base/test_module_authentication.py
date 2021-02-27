@@ -54,46 +54,99 @@ class TestApp(BaseTests):
             log.warning("Skipping authentication test: service not available")
             return
 
+        email = faker.ascii_email()
+        name = faker.first_name()
+        surname = faker.last_name()
         auth = Connector.get_authentication_instance()
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
         pwd = faker.password(min_pwd_len - 1)
-        ret_val, ret_text = auth.verify_password_strength(pwd, pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "The new password cannot match the previous password"
 
         pwd = faker.password(min_pwd_len - 1)
         old_pwd = faker.password(min_pwd_len)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         error = f"Password is too short, use at least {min_pwd_len} characters"
         assert ret_text == error
 
         pwd = faker.password(min_pwd_len, low=False, up=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing lower case letters"
 
         pwd = faker.password(min_pwd_len, low=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing upper case letters"
 
         pwd = faker.password(min_pwd_len, low=True, up=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing numbers"
 
         pwd = faker.password(min_pwd_len, low=True, up=True, digits=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing special characters"
 
         pwd = faker.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert ret_val
         assert ret_text == ""
+
+        email_local = email.split("@")[0]
+        password_with_email = [
+            email,
+            email.replace(".", "").replace("_", ""),
+            email_local,
+            email_local.replace(".", "").replace("_", ""),
+            f"{faker.pystr()}{email_local}{faker.pystr()}",
+        ]
+
+        for p in password_with_email:
+            for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is to prevent faillures for other reasons like length of chars
+                pp += "ABCabc123!"
+                val, txt = auth.verify_password_strength(
+                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
+                )
+                assert not val
+                assert txt == "Password is too weak, can't contain your email address"
+
+        password_with_name = [
+            name,
+            surname,
+            f"{faker.pystr()}{name}{faker.pystr()}"
+            f"{faker.pystr()}{surname}{faker.pystr()}"
+            f"{name}{faker.pyint(1, 99)}",
+        ]
+        for p in password_with_name:
+            for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is to prevent faillures for other reasons like length of chars
+                pp += "ABCabc123!"
+                val, text = auth.verify_password_strength(
+                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
+                )
+                assert not val
+                assert text == "Password is too weak, can't contain your name"
 
         # How to retrieve a generic user?
         user = None

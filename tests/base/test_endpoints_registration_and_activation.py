@@ -91,6 +91,28 @@ class TestApp(BaseTests):
         m = "Password is too weak, missing special characters"
         assert self.get_content(r) == m
 
+        registration_data["password"] = registration_data["email"].split("@")[0]
+        registration_data["password"] += "DEFghi345!"
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your email address"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = registration_data["name"] + "LMNopq678="
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your name"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = registration_data["surname"] + "LMNopq678="
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your name"
+        assert self.get_content(r) == m
+
         registration_data["password"] = faker.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)

@@ -46,7 +46,11 @@ if Connector.check_availability("smtp"):
             if self.auth.VERIFY_PASSWORD_STRENGTH:
 
                 check, msg = self.auth.verify_password_strength(
-                    kwargs.get("password"), None
+                    pwd=kwargs.get("password"),
+                    old_pwd=None,
+                    email=email,
+                    name=kwargs.get("name"),
+                    surname=kwargs.get("surname"),
                 )
 
                 if not check:

@@ -688,7 +688,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
     def verify_password_strength(
-        self, pwd: str, old_pwd: Optional[str]
+        self, pwd: str, old_pwd: Optional[str], email: str, name: str, surname: str
     ) -> Tuple[bool, str]:
 
         if old_pwd:
@@ -735,7 +735,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if self.VERIFY_PASSWORD_STRENGTH:
 
-            check, msg = self.verify_password_strength(new_password, password)
+            check, msg = self.verify_password_strength(
+                pwd=new_password,
+                old_pwd=password,
+                email=user.email,
+                name=user.name,
+                surname=user.surname,
+            )
 
             if not check:
                 raise Conflict(msg)
