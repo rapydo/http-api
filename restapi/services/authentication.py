@@ -714,6 +714,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not re.search(special_characters, pwd):
             return False, "Password is too weak, missing special characters"
 
+        p_lower = pwd.lower()
+        if name.lower() in p_lower:
+            return False, "Password is too weak, can't contain your name"
+
+        if surname.lower() in p_lower:
+            return False, "Password is too weak, can't contain your name"
+
+        cleaner = r"[\.|_]"
+        email_clean = re.sub(cleaner, "", email.lower())
+        p_clean = re.sub(cleaner, "", p_lower.lower())
+
+        if email_clean in p_clean:
+            return False, "Password is too weak, can't contain your email address"
+
+        email_local = email_clean.split("@")[0]
+        if email_local in p_clean:
+            return False, "Password is too weak, can't contain your email address"
+
         return True, ""
 
     def change_password(
