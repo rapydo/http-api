@@ -18,7 +18,7 @@ def test_init() -> None:
         log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
         return
 
-    # Always enable during core tests
+    # Always enabled during core tests
     if not Connector.check_availability("authentication"):  # pragma: no cover
         log.warning("Skipping authentication test: service not available")
         return

@@ -49,7 +49,7 @@ def verify_token_is_not_valid(
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -125,7 +125,7 @@ class TestApp(BaseTests):
         for p in password_with_email:
             for pp in [p, p.lower(), p.upper(), p.title()]:
                 # This is to prevent failures for other reasons like length of chars
-                pp += "ABCabc123!"
+                pp += "+ABCabc123!"
                 val, txt = auth.verify_password_strength(
                     pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
                 )
@@ -143,7 +143,7 @@ class TestApp(BaseTests):
         for p in password_with_name:
             for pp in [p, p.lower(), p.upper(), p.title()]:
                 # This is to prevent failures for other reasons like length of chars
-                pp += "ABCabc123!"
+                pp += "+ABCabc123!"
                 val, text = auth.verify_password_strength(
                     pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
                 )
@@ -264,7 +264,7 @@ class TestApp(BaseTests):
 
     def test_ip_management(self) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -281,7 +281,7 @@ class TestApp(BaseTests):
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -396,7 +396,7 @@ class TestApp(BaseTests):
 
     def test_users_groups_roles(self, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
