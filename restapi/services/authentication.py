@@ -716,20 +716,19 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         p_lower = pwd.lower()
         if name.lower() in p_lower:
+            log.critical("DEBUG CODE: {} contains {}", pwd, name)
             return False, "Password is too weak, can't contain your name"
 
         if surname.lower() in p_lower:
+            log.critical("DEBUG CODE: {} contains {}", pwd, surname)
             return False, "Password is too weak, can't contain your name"
 
         cleaner = r"[\.|_]"
-        email_clean = re.sub(cleaner, "", email.lower())
+        email_clean = re.sub(cleaner, "", email.lower().split("@")[0])
         p_clean = re.sub(cleaner, "", p_lower.lower())
 
         if email_clean in p_clean:
-            return False, "Password is too weak, can't contain your email address"
-
-        email_local = email_clean.split("@")[0]
-        if email_local in p_clean:
+            log.critical("DEBUG CODE: {} contains {}", pwd, email)
             return False, "Password is too weak, can't contain your email address"
 
         return True, ""
