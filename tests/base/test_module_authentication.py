@@ -148,8 +148,7 @@ class TestApp(BaseTests):
                 assert not val
                 assert text == "Password is too weak, can't contain your name"
 
-        # How to retrieve a generic user?
-        user = None
+        user = auth.get_user(username=BaseAuthentication.default_user)
         pwd = faker.password(min_pwd_len - 1)
 
         try:
