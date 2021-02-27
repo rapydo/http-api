@@ -33,10 +33,15 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
         registration_data["name"] = faker.first_name()
+        while len(registration_data["name"]) < 3:
+            registration_data["name"] = faker.first_name()
+
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
         registration_data["surname"] = faker.last_name()
+        while len(registration_data["surname"]) < 3:
+            registration_data["surname"] = faker.last_name()
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
