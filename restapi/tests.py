@@ -331,20 +331,32 @@ class BaseTests:
     # Simple wrappers to ensure names and surnames longer than 3 characters
     # Note: short names/surnamed are not verified for password strenght checks
     @classmethod
-    def get_first_name(cls, faker: Faker) -> str:
-        name = faker.first_name()
+    def get_first_name(cls, faker: Faker, recursion: int = 0) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        name = str(faker.first_name())
         if len(name) > 3:
-            # Please Faker, add some types hints!
-            return name  # type: ignore
-        return cls.get_first_name(faker)
+            return name
+
+        # Probably this Faker locale only has very short names.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return name * 4
+        return cls.get_first_name(faker, recursion=recursion + 1)
 
     @classmethod
-    def get_last_name(cls, faker: Faker) -> str:
-        surname = faker.last_name()
+    def get_last_name(cls, faker: Faker, recursion: int = 0) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        surname = str(faker.last_name())
         if len(surname) > 3:
             # Please Faker, add some types hints!
-            return surname  # type: ignore
-        return cls.get_last_name(faker)
+            return surname
+        # Probably this Faker locale only has very short names.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return surname * 4
+        return cls.get_last_name(faker, recursion=recursion + 1)
 
     @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:
