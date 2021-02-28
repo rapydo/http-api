@@ -359,6 +359,21 @@ class BaseTests:
         return cls.get_last_name(faker, recursion=recursion + 1)
 
     @classmethod
+    def get_random_email(cls, faker: Faker, name: str, surname: str) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        email = str(faker.ascii_email())
+
+        # This email contains the name, re-sampling again
+        if name.lower() in email.lower():
+            return cls.get_random_email(faker, name, surname)
+
+        # This email contains the surname, re-sampling again
+        if surname.lower() in email.lower():
+            return cls.get_random_email(faker, surname, surname)
+
+        return email
+
+    @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema

@@ -54,10 +54,12 @@ class TestApp(BaseTests):
             log.warning("Skipping authentication test: service not available")
             return
 
-        email = faker.ascii_email()
         # Ensure name and surname longer than 3
         name = self.get_first_name(faker)
         surname = self.get_last_name(faker)
+        # Ensure an email not containing name and surname
+        email = self.get_random_email(faker, name, surname)
+
         auth = Connector.get_authentication_instance()
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)

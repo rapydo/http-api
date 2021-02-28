@@ -26,6 +26,12 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
         assert r.status_code == 400
 
+        # Ensure name and surname longer than 3
+        name = self.get_first_name(faker)
+        surname = self.get_last_name(faker)
+        # Ensure an email not containing name and surname
+        email = self.get_random_email(faker, name, surname)
+
         registration_data = {}
         registration_data["password"] = faker.password(5)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
@@ -35,11 +41,11 @@ class TestApp(BaseTests):
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["name"] = self.get_first_name(faker)
+        registration_data["name"] = name
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["surname"] = self.get_last_name(faker)
+        registration_data["surname"] = surname
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
@@ -59,7 +65,7 @@ class TestApp(BaseTests):
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
-        registration_data["email"] = faker.ascii_email()
+        registration_data["email"] = email
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
