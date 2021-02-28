@@ -79,7 +79,7 @@ setup(
         "pytest-timeout==1.4.2",
         "schemathesis==3.1.0",
         "Faker==6.5.0",
-        "Telethon==1.19.5",
+        "Telethon==1.20",
     ],
     classifiers=[
         "Programming Language :: Python",
