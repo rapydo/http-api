@@ -109,6 +109,9 @@ if Connector.check_availability("smtp"):
 
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
+
+            log.critical("DEBUG CODE: {}", token)
+
             try:
                 unpacked_token = self.auth.verify_token(
                     token, raiseErrors=True, token_type=self.auth.PWD_RESET
