@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Dict, TypedDict, Union
+from typing import Dict, Type, TypedDict, Union
 
 from restapi.connectors import Connector
+from restapi.customizer import FlaskRequest
 from restapi.models import (
     ISO8601UTC,
     TOTP,
@@ -123,7 +124,7 @@ class NewPassword(Schema):
 # They will be executed a runtime
 
 
-def admin_user_output(many=True):
+def admin_user_output(many: bool = True) -> Schema:
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
 
@@ -150,12 +151,12 @@ def admin_user_output(many=True):
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes, name="UserData")
-    return schema(many=many)
+    return schema(many=many)  # type: ignore
 
 
 # Can't use request.method because it is not passed at loading time, i.e. the Specs will
 # be created with empty request
-def admin_user_input(request, is_post):
+def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
@@ -232,15 +233,15 @@ def admin_user_input(request, is_post):
     return Schema.from_dict(attributes, name="UserDefinition")
 
 
-def admin_user_post_input(request):
+def admin_user_post_input(request: FlaskRequest) -> Type[Schema]:
     return admin_user_input(request, True)
 
 
-def admin_user_put_input(request):
+def admin_user_put_input(request: FlaskRequest) -> Type[Schema]:
     return admin_user_input(request, False)
 
 
-def admin_group_input(request):
+def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
@@ -264,7 +265,7 @@ def admin_group_input(request):
     return Schema.from_dict(attributes, name="GroupDefinition")
 
 
-def profile_patch_input():
+def profile_patch_input() -> Schema:
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
 
@@ -278,10 +279,10 @@ def profile_patch_input():
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes, name="UserProfileEdit")
-    return schema()
+    return schema()  # type: ignore
 
 
-def profile_output():
+def profile_output() -> Schema:
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
 
@@ -313,10 +314,10 @@ def profile_output():
         attributes.update(custom_fields)
 
     schema = Schema.from_dict(attributes, name="UserProfile")
-    return schema()
+    return schema()  # type: ignore
 
 
-def user_registration_input(request):
+def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}

@@ -1,6 +1,7 @@
 import email
 import json
 from smtplib import SMTPException, SMTPServerDisconnected
+from typing import Tuple
 
 from restapi.utilities.logs import log
 
@@ -14,7 +15,7 @@ class SMTP:
         log.info("Mail mock initialized with host = {}", host)
         self.disconnected = False
 
-    def __enter__(self):  # pragma: no cover
+    def __enter__(self) -> "SMTP":  # pragma: no cover
         return self
 
     def __exit__(self, _type, value, tb):  # pragma: no cover
@@ -32,12 +33,12 @@ class SMTP:
     def login(user, pwd):
         log.info("Mail mock login ok")
 
-    def quit(self):
+    def quit(self) -> None:
         self.disconnected = True
         log.info("Mail mock sent quit message")
 
     @staticmethod
-    def ehlo():
+    def ehlo() -> None:
         log.info("Mail mock sent ehlo message")
 
     @staticmethod
@@ -78,7 +79,7 @@ class SMTP:
 
         log.info("Mail body written in {}", fpath)
 
-    def noop(self):
+    def noop(self) -> Tuple[int]:
         if self.disconnected:
             raise SMTPServerDisconnected  # pragma: no cover
 

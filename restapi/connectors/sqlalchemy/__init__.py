@@ -25,10 +25,10 @@ from sqlalchemy.exc import (
     OperationalError,
     ProgrammingError,
 )
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -198,7 +198,7 @@ class SQLAlchemy(Connector):
         )
         # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (OperationalError,)
 
     def connect(self, **kwargs):
@@ -268,7 +268,7 @@ class SQLAlchemy(Connector):
         return self
 
     @property
-    def session(self):
+    def session(self) -> Session:
         return self.db.session
 
     def disconnect(self) -> None:
@@ -318,7 +318,7 @@ class SQLAlchemy(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     # Also used by POST user

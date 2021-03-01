@@ -26,9 +26,8 @@ from neomodel.exceptions import (
 )
 from neomodel.match import NodeSet
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.exceptions import (
-    BadRequest,
     DatabaseDuplicatedEntry,
     DatabaseMissingRequiredProperty,
     RestApiException,
@@ -113,7 +112,7 @@ class NeoModel(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
 
         return (
             neobolt_ServiceUnavailable,
@@ -124,7 +123,7 @@ class NeoModel(Connector):
             # Raised here:
             # https://github.com/neo4j/neo4j-python-driver/blob/d36334e80a66d57b32621d319032751d2204ef67/neo4j/addressing.py#L112
             ValueError,
-        )
+        )  # type: ignore
 
     def connect(self, **kwargs):
 
@@ -240,7 +239,7 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     def get_user(

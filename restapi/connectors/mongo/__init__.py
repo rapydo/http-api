@@ -9,7 +9,7 @@ from pymodm.base.models import TopLevelMongoModel
 from pymodm.errors import ValidationError
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.exceptions import (
     BadRequest,
     DatabaseDuplicatedEntry,
@@ -94,7 +94,7 @@ class MongoExt(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (ServerSelectionTimeoutError,)
 
     @staticmethod
@@ -161,7 +161,7 @@ class MongoExt(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     # Also used by POST user

@@ -17,7 +17,7 @@ BIND_INTERFACE = "0.0.0.0"
 
 
 @click.group()
-def cli():  # pragma: no cover
+def cli() -> None:  # pragma: no cover
     click.echo("*** RESTful HTTP API ***")
 
 
@@ -35,14 +35,14 @@ def main(args):  # pragma: no cover
     fg_cli.main(**options)
 
 
-def initializing():
+def initializing() -> bool:
 
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
 
 
 # Too dangerous to launch it during tests... skipping tests
 @cli.command()
-def launch():  # pragma: no cover
+def launch() -> None:  # pragma: no cover
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
@@ -126,7 +126,7 @@ def init(wait, force_user, force_group):
 
 
 @cli.command()
-def wait():
+def wait() -> None:
     """Wait critical service(s) startup"""
     mywait()
 
@@ -146,7 +146,7 @@ def get_service_address(variables, host_var, port_var, service):
     return host, int(port)
 
 
-def mywait():
+def mywait() -> None:
     """
     Wait for a service on his host:port configuration
     basing the check on a socket connection.
@@ -199,7 +199,7 @@ def mywait():
 # Too dangerous to launch it during tests... skipping tests
 @cli.command()
 @click.confirmation_option(help="Are you sure you want to drop data?")
-def clean():  # pragma: no cover
+def clean() -> None:  # pragma: no cover
     """Destroy current services data"""
 
     from restapi.server import ServerModes, create_app
@@ -212,7 +212,7 @@ def clean():  # pragma: no cover
 
 
 @cli.command()
-def forced_clean():  # pragma: no cover
+def forced_clean() -> None:  # pragma: no cover
     """DANGEROUS: Destroy current data without asking yes/no """
 
     from restapi.server import ServerModes, create_app
@@ -297,7 +297,7 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
 
 
 @cli.command()
-def bot():
+def bot() -> None:
     # as is required to prevent name collision with the function bot()
     from restapi.services.telegram import bot as telegram_bot
 
@@ -307,7 +307,7 @@ def bot():
 
 
 @cli.command()
-def clearcache():
+def clearcache() -> None:
     from restapi.server import create_app
     from restapi.services.cache import Cache
 

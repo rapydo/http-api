@@ -17,7 +17,7 @@ from pika.exceptions import (
 )
 from requests.auth import HTTPBasicAuth
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
@@ -28,7 +28,7 @@ class RabbitExt(Connector):
         self.connection: Optional[pika.BlockingConnection] = None
         super().__init__()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         # Includes:
         #   AuthenticationError,
         #   ProbableAuthenticationError,
@@ -38,7 +38,7 @@ class RabbitExt(Connector):
             AMQPConnectionError,
             # Includes failures in name resolution
             socket.gaierror,
-        )
+        )  # type: ignore
 
     def connect(self, **kwargs):
 
@@ -323,7 +323,7 @@ class RabbitExt(Connector):
 
         return False
 
-    def get_channel(self):
+    def get_channel(self) -> pika.Channel:
         """
         Return existing channel (if healthy) or create and
         return new one.

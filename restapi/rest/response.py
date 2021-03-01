@@ -2,6 +2,7 @@ import gzip
 import sys
 import time
 from io import BytesIO
+from typing import List
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
@@ -138,7 +139,7 @@ class ResponseMaker:
     # Have a look here: (from flask import request)
     # request.user_agent.browser
     @staticmethod
-    def get_accepted_formats():
+    def get_accepted_formats() -> List[str]:
         """
         Possible outputs:
         '*/*'

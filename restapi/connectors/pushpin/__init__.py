@@ -3,7 +3,7 @@ from typing import Optional, Union
 from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.utilities.logs import log
 
 
@@ -12,8 +12,8 @@ class ServiceUnavailable(BaseException):
 
 
 class PushpinExt(Connector):
-    def get_connection_exception(self):
-        return ServiceUnavailable
+    def get_connection_exception(self) -> ExceptionsList:
+        return (ServiceUnavailable,)
 
     def connect(self, **kwargs):
 

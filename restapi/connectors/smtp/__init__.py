@@ -6,7 +6,7 @@ from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnect
 from typing import List, Optional, Union
 
 from restapi.config import TESTING
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
 # mypy: ignore-errors
@@ -27,7 +27,7 @@ class Mail(Connector):
         # This way the send method will be able to use variabiles overridden in connect
         self.instance_variables = self.variables.copy()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):

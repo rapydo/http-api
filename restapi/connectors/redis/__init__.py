@@ -3,7 +3,7 @@ from typing import Optional, Union
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
 # from restapi.utilities.logs import log
@@ -13,7 +13,7 @@ class RedisExt(Connector):
     def __init__(self) -> None:
         super().__init__()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return None
 
     def connect(self, **kwargs):

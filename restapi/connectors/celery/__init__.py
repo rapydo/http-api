@@ -7,7 +7,7 @@ from celery import Celery
 from celery.app.task import Task
 
 from restapi.config import CUSTOM_PACKAGE
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.connectors.smtp.notifications import send_celery_error_notification
 from restapi.env import Env
 from restapi.utilities import print_and_exit
@@ -64,7 +64,7 @@ class CeleryExt(Connector):
 
         return decorator
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return None
 
     @staticmethod

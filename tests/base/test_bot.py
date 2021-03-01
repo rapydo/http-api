@@ -47,7 +47,7 @@ def test_bot() -> None:
         messages = await client.get_messages(botname)
         return messages[0].message
 
-    async def test():
+    async def test() -> None:
         client = TelegramClient(StringSession(session_str), api_id, api_hash)
         await client.start()
 

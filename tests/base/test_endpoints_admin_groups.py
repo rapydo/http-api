@@ -113,7 +113,7 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
-    def test_events_file(self):
+    def test_events_file(self) -> None:
 
         events = self.get_last_events(4, filters={"target_type": "Group"})
 

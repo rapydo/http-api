@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType, TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 # mypy: ignore-errors
 from flask import Flask
@@ -35,6 +35,8 @@ NO_AUTH = "NO_AUTHENTICATION"
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
+
+ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -117,9 +119,7 @@ class Connector(metaclass=abc.ABCMeta):
         return False  # pragma: no cover
 
     @abc.abstractmethod
-    def get_connection_exception(
-        self,
-    ) -> Optional[Tuple[Type[BaseException]]]:  # pragma: no cover
+    def get_connection_exception(self) -> ExceptionsList:  # pragma: no cover
         return None
 
     @abc.abstractmethod

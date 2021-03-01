@@ -13,13 +13,7 @@ from attr import s as ClassOfAttributes
 from flask_restful import Resource
 
 from restapi import decorators
-from restapi.config import (
-    ABS_RESTAPI_PATH,
-    API_URL,
-    BASE_URLS,
-    CONF_PATH,
-    CUSTOM_PACKAGE,
-)
+from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.utilities import print_and_exit
@@ -47,21 +41,21 @@ class EndpointElements:
 
 
 class EndpointsLoader:
-    def __init__(self):
+    def __init__(self) -> None:
 
         # Used by server.py to load endpoints definitions
-        self.endpoints = []
+        self.endpoints: List[EndpointElements] = []
         # Used by server.py to remove unmapped methods
-        self.uri2methods = {}
+        self.uri2methods: Dict[str, List[str]] = {}
         # Used by server.py to configure ApiSpec
-        self.tags = []
+        self.tags: List[Dict[str, str]] = []
 
         # Used by swagger specs endpoints to show authentication info
-        self.authenticated_endpoints = {}
+        self.authenticated_endpoints: Dict[str, Dict[str, bool]] = {}
         # Used by swagger spec endpoint to remove private endpoints from public requests
-        self.private_endpoints = {}
+        self.private_endpoints: Dict[str, Dict[str, bool]] = {}
 
-        self._used_tags = set()
+        self._used_tags: Set[str] = set()
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
@@ -85,7 +79,7 @@ class EndpointsLoader:
 
         return configuration
 
-    def load_endpoints(self):
+    def load_endpoints(self) -> None:
 
         # core endpoints folder (rapydo/http-api)
         self.load_endpoints_folder(ABS_RESTAPI_PATH)
@@ -268,8 +262,10 @@ class EndpointsLoader:
             self.endpoints.append(endpoint)
 
     @staticmethod
-    def remove_unused_tags(all_tags, used_tags):
-        tags = []
+    def remove_unused_tags(
+        all_tags: Dict[str, str], used_tags: Set[str]
+    ) -> List[Dict[str, str]]:
+        tags: List[Dict[str, str]] = []
         for tag, desc in all_tags.items():
             if tag not in used_tags:  # pragma: no cover
                 log.debug("Skipping unsed tag: {}", tag)
@@ -277,7 +273,7 @@ class EndpointsLoader:
             tags.append({"name": tag, "description": desc})
         return tags
 
-    def detect_endpoints_shadowing(self):
+    def detect_endpoints_shadowing(self) -> None:
         # Verify mapping duplication or shadowing
         # Example of shadowing:
         # /xyz/<variable>
@@ -287,11 +283,11 @@ class EndpointsLoader:
         classes: Dict[str, Dict[str, Type[Resource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
-            for method, uris in endpoint.methods.items():
+            for method, tmp_uris1 in endpoint.methods.items():
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})
 
-                for uri in uris:
+                for uri in tmp_uris1:
                     if uri in mappings[method]:  # pragma: no cover
                         log.warning(
                             "Endpoint redefinition: {} {} used from both {} and {}",
@@ -305,9 +301,9 @@ class EndpointsLoader:
                         classes[method][uri] = endpoint.cls
 
         # Detect endpoints swadowing
-        for method, uris in mappings.items():
-            for idx1, u1 in enumerate(uris):
-                for idx2, u2 in enumerate(uris):
+        for method, tmp_uris2 in mappings.items():
+            for idx1, u1 in enumerate(tmp_uris2):
+                for idx2, u2 in enumerate(tmp_uris2):
                     # Just skip checks of an element with it-self (same index)
                     # or elements already verified (idx2 < idx1)
                     if idx2 <= idx1:
