@@ -26,10 +26,11 @@ if TESTING:
         )
         def get(self) -> Response:
             user = self.get_user()
-
-            resp = {}
-            resp["token"] = self.get_token()
-            resp["user"] = user.email
+            email = user.email if user else "N/A"
+            resp = {
+                "token": self.get_token(),
+                "user": email,
+            }
             return self.response(resp)
 
     class TestOptionalAuthentication(EndpointResource):
@@ -62,9 +63,11 @@ if TESTING:
         def get(self) -> Response:
             user = self.get_user()
 
-            resp = {}
-            resp["token"] = self.get_token()
-            resp["user"] = user.email
+            email = user.email if user else "N/A"
+            resp = {
+                "token": self.get_token(),
+                "user": email,
+            }
             return self.response(resp)
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
@@ -95,10 +98,13 @@ if TESTING:
         )
         def get(self) -> Response:
 
-            resp = {}
-            resp["token"] = self.get_token()
             user = self.get_user()
-            resp["user"] = user.email
+            email = user.email if user else "N/A"
+
+            resp = {
+                "token": self.get_token(),
+                "user": email,
+            }
 
             return self.response(resp)
 

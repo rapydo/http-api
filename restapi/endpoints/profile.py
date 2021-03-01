@@ -2,6 +2,7 @@ from typing import Any, Optional
 
 from restapi import decorators
 from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
+from restapi.exceptions import ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -22,6 +23,11 @@ class Profile(EndpointResource):
     def get(self) -> Response:
 
         user = self.get_user()
+
+        # Can't happen since auth is required
+        if user is None:  # pragma: no cover
+            raise ServiceUnavailable("Unexpected internal error")
+
         data = {
             "uuid": user.uuid,
             "email": user.email,
@@ -63,6 +69,10 @@ class Profile(EndpointResource):
         """ Update password for current user """
 
         user = self.get_user()
+
+        # Can't happen since auth is required
+        if user is None:  # pragma: no cover
+            raise ServiceUnavailable("Unexpected internal error")
 
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             self.auth.verify_totp(user, totp_code)

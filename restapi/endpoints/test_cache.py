@@ -84,7 +84,9 @@ if TESTING:
         def get(self) -> Response:
 
             TestAuthCache.counter += 1
-            return self.response((self.get_user().uuid, TestAuthCache.counter))
+            user = self.get_user()
+            uuid = user.uuid if user else "N/A"
+            return self.response((uuid, TestAuthCache.counter))
 
     class TestOptionalAuthCache(EndpointResource):
         """
@@ -141,7 +143,9 @@ if TESTING:
         def get(self) -> Response:
 
             TestParamAuthCache.counter += 1
-            return self.response((self.get_user().uuid, TestParamAuthCache.counter))
+            user = self.get_user()
+            uuid = user.uuid if user else "N/A"
+            return self.response((uuid, TestParamAuthCache.counter))
 
     class TestOptionalParamAuthCache(EndpointResource):
         """

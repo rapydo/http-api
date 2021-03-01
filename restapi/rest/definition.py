@@ -47,7 +47,7 @@ class EndpointResource(MethodResource, Resource):
     def get_token(self) -> Optional[str]:
         return self._unpacked_token
 
-    def get_user(self):
+    def get_user(self) -> Optional[User]:
         return self._unpacked_user
 
     # Deprecated since 1.1
