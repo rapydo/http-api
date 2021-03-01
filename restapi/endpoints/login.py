@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pytz
 
 from restapi import decorators
 from restapi.endpoints.schemas import Credentials
-from restapi.exceptions import Forbidden
 from restapi.rest.definition import EndpointResource, Response
-from restapi.utilities.time import EPOCH, get_now
 
 
 class Login(EndpointResource):
@@ -49,7 +47,7 @@ class Login(EndpointResource):
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
 
             if totp_code is None:
-                message = self.check_password_validity(
+                message = self.auth.check_password_validity(
                     user,
                     totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
                 )
@@ -58,7 +56,7 @@ class Login(EndpointResource):
                     "You do not provided a valid verification code"
                 )
                 if message["errors"]:
-                    raise Forbidden(message)
+                    return self.response(message, code=403)
 
             self.auth.verify_totp(user, totp_code)
 
@@ -74,11 +72,11 @@ class Login(EndpointResource):
                 password = new_password
                 token, payload, user = self.auth.make_login(username, password)
 
-        message = self.check_password_validity(
+        message = self.auth.check_password_validity(
             user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
         )
         if message["errors"]:
-            raise Forbidden(message)
+            return self.response(message, code=403)
 
         # Everything is ok, let's save authentication information
 
@@ -91,39 +89,3 @@ class Login(EndpointResource):
         self.auth.flush_failed_logins(username)
 
         return self.response(token)
-
-    def check_password_validity(self, user, totp_authentication):
-
-        # ##################################################
-        # Check if something is missing in the authentication and ask additional actions
-        # raises exceptions in case of errors
-
-        message: Dict[str, List[str]] = {"actions": [], "errors": []}
-        last_pwd_change = user.last_password_change
-        if last_pwd_change is None or last_pwd_change == 0:
-            last_pwd_change = EPOCH
-
-        if self.auth.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
-
-            message["actions"].append("FIRST LOGIN")
-            message["errors"].append("Please change your temporary password")
-
-            if totp_authentication:
-
-                message["qr_code"] = [self.auth.get_qrcode(user)]
-
-        elif self.auth.MAX_PASSWORD_VALIDITY:
-
-            valid_until = last_pwd_change + self.auth.MAX_PASSWORD_VALIDITY
-
-            # offset-naive datetime to compare with MySQL
-            now = get_now(last_pwd_change.tzinfo)
-
-            expired = last_pwd_change == EPOCH or valid_until < now
-
-            if expired:
-
-                message["actions"].append("PASSWORD EXPIRED")
-                message["errors"].append("Your password is expired, please change it")
-
-        return message

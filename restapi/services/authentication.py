@@ -37,7 +37,7 @@ from restapi.exceptions import (
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
-from restapi.utilities.time import get_now
+from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -781,6 +781,44 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 log.critical("Failed to invalidate token {}", e)
 
         return True
+
+    def check_password_validity(
+        self, user: User, totp_authentication: bool
+    ) -> Dict[str, List[str]]:
+
+        # ##################################################
+        # Check if something is missing in the authentication and ask additional actions
+        # raises exceptions in case of errors
+
+        message: Dict[str, List[str]] = {"actions": [], "errors": []}
+        last_pwd_change = user.last_password_change
+        if last_pwd_change is None or last_pwd_change == 0:
+            last_pwd_change = EPOCH
+
+        if self.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
+
+            message["actions"].append("FIRST LOGIN")
+            message["errors"].append("Please change your temporary password")
+
+            if totp_authentication:
+
+                message["qr_code"] = [self.get_qrcode(user)]
+
+        elif self.MAX_PASSWORD_VALIDITY:
+
+            valid_until = last_pwd_change + self.MAX_PASSWORD_VALIDITY
+
+            # offset-naive datetime to compare with MySQL
+            now = get_now(last_pwd_change.tzinfo)
+
+            expired = last_pwd_change == EPOCH or valid_until < now
+
+            if expired:
+
+                message["actions"].append("PASSWORD EXPIRED")
+                message["errors"].append("Your password is expired, please change it")
+
+        return message
 
     @classmethod
     def verify_blocked_username(cls, username: str) -> None:
