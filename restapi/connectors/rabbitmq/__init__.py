@@ -313,27 +313,22 @@ class RabbitExt(Connector):
 
     def get_channel(self) -> pika.channel.Channel:
         """
-        Return existing channel (if healthy) or create and
-        return new one.
-
-        :return: An healthy channel.
-        :raises: AttributeError if the connection is None.
+        Return existing channel (if healthy) or create and return new one
         """
 
         if not self.connection:  # pragma: no cover
             raise ServiceUnavailable(f"Service {self.name} is not available")
 
-        if self.channel is None:
-            log.debug("Creating new channel.")
-            self.channel = self.connection.channel()
-            self.channel.confirm_delivery()
+        # This workflow is to convert an Optional[Channel] into a Channel
+        if self.channel is None or self.channel.is_closed:
+            log.debug("Creating channel")
+            channel = self.connection.channel()
+            channel.confirm_delivery()
 
-        elif self.channel.is_closed:
-            log.debug("Recreating channel.")
-            self.channel = self.connection.channel()
-            self.channel.confirm_delivery()
-
-        return self.channel
+            self.channel = channel
+            return channel
+        else:
+            return self.channel
 
 
 instance = RabbitExt()
