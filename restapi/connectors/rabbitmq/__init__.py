@@ -131,8 +131,7 @@ class RabbitExt(Connector):
     def exchange_exists(self, exchange: str) -> bool:
         channel = self.get_channel()
         try:
-            out = channel.exchange_declare(exchange=exchange, passive=True)
-            log.debug(out)
+            channel.exchange_declare(exchange=exchange, passive=True)
             return True
         except ChannelClosedByBroker as e:
             log.error(e)
@@ -141,22 +140,19 @@ class RabbitExt(Connector):
     def create_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
-        out = channel.exchange_declare(
+        channel.exchange_declare(
             exchange=exchange, exchange_type="direct", durable=True, auto_delete=False
         )
-        log.debug(out)
 
     def delete_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
-        out = channel.exchange_delete(exchange, if_unused=False)
-        log.debug(out)
+        channel.exchange_delete(exchange, if_unused=False)
 
     def queue_exists(self, queue: str) -> bool:
         channel = self.get_channel()
         try:
-            out = channel.queue_declare(queue=queue, passive=True)
-            log.debug(out)
+            channel.queue_declare(queue=queue, passive=True)
             return True
         except ChannelClosedByBroker as e:
             log.error(e)
@@ -165,20 +161,18 @@ class RabbitExt(Connector):
     def create_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_declare(
+        channel.queue_declare(
             queue=queue, durable=True, exclusive=False, auto_delete=False
         )
-        log.debug(out)
 
     def delete_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_delete(
+        channel.queue_delete(
             queue,
             if_unused=False,
             if_empty=False,
         )
-        log.debug(out)
 
     def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
         if not self.exchange_exists(exchange):
@@ -239,18 +233,12 @@ class RabbitExt(Connector):
     def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_bind(
-            queue=queue, exchange=exchange, routing_key=routing_key
-        )
-        log.debug(out)
+        channel.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_unbind(
-            queue=queue, exchange=exchange, routing_key=routing_key
-        )
-        log.debug(out)
+        channel.queue_unbind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def send_json(self, message, routing_key="", exchange="", headers=None):
         return self.send(
