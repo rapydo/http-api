@@ -1,11 +1,9 @@
-import datetime
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
 from typing import List, Optional, Union
-
-import pytz
 
 from restapi.config import TESTING
 from restapi.connectors import Connector
@@ -152,8 +150,7 @@ class Mail(Connector):
                 log.warning("Invalid BCC value: {}", bcc)
                 bcc = None
 
-            date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
-            msg["Date"] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
+            msg["Date"] = formatdate()
 
             if plain_body is not None:
                 part1 = MIMEText(plain_body, "plain")
