@@ -125,6 +125,11 @@ class TestApp(BaseTests):
         log.warning("Debug code: Name Surname = {} {}", name, surname)
         for p in password_with_name:
             for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is because with "strange characters" it is not ensured that:
+                # str == str.upper().lower()
+                # In that case let's skip the forms that alter the characters
+                if p.lower() != pp.lower():  # pragma: no cover
+                    continue
                 # This is to prevent failures for other reasons like length of chars
                 pp += "+ABCabc123!"
                 val, text = auth.verify_password_strength(
@@ -144,6 +149,11 @@ class TestApp(BaseTests):
 
         for p in password_with_email:
             for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is because with "strange characters" it is not ensured that:
+                # str == str.upper().lower()
+                # In that case let's skip the forms that alter the characters
+                if p.lower() != pp.lower():  # pragma: no cover
+                    continue
                 # This is to prevent failures for other reasons like length of chars
                 pp += "+ABCabc123!"
                 val, txt = auth.verify_password_strength(
