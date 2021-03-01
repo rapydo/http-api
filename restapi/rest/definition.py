@@ -28,7 +28,7 @@ class EndpointResource(MethodResource, Resource):
     def __init__(self):
         super().__init__()
 
-        self.__auth = None
+        self.__auth: Optional[BaseAuthentication] = None
         # extracted from the token, if provided and verified
         self._unpacked_user: Optional[User] = None
         self._unpacked_token: Optional[str] = None
@@ -38,7 +38,7 @@ class EndpointResource(MethodResource, Resource):
         return self.__class__.__module__
 
     @property
-    def auth(self):
+    def auth(self) -> BaseAuthentication:
         if not self.__auth:
             self.__auth = Connector.get_authentication_instance()
 
