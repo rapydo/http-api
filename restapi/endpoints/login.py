@@ -110,7 +110,7 @@ class Login(EndpointResource):
 
             if totp_authentication:
 
-                message["qr_code"] = self.auth.get_qrcode(user)
+                message["qr_code"] = [self.auth.get_qrcode(user)]
 
         elif self.auth.MAX_PASSWORD_VALIDITY:
 

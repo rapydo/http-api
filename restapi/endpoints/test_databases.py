@@ -3,7 +3,7 @@ import re
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
+from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServerError
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import DEFAULT_GROUP_NAME
 
@@ -53,6 +53,9 @@ if TESTING:
             try:
 
                 default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+
+                if default_group is None:  # pragma: no cover
+                    raise ServerError("Default group is missing")
 
                 default_group.fullname = f"{default_group.fullname}_exteded"
                 # Don't commit with alchemy or the transaction can't be rollbacked

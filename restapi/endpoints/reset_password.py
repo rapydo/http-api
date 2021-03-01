@@ -135,13 +135,16 @@ if Connector.check_availability("smtp"):
                 log.info(e)
                 raise BadRequest("Invalid reset token")
 
+            if user is None:  # pragma: no cover
+                raise BadRequest("Invalid activation token")
+
             # Recovering token object from jti
-            token_obj = self.auth.get_tokens(token_jti=jti)
+            tokens_obj = self.auth.get_tokens(token_jti=jti)
             # Can't happen because the token is refused from verify_token function
-            if len(token_obj) == 0:  # pragma: no cover
+            if len(tokens_obj) == 0:  # pragma: no cover
                 raise BadRequest("Invalid reset token: this request is no longer valid")
 
-            token_obj = token_obj.pop(0)
+            token_obj = tokens_obj.pop(0)
             emitted = token_obj["emitted"]
 
             last_change = None

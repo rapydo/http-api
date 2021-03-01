@@ -49,6 +49,9 @@ class ProfileActivation(EndpointResource):
         except BaseException:
             raise BadRequest("Invalid activation token")
 
+        if user is None:  # pragma: no cover
+            raise BadRequest("Invalid activation token")
+
         self.auth.verify_blocked_username(user.email)
 
         # Recovering token object from jti

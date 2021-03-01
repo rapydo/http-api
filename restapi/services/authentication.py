@@ -183,6 +183,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # To be stored on DB
     failed_logins: Dict[str, List[FailedLogin]] = {}
 
+    # This is to let inform mypy about the existence of self.db
+    def __init__(self):
+        self.db: Any
+
     # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from restapi import decorators
 from restapi.config import get_frontend_url
@@ -31,31 +31,41 @@ if Connector.check_availability("smtp"):
                 409: "This user already exists",
             },
         )
-        def post(self, **kwargs: Any) -> Response:
+        def post(
+            self,
+            name: str,
+            surname: str,
+            email: str,
+            password: str,
+            password_confirm: str,
+            **kwargs: Any,
+        ) -> Response:
             """ Register new user """
 
-            email = kwargs.get("email")
             user = self.auth.get_user(username=email)
             if user is not None:
                 raise Conflict(f"This user already exists: {email}")
 
-            password_confirm = kwargs.pop("password_confirm")
-            if kwargs.get("password") != password_confirm:
+            if password != password_confirm:
                 raise Conflict("Your password doesn't match the confirmation")
 
             if self.auth.VERIFY_PASSWORD_STRENGTH:
 
                 check, msg = self.auth.verify_password_strength(
-                    pwd=kwargs.get("password"),
+                    pwd=password,
                     old_pwd=None,
                     email=email,
-                    name=kwargs.get("name"),
-                    surname=kwargs.get("surname"),
+                    name=name,
+                    surname=surname,
                 )
 
                 if not check:
                     raise Conflict(msg)
 
+            kwargs["name"] = name
+            kwargs["surname"] = surname
+            kwargs["email"] = email
+            kwargs["password"] = password
             kwargs["is_active"] = False
             user = self.auth.create_user(kwargs, [self.auth.default_role])
 
