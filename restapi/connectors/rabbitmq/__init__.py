@@ -26,6 +26,7 @@ from restapi.utilities.logs import log
 class RabbitExt(Connector):
     def __init__(self) -> None:
         self.connection: Optional[pika.BlockingConnection] = None
+        self.channel: Optional[pika.channel.Channel] = None
         super().__init__()
 
     def get_connection_exception(self) -> ExceptionsList:
@@ -97,7 +98,6 @@ class RabbitExt(Connector):
                 )
             )
 
-        self.channel = None
         return self
 
     def disconnect(self) -> None:
