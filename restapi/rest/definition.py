@@ -6,7 +6,7 @@ from flask_restful import Resource
 
 from restapi.connectors import Connector
 from restapi.rest.response import ResponseMaker
-from restapi.services.authentication import BaseAuthentication, Role
+from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.services.cache import Cache
 from restapi.utilities.logs import Events, log, save_event_log
 
@@ -29,6 +29,9 @@ class EndpointResource(MethodResource, Resource):
         super().__init__()
 
         self.__auth = None
+        # extracted from the token, if provided and verified
+        self._unpacked_user: Optional[User] = None
+        self._unpacked_token: Optional[str] = None
 
     # Used to set keys with Flask-Caching memoize
     def __repr__(self):
@@ -42,14 +45,10 @@ class EndpointResource(MethodResource, Resource):
         return self.__auth
 
     def get_token(self):
-        if not hasattr(self, "unpacked_token"):
-            return None
-        return self.unpacked_token[1]
+        return self._unpacked_token
 
     def get_user(self):
-        if not hasattr(self, "unpacked_token"):
-            return None
-        return self.unpacked_token[3]
+        return self._unpacked_user
 
     # Deprecated since 1.1
     def verify_admin(self):  # pragma: no cover

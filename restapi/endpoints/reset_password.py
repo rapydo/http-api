@@ -117,7 +117,8 @@ if Connector.check_availability("smtp"):
             log.critical("DEBUG CODE: {}", t)
 
             try:
-                unpacked_token = self.auth.verify_token(
+                # valid, token, jti, user
+                _, _, jti, user = self.auth.verify_token(
                     token, raiseErrors=True, token_type=self.auth.PWD_RESET
                 )
 
@@ -135,7 +136,6 @@ if Connector.check_availability("smtp"):
                 raise BadRequest("Invalid reset token")
 
             # Recovering token object from jti
-            jti = unpacked_token[2]
             token_obj = self.auth.get_tokens(token_jti=jti)
             # Can't happen because the token is refused from verify_token function
             if len(token_obj) == 0:  # pragma: no cover
@@ -143,7 +143,6 @@ if Connector.check_availability("smtp"):
 
             token_obj = token_obj.pop(0)
             emitted = token_obj["emitted"]
-            user = unpacked_token[3]
 
             last_change = None
             # If user logged in after the token emission invalidate the token

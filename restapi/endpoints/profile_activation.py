@@ -30,7 +30,8 @@ class ProfileActivation(EndpointResource):
         t = re.sub(r"(.)", r"\1.", token)
         log.critical("DEBUG CODE: {}", t)
         try:
-            unpacked_token = self.auth.verify_token(
+            # valid, token, jti, user
+            _, _, jti, user = self.auth.verify_token(
                 token, raiseErrors=True, token_type=self.auth.ACTIVATE_ACCOUNT
             )
 
@@ -48,11 +49,9 @@ class ProfileActivation(EndpointResource):
         except BaseException:
             raise BadRequest("Invalid activation token")
 
-        user = unpacked_token[3]
         self.auth.verify_blocked_username(user.email)
 
         # Recovering token object from jti
-        jti = unpacked_token[2]
         token_obj = self.auth.get_tokens(token_jti=jti)
         # Cannot be tested, this is an extra test to prevent any unauthorized access...
         # but invalid tokens are already refused above, with auth.verify_token
