@@ -269,7 +269,7 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return self.db.session
+        return self.db.session  # type: ignore
 
     def disconnect(self) -> None:
         if self.db:

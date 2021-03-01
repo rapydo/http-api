@@ -323,7 +323,7 @@ class RabbitExt(Connector):
 
         return False
 
-    def get_channel(self) -> pika.Channel:
+    def get_channel(self) -> pika.channel.Channel:
         """
         Return existing channel (if healthy) or create and
         return new one.
