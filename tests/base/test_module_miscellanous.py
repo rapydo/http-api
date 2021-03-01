@@ -308,9 +308,9 @@ class TestApp(BaseTests):
         assert handle_log_output(1) == 1
 
         # obfuscate_dict only accepts dict
-        assert obfuscate_dict(None) is None
-        assert obfuscate_dict(10) == 10
-        assert obfuscate_dict(["x"]) == ["x"]
+        assert obfuscate_dict(None) is None  # type: ignore
+        assert obfuscate_dict(10) == 10  # type: ignore
+        assert obfuscate_dict(["x"]) == ["x"]  # type: ignore
         assert len(obfuscate_dict({})) == 0
         assert obfuscate_dict({"x": "y"}) == {"x": "y"}
         assert obfuscate_dict({"password": "y"}) == {"password": "****"}
@@ -381,11 +381,23 @@ class TestApp(BaseTests):
     #########################################
     def test_uploader(self) -> None:
 
-        meta = Uploader.get_file_metadata("invalid_file")
+        meta = Uploader.get_file_metadata("invalid_file")  # type: ignore
         assert isinstance(meta, dict)
         assert len(meta) == 0
 
-        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")
+        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")  # type: ignore
+        assert isinstance(meta, dict)
+        assert len(meta) == 2
+        assert "type" in meta
+        assert "charset" in meta
+        assert meta["type"] == "text/plain"
+        assert meta["charset"] == "utf-8"
+
+        meta = Uploader.get_file_metadata(Path("invalid_file"))
+        assert isinstance(meta, dict)
+        assert len(meta) == 0
+
+        meta = Uploader.get_file_metadata(Path("confs/projects_defaults.yaml"))
         assert isinstance(meta, dict)
         assert len(meta) == 2
         assert "type" in meta

@@ -100,7 +100,7 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     # This is NOT a special from_address
     assert obj.send("body", "subject", "to_addr", "invalid3")
 
-    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)
+    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)  # type: ignore
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")

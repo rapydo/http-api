@@ -20,7 +20,7 @@ from restapi.utilities.logs import log
 
 class Mail(Connector):
     def __init__(self) -> None:
-        self.smtp = None
+        self.smtp: Optional[SMTP] = None
         super().__init__()
         # instance_variables is updated with custom variabiles in connect
         # and the used in the send method.

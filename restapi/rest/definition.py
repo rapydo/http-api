@@ -44,7 +44,7 @@ class EndpointResource(MethodResource, Resource):
 
         return self.__auth
 
-    def get_token(self):
+    def get_token(self) -> Optional[str]:
         return self._unpacked_token
 
     def get_user(self):
