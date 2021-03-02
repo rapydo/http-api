@@ -53,8 +53,6 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        # 5.0.3 raises errors on ssl context due to new defaults
-        "amqp==5.0.2",
         "python-telegram-bot==13.3",
         # TOTP
         "pyotp==2.6.0",
