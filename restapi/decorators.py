@@ -126,8 +126,7 @@ def make_cache_function_name(name: str) -> str:
 
 
 # Used to cache endpoint with @decorators.cache(timeout=60)
-# TODO: the original function is not type-hinted... to be fixed in a future
-def cache(*args: Any, **kwargs: Any) -> Any:
+def cache(*args, **kwargs):
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
@@ -164,9 +163,9 @@ def catch_graph_exceptions(func):  # pragma: no cover
 
 
 # This decorator is still a work in progress, in particular for MongoDB
-def database_transaction(func: F) -> Callable[[Any], Any]:
+def database_transaction(func):
     @wraps(func)
-    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+    def wrapper(self, *args, **kwargs):
 
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
