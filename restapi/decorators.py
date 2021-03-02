@@ -30,7 +30,14 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 # same definition as in:
 # https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
-def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
+# TODO: the original function is not type-hinted... to be fixed in a future
+def use_kwargs(
+    args: Optional[Any],
+    location: Optional[str] = None,
+    inherit: Optional[Any] = None,
+    apply: Optional[Any] = None,
+    **kwargs: Optional[Any],
+) -> Any:
     # this use_kwargs is used override the default location (json)
     # with a more extensive default location (body)
     # This trick will prevent to add location='body' to mostly all models

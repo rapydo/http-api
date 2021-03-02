@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from restapi import decorators
 from restapi.config import get_frontend_url
