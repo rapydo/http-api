@@ -16,6 +16,7 @@ from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
+from restapi.rest.definition import Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -98,7 +99,7 @@ def endpoint(
 
 
 # Prevent caching of 5xx errors responses
-def cache_response_filter(response):
+def cache_response_filter(response: Response) -> bool:
     if not isinstance(response, tuple):
         return True
 
@@ -125,7 +126,8 @@ def make_cache_function_name(name: str) -> str:
 
 
 # Used to cache endpoint with @decorators.cache(timeout=60)
-def cache(*args, **kwargs):
+# TODO: the original function is not type-hinted... to be fixed in a future
+def cache(*args: Any, **kwargs: Any) -> Any:
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
@@ -162,9 +164,9 @@ def catch_graph_exceptions(func):  # pragma: no cover
 
 
 # This decorator is still a work in progress, in particular for MongoDB
-def database_transaction(func):
+def database_transaction(func: F) -> Callable[[Any], Any]:
     @wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
