@@ -324,7 +324,7 @@ class Connector(metaclass=abc.ABCMeta):
                 authentication_instance.init_auth_db(options)
                 log.info("Initialized authentication module")
 
-            initializer = mem.initializer(app=Connector.app)
+            initializer = mem.initializer()
             if initializer:
                 log.info("Vanilla project has been initialized")
             else:  # pragma: no cover
