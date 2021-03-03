@@ -364,7 +364,7 @@ class BaseTests:
         email = str(faker.ascii_email())
 
         # This email contains the name, re-sampling again
-        if name.lower() in email.lower():
+        if name.lower() in email.lower():  # pragma: no cover
             return cls.get_random_email(faker, name, surname)
 
         # This email contains the surname, re-sampling again

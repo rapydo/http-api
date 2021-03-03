@@ -45,10 +45,9 @@ class Uploader:
         filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
     ) -> Path:
 
-        if subfolder is None:
-            root_path = UPLOAD_PATH
-        else:
-            root_path = UPLOAD_PATH.joinpath(subfolder)
+        root_path = UPLOAD_PATH
+        if subfolder:
+            root_path = root_path.joinpath(subfolder)
             if not root_path.exists():
                 root_path.mkdir(parents=True, exist_ok=True)
 

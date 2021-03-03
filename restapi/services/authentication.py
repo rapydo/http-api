@@ -184,7 +184,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     failed_logins: Dict[str, List[FailedLogin]] = {}
 
     # This is to let inform mypy about the existence of self.db
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pragma: no cover
         self.db: Any
 
     # Executed once by Connector in init_app
