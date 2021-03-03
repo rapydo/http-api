@@ -198,6 +198,7 @@ class AdvancedList(fields.List):
     def __init__(self, *args, unique=False, min_items=0, **kwargs):
         self.unique = unique
         self.min_items = min_items
+
         super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):

@@ -273,6 +273,9 @@ class ResponseMaker:
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
+            if autocomplete_endpoint := field_def.metadata.get("autocomplete"):
+                f["autocomplete"] = autocomplete_endpoint
+
             if not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default
             elif not isinstance(field_def.missing, _Missing):  # pragma: no cover
