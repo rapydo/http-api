@@ -273,9 +273,6 @@ class ResponseMaker:
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
-            if field_def.metadata.get("multiple"):
-                f["multiple"] = True
-
             if not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default
             elif not isinstance(field_def.missing, _Missing):  # pragma: no cover

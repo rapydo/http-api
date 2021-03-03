@@ -393,7 +393,7 @@ class BaseTests:
             if "options" in d:
                 if len(d["options"]) > 0:
                     keys = list(d["options"].keys())
-                    if d.get("multiple", False):
+                    if is_array:
                         data[key] = [cls.faker.random_element(keys)]
                     else:
                         data[key] = cls.faker.random_element(keys)
@@ -460,7 +460,7 @@ class BaseTests:
                 log.warning("BuildData for {}: unknow type {}", key, field_type)
                 continue
 
-            if is_array:  # i.e. the field type is something[]
+            if is_array:  # i.e. the field type is anytype[]
                 if not isinstance(data[key], list):
                     data[key] = [data[key]]
 

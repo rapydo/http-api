@@ -195,7 +195,6 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
         label="Roles",
         description="",
         unique=True,
-        multiple=True,
     )
 
     group_keys = []

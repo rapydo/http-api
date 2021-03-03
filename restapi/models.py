@@ -195,13 +195,9 @@ class UniqueDelimitedList(fields.DelimitedList):
 
 
 class AdvancedList(fields.List):
-    def __init__(self, *args, unique=False, multiple=False, min_items=0, **kwargs):
+    def __init__(self, *args, unique=False, min_items=0, **kwargs):
         self.unique = unique
         self.min_items = min_items
-        self.multiple = multiple
-        # this is to include multiple in the metadata dict
-        # (used by convert_model_to_schema in response.py)
-        kwargs["multiple"] = multiple
         super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):

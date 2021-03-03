@@ -23,7 +23,6 @@ class TestApp(BaseTests):
 
             # Other optional keys
             # - default
-            # - multiple: True|False
             # - min
             # - max
             # - options
