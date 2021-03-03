@@ -1,3 +1,4 @@
+import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
@@ -118,9 +119,23 @@ class CeleryExt(Connector):
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
 
-            self.celery_app.conf.broker_use_ssl = Env.to_bool(
-                service_vars.get("ssl_enabled")
-            )
+            if Env.to_bool(service_vars.get("ssl_enabled")):
+                # The setting can be a dict with the following keys:
+                #   ssl_cert_reqs (required): one of the SSLContext.verify_mode values:
+                #         ssl.CERT_NONE
+                #         ssl.CERT_OPTIONAL
+                #         ssl.CERT_REQUIRED
+                #   ssl_ca_certs (optional): path to the CA certificate
+                #   ssl_certfile (optional): path to the client certificate
+                #   ssl_keyfile (optional): path to the client key
+                self.celery_app.conf.broker_use_ssl = {
+                    # 'keyfile': '/var/ssl/private/worker-key.pem',
+                    # 'certfile': '/var/ssl/amqp-server-cert.pem',
+                    # 'ca_certs': '/var/ssl/myca.pem',
+                    # 'cert_reqs': ssl.CERT_REQUIRED
+                    # 'cert_reqs': ssl.CERT_OPTIONAL
+                    "cert_reqs": ssl.CERT_NONE
+                }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
                 service_vars, protocol="amqp"
