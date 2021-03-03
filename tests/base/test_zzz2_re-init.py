@@ -50,7 +50,7 @@ def test_init() -> None:
     try:
         create_app(mode=ServerModes.INIT)
         # This is only a rough retry to prevent random errors from sqlalchemy
-    except Exception:
+    except Exception:  # pragma: no cover
         create_app(mode=ServerModes.INIT)
 
     auth = Connector.get_authentication_instance()
