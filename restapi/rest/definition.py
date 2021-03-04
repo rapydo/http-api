@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from flask import Response as FlaskResponse
@@ -53,19 +54,26 @@ class EndpointResource(MethodResource, Resource):
     # Deprecated since 1.1
     def verify_admin(self) -> bool:  # pragma: no cover
         """ Check if current user has Administration role """
-        log.warning("Deprecated use of verify_admin, use auth.is_admin(user) instead")
+        warnings.warn(
+            "Deprecated use of verify_admin, use auth.is_admin(user) instead",
+            DeprecationWarning,
+        )
         return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
 
     # Deprecated since 1.1
     def verify_staff(self) -> bool:  # pragma: no cover
         """ Check if current user has Staff role """
-        log.warning("Deprecated use of verify_staff, use auth.is_staff(user) instead")
+        warnings.warn(
+            "Deprecated use of verify_staff, use auth.is_staff(user) instead",
+            DeprecationWarning,
+        )
         return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
 
     # Deprecated since 1.1
     def verify_coordinator(self) -> bool:  # pragma: no cover
-        log.warning(
-            "Deprecated use of verify_coordinator use auth.is_coordinator(user) instead"
+        warnings.warn(
+            "Deprecated use of verify_coordinator use auth.is_coordinator instead",
+            DeprecationWarning,
         )
         return self.auth.verify_roles(
             self.get_user(), [Role.COORDINATOR], warnings=False

@@ -4,9 +4,8 @@ Generalization of Exceptions
 to handle services known errors
 
 """
+import warnings
 from typing import Union
-
-from restapi.utilities.logs import log
 
 ExceptionType = Union[str, Exception]
 
@@ -23,9 +22,10 @@ class RestApiException(Exception):
 
         if code:  # pragma: no cover
             # Deprecated since 1.0
-            log.warning(
+            warnings.warn(
                 "Deprecated use of RestApiException(code),"
-                "use status_code or even better specific exceptions"
+                "use status_code or even better specific exceptions",
+                DeprecationWarning,
             )
             status_code = code
 

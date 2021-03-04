@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Set, Type
 
@@ -215,10 +216,10 @@ class EndpointsLoader:
                 # Once dropped change uris: List into uri: str in decorators.endpoint
                 # Deprecated since 1.1
                 if len(fn.uris) > 1:  # pragma: no cover
-                    log.warning(
-                        "Deprecated multiple URI mapping set on {}.{}",
-                        epclss.__name__,
-                        method_fn,
+                    warnings.warn(
+                        "Deprecated multiple URI mapping set on "
+                        f"{epclss.__name__}.{method_fn}",
+                        DeprecationWarning,
                     )
 
                 endpoint.methods[method_fn] = fn.uris

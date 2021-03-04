@@ -1,3 +1,4 @@
+import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
@@ -137,8 +138,9 @@ def cache(*args, **kwargs):
 # Deprecated since 1.0
 def catch_graph_exceptions(func):  # pragma: no cover
 
-    log.warning(
-        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it"
+    warnings.warn(
+        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it",
+        DeprecationWarning,
     )
 
     @wraps(func)

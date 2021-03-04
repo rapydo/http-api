@@ -1,4 +1,5 @@
 import os
+import warnings
 from functools import lru_cache
 from typing import Dict, Optional, Union
 
@@ -69,7 +70,10 @@ class Env:
     @staticmethod
     def load_group(label: str) -> Dict[str, str]:
 
-        print("Deprecated use of Env.load_group, use load_variables_group instead")
+        warnings.warn(
+            "Deprecated use of Env.load_group, use load_variables_group instead",
+            DeprecationWarning,
+        )
         return Env.load_variables_group(label)
 
     @staticmethod

@@ -1,5 +1,6 @@
 import ssl
 import traceback
+import warnings
 from datetime import timedelta
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
@@ -453,7 +454,10 @@ def send_errors_by_email(func):  # pragma: no cover
     system administrator with details about failure.
     """
 
-    log.warning("Deprecated use of send_errors_by_email decorator, you can remove it")
+    warnings.warn(
+        "Deprecated use of send_errors_by_email decorator, you can remove it",
+        DeprecationWarning,
+    )
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
