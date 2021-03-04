@@ -33,6 +33,7 @@ def load_data(request, schema):
 
 class Schema(MarshmallowSchema):
     def __init__(self, strip_required=False, *args, **kwargs):
+
         super().__init__(**kwargs)
         if strip_required:
             for k in self.declared_fields:
