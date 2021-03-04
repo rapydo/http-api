@@ -122,7 +122,6 @@ class TestApp(BaseTests):
             f"{faker.pystr()}{surname}{faker.pystr()}"
             f"{name}{faker.pyint(1, 99)}",
         ]
-        log.warning("Debug code: Name Surname = {} {}", name, surname)
         for p in password_with_name:
             for pp in [p, p.lower(), p.upper(), p.title()]:
                 # This is because with "strange characters" it is not ensured that:

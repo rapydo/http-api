@@ -88,7 +88,7 @@ class TestApp(BaseTests):
         os.environ[f"{prefix}_{var1}"] = val1
         os.environ[f"{prefix}_{var2}"] = val2
         os.environ[f"{prefix}_{var3}"] = val3
-        variables = Env.load_group(prefix)
+        variables = Env.load_variables_group(prefix)
         assert variables is not None
         assert isinstance(variables, dict)
         assert len(variables) == 3
@@ -178,9 +178,12 @@ class TestApp(BaseTests):
         assert ResponseMaker.is_binary("video/anyother")
         assert not ResponseMaker.is_binary(faker.pystr())
 
-        assert EndpointResource.response("", code=200)[1] == 200  # type: ignore
-        assert EndpointResource.response(None, code=200)[1] == 204  # type: ignore
-        assert EndpointResource.response(None, code=200, head_method=True)[1] == 200  # type: ignore
+        response = EndpointResource.response("", code=200)
+        assert response[1] == 200  # type: ignore
+        response = EndpointResource.response(None, code=200)
+        assert response[1] == 204  # type: ignore
+        response = EndpointResource.response(None, code=200, head_method=True)
+        assert response[1] == 200  # type: ignore
 
     # #######################################
     # ####      Processes

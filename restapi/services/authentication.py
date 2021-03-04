@@ -721,11 +721,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         MIN_CONTAINED_LEN = 3
         p_lower = pwd.lower()
         if len(name) > MIN_CONTAINED_LEN and name.lower() in p_lower:
-            log.critical("DEBUG CODE: {} contains {}", pwd, name)
             return False, "Password is too weak, can't contain your name"
 
         if len(surname) > MIN_CONTAINED_LEN and surname.lower() in p_lower:
-            log.critical("DEBUG CODE: {} contains {}", pwd, surname)
             return False, "Password is too weak, can't contain your name"
 
         cleaner = r"[\.|_]"
@@ -733,7 +731,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         p_clean = re.sub(cleaner, "", p_lower.lower())
 
         if len(email_clean) > MIN_CONTAINED_LEN and email_clean in p_clean:
-            log.critical("DEBUG CODE: {} contains {}", pwd, email)
             return False, "Password is too weak, can't contain your email address"
 
         return True, ""

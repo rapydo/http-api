@@ -68,7 +68,7 @@ class Env:
 
     # Deprecated since 1.0
     @staticmethod
-    def load_group(label: str) -> Dict[str, str]:
+    def load_group(label: str) -> Dict[str, str]:  # pragma: no cover
 
         warnings.warn(
             "Deprecated use of Env.load_group, use load_variables_group instead",

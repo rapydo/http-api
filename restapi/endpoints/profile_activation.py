@@ -24,11 +24,11 @@ class ProfileActivation(EndpointResource):
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
 
-        # DEBUG CODE: this add a dot after each character to prevent github to obfuscate
-        import re
+        # # DEBUG CODE: add dots after each character to prevent github to obfuscate
+        # import re
 
-        t = re.sub(r"(.)", r"\1.", token)
-        log.critical("DEBUG CODE: {}", t)
+        # t = re.sub(r"(.)", r"\1.", token)
+        # log.critical("DEBUG CODE: {}", t)
         try:
             # valid, token, jti, user
             _, _, jti, user = self.auth.verify_token(

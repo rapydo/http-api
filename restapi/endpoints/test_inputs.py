@@ -44,17 +44,19 @@ if TESTING:
         myint_exclusive = fields.Int(
             required=True,
             # Explicit label definition... but missing description
-            label="Int exclusive field",
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
+            metadata={"label": "Int exclusive field"},
         )
         myint_inclusive = fields.Int(
             required=True,
             # Both label and description explicit definition
-            label="Int inclusive field",
-            description="This field accepts values in a defined range",
             validate=validate.Range(min=1, max=10),
+            metadata={
+                "label": "Int inclusive field",
+                "description": "This field accepts values in a defined range",
+            },
         )
 
         myselect = fields.Str(

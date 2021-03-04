@@ -67,8 +67,10 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
                     required=required,
                     # validate=validate.Range(min=0, max=???),
                     validate=validate.Range(min=0),
-                    label="CustomField",
-                    description="This is a custom field"
+                    metadata={
+                        "label": "CustomField",
+                        "description": "This is a custom field",
+                    },
                 )
             }
         # these are editable fields in profile
@@ -88,14 +90,4 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         this method is used to extend the output model of admin users
         """
 
-        # required = request and request.method == "POST"
-        # return {
-        #     'custom_field': fields.Int(
-        #         required=required,
-        #         # validate=validate.Range(min=0, max=???),
-        #         validate=validate.Range(min=0),
-        #         label="CustomField",
-        #         description="This is a custom field"
-        #     )
-        # }
         return {}
