@@ -8,7 +8,7 @@ from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
-from webargs import fields  # also imported from endpoints
+from webargs import fields
 from webargs.flaskparser import parser
 
 from restapi.config import TESTING
@@ -251,3 +251,16 @@ class TOTP(fields.String):
             raise ValidationError("Invalid TOTP format")
 
         return value
+
+
+# Let's extend webargs.fields with some custom fields
+setattr(fields, "TOTP", TOTP)
+setattr(fields, "UniqueDelimitedList", UniqueDelimitedList)
+setattr(fields, "Neo4jRelationshipToCount", Neo4jRelationshipToCount)
+setattr(fields, "Neo4jRelationshipToSingle", Neo4jRelationshipToSingle)
+setattr(fields, "Neo4jRelationshipToMany", Neo4jRelationshipToMany)
+setattr(fields, "Neo4jChoice", Neo4jChoice)
+
+# Let's replace these webargs.fields with custom fields
+setattr(fields, "List", AdvancedList)
+setattr(fields, "Nested", AdvancedNested)

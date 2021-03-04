@@ -30,7 +30,7 @@ if Connector.check_availability("smtp"):
             description="Request password reset via email",
             responses={
                 200: "Reset email is valid",
-                401: "Invalid reset email",
+                400: "Invalid reset email",
                 403: "Account not found or already active",
             },
         )
@@ -81,13 +81,13 @@ if Connector.check_availability("smtp"):
             {
                 "new_password": fields.Str(
                     required=False,
-                    password=True,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+                    metadata={"password": True},
                 ),
                 "password_confirm": fields.Str(
                     required=False,
-                    password=True,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+                    metadata={"password": True},
                 ),
             }
         )
@@ -97,7 +97,7 @@ if Connector.check_availability("smtp"):
             description="Change password as conseguence of a reset request",
             responses={
                 200: "Reset token is valid, password changed",
-                401: "Invalid reset token",
+                400: "Invalid reset token",
             },
         )
         def put(

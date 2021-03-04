@@ -6,7 +6,6 @@ from restapi.customizer import FlaskRequest
 from restapi.models import (
     ISO8601UTC,
     TOTP,
-    AdvancedList,
     Neo4jRelationshipToSingle,
     Schema,
     fields,
@@ -203,7 +202,7 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     roles = {r.name: r.description for r in auth.get_roles()}
 
-    attributes["roles"] = AdvancedList(
+    attributes["roles"] = fields.List(
         fields.Str(
             validate=validate.OneOf(
                 choices=[r for r in roles.keys()],
