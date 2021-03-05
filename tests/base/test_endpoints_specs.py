@@ -56,3 +56,119 @@ class TestApp(BaseTests):
         # assert "Bearer" in content["security"][0]
         assert "securityDefinitions" in content
         assert "Bearer" in content["securityDefinitions"]
+
+        # Based on the definition of InputSchema in test_inputs.py
+        assert "/api/tests/inputs" in content["paths"]
+        assert "post" in content["paths"]["/api/tests/inputs"]
+        endpoint = content["paths"]["/api/tests/inputs"]["post"]
+        assert "parameters" in endpoint
+        assert "schema" in endpoint["parameters"]
+        assert "$ref" in endpoint["parameters"]["schema"]
+        assert endpoint["parameters"]["schema"]["$ref"] == "#/definitions/Input"
+
+        assert "Input" in content["definitions"]
+
+        schema = content["definitions"]["Input"]
+        assert "properties" in schema
+        assert "required" in schema
+        assert "type" in schema
+        assert schema["type"] == "object"
+
+        assert "MYDATE" in schema["required"]
+        assert "myequalstr" in schema["required"]
+        assert "myint_exclusive" in schema["required"]
+        assert "myint_inclusive" in schema["required"]
+        assert "mylist" in schema["required"]
+        assert "mylist2" in schema["required"]
+        assert "mylist3" in schema["required"]
+        assert "mymaxstr" in schema["required"]
+        assert "mynested" in schema["required"]
+        assert "myselect" in schema["required"]
+        assert "myselect2" in schema["required"]
+        assert "mystr" in schema["required"]
+
+        properties = schema["propertiess"]
+        f = "MYDATE"
+        assert f in properties
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "format" in properties[f]
+        assert properties[f]["format"] == "date-time"
+        assert "x-minimum" in properties[f]
+        assert "x-maximum" in properties[f]
+
+        f = "myequalstr"
+        assert f in properties
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "minLength" in properties[f]
+        assert properties[f]["minLength"] == 6
+        assert "maxLength" in properties[f]
+        assert properties[f]["maxLength"] == 6
+
+        f = "myint_exclusive"
+        assert f in properties
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "integer"
+        assert "minimum" in properties[f]
+        assert properties[f]["minimum"] == 1  # should be 2???
+        assert "maximum" in properties[f]
+        assert properties[f]["maximum"] == 10  # should be 9???
+
+        f = "myint_inclusive"
+        assert f in properties
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "integer"
+        assert "minimum" in properties[f]
+        assert properties[f]["minimum"] == 1
+        assert "maximum" in properties[f]
+        assert properties[f]["maximum"] == 10
+
+        f = "mylist"
+        assert f in properties
+        # "items": {
+        # "type": "string"
+        # },
+        # "type": "array"
+
+        f = "mylist2"
+        assert f in properties
+        # "items": {
+        # "type": "integer"
+        # },
+        # "type": "array"
+
+        f = "mylist3"
+        assert f in properties
+        # "items": {},
+        # "type": "array"
+
+        f = "mymaxstr"
+        assert f in properties
+        # "maxLength": 7,
+        # "type": "string"
+
+        f = "mynested"
+        assert f in properties
+        # "$ref": "#/definitions/Nested"
+
+        f = "myselect"
+        assert f in properties
+        # "enum": [
+        #     "a",
+        #     "b"
+        # ],
+        # "type": "string"
+
+        f = "myselect2"
+        assert f in properties
+        # "enum": [
+        #     "a",
+        #     "b"
+        # ],
+        # "type": "string"
+
+        f = "mystr"
+        assert f in properties
+        # "minLength": 4,
+        # "type": "string"
