@@ -8,7 +8,7 @@ if TESTING:
     class TestDependsOn(EndpointResource):
 
         labels = ["tests"]
-        depends_on = ["ACTIVATE_NEO4J"]
+        depends_on = ["NEO4J_ENABLE"]
 
         @decorators.endpoint(
             path="/tests/depends_on/neo4j",
@@ -26,7 +26,7 @@ if TESTING:
     class TestDependsOnNOT(EndpointResource):
 
         labels = ["tests"]
-        depends_on = ["not ACTIVATE_NEO4J"]
+        depends_on = ["not NEO4J_ENABLE"]
 
         @decorators.endpoint(
             path="/tests/depends_on_not/neo4j",
