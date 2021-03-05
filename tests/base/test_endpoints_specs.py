@@ -62,9 +62,11 @@ class TestApp(BaseTests):
         assert "post" in content["paths"]["/api/tests/inputs"]
         endpoint = content["paths"]["/api/tests/inputs"]["post"]
         assert "parameters" in endpoint
-        assert "schema" in endpoint["parameters"]
-        assert "$ref" in endpoint["parameters"]["schema"]
-        assert endpoint["parameters"]["schema"]["$ref"] == "#/definitions/Input"
+        assert isinstance(endpoint["parameters"], list)
+        assert len(endpoint["parameters"]) == 0
+        assert "schema" in endpoint["parameters"][0]
+        assert "$ref" in endpoint["parameters"][0]["schema"]
+        assert endpoint["parameters"][0]["schema"]["$ref"] == "#/definitions/Input"
 
         assert "Input" in content["definitions"]
 
