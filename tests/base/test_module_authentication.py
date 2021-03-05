@@ -126,7 +126,7 @@ class TestApp(BaseTests):
             for pp in [p, p.lower(), p.upper(), p.title()]:
                 # This is because with "strange characters" it is not ensured that:
                 # str == str.upper().lower()
-                # In that case let's skip the forms that alter the characters
+                # In that case let's skip the variant that alter the characters
                 if p.lower() != pp.lower():  # pragma: no cover
                     continue
                 # This is to prevent failures for other reasons like length of chars
@@ -150,7 +150,7 @@ class TestApp(BaseTests):
             for pp in [p, p.lower(), p.upper(), p.title()]:
                 # This is because with "strange characters" it is not ensured that:
                 # str == str.upper().lower()
-                # In that case let's skip the forms that alter the characters
+                # In that case let's skip the variant that alter the characters
                 if p.lower() != pp.lower():  # pragma: no cover
                     continue
                 # This is to prevent failures for other reasons like length of chars

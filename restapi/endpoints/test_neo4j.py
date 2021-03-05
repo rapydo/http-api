@@ -2,7 +2,7 @@ from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector, neo4j
 from restapi.exceptions import BadRequest
-from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
+from restapi.models import Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
@@ -52,8 +52,8 @@ if TESTING and Connector.check_availability("neo4j"):
         group7 = Neo4jSchema(Group, fields=None)
         custom = Neo4jSchema(Custom, fields="*")
 
-        choices1 = Neo4jChoice(CHOICES_tuple)
-        choices2 = Neo4jChoice(CHOICES_dict)
+        choices1 = fields.Neo4jChoice(CHOICES_tuple)
+        choices2 = fields.Neo4jChoice(CHOICES_dict)
 
     class TestNeo4j(EndpointResource):
 

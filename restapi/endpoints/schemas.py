@@ -3,14 +3,7 @@ from typing import Dict, Type, TypedDict, Union
 
 from restapi.connectors import Connector
 from restapi.customizer import FlaskRequest
-from restapi.models import (
-    ISO8601UTC,
-    TOTP,
-    Neo4jRelationshipToSingle,
-    Schema,
-    fields,
-    validate,
-)
+from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.utilities.globals import mem
 
 auth = Connector.get_authentication_instance()
@@ -78,53 +71,41 @@ class Credentials(Schema):
     username = fields.Email(required=True)
     password = fields.Str(
         required=True,
-        metadata={
-            "password": True,
-        },
+        password=True,
         # Otherwise default testing password, like test, will fail
         # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
     )
     new_password = fields.Str(
         required=False,
-        metadata={
-            "password": True,
-        },
+        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     password_confirm = fields.Str(
         required=False,
-        metadata={
-            "password": True,
-        },
+        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = TOTP(required=False)
+    totp_code = fields.TOTP(required=False)
 
 
 class NewPassword(Schema):
     password = fields.Str(
         required=True,
-        metadata={
-            "password": True,
-        },
+        password=True,
         # Not needed to check the length of the current password... if set...
         # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     new_password = fields.Str(
         required=True,
-        metadata={
-            "password": True,
-        },
+        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     password_confirm = fields.Str(
         required=True,
-        metadata={
-            "password": True,
-        },
+        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
-    totp_code = TOTP(required=False)
+    totp_code = fields.TOTP(required=False)
 
 
 #########################################
@@ -154,7 +135,9 @@ def admin_user_output(many: bool = True) -> Schema:
     attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
 
     if Connector.authentication_service == "neo4j":
-        attributes["belongs_to"] = Neo4jRelationshipToSingle(Group, data_key="group")
+        attributes["belongs_to"] = fields.Neo4jRelationshipToSingle(
+            Group, data_key="group"
+        )
     else:
         attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
@@ -181,23 +164,17 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     attributes["password"] = fields.Str(
         required=is_post,
-        metadata={
-            "password": True,
-        },
+        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
 
     if Connector.check_availability("smtp"):
-        attributes["email_notification"] = fields.Bool(
-            metadata={"label": "Notify password by email"}
-        )
+        attributes["email_notification"] = fields.Bool(label="Notify password by email")
 
     attributes["is_active"] = fields.Bool(
         default=True,
         required=False,
-        metadata={
-            "label": "Activate user",
-        },
+        label="Activate user",
     )
 
     roles = {r.name: r.description for r in auth.get_roles()}
@@ -212,10 +189,8 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
         default=[auth.default_role],
         required=False,
         unique=True,
-        metadata={
-            "label": "Roles",
-            "description": "",
-        },
+        label="Roles",
+        description="",
     )
 
     group_keys = []
@@ -234,19 +209,15 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
         required=is_post,
         default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
-        metadata={
-            "label": "Group",
-            "description": "The group to which the user belongs",
-        },
+        label="Group",
+        description="The group to which the user belongs",
     )
 
     attributes["expiration"] = fields.DateTime(
         required=False,
         allow_none=True,
-        metadata={
-            "label": "Account expiration",
-            "description": "This user will be blocked after this date",
-        },
+        label="Account expiration",
+        description="This user will be blocked after this date",
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(
@@ -271,12 +242,8 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
     # as defined in Marshmallow.schema.from_dict
     attributes: Dict[str, Union[fields.Field, type]] = {}
 
-    attributes["shortname"] = fields.Str(
-        required=True, metadata={"description": "Short name"}
-    )
-    attributes["fullname"] = fields.Str(
-        required=True, metadata={"description": "Full name"}
-    )
+    attributes["shortname"] = fields.Str(required=True, description="Short name")
+    attributes["fullname"] = fields.Str(required=True, description="Full name")
 
     return Schema.from_dict(attributes, name="GroupDefinition")
 
@@ -320,7 +287,9 @@ def profile_output() -> Schema:
     attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
 
     if Connector.authentication_service == "neo4j":
-        attributes["belongs_to"] = Neo4jRelationshipToSingle(Group, data_key="group")
+        attributes["belongs_to"] = fields.Neo4jRelationshipToSingle(
+            Group, data_key="group"
+        )
     else:
         attributes["belongs_to"] = fields.Nested(Group, data_key="group")
 
@@ -340,23 +309,17 @@ def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
-    attributes["email"] = fields.Email(
-        required=True, metadata={"label": "Username (email address)"}
-    )
+    attributes["email"] = fields.Email(required=True, label="Username (email address)")
     attributes["password"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-        metadata={
-            "password": True,
-        },
+        password=True,
     )
     attributes["password_confirm"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-        metadata={
-            "password": True,
-            "label": "Password confirmation",
-        },
+        password=True,
+        label="Password confirmation",
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(

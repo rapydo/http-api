@@ -22,7 +22,7 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
-from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
@@ -107,10 +107,7 @@ class TestApp(BaseTests):
             name = fields.Str()
 
         f = "myfield"
-        assert (
-            ResponseMaker.get_schema_type(f, fields.Str(metadata={"password": True}))
-            == "password"
-        )
+        assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
         assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
@@ -576,11 +573,16 @@ class TestApp(BaseTests):
 
     def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
-            unique_delimited_list = UniqueDelimitedList(
-                fields.Str(), delimiter=",", required=True
+            # Note: This is a replacement of the normal DelimitedList defined by rapydo
+            unique_delimited_list = fields.DelimitedList(
+                fields.Str(), delimiter=",", required=True, unique=True
             )
-            advanced_list = AdvancedList(
-                fields.Str(), unique=True, min_items=2, required=True
+            # Note: This is a replacement of the normal List list defined by rapydo
+            advanced_list = fields.List(
+                fields.Str(),
+                required=True,
+                unique=True,
+                min_items=2,
             )
 
         schema = Input1(strip_required=False)

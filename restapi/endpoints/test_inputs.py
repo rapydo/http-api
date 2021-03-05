@@ -5,14 +5,7 @@ import pytz
 
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.models import (
-    ISO8601UTC,
-    AdvancedList,
-    AdvancedNested,
-    Schema,
-    fields,
-    validate,
-)
+from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
@@ -47,16 +40,14 @@ if TESTING:
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
-            metadata={"label": "Int exclusive field"},
+            label="Int exclusive field",
         )
         myint_inclusive = fields.Int(
             required=True,
             # Both label and description explicit definition
             validate=validate.Range(min=1, max=10),
-            metadata={
-                "label": "Int inclusive field",
-                "description": "This field accepts values in a defined range",
-            },
+            label="Int inclusive field",
+            description="This field accepts values in a defined range",
         )
 
         myselect = fields.Str(
@@ -75,22 +66,23 @@ if TESTING:
 
         myequalstr = fields.Str(required=True, validate=validate.Length(equal=6))
 
-        # AdvancedNested is a normal Nested field, but with the ability to received
-        # json.dumped data from requests or pytest
-        mynested = AdvancedNested(Nested, required=True)
+        # Note: requests (from pytest) has to json-dump the arrays and objects,
+        # but the normal Marshmallow fields does not json-load the inputs
 
-        # Note: I'm using AdvancedList instead of fields.List only because
-        # this custom type is able to get inputs from requests.
-        # Requests has to json-dump the arrays, but the normal Marshmallow List field
-        # does not json-load the array as AdvancedList does
+        # fields.Nested is a replacement of the default Nested field with the ability
+        # to received json.dumped data from requests or pytest
+        mynested = fields.Nested(Nested, required=True)
+
+        # fields.List is a replacement of the default List field with the ability
+        # to received json.dumped data from requests or pytest
 
         # In json model the type of this field will be resolved as string[]
-        mylist = AdvancedList(fields.Str(), required=True)
+        mylist = fields.List(fields.Str(), required=True)
         # In json model the type of this field will be resolved as int[]
-        mylist2 = AdvancedList(CustomInt, required=True)
+        mylist2 = fields.List(CustomInt, required=True)
         # In json model the type of this field will be resolved as mylist3[]
         # The type is key[] ... should be something more explicative like FieldName[]
-        mylist3 = AdvancedList(CustomGenericField, required=True)
+        mylist3 = fields.List(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
         @decorators.use_kwargs(InputSchema)

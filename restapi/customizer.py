@@ -67,10 +67,8 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
                     required=required,
                     # validate=validate.Range(min=0, max=???),
                     validate=validate.Range(min=0),
-                    metadata={
-                        "label": "CustomField",
-                        "description": "This is a custom field",
-                    },
+                    label="CustomField",
+                    description="This is a custom field",
                 )
             }
         # these are editable fields in profile

@@ -82,12 +82,12 @@ if Connector.check_availability("smtp"):
                 "new_password": fields.Str(
                     required=False,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-                    metadata={"password": True},
+                    password=True,
                 ),
                 "password_confirm": fields.Str(
                     required=False,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-                    metadata={"password": True},
+                    password=True,
                 ),
             }
         )
