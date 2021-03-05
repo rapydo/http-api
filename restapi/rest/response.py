@@ -354,8 +354,6 @@ class ResponseMaker:
         # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
         if isinstance(schema, fields.Bool) or isinstance(schema, fields.Boolean):
             return "boolean"
-        # if isinstance(schema, fields.Constant):
-        #     return 'any'
         if isinstance(schema, fields.Date):
             return "date"
         # Include both AwareDateTime and NaiveDateTime that extend DateTime
@@ -371,28 +369,18 @@ class ResponseMaker:
         #     return 'any'
         if isinstance(schema, fields.Float):
             return "number"
-        # if isinstance(schema, fields.Function):
-        #     return 'any'
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         if isinstance(schema, fields.List):
             key = schema.data_key or field
             inner_type = ResponseMaker.get_schema_type(field, schema.inner, default=key)
             return f"{inner_type}[]"
-        # if isinstance(schema, fields.Mapping):
-        #     return 'any'
-        # if isinstance(schema, fields.Method):
-        #     return 'any'
         if isinstance(schema, fields.Nested):
             return "nested"
         if isinstance(schema, fields.Number):
             return "number"
-        # if isinstance(schema, fields.Raw):
-        #     return 'any'
         if isinstance(schema, fields.Str) or isinstance(schema, fields.String):
             return "string"
-        # if isinstance(schema, fields.TimeDelta):
-        #     return 'any'
 
         # Reached with lists of custom types
         if default:

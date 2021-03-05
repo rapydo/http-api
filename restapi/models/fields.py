@@ -42,23 +42,10 @@ class Field(webargs_fields.Field):
 ####################################################################################
 
 
-class AwareDateTime(Field, webargs_fields.AwareDateTime):
-    pass
-
-
-class Bool(Field, webargs_fields.Bool):
-    pass
+# Base types
 
 
 class Boolean(Field, webargs_fields.Boolean):
-    pass
-
-
-class Constant(Field, webargs_fields.Constant):
-    pass
-
-
-class Date(Field, webargs_fields.Date):
     pass
 
 
@@ -66,43 +53,8 @@ class DateTime(Field, webargs_fields.DateTime):
     pass
 
 
-class Decimal(Field, webargs_fields.Decimal):
-    pass
-
-
+# Should extend Mapping... but I'm not using Mapping so let's directly extend from Field
 class Dict(Field, webargs_fields.Dict):
-    pass
-
-
-class Email(Field, webargs_fields.Email):
-    pass
-
-
-class Float(Field, webargs_fields.Float):
-    pass
-
-
-class Function(Field, webargs_fields.Function):
-    pass
-
-
-class Int(Field, webargs_fields.Int):
-    pass
-
-
-class Integer(Field, webargs_fields.Integer):
-    pass
-
-
-class Mapping(Field, webargs_fields.Mapping):
-    pass
-
-
-class Method(Field, webargs_fields.Method):
-    pass
-
-
-class NaiveDateTime(Field, webargs_fields.NaiveDateTime):
     pass
 
 
@@ -110,32 +62,63 @@ class Number(Field, webargs_fields.Number):
     pass
 
 
-class Raw(Field, webargs_fields.Raw):
-    pass
-
-
-class Str(Field, webargs_fields.Str):
-    pass
-
-
 class String(Field, webargs_fields.String):
     pass
 
 
-class TimeDelta(Field, webargs_fields.TimeDelta):
+# Derived/child types
+
+# Child of DateTime, as defined in marshmallow.fields
+class AwareDateTime(DateTime, webargs_fields.AwareDateTime):
     pass
 
 
-class URL(Field, webargs_fields.URL):
+# Child of DateTime, as defined in marshmallow.fields
+class Date(DateTime, webargs_fields.Date):
     pass
 
 
-class Url(Field, webargs_fields.Url):
+# Child of Number, as defined in marshmallow.fields
+class Decimal(Number, webargs_fields.Decimal):
     pass
 
 
-class UUID(Field, webargs_fields.UUID):
+# Child of String, as defined in marshmallow.fields
+class Email(String, webargs_fields.Email):
     pass
+
+
+# Child of Number, as defined in marshmallow.fields
+class Integer(Number, webargs_fields.Integer):
+    pass
+
+
+# Child of Number, as defined in marshmallow.fields
+class Float(Number, webargs_fields.Float):
+    pass
+
+
+# Child of DateTime, as defined in marshmallow.fields
+class NaiveDateTime(DateTime, webargs_fields.NaiveDateTime):
+    pass
+
+
+# Child of String, as defined in marshmallow.fields
+class Url(String, webargs_fields.Url):
+    pass
+
+
+# Child of String, as defined in marshmallow.fields
+class UUID(String, webargs_fields.UUID):
+    pass
+
+
+# Aliases, as defined in
+# https://github.com/marshmallow-code/marshmallow/blob/dev/src/marshmallow/fields.py
+URL = Url
+Str = String
+Bool = Boolean
+Int = Integer
 
 
 ####################################################################################
@@ -186,7 +169,9 @@ class Nested(Field, webargs_fields.Nested):
         super()._deserialize(value, attr, data, **kwargs)
 
 
-class DelimitedList(Field, webargs_fields.DelimitedList):
+# DelimitedList is child of List as defined in:
+# https://github.com/marshmallow-code/webargs/blob/dev/src/webargs/fields.py
+class DelimitedList(List):
     def __init__(self, *args, unique=False, **kwargs):
         self.unique = unique
 
