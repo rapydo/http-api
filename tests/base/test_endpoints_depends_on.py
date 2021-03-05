@@ -5,7 +5,7 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 class TestApp(BaseTests):
     def test_depends_on(self, client: FlaskClient) -> None:
 
-        if not Connector.check_availability("neo4j"):
+        if Connector.check_availability("neo4j"):
 
             r = client.get(f"{API_URI}/tests/depends_on/neo4j")
             assert r.status_code == 200
