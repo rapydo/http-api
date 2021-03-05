@@ -74,6 +74,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_no_auth(case):
 
@@ -92,6 +93,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_with_admin_auth(case):
 
@@ -121,6 +123,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_logout(case):
 
