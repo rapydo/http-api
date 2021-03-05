@@ -173,7 +173,7 @@ class TestApp(BaseTests):
         assert f in properties
         assert "allOf" in properties[f]
         assert "$ref" in properties[f]["allOf"]
-        assert properties[f]["allOf"]["$ref"] == "#/definitions/Nested"
+        assert properties[f]["allOf"][0]["$ref"] == "#/definitions/Nested"
         assert "x-nullable" in properties[f]
         assert properties[f]["x-nullable"] is True
 
