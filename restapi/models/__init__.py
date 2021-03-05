@@ -1,4 +1,4 @@
-from marshmallow import validate  # used as alias from endpoints
+from marshmallow import pre_load, validate
 from webargs.flaskparser import parser
 
 from restapi.models import fields
@@ -8,6 +8,7 @@ __all__ = [
     "fields",
     "GET_SCHEMA_KEY",
     "Neo4jSchema",
+    "pre_load",
     "Schema",
     "PartialSchema",
     "validate",

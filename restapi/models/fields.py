@@ -20,10 +20,17 @@ class Field(webargs_fields.Field):
     ):
 
         kwargs.setdefault("metadata", {})
-        kwargs["metadata"].setdefault("label", label)
-        kwargs["metadata"].setdefault("description", description)
+
+        if label is not None:
+            kwargs["metadata"].setdefault("label", label)
+
+        if description is not None:
+            kwargs["metadata"].setdefault("description", description)
+
+        if autocomplete is not None:
+            kwargs["metadata"].setdefault("autocomplete", autocomplete)
+
         kwargs["metadata"].setdefault("password", password)
-        kwargs["metadata"].setdefault("autocomplete", autocomplete)
 
         super().__init__(*args, **kwargs)
 
