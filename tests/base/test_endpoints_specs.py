@@ -89,7 +89,7 @@ class TestApp(BaseTests):
         assert "myselect2" in schema["required"]
         assert "mystr" in schema["required"]
 
-        properties = schema["propertiess"]
+        properties = schema["properties"]
         f = "MYDATE"
         assert f in properties
         assert "type" in properties[f]
