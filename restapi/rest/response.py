@@ -273,8 +273,19 @@ class ResponseMaker:
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
-            if autocomplete_endpoint := field_def.metadata.get("autocomplete"):
-                f["autocomplete"] = autocomplete_endpoint
+            if autocomplete_endpoint := field_def.metadata.get("autocomplete_endpoint"):
+                f["autocomplete_endpoint"] = autocomplete_endpoint
+                f["autocomplete_show_id"] = field_def.metadata.get(
+                    "autocomplete_show_id", False
+                )
+
+            if autocomplete_id_bind := field_def.metadata.get("autocomplete_id_bind"):
+                f["autocomplete_id_bind"] = autocomplete_id_bind
+
+            if autocomplete_label_bind := field_def.metadata.get(
+                "autocomplete_label_bind"
+            ):
+                f["autocomplete_label_bind"] = autocomplete_label_bind
 
             if not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default

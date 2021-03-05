@@ -15,7 +15,10 @@ class Field(webargs_fields.Field):
         label=None,
         description=None,
         password=False,
-        autocomplete=None,
+        autocomplete_endpoint=None,
+        autocomplete_show_id=False,
+        autocomplete_id_bind=None,
+        autocomplete_label_bind=None,
         **kwargs,
     ):
 
@@ -27,8 +30,19 @@ class Field(webargs_fields.Field):
         if description is not None:
             kwargs["metadata"].setdefault("description", description)
 
-        if autocomplete is not None:
-            kwargs["metadata"].setdefault("autocomplete", autocomplete)
+        if autocomplete_endpoint is not None:
+            kwargs["metadata"].setdefault(
+                "autocomplete_endpoint", autocomplete_endpoint
+            )
+            kwargs["metadata"].setdefault("autocomplete_show_id", autocomplete_show_id)
+
+        if autocomplete_id_bind is not None:
+            kwargs["metadata"].setdefault("autocomplete_id_bind", autocomplete_id_bind)
+
+        if autocomplete_label_bind is not None:
+            kwargs["metadata"].setdefault(
+                "autocomplete_label_bind", autocomplete_label_bind
+            )
 
         kwargs["metadata"].setdefault("password", password)
 
