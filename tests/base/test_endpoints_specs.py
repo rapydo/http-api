@@ -63,7 +63,7 @@ class TestApp(BaseTests):
         endpoint = content["paths"]["/api/tests/inputs"]["post"]
         assert "parameters" in endpoint
         assert isinstance(endpoint["parameters"], list)
-        assert len(endpoint["parameters"]) == 0
+        assert len(endpoint["parameters"]) == 1
         assert "schema" in endpoint["parameters"][0]
         assert "$ref" in endpoint["parameters"][0]["schema"]
         assert endpoint["parameters"][0]["schema"]["$ref"] == "#/definitions/Input"
@@ -126,51 +126,80 @@ class TestApp(BaseTests):
         assert "maximum" in properties[f]
         assert properties[f]["maximum"] == 10
 
+        # string[]
         f = "mylist"
         assert f in properties
-        # "items": {
-        # "type": "string"
-        # },
-        # "type": "array"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "array"
+        assert "items" in properties[f]
+        assert "type" in properties[f]["items"]
+        assert len(properties[f]["items"]) == 1
+        assert properties[f]["items"]["type"] == "string"
 
+        # int[]
         f = "mylist2"
         assert f in properties
-        # "items": {
-        # "type": "integer"
-        # },
-        # "type": "array"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "array"
+        assert "items" in properties[f]
+        assert "type" in properties[f]["items"]
+        assert len(properties[f]["items"]) == 1
+        assert properties[f]["items"]["type"] == "integer"
 
+        # List of custom field
         f = "mylist3"
         assert f in properties
-        # "items": {},
-        # "type": "array"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "array"
+        assert "items" in properties[f]
+        # no property specified for custom fields... apispec is unable to convert it
+        assert len(properties[f]["items"]) == 0
 
         f = "mymaxstr"
         assert f in properties
-        # "maxLength": 7,
-        # "type": "string"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "maxLength" in properties[f]
+        assert properties[f]["maxLength"] == 7
 
+        # Normal Nested are assigned to $ref key
         f = "mynested"
         assert f in properties
-        # "$ref": "#/definitions/Nested"
+        assert "$ref" in properties[f]
+        assert properties[f]["$ref"] == "#/definitions/Nested"
+
+        # Nullable Nested are assigned to allOf key
+        f = "mynullablenested"
+        assert f in properties
+        assert "allOf" in properties[f]
+        assert "$ref" in properties[f]["allOf"]
+        assert properties[f]["allOf"]["$ref"] == "#/definitions/Nested"
+        assert "x-nullable" in properties[f]
+        assert properties[f]["x-nullable"] is True
 
         f = "myselect"
         assert f in properties
-        # "enum": [
-        #     "a",
-        #     "b"
-        # ],
-        # "type": "string"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "enum" in properties[f]
+        assert isinstance(properties[f]["enum"], list)
+        assert len(properties[f]["enum"]) == 2
+        assert properties[f]["enum"][0] == "a"
+        assert properties[f]["enum"][1] == "b"
 
         f = "myselect2"
         assert f in properties
-        # "enum": [
-        #     "a",
-        #     "b"
-        # ],
-        # "type": "string"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "enum" in properties[f]
+        assert isinstance(properties[f]["enum"], list)
+        assert len(properties[f]["enum"]) == 2
+        assert properties[f]["enum"][0] == "a"
+        assert properties[f]["enum"][1] == "b"
 
         f = "mystr"
         assert f in properties
-        # "minLength": 4,
-        # "type": "string"
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "minLength" in properties[f]
+        assert properties[f]["minLength"] == 4

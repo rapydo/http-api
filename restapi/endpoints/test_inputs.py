@@ -73,6 +73,8 @@ if TESTING:
         # to received json.dumped data from requests or pytest
         mynested = fields.Nested(Nested, required=True)
 
+        mynullablenested = fields.Nested(Nested, required=True, allow_none=True)
+
         # fields.List is a replacement of the default List field with the ability
         # to received json.dumped data from requests or pytest
 

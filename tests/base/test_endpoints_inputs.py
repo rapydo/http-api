@@ -150,6 +150,15 @@ class TestApp(BaseTests):
         assert "schema" in field
 
         field = schema[9]
+        assert len(field) == 6  # 5 mandatory fields + schema
+        assert field["key"] == "mynullablenested"
+        assert field["type"] == "nested"
+        assert field["label"] == field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+        assert "schema" in field
+
+        field = schema[10]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist"
         assert field["type"] == "string[]"
@@ -157,7 +166,7 @@ class TestApp(BaseTests):
         assert field["description"] == field["label"]
         assert field["required"]
 
-        field = schema[10]
+        field = schema[11]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist2"
         # The list is defined as List(CustomInt) and CustomInt is resolved as int
@@ -166,7 +175,7 @@ class TestApp(BaseTests):
         assert field["description"] == field["label"]
         assert field["required"]
 
-        field = schema[11]
+        field = schema[12]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist3"
         # The type is key[] ... should be something more explicative like FieldName[]
