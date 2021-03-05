@@ -171,7 +171,7 @@ class Nested(Field, webargs_fields.Nested):
 
 # DelimitedList is child of List as defined in:
 # https://github.com/marshmallow-code/webargs/blob/dev/src/webargs/fields.py
-class DelimitedList(List):
+class DelimitedList(List, webargs_fields.DelimitedList):
     def __init__(self, *args, unique=False, **kwargs):
         self.unique = unique
 
