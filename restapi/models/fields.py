@@ -166,7 +166,7 @@ class Nested(Field, webargs_fields.Nested):
                 value = json.loads(value)
             except BaseException as e:  # pragma: no cover
                 log.warning(e)
-        super()._deserialize(value, attr, data, **kwargs)
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 # DelimitedList is child of List as defined in:
