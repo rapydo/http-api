@@ -176,7 +176,7 @@ class RabbitExt(Connector):
 
     def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
         if not self.exchange_exists(exchange):
-            log.critical("Does not exist")
+            log.error("Exchange {} does not exist", exchange)
             return None
 
         host = self.variables.get("host", "")

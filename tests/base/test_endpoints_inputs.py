@@ -10,8 +10,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        NUM_FIELDS = 12
-        assert len(schema) == NUM_FIELDS
+        assert len(schema) == 13
         for field in schema:
 
             # Always in the schema

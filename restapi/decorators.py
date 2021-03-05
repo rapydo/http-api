@@ -349,7 +349,7 @@ def catch_exceptions(**kwargs):
 
             # errors with RabbitMQ credentials raised when sending Celery tasks
             except AccessRefused as e:  # pragma: no cover
-                log.critical(e)
+                log.error(e)
                 return self.response("Unexpected Server Error", code=500)
             except Exception as e:
 
