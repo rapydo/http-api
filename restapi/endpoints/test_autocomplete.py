@@ -23,7 +23,7 @@ if TESTING:
             autocomplete_endpoint="tests/autocomplete",
             autocomplete_id_bind="my_id",
             autocomplete_label_bind="my_label",
-            autocomplete_show_id=True,
+            autocomplete_show_id=False,
         )
 
     # This will accept a list of elements provided by the autocomplete endpoint.
@@ -35,7 +35,7 @@ if TESTING:
             autocomplete_endpoint="tests/autocomplete",
             autocomplete_id_bind="my_id",
             autocomplete_label_bind="my_label",
-            autocomplete_show_id=False,
+            autocomplete_show_id=True,
         )
 
     class TestAutocomplete(EndpointResource):
