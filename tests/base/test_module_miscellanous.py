@@ -588,6 +588,7 @@ class TestApp(BaseTests):
         schema = Input1(strip_required=False)
         try:
             schema.load({})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -602,6 +603,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": None})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -609,6 +611,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": ""})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -616,6 +619,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": [10]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -625,6 +629,7 @@ class TestApp(BaseTests):
         min_items_error = "Expected at least 2 items, received 1"
         try:
             schema.load({"advanced_list": ["a"]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -632,6 +637,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": ["a", "a"]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -643,6 +649,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": {"a": "b"}})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -677,7 +684,7 @@ class TestApp(BaseTests):
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "unique_delimited_list" in e.messages
-            err = "Provided list contains duplicates"
+            err = "Input list contains duplicates"
             assert e.messages["unique_delimited_list"][0] == err
 
         # No strips on elements

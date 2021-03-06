@@ -140,10 +140,9 @@ Int = Integer
 ####################################################################################
 class List(Field, webargs_fields.List):
     def __init__(self, *args, unique=False, min_items=0, **kwargs):
+        super().__init__(*args, **kwargs)
         self.unique = unique
         self.min_items = min_items
-
-        super().__init__(*args, **kwargs)
 
     def _deserialize(self, value, attr, data, **kwargs):
 
@@ -187,16 +186,18 @@ class Nested(Field, webargs_fields.Nested):
 # https://github.com/marshmallow-code/webargs/blob/dev/src/webargs/fields.py
 class DelimitedList(List, webargs_fields.DelimitedList):
     def __init__(self, *args, unique=False, **kwargs):
-        self.unique = unique
-
         super().__init__(*args, **kwargs)
+        # Note: Can't use self.unique otherwise the elements will be silently cleaned
+        # by the custom List deserializer
+        # self.unique = unique
+        self.no_duplicates = unique
 
     def _deserialize(self, value, attr, data, **kwargs):
 
         values = super()._deserialize(value, attr, data, **kwargs)
 
-        if self.unique and len(values) != len(set(values)):
-            raise ValidationError("Provided list contains duplicates")
+        if self.no_duplicates and len(values) != len(set(values)):
+            raise ValidationError("Input list contains duplicates")
 
         return values
 
