@@ -74,7 +74,7 @@ if TESTING:
             path="/tests/autocomplete",
             summary="Receives a list of MyElements",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={204: "Tests executed", 400: "Bad Input"},
         )
         def post(self, elements: List[str]) -> Response:
 
@@ -85,7 +85,7 @@ if TESTING:
             path="/tests/autocomplete",
             summary="Receives a single MyElement",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={204: "Tests executed", 400: "Bad Input"},
         )
         def put(self, element: str) -> Response:
 
