@@ -225,6 +225,15 @@ class EndpointsLoader:
                 endpoint.methods[method_fn] = fn.uris
                 for uri in fn.uris:
 
+                    if uri.startswith("/api/public/") or uri.startswith(
+                        "/api/app/"
+                    ):  # pragma: no cover
+                        log.critical(
+                            "Due to a BUG on the proxy configuration, "
+                            "the {} URL will not work in production mode",
+                            uri,
+                        )
+
                     self.authenticated_endpoints.setdefault(uri, {})
                     # method_fn is equivalent to m.lower()
                     self.authenticated_endpoints[uri].setdefault(

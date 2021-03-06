@@ -673,6 +673,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"unique_delimited_list": "a,b,b"})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "unique_delimited_list" in e.messages
