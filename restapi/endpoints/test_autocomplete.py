@@ -42,8 +42,8 @@ if TESTING:
         @staticmethod
         def get_element(name: str, surname: str, nickname: str) -> Tuple[str, str]:
             return (
-                f"{name[0]}{surname[0]}{nickname[0]}",
-                f"{name.upper()} {surname.upper()} the {nickname.upper()}",
+                f"{name[0].upper()}{surname[0].upper()}{nickname[0].upper()}",
+                f"{name.title()} {surname.title()} the {nickname.title()}",
             )
 
         # This is the autocomplete endpoint
