@@ -253,11 +253,12 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "D"})
         # This should fail, but Neo4jChoice are not validated as input
         # assert r.status_code == 400
-        # Since validation is not implemented, D is accepted
+        # Since validation is not implemented, D is accepted But since it is
+        # not included in the choice, the description will simply match the key
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
         assert response["choice"]["key"] == "D"
-        assert response["choice"]["description"] == "DDD"
+        assert response["choice"]["description"] == "D"
