@@ -25,7 +25,12 @@ elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no
+  # the --test flag here (not included in others templates) will extend che customizer
+  # class with additinal input/output fields to test these customizations
+  # The flag is not included in all templates to be able to also tests the cases
+  # when input and output models are not extended
   rapydo create prj --current \
+                    --test \
                     --add-optionals \
                     --extend prjbase \
                     --auth ${AUTH} \
