@@ -217,13 +217,16 @@ class Uploader:
             chunk_size = 1048576
 
         file_path = upload_dir.joinpath(filename)
-        with open(file_path, "ab") as f:
-            while True:
-                chunk = request.stream.read(chunk_size)
-                if not chunk:
-                    break
-                f.seek(start)
-                f.write(chunk)
+        try:
+            with open(file_path, "ab") as f:
+                while True:
+                    chunk = request.stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.seek(start)
+                    f.write(chunk)
+        except PermissionError:
+            raise ServiceUnavailable("Permission denied: failed to write the file")
 
         if completed:
             file_path.chmod(DEFAULT_PERMISSIONS)
