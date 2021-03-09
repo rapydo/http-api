@@ -361,11 +361,9 @@ class Connector(metaclass=abc.ABCMeta):
         for m in [extended_models, custom_models]:
             for key, model in m.items():
 
-                # Verify if overriding
+                # Verify if overriding => replace
                 if key in base_models.keys():
-                    original_model = base_models[key]
-                    # Override
-                    if issubclass(model, original_model):  # pragma: no cover
+                    if issubclass(model, base_models[key]):  # pragma: no cover
                         log.debug("Overriding model {}", key)
                         cls._models[key] = model
                         continue
