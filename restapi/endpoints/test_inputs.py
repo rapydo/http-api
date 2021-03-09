@@ -5,6 +5,7 @@ import pytz
 
 from restapi import decorators
 from restapi.config import TESTING
+from restapi.connectors import Connector
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 
@@ -91,10 +92,43 @@ if TESTING:
         @decorators.use_kwargs(InputSchema)
         @decorators.endpoint(
             path="/tests/inputs",
-            summary="Accept input based on a rich model",
+            summary="Accept inputs based on a rich model",
             description="Only enabled in testing mode",
             responses={204: "Tests executed"},
         )
         def post(self, **kwargs: Any) -> Response:
 
             return self.empty_response()
+
+
+if TESTING and Connector.check_availability("neo4j"):
+
+    CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
+
+    class InputNeo4jSchema(Schema):
+        # include a Neo4jChoice to test the deserialize
+        choice = fields.Neo4jChoice(CHOICES, required=True)
+
+    class OutputNeo4jSchema(Schema):
+        # include a Neo4jChoice to test the serialize
+        choice = fields.Neo4jChoice(CHOICES)
+        # include a Neo4jRelationshipToMany to test the serialize
+        # include a Neo4jRelationshipToSingle (to complete the list)
+        # include a Neo4jRelationshipToCount
+
+    class TestNeo4jInputs(EndpointResource):
+        @decorators.auth.optional(allow_access_token_parameter=True)
+        @decorators.use_kwargs(InputNeo4jSchema)
+        @decorators.marshal_with(OutputNeo4jSchema)
+        @decorators.endpoint(
+            path="/tests/neo4jinputs",
+            summary="Accept inputs based on a neo4j-related schema",
+            description="Only enabled in testing mode",
+            responses={204: "Tests executed"},
+        )
+        def post(self, choice: str) -> Response:
+
+            data = {
+                "choice": choice,
+            }
+            return self.response(data)

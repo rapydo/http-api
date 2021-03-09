@@ -1,6 +1,8 @@
 import json
 
+from restapi.connectors import Connector
 from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
@@ -203,4 +205,36 @@ class TestApp(BaseTests):
         # This is to verify that unknown inputs raise a ValidationError
         data["unknown"] = "input"
         r = client.post(f"{API_URI}/tests/inputs", data=data)
+        assert r.status_code == 400
+
+    def test_neo4j_inputs(self, client: FlaskClient) -> None:
+
+        if not Connector.check_availability("neo4j"):
+            log.warning("Skipping tests on neo4j input models")
+            return None
+
+        schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", {})
+        assert len(schema) == 1
+        assert "choice" in schema
+        assert "UNKNOWN" in schema["choice"]
+
+        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "A"})
+        assert r.status_code == 200
+        response = self.get_content(r)
+        assert "choice" in response
+        assert response["choice"] == "A"
+
+        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "B"})
+        assert r.status_code == 200
+        response = self.get_content(r)
+        assert "choice" in response
+        assert response["choice"] == "B"
+
+        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "C"})
+        assert r.status_code == 200
+        response = self.get_content(r)
+        assert "choice" in response
+        assert response["choice"] == "C"
+
+        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "D"})
         assert r.status_code == 400
