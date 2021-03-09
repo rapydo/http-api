@@ -290,7 +290,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 201
         assert self.get_content(r) == ""
 
-        data["name"] = ("fixed.filename.notallowed",)
+        data["name"] = "fixed.filename.notallowed"
         data["force"] = False
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 400
