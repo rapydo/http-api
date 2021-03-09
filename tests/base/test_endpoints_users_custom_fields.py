@@ -1,3 +1,5 @@
+import pytest
+
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.globals import mem
 
@@ -30,16 +32,24 @@ class TestApp(BaseTests):
         # Verify custom input fields (if defined) included in the profile input schema
         r = client.patch(f"{AUTH_URI}/profile", data={"get_schema": 1}, headers=headers)
         response = self.get_content(r)
-        for field in profile_inputs:
-            # This will fail
-            assert field in response
+        for field in profile_inputs.keys():
+            for expected in response:
+                if expected["key"] == field:
+                    break
+            else:  # pragma: no cover
+                pytest.fail(f"Input field {field} not found in profile input schema")
 
         # Verify custom registration fields (if defined) included in the reg. schema
         r = client.post(f"{AUTH_URI}/profile", data={"get_schema": 1})
         response = self.get_content(r)
-        for field in registration_inputs:
-            # This will fail
-            assert field in response
+        for field in registration_inputs.keys():
+            for expected in response:
+                if expected["key"] == field:
+                    break
+            else:  # pragma: no cover
+                pytest.fail(
+                    f"Input field {field} not found in registration input schema"
+                )
 
         headers, _ = self.do_login(client, None, None)
         # Verify custom admin input fields (if defined) included in admin users schema
@@ -47,9 +57,14 @@ class TestApp(BaseTests):
             f"{API_URI}/admin/users", data={"get_schema": 1}, headers=headers
         )
         response = self.get_content(r)
-        for field in admin_inputs:
-            # This will fail
-            assert field in response
+        for field in admin_inputs.keys():
+            for expected in response:
+                if expected["key"] == field:
+                    break
+            else:  # pragma: no cover
+                pytest.fail(
+                    f"Input field {field} not found in admin users input schema"
+                )
 
         # Verify custom admin output fields (if defined) included in admin users output
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
