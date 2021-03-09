@@ -227,19 +227,28 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
-        assert response["choice"] == "A"
+        assert "key" in response["choice"]
+        assert "description" in response["choice"]
+        assert response["choice"]["key"] == "A"
+        assert response["choice"]["description"] == "AAA"
 
         r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "B"})
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
-        assert response["choice"] == "B"
+        assert "key" in response["choice"]
+        assert "description" in response["choice"]
+        assert response["choice"]["key"] == "B"
+        assert response["choice"]["description"] == "BBB"
 
         r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "C"})
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
-        assert response["choice"] == "C"
+        assert "key" in response["choice"]
+        assert "description" in response["choice"]
+        assert response["choice"]["key"] == "C"
+        assert response["choice"]["description"] == "CCC"
 
         r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "D"})
         # This should fail, but Neo4jChoice are not validated as input
@@ -248,4 +257,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
-        assert response["choice"] == "D"
+        assert "key" in response["choice"]
+        assert "description" in response["choice"]
+        assert response["choice"]["key"] == "D"
+        assert response["choice"]["description"] == "DDD"

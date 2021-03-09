@@ -103,7 +103,7 @@ if TESTING:
 
 if TESTING and Connector.check_availability("neo4j"):
 
-    CHOICES = (("A", "A"), ("B", "B"), ("C", "C"))
+    CHOICES = (("A", "AAAA"), ("B", "BBBB"), ("C", "CCC"))
 
     class InputNeo4jSchema(Schema):
         # include a Neo4jChoice to test the deserialize
