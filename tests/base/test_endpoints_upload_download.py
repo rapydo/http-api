@@ -1,7 +1,9 @@
 import io
+import os
 
 from faker import Faker
 
+from restapi.config import UPLOAD_PATH
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
@@ -10,6 +12,8 @@ class TestUploadAndDownload(BaseTests):
 
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
+        # as defined in test_upload.py for normal uploads
+        upload_folder = "fixsubfolder"
 
         self.fname = f"{faker.pystr()}.notallowed"
 
@@ -53,6 +57,10 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         r = client.put(
             f"{API_URI}/tests/upload",
             data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
@@ -69,6 +77,10 @@ class TestUploadAndDownload(BaseTests):
             },
         )
         assert r.status_code == 200
+
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
         c = self.get_content(r)
         assert c.get("filename") == self.fname
@@ -190,6 +202,10 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") == "us-ascii"
         assert meta.get("type") == "text/plain"
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         r = client.get(f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
@@ -263,6 +279,11 @@ class TestUploadAndDownload(BaseTests):
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
         assert r.status_code == 200
+
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         # c = self.get_content(r)
         # assert c.get('filename') is not None
         # uploaded_filename = c.get('filename')

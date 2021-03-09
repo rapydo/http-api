@@ -1,15 +1,3 @@
-"""
-Upload data to APIs
-
-Interesting reading:
-http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
-https://philsturgeon.uk/api/2016/01/04/http-rest-api-file-uploads/
-
-Note: originally developed for POST, should/could be used also for PUT
-http://stackoverflow.com/a/9533843/2114395
-
-"""
-
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -23,9 +11,10 @@ from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
+# Equivalent to -r--r-----
+DEFAULT_PERMISSIONS = 0o440
 
-######################################
-# Save files http://API/upload
+
 class Uploader:
 
     allowed_exts: List[str] = []
@@ -116,7 +105,7 @@ class Uploader:
         ########################
         # ## Final response
 
-        self.fix_file_permissions(abs_file)
+        abs_file.chmod(DEFAULT_PERMISSIONS)
 
         # Default redirect is to 302 state, which makes client
         # think that response was unauthorized....
@@ -208,6 +197,12 @@ class Uploader:
 
         return total_length, start, stop
 
+    # Please not that chunk_upload as to be used from a PUT endpoint
+    # PUT request is way different compared to POST request. With PUT request
+    # the file contents can be accessed using either request.data or request.stream.
+    # The first one stores incoming data as string, while request.stream acts
+    # more like a file object, making it more suitable for binary data
+    # Ref. http://stackoverflow.com/a/9533843/2114395
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
@@ -235,7 +230,7 @@ class Uploader:
                 f.write(chunk)
 
         if completed:
-            self.fix_file_permissions(file_path)
+            file_path.chmod(DEFAULT_PERMISSIONS)
             return (
                 completed,
                 EndpointResource.response(
