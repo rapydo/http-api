@@ -216,7 +216,10 @@ class TestApp(BaseTests):
         schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", {})
         assert len(schema) == 1
         assert "choice" in schema
-        assert "UNKNOWN" in schema["choice"]
+        # This is because the Neo4jChoice field is not completed for deserialization
+        # It is should be automatically translated into a select, with options by
+        # including a validation OneOf
+        assert "options" not in schema["choice"]
 
         r = client.post(f"{API_URI}/tests/inputs", data={"choice": "A"})
         assert r.status_code == 200

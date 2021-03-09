@@ -207,6 +207,8 @@ class DelimitedList(List, webargs_fields.DelimitedList):
 ####################################################################################
 
 
+# Should be extended to automatically include the choices as validation field to be
+# Converted as a select on frontend
 class Neo4jChoice(Field):
     """Field that serializes from a neo4j choice"""
 
