@@ -247,7 +247,7 @@ class TestApp(BaseTests):
         assert isinstance(response["relationship_many"], list)
         assert len(response["relationship_many"]) > 0
         assert isinstance(response["relationship_many"][0], dict)
-        assert "uuid" in response["relationship_many"][0]
+        assert "token_type" in response["relationship_many"][0]
 
         r = client.post(
             f"{API_URI}/tests/neo4jinputs", data={"choice": "B"}, headers=headers

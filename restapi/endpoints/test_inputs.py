@@ -113,10 +113,13 @@ if TESTING and Connector.check_availability("neo4j"):
     class UUID(Schema):
         uuid = fields.String()
 
+    class TOKEN(Schema):
+        token_type = fields.String()
+
     class OutputNeo4jSchema(Schema):
         # include a Neo4jChoice to test the serialize
         choice = fields.Neo4jChoice(CHOICES)
-        relationship_many = fields.Neo4jRelationshipToMany(UUID)
+        relationship_many = fields.Neo4jRelationshipToMany(TOKEN)
         relationship_single = fields.Neo4jRelationshipToSingle(UUID)
         relationship_count = fields.Neo4jRelationshipToCount()
 
