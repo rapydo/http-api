@@ -67,6 +67,10 @@ if TESTING:
         )
         def post(self, force: bool = False, **kwargs: Any) -> Response:
 
+            # This is just to test the allowed exts without adding a new parameter..
+            if not force:
+                self.set_allowed_exts(["txt"])
+
             filename = "fixed.filename"
             path = UPLOAD_PATH.joinpath("fixed")
             return self.init_chunk_upload(path, filename, force=force)

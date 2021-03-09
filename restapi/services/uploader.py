@@ -40,6 +40,10 @@ class Uploader:
             "." in filename and filename.rsplit(".", 1)[1].lower() in self.allowed_exts
         )
 
+    def fix_file_permissions(self, file_path: Path) -> None:
+        # Not implemented yet
+        pass
+
     @staticmethod
     def absolute_upload_file(
         filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
@@ -77,7 +81,6 @@ class Uploader:
 
         myfile = request.files["file"]
 
-        # Check file extension?
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
@@ -113,6 +116,8 @@ class Uploader:
         ########################
         # ## Final response
 
+        self.fix_file_permissions(abs_file)
+
         # Default redirect is to 302 state, which makes client
         # think that response was unauthorized....
         # see http://dotnet.dzone.com/articles/getting-know-cross-origin
@@ -128,6 +133,9 @@ class Uploader:
     def init_chunk_upload(
         self, upload_dir: Path, filename: str, force: bool = True
     ) -> Response:
+
+        if not self.allowed_file(filename):
+            raise BadRequest("File extension not allowed")
 
         if not upload_dir.exists():
             upload_dir.mkdir(parents=True, exist_ok=True)
@@ -227,6 +235,7 @@ class Uploader:
                 f.write(chunk)
 
         if completed:
+            self.fix_file_permissions(file_path)
             return (
                 completed,
                 EndpointResource.response(
