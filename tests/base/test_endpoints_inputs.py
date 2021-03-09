@@ -192,3 +192,15 @@ class TestApp(BaseTests):
 
         r = client.post(f"{API_URI}/tests/inputs", data=data)
         assert r.status_code == 204
+
+        # This is to verify that access_token, if provided is excluded from parameters
+        # And do not raise any ValidationError for unknown input
+        _, token = self.do_login(client, None, None)
+        data["access_token"] = token
+        r = client.post(f"{API_URI}/tests/inputs", data=data)
+        assert r.status_code == 204
+
+        # This is to verify that unknown inputs raise a ValidationError
+        data["unknown"] = "input"
+        r = client.post(f"{API_URI}/tests/inputs", data=data)
+        assert r.status_code == 400

@@ -87,6 +87,7 @@ if TESTING:
         mylist3 = fields.List(CustomGenericField, required=True)
 
     class TestInputs(EndpointResource):
+        @decorators.auth.optional(allow_access_token_parameter=True)
         @decorators.use_kwargs(InputSchema)
         @decorators.endpoint(
             path="/tests/inputs",
