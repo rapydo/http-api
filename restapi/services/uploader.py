@@ -29,10 +29,6 @@ class Uploader:
             "." in filename and filename.rsplit(".", 1)[1].lower() in self.allowed_exts
         )
 
-    def fix_file_permissions(self, file_path: Path) -> None:
-        # Not implemented yet
-        pass
-
     @staticmethod
     def absolute_upload_file(
         filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
