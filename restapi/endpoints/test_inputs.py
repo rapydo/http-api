@@ -6,6 +6,7 @@ import pytz
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector
+from restapi.exceptions import ServerError
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
 
@@ -109,26 +110,36 @@ if TESTING and Connector.check_availability("neo4j"):
         # include a Neo4jChoice to test the deserialize
         choice = fields.Neo4jChoice(CHOICES, required=True)
 
+    class UUID(Schema):
+        uuid = fields.String()
+
     class OutputNeo4jSchema(Schema):
         # include a Neo4jChoice to test the serialize
         choice = fields.Neo4jChoice(CHOICES)
-        # include a Neo4jRelationshipToMany to test the serialize
-        # include a Neo4jRelationshipToSingle (to complete the list)
-        # include a Neo4jRelationshipToCount
+        relationship_many = fields.Neo4jRelationshipToMany(UUID)
+        relationship_single = fields.Neo4jRelationshipToSingle(UUID)
+        relationship_count = fields.Neo4jRelationshipToCount()
 
     class TestNeo4jInputs(EndpointResource):
-        @decorators.auth.optional(allow_access_token_parameter=True)
+        @decorators.auth.require()
         @decorators.use_kwargs(InputNeo4jSchema)
         @decorators.marshal_with(OutputNeo4jSchema)
         @decorators.endpoint(
             path="/tests/neo4jinputs",
             summary="Accept inputs based on a neo4j-related schema",
-            description="Only enabled in testing mode",
-            responses={204: "Tests executed"},
+            desingleponses={204: "Tests executed"},
         )
         def post(self, choice: str) -> Response:
 
+            user = self.get_user()
+            # Can't happen since auth is required
+            if not user:  # pragma: no cover
+                raise ServerError("User misconfiguration")
+
             data = {
                 "choice": choice,
+                "relationship_many": user.tokens,
+                "relationship_single": user.belongs_to,
+                "relationship_count": user.tokens,
             }
             return self.response(data)

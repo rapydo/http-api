@@ -213,7 +213,8 @@ class TestApp(BaseTests):
             log.warning("Skipping tests on neo4j input models")
             return None
 
-        schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", {})
+        headers, _ = self.do_login(client, None, None)
+        schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", headers)
         assert len(schema) == 1
 
         field = schema[0]
@@ -223,7 +224,9 @@ class TestApp(BaseTests):
         # including a validation OneOf
         assert "options" not in field
 
-        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "A"})
+        r = client.post(
+            f"{API_URI}/tests/neo4jinputs", data={"choice": "A"}, headers=headers
+        )
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
@@ -232,7 +235,23 @@ class TestApp(BaseTests):
         assert response["choice"]["key"] == "A"
         assert response["choice"]["description"] == "AAA"
 
-        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "B"})
+        assert "relationship_count" in response
+        assert isinstance(response["relationship_count"], int)
+        assert response["relationship_count"] > 0
+
+        assert "relationship_single" in response
+        assert isinstance(response["relationship_single"], dict)
+        assert "uuid" in response["relationship_single"]
+
+        assert "relationship_many" in response
+        assert isinstance(response["relationship_many"], list)
+        assert len(response["relationship_many"]) > 0
+        assert isinstance(response["relationship_many"][0], dict)
+        assert "uuid" in response["relationship_many"][0]
+
+        r = client.post(
+            f"{API_URI}/tests/neo4jinputs", data={"choice": "B"}, headers=headers
+        )
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
@@ -241,7 +260,9 @@ class TestApp(BaseTests):
         assert response["choice"]["key"] == "B"
         assert response["choice"]["description"] == "BBB"
 
-        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "C"})
+        r = client.post(
+            f"{API_URI}/tests/neo4jinputs", data={"choice": "C"}, headers=headers
+        )
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
@@ -250,7 +271,9 @@ class TestApp(BaseTests):
         assert response["choice"]["key"] == "C"
         assert response["choice"]["description"] == "CCC"
 
-        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "D"})
+        r = client.post(
+            f"{API_URI}/tests/neo4jinputs", data={"choice": "D"}, headers=headers
+        )
         # This should fail, but Neo4jChoice are not validated as input
         # assert r.status_code == 400
         # Since validation is not implemented, D is accepted But since it is
