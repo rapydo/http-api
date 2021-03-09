@@ -138,9 +138,10 @@ class TestUploadAndDownload(BaseTests):
         r = client.post(f"{API_URI}/tests/chunkedupload", data={"force": True})
         assert r.status_code == 400
 
+        filename = "fixed.filename.txt"
         data = {
             "force": True,
-            "name": "fixed.filename.txt",
+            "name": filename,
             "size": "999",
             "mimeType": "application/zip",
             "lastModified": 1590302749209,
@@ -150,13 +151,13 @@ class TestUploadAndDownload(BaseTests):
         assert self.get_content(r) == ""
 
         with io.StringIO(faker.text()) as f:
-            r = client.put(f"{API_URI}/tests/chunkedupload", data=f)
+            r = client.put(f"{API_URI}/tests/chunkedupload/{filename}", data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload",
+                f"{API_URI}/tests/chunkedupload/{filename}",
                 data=f,
                 headers={"Content-Range": "!"},
             )
@@ -167,7 +168,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload",
+                f"{API_URI}/tests/chunkedupload/{filename}",
                 data=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
@@ -176,7 +177,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload",
+                f"{API_URI}/tests/chunkedupload/{filename}",
                 data=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
@@ -257,7 +258,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload",
+                f"{API_URI}/tests/chunkedupload/{filename}",
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
