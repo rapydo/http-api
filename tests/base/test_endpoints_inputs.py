@@ -223,25 +223,25 @@ class TestApp(BaseTests):
         # including a validation OneOf
         assert "options" not in field
 
-        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "A"})
+        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "A"})
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
         assert response["choice"] == "A"
 
-        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "B"})
+        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "B"})
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
         assert response["choice"] == "B"
 
-        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "C"})
+        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "C"})
         assert r.status_code == 200
         response = self.get_content(r)
         assert "choice" in response
         assert response["choice"] == "C"
 
-        r = client.post(f"{API_URI}/tests/inputs", data={"choice": "D"})
+        r = client.post(f"{API_URI}/tests/neo4jinputs", data={"choice": "D"})
         # This should fail, but Neo4jChoice are not validated as input
         # assert r.status_code == 400
         # Since validation is not implemented, D is accepted
