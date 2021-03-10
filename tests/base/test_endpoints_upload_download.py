@@ -161,6 +161,8 @@ class TestUploadAndDownload(BaseTests):
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
+        assert "Location" in r.headers
+        assert r.headers["Location"] == f"{API_URI}/tests/chunkedupload/{filename}"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(f"{API_URI}/tests/chunkedupload/{filename}", data=f)
@@ -286,8 +288,6 @@ class TestUploadAndDownload(BaseTests):
         # -rw-rw----
         destination_path.chmod(0o660)
 
-        up_data2 = faker.pystr(min_chars=24, max_chars=48)
-        STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(
                 f"{API_URI}/tests/chunkedupload/{filename}",
@@ -328,6 +328,8 @@ class TestUploadAndDownload(BaseTests):
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
+        assert "Location" in r.headers
+        assert r.headers["Location"] == f"{API_URI}/tests/chunkedupload/{filename}"
 
         data["name"] = "fixed.filename.notallowed"
         data["force"] = False

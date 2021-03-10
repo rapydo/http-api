@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 
 from restapi import decorators
 from restapi.config import TESTING, UPLOAD_PATH
@@ -37,6 +36,31 @@ if TESTING:
 
         labels = ["tests"]
 
+        @decorators.init_chunk_upload
+        @decorators.use_kwargs(Force)
+        @decorators.endpoint(
+            # forgot the leading slash to test the automatic fix
+            path="tests/chunkedupload",
+            summary="Initialize tests on chunked upload",
+            description="Only enabled in testing mode",
+            responses={200: "Schema retrieved", 201: "Upload initialized"},
+        )
+        def post(
+            self,
+            name: str,
+            mimeType: str,
+            size: int,
+            lastModified: int,
+            force: bool = False,
+        ) -> Response:
+
+            # This is just to test the allowed exts without adding a new parameter..
+            if not force:
+                self.set_allowed_exts(["txt"])
+
+            path = UPLOAD_PATH.joinpath("fixed")
+            return self.init_chunk_upload(path, name, force=force)
+
         @decorators.use_kwargs(Force)
         @decorators.endpoint(
             # forgot the leading slash to test the automatic fix
@@ -54,21 +78,3 @@ if TESTING:
                 log.info("Upload completed")
 
             return response
-
-        @decorators.init_chunk_upload
-        @decorators.use_kwargs(Force)
-        @decorators.endpoint(
-            # forgot the leading slash to test the automatic fix
-            path="tests/chunkedupload",
-            summary="Initialize tests on chunked upload",
-            description="Only enabled in testing mode",
-            responses={200: "Schema retrieved", 201: "Upload initialized"},
-        )
-        def post(self, name: str, force: bool = False, **kwargs: Any) -> Response:
-
-            # This is just to test the allowed exts without adding a new parameter..
-            if not force:
-                self.set_allowed_exts(["txt"])
-
-            path = UPLOAD_PATH.joinpath("fixed")
-            return self.init_chunk_upload(path, name, force=force)
