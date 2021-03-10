@@ -538,7 +538,7 @@ class BaseTests:
             # Debug code:
             from restapi.config import APP_SECRETS
 
-            log.critical(APP_SECRETS.iterdir())
+            log.critical(list(APP_SECRETS.iterdir()))
             secret = open(JWT_SECRET_FILE, "rb").read()
 
         if wrong_algorithm:
