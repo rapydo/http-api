@@ -68,7 +68,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/upload",
             data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
         )
-        assert r.status_code == 400
+        assert r.status_code == 409
         err = f"File '{self.fname}' already exists, use force parameter to overwrite"
         assert self.get_content(r) == err
 
@@ -167,6 +167,11 @@ class TestUploadAndDownload(BaseTests):
         upload_endpoint = get_location_header(
             r.headers, expected=f"{API_URI}/tests/chunkedupload/{filename}"
         )
+
+        data["force"] = False
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
+        assert r.status_code == 409
+        assert self.get_content(r) == f"File '{filename}' already exists"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(upload_endpoint, data=f)
@@ -329,7 +334,7 @@ class TestUploadAndDownload(BaseTests):
 
         data["force"] = False
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
-        assert r.status_code == 400
+        assert r.status_code == 409
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 

@@ -7,7 +7,7 @@ from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
-from restapi.exceptions import BadRequest, ServiceUnavailable
+from restapi.exceptions import BadRequest, Conflict, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
@@ -76,11 +76,10 @@ class Uploader:
 
         if abs_file.exists():
             if not force:
-                raise BadRequest(
+                raise Conflict(
                     f"File '{fname}' already exists, use force parameter to overwrite"
                 )
             abs_file.unlink()
-            log.debug("Already exists, forced removal")
 
         # Save the file
         try:
@@ -135,10 +134,9 @@ class Uploader:
                 file_path.unlink()
                 log.debug("Forced removal")
             else:
-                return EndpointResource.response(
-                    f"File '{filename}' already exists",
-                    code=400,
-                )
+                raise Conflict(f"File '{filename}' already exists")
+
+        file_path.touch()
 
         host = get_backend_url()
         url = f"{host}{request.path}/{filename}"
