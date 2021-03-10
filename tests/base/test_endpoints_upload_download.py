@@ -1,14 +1,25 @@
 import io
 import os
+from typing import Dict
 
 from faker import Faker
 
-from restapi.config import DEFAULT_HOST, UPLOAD_PATH
-from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.config import PRODUCTION, UPLOAD_PATH, get_backend_url
+from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
-def get_location_header(location: str) -> str:
-    return location.replace("localhost", DEFAULT_HOST)
+def get_location_header(headers: Dict[str, str], expected: str) -> str:
+    assert "Location" in headers
+    location = headers["Location"]
+
+    if PRODUCTION:
+        assert location.startswith("https://")
+
+    host = get_backend_url()
+    assert location.startswith(host)
+    location = location.replace(host, SERVER_URI)
+    assert location == expected
+    return location
 
 
 class TestUploadAndDownload(BaseTests):
@@ -153,18 +164,18 @@ class TestUploadAndDownload(BaseTests):
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
-        assert "Location" in r.headers
-        upload_endpoint = get_location_header(r.headers["Location"])
-        assert upload_endpoint == f"{API_URI}/tests/chunkedupload/{filename}"
+        upload_endpoint = get_location_header(
+            r.headers, expected=f"{API_URI}/tests/chunkedupload/{filename}"
+        )
 
         with io.StringIO(faker.text()) as f:
-            r = client.put(f"{API_URI}/tests/chunkedupload/{filename}", data=f)
+            r = client.put(upload_endpoint, data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": "!"},
             )
@@ -175,7 +186,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
@@ -184,7 +195,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
@@ -269,7 +280,7 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
@@ -283,7 +294,7 @@ class TestUploadAndDownload(BaseTests):
 
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
@@ -321,9 +332,9 @@ class TestUploadAndDownload(BaseTests):
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
-        assert "Location" in r.headers
-        upload_endpoint = get_location_header(r.headers["Location"])
-        assert upload_endpoint == f"{API_URI}/tests/chunkedupload/{filename}"
+        upload_endpoint = get_location_header(
+            r.headers, expected=f"{API_URI}/tests/chunkedupload/{filename}"
+        )
 
         data["name"] = "fixed.filename.notallowed"
         data["force"] = False
@@ -335,7 +346,7 @@ class TestUploadAndDownload(BaseTests):
         filename = f"{faker.pystr()}.notallowed"
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/chunkedupload/{filename}",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
