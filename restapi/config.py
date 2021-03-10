@@ -14,9 +14,9 @@ PRODUCTION: bool = APP_MODE == "production"
 STACKTRACE: bool = False
 REMOVE_DATA_AT_INIT_TIME: bool = False
 
-HOSTNAME = os.getenv("HOSTNAME", "backend")
-CONTAINER_ID = os.getenv("CONTAINER_ID", "")
-IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
+HOSTNAME: str = os.getenv("HOSTNAME", "backend")
+CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
+IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
 
 # ENDPOINTS bases
 API_URL = "/api"

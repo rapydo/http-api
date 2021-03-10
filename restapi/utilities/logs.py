@@ -22,7 +22,7 @@ LOGS_FOLDER = "/logs"
 
 
 # BACKEND-SERVER
-if IS_CELERY_CONTAINER == "0":
+if not IS_CELERY_CONTAINER:
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:  # pragma: no cover

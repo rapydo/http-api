@@ -660,16 +660,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
             self.save_user(user)
 
-        try:
-            return self.fernet.decrypt(user.mfa_hash.encode()).decode()
-        # To be removed as soon as all secrets will be fixed
-        except TypeError as e:
-            log.error(e)
-            log.critical("Found un-encrypted totp secret, fixing")
-            plain_hash = user.mfa_hash
-            user.mfa_hash = self.fernet.encrypt(plain_hash.encode())
-            self.save_user(user)
-            return cast(str, plain_hash)
+        return self.fernet.decrypt(user.mfa_hash.encode()).decode()
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
