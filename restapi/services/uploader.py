@@ -217,6 +217,13 @@ class Uploader:
             chunk_size = 1048576
 
         file_path = upload_dir.joinpath(filename)
+
+        # Uhm... this upload is not initialized?
+        if not file_path.exists():
+            raise ServiceUnavailable(
+                "Permission denied: the destination file does not exist"
+            )
+
         try:
             with open(file_path, "ab") as f:
                 while True:

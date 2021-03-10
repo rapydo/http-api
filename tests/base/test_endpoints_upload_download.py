@@ -193,6 +193,11 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 206
         assert self.get_content(r) == "partial"
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        # The file is not yet read only because the upload is in progress
+        assert oct(os.stat(destination_path).st_mode & 0o777) != "0o440"
+
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
                 upload_endpoint,
@@ -343,7 +348,7 @@ class TestUploadAndDownload(BaseTests):
         assert self.get_content(r) == "File extension not allowed"
 
         # Send an upload on a file endpoint not previously initialized
-        filename = f"{faker.pystr()}.notallowed"
+        filename = f"{faker.pystr()}.txt"
         with io.StringIO(up_data2) as f:
             r = client.put(
                 upload_endpoint,
@@ -351,4 +356,9 @@ class TestUploadAndDownload(BaseTests):
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
 
-        assert r.status_code == 200
+        assert r.status_code == 503
+        error = "Permission denied: the destination file does not exist"
+        assert self.get_content(r) == error
+
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert not destination_path.exists()
