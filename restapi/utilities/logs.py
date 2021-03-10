@@ -8,14 +8,18 @@ from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
-from restapi.config import PRODUCTION, TESTING
+from restapi.config import (
+    CONTAINER_ID,
+    HOSTNAME,
+    IS_CELERY_CONTAINER,
+    PRODUCTION,
+    TESTING,
+)
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
 LOGS_FOLDER = "/logs"
-HOSTNAME = os.getenv("HOSTNAME", "backend")
-CONTAINER_ID = os.getenv("CONTAINER_ID", "")
-IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
+
 
 # BACKEND-SERVER
 if IS_CELERY_CONTAINER == "0":

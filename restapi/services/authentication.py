@@ -5,7 +5,6 @@ Add auth checks called /checklogged and /testadmin
 import abc
 import base64
 import re
-import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
@@ -22,6 +21,7 @@ from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
+    IS_CELERY_CONTAINER,
     JWT_SECRET_FILE,
     PRODUCTION,
     TESTING,
@@ -45,6 +45,10 @@ from restapi.utilities.uuid import getUUID
 
 
 def import_secret(abs_filename: Path) -> bytes:
+
+    if IS_CELERY_CONTAINER:
+        return Fernet.generate_key()
+
     try:
         return open(abs_filename, "rb").read()
     except OSError:
@@ -661,7 +665,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # To be removed as soon as all secrets will be fixed
         except TypeError as e:
             log.error(e)
-            log.critical("Found un-encrypted totp secrete, fixing")
+            log.critical("Found un-encrypted totp secret, fixing")
             plain_hash = user.mfa_hash
             user.mfa_hash = self.fernet.encrypt(plain_hash.encode())
             self.save_user(user)
