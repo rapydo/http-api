@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import jwt
 import pyotp
-import pytest
 import pytz
 from faker import Faker
 from flask.wrappers import Response
@@ -535,6 +534,11 @@ class BaseTests:
         if wrong_secret:
             secret = cls.faker.password()
         else:
+
+            # Debug code:
+            from restapi.config import APP_SECRETS
+
+            log.critical(APP_SECRETS.iterdir())
             secret = open(JWT_SECRET_FILE, "rb").read()
 
         if wrong_algorithm:
