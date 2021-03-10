@@ -46,12 +46,13 @@ from restapi.utilities.uuid import getUUID
 
 def import_secret(abs_filename: Path) -> bytes:
 
-    if IS_CELERY_CONTAINER:
+    if IS_CELERY_CONTAINER:  # pragma: no cover
         return Fernet.generate_key()
 
     try:
         return open(abs_filename, "rb").read()
-    except OSError:
+    # Can't be covered because it is execute once before the tests...
+    except OSError:  # pragma: no cover
         key = Fernet.generate_key()
         with open(abs_filename, "wb") as key_file:
             key_file.write(key)
