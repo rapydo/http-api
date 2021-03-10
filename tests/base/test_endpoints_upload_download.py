@@ -356,7 +356,7 @@ class TestUploadAndDownload(BaseTests):
         filename = f"{faker.pystr()}.txt"
         with io.StringIO(up_data2) as f:
             r = client.put(
-                upload_endpoint,
+                f"{API_URI}/tests/chunkedupload/{filename}",
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
