@@ -20,7 +20,7 @@ from restapi.config import (
     AUTH_URL,
     DEFAULT_HOST,
     DEFAULT_PORT,
-    SECRET_KEY_FILE,
+    JWT_SECRET_FILE,
 )
 from restapi.connectors import Connector
 from restapi.env import Env
@@ -535,7 +535,7 @@ class BaseTests:
         if wrong_secret:
             secret = cls.faker.password()
         else:
-            secret = open(SECRET_KEY_FILE, "rb").read()
+            secret = open(JWT_SECRET_FILE, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"

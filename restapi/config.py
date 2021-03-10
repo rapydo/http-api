@@ -26,7 +26,8 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
 UPLOAD_PATH: Path = Path(os.getenv("UPLOAD_PATH", "/uploads"))
-SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
+JWT_SECRET_FILE = Path(f"{os.getenv('APP_SECRETS')}/jwt_secret.key")
+TOTP_SECRET_FILE = Path(f"{os.getenv('APP_SECRETS')}/totp_secret.key")
 
 #################
 

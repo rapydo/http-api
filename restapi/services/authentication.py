@@ -9,20 +9,23 @@ import sys
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
-import pyotp  # TOTP generation
+import pyotp
 import pytz
-import segno  # QR Code generation
+import segno
+from cryptography.fernet import Fernet
 from flask import request
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
+    JWT_SECRET_FILE,
     PRODUCTION,
-    SECRET_KEY_FILE,
     TESTING,
+    TOTP_SECRET_FILE,
     get_project_configuration,
 )
 from restapi.env import Env
@@ -39,6 +42,18 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
+
+
+def import_secret(abs_filename: Path) -> bytes:
+    try:
+        return open(abs_filename, "rb").read()
+    except OSError:
+        key = Fernet.generate_key()
+        with open(abs_filename, "wb") as key_file:
+            key_file.write(key)
+        abs_filename.chmod(0o400)
+        return key
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -122,8 +137,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     that aims to store credentials of users and roles.
     """
 
-    # Secret loaded from secret.key file
-    JWT_SECRET: Optional[bytes] = None
+    JWT_SECRET: bytes = import_secret(JWT_SECRET_FILE)
+    fernet = Fernet(import_secret(TOTP_SECRET_FILE))
+
     # JWT_ALGO = 'HS256'
     # Should be faster on 64bit machines
     JWT_ALGO = "HS512"
@@ -192,7 +208,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def module_initialization(cls) -> None:
         cls.load_default_user()
         cls.load_roles()
-        cls.import_secret(SECRET_KEY_FILE)
 
     @staticmethod
     def load_default_user() -> None:
@@ -272,13 +287,6 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self.register_failed_login(username)
         raise Unauthorized("Invalid access credentials", is_warning=True)
 
-    @classmethod
-    def import_secret(cls, abs_filename: str) -> None:
-        try:
-            cls.JWT_SECRET = open(abs_filename, "rb").read()
-        except OSError:  # pragma: no cover
-            print_and_exit("Jwt secret file {} not found", abs_filename)
-
     # #####################
     # # Password handling #
     ####################
@@ -356,13 +364,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     @classmethod
     def create_token(cls, payload: Payload) -> str:
         """ Generate a byte token with JWT library to encrypt the payload """
-        if cls.JWT_SECRET:
-            return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
-                "ascii"
-            )
-        else:  # pragma: no cover
-            log.critical("Server misconfiguration, missing jwt configuration")
-            sys.exit(1)
+        return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
+            "ascii"
+        )
 
     def create_temporary_token(
         self, user: User, token_type: str, duration: int = 86400
@@ -390,12 +394,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
 
         try:
-            if cls.JWT_SECRET:
-                return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
-            else:
-                print_and_exit(  # pragma: no cover
-                    "Server misconfiguration, missing jwt configuration"
-                )
+            return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
         # now > exp
         except ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
@@ -653,11 +652,20 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 return p
 
         if not user.mfa_hash:
-            # to be encrypted
-            user.mfa_hash = pyotp.random_base32()
+            random_hash = pyotp.random_base32()
+            user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
             self.save_user(user)
 
-        return cast(str, user.mfa_hash)
+        try:
+            return self.fernet.decrypt(user.mfa_hash.encode()).decode()
+        # To be removed as soon as all secrets will be fixed
+        except TypeError as e:
+            log.error(e)
+            log.critical("Found un-encrypted totp secrete, fixing")
+            plain_hash = user.mfa_hash
+            user.mfa_hash = self.fernet.encrypt(plain_hash.encode())
+            self.save_user(user)
+            return cast(str, plain_hash)
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
