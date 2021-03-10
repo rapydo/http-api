@@ -3,12 +3,18 @@ import os
 
 from faker import Faker
 
-from restapi.config import UPLOAD_PATH
+from restapi.config import DEFAULT_HOST, UPLOAD_PATH
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
+def get_location_header(location: str) -> str:
+    return location.replace("localhost", DEFAULT_HOST)
+
+
 class TestUploadAndDownload(BaseTests):
-    def test_upload(self, client: FlaskClient, faker: Faker) -> None:
+    def test_simple_upload_and_download(
+        self, client: FlaskClient, faker: Faker
+    ) -> None:
 
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
@@ -16,20 +22,6 @@ class TestUploadAndDownload(BaseTests):
         upload_folder = "fixsubfolder"
 
         self.fname = f"{faker.pystr()}.notallowed"
-
-        r = client.put(
-            f"{API_URI}/tests/upload",
-            data={
-                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                # By setting force False only txt files will be allowed for upload
-                # Strange, but it is how the endpoint is configured to improve the tests
-                "force": False,
-            },
-        )
-        assert r.status_code == 400
-        assert self.get_content(r) == "File extension not allowed"
-
-        self.fname = f"{faker.pystr()}.not"
 
         r = client.put(
             f"{API_URI}/tests/upload",
@@ -89,8 +81,6 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") is not None
         assert meta.get("type") is not None
 
-    def test_download(self, client: FlaskClient) -> None:
-
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
         # as defined in test_upload.py for normal uploads
@@ -139,7 +129,9 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 400
 
-    def test_chunked(self, client: FlaskClient, faker: Faker) -> None:
+    def test_chunked_upload_and_download(
+        self, client: FlaskClient, faker: Faker
+    ) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
@@ -162,7 +154,8 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 201
         assert self.get_content(r) == ""
         assert "Location" in r.headers
-        assert r.headers["Location"] == f"{API_URI}/tests/chunkedupload/{filename}"
+        upload_endpoint = get_location_header(r.headers["Location"])
+        assert upload_endpoint == f"{API_URI}/tests/chunkedupload/{filename}"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(f"{API_URI}/tests/chunkedupload/{filename}", data=f)
@@ -329,10 +322,22 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 201
         assert self.get_content(r) == ""
         assert "Location" in r.headers
-        assert r.headers["Location"] == f"{API_URI}/tests/chunkedupload/{filename}"
+        upload_endpoint = get_location_header(r.headers["Location"])
+        assert upload_endpoint == f"{API_URI}/tests/chunkedupload/{filename}"
 
         data["name"] = "fixed.filename.notallowed"
         data["force"] = False
         r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 400
         assert self.get_content(r) == "File extension not allowed"
+
+        # Send an upload on a file endpoint not previously initialized
+        filename = f"{faker.pystr()}.notallowed"
+        with io.StringIO(up_data2) as f:
+            r = client.put(
+                f"{API_URI}/tests/chunkedupload/{filename}",
+                data=f,
+                headers={"Content-Range": f"bytes */{STR_LEN}"},
+            )
+
+        assert r.status_code == 200
