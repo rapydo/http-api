@@ -38,6 +38,7 @@ jobs:
             flask_migrate \
             neo4j \
             neobolt \
+            neomodel \
             sqlalchemy \
             pymodm \
             mongoengine \
