@@ -69,15 +69,24 @@ class BaseTests:
 
     @staticmethod
     def getDynamicInputSchema(
-        client: FlaskClient, endpoint: str, headers: Optional[Dict[str, str]]
+        client: FlaskClient,
+        endpoint: str,
+        headers: Optional[Dict[str, str]],
+        method: str = "post",
     ) -> Any:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
 
-        r = client.post(
-            f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
-        )
+        if method == "post":
+            r = client.post(
+                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+            )
+        else:
+            r = client.put(
+                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+            )
+
         assert r.status_code == 200
 
         return json.loads(r.data.decode("utf-8"))
