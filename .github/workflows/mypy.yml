@@ -36,7 +36,6 @@ jobs:
             flask_restful \
             flask_sqlalchemy \
             flask_migrate \
-            neomodel \
             neo4j \
             neobolt \
             sqlalchemy \
