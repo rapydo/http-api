@@ -123,7 +123,7 @@ class EndpointsLoader:
 
         return False, None
 
-    def extract_endpoints(self, base_dir):
+    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:
 
         endpoints_classes = []
         # get last item of the path
@@ -172,7 +172,7 @@ class EndpointsLoader:
 
         return endpoints_classes
 
-    def load_endpoints_folder(self, base_dir):
+    def load_endpoints_folder(self, base_dir: str) -> None:
         # Walk folders looking for endpoints
 
         for epclss in self.extract_endpoints(base_dir):
