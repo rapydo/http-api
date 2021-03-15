@@ -8,7 +8,7 @@ from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.services.authentication import Role
-from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
+from restapi.tests import SERVER_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
 
@@ -37,7 +37,9 @@ class TestApp1(BaseTests):
                     if path.startswith("/api/tests/"):
                         continue
 
-                    paths.append(self.get_path(method, path))
+                    p = self.get_path(method, path)
+                    log.warning("DEBUG CODE: Loaded endpoint {}", p)
+                    paths.append(p)
 
         return paths
 
