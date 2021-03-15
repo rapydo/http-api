@@ -145,11 +145,11 @@ class TestApp1(BaseTests):
 
         if Connector.check_availability("pushpin"):
             paths = self.check_endpoint(
-                client, "PUT", "/socket/<channel>/<sync>", headers, True, paths
+                client, "PUT", "/api/socket/<channel>/<sync>", headers, True, paths
             )
 
             paths = self.check_endpoint(
-                client, "POST", "/socket/<channel>", headers, True, paths
+                client, "POST", "/api/socket/<channel>", headers, True, paths
             )
 
         # These are allowed to coordinators
