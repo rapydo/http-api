@@ -141,6 +141,15 @@ class TestApp1(BaseTests):
             client, "DELETE", "/auth/tokens/<token>", headers, True, paths
         )
 
+        if not Connector.check_availability("pushpin"):
+            paths = self.check_endpoint(
+                client, "PUT", "/socket/<channel>/<sync>", headers, True, paths
+            )
+
+            paths = self.check_endpoint(
+                client, "POST", "/socket/<channel>", headers, True, paths
+            )
+
         # These are allowed to coordinators
         # ... none
 
