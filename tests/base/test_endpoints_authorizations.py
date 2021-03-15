@@ -152,6 +152,14 @@ class TestApp1(BaseTests):
                 client, "POST", "/api/socket/<channel>", headers, True, paths
             )
 
+            paths = self.check_endpoint(
+                client, "PUT", "/api/stream/<channel>/<sync>", headers, True, paths
+            )
+
+            paths = self.check_endpoint(
+                client, "POST", "/api/stream/<channel>", headers, True, paths
+            )
+
         # These are allowed to coordinators
         # ... none
 
