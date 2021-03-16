@@ -212,6 +212,14 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_staff(self, client: FlaskClient) -> None:
+
+        auth = Connector.get_authentication_instance()
+        auth.get_roles()
+
+        if "staff_user" not in [r.name for r in auth.get_roles()]:  # pragma: no cover
+            log.warning("Skipping authorization tests on role Staff (not enabled)")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
