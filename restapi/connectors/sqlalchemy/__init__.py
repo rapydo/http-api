@@ -252,8 +252,9 @@ class SQLAlchemy(Connector):
                 instance.db.session.remove()
                 instance.db.session.close_all()
                 # massive destruction
-                log.critical("Destroy current SQL data")
+                log.critical("Removing current SQL data")
                 instance.db.drop_all()
+                log.critical("Current SQL data destroyed")
 
     @staticmethod
     def update_properties(instance, properties):
