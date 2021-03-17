@@ -96,7 +96,6 @@ class BaseTests:
     @staticmethod
     def get_content(http_out: Response) -> Any:
 
-        http_out.status_code == 200
         try:
             response = json.loads(http_out.get_data().decode())
         except Exception as e:  # pragma: no cover
