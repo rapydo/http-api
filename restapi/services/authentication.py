@@ -68,7 +68,7 @@ ROLE_DISABLED = "disabled"
 DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
 
-Payload = Dict[str, Any]
+# Payload = Dict[str, Any]
 User = Any
 Group = Any
 RoleObj = Any
@@ -76,6 +76,27 @@ RoleObj = Any
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+
+
+# Produced by fill_payload
+class Payload(TypedDict, total=False):
+    user_id: str
+    jti: str
+    t: str
+    iat: datetime
+    nbf: datetime
+    exp: datetime
+
+
+# Produced by unpack_token. Datetimes are converted to int as specified in rfc7519
+# https://tools.ietf.org/html/rfc7519#page-10
+class DecodedPayload(TypedDict, total=False):
+    user_id: str
+    jti: str
+    t: str
+    iat: int
+    nbf: int
+    exp: int
 
 
 class Token(TypedDict, total=False):
@@ -396,10 +417,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return token, full_payload
 
     @classmethod
-    def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
+    def unpack_token(
+        cls, token: str, raiseErrors: bool = False
+    ) -> Optional[DecodedPayload]:
 
         try:
-            return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
+            return cast(
+                DecodedPayload,
+                jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO]),
+            )
         # now > exp
         except ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
@@ -492,8 +518,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        payload = {"user_id": user.uuid, "jti": getUUID()}
-        full_payload = payload.copy()
+        payload: Payload = {"user_id": user.uuid, "jti": getUUID()}
+        full_payload: Payload = payload.copy()
 
         if not token_type:
             token_type = self.FULL_TOKEN
