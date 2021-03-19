@@ -188,6 +188,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         "AUTH_SECOND_FACTOR_AUTHENTICATION", False
     )
 
+    TOTP_VALIDITY_WINDOW = Env.get_int("AUTH_TOTP_VALIDITY_WINDOW", 1)
+
     # enabled if explicitly set or for 2FA is enabled
     FORCE_FIRST_PASSWORD_CHANGE = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
         "AUTH_FORCE_FIRST_PASSWORD_CHANGE", False
@@ -695,7 +697,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise Unauthorized("Verification code is missing")
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
-        if not totp.verify(totp_code, valid_window=1):
+        if not totp.verify(totp_code, valid_window=self.TOTP_VALIDITY_WINDOW):
 
             self.log_event(
                 Events.failed_login,

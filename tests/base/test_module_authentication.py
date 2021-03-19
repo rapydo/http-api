@@ -1,7 +1,8 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
+import pyotp
 import pytest
 import pytz
 from faker import Faker
@@ -224,17 +225,6 @@ class TestApp(BaseTests):
         except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
-        try:
-            auth.verify_totp(None, None)  # type: ignore
-            pytest.fail("NULL totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is missing"
-        except BaseException:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
-
-        auth = Connector.get_authentication_instance()
-
         pwd1 = faker.password(strong=True)
         pwd2 = faker.password(strong=True)
 
@@ -272,6 +262,82 @@ class TestApp(BaseTests):
         assert not auth.verify_password(pwd1, None)  # type: ignore
 
         assert not auth.verify_password(None, None)  # type: ignore
+
+    def test_totp_management(self) -> None:
+
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):  # pragma: no cover
+            log.warning("Skipping TOTP test: 2FA not enabled")
+            return
+
+        auth = Connector.get_authentication_instance()
+
+        try:
+            auth.verify_totp(None, None)  # type: ignore
+            pytest.fail("NULL totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is missing"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        user = auth.get_user(username=auth.default_user)
+        secret = auth.get_totp_secret(user)
+        totp = pyotp.TOTP(secret)
+
+        # Verifiy current totp
+        assert auth.verify_totp(user, totp.now())
+
+        now = datetime.now()
+        t30s = timedelta(seconds=30)
+
+        # Verify previous and next totp(s)
+        assert auth.verify_totp(user, totp.at(now + t30s))
+        assert auth.verify_totp(user, totp.at(now - t30s))
+
+        # Verify second-previous and second-ntext totp(s)
+        try:
+            auth.verify_totp(user, totp.at(now + t30s + t30s))
+            pytest.fail("Future totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        try:
+            auth.verify_totp(user, totp.at(now - t30s - t30s))
+            pytest.fail("Past totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        # Extend validity window
+        auth.TOTP_VALIDITY_WINDOW = 2
+
+        # Verify again second-previous and second-ntext totp(s)
+        assert auth.verify_totp(user, totp.at(now + t30s + t30s))
+        assert auth.verify_totp(user, totp.at(now - t30s - t30s))
+
+        # Verify second-second-previous and second-second-ntext totp(s)
+        try:
+            auth.verify_totp(user, totp.at(now + t30s + t30s + t30s))
+            pytest.fail("Future totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        try:
+            auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
+            pytest.fail("Past totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
 
     def test_ip_management(self) -> None:
 
