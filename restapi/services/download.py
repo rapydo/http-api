@@ -41,10 +41,7 @@ class Downloader:
         Lazy function (generator) to read a file piece by piece.
         Default chunk size: 1k.
         """
-        while True:
-            data = file_object.read(chunk_size)
-            if not data:
-                break
+        while data := file_object.read(chunk_size):
             yield data
 
     # this is good for large files
