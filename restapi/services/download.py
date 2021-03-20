@@ -57,5 +57,8 @@ class Downloader:
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
         return Response(
-            stream_with_context(Downloader.read_in_chunks(path)), mimetype=mime
+            stream_with_context(Downloader.read_in_chunks(path)),
+            mimetype=mime,
+            # prevent response buffering [disruptive when sending large files]
+            headers={"X-Accel-Buffering": "no"},
         )
