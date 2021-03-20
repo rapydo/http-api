@@ -3,7 +3,7 @@ Download data from APIs
 """
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Any, Optional
+from typing import Iterator, Optional
 
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
@@ -36,7 +36,7 @@ class Downloader:
         return send_from_directory(path, filename, mimetype=mime)
 
     @staticmethod
-    def read_in_chunks(path: Path, chunk_size: int = 1024) -> Any:
+    def read_in_chunks(path: Path, chunk_size: int = 1024) -> Iterator[bytes]:
         """
         Lazy function (generator) to read a file piece by piece.
         """
