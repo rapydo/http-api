@@ -36,7 +36,7 @@ class Downloader:
         return send_from_directory(path, filename, mimetype=mime)
 
     @staticmethod
-    def read_in_chunks(path: Path, chunk_size: int = 1024) -> Iterator[bytes]:
+    def read_in_chunks(path: Path, chunk_size: int = 1024 * 1024) -> Iterator[bytes]:
         """
         Lazy function (generator) to read a file piece by piece.
         """
