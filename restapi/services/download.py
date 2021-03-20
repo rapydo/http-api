@@ -56,7 +56,7 @@ class Downloader:
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
-        f = open(path, "rb")
-        return Response(
-            stream_with_context(Downloader.read_in_chunks(f)), mimetype=mime
-        )
+        with open(path, "rb") as f:
+            return Response(
+                stream_with_context(Downloader.read_in_chunks(f)), mimetype=mime
+            )
