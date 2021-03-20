@@ -8,7 +8,7 @@ from typing import Iterator, Optional
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
 
-from restapi.exceptions import BadRequest
+from restapi.exceptions import BadRequest, NotFound
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
@@ -55,6 +55,9 @@ class Downloader:
             mime = mime_type[0]
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
+
+        if not path.exists():
+            raise NotFound("The requested file does not exist")
 
         return Response(
             stream_with_context(Downloader.read_in_chunks(path)),

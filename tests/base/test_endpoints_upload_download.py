@@ -138,7 +138,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{upload_folder}/doesnotexist",
             query_string={"stream": True},
         )
-        assert r.status_code == 400
+        assert r.status_code == 404
 
     def test_chunked_upload_and_download(
         self, client: FlaskClient, faker: Faker
