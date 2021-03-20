@@ -40,8 +40,11 @@ class Downloader:
         """
         Lazy function (generator) to read a file piece by piece.
         """
+        log.critical("DEBUG CODE: Reading path {}", str(path))
         with open(path, "rb") as file_handle:
+            log.critical("File open")
             while data := file_handle.read(chunk_size):
+                log.critical("Chunk")
                 yield data
 
     # this is good for large files
