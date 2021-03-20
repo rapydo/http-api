@@ -3,7 +3,7 @@ Download data from APIs
 """
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
@@ -36,13 +36,13 @@ class Downloader:
         return send_from_directory(path, filename, mimetype=mime)
 
     @staticmethod
-    def read_in_chunks(file_object, chunk_size=1024):
+    def read_in_chunks(path: Path, chunk_size: int = 1024) -> Any:
         """
         Lazy function (generator) to read a file piece by piece.
-        Default chunk size: 1k.
         """
-        while data := file_object.read(chunk_size):
-            yield data
+        with open(path, "rb") as file_handle:
+            while data := file_handle.read(chunk_size):
+                yield data
 
     # this is good for large files
     # Beware: path is expected to be already secured, no further validation applied here
@@ -56,7 +56,6 @@ class Downloader:
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
-        with open(path, "rb") as f:
-            return Response(
-                stream_with_context(Downloader.read_in_chunks(f)), mimetype=mime
-            )
+        return Response(
+            stream_with_context(Downloader.read_in_chunks(path)), mimetype=mime
+        )
