@@ -56,9 +56,6 @@ class Downloader:
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
-        from flask import request
-
-        log.critical(request.headers)
         return Response(
             stream_with_context(Downloader.read_in_chunks(path)),
             mimetype=mime,

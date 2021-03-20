@@ -103,7 +103,11 @@ def handle_response(response):
 
     url = obfuscate_query_parameters(request.url)
 
-    if GZIP_ENABLE and "gzip" in request.headers.get("Accept-Encoding", "").lower():
+    if (
+        GZIP_ENABLE
+        and not response.is_streamed
+        and "gzip" in request.headers.get("Accept-Encoding", "").lower()
+    ):
         response.direct_passthrough = False
         content, headers = ResponseMaker.gzip_response(
             response.data,
