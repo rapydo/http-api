@@ -543,7 +543,7 @@ class TestApp(BaseTests):
         assert seconds_to_human(121) == "2 minutes, 1 second"
         assert seconds_to_human(122) == "2 minutes, 2 seconds"
         assert seconds_to_human(179) == "2 minutes, 59 seconds"
-        assert seconds_to_human(532) == "8 minutes, 8 seconds"
+        assert seconds_to_human(532) == "8 minutes, 52 seconds"
         assert seconds_to_human(3600) == "1 hour"
         assert seconds_to_human(3601) == "1 hour, 0 minutes, 1 second"
         assert seconds_to_human(3602) == "1 hour, 0 minutes, 2 seconds"
