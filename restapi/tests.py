@@ -480,6 +480,12 @@ class BaseTests:
         return data
 
     @staticmethod
+    def delete_mock_email() -> Any:
+        fpath = "/logs/mock.mail.lastsent.json"
+        if os.path.exists(fpath):
+            os.unlink(fpath)
+
+    @staticmethod
     def read_mock_email() -> Any:
         fpath = "/logs/mock.mail.lastsent.json"
         if not os.path.exists(fpath):

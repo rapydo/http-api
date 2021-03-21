@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 import html2text
 import jinja2
@@ -10,9 +10,10 @@ from restapi.config import (
     MODELS_DIR,
     get_project_configuration,
 )
-from restapi.connectors import CONNECTORS_FOLDER, smtp
-from restapi.services.authentication import User
+from restapi.connectors import CONNECTORS_FOLDER, Connector, smtp
+from restapi.services.authentication import FailedLogin, User
 from restapi.utilities.logs import log
+from restapi.utilities.time import seconds_to_human
 
 
 def get_html_template(
@@ -72,6 +73,10 @@ def send_notification(
     user: Optional[User] = None,
 ) -> bool:
 
+    # Always enabled during tests
+    if not Connector.check_availability("smtp"):
+        return False
+
     title = get_project_configuration("project.title", default="Unkown title")
 
     if data is None:
@@ -91,6 +96,7 @@ def send_notification(
         return False
 
     subject = f"{title}: {subject}"
+
     smtp_client = smtp.get_instance()
     return smtp_client.send(
         subject=subject, body=html_body, to_address=to_address, plain_body=plain_body
@@ -126,6 +132,19 @@ def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
         template="reset_password.html",
         to_address=reset_email,
         data={"url": uri},
+        user=user,
+    )
+
+
+def notify_login_block(
+    user: User, events: Iterator[FailedLogin], duration: int
+) -> bool:
+
+    return send_notification(
+        subject="Your credentials have been blocked",
+        template="blocked_credentials.html",
+        to_address=user.email,
+        data={"events": events, "duration": seconds_to_human(duration)},
         user=user,
     )
 

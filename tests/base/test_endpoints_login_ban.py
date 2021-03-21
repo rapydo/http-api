@@ -2,7 +2,7 @@ import time
 
 from faker import Faker
 
-from restapi.config import PRODUCTION
+from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
@@ -15,6 +15,7 @@ BAN_MESSAGE = (
     "Sorry, this account is temporarily blocked "
     + "due to the number of failed login attempts."
 )
+
 
 if max_login_attempts == 0:
 
@@ -53,6 +54,22 @@ else:
     assert ban_duration < 60
 
     class TestApp2(BaseTests):
+        def verify_credentials_ban_notification(self) -> None:
+
+            # Verify email sent to notify credentials block
+            mail = self.read_mock_email()
+            body = mail.get("body")
+            project_tile = get_project_configuration(
+                "project.title", default="YourProject"
+            )
+
+            assert body is not None
+            assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+            assert "this email is to inform you that your credentials have been blocked"
+            "due to the number of failed login attempts" in body
+            assert "Here a list of last failed login events" in body
+            assert "Your credentials will be automatically unlocked in" in body
+
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
 
             if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
@@ -61,12 +78,16 @@ else:
 
             uuid, data = self.create_user(client)
 
+            self.delete_mock_email()
+
             for _ in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+
+            self.verify_credentials_ban_notification()
 
             # This should fail
             headers, _ = self.do_login(
@@ -162,6 +183,8 @@ else:
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
 
+                self.delete_mock_email()
+
                 for _ in range(0, max_login_attempts):
                     # Event if non activated if password is wrong the status is 401
                     self.do_login(
@@ -174,6 +197,8 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
                 assert events[0].payload["username"] == registration_data["email"]
+
+                self.verify_credentials_ban_notification()
 
                 # After max_login_attempts the account is not blocked
 
@@ -251,6 +276,8 @@ else:
 
                 # Verify login ban due to wrong TOTPs
 
+                self.delete_mock_email()
+
                 for _ in range(0, max_login_attempts):
                     self.do_login(
                         client,
@@ -265,6 +292,8 @@ else:
                 assert "username" not in events[0].payload
                 assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
+
+                self.verify_credentials_ban_notification()
 
                 # Now the login is blocked
                 headers, _ = self.do_login(
@@ -292,3 +321,36 @@ else:
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)
+
+        def test_04_no_notification_email_for_wrong_usernames(
+            self, client: FlaskClient, faker: Faker
+        ) -> None:
+
+            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+                log.warning("Skipping admin/users tests")
+                return
+
+            uuid, data = self.create_user(client)
+
+            self.delete_mock_email()
+
+            # Just to verify that email is deleted
+            mail = self.read_mock_email()
+            assert mail is None
+
+            email = faker.ascii_email()
+            # Wrong credentials with a non existing email
+            # -> No notification will be sent
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, email, data["password"], status_code=401)
+
+            # Verify the ban (i.e. status 403)
+            headers, _ = self.do_login(client, email, data["password"], status_code=403)
+            assert headers is None
+
+            # Verify that there are no mocked email
+            mail = self.read_mock_email()
+            assert mail is None
+
+            # Goodbye temporary user
+            self.delete_user(client, uuid)

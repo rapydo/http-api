@@ -284,7 +284,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise ServiceUnavailable("Unable to connect to auth backend")
 
         if user is None:
-            self.register_failed_login(username)
+            self.register_failed_login(username, user=None)
 
             self.log_event(
                 Events.failed_login,
@@ -312,7 +312,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             payload={"username": username},
             user=user,
         )
-        self.register_failed_login(username)
+        self.register_failed_login(username, user=user)
         raise Unauthorized("Invalid access credentials", is_warning=True)
 
     # #####################
@@ -642,7 +642,12 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ###########################
 
     @classmethod
-    def register_failed_login(cls, username: str) -> None:
+    def register_failed_login(cls, username: str, user: Optional[User]) -> None:
+
+        if cls.MAX_LOGIN_ATTEMPTS == 0:
+            log.debug("Failed login are not registered in this configuration")
+            return
+
         ip = cls.get_remote_ip()
         ip_loc = cls.localize_ip(ip)
         cls.failed_logins.setdefault(username, [])
@@ -657,6 +662,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "location": ip_loc,
             }
         )
+
+        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
+            return
+
+        log.error(
+            "Reached the maximum number of failed login, account {} is blocked",
+            username,
+        )
+
+        if user:
+            # Import here to prevent circular dependencies
+            from restapi.connectors.smtp.notifications import notify_login_block
+
+            notify_login_block(
+                user,
+                reversed(cls.failed_logins[username]),
+                cls.FAILED_LOGINS_EXPIRATION.seconds,
+            )
 
     @classmethod
     def get_failed_login(cls, username: str) -> int:
@@ -705,7 +728,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 user=user,
             )
 
-            self.register_failed_login(user.email)
+            self.register_failed_login(user.email, user=user)
             raise Unauthorized("Verification code is not valid")
 
         return True
