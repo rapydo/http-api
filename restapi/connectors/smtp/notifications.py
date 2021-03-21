@@ -74,7 +74,7 @@ def send_notification(
 ) -> bool:
 
     # Always enabled during tests
-    if not Connector.check_availability("smtp"):
+    if not Connector.check_availability("smtp"):  # pragma: no cover
         return False
 
     title = get_project_configuration("project.title", default="Unkown title")

@@ -352,7 +352,7 @@ class BaseTests:
         # Let's return a repetition of the name it self
         if recursion >= 10:  # pragma: no cover
             return name * 4
-        return cls.get_first_name(faker, recursion=recursion + 1)
+        return cls.get_first_name(faker, recursion=recursion + 1)  # pragma: no cover
 
     @classmethod
     def get_last_name(cls, faker: Faker, recursion: int = 0) -> str:
@@ -366,7 +366,7 @@ class BaseTests:
         # Let's return a repetition of the name it self
         if recursion >= 10:  # pragma: no cover
             return surname * 4
-        return cls.get_last_name(faker, recursion=recursion + 1)
+        return cls.get_last_name(faker, recursion=recursion + 1)  # pragma: no cover
 
     @classmethod
     def get_random_email(cls, faker: Faker, name: str, surname: str) -> str:

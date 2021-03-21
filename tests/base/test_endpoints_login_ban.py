@@ -67,10 +67,11 @@ else:
             assert mail.get("headers") is not None
             title = "Your credentials have been blocked"
             assert f"Subject: {project_tile}: {title}" in mail.get("headers")
-            assert "this email is to inform you that your credentials have been blocked"
-            "due to the number of failed login attempts" in body
-            assert "Here a list of last failed login events" in body
-            assert "Your credentials will be automatically unlocked in" in body
+            # Body can't be asserted if can be changed at project level...
+            # assert "this email is to inform you that your credentials have been "
+            # "temporarily due to the number of failed login attempts" in body
+            # assert "inspect the list below to detect any unwanted login" in body
+            # assert "Your credentials will be automatically unlocked in" in body
 
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
 
