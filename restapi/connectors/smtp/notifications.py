@@ -71,6 +71,7 @@ def send_notification(
     to_address: Optional[str] = None,
     data: Optional[Dict[str, Any]] = None,
     user: Optional[User] = None,
+    send_async: bool = False,
 ) -> bool:
 
     # Always enabled during tests
@@ -99,7 +100,11 @@ def send_notification(
 
     smtp_client = smtp.get_instance()
     return smtp_client.send(
-        subject=subject, body=html_body, to_address=to_address, plain_body=plain_body
+        subject=subject,
+        body=html_body,
+        to_address=to_address,
+        plain_body=plain_body,
+        send_async=send_async,
     )
 
 
@@ -111,6 +116,7 @@ def send_registration_notification(user: User) -> bool:
         to_address=None,
         data=None,
         user=user,
+        send_async=True,
     )
 
 
@@ -146,6 +152,7 @@ def notify_login_block(
         to_address=user.email,
         data={"events": events, "duration": seconds_to_human(duration)},
         user=user,
+        send_async=True,
     )
 
 
@@ -157,6 +164,7 @@ def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
         to_address=user.email,
         data={"password": unhashed_password},
         user=user,
+        send_async=True,
     )
 
 
@@ -168,6 +176,7 @@ def notify_update_credentials_to_user(user: User, unhashed_password: str) -> boo
         to_address=user.email,
         data={"password": unhashed_password},
         user=user,
+        send_async=True,
     )
 
 
@@ -186,4 +195,5 @@ def send_celery_error_notification(
             "error_stack": error_stack,
         },
         user=None,
+        send_async=True,
     )  # pragma: no cover

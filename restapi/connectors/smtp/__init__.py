@@ -3,6 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
+from threading import Thread
 from typing import List, Optional, Union
 
 from restapi.config import TESTING
@@ -97,6 +98,7 @@ class Mail(Connector):
         cc: Optional[Union[str, List[str]]] = None,
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
+        send_async: bool = False,
     ) -> bool:
 
         if not to_address:
@@ -160,6 +162,17 @@ class Mail(Connector):
 
             log.debug("Sending email to {}", to_address)
 
+            if send_async:
+                thr = Thread(
+                    target=self.smtp.sendmail,
+                    args=[from_address, dest_addresses, msg.as_string()],
+                )
+                thr.start()
+
+                # This False means that the caller should not verify the return value
+                # Becausing being sent asynchronously it is not possible to
+                # synchronously know if the email is sent or not
+                return False
             self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
 
             log.info(
