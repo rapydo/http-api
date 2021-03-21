@@ -169,6 +169,10 @@ class Mail(Connector):
                 )
                 thr.start()
 
+                # in TESTING mode async mails are kept sync to simplify checks
+                if TESTING:
+                    thr.join()
+
                 # This False means that the caller should not verify the return value
                 # Becausing being sent asynchronously it is not possible to
                 # synchronously know if the email is sent or not
