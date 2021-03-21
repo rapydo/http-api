@@ -64,7 +64,9 @@ else:
             )
 
             assert body is not None
-            assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+            assert mail.get("headers") is not None
+            title = "Your credentials have been blocked"
+            assert f"Subject: {project_tile}: {title}" in mail.get("headers")
             assert "this email is to inform you that your credentials have been blocked"
             "due to the number of failed login attempts" in body
             assert "Here a list of last failed login events" in body
