@@ -61,7 +61,7 @@ def pluralize(value: int, unit: str) -> str:
 def seconds_to_human(seconds: int) -> str:
 
     elements: List[str] = []
-    if seconds < 59:
+    if seconds < 60:
         elements.append(pluralize(seconds, "second"))
 
     elif seconds < 3600:
