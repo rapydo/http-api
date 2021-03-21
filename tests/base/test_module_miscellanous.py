@@ -37,7 +37,7 @@ from restapi.utilities.processes import (
     stop_timeout,
     wait_socket,
 )
-from restapi.utilities.time import get_timedelta
+from restapi.utilities.time import get_timedelta, seconds_to_human
 
 
 class TestApp(BaseTests):
@@ -530,6 +530,50 @@ class TestApp(BaseTests):
             )  # pragma: no cover
         except BadRequest:
             pass
+
+        assert seconds_to_human(0) == "0 seconds"
+        assert seconds_to_human(1) == "1 second"
+        assert seconds_to_human(2) == "2 seconds"
+        assert seconds_to_human(59) == "59 seconds"
+        assert seconds_to_human(60) == "1 minute"
+        assert seconds_to_human(61) == "1 minute, 1 second"
+        assert seconds_to_human(62) == "1 minute, 2 seconds"
+        assert seconds_to_human(119) == "1 minute, 59 seconds"
+        assert seconds_to_human(120) == "2 minutes"
+        assert seconds_to_human(121) == "2 minutes, 1 second"
+        assert seconds_to_human(122) == "2 minutes, 2 seconds"
+        assert seconds_to_human(179) == "2 minutes, 59 seconds"
+        assert seconds_to_human(532) == "8 minutes, 8 seconds"
+        assert seconds_to_human(3600) == "1 hour"
+        assert seconds_to_human(3601) == "1 hour, 0 minutes, 1 second"
+        assert seconds_to_human(3602) == "1 hour, 0 minutes, 2 seconds"
+        assert seconds_to_human(3660) == "1 hour, 1 minute"
+        assert seconds_to_human(3661) == "1 hour, 1 minute, 1 second"
+        assert seconds_to_human(3662) == "1 hour, 1 minute, 2 seconds"
+        assert seconds_to_human(3720) == "1 hour, 2 minutes"
+        assert seconds_to_human(7200) == "2 hours"
+        assert seconds_to_human(82800) == "23 hours"
+        assert seconds_to_human(86399) == "23 hours, 59 minutes, 59 seconds"
+        assert seconds_to_human(86400) == "1 day"
+        assert seconds_to_human(86401) == "1 day, 0 hours, 0 minutes, 1 second"
+        assert seconds_to_human(86402) == "1 day, 0 hours, 0 minutes, 2 seconds"
+        assert seconds_to_human(86460) == "1 day, 0 hours, 1 minute"
+        assert seconds_to_human(86461) == "1 day, 0 hours, 1 minute, 1 second"
+        assert seconds_to_human(86520) == "1 day, 0 hours, 2 minutes"
+        assert seconds_to_human(86521) == "1 day, 0 hours, 2 minutes, 1 second"
+        assert seconds_to_human(86522) == "1 day, 0 hours, 2 minutes, 2 seconds"
+        assert seconds_to_human(90000) == "1 day, 1 hour"
+        assert seconds_to_human(90060) == "1 day, 1 hour, 1 minute"
+        assert seconds_to_human(90061) == "1 day, 1 hour, 1 minute, 1 second"
+        assert seconds_to_human(90062) == "1 day, 1 hour, 1 minute, 2 seconds"
+        assert seconds_to_human(90120) == "1 day, 1 hour, 2 minutes"
+        assert seconds_to_human(90121) == "1 day, 1 hour, 2 minutes, 1 second"
+        assert seconds_to_human(90122) == "1 day, 1 hour, 2 minutes, 2 seconds"
+        assert seconds_to_human(93600) == "1 day, 2 hours"
+        assert seconds_to_human(777600) == "9 days"
+        assert seconds_to_human(10627200) == "123 days"
+        assert seconds_to_human(22222222) == "257 days, 4 hours, 50 minutes, 22 seconds"
+        assert seconds_to_human(63072000) == "730 days"
 
     # #######################################
     # ####      Exceptions
