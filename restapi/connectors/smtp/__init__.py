@@ -101,7 +101,7 @@ class Mail(Connector):
     ) -> None:
         thr = Thread(
             target=self.send,
-            args=[body, subject, to_address, from_address, cc, bcc, plain_body],
+            args=[body, subject, to_address, from_address, cc, bcc, plain_body, True],
         )
         thr.start()
 
@@ -123,6 +123,9 @@ class Mail(Connector):
         cc: Optional[Union[str, List[str]]] = None,
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
+        # do not use this flag, it is only used to close the connection after the send.
+        # To send asynchronous email use send_async
+        is_async: bool = False,
     ) -> bool:
 
         if not to_address:
@@ -194,16 +197,18 @@ class Mail(Connector):
                 cc,
                 bcc,
             )
+
+            if is_async:
+                # Why this disconnect? Because when sending an email from a thread,
+                # somehow the connection is closed after the send. Then all the
+                # following use of this connection will fail. Invalidate the connection
+                # will force the opening of a new one to prevent such errors
+                self.disconnect()
+
             return True
         # Cannot be tested because smtplib is mocked!
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
-            # Why this disconnect? Because when trying to send an email to a non
-            # existing email address the server could drop the connection. Then all the
-            # following use of this connection will fail. Furthmore this expception is
-            # pretty generic and may be raised due to errors in connection. In both
-            # cases invalidate the connection and open a new one is a good choice
-            self.disconnect()
             return False
         except BaseException as e:
             log.error(str(e))
