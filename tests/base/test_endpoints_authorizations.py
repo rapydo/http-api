@@ -102,6 +102,9 @@ class TestApp1(BaseTests):
             client, data.get("email"), data.get("password")
         )
 
+        log.critical(Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS"))
+        log.critical(Env.get_bool("AUTH_MAX_LOGIN_ATTEMPTS"))
+
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
@@ -600,8 +603,7 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
-        log.critical(Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS"))
-        log.critical(Env.get_bool("AUTH_MAX_LOGIN_ATTEMPTS"))
+
         if Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS") > 0:
             paths = self.check_endpoint(
                 client, "POST", "/auth/login/unlock/<token>", headers, True, paths
