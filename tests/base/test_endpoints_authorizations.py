@@ -106,6 +106,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
+        paths = self.check_endpoint(
+            client, "POST", "/auth/login/unlock/<token>", headers, True, paths
+        )
         if Env.get_bool("ALLOW_REGISTRATION"):
             paths = self.check_endpoint(
                 client, "POST", "/auth/profile", headers, True, paths
@@ -233,6 +236,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
+        paths = self.check_endpoint(
+            client, "POST", "/auth/login/unlock/<token>", headers, True, paths
+        )
         if Env.get_bool("ALLOW_REGISTRATION"):
             paths = self.check_endpoint(
                 client, "POST", "/auth/profile", headers, True, paths
@@ -352,6 +358,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
+        paths = self.check_endpoint(
+            client, "POST", "/auth/login/unlock/<token>", headers, True, paths
+        )
         if Env.get_bool("ALLOW_REGISTRATION"):
             paths = self.check_endpoint(
                 client, "POST", "/auth/profile", headers, True, paths
@@ -471,6 +480,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
+        paths = self.check_endpoint(
+            client, "POST", "/auth/login/unlock/<token>", headers, True, paths
+        )
         if Env.get_bool("ALLOW_REGISTRATION"):
             paths = self.check_endpoint(
                 client, "POST", "/auth/profile", headers, True, paths
@@ -581,11 +593,13 @@ class TestApp1(BaseTests):
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
         headers = None
-
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
+        paths = self.check_endpoint(
+            client, "POST", "/auth/login/unlock/<token>", headers, True, paths
+        )
         if Env.get_bool("ALLOW_REGISTRATION"):
             paths = self.check_endpoint(
                 client, "POST", "/auth/profile", headers, True, paths
