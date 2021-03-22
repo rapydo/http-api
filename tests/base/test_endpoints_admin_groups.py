@@ -113,6 +113,23 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
+        post_schema = {s["key"]: s for s in schema}
+
+        schema = self.getDynamicInputSchema(
+            client, "admin/groups", headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in schema}
+
+        assert "shortname" in post_schema
+        assert post_schema["shortname"]["required"]
+        assert "shortname" in put_schema
+        assert put_schema["shortname"]["required"]
+
+        assert "fullname" in post_schema
+        assert post_schema["fullname"]["required"]
+        assert "fullname" in put_schema
+        assert put_schema["fullname"]["required"]
+
     def test_events_file(self) -> None:
 
         events = self.get_last_events(4, filters={"target_type": "Group"})
