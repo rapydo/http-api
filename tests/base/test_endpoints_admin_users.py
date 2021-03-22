@@ -29,10 +29,10 @@ class TestApp(BaseTests):
         # Test the differences between post and put schema
         post_schema = {s["key"]: s for s in schema}
 
-        schema = self.getDynamicInputSchema(
+        tmp_schema = self.getDynamicInputSchema(
             client, "admin/users/myuuid", headers, method="put"
         )
-        put_schema = {s["key"]: s for s in schema}
+        put_schema = {s["key"]: s for s in tmp_schema}
 
         assert "email" in post_schema
         assert post_schema["email"]["required"]
