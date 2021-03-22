@@ -52,6 +52,7 @@ class Events(str, Enum):
     failed_login = "failed_login"
     refused_login = "refused_login"
     activation = "activation"
+    login_unlock = "login_unlock"
     change_password = "change_password"
     reset_password_request = "reset_password_request"
 

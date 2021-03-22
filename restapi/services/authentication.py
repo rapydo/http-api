@@ -26,6 +26,7 @@ from restapi.config import (
     PRODUCTION,
     TESTING,
     TOTP_SECRET_FILE,
+    get_frontend_url,
     get_project_configuration,
 )
 from restapi.env import Env
@@ -181,6 +182,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
+    UNLOCK_CREDENTIALS = "u"
     TOTP = "TOTP"
     MIN_PASSWORD_LENGTH = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 8)
 
@@ -527,7 +529,11 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             token_type = self.FULL_TOKEN
 
         short_token = False
-        if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
+        if token_type in (
+            self.PWD_RESET,
+            self.ACTIVATE_ACCOUNT,
+            self.UNLOCK_CREDENTIALS,
+        ):
             short_token = True
             payload["t"] = token_type
 
@@ -641,19 +647,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    @classmethod
-    def register_failed_login(cls, username: str, user: Optional[User]) -> None:
+    def register_failed_login(self, username: str, user: Optional[User]) -> None:
 
-        if cls.MAX_LOGIN_ATTEMPTS == 0:
+        if self.MAX_LOGIN_ATTEMPTS == 0:
             log.debug("Failed login are not registered in this configuration")
             return
 
-        ip = cls.get_remote_ip()
-        ip_loc = cls.localize_ip(ip)
-        cls.failed_logins.setdefault(username, [])
+        ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
+        self.failed_logins.setdefault(username, [])
 
-        count = len(cls.failed_logins[username])
-        cls.failed_logins[username].append(
+        count = len(self.failed_logins[username])
+        self.failed_logins[username].append(
             {
                 "progressive_count": count + 1,
                 "username": username,
@@ -663,7 +668,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             }
         )
 
-        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
+        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
         log.error(
@@ -675,10 +680,24 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             # Import here to prevent circular dependencies
             from restapi.connectors.smtp.notifications import notify_login_block
 
+            unlock_token, payload = self.create_temporary_token(
+                user, self.UNLOCK_CREDENTIALS
+            )
+
+            self.save_token(
+                user, unlock_token, payload, token_type=self.UNLOCK_CREDENTIALS
+            )
+
+            server_url = get_frontend_url()
+
+            rt = unlock_token.replace(".", "+")
+            url = f"{server_url}/app/login/unlock/{rt}"
+
             notify_login_block(
                 user,
-                reversed(cls.failed_logins[username]),
-                cls.FAILED_LOGINS_EXPIRATION.seconds,
+                reversed(self.failed_logins[username]),
+                self.FAILED_LOGINS_EXPIRATION.seconds,
+                url,
             )
 
     @classmethod

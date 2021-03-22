@@ -117,9 +117,10 @@ def send_notification(
     )
 
 
-def send_registration_notification(user: User) -> bool:
+def send_registration_notification(user: User) -> None:
 
-    return send_notification(
+    # no return value since it is a send_async
+    send_notification(
         subject="New user registered",
         template="new_user_registered.html",
         to_address=None,
@@ -152,22 +153,25 @@ def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 
 
 def notify_login_block(
-    user: User, events: Iterator[FailedLogin], duration: int
-) -> bool:
+    user: User, events: Iterator[FailedLogin], duration: int, url: str
+) -> None:
 
-    return send_notification(
+    log.critical("DEBUG CODE: {}", url)
+    # no return value since it is a send_async
+    send_notification(
         subject="Your credentials have been blocked",
         template="blocked_credentials.html",
         to_address=user.email,
-        data={"events": events, "duration": seconds_to_human(duration)},
+        data={"events": events, "duration": seconds_to_human(duration), "url": url},
         user=user,
         send_async=True,
     )
 
 
-def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
+def notify_new_credentials_to_user(user: User, unhashed_password: str) -> None:
 
-    return send_notification(
+    # no return value since it is a send_async
+    send_notification(
         subject="New credentials",
         template="new_credentials.html",
         to_address=user.email,
@@ -177,9 +181,10 @@ def notify_new_credentials_to_user(user: User, unhashed_password: str) -> bool:
     )
 
 
-def notify_update_credentials_to_user(user: User, unhashed_password: str) -> bool:
+def notify_update_credentials_to_user(user: User, unhashed_password: str) -> None:
 
-    return send_notification(
+    # no return value since it is a send_async
+    send_notification(
         subject="Password changed",
         template="update_credentials.html",
         to_address=user.email,
@@ -191,9 +196,10 @@ def notify_update_credentials_to_user(user: User, unhashed_password: str) -> boo
 
 def send_celery_error_notification(
     task_id: str, task_name: str, arguments: str, error_stack: Any
-) -> bool:
+) -> None:
 
-    return send_notification(
+    # no return value since it is a send_async
+    send_notification(
         subject=f"Task {task_name} failed",
         template="celery_error_notification.html",
         to_address=None,

@@ -17,18 +17,13 @@ class ProfileActivation(EndpointResource):
     @decorators.endpoint(
         path="/auth/profile/activate/<token>",
         summary="Activate your account by providing the activation token",
-        responses={200: "Account successfully activated"},
+        responses={200: "Account successfully activated", 400: "Invalid token"},
     )
     def put(self, token: str) -> Response:
 
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
 
-        # # DEBUG CODE: add dots after each character to prevent github to obfuscate
-        # import re
-
-        # t = re.sub(r"(.)", r"\1.", token)
-        # log.critical("DEBUG CODE: {}", t)
         try:
             # valid, token, jti, user
             _, _, jti, user = self.auth.verify_token(
@@ -106,7 +101,6 @@ class ProfileActivation(EndpointResource):
             server_url = get_frontend_url()
 
             rt = activation_token.replace(".", "+")
-            log.debug("Activation token: {}", rt)
             url = f"{server_url}/public/register/{rt}"
 
             sent = send_activation_link(user, url)
