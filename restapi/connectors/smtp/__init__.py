@@ -198,6 +198,12 @@ class Mail(Connector):
         # Cannot be tested because smtplib is mocked!
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
+            # Why this disconnect? Because when trying to send an email to a non
+            # existing email address the server could drop the connection. Then all the
+            # following use of this connection will fail. Furthmore this expception is
+            # pretty generic and may be raised due to errors in connection. In both
+            # cases invalidate the connection and open a new one is a good choice
+            self.disconnect()
             return False
         except BaseException as e:
             log.error(str(e))
