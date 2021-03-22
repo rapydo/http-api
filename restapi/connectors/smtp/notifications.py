@@ -156,7 +156,6 @@ def notify_login_block(
     user: User, events: Iterator[FailedLogin], duration: int, url: str
 ) -> None:
 
-    log.critical("DEBUG CODE: {}", url)
     # no return value since it is a send_async
     send_notification(
         subject="Your credentials have been blocked",
