@@ -116,7 +116,7 @@ class TestApp(BaseTests):
         post_schema = {s["key"]: s for s in schema}
 
         schema = self.getDynamicInputSchema(
-            client, "admin/groups", headers, method="put"
+            client, "admin/groups/myuuid", headers, method="put"
         )
         put_schema = {s["key"]: s for s in schema}
 
