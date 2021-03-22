@@ -1,5 +1,4 @@
 import json
-from typing import Any, Dict
 
 from faker import Faker
 from flask import escape
@@ -26,6 +25,39 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
+
+        # Test the differences between post and put schema
+        post_schema = {s["key"]: s for s in schema}
+
+        schema = self.getDynamicInputSchema(
+            client, "admin/users/myuuid", headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in schema}
+
+        assert "email" in post_schema
+        assert post_schema["email"]["required"]
+        assert "email" not in put_schema
+
+        assert "name" in post_schema
+        assert post_schema["name"]["required"]
+        assert "name" in put_schema
+        assert not put_schema["name"]["required"]
+
+        assert "surname" in post_schema
+        assert post_schema["surname"]["required"]
+        assert "surname" in put_schema
+        assert not put_schema["surname"]["required"]
+
+        assert "password" in post_schema
+        assert post_schema["password"]["required"]
+        assert "password" in put_schema
+        assert not put_schema["password"]["required"]
+
+        assert "group" in post_schema
+        assert post_schema["group"]["required"]
+        assert "group" in put_schema
+        assert not put_schema["group"]["required"]
+
         data["email_notification"] = True
         data["is_active"] = True
         data["expiration"] = None
@@ -188,38 +220,6 @@ class TestApp(BaseTests):
 
         r = client.get(f"{AUTH_URI}/logout", headers=headers)
         assert r.status_code == 204
-
-        # Final: test differences between post and put schema
-        post_schema = {s["key"]: s for s in schema}
-
-        schema = self.getDynamicInputSchema(
-            client, "admin/users/myuuid", headers, method="put"
-        )
-        put_schema = {s["key"]: s for s in schema}
-
-        assert "email" in post_schema
-        assert post_schema["email"]["required"]
-        assert "email" not in put_schema
-
-        assert "name" in post_schema
-        assert post_schema["name"]["required"]
-        assert "name" in put_schema
-        assert not put_schema["name"]["required"]
-
-        assert "surname" in post_schema
-        assert post_schema["surname"]["required"]
-        assert "surname" in put_schema
-        assert not put_schema["surname"]["required"]
-
-        assert "password" in post_schema
-        assert post_schema["password"]["required"]
-        assert "password" in put_schema
-        assert not put_schema["password"]["required"]
-
-        assert "group" in post_schema
-        assert post_schema["group"]["required"]
-        assert "group" in put_schema
-        assert not put_schema["group"]["required"]
 
     def test_events_file(self) -> None:
 
