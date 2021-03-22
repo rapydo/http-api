@@ -89,6 +89,31 @@ class Mail(Connector):
         except SMTPServerDisconnected:  # pragma: no cover
             return False
 
+    def send_async(
+        self,
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+    ) -> None:
+        thr = Thread(
+            target=self.send,
+            args=[body, subject, to_address, from_address, cc, bcc, plain_body],
+        )
+        thr.start()
+
+        # in TESTING mode async mails are kept sync to simplify checks
+        if TESTING:
+            thr.join()
+
+        # In async mode there is no return value
+        # Because being sent asynchronously it is not possible to
+        # synchronously know if the email is sent or not
+        return None
+
     def send(
         self,
         body: str,
@@ -98,7 +123,6 @@ class Mail(Connector):
         cc: Optional[Union[str, List[str]]] = None,
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
-        send_async: bool = False,
     ) -> bool:
 
         if not to_address:
@@ -162,21 +186,6 @@ class Mail(Connector):
 
             log.debug("Sending email to {}", to_address)
 
-            if send_async:
-                thr = Thread(
-                    target=self.smtp.sendmail,
-                    args=[from_address, dest_addresses, msg.as_string()],
-                )
-                thr.start()
-
-                # in TESTING mode async mails are kept sync to simplify checks
-                if TESTING:
-                    thr.join()
-
-                # This False means that the caller should not verify the return value
-                # Becausing being sent asynchronously it is not possible to
-                # synchronously know if the email is sent or not
-                return False
             self.smtp.sendmail(from_address, dest_addresses, msg.as_string())
 
             log.info(

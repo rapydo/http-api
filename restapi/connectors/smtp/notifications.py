@@ -99,12 +99,21 @@ def send_notification(
     subject = f"{title}: {subject}"
 
     smtp_client = smtp.get_instance()
+
+    if send_async:
+        smtp_client.send_async(
+            subject=subject,
+            body=html_body,
+            to_address=to_address,
+            plain_body=plain_body,
+        )
+        return False
+
     return smtp_client.send(
         subject=subject,
         body=html_body,
         to_address=to_address,
         plain_body=plain_body,
-        send_async=send_async,
     )
 
 
