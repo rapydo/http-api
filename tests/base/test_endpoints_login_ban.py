@@ -177,14 +177,14 @@ else:
             r = client.post(f"{AUTH_URI}/login/unlock/{token}")
             assert r.status_code == 200
 
-            # Now credentials are unlock again :-)
-            headers, _ = self.do_login(client, data["email"], data["password"])
-            assert headers is not None
-
             events = self.get_last_events(1)
             assert events[0].event == Events.login_unlock.value
             assert events[0].user == data["email"]
             assert events[0].target_type == "User"
+
+            # Now credentials are unlock again :-)
+            headers, _ = self.do_login(client, data["email"], data["password"])
+            assert headers is not None
 
             # Unlock token can be used twice
             r = client.post(f"{AUTH_URI}/login/unlock/{token}")
