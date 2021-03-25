@@ -20,6 +20,7 @@ from restapi.config import (
     DEFAULT_HOST,
     DEFAULT_PORT,
     JWT_SECRET_FILE,
+    get_frontend_url,
 )
 from restapi.connectors import Connector
 from restapi.env import Env
@@ -529,8 +530,14 @@ class BaseTests:
 
             log.warning("Found urls: {}", urls)
             if urls:
-                # token is the last part of the url, extract as a path
-                token = os.path.basename(urls[0])
+                for url in urls:
+                    frontend_host = get_frontend_url()
+                    # Search the first url that contains the frontend host,
+                    # to skip any external url
+                    if frontend_host in url:
+                        # token is the last part of the url, extract as a path
+                        token = os.path.basename(url)
+                        break
 
         if token:
             token = urllib.parse.unquote(token)

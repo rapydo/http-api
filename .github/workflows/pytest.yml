@@ -127,6 +127,10 @@ jobs:
         if: failure()
         run: tail -100 ${{ matrix.template }}.${{ matrix.mode }}/data/logs/security-events.log
 
+      - name: Print mocked email on failure
+        if: failure()
+        run: cat ${{ matrix.template }}.${{ matrix.mode }}/data/logs/mock.mail.lastsent.body
+
       - name: Docker Logs
         if: failure()
         run: |
