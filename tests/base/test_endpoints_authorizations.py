@@ -165,7 +165,9 @@ class TestApp1(BaseTests):
             )
 
         # These are allowed to coordinators
-        # ... none
+        paths = self.check_endpoint(
+            client, "GET", "/api/group/users", headers, False, paths
+        )
 
         # These are allowed to staff
         # ... none
@@ -296,7 +298,9 @@ class TestApp1(BaseTests):
             )
 
         # These are allowed to coordinators
-        # ... none
+        paths = self.check_endpoint(
+            client, "GET", "/api/group/users", headers, False, paths
+        )
 
         # These are allowed to staff
         # ... none
@@ -419,7 +423,9 @@ class TestApp1(BaseTests):
             )
 
         # These are allowed to coordinators
-        # ... none
+        paths = self.check_endpoint(
+            client, "GET", "/api/group/users", headers, True, paths
+        )
 
         # These are allowed to staff
         # ... none
@@ -542,7 +548,9 @@ class TestApp1(BaseTests):
             )
 
         # These are allowed to coordinators
-        # ... none
+        paths = self.check_endpoint(
+            client, "GET", "/api/group/users", headers, False, paths
+        )
 
         # These are allowed to staff
         # ... none
@@ -665,7 +673,9 @@ class TestApp1(BaseTests):
             )
 
         # These are allowed to coordinators
-        # ... none
+        paths = self.check_endpoint(
+            client, "GET", "/api/group/users", headers, False, paths
+        )
 
         # These are allowed to staff
         # ... none

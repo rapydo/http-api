@@ -8,6 +8,8 @@ from restapi.utilities.globals import mem
 
 auth = Connector.get_authentication_instance()
 
+# as defined in Marshmallow.schema.from_dict
+MarshmallowSchema = Dict[str, Union[fields.Field, type]]
 
 #########################################
 # #############   Schemas   #############
@@ -117,8 +119,7 @@ class NewPassword(Schema):
 
 
 def admin_user_output(many: bool = True) -> Schema:
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
 
     attributes["uuid"] = fields.UUID()
     attributes["email"] = fields.Email()
@@ -148,12 +149,26 @@ def admin_user_output(many: bool = True) -> Schema:
     return schema(many=many)  # type: ignore
 
 
+def group_users_output() -> Schema:
+    attributes: MarshmallowSchema = {}
+
+    attributes["email"] = fields.Email()
+    attributes["name"] = fields.Str()
+    attributes["surname"] = fields.Str()
+    attributes["roles"] = fields.List(fields.Nested(Role))
+
+    if custom_fields := mem.customizer.get_custom_output_fields(None):
+        attributes.update(custom_fields)
+
+    schema = Schema.from_dict(attributes, name="UserData")
+    return schema(many=True)  # type: ignore
+
+
 # Can't use request.method because it is not passed at loading time, i.e. the Specs will
 # be created with empty request
 def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
     if is_post:
         attributes["email"] = fields.Email(required=is_post)
 
@@ -239,8 +254,7 @@ def admin_user_put_input(request: FlaskRequest) -> Type[Schema]:
 # Should to transformed again in a Schema
 def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
 
     attributes["shortname"] = fields.Str(required=True, description="Short name")
     attributes["fullname"] = fields.Str(required=True, description="Full name")
@@ -249,8 +263,7 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 
 
 def profile_patch_input() -> Schema:
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
 
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
@@ -266,8 +279,7 @@ def profile_patch_input() -> Schema:
 
 
 def profile_output() -> Schema:
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
 
     attributes["uuid"] = fields.UUID(required=True)
     attributes["email"] = fields.Email(required=True)
@@ -304,8 +316,7 @@ def profile_output() -> Schema:
 
 def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
+    attributes: MarshmallowSchema = {}
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)

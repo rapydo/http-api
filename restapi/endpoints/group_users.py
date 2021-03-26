@@ -1,48 +1,40 @@
-# from restapi import decorators
-# from restapi.rest.definition import EndpointResource
-# from restapi.endpoints.admin_users import get_output_schema
-# from restapi.services.authentication import Role
+from restapi import decorators
+from restapi.connectors import Connector
+from restapi.endpoints.schemas import group_users_output
+from restapi.exceptions import ServerError
+from restapi.rest.definition import EndpointResource
+from restapi.services.authentication import Role
 
-# # from restapi.utilities.logs import log
 
-# ################################################
-# #   THIS IS THE NEW READ-ONLY IMPLEMENTATION   #
-# ################################################
+class GroupUsers(EndpointResource):
 
-# class GroupUsers(EndpointResource):
+    depends_on = ["MAIN_LOGIN_ENABLE"]
+    labels = ["admin"]
 
-#     depends_on = ["MAIN_LOGIN_ENABLE"]
-#     labels = ["admin"]
+    @decorators.auth.require_all(Role.COORDINATOR)
+    @decorators.marshal_with(group_users_output(), code=200)
+    @decorators.endpoint(
+        path="/group/users",
+        summary="List of users of your group",
+        responses={
+            200: "List of users successfully retrieved",
+        },
+    )
+    def get(self):
 
-#     @decorators.auth.require_all(Role.COORDINATOR)
-#     @decorators.marshal_with(get_output_schema(), code=200)
-#     @decorators.endpoint(
-#         path="/group/users",
-#         summary="List of users of your group",
-#         responses={
-#             200: "List of users successfully retrieved",
-#         },
-#     )
-#     def get(self):
+        user = self.get_user()
 
-#         users = self.auth.get_users()
-#         current_user = self.get_user()
+        # Can't happen since auth is required
+        if not user:  # pragma: no cover
+            raise ServerError("User misconfiguration")
 
-#         if Connector.authentication_service == "neo4j":
-#             # To be replaced with Neo4jRelationshipToSingle
-#             current_user.belongs_to = current_user.belongs_to.single()
+        user_group = user.belongs_to
+        if Connector.authentication_service == "neo4j":
+            user_group = user_group.single()
 
-#         data = []
-#         # Should iterate over current_user.belong_to.users instead of on all
-#         for user in users:
+        data = []
+        for user in user_group.members:
 
-#             if Connector.authentication_service == "neo4j":
-#                 # To be replaced with Neo4jRelationshipToSingle
-#                 user.belongs_to = user.belongs_to.single()
+            data.append(user)
 
-#             if current_user.belongs_to != user.belongs_to:
-#                 continue
-
-#             data.append(user)
-
-#         return self.response(data)
+        return self.response(data)
