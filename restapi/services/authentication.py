@@ -1,10 +1,6 @@
-"""
-SECURITY ENDPOINTS CHECK
-Add auth checks called /checklogged and /testadmin
-"""
-import abc
 import base64
 import re
+from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
@@ -156,7 +152,7 @@ def get_max_login_attempts(val: int) -> int:
 # ##############################################################################
 
 
-class BaseAuthentication(metaclass=abc.ABCMeta):
+class BaseAuthentication(metaclass=ABCMeta):
 
     """
     An almost abstract class with methods
@@ -1120,10 +1116,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #  Abstract methods  # #
     # ########################
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
-    ) -> Optional[User]:  # pragma: no cover
+    ) -> Optional[User]:
         """
         How to retrieve a single user from the current authentication db,
         based on the unique username or the user_id
@@ -1131,160 +1127,147 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         ...
 
-    @abc.abstractmethod
-    def get_users(self) -> List[User]:  # pragma: no cover
+    @abstractmethod
+    def get_users(self) -> List[User]:
         """
         How to retrieve a list of all users from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
-    def save_user(self, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def save_user(self, user: User) -> bool:
         # log.error("Users are not saved in base authentication")
         ...
 
-    @abc.abstractmethod
-    def delete_user(self, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def delete_user(self, user: User) -> bool:
         # log.error("Users are not deleted in base authentication")
         ...
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_group(
         self, group_id: Optional[str] = None, name: Optional[str] = None
-    ) -> Optional[Group]:  # pragma: no cover
+    ) -> Optional[Group]:
         """
         How to retrieve a single group from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
-    def get_groups(self) -> List[Group]:  # pragma: no cover
+    @abstractmethod
+    def get_groups(self) -> List[Group]:
         """
         How to retrieve groups list from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_user_group(self, user: User) -> Group:
         """
         How to retrieve the group that the user belongs to from the current auth db
         """
         ...
 
-    @abc.abstractmethod
-    def get_group_members(self, group: Group) -> List[User]:  # pragma: no cover
+    @abstractmethod
+    def get_group_members(self, group: Group) -> List[User]:
         """
         How to retrieve group users list from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
-    def save_group(self, group: Group) -> bool:  # pragma: no cover
+    @abstractmethod
+    def save_group(self, group: Group) -> bool:
         ...
 
-    @abc.abstractmethod
-    def delete_group(self, group: Group) -> bool:  # pragma: no cover
+    @abstractmethod
+    def delete_group(self, group: Group) -> bool:
         ...
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_tokens(
         self,
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:  # pragma: no cover
+    ) -> List[Token]:
         """
         Return the list of tokens
         """
         ...
 
-    @abc.abstractmethod
-    def verify_token_validity(self, jti: str, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def verify_token_validity(self, jti: str, user: User) -> bool:
         """
         This method MUST be implemented by specific Authentication Methods
         to add more specific validation contraints
         """
         ...
 
-    @abc.abstractmethod  # pragma: no cover
+    @abstractmethod
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
         log.debug("Tokens is not saved in base authentication")
 
-    @abc.abstractmethod
-    def invalidate_token(self, token: str) -> bool:  # pragma: no cover
+    @abstractmethod
+    def invalidate_token(self, token: str) -> bool:
         """
         With this method the specified token must be invalidated
         as expected after a user logout
         """
         ...
 
-    @abc.abstractmethod
-    def get_roles(self) -> List[RoleObj]:  # pragma: no cover
+    @abstractmethod
+    def get_roles(self) -> List[RoleObj]:
         """
         How to retrieve all the roles
         """
         ...
 
-    @abc.abstractmethod
-    def get_roles_from_user(
-        self, user: Optional[User]
-    ) -> List[str]:  # pragma: no cover
+    @abstractmethod
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
         """
         Retrieve roles from a user object from the current auth service
         """
         ...
 
-    @abc.abstractmethod
-    def create_role(self, name: str, description: str) -> None:  # pragma: no cover
+    @abstractmethod
+    def create_role(self, name: str, description: str) -> None:
         """
         A method to create a new role
         """
         ...
 
-    @abc.abstractmethod
-    def save_role(self, role: RoleObj) -> bool:  # pragma: no cover
+    @abstractmethod
+    def save_role(self, role: RoleObj) -> bool:
         ...
 
     # ################
     # # Create Users #
     # ################
-    @abc.abstractmethod
-    def create_user(
-        self, userdata: Dict[str, Any], roles: List[str]
-    ) -> User:  # pragma: no cover
+    @abstractmethod
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
         """
         A method to create a new user
         """
         ...
 
-    @abc.abstractmethod
-    def link_roles(self, user: User, roles: List[str]) -> None:  # pragma: no cover
+    @abstractmethod
+    def link_roles(self, user: User, roles: List[str]) -> None:
         """
         A method to assign roles to a user
         """
         ...
 
-    @abc.abstractmethod
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:  # pragma: no cover
+    @abstractmethod
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
         """
         A method to create a new group
         """
         ...
 
-    @abc.abstractmethod
-    def add_user_to_group(self, user: User, group: Group) -> None:  # pragma: no cover
+    @abstractmethod
+    def add_user_to_group(self, user: User, group: Group) -> None:
         """
         Save the group.members -> user relationship
         """
         ...
-
-    # @abc.abstractmethod
-    # def set_group_coordinator(
-    #     self, group: Group, user: User
-    # ) -> None:  # pragma: no cover
-    #     """
-    #     Save the group.coordinator -> user relationship
-    #     """
-    #     ...

@@ -647,3 +647,64 @@ class TestApp(BaseTests):
 
         group = auth.get_group(name="Default")
         assert group.fullname != "Changed"
+
+    def test_authentication_abstract_methods(self, faker: Faker) -> None:
+        # Super trick!
+        # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
+        abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
+        BaseAuthentication.__abstractmethods__ = set()  # type: ignore
+
+        auth = Connector.get_authentication_instance()
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
+        role = auth.get_roles()[0]
+
+        auth = BaseAuthentication()  # type: ignore
+
+        assert (
+            auth.get_user(username=faker.ascii_email(), user_id=faker.pystr()) is None
+        )
+
+        assert auth.get_users() is None
+        assert auth.save_user(user=user) is None
+        assert auth.delete_user(user=user) is None
+
+        assert auth.get_group(group_id=faker.pystr(), name=faker.pystr()) is None
+
+        assert auth.get_groups() is None
+        assert auth.get_user_group(user=user) is None
+
+        assert auth.get_group_members(group=group) is None
+
+        assert auth.save_group(group=group) is None
+
+        assert auth.delete_group(group=group) is None
+
+        assert auth.get_tokens(user=user, token_jti=faker.pystr(), get_all=True) is None
+
+        assert auth.verify_token_validity(jti=faker.pystr(), user=user) is None
+
+        assert (
+            auth.save_token(
+                user=user, token=faker.pystr(), payload={}, token_type=faker.pystr()
+            )
+            is None
+        )
+
+        assert auth.invalidate_token(token=faker.pystr()) is None
+
+        assert auth.get_roles() is None
+
+        assert auth.get_roles_from_user(user=user) is None
+
+        assert auth.create_role(name=faker.pystr(), description=faker.pystr()) is None
+        assert auth.save_role(role=role) is None
+
+        assert auth.create_user(userdata={}, roles=[faker.pystr()]) is None
+
+        assert auth.link_roles(user=user, roles=[faker.pystr()]) is None
+        assert auth.create_group(groupdata={}) is None
+
+        assert auth.add_user_to_group(user=user, group=group) is None
+
+        BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore
