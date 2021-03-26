@@ -286,6 +286,12 @@ class Authentication(BaseAuthentication):
     def get_groups(self) -> List[Group]:
         return cast(List[Group], self.db.Group.nodes.all())
 
+    def get_user_group(self, user: User) -> Group:
+        return user.belongs_to.single()
+
+    def get_group_members(self, group: Group) -> List[User]:
+        return list(group.members)
+
     def save_group(self, group: Group) -> bool:
         if not group:
             return False

@@ -1153,14 +1153,28 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         self, group_id: Optional[str] = None, name: Optional[str] = None
     ) -> Optional[Group]:  # pragma: no cover
         """
-        How to retrieve a single group from the current authentication db,
+        How to retrieve a single group from the current authentication db
         """
         ...
 
     @abc.abstractmethod
     def get_groups(self) -> List[Group]:  # pragma: no cover
         """
-        How to retrieve groups list from the current authentication db,
+        How to retrieve groups list from the current authentication db
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_user_group(self, user: User) -> Group:
+        """
+        How to retrieve the group that the user belongs to from the current auth db
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_group_members(self, group: Group) -> List[User]:  # pragma: no cover
+        """
+        How to retrieve group users list from the current authentication db
         """
         ...
 

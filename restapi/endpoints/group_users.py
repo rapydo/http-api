@@ -28,13 +28,6 @@ class GroupUsers(EndpointResource):
         if not user:  # pragma: no cover
             raise ServerError("User misconfiguration")
 
-        user_group = user.belongs_to
-        if Connector.authentication_service == "neo4j":
-            user_group = user_group.single()
+        group = self.auth.get_user_group(user)
 
-        data = []
-        for user in user_group.members:
-
-            data.append(user)
-
-        return self.response(data)
+        return self.response(self.auth.get_group_members(group))

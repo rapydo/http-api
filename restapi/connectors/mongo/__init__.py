@@ -269,6 +269,18 @@ class Authentication(BaseAuthentication):
         # should be expanded with members ...
         return list(self.db.Group.objects.all())
 
+    def get_user_group(self, user: User) -> Group:
+        return user.belongs_to
+
+    def get_group_members(self, group: Group) -> List[User]:
+        output: List[User] = []
+
+        for u in self.get_users():
+            if u.belongs_to == group:
+                output.append(u)
+
+        return output
+
     def save_group(self, group: Group) -> bool:
         if not group:
             return False
