@@ -26,7 +26,7 @@ class TestApp(BaseTests):
         group2_uuid, group2_data = self.create_group(client)
 
         user3_uuid, user3_data = self.create_user(
-            client, roles=[Role.COORDINATOR], data={"group": group1_uuid}
+            client, roles=[Role.COORDINATOR], data={"group": group2_uuid}
         )
 
         # Verify POST / PUT and DELETE are not enabled
