@@ -1,5 +1,4 @@
 from restapi import decorators
-from restapi.connectors import Connector
 from restapi.endpoints.schemas import group_users_output
 from restapi.exceptions import ServerError
 from restapi.rest.definition import EndpointResource

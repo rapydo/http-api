@@ -370,19 +370,35 @@ class BaseTests:
         return cls.get_last_name(faker, recursion=recursion + 1)  # pragma: no cover
 
     @classmethod
-    def get_random_email(cls, faker: Faker, name: str, surname: str) -> str:
+    def get_random_email(
+        cls, faker: Faker, name: str, surname: str, recursion: int = 0
+    ) -> str:
         # Please Faker, add some types hints and let me remove this str()!
         email = str(faker.ascii_email())
 
         # This email contains the name, re-sampling again
         if name.lower() in email.lower():  # pragma: no cover
-            return cls.get_random_email(faker, name, surname)
+            return cls.get_random_email(faker, name, surname, recursion=recursion + 1)
 
         # This email contains the surname, re-sampling again
         if surname.lower() in email.lower():  # pragma: no cover
-            return cls.get_random_email(faker, surname, surname)
+            return cls.get_random_email(faker, name, surname, recursion=recursion + 1)
 
-        return email
+        email_tokens = email.split("@")
+        email_username = email_tokens[0]
+        if len(email_username) > 3:
+            # Please Faker, add some types hints!
+            return email
+
+        # Probably this Faker locale only has very short emails.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return f"{email_username * 4}@{email_tokens[1]}"
+
+        return cls.get_random_email(  # pragma: no cover
+            faker, surname, surname, recursion=recursion + 1
+        )
 
     @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:

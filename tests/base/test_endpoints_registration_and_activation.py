@@ -29,7 +29,7 @@ class TestApp(BaseTests):
         # Ensure name and surname longer than 3
         name = self.get_first_name(faker)
         surname = self.get_last_name(faker)
-        # Ensure an email not containing name and surname
+        # Ensure an email not containing name and surname and longer than 3
         email = self.get_random_email(faker, name, surname)
 
         registration_data = {}
