@@ -98,6 +98,7 @@ class TestApp(BaseTests):
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
 
+        self.delete_mock_email()
         data = {
             "subject": faker.pystr(),
             "body": "TEST EMAIL BODY",
@@ -109,6 +110,7 @@ class TestApp(BaseTests):
         body = mail.get("body")
         assert "TEST EMAIL BODY" in body
 
+        self.delete_mock_email()
         data = {
             "subject": faker.pystr(),
             "body": "TEST EMAIL <b>HTML</b> BODY",
