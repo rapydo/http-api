@@ -94,9 +94,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert f"Subject: {data['subject']}" in headers
         ccs = mail.get("cc")
-        assert data["to"] == ccs[0]
-        assert data["cc"].split(",") == ccs[1]
-        assert data["bcc"].split(",") == ccs[2]
+        assert ccs[0] == data["to"]
+        assert ccs[1] == data["cc"].split(",")
+        assert ccs[2] == data["bcc"].split(",")
 
         data["body"] = "TEST EMAIL BODY"
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
