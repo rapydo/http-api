@@ -46,9 +46,22 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         data["to"] = faker.ascii_email()
+        data["body"] = "TEST EMAIL BODY"
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
 
+        mail = self.read_mock_email()
+        body = mail.get("body")
+        assert "TEST EMAIL BODY" in body
+
+        data["body"] = "TEST EMAIL <b>HTML</b> BODY"
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
+        assert r.status_code == 204
+        mail = self.read_mock_email()
+        body = mail.get("body")
+        assert "TEST EMAIL <b>HTML</b> BODY" in body
+
+        data["body"] = faker.text()
         data["cc"] = faker.pystr()
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
@@ -97,27 +110,3 @@ class TestApp(BaseTests):
         assert ccs[0] == data["to"]
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
-
-        self.delete_mock_email()
-        data = {
-            "subject": faker.pystr(),
-            "body": "TEST EMAIL BODY",
-            "to": faker.ascii_email(),
-        }
-        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
-        assert r.status_code == 204
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        assert "TEST EMAIL BODY" in body
-
-        self.delete_mock_email()
-        data = {
-            "subject": faker.pystr(),
-            "body": "TEST EMAIL <b>HTML</b> BODY",
-            "to": faker.ascii_email(),
-        }
-        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
-        assert r.status_code == 204
-        mail = self.read_mock_email()
-        body = mail.get("body")
-        assert "TEST EMAIL <b>HTML</b> BODY" in body
