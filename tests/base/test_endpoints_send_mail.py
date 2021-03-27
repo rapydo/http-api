@@ -98,7 +98,7 @@ class TestApp(BaseTests):
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
 
-        data["body"] = "TEST EMAIL BODY"
+        # data["body"] = "TEST EMAIL BODY"
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
