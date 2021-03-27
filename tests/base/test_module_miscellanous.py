@@ -701,8 +701,10 @@ class TestApp(BaseTests):
 
         r = schema.load({"unique_delimited_list": ""})
         assert "unique_delimited_list" in r
-        assert len(r["unique_delimited_list"]) == 1
-        assert r["unique_delimited_list"][0] == ""
+        # This is because I added a check to return value if value is ""
+        assert len(r["unique_delimited_list"]) == 0
+        # assert len(r["unique_delimited_list"]) == 1
+        # assert r["unique_delimited_list"][0] == ""
 
         r = schema.load({"unique_delimited_list": "xyz"})
         assert "unique_delimited_list" in r

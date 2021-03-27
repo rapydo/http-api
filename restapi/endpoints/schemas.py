@@ -121,12 +121,12 @@ class MailInput(Schema):
     cc = fields.DelimitedList(
         fields.Email(),
         label="CC - Carbon Copy",
-        description="comma-delimited list of email addresses",
+        description="CC email addresses (comma-delimited list)",
     )
     bcc = fields.DelimitedList(
         fields.Email(),
         label="BCC - Blind Carbon Copy",
-        description="comma-delimited list of email addresses",
+        description="BCC email addresses (comma-delimited list)",
     )
 
 
