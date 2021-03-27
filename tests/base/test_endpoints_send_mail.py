@@ -30,47 +30,47 @@ class TestApp(BaseTests):
         assert r.status_code == 405
 
         data: Dict[str, Any] = {}
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["subject"] = faker.pystr()
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["body"] = faker.text()
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["to"] = faker.ascii_email()
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
 
         data["cc"] = faker.ascii_email()
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["cc"] = [faker.pystr()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["cc"] = [faker.ascii_email(), faker.pystr()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["cc"] = [faker.ascii_email(), faker.ascii_email()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
 
         data["bcc"] = [faker.pystr()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["bcc"] = [faker.ascii_email(), faker.pystr()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
         data["bcc"] = [faker.ascii_email(), faker.ascii_email()]
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
 
         mail = self.read_mock_email()
@@ -86,14 +86,14 @@ class TestApp(BaseTests):
         assert mail.get("bcc") == data["bcc"]
 
         data["body"] = "TEST EMAIL BODY"
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
         body = mail.get("body")
         assert "TEST EMAIL BODY" in body
 
         data["body"] = "TEST EMAIL <b>HTML</b> BODY"
-        r = client.post(f"{API_URI}/group/users", data=data, headers=headers)
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
         body = mail.get("body")
