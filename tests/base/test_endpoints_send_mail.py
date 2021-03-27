@@ -98,14 +98,22 @@ class TestApp(BaseTests):
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
 
-        # data["body"] = "TEST EMAIL BODY"
+        data = {
+            "subject": faker.pystr(),
+            "body": "TEST EMAIL BODY",
+            "to": faker.ascii_email(),
+        }
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
         body = mail.get("body")
         assert "TEST EMAIL BODY" in body
 
-        data["body"] = "TEST EMAIL <b>HTML</b> BODY"
+        data = {
+            "subject": faker.pystr(),
+            "body": "TEST EMAIL <b>HTML</b> BODY",
+            "to": faker.ascii_email(),
+        }
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
