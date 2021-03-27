@@ -93,8 +93,7 @@ class TestApp(BaseTests):
         assert headers is not None
         # Subject: is a key in the MIMEText
         assert f"Subject: {data['subject']}" in headers
-        assert mail.get("to") == data["to"]
-        assert mail.get("cc") == data["cc"]
+        assert mail.get("cc") == [data["to"]] + data["cc"]
         assert mail.get("bcc") == data["bcc"]
 
         data["body"] = "TEST EMAIL BODY"
