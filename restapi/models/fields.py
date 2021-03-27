@@ -151,8 +151,8 @@ class List(Field, webargs_fields.List):
         if isinstance(value, str):
             try:
                 value = json.loads(value)
-            except BaseException as e:
-                log.warning(e)
+            except BaseException:
+                pass
 
         value = super()._deserialize(value, attr, data, **kwargs)
 
@@ -193,6 +193,9 @@ class DelimitedList(List, webargs_fields.DelimitedList):
         self.no_duplicates = unique
 
     def _deserialize(self, value, attr, data, **kwargs):
+
+        if not value:
+            return value
 
         values = super()._deserialize(value, attr, data, **kwargs)
 

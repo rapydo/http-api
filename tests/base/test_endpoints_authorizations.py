@@ -209,6 +209,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(
             client, "GET", "/api/admin/stats", headers, True, paths
         )
+        paths = self.check_endpoint(
+            client, "POST", "/api/admin/mail", headers, True, paths
+        )
 
         # logout MUST be the last one or the token will be invalidated!! :-)
         paths = self.check_endpoint(client, "GET", "/auth/logout", headers, True, paths)
@@ -342,6 +345,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(
             client, "GET", "/api/admin/stats", headers, False, paths
         )
+        paths = self.check_endpoint(
+            client, "POST", "/api/admin/mail", headers, False, paths
+        )
 
         # logout MUST be the last one or the token will be invalidated!! :-)
         paths = self.check_endpoint(client, "GET", "/auth/logout", headers, True, paths)
@@ -466,6 +472,9 @@ class TestApp1(BaseTests):
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/stats", headers, False, paths
+        )
+        paths = self.check_endpoint(
+            client, "POST", "/api/admin/mail", headers, False, paths
         )
 
         # logout MUST be the last one or the token will be invalidated!! :-)
@@ -592,6 +601,9 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(
             client, "GET", "/api/admin/stats", headers, False, paths
         )
+        paths = self.check_endpoint(
+            client, "POST", "/api/admin/mail", headers, False, paths
+        )
 
         # logout MUST be the last one or the token will be invalidated!! :-)
         paths = self.check_endpoint(client, "GET", "/auth/logout", headers, True, paths)
@@ -716,6 +728,9 @@ class TestApp1(BaseTests):
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/stats", headers, False, paths
+        )
+        paths = self.check_endpoint(
+            client, "POST", "/api/admin/mail", headers, False, paths
         )
 
         # logout MUST be the last one or the token will be invalidated!! :-)

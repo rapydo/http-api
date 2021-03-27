@@ -110,6 +110,26 @@ class NewPassword(Schema):
     totp_code = fields.TOTP(required=False)
 
 
+class MailInput(Schema):
+    subject = fields.Str(required=True, description="Subject of your email")
+    body = fields.Str(
+        required=True,
+        description="Body of your email. You can use email code here.",
+        validate=validate.Length(max=9999),
+    )
+    to = fields.Email(required=True, label="Destination email address")
+    cc = fields.DelimitedList(
+        fields.Email(),
+        label="CC - Carbon Copy",
+        description="comma-delimited list of email addresses",
+    )
+    bcc = fields.DelimitedList(
+        fields.Email(),
+        label="BCC - Blind Carbon Copy",
+        description="comma-delimited list of email addresses",
+    )
+
+
 #########################################
 # ############   Callbacks   ############
 #########################################
