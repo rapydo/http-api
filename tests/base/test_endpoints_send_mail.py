@@ -55,7 +55,7 @@ class TestApp(BaseTests):
 
         data["cc"] = [faker.ascii_email()]
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
-        assert r.status_code == 400
+        assert r.status_code == 204
 
         data["cc"] = faker.ascii_email()
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
@@ -75,7 +75,7 @@ class TestApp(BaseTests):
 
         data["bcc"] = [faker.ascii_email()]
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
-        assert r.status_code == 400
+        assert r.status_code == 204
 
         data["bcc"] = f"{faker.ascii_email()},{faker.pystr()}"
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
