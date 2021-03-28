@@ -24,13 +24,20 @@ def get_html_template(
     header_html, header_plain = _get_html_template("email_header.html", replaces)
     footer_html, footer_plain = _get_html_template("email_footer.html", replaces)
 
-    if html and plain and header_html and header_plain and footer_html and footer_plain:
-        return (
-            f"{header_html}{html}{footer_html}",
-            f"{header_plain}{plain}{footer_plain}",
-        )
+    if (
+        html is None
+        or plain is None
+        or header_html is None
+        or header_plain is None
+        or footer_html is None
+        or footer_plain is None
+    ):
+        return None, None
 
-    return None, None
+    return (
+        f"{header_html}{html}{footer_html}",
+        f"{header_plain}{plain}{footer_plain}",
+    )
 
 
 def convert_html2text(html_body: str) -> str:

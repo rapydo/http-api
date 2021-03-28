@@ -6,7 +6,8 @@ from restapi.connectors.smtp.notifications import _get_html_template, convert_ht
 from restapi.endpoints.schemas import MailInput, MailOutput
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
-from restapi.utilities.logs import log
+
+# from restapi.utilities.logs import log
 
 
 class SendMail(EndpointResource):
