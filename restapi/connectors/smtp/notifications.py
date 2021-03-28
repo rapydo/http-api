@@ -20,6 +20,34 @@ def get_html_template(
     template_file: str, replaces: Dict[str, Any]
 ) -> Tuple[Optional[str], Optional[str]]:
 
+    html, plain = _get_html_template(template_file, replaces)
+    header_html, header_plain = _get_html_template("email_header.html", replaces)
+    footer_html, footer_plain = _get_html_template("email_footer.html", replaces)
+
+    if html and plain and header_html and header_plain and footer_html and footer_plain:
+        return (
+            f"{header_html}{html}{footer_html}",
+            f"{header_plain}{plain}{footer_plain}",
+        )
+
+    return None, None
+
+
+def convert_html2text(html_body: str) -> str:
+
+    h2t = html2text.HTML2Text()
+    h2t.unicode_snob = False
+    h2t.ignore_emphasis = True
+    h2t.single_line_break = True
+    h2t.ignore_images = True
+    # zero for no wrap of long lines [otherwise tokens in urls will be broken]
+    h2t.body_width = 0
+    return h2t.handle(html_body)
+
+
+def _get_html_template(
+    template_file: str, replaces: Dict[str, Any]
+) -> Tuple[Optional[str], Optional[str]]:
     # Custom templates from project backend/models/email/
     template_path = os.path.join(
         os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
@@ -49,14 +77,7 @@ def get_html_template(
 
         html_body = template.render(**replaces)
 
-        h2t = html2text.HTML2Text()
-        h2t.unicode_snob = False
-        h2t.ignore_emphasis = True
-        h2t.single_line_break = True
-        h2t.ignore_images = True
-        # zero for no wrap of long lines [otherwise tokens in urls will be broken]
-        h2t.body_width = 0
-        plain_body = h2t.handle(html_body)
+        plain_body = convert_html2text(html_body)
 
         return html_body, plain_body
     except BaseException as e:  # pragma: no cover

@@ -114,7 +114,7 @@ class MailInput(Schema):
     subject = fields.Str(required=True, description="Subject of your email")
     body = fields.Str(
         required=True,
-        description="Body of your email. You can use email code here.",
+        description="Body of your email. You can use html code here.",
         validate=validate.Length(max=9999),
     )
     to = fields.Email(required=True, label="Destination email address")
@@ -128,6 +128,20 @@ class MailInput(Schema):
         label="BCC - Blind Carbon Copy",
         description="BCC email addresses (comma-delimited list)",
     )
+    dry_run = fields.Boolean(
+        required=True,
+        label="Dry run execution",
+        description="Only simulate the email, do not send it",
+    )
+
+
+class MailOutput(Schema):
+    html_body = fields.Str()
+    plain_body = fields.Str()
+    subject = fields.Str()
+    to = fields.Email()
+    cc = fields.List(fields.Email())
+    bcc = fields.List(fields.Email())
 
 
 #########################################
