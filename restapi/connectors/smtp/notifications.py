@@ -20,24 +20,16 @@ def get_html_template(
     template_file: str, replaces: Dict[str, Any]
 ) -> Tuple[Optional[str], Optional[str]]:
 
-    html, plain = _get_html_template(template_file, replaces)
-    header_html, header_plain = _get_html_template("email_header.html", replaces)
-    footer_html, footer_plain = _get_html_template("email_footer.html", replaces)
+    html = _get_html_template(template_file, replaces)
+    header_html = _get_html_template("email_header.html", replaces)
+    footer_html = _get_html_template("email_footer.html", replaces)
 
-    if (
-        html is None
-        or plain is None
-        or header_html is None
-        or header_plain is None
-        or footer_html is None
-        or footer_plain is None
-    ):
+    if html is None or header_html is None or footer_html is None:
         return None, None
 
-    return (
-        f"{header_html}{html}{footer_html}",
-        f"{header_plain}{plain}{footer_plain}",
-    )
+    html_body = f"{header_html}{html}{footer_html}"
+    plain_body = convert_html2text(html_body)
+    return html_body, plain_body
 
 
 def convert_html2text(html_body: str) -> str:
@@ -52,9 +44,7 @@ def convert_html2text(html_body: str) -> str:
     return h2t.handle(html_body)
 
 
-def _get_html_template(
-    template_file: str, replaces: Dict[str, Any]
-) -> Tuple[Optional[str], Optional[str]]:
+def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional[str]:
     # Custom templates from project backend/models/email/
     template_path = os.path.join(
         os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
@@ -72,7 +62,7 @@ def _get_html_template(
 
     if not os.path.exists(template_path):
         log.info("Template not found: {}", template_path)
-        return None, None
+        return None
 
     try:
 
@@ -82,14 +72,10 @@ def _get_html_template(
         templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
         template = templateEnv.get_template(template_file)
 
-        html_body = template.render(**replaces)
-
-        plain_body = convert_html2text(html_body)
-
-        return html_body, plain_body
+        return template.render(**replaces)
     except BaseException as e:  # pragma: no cover
         log.error("Error loading template {}: {}", template_file, e)
-        return None, None
+        return None
 
 
 def send_notification(

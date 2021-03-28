@@ -36,13 +36,13 @@ class SendMail(EndpointResource):
 
         replaces: Dict[str, Any] = {}
 
-        header_html, header_plain = _get_html_template("email_header.html", replaces)
-        footer_html, footer_plain = _get_html_template("email_footer.html", replaces)
+        header_html = _get_html_template("email_header.html", replaces)
+        footer_html = _get_html_template("email_footer.html", replaces)
 
         body = body.replace("\n", "<br/>")
 
         html_body = f"{header_html}{body}{footer_html}"
-        plain_body = f"{header_plain}{convert_html2text(body)}{footer_html}"
+        plain_body = convert_html2text(html_body)
 
         if dry_run:
             return self.response(
