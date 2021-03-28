@@ -29,7 +29,7 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/mail", headers=headers)
         assert r.status_code == 405
 
-        data: Dict[str, Any] = {}
+        data: Dict[str, Any] = {"dry_run": False}
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 400
 
@@ -110,3 +110,18 @@ class TestApp(BaseTests):
         assert ccs[0] == data["to"]
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
+
+        data["dry_run"] = True
+        data["body"] = "TEST EMAIL <b>HTML</b> BODY"
+        r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
+        assert r.status_code == 200
+
+        response = self.get_content(r)
+        assert "html_body" in response
+        assert "plain_body" in response
+        assert "subject" in response
+        assert "to" in response
+        assert "cc" in response
+        assert "bcc" in response
+
+        ...
