@@ -76,9 +76,6 @@ if Connector.check_availability("smtp"):
             self.log_event(self.events.create, user, kwargs)
 
             try:
-                # Sending an email to the administrator
-                if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
-                    send_registration_notification(user)
 
                 auth = Connector.get_authentication_instance()
 
@@ -96,10 +93,13 @@ if Connector.check_availability("smtp"):
 
                 if not sent:  # pragma: no cover
                     raise ServiceUnavailable("Error sending email, please retry")
-
                 auth.save_token(
                     user, activation_token, payload, token_type=auth.ACTIVATE_ACCOUNT
                 )
+
+                # Sending an email to the administrator
+                if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
+                    send_registration_notification(user)
 
             except BaseException as e:  # pragma: no cover
                 self.auth.delete_user(user)
