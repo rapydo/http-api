@@ -21,8 +21,6 @@ def get_html_template(
     template_file: str, replaces: Dict[str, Any]
 ) -> Tuple[Optional[str], Optional[str]]:
 
-    replaces.setdefault("host", get_frontend_url())
-
     html = _get_html_template(template_file, replaces)
     header_html = _get_html_template("email_header.html", replaces)
     footer_html = _get_html_template("email_footer.html", replaces)
@@ -74,6 +72,8 @@ def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional
         )
         templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
         template = templateEnv.get_template(template_file)
+
+        replaces.setdefault("host", get_frontend_url())
 
         return template.render(**replaces)
     except BaseException as e:  # pragma: no cover
