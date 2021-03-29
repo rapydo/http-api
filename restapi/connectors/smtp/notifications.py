@@ -8,10 +8,10 @@ from restapi.config import (
     ABS_RESTAPI_PATH,
     CUSTOM_PACKAGE,
     MODELS_DIR,
+    get_frontend_url,
     get_project_configuration,
 )
 from restapi.connectors import CONNECTORS_FOLDER, Connector, smtp
-from restapi.env import Env
 from restapi.services.authentication import FailedLogin, User
 from restapi.utilities.logs import log
 from restapi.utilities.time import seconds_to_human
@@ -21,7 +21,7 @@ def get_html_template(
     template_file: str, replaces: Dict[str, Any]
 ) -> Tuple[Optional[str], Optional[str]]:
 
-    replaces.setdefault("host", Env.get("DOMAIN"))
+    replaces.setdefault("host", get_frontend_url())
 
     html = _get_html_template(template_file, replaces)
     header_html = _get_html_template("email_header.html", replaces)
