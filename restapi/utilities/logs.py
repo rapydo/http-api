@@ -4,6 +4,7 @@ import re
 import sys
 import urllib.parse
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
@@ -18,7 +19,7 @@ from restapi.config import (
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
-LOGS_FOLDER = "/logs"
+LOGS_FOLDER = Path("/logs")
 
 
 # BACKEND-SERVER
@@ -27,19 +28,19 @@ if not IS_CELERY_CONTAINER:
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
-    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
-    if not os.path.isdir(LOGS_FOLDER):
-        os.makedirs(LOGS_FOLDER, exist_ok=True)
+    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
+    if not LOGS_FOLDER.is_dir():
+        LOGS_FOLDER.mkdir(exist_ok=True)
 # Celery (variables name due to scaling)
 else:  # pragma: no cover
     LOGS_FILE = f"celery_{HOSTNAME}"
-    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
-    if not os.path.isdir(LOGS_FOLDER):
-        os.makedirs(LOGS_FOLDER, exist_ok=True)
+    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
+    if not LOGS_FOLDER.is_dir():
+        LOGS_FOLDER.mkdir(exist_ok=True)
 
 
-LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
-EVENTS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, "security-events.log")
+LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{LOGS_FILE}.log")
+EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
 
 
 class Events(str, Enum):

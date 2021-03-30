@@ -3,7 +3,7 @@ import json
 from smtplib import SMTPException, SMTPServerDisconnected
 from typing import Tuple
 
-from restapi.utilities.logs import log
+from restapi.utilities.logs import LOGS_FOLDER, log
 
 
 class SMTP:
@@ -50,16 +50,23 @@ class SMTP:
         if from_address == "invalid2":
             raise BaseException("Generic Error")
 
-        fpath = "/logs/mock.mail.lastsent.json"
+        json_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.json")
+        body_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.body")
+
+        if json_fpath.exists():
+            json_fpath.rename("mock.mail.prevsent.json")
+
+        if body_fpath.exists():
+            body_fpath.rename("mock.mail.prevsent.body")
+
         data = {"from": from_address, "cc": dest_addresses, "msg": msg}
         log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)
-        with open(fpath, "w+") as file:
+        with open(json_fpath, "w+") as file:
             file.write(json.dumps(data))
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
-        log.info("Mail mock mail written in {}", fpath)
+        log.info("Mail mock mail written in {}", json_fpath)
 
         log.info("Extracting body")
-        fpath = "/logs/mock.mail.lastsent.body"
         b = email.message_from_string(msg)
         if b.is_multipart():
             # get the first payload (the non html version)
@@ -74,10 +81,10 @@ class SMTP:
             # Otherwise this is needed:
             payload = b.get_payload(decode=True).decode("utf-8")
 
-        with open(fpath, "w+") as file:
+        with open(body_fpath, "w+") as file:
             file.write(payload)
 
-        log.info("Mail body written in {}", fpath)
+        log.info("Mail body written in {}", body_fpath)
 
     def noop(self) -> Tuple[int]:
         if self.disconnected:

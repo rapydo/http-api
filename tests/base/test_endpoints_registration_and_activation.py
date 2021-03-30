@@ -139,7 +139,17 @@ class TestApp(BaseTests):
         assert "password" in events[0].payload
         assert events[0].payload["password"] == OBSCURE_VALUE
 
+        # Last sent email is the registration notification to the admin
         mail = self.read_mock_email()
+        body = mail.get("body")
+        assert body is not None
+        assert mail.get("headers") is not None
+        # Subject: is a key in the MIMEText
+        assert f"Subject: {project_tile}: New user registered" in mail.get("headers")
+        assert registration_data["email"] in body
+
+        # Previous sent email is the activation link sent to the user
+        mail = self.read_mock_email(previous=True)
         body = mail.get("body")
         assert body is not None
         assert mail.get("headers") is not None

@@ -26,7 +26,7 @@ from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Payload, Role
 from restapi.utilities.faker import get_faker
-from restapi.utilities.logs import log
+from restapi.utilities.logs import LOGS_FOLDER, log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
@@ -497,15 +497,16 @@ class BaseTests:
         return data
 
     @staticmethod
-    def delete_mock_email() -> Any:
-        fpath = "/logs/mock.mail.lastsent.json"
-        if os.path.exists(fpath):
-            os.unlink(fpath)
+    def delete_mock_email(previous: bool = False) -> Any:
+        target = "prevsent" if previous else "lastsent"
+        fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
+        fpath.unlink(missing_ok=True)
 
     @staticmethod
-    def read_mock_email() -> Any:
-        fpath = "/logs/mock.mail.lastsent.json"
-        if not os.path.exists(fpath):
+    def read_mock_email(previous: bool = False) -> Any:
+        target = "prevsent" if previous else "lastsent"
+        fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
+        if not fpath.exists():
             return None
 
         with open(fpath) as file:
@@ -527,7 +528,7 @@ class BaseTests:
             # b64decode gives as output bytes, decode("utf-8") needed to get a string
             data["body"] = base64.b64decode(base64_body).decode("utf-8")
 
-        os.unlink(fpath)
+        fpath.unlink()
         return data
 
     @staticmethod
