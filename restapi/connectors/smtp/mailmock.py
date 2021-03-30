@@ -52,12 +52,14 @@ class SMTP:
 
         json_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.json")
         body_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.body")
+        json_fpath_prev = LOGS_FOLDER.joinpath("mock.mail.prevsent.json")
+        body_fpath_perv = LOGS_FOLDER.joinpath("mock.mail.prevsent.body")
 
         if json_fpath.exists():
-            json_fpath.rename("mock.mail.prevsent.json")
+            json_fpath.rename(json_fpath_prev)
 
         if body_fpath.exists():
-            body_fpath.rename("mock.mail.prevsent.body")
+            body_fpath.rename(body_fpath_perv)
 
         data = {"from": from_address, "cc": dest_addresses, "msg": msg}
         log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)
