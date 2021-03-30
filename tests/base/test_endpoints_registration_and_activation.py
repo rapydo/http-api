@@ -311,7 +311,9 @@ class TestApp(BaseTests):
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
 
-        mail = self.read_mock_email()
+        # Registration endpoint send 2 mail: the first is the activation link,
+        # the second (last) is the admin notification
+        mail = self.read_mock_email(previous=True)
         body = mail.get("body")
         assert body is not None
         assert mail.get("headers") is not None
