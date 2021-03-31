@@ -12,6 +12,7 @@ from restapi.config import (
     get_project_configuration,
 )
 from restapi.connectors import CONNECTORS_FOLDER, Connector, smtp
+from restapi.env import Env
 from restapi.services.authentication import FailedLogin, User
 from restapi.utilities.logs import log
 from restapi.utilities.time import seconds_to_human
@@ -96,11 +97,13 @@ def send_notification(
         return False
 
     title = get_project_configuration("project.title", default="Unkown title")
+    replyto = Env.get("SMTP_NOREPLY", Env.get("SMTP_ADMIN", ""))
 
     if data is None:
         data = {}
 
     data.setdefault("project", title)
+    data.setdefault("replyto", replyto)
 
     if user:
         data.setdefault("username", user.email)
