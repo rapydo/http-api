@@ -50,16 +50,20 @@ class CeleryExt(Connector):
                     task_id = self.request.id
                     task_name = self.request.task
                     arguments = str(self.request.args)
-                    error_stack = traceback.format_exc()
+
+                    # Removing username and password from urls in error stack
+                    clean_error_stack = ""
+                    for line in traceback.format_exc().split("\n"):
+                        clean_error_stack += f"{obfuscate_url(line)}\n"
 
                     log.error("Celery task {} ({}) failed", task_id, task_name)
                     log.error("Failed task arguments: {}", arguments[0:256])
-                    log.error("Task error: {}", error_stack)
+                    log.error("Task error: {}", clean_error_stack)
 
                     if Connector.check_availability("smtp"):
                         log.info("Sending error report by email", task_id, task_name)
                         send_celery_error_notification(
-                            task_id, task_name, arguments, error_stack
+                            task_id, task_name, arguments, clean_error_stack
                         )
 
             return wrapper
