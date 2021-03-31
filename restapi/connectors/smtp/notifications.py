@@ -97,13 +97,13 @@ def send_notification(
         return False
 
     title = get_project_configuration("project.title", default="Unkown title")
-    replyto = Env.get("SMTP_NOREPLY", Env.get("SMTP_ADMIN", ""))
+    reply_to = Env.get("SMTP_NOREPLY", Env.get("SMTP_ADMIN", ""))
 
     if data is None:
         data = {}
 
     data.setdefault("project", title)
-    data.setdefault("replyto", replyto)
+    data.setdefault("reply_to", reply_to)
 
     if user:
         data.setdefault("username", user.email)
