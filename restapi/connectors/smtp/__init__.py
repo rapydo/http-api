@@ -214,6 +214,7 @@ class Mail(Connector):
                 bcc,
             )
 
+            return True
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
             return False
