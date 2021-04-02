@@ -103,7 +103,7 @@ class Mail(Connector):
 
         thr = Thread(
             target=cls.send_async_thread,
-            args=[body, subject, to_address, from_address, cc, bcc, plain_body, True],
+            args=[body, subject, to_address, from_address, cc, bcc, plain_body],
         )
         thr.start()
 
