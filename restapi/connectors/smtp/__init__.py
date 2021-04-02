@@ -89,8 +89,9 @@ class Mail(Connector):
         except SMTPServerDisconnected:  # pragma: no cover
             return False
 
+    @classmethod
     def send_async(
-        self,
+        cls,
         body: str,
         subject: str,
         to_address: Optional[str] = None,
@@ -99,8 +100,9 @@ class Mail(Connector):
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
+
         thr = Thread(
-            target=self.send,
+            target=cls.send_async_thread,
             args=[body, subject, to_address, from_address, cc, bcc, plain_body, True],
         )
         thr.start()
@@ -114,6 +116,23 @@ class Mail(Connector):
         # synchronously know if the email is sent or not
         return None
 
+    @classmethod
+    def send_async_thread(
+        cls,
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+    ) -> bool:
+
+        with get_instance() as client:
+            return client.send(
+                body, subject, to_address, from_address, cc, bcc, plain_body
+            )
+
     def send(
         self,
         body: str,
@@ -123,9 +142,6 @@ class Mail(Connector):
         cc: Optional[Union[str, List[str]]] = None,
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
-        # do not use this flag, it is only used to close the connection after the send.
-        # To send asynchronous email use send_async
-        is_async: bool = False,
     ) -> bool:
 
         if not to_address:
@@ -198,15 +214,6 @@ class Mail(Connector):
                 bcc,
             )
 
-            if is_async:
-                # Why this disconnect? Because when sending an email from a thread,
-                # somehow the connection is closed after the send. Then all the
-                # following use of this connection will fail. Invalidate the connection
-                # will force the opening of a new one to prevent such errors
-                self.disconnect()
-
-            return True
-        # Cannot be tested because smtplib is mocked!
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
             return False

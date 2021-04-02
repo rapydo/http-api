@@ -12,6 +12,7 @@ from restapi.config import (
     get_project_configuration,
 )
 from restapi.connectors import CONNECTORS_FOLDER, Connector, smtp
+from restapi.connectors.smtp import Mail
 from restapi.env import Env
 from restapi.services.authentication import FailedLogin, User
 from restapi.utilities.logs import log
@@ -118,10 +119,8 @@ def send_notification(
 
     subject = f"{title}: {subject}"
 
-    smtp_client = smtp.get_instance()
-
     if send_async:
-        smtp_client.send_async(
+        Mail.send_async(
             subject=subject,
             body=html_body,
             to_address=to_address,
@@ -129,6 +128,7 @@ def send_notification(
         )
         return False
 
+    smtp_client = smtp.get_instance()
     return smtp_client.send(
         subject=subject,
         body=html_body,
