@@ -43,7 +43,9 @@ def convert_html2text(html_body: str) -> str:
     h2t.single_line_break = True
     h2t.ignore_images = True
     # zero for no wrap of long lines [otherwise tokens in urls will be broken]
-    h2t.body_width = 0
+    # but since the maximum allowed line length on email is 998 octets
+    # I set a very long wrap, that should not break any tokens
+    h2t.body_width = 512
     return h2t.handle(html_body)
 
 
