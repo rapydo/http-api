@@ -91,7 +91,7 @@ class CeleryExt(Connector):
 
     @staticmethod
     def get_redis_url(
-        variables: Dict[str, str], protocol: str, celery_beat: bool = False
+        variables: Dict[str, str], protocol: str, celery_beat: bool
     ) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
@@ -160,7 +160,7 @@ class CeleryExt(Connector):
             self.celery_app.conf.broker_use_ssl = False
 
             self.celery_app.conf.broker_url = self.get_redis_url(
-                service_vars, protocol="redis"
+                service_vars, protocol="redis", celery_beat=False
             )
 
         else:  # pragma: no cover
@@ -193,7 +193,7 @@ class CeleryExt(Connector):
             service_vars = Env.load_variables_group(prefix="redis")
 
             self.celery_app.conf.result_backend = self.get_redis_url(
-                service_vars, protocol="redis"
+                service_vars, protocol="redis", celery_beat=False
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
 
@@ -280,7 +280,9 @@ class CeleryExt(Connector):
             elif backend == "REDIS":
 
                 service_vars = Env.load_variables_group(prefix="redis")
-                url = self.get_redis_url(service_vars, protocol="redis")
+                url = self.get_redis_url(
+                    service_vars, protocol="redis", celery_beat=True
+                )
 
                 self.celery_app.conf["REDBEAT_REDIS_URL"] = url
                 self.celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
