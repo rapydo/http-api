@@ -10,6 +10,13 @@ from restapi.env import Env
 
 
 class RedisExt(Connector):
+
+    DB = 0
+    CELERY_DB = 1
+    # To be fixed to use 1... or 3?
+    CELERY_BEAT_DB = 0
+    CACHE_DB = 2
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -34,7 +41,7 @@ class RedisExt(Connector):
             # 1 by celery-beat BUG!? Actually celery-beat is using 0 in celery connector
             # 2 by flask caching
             # We use 3 here? Or keep 0 and shift the others?
-            db=0,
+            db=RedisExt.DB,
         )
         return self
 

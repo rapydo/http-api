@@ -10,6 +10,7 @@ from celery.app.task import Task
 
 from restapi.config import CUSTOM_PACKAGE
 from restapi.connectors import Connector, ExceptionsList
+from restapi.connectors.redis import RedisExt
 from restapi.connectors.smtp.notifications import send_celery_error_notification
 from restapi.env import Env
 from restapi.utilities import print_and_exit
@@ -89,7 +90,9 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(variables: Dict[str, str], protocol: str) -> str:
+    def get_redis_url(
+        variables: Dict[str, str], protocol: str, celery_beat: bool = False
+    ) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
@@ -97,7 +100,12 @@ class CeleryExt(Connector):
         if pwd:
             creds = f":{pwd}@"
 
-        return f"{protocol}://{creds}{host}:{port}/0"
+        if celery_beat:
+            db = RedisExt.CELERY_BEAT_DB
+        else:
+            db = RedisExt.CELERY_DB
+
+        return f"{protocol}://{creds}{host}:{port}/{db}"
 
     @staticmethod
     def get_mongodb_url(variables: Dict[str, str], protocol: str) -> str:
