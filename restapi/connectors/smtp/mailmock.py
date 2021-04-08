@@ -1,9 +1,12 @@
 import email
 import json
 from smtplib import SMTPException, SMTPServerDisconnected
-from typing import Tuple
+from types import TracebackType
+from typing import Optional, Tuple, Type, TypeVar
 
 from restapi.utilities.logs import LOGS_FOLDER, log
+
+T = TypeVar("T", bound="SMTP")
 
 
 class SMTP:
@@ -15,11 +18,20 @@ class SMTP:
         log.info("Mail mock initialized with host = {}", host)
         self.disconnected = False
 
-    def __enter__(self) -> "SMTP":  # pragma: no cover
+    def __enter__(self: T) -> T:  # pragma: no cover
         return self
 
-    def __exit__(self, _type, value, tb):  # pragma: no cover
-        pass
+    def __exit__(
+        self,
+        _type: Optional[Type[BaseException]],
+        value: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> bool:  # pragma: no cover
+        # return False if the exception is not handled:
+        # -> return True if the exception is None (nothing to be handled)
+        # -> return False if the exception is not None (because it is not handled here)
+        # always return False is not accepted by mypy...
+        return _type is None
 
     @staticmethod
     def set_debuglevel(intval):

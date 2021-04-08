@@ -499,7 +499,7 @@ class BaseAuthentication(metaclass=ABCMeta):
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
 
-        log.debug("User {} authorized", user.email)
+        log.debug("User {} is authorized", user.email)
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 

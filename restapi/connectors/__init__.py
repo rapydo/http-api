@@ -171,7 +171,6 @@ class Connector(metaclass=abc.ABCMeta):
                 log.info("{} connector is disabled", connector)
                 continue
 
-            # if host is not in variables (like for Celery) do not consider it
             external = False
             if "host" in variables:
                 if host := variables.get("host"):
@@ -181,7 +180,10 @@ class Connector(metaclass=abc.ABCMeta):
                     variables["enable"] = "0"
 
             enabled = Env.to_bool(variables.get("enable"))
-            available = enabled or external
+
+            # Celery is always enabled, if connector is enabled
+            # No further check is needed on host/external
+            available = enabled or external or connector == "celery"
 
             if not available:
                 continue
