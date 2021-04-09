@@ -71,19 +71,23 @@ class RabbitExt(Connector):
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             # context.verify_mode = ssl.CERT_REQUIRED
             context.verify_mode = ssl.CERT_NONE
+            # context.check_hostname = False
             context.load_default_certs()
             # Enable client certification verification
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
+
+            # ADD THIS TO ALLOW FOR CERT VALIDATION
+            # import certifi
+            # context.load_verify_locations(cafile=certifi.where())
+
             self.connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=host,
                     port=port,
                     virtual_host=vhost,
                     credentials=pika.PlainCredentials(user, password),
-                    ssl_options=pika.SSLOptions(
-                        context=context, server_hostname=variables.get("host")
-                    ),
+                    ssl_options=pika.SSLOptions(context=context, server_hostname=host),
                 )
             )
 
