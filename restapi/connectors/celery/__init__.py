@@ -50,7 +50,7 @@ class CeleryExt(Connector):
 
                     if TESTING:
                         self.request.id = "fixed-id"
-                        self.request.task = name
+                        self.request.task = name or func.__name__
 
                     task_id = self.request.id
                     task_name = self.request.task
