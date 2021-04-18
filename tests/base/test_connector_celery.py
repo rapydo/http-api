@@ -7,6 +7,7 @@ import pytest
 from faker import Faker
 from flask import Flask
 
+from restapi.config import get_project_configuration
 from restapi.connectors import Connector
 from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt
@@ -36,16 +37,41 @@ def test_celery(app: Flask, faker: Faker) -> None:
     obj = connector.get_instance()
     assert obj is not None
 
-    task = obj.celery_app.send_task("test_task")
+    task = obj.celery_app.send_task("test_task", args=["myinput"])
 
     assert task is not None
     assert task.id is not None
 
     # Mocked task
-    task_output = BaseTests.send_task(app, "test_task")
+    task_output = BaseTests.send_task(app, "test_task", "myinput")
 
     # As defined in task template
     assert task_output == "Task executed!"
+
+    # wrong is a special value included in tasks template
+    task_output = BaseTests.send_task(app, "test_task", "wrong")
+
+    assert task_output is None
+
+    mail = BaseTests.read_mock_email()
+    project_tile = get_project_configuration("project.title", default="YourProject")
+
+    body = mail.get("body")
+    headers = mail.get("headers")
+    assert body is not None
+    assert headers is not None
+    assert f"Subject: {project_tile}: Task test_task failed" in headers
+    # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
+    assert "Celery task fixed-id failed" in body
+    assert "Name: test_task" in body
+    assert "Arguments: ['wrong']" in body
+    assert "Error: Traceback (most recent call last):" in body
+
+    exc = (
+        "raise AttributeError("
+        + 'You can raise exceptions to stop the task execution in case of errors")'
+    )
+    assert exc in body
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
@@ -263,35 +289,3 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     assert os.environ["HOSTNAME"] == "backend-server"
     assert LOGS_FILE == "backend-server"
-
-    # # this decorator is expected to be used in celery context, i.e. the self reference
-    # # should contains a request, injected by celery. Let's mock this by injecting an
-    # # artificial self
-    # @send_errors_by_email
-    # def this_function_raises_exceptions(self):
-    #     raise AttributeError("Just an exception")
-
-    # class FakeRequest:
-    #     def __init__(self, task_id, task, args):
-    #         self.id = task_id
-    #         self.task = task
-    #         self.args = args
-
-    # class FakeSelf:
-    #     def __init__(self, task_id, task, args):
-    #         self.request = FakeRequest(task_id, task, args)
-
-    # task_id = faker.pystr()
-    # task_name = faker.pystr()
-    # task_args = [faker.pystr()]
-
-    # this_function_raises_exceptions(FakeSelf(task_id, task_name, task_args))
-
-    # mail = BaseTests.read_mock_email()
-    # assert mail.get("body") is not None
-
-    # assert f"Celery task {task_id} failed" in mail.get("body")
-    # assert f"Name: {task_name}" in mail.get("body")
-    # assert f"Arguments: {str(task_args)}" in mail.get("body")
-    # assert "Error: Traceback (most recent call last):" in mail.get("body")
-    # assert 'raise AttributeError("Just an exception")' in mail.get("body")

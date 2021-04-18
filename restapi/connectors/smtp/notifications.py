@@ -232,4 +232,4 @@ def send_celery_error_notification(
         },
         user=None,
         send_async=True,
-    )  # pragma: no cover
+    )

@@ -49,7 +49,9 @@ class CeleryExt(Connector):
                 except BaseException:
 
                     if TESTING:
+                        self.request.id = "fixed-id"
                         self.request.task = name
+
                     task_id = self.request.id
                     task_name = self.request.task
                     arguments = str(self.request.args)
