@@ -719,6 +719,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     def get_totp_secret(self, user: User) -> str:
 
         if TESTING:  # pragma: no cover
+            # TESTING_TOTP_HASH is set by setup-cypress github action
             if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
                 return p
 

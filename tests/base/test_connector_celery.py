@@ -41,6 +41,12 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert task is not None
     assert task.id is not None
 
+    # Mocked task
+    task_output = BaseTests.send_task(app, "test_task")
+
+    # As defined in task template
+    assert task_output == "Task executed!"
+
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
             "Due to limitations on RABBIT backend task results will not be tested"

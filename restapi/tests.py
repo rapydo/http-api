@@ -12,6 +12,7 @@ import jwt
 import pyotp
 import pytz
 from faker import Faker
+from flask import Flask
 from flask.wrappers import Response
 
 from restapi.config import (
@@ -22,7 +23,7 @@ from restapi.config import (
     JWT_SECRET_FILE,
     get_frontend_url,
 )
-from restapi.connectors import Connector
+from restapi.connectors import Connector, celery
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Payload, Role
 from restapi.utilities.faker import get_faker
@@ -676,3 +677,16 @@ class BaseTests:
 
         events.reverse()
         return events
+
+    @staticmethod
+    def send_task(app: Flask, task_name: str, *args: Any, **kwargs: Any) -> Any:
+
+        c = celery.get_instance()
+        c.app = app
+
+        task = c.celery_app.tasks.get(task_name)
+
+        if not task:
+            raise AttributeError("Task not found")
+
+        return task(*args, **kwargs)

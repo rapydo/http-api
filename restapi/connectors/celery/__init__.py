@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from celery import Celery
 from celery.app.task import Task
 
-from restapi.config import CUSTOM_PACKAGE
+from restapi.config import CUSTOM_PACKAGE, TESTING
 from restapi.connectors import Connector, ExceptionsList
 from restapi.connectors.redis import RedisExt
 from restapi.connectors.smtp.notifications import send_celery_error_notification
@@ -41,13 +41,15 @@ class CeleryExt(Connector):
             # However it is tested on celery so... even if not covered it is ok
             @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
             @wraps(func)
-            def wrapper(self, *args, **kwargs):  # pragma: no cover
+            def wrapper(self, *args, **kwargs):
 
                 try:
                     with CeleryExt.app.app_context():
                         return func(self, *args, **kwargs)
                 except BaseException:
 
+                    if TESTING:
+                        self.request.task = name
                     task_id = self.request.id
                     task_name = self.request.task
                     arguments = str(self.request.args)
