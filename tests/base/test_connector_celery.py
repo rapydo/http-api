@@ -61,15 +61,17 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert body is not None
     assert headers is not None
     assert f"Subject: {project_tile}: Task test_task failed" in headers
+    assert "this email is to notify you that a Celery task failed!" in body
     # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
-    assert "Celery task fixed-id failed" in body
-    assert "Name: test_task" in body
-    assert "Arguments: ['wrong']" in body
-    assert "Error: Traceback (most recent call last):" in body
+    assert "Task ID: fixed-id" in body
+    assert "Task name: test_task" in body
+    assert "Arguments: ('wrong',)" in body
+    assert "Error Stack" in body
+    assert "Traceback (most recent call last):" in body
 
     exc = (
-        "raise AttributeError("
-        + 'You can raise exceptions to stop the task execution in case of errors")'
+        "AttributeError: "
+        "You can raise exceptions to stop the task execution in case of errors"
     )
     assert exc in body
 
