@@ -18,6 +18,8 @@ else:
 
 from restapi.utilities.logs import log
 
+MAX_NUM_RETRIES = 3
+
 
 class Mail(Connector):
     def __init__(self) -> None:
@@ -126,12 +128,28 @@ class Mail(Connector):
         cc: Optional[Union[str, List[str]]] = None,
         bcc: Optional[Union[str, List[str]]] = None,
         plain_body: Optional[str] = None,
+        retry: int = 1,
     ) -> bool:
 
         with get_instance() as client:
-            return client.send(
+            sent = client.send(
                 body, subject, to_address, from_address, cc, bcc, plain_body
             )
+
+        if sent or retry > MAX_NUM_RETRIES:
+            return sent
+
+        log.warning("Sending email again")  # pragma: no cover
+        return cls.send_async_thread(  # pragma: no cover
+            body=body,
+            subject=subject,
+            to_address=to_address,
+            from_address=from_address,
+            cc=cc,
+            bcc=bcc,
+            plain_body=plain_body,
+            retry=retry + 1,
+        )
 
     def send(
         self,
