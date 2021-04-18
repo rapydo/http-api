@@ -75,6 +75,12 @@ def test_celery(app: Flask, faker: Faker) -> None:
     )
     assert exc in body
 
+    try:
+        BaseTests.send_task(app, "does-not-exist")
+        pytest.fail("No exception raised")  # pragma: no cover
+    except AttributeError as e:
+        assert str(e) == "Task not found"
+
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
             "Due to limitations on RABBIT backend task results will not be tested"
