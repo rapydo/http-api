@@ -65,7 +65,6 @@ ROLE_DISABLED = "disabled"
 DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
 
-# Payload = Dict[str, Any]
 User = Any
 Group = Any
 RoleObj = Any
@@ -160,7 +159,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     that aims to store credentials of users and roles.
     """
 
-    JWT_SECRET: bytes = import_secret(JWT_SECRET_FILE)
+    JWT_SECRET: str = import_secret(JWT_SECRET_FILE).decode()
     fernet = Fernet(import_secret(TOTP_SECRET_FILE))
 
     # JWT_ALGO = 'HS256'
@@ -389,9 +388,9 @@ class BaseAuthentication(metaclass=ABCMeta):
     # ###################
     @classmethod
     def create_token(cls, payload: Payload) -> str:
-        """ Generate a byte token with JWT library to encrypt the payload """
-        return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
-            "ascii"
+        """ Generate a str token with JWT library to encrypt the payload """
+        return jwt.encode(
+            cast(Dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
         )
 
     def create_temporary_token(
