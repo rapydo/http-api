@@ -72,7 +72,7 @@ setup(
         "simplejson",
         # Web sockets and others
         "websocket-client",
-        "gripcontrol==4.0.0",
+        # "gripcontrol==4.0.0",
         "sentry-sdk[flask]==0.20.3",
         # Tests
         "pytest-flask==1.2.0",

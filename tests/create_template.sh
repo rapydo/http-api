@@ -29,13 +29,15 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
   # customizer class with additinal input/output fields to test these customizations
   # The flag is not included in all templates to be able to also tests the cases
   # when input and output models are not extended
+
+  # Temporary disabled pushpin
+  # -s pushpin \
   rapydo --testing create prj --current \
                     --add-optionals \
                     --extend prjbase \
                     --auth ${AUTH} \
                     --frontend no \
                     -s ftp \
-                    -s pushpin \
                     -s bot \
                     -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
                     -e AUTH_MAX_PASSWORD_VALIDITY=60 \
