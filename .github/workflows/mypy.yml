@@ -49,7 +49,6 @@ jobs:
             faker \
             psutil \
             amqp.exceptions \
-            jwt.exceptions \
             passlib \
             gripcontrol \
             pubcontrol \
