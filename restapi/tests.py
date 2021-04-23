@@ -591,7 +591,7 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload: Payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
+        payload: Dict[str, Any] = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
         payload["iat"] = now
@@ -604,9 +604,7 @@ class BaseTests:
         else:
             payload["exp"] = now + timedelta(seconds=999)
 
-        token = jwt.encode(payload, secret, algorithm=algorithm).decode("ascii")
-
-        return token
+        return jwt.encode(payload, secret, algorithm=algorithm)
 
     @staticmethod
     def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
