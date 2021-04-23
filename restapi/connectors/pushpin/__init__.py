@@ -12,7 +12,8 @@ class ServiceUnavailable(BaseException):
     pass
 
 
-class PushpinExt(Connector):
+# PLEASE NOTE THE PRAGMA NO COVER: remove when this connector will be enabled again
+class PushpinExt(Connector):  # pragma: no cover
     def get_connection_exception(self) -> ExceptionsList:
         return (ServiceUnavailable,)
 
