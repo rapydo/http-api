@@ -149,6 +149,8 @@ def create_app(
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
+        warnings.simplefilter("always", DeprecationWarning)
+
         mem.cache = Cache.get_instance(microservice)
 
         endpoints_loader.load_endpoints()

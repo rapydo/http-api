@@ -9,7 +9,7 @@ from restapi.utilities.logs import Events, log
 class TestApp(BaseTests):
     def test_password_reset(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Env.get_bool("ALLOW_PASSWORD_RESET"):  # pragma: no cover
             log.warning("Password reset is disabled, skipping tests")
             return
@@ -55,7 +55,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile} Password Reset" in mail.get("headers")
+        assert f"Subject: {project_tile}: Password Reset" in mail.get("headers")
         assert f"{proto}://localhost/public/reset/" in body
 
         token = self.get_token_from_body(body)

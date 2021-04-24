@@ -29,11 +29,11 @@ class Role(MongoModel):
 
 class User(MongoModel):
     id = fields.CharField(primary_key=True)
-    uuid = fields.CharField()
-    email = fields.EmailField()
-    name = fields.CharField()
-    surname = fields.CharField()
-    authmethod = fields.CharField()
+    uuid = fields.CharField(required=True)
+    email = fields.EmailField(required=True)
+    name = fields.CharField(required=True)
+    surname = fields.CharField(required=True)
+    authmethod = fields.CharField(required=True)
     password = fields.CharField(required=True)
     mfa_hash = fields.CharField()
     first_login = fields.DateTimeField(blank=True)
@@ -44,7 +44,7 @@ class User(MongoModel):
     expiration = fields.DateTimeField(blank=True)
 
     roles = fields.EmbeddedDocumentListField(Role, blank=True)
-    belongs_to = fields.EmbeddedDocumentField("Group", blank=True)
+    belongs_to = fields.ReferenceField("Group", blank=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)
@@ -54,10 +54,10 @@ class User(MongoModel):
 
 
 class Token(MongoModel):
-    jti = fields.CharField()
-    token = fields.CharField()
-    token_type = fields.CharField()
-    creation = fields.DateTimeField()
+    jti = fields.CharField(required=True)
+    token = fields.CharField(required=True)
+    token_type = fields.CharField(required=True)
+    creation = fields.DateTimeField(required=True)
     expiration = fields.DateTimeField()
     last_access = fields.DateTimeField()
     IP = fields.CharField()
@@ -76,9 +76,9 @@ class Token(MongoModel):
 class Group(MongoModel):
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     id = fields.CharField(primary_key=True)
-    uuid = fields.CharField()
-    shortname = fields.CharField()
-    fullname = fields.CharField()
+    uuid = fields.CharField(required=True)
+    shortname = fields.CharField(required=True)
+    fullname = fields.CharField(required=True)
 
     class Meta:
         # write_concern = WriteConcern(j=True)

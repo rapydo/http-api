@@ -1,3 +1,4 @@
+import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
@@ -9,17 +10,14 @@ from flask_apispec import use_kwargs as original_use_kwargs
 from marshmallow import post_load
 from sentry_sdk import capture_exception
 
-from restapi.config import SENTRY_URL
-from restapi.exceptions import (
-    BadRequest,
-    Conflict,
-    DatabaseDuplicatedEntry,
-    RestApiException,
-)
+from restapi.config import API_URL, AUTH_URL, SENTRY_URL
+from restapi.connectors import Connector
+from restapi.exceptions import BadRequest, Conflict, RestApiException
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
+from restapi.rest.definition import Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -34,7 +32,14 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 # same definition as in:
 # https://github.com/jmcarp/flask-apispec/blob/master/flask_apispec/annotations.py
-def use_kwargs(args, location=None, inherit=None, apply=None, **kwargs):
+# TODO: the original function is not type-hinted... to be fixed in a future
+def use_kwargs(
+    args: Optional[Any],
+    location: Optional[str] = None,
+    inherit: Optional[Any] = None,
+    apply: Optional[Any] = None,
+    **kwargs: Optional[Any],
+) -> Any:
     # this use_kwargs is used override the default location (json)
     # with a more extensive default location (body)
     # This trick will prevent to add location='body' to mostly all models
@@ -70,7 +75,18 @@ def endpoint(
 
         if not hasattr(func, "uris"):
             setattr(func, "uris", [])
-        getattr(func, "uris").append(path)
+
+        if not path.startswith("/"):
+            normalized_path = f"/{path}"
+        else:
+            normalized_path = path
+
+        if not normalized_path.startswith(API_URL) and not normalized_path.startswith(
+            AUTH_URL
+        ):
+            normalized_path = f"{API_URL}{normalized_path}"
+
+        getattr(func, "uris").append(normalized_path)
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)
@@ -84,7 +100,7 @@ def endpoint(
 
 
 # Prevent caching of 5xx errors responses
-def cache_response_filter(response):
+def cache_response_filter(response: Response) -> bool:
     if not isinstance(response, tuple):
         return True
 
@@ -122,8 +138,9 @@ def cache(*args, **kwargs):
 # Deprecated since 1.0
 def catch_graph_exceptions(func):  # pragma: no cover
 
-    log.warning(
-        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it"
+    warnings.warn(
+        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it",
+        DeprecationWarning,
     )
 
     @wraps(func)
@@ -131,44 +148,86 @@ def catch_graph_exceptions(func):  # pragma: no cover
 
         from neomodel.exceptions import RequiredProperty
 
+        from restapi.exceptions import DatabaseDuplicatedEntry
+
         try:
             return func(self, *args, **kwargs)
 
         except DatabaseDuplicatedEntry as e:
 
-            log.critical("boh")
-
             raise Conflict(str(e))
 
         except RequiredProperty as e:
-
-            log.critical("Missing required")
 
             raise BadRequest(e)
 
     return wrapper
 
 
-def graph_transactions(func):
+# This decorator is still a work in progress, in particular for MongoDB
+def database_transaction(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        from neomodel import db
+        neo4j_enabled = Connector.check_availability("neo4j")
+        sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
+        # ... are transactions supported !?
+        mongo_enabled = Connector.check_availability("mongo")
+
+        if neo4j_enabled:
+            from neomodel import db as neo4j_db
+
+        if sqlalchemy_enabled:
+            # thanks to connectors cache this should always match the
+            # same instance that will be used from inside the endpoint
+            from restapi.connectors import sqlalchemy
+
+            alchemy_db = sqlalchemy.get_instance()
+
+        # if mongo_enabled:
+        #     from .... import ... as mongo_db
 
         try:
 
-            db.begin()
+            if neo4j_enabled:
+                neo4j_db.begin()
+
+            # Transaction is already open...
+            # if sqlalchemy_enabled:
+            #     pass
+
+            if mongo_enabled:
+                # mongoDB transaction begin not implemented yet
+                pass
 
             out = func(self, *args, **kwargs)
 
-            db.commit()
+            if neo4j_enabled:
+                neo4j_db.commit()
+
+            if sqlalchemy_enabled:
+                alchemy_db.session.commit()
+
+            if mongo_enabled:
+                # mongoDB transaction commit not implemented yet
+                pass
 
             return out
         except Exception as e:
-            log.debug("Neomodel transaction ROLLBACK")
+            log.debug("Rolling backend database transaction")
             try:
-                db.rollback()
-            except Exception as sub_ex:
+
+                if neo4j_enabled:
+                    neo4j_db.rollback()
+
+                if sqlalchemy_enabled:
+                    alchemy_db.session.rollback()
+
+                if mongo_enabled:
+                    # mongoDB transaction rollback not implemented yet
+                    pass
+
+            except Exception as sub_ex:  # pragma: no cover
                 log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
@@ -290,7 +349,7 @@ def catch_exceptions(**kwargs):
 
             # errors with RabbitMQ credentials raised when sending Celery tasks
             except AccessRefused as e:  # pragma: no cover
-                log.critical(e)
+                log.error(e)
                 return self.response("Unexpected Server Error", code=500)
             except Exception as e:
 

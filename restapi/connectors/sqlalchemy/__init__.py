@@ -25,12 +25,18 @@ from sqlalchemy.exc import (
     OperationalError,
     ProgrammingError,
 )
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, ServiceUnavailable
+from restapi.exceptions import (
+    BadRequest,
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+    RestApiException,
+    ServiceUnavailable,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -47,8 +53,7 @@ from restapi.utilities.uuid import getUUID
 db = OriginalAlchemy()
 
 
-def parse_postgres_error(excpt):
-
+def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
     if m0 := re.search(
         r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
     ):
@@ -66,7 +71,7 @@ def parse_postgres_error(excpt):
     return None
 
 
-def parse_mysql_error(excpt):
+def parse_mysql_duplication_error(excpt: List[str]) -> Optional[str]:
 
     if m0 := re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0]):
 
@@ -84,28 +89,57 @@ def parse_mysql_error(excpt):
     return None  # pragma: no cover
 
 
+def parse_missing_error(excpt: List[str]) -> Optional[str]:
+
+    if m := re.search(
+        r"null value in column \"(.*)\" of relation \"(.*)\" "
+        "violates not-null constraint",
+        excpt[0],
+    ):
+        prop = m.group(1)
+        table = m.group(2)
+
+        return f"Missing property {prop} required by {table.title()}"
+
+    if m0 := re.search(r".*Column '(.*)' cannot be null.*", excpt[0]):
+
+        prop = m0.group(1)
+
+        # table name can be "tablename" or "`tablename`"
+        # => match all non-space and non-backticks characters optioanlly wrapped among `
+        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
+
+        if m:
+            table = m.group(1)
+            return f"Missing property {prop} required by {table.title()}"
+
+    return None  # pragma: no cover
+
+
 def catch_db_exceptions(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
 
         try:
             return func(*args, **kwargs)
-        except (DatabaseDuplicatedEntry, BadRequest):
+        except RestApiException:
             # already catched and parser, raise up
             raise
         except IntegrityError as e:
             message = str(e).split("\n")
 
-            error = parse_postgres_error(message)
-            if not error:
-                error = parse_mysql_error(message)
+            if error := parse_postgres_duplication_error(message):
+                raise DatabaseDuplicatedEntry(error)
 
-            # Should never happen except in case of new alchemy version
-            if not error:  # pragma: no cover
-                log.error("Unrecognized error message: {}", e)
-                raise DatabaseDuplicatedEntry("Duplicated entry")
+            if error := parse_mysql_duplication_error(message):
+                raise DatabaseDuplicatedEntry(error)
 
-            raise DatabaseDuplicatedEntry(error)
+            if error := parse_missing_error(message):
+                raise DatabaseMissingRequiredProperty(error)
+
+            # Should never happen except in case of a new alchemy version
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise ServiceUnavailable("Duplicated entry")  # pragma: no cover
 
         except InternalError as e:  # pragma: no cover
 
@@ -164,7 +198,7 @@ class SQLAlchemy(Connector):
         )
         # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (OperationalError,)
 
     def connect(self, **kwargs):
@@ -234,8 +268,8 @@ class SQLAlchemy(Connector):
         return self
 
     @property
-    def session(self):
-        return self.db.session
+    def session(self) -> Session:
+        return self.db.session  # type: ignore
 
     def disconnect(self) -> None:
         if self.db:
@@ -284,7 +318,7 @@ class SQLAlchemy(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     # Also used by POST user
@@ -391,6 +425,12 @@ class Authentication(BaseAuthentication):
 
     def get_groups(self) -> List[Group]:
         return cast(List[Group], self.db.Group.query.all())
+
+    def get_user_group(self, user: User) -> Group:
+        return user.belongs_to
+
+    def get_group_members(self, group: Group) -> List[User]:
+        return list(group.members)
 
     def save_group(self, group: Group) -> bool:
         if not group:

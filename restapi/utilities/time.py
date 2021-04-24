@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, tzinfo
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 import pytz
 
@@ -50,3 +50,44 @@ def get_timedelta(every: int, period: AllowedTimedeltaPeriods) -> timedelta:
         return timedelta(weeks=every)
 
     raise BadRequest(f"Invalid timedelta period: {period}")
+
+
+def pluralize(value: int, unit: str) -> str:
+    if value == 1:
+        return f"{value} {unit}"
+    return f"{value} {unit}s"
+
+
+def seconds_to_human(seconds: int) -> str:
+
+    elements: List[str] = []
+    if seconds < 60:
+        elements.append(pluralize(seconds, "second"))
+
+    elif seconds < 3600:
+        m, s = divmod(seconds, 60)
+        elements.append(pluralize(m, "minute"))
+        if s > 0:
+            elements.append(pluralize(s, "second"))
+
+    elif seconds < 86400:
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        elements.append(pluralize(h, "hour"))
+        if m > 0 or s > 0:
+            elements.append(pluralize(m, "minute"))
+        if s > 0:
+            elements.append(pluralize(s, "second"))
+    else:
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        elements.append(pluralize(d, "day"))
+        if h > 0 or m > 0 or s > 0:
+            elements.append(pluralize(h, "hour"))
+        if m > 0 or s > 0:
+            elements.append(pluralize(m, "minute"))
+        if s > 0:
+            elements.append(pluralize(s, "second"))
+
+    return ", ".join(elements)

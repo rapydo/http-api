@@ -23,6 +23,25 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/groups", headers)
         data = self.buildData(schema)
+
+        # Test the differences between post and put schema
+        post_schema = {s["key"]: s for s in schema}
+
+        tmp_schema = self.getDynamicInputSchema(
+            client, "admin/groups/myuuid", headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in tmp_schema}
+
+        assert "shortname" in post_schema
+        assert post_schema["shortname"]["required"]
+        assert "shortname" in put_schema
+        assert put_schema["shortname"]["required"]
+
+        assert "fullname" in post_schema
+        assert post_schema["fullname"]["required"]
+        assert "fullname" in put_schema
+        assert put_schema["fullname"]["required"]
+
         # Event 1: create
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
@@ -33,6 +52,13 @@ class TestApp(BaseTests):
         groups = self.get_content(r)
         assert groups
         assert len(groups) > 0
+
+        assert "uuid" in groups[0]
+        assert "shortname" in groups[0]
+        assert "fullname" in groups[0]
+        assert "members" in groups[0]
+        assert len(groups[0]["members"]) > 0
+        assert "coordinators" in groups[0]
 
         fullname = None
         for g in groups:
@@ -106,7 +132,7 @@ class TestApp(BaseTests):
         r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
         assert r.status_code == 204
 
-    def test_events_file(self):
+    def test_events_file(self) -> None:
 
         events = self.get_last_events(4, filters={"target_type": "Group"})
 

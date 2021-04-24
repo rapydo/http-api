@@ -36,9 +36,9 @@ jobs:
             flask_restful \
             flask_sqlalchemy \
             flask_migrate \
-            neomodel \
             neo4j \
             neobolt \
+            neomodel \
             sqlalchemy \
             pymodm \
             mongoengine \
@@ -49,7 +49,6 @@ jobs:
             faker \
             psutil \
             amqp.exceptions \
-            jwt.exceptions \
             passlib \
             gripcontrol \
             pubcontrol \
@@ -61,5 +60,11 @@ jobs:
 
           export MYPYPATH='./stubs'
           # --disallow-any-unimported
-          mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report . --html-report . restapi/
-          cat index.txt
+          mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
+          cat report/index.txt
+
+      - name: Save Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: mypy-report
+          path: report

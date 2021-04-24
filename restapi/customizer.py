@@ -1,11 +1,14 @@
 import abc
 from typing import Any, Dict, Tuple
 
+from flask import Flask
+
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import User
 
 Props = Dict[str, Any]
 FlaskRequest = Any
+FlaskApp = Flask
 
 
 class BaseCustomizer(metaclass=abc.ABCMeta):
@@ -65,7 +68,7 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
                     # validate=validate.Range(min=0, max=???),
                     validate=validate.Range(min=0),
                     label="CustomField",
-                    description="This is a custom field"
+                    description="This is a custom field",
                 )
             }
         # these are editable fields in profile
@@ -85,14 +88,4 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
         this method is used to extend the output model of admin users
         """
 
-        # required = request and request.method == "POST"
-        # return {
-        #     'custom_field': fields.Int(
-        #         required=required,
-        #         # validate=validate.Range(min=0, max=???),
-        #         validate=validate.Range(min=0),
-        #         label="CustomField",
-        #         description="This is a custom field"
-        #     )
-        # }
         return {}

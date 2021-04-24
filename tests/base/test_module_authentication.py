@@ -1,7 +1,8 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
+import pyotp
 import pytest
 import pytz
 from faker import Faker
@@ -49,54 +50,126 @@ def verify_token_is_not_valid(
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
+
+        # Ensure name and surname longer than 3
+        name = self.get_first_name(faker)
+        surname = self.get_last_name(faker)
+        # Ensure an email not containing name and surname
+        email = self.get_random_email(faker, name, surname)
 
         auth = Connector.get_authentication_instance()
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
         pwd = faker.password(min_pwd_len - 1)
-        ret_val, ret_text = auth.verify_password_strength(pwd, pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "The new password cannot match the previous password"
 
         pwd = faker.password(min_pwd_len - 1)
         old_pwd = faker.password(min_pwd_len)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         error = f"Password is too short, use at least {min_pwd_len} characters"
         assert ret_text == error
 
         pwd = faker.password(min_pwd_len, low=False, up=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing lower case letters"
 
         pwd = faker.password(min_pwd_len, low=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing upper case letters"
 
         pwd = faker.password(min_pwd_len, low=True, up=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing numbers"
 
         pwd = faker.password(min_pwd_len, low=True, up=True, digits=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert not ret_val
         assert ret_text == "Password is too weak, missing special characters"
 
         pwd = faker.password(min_pwd_len, low=True, up=True, digits=True, symbols=True)
-        ret_val, ret_text = auth.verify_password_strength(pwd, old_pwd)
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd=pwd, old_pwd=old_pwd, email=email, name=name, surname=surname
+        )
         assert ret_val
-        assert ret_text is None
+        assert ret_text == ""
 
-        # How to retrieve a generic user?
-        user = None
+        password_with_name = [
+            name,
+            surname,
+            f"{faker.pystr()}{name}{faker.pystr()}"
+            f"{faker.pystr()}{surname}{faker.pystr()}"
+            f"{name}{faker.pyint(1, 99)}",
+        ]
+        for p in password_with_name:
+            for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is because with "strange characters" it is not ensured that:
+                # str == str.upper().lower()
+                # In that case let's skip the variant that alter the characters
+                if p.lower() != pp.lower():  # pragma: no cover
+                    continue
+                # This is to prevent failures for other reasons like length of chars
+                pp += "+ABCabc123!"
+                val, text = auth.verify_password_strength(
+                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
+                )
+                assert not val
+                assert text == "Password is too weak, can't contain your name"
+
+        email_local = email.split("@")[0]
+        password_with_email = [
+            email,
+            email.replace(".", "").replace("_", ""),
+            email_local,
+            email_local.replace(".", "").replace("_", ""),
+            f"{faker.pystr()}{email_local}{faker.pystr()}",
+        ]
+
+        for p in password_with_email:
+            for pp in [p, p.lower(), p.upper(), p.title()]:
+                # This is because with "strange characters" it is not ensured that:
+                # str == str.upper().lower()
+                # In that case let's skip the variant that alter the characters
+                if p.lower() != pp.lower():  # pragma: no cover
+                    continue
+                # This is to prevent failures for other reasons like length of chars
+                pp += "+ABCabc123!"
+                val, txt = auth.verify_password_strength(
+                    pwd=pp, old_pwd=old_pwd, email=email, name=name, surname=surname
+                )
+                assert not val
+                assert txt == "Password is too weak, can't contain your email address"
+
+        # Short names are not inspected for containing checks
+        ret_val, ret_text = auth.verify_password_strength(
+            pwd="Bob1234567!", old_pwd=old_pwd, email=email, name="Bob", surname=surname
+        )
+        assert ret_val
+        assert ret_text == ""
+
+        user = auth.get_user(username=BaseAuthentication.default_user)
         pwd = faker.password(min_pwd_len - 1)
 
         try:
@@ -152,17 +225,6 @@ class TestApp(BaseTests):
         except BaseException:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
-        try:
-            auth.verify_totp(None, None)  # type: ignore
-            pytest.fail("NULL totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is missing"
-        except BaseException:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
-
-        auth = Connector.get_authentication_instance()
-
         pwd1 = faker.password(strong=True)
         pwd2 = faker.password(strong=True)
 
@@ -201,9 +263,85 @@ class TestApp(BaseTests):
 
         assert not auth.verify_password(None, None)  # type: ignore
 
+    def test_totp_management(self) -> None:
+
+        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):  # pragma: no cover
+            log.warning("Skipping TOTP test: 2FA not enabled")
+            return
+
+        auth = Connector.get_authentication_instance()
+
+        try:
+            auth.verify_totp(None, None)  # type: ignore
+            pytest.fail("NULL totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is missing"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        user = auth.get_user(username=auth.default_user)
+        secret = auth.get_totp_secret(user)
+        totp = pyotp.TOTP(secret)
+
+        # Verifiy current totp
+        assert auth.verify_totp(user, totp.now())
+
+        now = datetime.now()
+        t30s = timedelta(seconds=30)
+
+        # Verify previous and next totp(s)
+        assert auth.verify_totp(user, totp.at(now + t30s))
+        assert auth.verify_totp(user, totp.at(now - t30s))
+
+        # Verify second-previous and second-ntext totp(s)
+        try:
+            auth.verify_totp(user, totp.at(now + t30s + t30s))
+            pytest.fail("Future totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        try:
+            auth.verify_totp(user, totp.at(now - t30s - t30s))
+            pytest.fail("Past totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        # Extend validity window
+        auth.TOTP_VALIDITY_WINDOW = 2
+
+        # Verify again second-previous and second-ntext totp(s)
+        assert auth.verify_totp(user, totp.at(now + t30s + t30s))
+        assert auth.verify_totp(user, totp.at(now - t30s - t30s))
+
+        # Verify second-second-previous and second-second-ntext totp(s)
+        try:
+            auth.verify_totp(user, totp.at(now + t30s + t30s + t30s))
+            pytest.fail("Future totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
+        try:
+            auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
+            pytest.fail("Past totp accepted!")  # pragma: no cover
+        except RestApiException as e:
+            assert e.status_code == 401
+            assert str(e) == "Verification code is not valid"
+        except BaseException:  # pragma: no cover
+            pytest.fail("Unexpected exception raised")
+
     def test_ip_management(self) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -220,7 +358,7 @@ class TestApp(BaseTests):
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -335,7 +473,7 @@ class TestApp(BaseTests):
 
     def test_users_groups_roles(self, faker: Faker) -> None:
 
-        # Always enable during core tests
+        # Always enabled during core tests
         if not Connector.check_availability("authentication"):  # pragma: no cover
             log.warning("Skipping authentication test: service not available")
             return
@@ -509,3 +647,64 @@ class TestApp(BaseTests):
 
         group = auth.get_group(name="Default")
         assert group.fullname != "Changed"
+
+    def test_authentication_abstract_methods(self, faker: Faker) -> None:
+        # Super trick!
+        # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
+        abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
+        BaseAuthentication.__abstractmethods__ = set()  # type: ignore
+
+        auth = Connector.get_authentication_instance()
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
+        role = auth.get_roles()[0]
+
+        auth = BaseAuthentication()  # type: ignore
+
+        assert (
+            auth.get_user(username=faker.ascii_email(), user_id=faker.pystr()) is None
+        )
+
+        assert auth.get_users() is None
+        assert auth.save_user(user=user) is None
+        assert auth.delete_user(user=user) is None
+
+        assert auth.get_group(group_id=faker.pystr(), name=faker.pystr()) is None
+
+        assert auth.get_groups() is None
+        assert auth.get_user_group(user=user) is None
+
+        assert auth.get_group_members(group=group) is None
+
+        assert auth.save_group(group=group) is None
+
+        assert auth.delete_group(group=group) is None
+
+        assert auth.get_tokens(user=user, token_jti=faker.pystr(), get_all=True) is None
+
+        assert auth.verify_token_validity(jti=faker.pystr(), user=user) is None
+
+        assert (
+            auth.save_token(
+                user=user, token=faker.pystr(), payload={}, token_type=faker.pystr()
+            )
+            is None
+        )
+
+        assert auth.invalidate_token(token=faker.pystr()) is None
+
+        assert auth.get_roles() is None
+
+        assert auth.get_roles_from_user(user=user) is None
+
+        assert auth.create_role(name=faker.pystr(), description=faker.pystr()) is None
+        assert auth.save_role(role=role) is None
+
+        assert auth.create_user(userdata={}, roles=[faker.pystr()]) is None
+
+        assert auth.link_roles(user=user, roles=[faker.pystr()]) is None
+        assert auth.create_group(groupdata={}) is None
+
+        assert auth.add_user_to_group(user=user, group=group) is None
+
+        BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore

@@ -1,23 +1,11 @@
 from glom import glom
 
 from restapi import decorators
-from restapi.endpoints.tokens import TokenSchema
+from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
-from restapi.models import Schema, TotalSchema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
 from restapi.utilities.logs import log
-
-
-class User(Schema):
-    email = fields.Email()
-    name = fields.Str()
-    surname = fields.Str()
-
-
-class TokenAdminSchema(TokenSchema):
-    # token_type = fields.Str()
-    user = fields.Nested(User)
 
 
 class AdminTokens(EndpointResource):
@@ -53,9 +41,16 @@ class AdminTokens(EndpointResource):
         if input_filter:
             filtered_tokens = []
             for t in tokens:
-                for f in ["token", "IP", "location", "user.email"]:
-                    value = glom(t, f, default="")
-                    if value and input_filter in value.lower():
+                token = t.get("token", "").lower()
+                ip = t.get("IP", "").lower()
+                location = t.get("location", "").lower()
+                if user := t.get("user"):
+                    email = user.email.lower()
+                else:
+                    email = ""
+
+                for value in [token, ip, location, email]:
+                    if value and input_filter in value:
                         filtered_tokens.append(t)
                         break
 
@@ -82,7 +77,7 @@ class AdminTokens(EndpointResource):
         start = end - size
         response = []
         for t in tokens[start:end]:
-            if t.get("user") is None:
+            if t.get("user") is None:  # pragma: no cover
                 log.error("Found a token without any user assigned: {}", t["id"])
                 continue
             response.append(t)
@@ -108,5 +103,7 @@ class AdminTokens(EndpointResource):
         token = tokens[0]
 
         if not self.auth.invalidate_token(token=token["token"]):
-            raise BadRequest(f"Failed token invalidation: '{token}'")
+            raise BadRequest(
+                f"Failed token invalidation: '{token}'"
+            )  # pragma: no cover
         return self.empty_response()

@@ -1,31 +1,20 @@
 from restapi import decorators
+from restapi.endpoints.schemas import TokenSchema
 from restapi.exceptions import BadRequest, Forbidden
-from restapi.models import ISO8601UTC, Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 
 # from restapi.utilities.logs import log
 
 
-class TokenSchema(Schema):
-    id = fields.Str()
-    IP = fields.Str()
-    location = fields.Str()
-    token = fields.Str()
-    emitted = fields.DateTime(format=ISO8601UTC)
-    expiration = fields.DateTime(format=ISO8601UTC)
-    last_access = fields.DateTime(format=ISO8601UTC)
-
-
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
-    baseuri = "/auth"
     labels = ["authentication"]
 
     @decorators.auth.require()
     @decorators.marshal_with(TokenSchema(many=True), code=200)
     @decorators.endpoint(
-        path="/tokens",
+        path="/auth/tokens",
         summary="Retrieve all tokens emitted for logged user",
         responses={200: "List of tokens"},
     )
@@ -40,7 +29,7 @@ class Tokens(EndpointResource):
     # token_id = uuid associated to the token you want to select
     @decorators.auth.require()
     @decorators.endpoint(
-        path="/tokens/<token_id>",
+        path="/auth/tokens/<token_id>",
         summary="Remove specified token and make it invalid from now on",
         responses={204: "Token has been invalidated"},
     )

@@ -14,6 +14,10 @@ PRODUCTION: bool = APP_MODE == "production"
 STACKTRACE: bool = False
 REMOVE_DATA_AT_INIT_TIME: bool = False
 
+HOSTNAME: str = os.getenv("HOSTNAME", "backend")
+CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
+IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
+
 # ENDPOINTS bases
 API_URL = "/api"
 AUTH_URL = "/auth"
@@ -25,8 +29,10 @@ BASE_URLS = [API_URL, AUTH_URL]
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
-UPLOAD_PATH = os.getenv("UPLOAD_PATH", "/upload")
-SECRET_KEY_FILE = f"{os.getenv('JWT_APP_SECRETS')}/secret.key"
+UPLOAD_PATH: Path = Path(os.getenv("UPLOAD_PATH", "/uploads"))
+APP_SECRETS = Path(os.getenv("APP_SECRETS", "/secrets"))
+JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
+TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
 
 #################
 
@@ -62,7 +68,7 @@ def get_project_configuration(key, default=None):
 
 
 @lru_cache
-def get_backend_url():
+def get_backend_url() -> str:
     domain = os.getenv("DOMAIN")
     if PRODUCTION:
         return f"https://{domain}"
@@ -72,7 +78,7 @@ def get_backend_url():
 
 
 @lru_cache
-def get_frontend_url():
+def get_frontend_url() -> str:
     domain = os.getenv("DOMAIN")
     protocol = "https" if PRODUCTION else "http"
 

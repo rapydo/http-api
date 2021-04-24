@@ -18,7 +18,7 @@ def test_init() -> None:
         log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
         return
 
-    # Always enable during core tests
+    # Always enabled during core tests
     if not Connector.check_availability("authentication"):  # pragma: no cover
         log.warning("Skipping authentication test: service not available")
         return
@@ -37,7 +37,21 @@ def test_init() -> None:
 
         # sql = sqlalchemy.get_instance()
 
-    create_app(mode=ServerModes.INIT)
+    if Connector.check_availability("sqlalchemy"):
+        # Prevents errors like:
+        # sqlalchemy.exc.ResourceClosedError: This Connection is closed
+        Connector.disconnect_all()
+
+        # sql = sqlalchemy.get_instance()
+        # # Close previous connections, otherwise the new create_app will hang
+        # sql.session.remove()
+        # sql.session.close_all()
+
+    try:
+        create_app(mode=ServerModes.INIT)
+        # This is only a rough retry to prevent random errors from sqlalchemy
+    except Exception:  # pragma: no cover
+        create_app(mode=ServerModes.INIT)
 
     auth = Connector.get_authentication_instance()
     try:

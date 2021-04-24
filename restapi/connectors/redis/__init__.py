@@ -3,17 +3,24 @@ from typing import Optional, Union
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
 # from restapi.utilities.logs import log
 
 
 class RedisExt(Connector):
+
+    DB = 0
+    CELERY_DB = 1
+    # To be fixed to use 1... or 3?
+    CELERY_BEAT_DB = 0
+    CACHE_DB = 2
+
     def __init__(self) -> None:
         super().__init__()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return None
 
     def connect(self, **kwargs):
@@ -31,10 +38,10 @@ class RedisExt(Connector):
             port=Env.to_int(variables.get("port"), 6379),
             password=variables.get("password"),
             # Usually 0 is used by celery
-            # 1 by celery-beat
+            # 1 by celery-beat BUG!? Actually celery-beat is using 0 in celery connector
             # 2 by flask caching
-            # We use use here 3? Or keep 0 and shift the others?
-            db=0,
+            # We use 3 here? Or keep 0 and shift the others?
+            db=RedisExt.DB,
         )
         return self
 

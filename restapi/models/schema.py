@@ -1,42 +1,34 @@
 import inspect
-import json
-import re
+from typing import Dict, Union
 
 import simplejson
-from marshmallow import validate  # used as alias from endpoints
 from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
-from webargs import fields  # also imported from endpoints
-from webargs.flaskparser import parser
 
-from restapi.config import TESTING
+from restapi.models import fields
 from restapi.utilities.logs import log
 
-# Note for SQL-Alchemy, consider to use:
-# https://github.com/marshmallow-code/marshmallow-sqlalchemy
-
 GET_SCHEMA_KEY = "get_schema"
-# ISO 8601 format with Zulu time (default format for Javascript Date)
-ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-log.debug("{} loaded", validate)
-
-
-@parser.location_loader("body")
-def load_data(request, schema):
-    # Return json if it is not None, otherwise it will send form
-    # No merge is allowed here
-    return request.json or request.form
 
 
 class Schema(MarshmallowSchema):
     def __init__(self, strip_required=False, *args, **kwargs):
+
         super().__init__(**kwargs)
         if strip_required:
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
+
+    # Mypy does not accept the equivalence beetween
+    # marshmallow.fields and restapi.models.fields
+    # And cannot be blamed for that... it's a dirty implementation :-)
+    @classmethod
+    def from_dict(  # type: ignore
+        cls, attributes: Dict[str, Union[fields.Field, type]], name: str
+    ) -> type:
+        return super().from_dict(attributes, name=name)  # type: ignore
 
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
@@ -61,10 +53,6 @@ class PartialSchema(Schema):
     class Meta:
         ordered = True
         unknown = EXCLUDE
-
-
-class TotalSchema(Schema):
-    total = fields.Int()
 
 
 class Neo4jSchema(Schema):
@@ -122,7 +110,9 @@ class Neo4jSchema(Schema):
                     if prop.choices is None:
                         self.declared_fields[attribute] = fields.Str()
                     else:
-                        self.declared_fields[attribute] = Neo4jChoice(prop.choices)
+                        self.declared_fields[attribute] = fields.Neo4jChoice(
+                            prop.choices
+                        )
 
                 elif isinstance(prop, properties.BooleanProperty):
                     self.declared_fields[attribute] = fields.Boolean()
@@ -140,108 +130,3 @@ class Neo4jSchema(Schema):
                         prop.__class__.__name__,
                     )
                     self.declared_fields[attribute] = fields.Str()
-
-
-class Neo4jChoice(fields.Field):
-    """Field that serializes from a neo4j choice"""
-
-    # choice_model is the same used in neo4j model as choices=
-    def __init__(self, choices_model, **kwargs):
-        super().__init__(**kwargs)
-        if isinstance(choices_model, dict):
-            self.choices_dict = choices_model
-        else:
-            # convert the tuple of tuple into as a dictionary for convenience
-            self.choices_dict = {}
-            for k, v in choices_model:
-                self.choices_dict.setdefault(k, v)
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        return {
-            "key": value,
-            # the value correspondance from choices_dict or value as default
-            "description": self.choices_dict.get(value, value),
-        }
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return value
-
-
-class Neo4jRelationshipToMany(fields.Nested):
-    # nested_obj: StructuredRel
-    def _serialize(self, nested_obj, attr, obj, **kwargs):
-        self.many = True
-        return super()._serialize(nested_obj.all(), attr, obj, **kwargs)
-
-
-class Neo4jRelationshipToSingle(fields.Nested):
-    # nested_obj: StructuredRel
-    def _serialize(self, nested_obj, attr, obj, **kwargs):
-        self.many = False
-        self.schema.many = False
-        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
-
-
-class Neo4jRelationshipToCount(fields.Int):
-    # value: StructuredRel
-    def _serialize(self, value, attr, obj, **kwargs):
-        return self._format_num(len(value))
-
-
-class UniqueDelimitedList(fields.DelimitedList):
-    def _deserialize(self, value, attr, data, **kwargs):
-        values = super()._deserialize(value, attr, data, **kwargs)
-
-        if len(values) != len(set(values)):
-            raise ValidationError("Provided list contains duplicates")
-
-        return values
-
-
-class AdvancedList(fields.List):
-    def __init__(self, *args, unique=False, multiple=False, min_items=0, **kwargs):
-        self.unique = unique
-        self.min_items = min_items
-        self.multiple = multiple
-        # this is to include multiple in the metadata dict
-        # (used by convert_model_to_schema in response.py)
-        kwargs["multiple"] = multiple
-        super().__init__(*args, **kwargs)
-
-    def _deserialize(self, value, attr, data, **kwargs):
-
-        # this is the case when requests (or pytest) send some json-dumped lists
-        # for example for a multi-value select
-        if isinstance(value, str):
-            try:
-                value = json.loads(value)
-            except BaseException as e:
-                log.warning(e)
-
-        value = super()._deserialize(value, attr, data, **kwargs)
-
-        if not isinstance(value, list):  # pragma: no cover
-            raise ValidationError("Invalid type")
-
-        if self.unique:
-            value = list(set(value))
-
-        if len(value) < self.min_items:
-            raise ValidationError(
-                f"Expected at least {self.min_items} items, received {len(value)}"
-            )
-
-        return value
-
-
-class TOTP(fields.String):
-    def _deserialize(self, value, attr, data, **kwargs):
-
-        value = super()._deserialize(value, attr, data, **kwargs)
-
-        if not re.match(r"^[0-9]{6}$", value):
-            if TESTING:
-                log.error("Invalid TOTP format: {}", value)
-            raise ValidationError("Invalid TOTP format")
-
-        return value

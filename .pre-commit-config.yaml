@@ -1,14 +1,14 @@
 repos:
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.5.2
+    rev: 5.7.0
     hooks:
       - id: isort
-  - repo: https://github.com/prettier/prettier
-    rev: 2.1.1
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.2.1
     hooks:
       - id: prettier
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.2
+    rev: v2.10.1
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
@@ -17,52 +17,15 @@ repos:
     hooks:
       - id: black
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.9.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.790
+    rev: v0.812
     hooks:
       - id: mypy
         additional_dependencies: [
-            "Flask==1.1.2",
-            "Flask-RESTful==0.3.8",
-            "flask-apispec==0.11.0",
-            "Flask-Cors==3.0.9",
-            "Flask-SQLAlchemy==2.4.4",
-            "Flask-Migrate==2.5.3",
-            "PyJWT",
-            "pyOpenSSL",
-            "passlib[bcrypt]==1.7.4",
-            "neomodel==4.0.1",
-            "psycopg2-binary",
-            "pymodm",
-            "PyMySQL",
-            "redis",
-            "pika",
-            "celery==5.0.4",
-            "flower==0.9.5",
-            "celery-redbeat==2.0.0",
-            "celerybeat-mongo==0.2.0",
-            "python-telegram-bot==13.0",
-            "pyotp==2.4.1",
-            "segno==1.3.1",
-            "PyYAML==5.3.1",
-            "loguru",
-            "glom",
-            "psutil",
-            "plumbum",
-            "maxminddb-geolite2",
-            "simplejson",
-            "websocket-client",
-            "gripcontrol==4.0.0",
-            "sentry-sdk[flask]==0.19.1",
-            "pytest-flask==1.0.0",
-            "pytest-cov==2.10.1",
-            "pytest-timeout==1.4.2",
-            "schemathesis==2.7.1",
-            "Faker==4.14.0",
-            "Telethon==1.17.5",
+            "git+https://github.com/rapydo/http-api.git@1.1",
 
             # Extra dependencies
             "lxml",
@@ -70,7 +33,6 @@ repos:
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
-
         args: [
             # -> Base type Model becomes "Any" due to an unfollowed import
             # -> Base type MongoModel becomes "Any" due to an unfollowed import

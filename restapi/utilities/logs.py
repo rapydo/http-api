@@ -4,38 +4,43 @@ import re
 import sys
 import urllib.parse
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
-from restapi.config import PRODUCTION, TESTING
+from restapi.config import (
+    CONTAINER_ID,
+    HOSTNAME,
+    IS_CELERY_CONTAINER,
+    PRODUCTION,
+    TESTING,
+)
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
-LOGS_FOLDER = "/logs"
-HOSTNAME = os.getenv("HOSTNAME", "backend")
-CONTAINER_ID = os.getenv("CONTAINER_ID", "")
-IS_CELERY_CONTAINER = os.getenv("IS_CELERY_CONTAINER", "0")
+LOGS_FOLDER = Path("/logs")
+
 
 # BACKEND-SERVER
-if IS_CELERY_CONTAINER == "0":
+if not IS_CELERY_CONTAINER:
     LOGS_FILE = HOSTNAME
 # Flower or Celery-Beat
 elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
     LOGS_FILE = HOSTNAME
-    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
-    if not os.path.isdir(LOGS_FOLDER):
-        os.makedirs(LOGS_FOLDER, exist_ok=True)
+    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
+    if not LOGS_FOLDER.is_dir():
+        LOGS_FOLDER.mkdir(exist_ok=True)
 # Celery (variables name due to scaling)
 else:  # pragma: no cover
     LOGS_FILE = f"celery_{HOSTNAME}"
-    LOGS_FOLDER = os.path.join(LOGS_FOLDER, "celery")
-    if not os.path.isdir(LOGS_FOLDER):
-        os.makedirs(LOGS_FOLDER, exist_ok=True)
+    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
+    if not LOGS_FOLDER.is_dir():
+        LOGS_FOLDER.mkdir(exist_ok=True)
 
 
-LOGS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, f"{LOGS_FILE}.log")
-EVENTS_PATH: Optional[str] = os.path.join(LOGS_FOLDER, "security-events.log")
+LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{LOGS_FILE}.log")
+EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
 
 
 class Events(str, Enum):
@@ -48,6 +53,7 @@ class Events(str, Enum):
     failed_login = "failed_login"
     refused_login = "refused_login"
     activation = "activation"
+    login_unlock = "login_unlock"
     change_password = "change_password"
     reset_password_request = "reset_password_request"
 
@@ -169,7 +175,7 @@ OBSCURED_FIELDS = [
 ]
 
 
-def handle_log_output(original_parameters_string):
+def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
     """ Avoid printing passwords! """
     if original_parameters_string is None:
         return {}
@@ -191,7 +197,7 @@ def handle_log_output(original_parameters_string):
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True
-        except BaseException:
+        except BaseException:  # pragma: no cover
 
             return original_parameters_string
 
@@ -202,7 +208,9 @@ def obfuscate_url(url: str) -> str:
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
-def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
+def obfuscate_dict(
+    parameters: Dict[str, Any], urlencoded: bool = False, max_len: int = MAX_CHAR_LEN
+) -> Dict[str, Any]:
 
     if not isinstance(parameters, dict):
         return parameters
@@ -222,7 +230,7 @@ def obfuscate_dict(parameters, urlencoded: bool = False, max_len=MAX_CHAR_LEN):
             try:
                 if len(value) > max_len:
                     value = value[:max_len] + "..."
-            except IndexError:
+            except IndexError:  # pragma: no cover
                 pass
 
         output[key] = value

@@ -1,6 +1,7 @@
 import json
 
 from faker import Faker
+from flask import escape
 
 from restapi.config import get_project_configuration
 from restapi.env import Env
@@ -24,6 +25,39 @@ class TestApp(BaseTests):
 
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
+
+        # Test the differences between post and put schema
+        post_schema = {s["key"]: s for s in schema}
+
+        tmp_schema = self.getDynamicInputSchema(
+            client, "admin/users/myuuid", headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in tmp_schema}
+
+        assert "email" in post_schema
+        assert post_schema["email"]["required"]
+        assert "email" not in put_schema
+
+        assert "name" in post_schema
+        assert post_schema["name"]["required"]
+        assert "name" in put_schema
+        assert not put_schema["name"]["required"]
+
+        assert "surname" in post_schema
+        assert post_schema["surname"]["required"]
+        assert "surname" in put_schema
+        assert not put_schema["surname"]["required"]
+
+        assert "password" in post_schema
+        assert post_schema["password"]["required"]
+        assert "password" in put_schema
+        assert not put_schema["password"]["required"]
+
+        assert "group" in post_schema
+        assert post_schema["group"]["required"]
+        assert "group" in put_schema
+        assert not put_schema["group"]["required"]
+
         data["email_notification"] = True
         data["is_active"] = True
         data["expiration"] = None
@@ -34,12 +68,14 @@ class TestApp(BaseTests):
         uuid = self.get_content(r)
 
         mail = self.read_mock_email()
+        body = mail.get("body")
+
         # Subject: is a key in the MIMEText
-        assert mail.get("body") is not None
+        assert body is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
-        assert f"Username: {data.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {data.get('password')}" in mail.get("body")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert data.get("email", "MISSING").lower() in body
+        assert data.get("password") in body or escape(str(data.get("password"))) in body
 
         # Event 2: read
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
@@ -47,7 +83,7 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is saved lowercase
-        assert users_list[0].get("email") == data.get("email", "MISSING").lower()
+        assert users_list.get("email") == data.get("email", "MISSING").lower()
 
         # Check duplicates
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
@@ -65,12 +101,14 @@ class TestApp(BaseTests):
         uuid2 = self.get_content(r)
 
         mail = self.read_mock_email()
+        body = mail.get("body")
         # Subject: is a key in the MIMEText
-        assert mail.get("body") is not None
+        assert body is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: new credentials" in mail.get("headers")
-        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {data2.get('password')}" in mail.get("body")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert data2.get("email", "MISSING").lower() in body
+        pwd = data2.get("password")
+        assert pwd in body or escape(str(pwd)) in body
 
         # send and invalid user_id
         r = client.put(
@@ -102,8 +140,8 @@ class TestApp(BaseTests):
         users_list = self.get_content(r)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
-        assert users_list[0].get("email") != data.get("email", "MISSING").lower()
-        assert users_list[0].get("email") == data2.get("email", "MISSING").lower()
+        assert users_list.get("email") != data.get("email", "MISSING").lower()
+        assert users_list.get("email") == data2.get("email", "MISSING").lower()
 
         r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
         assert r.status_code == 404
@@ -126,9 +164,9 @@ class TestApp(BaseTests):
         # Subject: is a key in the MIMEText
         assert mail.get("body") is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: password changed" in mail.get("headers")
-        assert f"Username: {data2.get('email', 'MISSING').lower()}" in mail.get("body")
-        assert f"Password: {newpwd}" in mail.get("body")
+        assert f"Subject: {project_tile}: Password changed" in mail.get("headers")
+        assert data2.get("email", "MISSING").lower() in mail.get("body")
+        assert newpwd in mail.get("body") or escape(newpwd) in mail.get("body")
 
         # login with a newly created user
         headers2, _ = self.do_login(client, data2.get("email"), newpwd)
@@ -183,7 +221,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/logout", headers=headers)
         assert r.status_code == 204
 
-    def test_events_file(self):
+    def test_events_file(self) -> None:
 
         events = self.get_last_events(9, filters={"target_type": "User"})
 

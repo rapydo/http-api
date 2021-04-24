@@ -3,33 +3,16 @@ from typing import Optional
 import jwt
 
 from restapi import decorators
-from restapi.config import get_frontend_url, get_project_configuration
-from restapi.connectors import Connector, smtp
+from restapi.config import get_frontend_url
+from restapi.connectors import Connector
+from restapi.connectors.smtp.notifications import send_password_reset_link
 from restapi.env import Env
 from restapi.exceptions import BadRequest, Forbidden, ServiceUnavailable
 from restapi.models import fields, validate
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
-from restapi.utilities.templates import get_html_template
 
 auth = Connector.get_authentication_instance()
-
-
-def send_password_reset_link(smtp, uri, title, reset_email):
-    # Internal templating
-    body: Optional[str] = f"Follow this link to reset your password: {uri}"
-    html_body = get_html_template("reset_password.html", {"url": uri})
-    if html_body is None:
-        log.warning("Unable to find email template")
-        html_body = body
-        body = None
-    subject = f"{title} Password Reset"
-
-    # Internal email sending
-    c = smtp.send(html_body, subject, reset_email, plain_body=body)
-    # it cannot fail during tests, because the email sending is mocked
-    if not c:  # pragma: no cover
-        raise ServiceUnavailable("Error sending email, please retry")
 
 
 # This endpoint require the server to send the reset token via email
@@ -37,18 +20,17 @@ if Connector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
 
-        baseuri = "/auth"
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET"]
         labels = ["authentication"]
 
         @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
         @decorators.endpoint(
-            path="/reset",
+            path="/auth/reset",
             summary="Request password reset via email",
             description="Request password reset via email",
             responses={
                 200: "Reset email is valid",
-                401: "Invalid reset email",
+                400: "Invalid reset email",
                 403: "Account not found or already active",
             },
         )
@@ -67,8 +49,6 @@ if Connector.check_availability("smtp"):
 
             self.auth.verify_user_status(user)
 
-            title = get_project_configuration("project.title", default="Unkown title")
-
             reset_token, payload = self.auth.create_temporary_token(
                 user, self.auth.PWD_RESET
             )
@@ -80,8 +60,10 @@ if Connector.check_availability("smtp"):
             uri = Env.get("RESET_PASSWORD_URI", "/public/reset")
             complete_uri = f"{server_url}{uri}/{rt}"
 
-            smtp_client = smtp.get_instance()
-            send_password_reset_link(smtp_client, complete_uri, title, reset_email)
+            sent = send_password_reset_link(user, complete_uri, reset_email)
+
+            if not sent:  # pragma: no cover
+                raise ServiceUnavailable("Error sending email, please retry")
 
             ##################
             # Completing the reset task
@@ -99,23 +81,23 @@ if Connector.check_availability("smtp"):
             {
                 "new_password": fields.Str(
                     required=False,
-                    password=True,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+                    password=True,
                 ),
                 "password_confirm": fields.Str(
                     required=False,
-                    password=True,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+                    password=True,
                 ),
             }
         )
         @decorators.endpoint(
-            path="/reset/<token>",
+            path="/auth/reset/<token>",
             summary="Change password as conseguence of a reset request",
             description="Change password as conseguence of a reset request",
             responses={
                 200: "Reset token is valid, password changed",
-                401: "Invalid reset token",
+                400: "Invalid reset token",
             },
         )
         def put(
@@ -127,8 +109,16 @@ if Connector.check_availability("smtp"):
 
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
+
+            # # DEBUG CODE: add dots after each character to prevent github to obfuscate
+            # import re
+
+            # t = re.sub(r"(.)", r"\1.", token)
+            # log.critical("DEBUG CODE: {}", t)
+
             try:
-                unpacked_token = self.auth.verify_token(
+                # valid, token, jti, user
+                _, _, jti, user = self.auth.verify_token(
                     token, raiseErrors=True, token_type=self.auth.PWD_RESET
                 )
 
@@ -145,16 +135,17 @@ if Connector.check_availability("smtp"):
                 log.info(e)
                 raise BadRequest("Invalid reset token")
 
+            if user is None:  # pragma: no cover
+                raise BadRequest("Invalid activation token")
+
             # Recovering token object from jti
-            jti = unpacked_token[2]
-            token_obj = self.auth.get_tokens(token_jti=jti)
+            tokens_obj = self.auth.get_tokens(token_jti=jti)
             # Can't happen because the token is refused from verify_token function
-            if len(token_obj) == 0:  # pragma: no cover
+            if len(tokens_obj) == 0:  # pragma: no cover
                 raise BadRequest("Invalid reset token: this request is no longer valid")
 
-            token_obj = token_obj.pop(0)
+            token_obj = tokens_obj.pop(0)
             emitted = token_obj["emitted"]
-            user = unpacked_token[3]
 
             last_change = None
             # If user logged in after the token emission invalidate the token

@@ -2,16 +2,30 @@ from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector, neo4j
 from restapi.exceptions import BadRequest
-from restapi.models import Neo4jChoice, Neo4jSchema, Schema, fields
+from restapi.models import Neo4jSchema, Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 if TESTING and Connector.check_availability("neo4j"):
 
+    from neomodel import (
+        IntegerProperty,
+        StringProperty,
+        StructuredNode,
+        UniqueIdProperty,
+    )
+
     from restapi.connectors.neo4j.models import Group, User
 
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
+
+    class Custom(StructuredNode):
+        custom = StringProperty(required=True, choices=CHOICES_tuple)
+        myint = IntegerProperty(required=True)
+        # do not set it as required because:
+        # ValueError: required argument ignored by UniqueIdProperty
+        myuuid = UniqueIdProperty()
 
     class Output(Schema):
         val = fields.Integer()
@@ -36,16 +50,16 @@ if TESTING and Connector.check_availability("neo4j"):
         group5 = Neo4jSchema(Group, fields=["fullname", "shortname"])
         group6 = Neo4jSchema(Group, fields="")
         group7 = Neo4jSchema(Group, fields=None)
+        custom = Neo4jSchema(Custom, fields="*")
 
-        choices1 = Neo4jChoice(CHOICES_tuple)
-        choices2 = Neo4jChoice(CHOICES_dict)
+        choices1 = fields.Neo4jChoice(CHOICES_tuple)
+        choices2 = fields.Neo4jChoice(CHOICES_dict)
 
     class TestNeo4j(EndpointResource):
 
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
-        @decorators.graph_transactions
         @decorators.marshal_with(Output, code=200)
         @decorators.endpoint(
             path="/tests/neo4j/<test>",

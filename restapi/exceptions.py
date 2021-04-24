@@ -4,18 +4,28 @@ Generalization of Exceptions
 to handle services known errors
 
 """
-from restapi.utilities.logs import log
+import warnings
+from typing import Union
+
+ExceptionType = Union[str, Exception]
 
 
 class RestApiException(Exception):
     # code is now an alias for status_code
-    def __init__(self, exception, status_code=404, code=None, is_warning=False):
+    def __init__(
+        self,
+        exception: ExceptionType,
+        status_code: int = 404,
+        code: int = None,
+        is_warning: bool = False,
+    ):
 
         if code:  # pragma: no cover
             # Deprecated since 1.0
-            log.warning(
+            warnings.warn(
                 "Deprecated use of RestApiException(code),"
-                "use status_code or even better specific exceptions"
+                "use status_code or even better specific exceptions",
+                DeprecationWarning,
             )
             status_code = code
 
@@ -25,41 +35,45 @@ class RestApiException(Exception):
 
 
 class BadRequest(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=400, is_warning=is_warning)
 
 
 class Unauthorized(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=401, is_warning=is_warning)
 
 
 class Forbidden(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=403, is_warning=is_warning)
 
 
 class NotFound(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=404, is_warning=is_warning)
 
 
 class Conflict(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=409, is_warning=is_warning)
 
 
 class ServerError(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=500, is_warning=is_warning)
 
 
 class ServiceUnavailable(RestApiException):
-    def __init__(self, exception, is_warning=False):
+    def __init__(self, exception: ExceptionType, is_warning: bool = False):
         super().__init__(exception, status_code=503, is_warning=is_warning)
 
 
-class DatabaseDuplicatedEntry(Exception):
+class DatabaseDuplicatedEntry(Conflict):
+    pass
+
+
+class DatabaseMissingRequiredProperty(BadRequest):
     pass
 
 

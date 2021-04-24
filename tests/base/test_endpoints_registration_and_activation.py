@@ -25,18 +25,27 @@ class TestApp(BaseTests):
         # registration, missing information
         r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
         assert r.status_code == 400
+
+        # Ensure name and surname longer than 3
+        name = self.get_first_name(faker)
+        surname = self.get_last_name(faker)
+        # Ensure an email not containing name and surname and longer than 3
+        email = self.get_random_email(faker, name, surname)
+
         registration_data = {}
         registration_data["password"] = faker.password(5)
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
+
         registration_data["email"] = BaseAuthentication.default_user
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
-        registration_data["name"] = faker.first_name()
+
+        registration_data["name"] = name
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
-        registration_data["surname"] = faker.last_name()
+        registration_data["surname"] = surname
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 400
 
@@ -56,7 +65,7 @@ class TestApp(BaseTests):
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
-        registration_data["email"] = faker.ascii_email()
+        registration_data["email"] = email
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
@@ -91,6 +100,28 @@ class TestApp(BaseTests):
         m = "Password is too weak, missing special characters"
         assert self.get_content(r) == m
 
+        registration_data["password"] = registration_data["email"].split("@")[0]
+        registration_data["password"] += "DEFghi345!"
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your email address"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = registration_data["name"] + "LMNopq678="
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your name"
+        assert self.get_content(r) == m
+
+        registration_data["password"] = registration_data["surname"] + "LMNopq678="
+        registration_data["password_confirm"] = registration_data["password"]
+        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        assert r.status_code == 409
+        m = "Password is too weak, can't contain your name"
+        assert self.get_content(r) == m
+
         registration_data["password"] = faker.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
         r = client.post(f"{AUTH_URI}/profile", data=registration_data)
@@ -108,12 +139,22 @@ class TestApp(BaseTests):
         assert "password" in events[0].payload
         assert events[0].payload["password"] == OBSCURE_VALUE
 
+        # Last sent email is the registration notification to the admin
         mail = self.read_mock_email()
         body = mail.get("body")
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile} account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: New user registered" in mail.get("headers")
+        assert registration_data["email"] in body
+
+        # Previous sent email is the activation link sent to the user
+        mail = self.read_mock_email(previous=True)
+        body = mail.get("body")
+        assert body is not None
+        assert mail.get("headers") is not None
+        # Subject: is a key in the MIMEText
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
 
         # This will fail because the user is not active
@@ -181,7 +222,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile} account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
         assert f"{proto}://localhost/public/register/" in body
 
         token = self.get_token_from_body(body)
@@ -270,7 +311,9 @@ class TestApp(BaseTests):
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
 
-        mail = self.read_mock_email()
+        # Registration endpoint send 2 mail: the first is the activation link,
+        # the second (last) is the admin notification
+        mail = self.read_mock_email(previous=True)
         body = mail.get("body")
         assert body is not None
         assert mail.get("headers") is not None

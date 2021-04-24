@@ -6,10 +6,15 @@ from typing import Any, Dict, List, Optional, Union
 from pymodm import MongoModel
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
+from pymodm.errors import ValidationError
 from pymongo.errors import DuplicateKeyError, ServerSelectionTimeoutError
 
-from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry
+from restapi.connectors import Connector, ExceptionsList
+from restapi.exceptions import (
+    BadRequest,
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -50,9 +55,23 @@ def catch_db_exceptions(func):
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
             raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
 
-        # except ValidationError as e:
-        #     # not handled
-        #     raise e
+        except ValidationError as e:
+
+            # {'shortname': ['field is required.']}
+            for prop, error in e.message.items():
+                if error[0] == "field is required.":
+
+                    # table is not available in the message... :-(
+
+                    raise DatabaseMissingRequiredProperty(
+                        # f"Missing property {prop} required by {table.title()}"
+                        f"Missing property {prop} required by database constraints"
+                    )
+
+            # Should never happen except in case of a new mongo version
+            log.error("Unrecognized error message: {}", e)  # pragma: no cover
+            raise e  # pragma: no cover
+
         except RecursionError as e:  # pragma: no cover
             # Got some circular references? Let's try to break them,
             # but the cause is still unknown...
@@ -75,7 +94,7 @@ class MongoExt(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (ServerSelectionTimeoutError,)
 
     @staticmethod
@@ -142,7 +161,7 @@ class MongoExt(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     # Also used by POST user
@@ -247,7 +266,20 @@ class Authentication(BaseAuthentication):
         return None
 
     def get_groups(self) -> List[Group]:
+        # should be expanded with members ...
         return list(self.db.Group.objects.all())
+
+    def get_user_group(self, user: User) -> Group:
+        return user.belongs_to
+
+    def get_group_members(self, group: Group) -> List[User]:
+        output: List[User] = []
+
+        for u in self.get_users():
+            if u.belongs_to == group:
+                output.append(u)
+
+        return output
 
     def save_group(self, group: Group) -> bool:
         if not group:

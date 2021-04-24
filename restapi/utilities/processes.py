@@ -5,6 +5,8 @@ import signal
 import socket
 import time
 from datetime import datetime
+from types import FrameType
+from typing import List, Optional
 
 import psutil
 
@@ -19,20 +21,24 @@ class Timeout(Exception):
     pass
 
 
-def handler(signum, frame):
+def handler(signum: int, frame: FrameType) -> None:
     raise Timeout("Operation timeout: interrupted")
 
 
-def start_timeout(time):
+def start_timeout(time: int) -> None:
     signal.signal(signal.SIGALRM, handler)
     signal.alarm(time)
 
 
-def stop_timeout():
+def stop_timeout() -> None:
     signal.alarm(0)
 
 
-def find_process(process_name, keywords=None, prefix=None):
+def find_process(
+    process_name: str,
+    keywords: Optional[List[str]] = None,
+    prefix: Optional[str] = None,
+) -> bool:
 
     if keywords is None:
         keywords = []
@@ -65,7 +71,9 @@ def find_process(process_name, keywords=None, prefix=None):
     return False
 
 
-def wait_socket(host, port, service_name, retries=DEFAULT_MAX_RETRIES):
+def wait_socket(
+    host: str, port: int, service_name: str, retries: int = DEFAULT_MAX_RETRIES
+) -> None:
 
     SLEEP_TIME = 2
     TIMEOUT = 1

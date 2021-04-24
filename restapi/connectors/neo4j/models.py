@@ -32,7 +32,7 @@ class User(UserCustomClass):
     name = StringProperty(required=True)
     surname = StringProperty(required=True)
     authmethod = StringProperty(required=True)
-    password = StringProperty()
+    password = StringProperty(required=True)
     mfa_hash = StringProperty()
     first_login = DateTimeProperty()
     last_login = DateTimeProperty()
@@ -56,7 +56,7 @@ class Group(GroupCustomClass):
 class Token(StructuredNode):
     jti = StringProperty(required=True, unique_index=True)
     token = StringProperty(required=True, unique_index=True)
-    token_type = StringProperty()
+    token_type = StringProperty(required=True)
     creation = DateTimeProperty(required=True)
     expiration = DateTimeProperty()
     last_access = DateTimeProperty()

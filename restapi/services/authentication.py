@@ -1,35 +1,34 @@
-"""
-SECURITY ENDPOINTS CHECK
-Add auth checks called /checklogged and /testadmin
-"""
-import abc
 import base64
 import re
-import sys
+from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
-import pyotp  # TOTP generation
+import pyotp
 import pytz
-import segno  # QR Code generation
+import segno
+from cryptography.fernet import Fernet
 from flask import request
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
+    IS_CELERY_CONTAINER,
+    JWT_SECRET_FILE,
     PRODUCTION,
-    SECRET_KEY_FILE,
     TESTING,
+    TOTP_SECRET_FILE,
+    get_frontend_url,
     get_project_configuration,
 )
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
     Conflict,
-    DatabaseDuplicatedEntry,
     Forbidden,
     RestApiException,
     ServiceUnavailable,
@@ -38,8 +37,25 @@ from restapi.exceptions import (
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
-from restapi.utilities.time import get_now
+from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
+
+
+def import_secret(abs_filename: Path) -> bytes:
+
+    if IS_CELERY_CONTAINER:  # pragma: no cover
+        return Fernet.generate_key()
+
+    try:
+        return open(abs_filename, "rb").read()
+    # Can't be covered because it is execute once before the tests...
+    except OSError:  # pragma: no cover
+        key = Fernet.generate_key()
+        with open(abs_filename, "wb") as key_file:
+            key_file.write(key)
+        abs_filename.chmod(0o400)
+        return key
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -49,7 +65,6 @@ ROLE_DISABLED = "disabled"
 DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
 
-Payload = Dict[str, Any]
 User = Any
 Group = Any
 RoleObj = Any
@@ -57,6 +72,27 @@ RoleObj = Any
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+
+
+# Produced by fill_payload
+class Payload(TypedDict, total=False):
+    user_id: str
+    jti: str
+    t: str
+    iat: datetime
+    nbf: datetime
+    exp: datetime
+
+
+# Produced by unpack_token. Datetimes are converted to int as specified in rfc7519
+# https://tools.ietf.org/html/rfc7519#page-10
+class DecodedPayload(TypedDict, total=False):
+    user_id: str
+    jti: str
+    t: str
+    iat: int
+    nbf: int
+    exp: int
 
 
 class Token(TypedDict, total=False):
@@ -115,7 +151,7 @@ def get_max_login_attempts(val: int) -> int:
 # ##############################################################################
 
 
-class BaseAuthentication(metaclass=abc.ABCMeta):
+class BaseAuthentication(metaclass=ABCMeta):
 
     """
     An almost abstract class with methods
@@ -123,8 +159,9 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     that aims to store credentials of users and roles.
     """
 
-    # Secret loaded from secret.key file
-    JWT_SECRET: Optional[bytes] = None
+    JWT_SECRET: str = import_secret(JWT_SECRET_FILE).decode()
+    fernet = Fernet(import_secret(TOTP_SECRET_FILE))
+
     # JWT_ALGO = 'HS256'
     # Should be faster on 64bit machines
     JWT_ALGO = "HS512"
@@ -140,12 +177,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     FULL_TOKEN = "f"
     PWD_RESET = "r"
     ACTIVATE_ACCOUNT = "a"
+    UNLOCK_CREDENTIALS = "u"
     TOTP = "TOTP"
     MIN_PASSWORD_LENGTH = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 8)
 
     SECOND_FACTOR_AUTHENTICATION = Env.get_bool(
         "AUTH_SECOND_FACTOR_AUTHENTICATION", False
     )
+
+    TOTP_VALIDITY_WINDOW = Env.get_int("AUTH_TOTP_VALIDITY_WINDOW", 1)
 
     # enabled if explicitly set or for 2FA is enabled
     FORCE_FIRST_PASSWORD_CHANGE = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
@@ -184,12 +224,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # To be stored on DB
     failed_logins: Dict[str, List[FailedLogin]] = {}
 
+    # This is to let inform mypy about the existence of self.db
+    def __init__(self) -> None:  # pragma: no cover
+        self.db: Any
+
     # Executed once by Connector in init_app
     @classmethod
     def module_initialization(cls) -> None:
         cls.load_default_user()
         cls.load_roles()
-        cls.import_secret(SECRET_KEY_FILE)
 
     @staticmethod
     def load_default_user() -> None:
@@ -238,7 +281,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise ServiceUnavailable("Unable to connect to auth backend")
 
         if user is None:
-            self.register_failed_login(username)
+            self.register_failed_login(username, user=None)
 
             self.log_event(
                 Events.failed_login,
@@ -266,15 +309,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             payload={"username": username},
             user=user,
         )
-        self.register_failed_login(username)
+        self.register_failed_login(username, user=user)
         raise Unauthorized("Invalid access credentials", is_warning=True)
-
-    @classmethod
-    def import_secret(cls, abs_filename: str) -> None:
-        try:
-            cls.JWT_SECRET = open(abs_filename, "rb").read()
-        except OSError:  # pragma: no cover
-            print_and_exit("Jwt secret file {} not found", abs_filename)
 
     # #####################
     # # Password handling #
@@ -352,14 +388,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # ###################
     @classmethod
     def create_token(cls, payload: Payload) -> str:
-        """ Generate a byte token with JWT library to encrypt the payload """
-        if cls.JWT_SECRET:
-            return jwt.encode(payload, cls.JWT_SECRET, algorithm=cls.JWT_ALGO).decode(
-                "ascii"
-            )
-        else:  # pragma: no cover
-            log.critical("Server misconfiguration, missing jwt configuration")
-            sys.exit(1)
+        """ Generate a str token with JWT library to encrypt the payload """
+        return jwt.encode(
+            cast(Dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
+        )
 
     def create_temporary_token(
         self, user: User, token_type: str, duration: int = 86400
@@ -384,15 +416,15 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return token, full_payload
 
     @classmethod
-    def unpack_token(cls, token: str, raiseErrors: bool = False) -> Optional[Payload]:
+    def unpack_token(
+        cls, token: str, raiseErrors: bool = False
+    ) -> Optional[DecodedPayload]:
 
         try:
-            if cls.JWT_SECRET:
-                return jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO])
-            else:
-                print_and_exit(  # pragma: no cover
-                    "Server misconfiguration, missing jwt configuration"
-                )
+            return cast(
+                DecodedPayload,
+                jwt.decode(token, cls.JWT_SECRET, algorithms=[cls.JWT_ALGO]),
+            )
         # now > exp
         except ExpiredSignatureError as e:
             # should this token be invalidated into the DB?
@@ -439,7 +471,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         payload = self.unpack_token(token, raiseErrors=raiseErrors)
         if payload is None:
             if raiseErrors:
-                raise InvalidToken("Invalid payload")
+                raise InvalidToken("Invalid payload")  # pragma: no cover
             return self.unpacked_token(False)
 
         payload_type = payload.get("t", self.FULL_TOKEN)
@@ -466,7 +498,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 raise InvalidToken("Token is not valid")
             return self.unpacked_token(False)
 
-        log.debug("User {} authorized", user.email)
+        log.debug("User {} is authorized", user.email)
 
         return self.unpacked_token(True, token=token, jti=payload["jti"], user=user)
 
@@ -485,14 +517,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         TTL is measured in seconds
         """
 
-        payload = {"user_id": user.uuid, "jti": getUUID()}
-        full_payload = payload.copy()
+        payload: Payload = {"user_id": user.uuid, "jti": getUUID()}
+        full_payload: Payload = payload.copy()
 
         if not token_type:
             token_type = self.FULL_TOKEN
 
         short_token = False
-        if token_type in (self.PWD_RESET, self.ACTIVATE_ACCOUNT):
+        if token_type in (
+            self.PWD_RESET,
+            self.ACTIVATE_ACCOUNT,
+            self.UNLOCK_CREDENTIALS,
+        ):
             short_token = True
             payload["t"] = token_type
 
@@ -516,9 +552,21 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         # second used to store information on backend DB
         return payload, full_payload
 
-    # ##################
-    # # Roles handling #
-    # ##################
+    # ###############################
+    # #####   Roles handling   ######
+    # ###############################
+    def is_admin(self, user: User) -> bool:
+        """ Check if current user has Administration role """
+        return self.verify_roles(user, [Role.ADMIN], warnings=False)
+
+    def is_staff(self, user: User) -> bool:
+        """ Check if current user has Staff role """
+        return self.verify_roles(user, [Role.STAFF], warnings=False)
+
+    def is_coordinator(self, user: User) -> bool:
+        """ Check if current user has Coordinator role """
+        return self.verify_roles(user, [Role.COORDINATOR], warnings=False)
+
     def verify_roles(
         self,
         user: User,
@@ -567,7 +615,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         try:
             userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
-        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+        except RestApiException:  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
             raise BadRequest(f"Unable to pre-customize user properties: {e}")
@@ -583,7 +631,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             mem.customizer.custom_user_properties_post(
                 user, userdata, extra_userdata, db
             )
-        except (RestApiException, DatabaseDuplicatedEntry):  # pragma: no cover
+        except RestApiException:  # pragma: no cover
             raise
         except BaseException as e:  # pragma: no cover
             raise BadRequest(f"Unable to post-customize user properties: {e}")
@@ -594,14 +642,18 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # # Login attempts handling #
     # ###########################
 
-    @classmethod
-    def register_failed_login(cls, username: str) -> None:
-        ip = cls.get_remote_ip()
-        ip_loc = cls.localize_ip(ip)
-        cls.failed_logins.setdefault(username, [])
+    def register_failed_login(self, username: str, user: Optional[User]) -> None:
 
-        count = len(cls.failed_logins[username])
-        cls.failed_logins[username].append(
+        if self.MAX_LOGIN_ATTEMPTS == 0:
+            log.debug("Failed login are not registered in this configuration")
+            return
+
+        ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
+        self.failed_logins.setdefault(username, [])
+
+        count = len(self.failed_logins[username])
+        self.failed_logins[username].append(
             {
                 "progressive_count": count + 1,
                 "username": username,
@@ -610,6 +662,38 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 "location": ip_loc,
             }
         )
+
+        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+            return
+
+        log.error(
+            "Reached the maximum number of failed login, account {} is blocked",
+            username,
+        )
+
+        if user:
+            # Import here to prevent circular dependencies
+            from restapi.connectors.smtp.notifications import notify_login_block
+
+            unlock_token, payload = self.create_temporary_token(
+                user, self.UNLOCK_CREDENTIALS
+            )
+
+            self.save_token(
+                user, unlock_token, payload, token_type=self.UNLOCK_CREDENTIALS
+            )
+
+            server_url = get_frontend_url()
+
+            rt = unlock_token.replace(".", "+")
+            url = f"{server_url}/app/login/unlock/{rt}"
+
+            notify_login_block(
+                user,
+                reversed(self.failed_logins[username]),
+                self.FAILED_LOGINS_EXPIRATION.seconds,
+                url,
+            )
 
     @classmethod
     def get_failed_login(cls, username: str) -> int:
@@ -634,15 +718,16 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     def get_totp_secret(self, user: User) -> str:
 
         if TESTING:  # pragma: no cover
+            # TESTING_TOTP_HASH is set by setup-cypress github action
             if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
                 return p
 
         if not user.mfa_hash:
-            # to be encrypted
-            user.mfa_hash = pyotp.random_base32()
+            random_hash = pyotp.random_base32()
+            user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
             self.save_user(user)
 
-        return cast(str, user.mfa_hash)
+        return self.fernet.decrypt(user.mfa_hash.encode()).decode()
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
@@ -650,7 +735,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
             raise Unauthorized("Verification code is missing")
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
-        if not totp.verify(totp_code, valid_window=1):
+        if not totp.verify(totp_code, valid_window=self.TOTP_VALIDITY_WINDOW):
 
             self.log_event(
                 Events.failed_login,
@@ -658,7 +743,7 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 user=user,
             )
 
-            self.register_failed_login(user.email)
+            self.register_failed_login(user.email, user=user)
             raise Unauthorized("Verification code is not valid")
 
         return True
@@ -677,8 +762,8 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         return base64.b64encode(qr_stream.getvalue()).decode("utf-8")
 
     def verify_password_strength(
-        self, pwd: str, old_pwd: Optional[str]
-    ) -> Tuple[bool, Optional[str]]:
+        self, pwd: str, old_pwd: Optional[str], email: str, name: str, surname: str
+    ) -> Tuple[bool, str]:
 
         if old_pwd:
             if pwd == old_pwd:
@@ -703,7 +788,22 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         if not re.search(special_characters, pwd):
             return False, "Password is too weak, missing special characters"
 
-        return True, None
+        MIN_CONTAINED_LEN = 3
+        p_lower = pwd.lower()
+        if len(name) > MIN_CONTAINED_LEN and name.lower() in p_lower:
+            return False, "Password is too weak, can't contain your name"
+
+        if len(surname) > MIN_CONTAINED_LEN and surname.lower() in p_lower:
+            return False, "Password is too weak, can't contain your name"
+
+        cleaner = r"[\.|_]"
+        email_clean = re.sub(cleaner, "", email.lower().split("@")[0])
+        p_clean = re.sub(cleaner, "", p_lower.lower())
+
+        if len(email_clean) > MIN_CONTAINED_LEN and email_clean in p_clean:
+            return False, "Password is too weak, can't contain your email address"
+
+        return True, ""
 
     def change_password(
         self,
@@ -724,7 +824,13 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
 
         if self.VERIFY_PASSWORD_STRENGTH:
 
-            check, msg = self.verify_password_strength(new_password, password)
+            check, msg = self.verify_password_strength(
+                pwd=new_password,
+                old_pwd=password,
+                email=user.email,
+                name=user.name,
+                surname=user.surname,
+            )
 
             if not check:
                 raise Conflict(msg)
@@ -742,6 +848,44 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
                 log.critical("Failed to invalidate token {}", e)
 
         return True
+
+    def check_password_validity(
+        self, user: User, totp_authentication: bool
+    ) -> Dict[str, List[str]]:
+
+        # ##################################################
+        # Check if something is missing in the authentication and ask additional actions
+        # raises exceptions in case of errors
+
+        message: Dict[str, List[str]] = {"actions": [], "errors": []}
+        last_pwd_change = user.last_password_change
+        if last_pwd_change is None or last_pwd_change == 0:
+            last_pwd_change = EPOCH
+
+        if self.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
+
+            message["actions"].append("FIRST LOGIN")
+            message["errors"].append("Please change your temporary password")
+
+            if totp_authentication:
+
+                message["qr_code"] = [self.get_qrcode(user)]
+
+        elif self.MAX_PASSWORD_VALIDITY:
+
+            valid_until = last_pwd_change + self.MAX_PASSWORD_VALIDITY
+
+            # offset-naive datetime to compare with MySQL
+            now = get_now(last_pwd_change.tzinfo)
+
+            expired = last_pwd_change == EPOCH or valid_until < now
+
+            if expired:
+
+                message["actions"].append("PASSWORD EXPIRED")
+                message["errors"].append("Your password is expired, please change it")
+
+        return message
 
     @classmethod
     def verify_blocked_username(cls, username: str) -> None:
@@ -972,10 +1116,10 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
     # #  Abstract methods  # #
     # ########################
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
-    ) -> Optional[User]:  # pragma: no cover
+    ) -> Optional[User]:
         """
         How to retrieve a single user from the current authentication db,
         based on the unique username or the user_id
@@ -983,137 +1127,147 @@ class BaseAuthentication(metaclass=abc.ABCMeta):
         """
         ...
 
-    @abc.abstractmethod
-    def get_users(self) -> List[User]:  # pragma: no cover
+    @abstractmethod
+    def get_users(self) -> List[User]:
         """
         How to retrieve a list of all users from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
-    def save_user(self, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def save_user(self, user: User) -> bool:
         # log.error("Users are not saved in base authentication")
         ...
 
-    @abc.abstractmethod
-    def delete_user(self, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def delete_user(self, user: User) -> bool:
         # log.error("Users are not deleted in base authentication")
         ...
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_group(
         self, group_id: Optional[str] = None, name: Optional[str] = None
-    ) -> Optional[Group]:  # pragma: no cover
+    ) -> Optional[Group]:
         """
-        How to retrieve a single group from the current authentication db,
-        """
-        ...
-
-    @abc.abstractmethod
-    def get_groups(self) -> List[Group]:  # pragma: no cover
-        """
-        How to retrieve groups list from the current authentication db,
+        How to retrieve a single group from the current authentication db
         """
         ...
 
-    @abc.abstractmethod
-    def save_group(self, group: Group) -> bool:  # pragma: no cover
+    @abstractmethod
+    def get_groups(self) -> List[Group]:
+        """
+        How to retrieve groups list from the current authentication db
+        """
         ...
 
-    @abc.abstractmethod
-    def delete_group(self, group: Group) -> bool:  # pragma: no cover
+    @abstractmethod
+    def get_user_group(self, user: User) -> Group:
+        """
+        How to retrieve the group that the user belongs to from the current auth db
+        """
         ...
 
-    @abc.abstractmethod
+    @abstractmethod
+    def get_group_members(self, group: Group) -> List[User]:
+        """
+        How to retrieve group users list from the current authentication db
+        """
+        ...
+
+    @abstractmethod
+    def save_group(self, group: Group) -> bool:
+        ...
+
+    @abstractmethod
+    def delete_group(self, group: Group) -> bool:
+        ...
+
+    @abstractmethod
     def get_tokens(
         self,
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:  # pragma: no cover
+    ) -> List[Token]:
         """
         Return the list of tokens
         """
         ...
 
-    @abc.abstractmethod
-    def verify_token_validity(self, jti: str, user: User) -> bool:  # pragma: no cover
+    @abstractmethod
+    def verify_token_validity(self, jti: str, user: User) -> bool:
         """
         This method MUST be implemented by specific Authentication Methods
         to add more specific validation contraints
         """
         ...
 
-    @abc.abstractmethod  # pragma: no cover
+    @abstractmethod
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
         log.debug("Tokens is not saved in base authentication")
 
-    @abc.abstractmethod
-    def invalidate_token(self, token: str) -> bool:  # pragma: no cover
+    @abstractmethod
+    def invalidate_token(self, token: str) -> bool:
         """
         With this method the specified token must be invalidated
         as expected after a user logout
         """
         ...
 
-    @abc.abstractmethod
-    def get_roles(self) -> List[RoleObj]:  # pragma: no cover
+    @abstractmethod
+    def get_roles(self) -> List[RoleObj]:
         """
         How to retrieve all the roles
         """
         ...
 
-    @abc.abstractmethod
-    def get_roles_from_user(
-        self, user: Optional[User]
-    ) -> List[str]:  # pragma: no cover
+    @abstractmethod
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
         """
         Retrieve roles from a user object from the current auth service
         """
         ...
 
-    @abc.abstractmethod
-    def create_role(self, name: str, description: str) -> None:  # pragma: no cover
+    @abstractmethod
+    def create_role(self, name: str, description: str) -> None:
         """
         A method to create a new role
         """
         ...
 
-    @abc.abstractmethod
-    def save_role(self, role: RoleObj) -> bool:  # pragma: no cover
+    @abstractmethod
+    def save_role(self, role: RoleObj) -> bool:
         ...
 
     # ################
     # # Create Users #
     # ################
-    @abc.abstractmethod
-    def create_user(
-        self, userdata: Dict[str, Any], roles: List[str]
-    ) -> User:  # pragma: no cover
+    @abstractmethod
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
         """
         A method to create a new user
         """
         ...
 
-    @abc.abstractmethod
-    def link_roles(self, user: User, roles: List[str]) -> None:  # pragma: no cover
+    @abstractmethod
+    def link_roles(self, user: User, roles: List[str]) -> None:
         """
         A method to assign roles to a user
         """
         ...
 
-    @abc.abstractmethod
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:  # pragma: no cover
+    @abstractmethod
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
         """
         A method to create a new group
         """
         ...
 
-    @abc.abstractmethod
-    def add_user_to_group(self, user: User, group: Group) -> None:  # pragma: no cover
+    @abstractmethod
+    def add_user_to_group(self, user: User, group: Group) -> None:
         """
-        Expand the group.members -> user relationship
+        Save the group.members -> user relationship
         """
         ...

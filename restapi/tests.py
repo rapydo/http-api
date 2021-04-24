@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import jwt
 import pyotp
-import pytest
 import pytz
 from faker import Faker
+from flask import Flask
 from flask.wrappers import Response
 
 from restapi.config import (
@@ -20,13 +20,14 @@ from restapi.config import (
     AUTH_URL,
     DEFAULT_HOST,
     DEFAULT_PORT,
-    SECRET_KEY_FILE,
+    JWT_SECRET_FILE,
+    get_frontend_url,
 )
-from restapi.connectors import Connector
+from restapi.connectors import Connector, celery
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Payload, Role
 from restapi.utilities.faker import get_faker
-from restapi.utilities.logs import log
+from restapi.utilities.logs import LOGS_FOLDER, log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
@@ -70,15 +71,26 @@ class BaseTests:
 
     @staticmethod
     def getDynamicInputSchema(
-        client: FlaskClient, endpoint: str, headers: Optional[Dict[str, str]]
+        client: FlaskClient,
+        endpoint: str,
+        headers: Optional[Dict[str, str]],
+        method: str = "post",
     ) -> Any:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
 
-        r = client.post(
-            f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
-        )
+        method = method.lower()
+
+        if method == "post":
+            r = client.post(
+                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+            )
+        else:
+            r = client.put(
+                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+            )
+
         assert r.status_code == 200
 
         return json.loads(r.data.decode("utf-8"))
@@ -328,24 +340,89 @@ class BaseTests:
 
         return uuid, group_data
 
+    # Simple wrappers to ensure names and surnames longer than 3 characters
+    # Note: short names/surnamed are not verified for password strenght checks
+    @classmethod
+    def get_first_name(cls, faker: Faker, recursion: int = 0) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        name = str(faker.first_name())
+        if len(name) > 3:
+            return name
+
+        # Probably this Faker locale only has very short names.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return name * 4
+        return cls.get_first_name(faker, recursion=recursion + 1)  # pragma: no cover
+
+    @classmethod
+    def get_last_name(cls, faker: Faker, recursion: int = 0) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        surname = str(faker.last_name())
+        if len(surname) > 3:
+            # Please Faker, add some types hints!
+            return surname
+        # Probably this Faker locale only has very short names.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return surname * 4
+        return cls.get_last_name(faker, recursion=recursion + 1)  # pragma: no cover
+
+    @classmethod
+    def get_random_email(
+        cls, faker: Faker, name: str, surname: str, recursion: int = 0
+    ) -> str:
+        # Please Faker, add some types hints and let me remove this str()!
+        email = str(faker.ascii_email())
+
+        # This email contains the name, re-sampling again
+        if name.lower() in email.lower():  # pragma: no cover
+            return cls.get_random_email(faker, name, surname, recursion=recursion + 1)
+
+        # This email contains the surname, re-sampling again
+        if surname.lower() in email.lower():  # pragma: no cover
+            return cls.get_random_email(faker, name, surname, recursion=recursion + 1)
+
+        email_tokens = email.split("@")
+        email_username = email_tokens[0]
+        if len(email_username) > 3:
+            # Please Faker, add some types hints!
+            return email
+
+        # Probably this Faker locale only has very short emails.
+        # It can happens with Chinese?
+        # Let's return a repetition of the name it self
+        if recursion >= 10:  # pragma: no cover
+            return f"{email_username * 4}@{email_tokens[1]}"
+
+        return cls.get_random_email(  # pragma: no cover
+            faker, surname, surname, recursion=recursion + 1
+        )
+
     @classmethod
     def buildData(cls, schema: Any) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema
         Output: a dictionary of random data
         """
-        data = {}
+        data: Dict[str, Any] = {}
         for d in schema:
 
             key = d.get("key")
             field_type = d.get("type")
 
+            if is_array := field_type.endswith("[]"):
+                # py39:
+                # field_type.removesuffix("[]")
+                field_type = field_type[0:-2]
+
             if "options" in d:
                 if len(d["options"]) > 0:
                     keys = list(d["options"].keys())
-                    if d.get("multiple", False):
-                        # requests is unable to send lists, if not json-dumped
-                        data[key] = json.dumps([cls.faker.random_element(keys)])
+                    if is_array:
+                        data[key] = [cls.faker.random_element(keys)]
                     else:
                         data[key] = cls.faker.random_element(keys)
                 # else:  # pragma: no cover
@@ -355,9 +432,25 @@ class BaseTests:
                 max_value = d.get("max", 9999)
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
+
+                # Fri, 26 Feb 2021 23:59:59 GMT
+                fmt = "%a, %d %b %Y %H:%M:%S %Z"
                 # d = cls.faker.date(pattern="%Y-%m-%d")
                 # data[key] = f"{d}T00:00:00.000Z"
-                data[key] = f"{cls.faker.iso8601()}.000Z"
+
+                min_date = None
+                max_date = None
+
+                if min_value := d.get("min"):
+                    min_date = datetime.strptime(min_value, fmt)
+
+                if max_value := d.get("max"):
+                    max_date = datetime.strptime(max_value, fmt)
+
+                d = cls.faker.date_time_between_dates(
+                    datetime_start=min_date, datetime_end=max_date
+                )
+                data[key] = f"{d.isoformat()}.000Z"
             elif field_type == "email":
                 data[key] = cls.faker.ascii_email()
             elif field_type == "boolean":
@@ -365,22 +458,60 @@ class BaseTests:
             elif field_type == "password":
                 data[key] = cls.faker.password(strong=True)
             elif field_type == "string":
-                data[key] = cls.faker.pystr(min_chars=16, max_chars=32)
-            else:  # pragma: no cover
-                pytest.fail(f"BuildData for {key}: unknow type {field_type}")
+                min_value = d.get("min")
+                max_value = d.get("max")
+
+                # No min/max validation
+                if min_value is None and max_value is None:
+                    min_value = 16
+                    max_value = 32
+                # Only min value provided
+                elif max_value is None:
+                    assert min_value is not None
+                    # max(min_value, 1) is need in case of min_value == 0
+                    max_value = max(min_value, 1) * 2
+                # Only max value provided
+                elif min_value is None:
+                    assert max_value is not None
+                    min_value = 1
+                # Otherwise both min and max values provided => nothing to do
+
+                data[key] = cls.faker.pystr(min_chars=min_value, max_chars=max_value)
+            elif field_type == "nested":
+                assert "schema" in d
+                # build a sub-schema based on d["schema"]
+                nested_data = cls.buildData(d["schema"])
+                data[key] = json.dumps(nested_data)
+            else:
+                # Reached for example with lists of custom fields. In this case
+                # the input can't be automatically set and here is simply ignored
+                log.warning("BuildData for {}: unknow type {}", key, field_type)
+                continue
+
+            if is_array:  # i.e. the field type is anytype[]
+                if not isinstance(data[key], list):
+                    data[key] = [data[key]]
+
+                # requests is unable to send lists, if not json-dumped
+                data[key] = json.dumps(data[key])
 
         return data
 
     @staticmethod
-    def read_mock_email() -> Any:
-        fpath = "/logs/mock.mail.lastsent.json"
-        if not os.path.exists(fpath):
+    def delete_mock_email(previous: bool = False) -> Any:
+        target = "prevsent" if previous else "lastsent"
+        fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
+        fpath.unlink(missing_ok=True)
+
+    @staticmethod
+    def read_mock_email(previous: bool = False) -> Any:
+        target = "prevsent" if previous else "lastsent"
+        fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
+        if not fpath.exists():
             return None
 
         with open(fpath) as file:
             data = json.load(file)
-
-            log.warning("Inspecting Email: {}", data)
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
@@ -388,28 +519,26 @@ class BaseTests:
             data["body"] = "".join(tokens[1:])
 
         # Longer email are base64 encoded
-        # It happens with activation email from MeteoHub
         if "Content-Transfer-Encoding: base64" in data["body"]:  # pragma: no cover
             encodings = data["body"].split("Content-Transfer-Encoding: base64")
-            base64_body = re.sub(r"--===============.*$", "", encodings[1])
+            # Get the last message... should the be the html content
+            # A proper email parser would be need to improve this part
+            base64_body = re.sub(r"--===============.*$", "", encodings[-1])
+            base64_body = base64_body.replace("\n", "")
 
-            # b64decode gives as output bytes, decode("utf-8") needed to get string
-            data["body"] = base64.b64decode(base64_body.replace("\n", "")).decode(
-                "utf-8"
-            )
+            # b64decode gives as output bytes, decode("utf-8") needed to get a string
+            data["body"] = base64.b64decode(base64_body).decode("utf-8")
 
-        os.unlink(fpath)
+        fpath.unlink()
         return data
 
     @staticmethod
     def get_token_from_body(body: str) -> Optional[str]:
         token = None
 
-        # Debug code:
-        log.warning("Inspecting email body: {}", body)
-
         # if a token is not found the email is considered to be plain text
-        if "</a>" not in body:
+        # Emails are always html now
+        if "</a>" not in body:  # pragma: no cover
             token = body[1 + body.rfind("/") :]
         # if a token is found the email is considered to be html
         else:
@@ -419,8 +548,14 @@ class BaseTests:
 
             log.warning("Found urls: {}", urls)
             if urls:
-                # token is the last part of the url, extract as a path
-                token = os.path.basename(urls[0])
+                for url in urls:
+                    frontend_host = get_frontend_url()
+                    # Search the first url that contains the frontend host,
+                    # to skip any external url
+                    if frontend_host in url:
+                        # token is the last part of the url, extract as a path
+                        token = os.path.basename(url)
+                        break
 
         if token:
             token = urllib.parse.unquote(token)
@@ -441,7 +576,12 @@ class BaseTests:
         if wrong_secret:
             secret = cls.faker.password()
         else:
-            secret = open(SECRET_KEY_FILE, "rb").read()
+
+            # Debug code:
+            from restapi.config import APP_SECRETS
+
+            log.critical(list(APP_SECRETS.iterdir()))
+            secret = open(JWT_SECRET_FILE, "rb").read()
 
         if wrong_algorithm:
             algorithm = "HS256"
@@ -451,7 +591,7 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload: Payload = {"user_id": user_id, "jti": str(uuid.uuid4())}
+        payload: Dict[str, Any] = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
         payload["iat"] = now
@@ -464,9 +604,7 @@ class BaseTests:
         else:
             payload["exp"] = now + timedelta(seconds=999)
 
-        token = jwt.encode(payload, secret, algorithm=algorithm).decode("ascii")
-
-        return token
+        return jwt.encode(payload, secret, algorithm=algorithm)
 
     @staticmethod
     def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
@@ -537,3 +675,20 @@ class BaseTests:
 
         events.reverse()
         return events
+
+    @staticmethod
+    def send_task(app: Flask, task_name: str, *args: Any, **kwargs: Any) -> Any:
+
+        c = celery.get_instance()
+        c.app = app
+
+        # Celery type hints are wrong!?
+        # Mypy complains about: error: "Callable[[], Any]" has no attribute "get"
+        # But .tasks is a TaskRegistry and it is child of dict...
+        # so that .get is totally legit!
+        task = c.celery_app.tasks.get(task_name)  # type: ignore
+
+        if not task:
+            raise AttributeError("Task not found")
+
+        return task(*args, **kwargs)

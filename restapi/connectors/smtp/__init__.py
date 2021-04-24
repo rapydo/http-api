@@ -1,14 +1,13 @@
-import datetime
 import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
-from typing import Optional, Union
-
-import pytz
+from threading import Thread
+from typing import List, Optional, Union
 
 from restapi.config import TESTING
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
 # mypy: ignore-errors
@@ -19,17 +18,19 @@ else:
 
 from restapi.utilities.logs import log
 
+MAX_NUM_RETRIES = 3
+
 
 class Mail(Connector):
     def __init__(self) -> None:
-        self.smtp = None
+        self.smtp: Optional[SMTP] = None
         super().__init__()
         # instance_variables is updated with custom variabiles in connect
         # and the used in the send method.
         # This way the send method will be able to use variabiles overridden in connect
         self.instance_variables = self.variables.copy()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):
@@ -74,7 +75,7 @@ class Mail(Connector):
         try:
             self.smtp.quit()
             self.smtp = None
-        except SMTPServerDisconnected:
+        except SMTPServerDisconnected:  # pragma: no cover
             log.debug("SMTP is already disconnected")
 
         return None
@@ -87,19 +88,79 @@ class Mail(Connector):
         try:
             status = self.smtp.noop()[0]
             return status == 250
-        except SMTPServerDisconnected:
+        except SMTPServerDisconnected:  # pragma: no cover
             return False
+
+    @classmethod
+    def send_async(
+        cls,
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+    ) -> None:
+
+        thr = Thread(
+            target=cls.send_async_thread,
+            args=[body, subject, to_address, from_address, cc, bcc, plain_body],
+        )
+        thr.start()
+
+        # in TESTING mode async mails are kept sync to simplify checks
+        if TESTING:
+            thr.join()
+
+        # In async mode there is no return value
+        # Because being sent asynchronously it is not possible to
+        # synchronously know if the email is sent or not
+        return None
+
+    @classmethod
+    def send_async_thread(
+        cls,
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+        retry: int = 1,
+    ) -> bool:
+
+        with get_instance() as client:
+            sent = client.send(
+                body, subject, to_address, from_address, cc, bcc, plain_body
+            )
+
+        if sent or retry > MAX_NUM_RETRIES:
+            return sent
+
+        log.warning("Sending email again")  # pragma: no cover
+        return cls.send_async_thread(  # pragma: no cover
+            body=body,
+            subject=subject,
+            to_address=to_address,
+            from_address=from_address,
+            cc=cc,
+            bcc=bcc,
+            plain_body=plain_body,
+            retry=retry + 1,
+        )
 
     def send(
         self,
-        body,
-        subject,
-        to_address=None,
-        from_address=None,
-        cc=None,
-        bcc=None,
-        plain_body=None,
-    ):
+        body: str,
+        subject: str,
+        to_address: Optional[str] = None,
+        from_address: Optional[str] = None,
+        cc: Optional[Union[str, List[str]]] = None,
+        bcc: Optional[Union[str, List[str]]] = None,
+        plain_body: Optional[str] = None,
+    ) -> bool:
 
         if not to_address:
             to_address = self.instance_variables.get("admin")
@@ -152,8 +213,7 @@ class Mail(Connector):
                 log.warning("Invalid BCC value: {}", bcc)
                 bcc = None
 
-            date_fmt = "%a, %b %d, %Y at %I:%M %p %z"
-            msg["Date"] = datetime.datetime.now(pytz.utc).strftime(date_fmt)
+            msg["Date"] = formatdate()
 
             if plain_body is not None:
                 part1 = MIMEText(plain_body, "plain")
@@ -171,8 +231,8 @@ class Mail(Connector):
                 cc,
                 bcc,
             )
+
             return True
-        # Cannot be tested because smtplib is mocked!
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
             return False

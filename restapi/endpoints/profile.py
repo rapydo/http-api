@@ -1,140 +1,61 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional
 
 from restapi import decorators
-from restapi.connectors import Connector
-from restapi.models import ISO8601UTC, TOTP, Schema, fields, validate
+from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
+from restapi.exceptions import ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
-auth = Connector.get_authentication_instance()
-
-
-class NewPassword(Schema):
-    password = fields.Str(
-        required=True,
-        password=True,
-        # Not needed to check the length of the current password... if set...
-        # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    new_password = fields.Str(
-        required=True,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    password_confirm = fields.Str(
-        required=True,
-        password=True,
-        validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-    )
-    totp_code = TOTP(required=False)
-
-
-def patchUserProfile():
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["name"] = fields.Str()
-    attributes["surname"] = fields.Str()
-    attributes["privacy_accepted"] = fields.Boolean()
-
-    if custom_fields := mem.customizer.get_custom_input_fields(
-        request=None, scope=mem.customizer.PROFILE
-    ):
-        attributes.update(custom_fields)
-
-    schema = Schema.from_dict(attributes, name="UserProfileEdit")
-    return schema()
-
-
-# Duplicated in admin_users.py
-class Group(Schema):
-    uuid = fields.UUID()
-    shortname = fields.Str()
-    fullname = fields.Str()
-
-
-def getProfileData():
-    # as defined in Marshmallow.schema.from_dict
-    attributes: Dict[str, Union[fields.Field, type]] = {}
-
-    attributes["uuid"] = fields.UUID(required=True)
-    attributes["email"] = fields.Email(required=True)
-    attributes["name"] = fields.Str(required=True)
-    attributes["surname"] = fields.Str(required=True)
-    attributes["isAdmin"] = fields.Boolean(required=True)
-    attributes["isStaff"] = fields.Boolean(required=True)
-    attributes["isCoordinator"] = fields.Boolean(required=True)
-    attributes["privacy_accepted"] = fields.Boolean(required=True)
-    attributes["is_active"] = fields.Boolean(required=True)
-    attributes["expiration"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
-    attributes["roles"] = fields.Dict(required=True)
-    attributes["last_password_change"] = fields.DateTime(
-        required=True, format=ISO8601UTC
-    )
-    attributes["first_login"] = fields.DateTime(required=True, format=ISO8601UTC)
-    attributes["last_login"] = fields.DateTime(required=True, format=ISO8601UTC)
-
-    attributes["group"] = fields.Nested(Group)
-
-    attributes["two_factor_enabled"] = fields.Boolean(required=True)
-
-    if custom_fields := mem.customizer.get_custom_output_fields(None):
-        attributes.update(custom_fields)
-
-    schema = Schema.from_dict(attributes, name="UserProfile")
-    return schema()
-
 
 class Profile(EndpointResource):
 
-    baseuri = "/auth"
     depends_on = ["MAIN_LOGIN_ENABLE"]
     labels = ["profile"]
 
     @decorators.auth.require()
-    @decorators.marshal_with(getProfileData(), code=200)
+    @decorators.marshal_with(profile_output(), code=200)
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="List profile attributes",
         responses={200: "User profile is returned"},
     )
     def get(self) -> Response:
 
-        current_user = self.get_user()
+        user = self.get_user()
+
+        # Can't happen since auth is required
+        if user is None:  # pragma: no cover
+            raise ServiceUnavailable("Unexpected internal error")
+
         data = {
-            "uuid": current_user.uuid,
-            "email": current_user.email,
-            "name": current_user.name,
-            "surname": current_user.surname,
-            "isAdmin": self.verify_admin(),
-            "isStaff": self.verify_staff(),
-            "isCoordinator": self.verify_coordinator(),
-            "privacy_accepted": current_user.privacy_accepted,
-            "last_password_change": current_user.last_password_change,
-            "first_login": current_user.first_login,
-            "last_login": current_user.last_login,
-            "is_active": current_user.is_active,
-            "expiration": current_user.expiration,
+            "uuid": user.uuid,
+            "email": user.email,
+            "name": user.name,
+            "surname": user.surname,
+            "isAdmin": self.auth.is_admin(user),
+            "isStaff": self.auth.is_staff(user),
+            "isCoordinator": self.auth.is_coordinator(user),
+            "privacy_accepted": user.privacy_accepted,
+            "last_password_change": user.last_password_change,
+            "first_login": user.first_login,
+            "last_login": user.last_login,
+            "is_active": user.is_active,
+            "expiration": user.expiration,
+            "belongs_to": user.belongs_to,
             # Convert list of Roles into a dict with name: description
-            "roles": {role.name: role.description for role in current_user.roles},
+            "roles": {role.name: role.description for role in user.roles},
+            "two_factor_enabled": self.auth.SECOND_FACTOR_AUTHENTICATION,
         }
 
-        if Connector.authentication_service == "neo4j":
-            data["group"] = current_user.belongs_to.single()
-        else:
-            data["group"] = current_user.belongs_to
-
-        data["two_factor_enabled"] = self.auth.SECOND_FACTOR_AUTHENTICATION
-
-        data = mem.customizer.manipulate_profile(ref=self, user=current_user, data=data)
+        data = mem.customizer.manipulate_profile(ref=self, user=user, data=data)
 
         return self.response(data)
 
     @decorators.auth.require()
     @decorators.use_kwargs(NewPassword)
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="Update user password",
         responses={204: "Password updated"},
     )
@@ -149,6 +70,10 @@ class Profile(EndpointResource):
 
         user = self.get_user()
 
+        # Can't happen since auth is required
+        if user is None:  # pragma: no cover
+            raise ServiceUnavailable("Unexpected internal error")
+
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             self.auth.verify_totp(user, totp_code)
 
@@ -161,9 +86,9 @@ class Profile(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require()
-    @decorators.use_kwargs(patchUserProfile())
+    @decorators.use_kwargs(profile_patch_input())
     @decorators.endpoint(
-        path="/profile",
+        path="/auth/profile",
         summary="Update profile information",
         responses={204: "Profile updated"},
     )

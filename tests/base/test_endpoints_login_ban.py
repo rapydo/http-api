@@ -2,7 +2,7 @@ import time
 
 from faker import Faker
 
-from restapi.config import PRODUCTION
+from restapi.config import PRODUCTION, get_project_configuration
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
@@ -15,6 +15,7 @@ BAN_MESSAGE = (
     "Sorry, this account is temporarily blocked "
     + "due to the number of failed login attempts."
 )
+
 
 if max_login_attempts == 0:
 
@@ -42,6 +43,10 @@ if max_login_attempts == 0:
             assert events[0].event == Events.login.value
             assert events[0].user == data["email"]
 
+            # Furthermore the login/unlock endpoint is now enabled
+            r = client.post(f"{AUTH_URI}/login/unlock/token")
+            assert r.status_code == 404
+
             # Goodbye temporary user
             self.delete_user(client, uuid)
 
@@ -53,6 +58,30 @@ else:
     assert ban_duration < 60
 
     class TestApp2(BaseTests):
+        def verify_credentials_ban_notification(self) -> str:
+
+            # Verify email sent to notify credentials block,
+            # + extract and return the unlock url
+            mail = self.read_mock_email()
+            body = mail.get("body")
+            project_tile = get_project_configuration(
+                "project.title", default="YourProject"
+            )
+
+            assert body is not None
+            assert mail.get("headers") is not None
+            title = "Your credentials have been blocked"
+            assert f"Subject: {project_tile}: {title}" in mail.get("headers")
+            # Body can't be asserted if can be changed at project level...
+            # assert "this email is to inform you that your credentials have been "
+            # "temporarily due to the number of failed login attempts" in body
+            # assert "inspect the list below to detect any unwanted login" in body
+            # assert "Your credentials will be automatically unlocked in" in body
+
+            token = self.get_token_from_body(body)
+            assert token is not None
+            return token
+
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
 
             if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
@@ -61,12 +90,16 @@ else:
 
             uuid, data = self.create_user(client)
 
+            self.delete_mock_email()
+
             for _ in range(0, max_login_attempts):
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+
+            self.verify_credentials_ban_notification()
 
             # This should fail
             headers, _ = self.do_login(
@@ -119,7 +152,145 @@ else:
             # Goodbye temporary user
             self.delete_user(client, uuid)
 
-        def test_02_registration_and_login_ban(
+        def test_02_unlock_token(self, client: FlaskClient) -> None:
+
+            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+                log.warning("Skipping admin/users tests")
+                return
+
+            uuid, data = self.create_user(client)
+
+            self.delete_mock_email()
+
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, data["email"], "wrong", status_code=401)
+
+            token = self.verify_credentials_ban_notification()
+
+            # This should fail
+            headers, _ = self.do_login(
+                client, data["email"], data["password"], status_code=403
+            )
+            assert headers is None
+
+            # Check if token is valid
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 200
+
+            events = self.get_last_events(1)
+            assert events[0].event == Events.login_unlock.value
+            assert events[0].user == data["email"]
+            assert events[0].target_type == "User"
+
+            # Now credentials are unlock again :-)
+            headers, _ = self.do_login(client, data["email"], data["password"])
+            assert headers is not None
+
+            # Unlock token can be used twice
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+
+            # Verify that unlock tokens can't be used if the user is already unlocked
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, data["email"], "wrong", status_code=401)
+
+            token = self.verify_credentials_ban_notification()
+
+            # This should fail
+            headers, _ = self.do_login(
+                client, data["email"], data["password"], status_code=403
+            )
+            assert headers is None
+
+            time.sleep(ban_duration)
+
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+
+            # Verify that unlock tokens are invalidated by new tokens
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, data["email"], "wrong", status_code=401)
+
+            first_token = self.verify_credentials_ban_notification()
+
+            # This should fail
+            headers, _ = self.do_login(
+                client, data["email"], data["password"], status_code=403
+            )
+            assert headers is None
+
+            time.sleep(ban_duration)
+
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, data["email"], "wrong", status_code=401)
+
+            second_token = self.verify_credentials_ban_notification()
+
+            assert first_token != second_token
+
+            r = client.post(f"{AUTH_URI}/login/unlock/{first_token}")
+            assert r.status_code == 400
+
+            r = client.post(f"{AUTH_URI}/login/unlock/{second_token}")
+            assert r.status_code == 200
+
+            # Test invalid tokens
+
+            # Token created for another user
+            token = self.get_crafted_token("u")
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # Token created with a wrong algorithm
+            token = self.get_crafted_token("u", wrong_algorithm=True)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # Token created with a wrong secret
+            token = self.get_crafted_token("u", wrong_secret=True)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # Token created for another user
+            headers, _ = self.do_login(client, None, None)
+            r = client.get(f"{AUTH_URI}/profile", headers=headers)
+            assert r.status_code == 200
+            uuid = self.get_content(r).get("uuid")
+
+            token = self.get_crafted_token("x", user_id=uuid)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # token created for the correct user, but from outside the system!!
+            token = self.get_crafted_token("u", user_id=uuid)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # Immature token
+            token = self.get_crafted_token("u", user_id=uuid, immature=True)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token"
+
+            # Expired token
+            token = self.get_crafted_token("u", user_id=uuid, expired=True)
+            r = client.post(f"{AUTH_URI}/login/unlock/{token}")
+            assert r.status_code == 400
+            c = self.get_content(r)
+            assert c == "Invalid unlock token: this request is expired"
+
+        def test_03_registration_and_login_ban(
             self, client: FlaskClient, faker: Faker
         ) -> None:
             if Env.get_bool("ALLOW_REGISTRATION"):
@@ -138,7 +309,9 @@ else:
                 registration_message += "your account"
                 assert self.get_content(r) == registration_message
 
-                mail = self.read_mock_email()
+                # Registration endpoint send 2 mail: the first is the activation link,
+                # the second (last) is the admin notification
+                mail = self.read_mock_email(previous=True)
                 body = mail.get("body")
                 assert body is not None
                 assert mail.get("headers") is not None
@@ -162,6 +335,8 @@ else:
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
 
+                self.delete_mock_email()
+
                 for _ in range(0, max_login_attempts):
                     # Event if non activated if password is wrong the status is 401
                     self.do_login(
@@ -174,6 +349,8 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
                 assert events[0].payload["username"] == registration_data["email"]
+
+                self.verify_credentials_ban_notification()
 
                 # After max_login_attempts the account is not blocked
 
@@ -216,7 +393,7 @@ else:
 
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
-            def test_03_totp_and_login_ban(self, client: FlaskClient) -> None:
+            def test_04_totp_and_login_ban(self, client: FlaskClient) -> None:
 
                 uuid, data = self.create_user(client)
 
@@ -251,6 +428,8 @@ else:
 
                 # Verify login ban due to wrong TOTPs
 
+                self.delete_mock_email()
+
                 for _ in range(0, max_login_attempts):
                     self.do_login(
                         client,
@@ -265,6 +444,8 @@ else:
                 assert "username" not in events[0].payload
                 assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
+
+                self.verify_credentials_ban_notification()
 
                 # Now the login is blocked
                 headers, _ = self.do_login(
@@ -292,3 +473,36 @@ else:
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)
+
+        def test_05_no_notification_email_for_wrong_usernames(
+            self, client: FlaskClient, faker: Faker
+        ) -> None:
+
+            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+                log.warning("Skipping admin/users tests")
+                return
+
+            uuid, data = self.create_user(client)
+
+            self.delete_mock_email()
+
+            # Just to verify that email is deleted
+            mail = self.read_mock_email()
+            assert mail is None
+
+            email = faker.ascii_email()
+            # Wrong credentials with a non existing email
+            # -> No notification will be sent
+            for _ in range(0, max_login_attempts):
+                self.do_login(client, email, data["password"], status_code=401)
+
+            # Verify the ban (i.e. status 403)
+            headers, _ = self.do_login(client, email, data["password"], status_code=403)
+            assert headers is None
+
+            # Verify that there are no mocked email
+            mail = self.read_mock_email()
+            assert mail is None
+
+            # Goodbye temporary user
+            self.delete_user(client, uuid)

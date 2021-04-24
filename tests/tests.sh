@@ -37,4 +37,4 @@ else
     test_folder="tests/${2}"
 fi
 
-py.test --confcutdir=tests --timeout=300 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} ${test_folder}
+py.test --confcutdir=tests --timeout=300 --durations=5 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} ${test_folder}

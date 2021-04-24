@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType, TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 # mypy: ignore-errors
 from flask import Flask
@@ -35,6 +35,8 @@ NO_AUTH = "NO_AUTHENTICATION"
 InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
+
+ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -117,9 +119,7 @@ class Connector(metaclass=abc.ABCMeta):
         return False  # pragma: no cover
 
     @abc.abstractmethod
-    def get_connection_exception(
-        self,
-    ) -> Optional[Tuple[Type[BaseException]]]:  # pragma: no cover
+    def get_connection_exception(self) -> ExceptionsList:  # pragma: no cover
         return None
 
     @abc.abstractmethod
@@ -171,7 +171,6 @@ class Connector(metaclass=abc.ABCMeta):
                 log.info("{} connector is disabled", connector)
                 continue
 
-            # if host is not in variables (like for Celery) do not consider it
             external = False
             if "host" in variables:
                 if host := variables.get("host"):
@@ -181,7 +180,10 @@ class Connector(metaclass=abc.ABCMeta):
                     variables["enable"] = "0"
 
             enabled = Env.to_bool(variables.get("enable"))
-            available = enabled or external
+
+            # Celery is always enabled, if connector is enabled
+            # No further check is needed on host/external
+            available = enabled or external or connector == "celery"
 
             if not available:
                 continue
@@ -324,14 +326,17 @@ class Connector(metaclass=abc.ABCMeta):
                 authentication_instance.init_auth_db(options)
                 log.info("Initialized authentication module")
 
-            if mem.initializer(app=Connector.app):
+            initializer = mem.initializer()
+            if initializer:
                 log.info("Vanilla project has been initialized")
             else:  # pragma: no cover
                 log.error("Errors during custom initialization")
 
             if TESTING:
+                # Core test initialization
                 initialize_testing_environment(authentication_instance)
-                # TODO: also call project defined testing initialization
+                # Custom test initialization
+                initializer.initialize_testing_environment()
 
     @staticmethod
     def project_clean() -> None:
@@ -358,11 +363,9 @@ class Connector(metaclass=abc.ABCMeta):
         for m in [extended_models, custom_models]:
             for key, model in m.items():
 
-                # Verify if overriding
+                # Verify if overriding => replace
                 if key in base_models.keys():
-                    original_model = base_models[key]
-                    # Override
-                    if issubclass(model, original_model):  # pragma: no cover
+                    if issubclass(model, base_models[key]):  # pragma: no cover
                         log.debug("Overriding model {}", key)
                         cls._models[key] = model
                         continue

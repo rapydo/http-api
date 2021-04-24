@@ -1,31 +1,38 @@
 import io
+import os
+from typing import Dict
 
 from faker import Faker
 
-from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.config import PRODUCTION, UPLOAD_PATH, get_backend_url
+from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
+
+
+def get_location_header(headers: Dict[str, str], expected: str) -> str:
+    assert "Location" in headers
+    location = headers["Location"]
+
+    if PRODUCTION:
+        assert location.startswith("https://")
+
+    host = get_backend_url()
+    assert location.startswith(host)
+    location = location.replace(host, SERVER_URI)
+    assert location == expected
+    return location
 
 
 class TestUploadAndDownload(BaseTests):
-    def test_upload(self, client: FlaskClient, faker: Faker) -> None:
+    def test_simple_upload_and_download(
+        self, client: FlaskClient, faker: Faker
+    ) -> None:
 
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
+        # as defined in test_upload.py for normal uploads
+        upload_folder = "fixsubfolder"
 
         self.fname = f"{faker.pystr()}.notallowed"
-
-        r = client.put(
-            f"{API_URI}/tests/upload",
-            data={
-                "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
-                # By setting force False only txt files will be allowed for upload
-                # Strange, but it is how the endpoint is configured to improve the tests
-                "force": False,
-            },
-        )
-        assert r.status_code == 400
-        assert self.get_content(r) == "File extension not allowed"
-
-        self.fname = f"{faker.pystr()}.not"
 
         r = client.put(
             f"{API_URI}/tests/upload",
@@ -53,11 +60,15 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         r = client.put(
             f"{API_URI}/tests/upload",
             data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
         )
-        assert r.status_code == 400
+        assert r.status_code == 409
         err = f"File '{self.fname}' already exists, use force parameter to overwrite"
         assert self.get_content(r) == err
 
@@ -70,6 +81,10 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         c = self.get_content(r)
         assert c.get("filename") == self.fname
         meta = c.get("meta")
@@ -77,19 +92,20 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") is not None
         assert meta.get("type") is not None
 
-    def test_download(self, client: FlaskClient) -> None:
-
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
+        # as defined in test_upload.py for normal uploads
+        upload_folder = "fixsubfolder"
 
-        r = client.get(f"{API_URI}/tests/download/doesnotexist")
+        r = client.get(f"{API_URI}/tests/download/folder/doesnotexist")
         assert r.status_code == 400
 
-        # no filename provided
-        r = client.get(f"{API_URI}/tests/download")
+        # this is a special case introduced for testing purpose
+        # this special file name will be converted to None into the endpoint
+        r = client.get(f"{API_URI}/tests/download/folder/SPECIAL-VALUE-FOR-NONE")
         assert r.status_code == 400
 
-        r = client.get(f"{API_URI}/tests/download/{self.fname}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == self.fcontent
@@ -104,51 +120,67 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        r = client.get(f"{API_URI}/tests/download/{self.fname}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content != self.fcontent
         assert content == new_content
 
         r = client.get(
-            f"{API_URI}/tests/download/{self.fname}", query_string={"stream": True}
+            f"{API_URI}/tests/download/{upload_folder}/{self.fname}",
+            query_string={"stream": True},
         )
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == new_content
 
         r = client.get(
-            f"{API_URI}/tests/download/doesnotexist", query_string={"stream": True}
+            f"{API_URI}/tests/download/{upload_folder}/doesnotexist",
+            query_string={"stream": True},
         )
-        assert r.status_code == 400
+        assert r.status_code == 404
 
-    def test_chunked(self, client: FlaskClient, faker: Faker) -> None:
+    def test_chunked_upload_and_download(
+        self, client: FlaskClient, faker: Faker
+    ) -> None:
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
 
-        r = client.post(f"{API_URI}/tests/upload", data={"force": True})
+        # as defined in test_upload.py for chunked uploads
+        upload_folder = "fixed"
+
+        r = client.post(f"{API_URI}/tests/chunkedupload", data={"force": True})
         assert r.status_code == 400
 
+        filename = "fixed.filename.txt"
         data = {
             "force": True,
-            "name": "fixed.filename",
+            "name": filename,
             "size": "999",
             "mimeType": "application/zip",
             "lastModified": 1590302749209,
         }
-        r = client.post(f"{API_URI}/tests/upload", data=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
+        upload_endpoint = get_location_header(
+            r.headers, expected=f"{API_URI}/tests/chunkedupload/{filename}"
+        )
+
+        data["force"] = False
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
+        assert r.status_code == 409
+        assert self.get_content(r) == f"File '{filename}' already exists"
 
         with io.StringIO(faker.text()) as f:
-            r = client.put(f"{API_URI}/tests/upload/chunked", data=f)
+            r = client.put(upload_endpoint, data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": "!"},
             )
@@ -159,16 +191,21 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
         assert r.status_code == 206
         assert self.get_content(r) == "partial"
 
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        # The file is not yet read only because the upload is in progress
+        assert oct(os.stat(destination_path).st_mode & 0o777) != "0o440"
+
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
@@ -181,29 +218,34 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") == "us-ascii"
         assert meta.get("type") == "text/plain"
 
-        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == up_data
 
-        r = client.get(f"{API_URI}/tests/download/{uploaded_filename}")
+        r = client.get(f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")
         assert content == up_data
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}", headers={"Range": ""}
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
+            headers={"Range": ""},
         )
         assert r.status_code == 416
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"0-{STR_LEN - 1}"},
         )
         assert r.status_code == 416
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-9999999999999999"},
         )
 
@@ -216,7 +258,7 @@ class TestUploadAndDownload(BaseTests):
             assert r.status_code == 206
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-4"},
         )
         assert r.status_code == 206
@@ -224,7 +266,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[0:5]
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=5-{STR_LEN - 1}"},
         )
         assert r.status_code == 206
@@ -232,7 +274,7 @@ class TestUploadAndDownload(BaseTests):
         assert content == up_data[5:]
 
         r = client.get(
-            f"{API_URI}/tests/download/{uploaded_filename}",
+            f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
         # Back-compatibility check for B2STAGE
@@ -248,11 +290,32 @@ class TestUploadAndDownload(BaseTests):
         STR_LEN = len(up_data2)
         with io.StringIO(up_data2) as f:
             r = client.put(
-                f"{API_URI}/tests/upload/chunked",
+                upload_endpoint,
                 data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
+        assert r.status_code == 503
+        assert self.get_content(r) == "Permission denied: failed to write the file"
+
+        # force the file to be writeable again
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        # -rw-rw----
+        destination_path.chmod(0o660)
+
+        with io.StringIO(up_data2) as f:
+            r = client.put(
+                upload_endpoint,
+                data=f,
+                headers={"Content-Range": f"bytes */{STR_LEN}"},
+            )
+
         assert r.status_code == 200
+
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert destination_path.exists()
+        # File permissions are restored
+        assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
+
         # c = self.get_content(r)
         # assert c.get('filename') is not None
         # uploaded_filename = c.get('filename')
@@ -261,19 +324,46 @@ class TestUploadAndDownload(BaseTests):
         # assert meta.get('charset') == 'us-ascii'
         # assert meta.get('type') == 'text/plain'
 
-        # r = client.get(f'{API_URI}/tests/download/{uploaded_filename}')
+        # r = client.get(
+        #     f'{API_URI}/tests/download/{upload_folder}/{uploaded_filename}'
+        # )
         # assert r.status_code == 200
         # content = r.data.decode('utf-8')
         # # Uhmmm... should not be up_data2 + up_data ??
         # assert content == up_data + up_data2
 
         data["force"] = False
-        r = client.post(f"{API_URI}/tests/upload", data=data)
-        assert r.status_code == 400
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
+        assert r.status_code == 409
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
         data["force"] = True
-        r = client.post(f"{API_URI}/tests/upload", data=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
+        upload_endpoint = get_location_header(
+            r.headers, expected=f"{API_URI}/tests/chunkedupload/{filename}"
+        )
+
+        data["name"] = "fixed.filename.notallowed"
+        data["force"] = False
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
+        assert r.status_code == 400
+        assert self.get_content(r) == "File extension not allowed"
+
+        # Send an upload on a file endpoint not previously initialized
+        filename = f"{faker.pystr()}.txt"
+        with io.StringIO(up_data2) as f:
+            r = client.put(
+                f"{API_URI}/tests/chunkedupload/{filename}",
+                data=f,
+                headers={"Content-Range": f"bytes */{STR_LEN}"},
+            )
+
+        assert r.status_code == 503
+        error = "Permission denied: the destination file does not exist"
+        assert self.get_content(r) == error
+
+        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        assert not destination_path.exists()

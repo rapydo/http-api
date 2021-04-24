@@ -104,13 +104,14 @@ class HTTPTokenAuth:
                     and request.method != "OPTIONS"
                 ):
 
-                    caller.unpacked_token = caller.auth.verify_token(token)
+                    # valid, token, jti, user
+                    valid, token, _, user = caller.auth.verify_token(token)
 
                     # Check authentication. Optional authentication is valid if:
                     # 1) token is missing
                     # 2) token is valid
                     # Invalid tokens are rejected
-                    if not caller.unpacked_token[0]:
+                    if not valid:
                         # Clear TCP receive buffer of any pending data
                         _ = request.data
                         # Mimic the response from a normal endpoint
@@ -124,6 +125,8 @@ class HTTPTokenAuth:
                             allow_html=True,
                         )
 
+                    caller._unpacked_user = user
+                    caller._unpacked_token = token
                     request.environ[TOKEN_VALIDATED_KEY] = True
 
                 return func(*args, **kwargs)
@@ -193,9 +196,10 @@ class HTTPTokenAuth:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != "OPTIONS":
 
-                    caller.unpacked_token = caller.auth.verify_token(token)
+                    # valid, token, jti, user
+                    valid, token, _, user = caller.auth.verify_token(token)
                     # Check authentication
-                    if not caller.unpacked_token[0]:
+                    if not valid:
                         # Clear TCP receive buffer of any pending data
                         _ = request.data
                         # Mimic the response from a normal endpoint
@@ -212,7 +216,7 @@ class HTTPTokenAuth:
 
                 # Check roles
                 if not caller.auth.verify_roles(
-                    caller.unpacked_token[3], roles, required_roles=required_roles
+                    user, roles, required_roles=required_roles
                 ):
                     log.info("Unauthorized request: missing privileges.")
                     return caller.response(
@@ -221,6 +225,8 @@ class HTTPTokenAuth:
                         allow_html=True,
                     )
 
+                caller._unpacked_user = user
+                caller._unpacked_token = token
                 return func(*args, **kwargs)
 
             return wrapper

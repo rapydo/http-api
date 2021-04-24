@@ -2,6 +2,7 @@ import gzip
 import sys
 import time
 from io import BytesIO
+from typing import List
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
@@ -69,6 +70,27 @@ def obfuscate_query_parameters(raw_url):
     return urllib_parse.urlunparse(url)
 
 
+def get_data_from_request() -> str:
+    # If it is an upload, DO NOT consume request.data or request.json,
+    # otherwise the content gets lost
+    try:
+        if request.mimetype in ["application/octet-stream", "multipart/form-data"]:
+            return " STREAM_UPLOAD"
+
+        if request.data:
+            if data := handle_log_output(request.data):
+                return f" {data}"
+
+        if request.form:
+            if data := obfuscate_dict(request.form):
+                return f" {data}"
+
+    except Exception as e:  # pragma: no cover
+        log.debug(e)
+
+    return ""
+
+
 def handle_response(response):
 
     response.headers["_RV"] = str(version)
@@ -76,27 +98,16 @@ def handle_response(response):
     PROJECT_VERSION = get_project_configuration("project.version", default=None)
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
-    # If it is an upload, DO NOT consume request.data or request.json,
-    # otherwise the content gets lost
-    try:
-        if request.mimetype in ["application/octet-stream", "multipart/form-data"]:
-            data = "STREAM_UPLOAD"
-        elif request.data:
-            data = handle_log_output(request.data)
-        elif request.form:
-            data = obfuscate_dict(request.form)
-        else:
-            data = ""
 
-        if data:
-            data = f" {data}"
-    except Exception as e:  # pragma: no cover
-        log.debug(e)
-        data = ""
+    data_string = get_data_from_request()
 
     url = obfuscate_query_parameters(request.url)
 
-    if GZIP_ENABLE and "gzip" in request.headers.get("Accept-Encoding", "").lower():
+    if (
+        GZIP_ENABLE
+        and not response.is_streamed
+        and "gzip" in request.headers.get("Accept-Encoding", "").lower()
+    ):
         response.direct_passthrough = False
         content, headers = ResponseMaker.gzip_response(
             response.data,
@@ -120,7 +131,7 @@ def handle_response(response):
         BaseAuthentication.get_remote_ip(),
         request.method,
         url,
-        data,
+        data_string,
         resp,
     )
 
@@ -132,7 +143,7 @@ class ResponseMaker:
     # Have a look here: (from flask import request)
     # request.user_agent.browser
     @staticmethod
-    def get_accepted_formats():
+    def get_accepted_formats() -> List[str]:
         """
         Possible outputs:
         '*/*'
@@ -266,8 +277,19 @@ class ResponseMaker:
 
             f["type"] = ResponseMaker.get_schema_type(field, field_def)
 
-            if field_def.metadata.get("multiple"):
-                f["multiple"] = True
+            if autocomplete_endpoint := field_def.metadata.get("autocomplete_endpoint"):
+                f["autocomplete_endpoint"] = autocomplete_endpoint
+                f["autocomplete_show_id"] = field_def.metadata.get(
+                    "autocomplete_show_id", False
+                )
+
+            if autocomplete_id_bind := field_def.metadata.get("autocomplete_id_bind"):
+                f["autocomplete_id_bind"] = autocomplete_id_bind
+
+            if autocomplete_label_bind := field_def.metadata.get(
+                "autocomplete_label_bind"
+            ):
+                f["autocomplete_label_bind"] = autocomplete_label_bind
 
             if not isinstance(field_def.default, _Missing):
                 f["default"] = field_def.default
@@ -287,9 +309,9 @@ class ResponseMaker:
 
                     if validator.min is not None:
                         f["min"] = validator.min
-                    if validator.max is not None:  # pragma: no cover
+                    if validator.max is not None:
                         f["max"] = validator.max
-                    if validator.equal is not None:  # pragma: no cover
+                    if validator.equal is not None:
                         f["min"] = validator.equal
                         f["max"] = validator.equal
 
@@ -309,7 +331,7 @@ class ResponseMaker:
 
                     choices = validator.choices
                     labels = validator.labels
-                    if len(tuple(labels)) != len(tuple(choices)):  # pragma: no cover
+                    if len(tuple(labels)) != len(tuple(choices)):
                         labels = choices
                     f["options"] = dict(zip(choices, labels))
 
@@ -347,8 +369,6 @@ class ResponseMaker:
         # https://github.com/danohu/py2ng/blob/master/py2ng/__init__.py
         if isinstance(schema, fields.Bool) or isinstance(schema, fields.Boolean):
             return "boolean"
-        # if isinstance(schema, fields.Constant):
-        #     return 'any'
         if isinstance(schema, fields.Date):
             return "date"
         # Include both AwareDateTime and NaiveDateTime that extend DateTime
@@ -364,28 +384,18 @@ class ResponseMaker:
         #     return 'any'
         if isinstance(schema, fields.Float):
             return "number"
-        # if isinstance(schema, fields.Function):
-        #     return 'any'
         if isinstance(schema, fields.Int) or isinstance(schema, fields.Integer):
             return "int"
         if isinstance(schema, fields.List):
             key = schema.data_key or field
             inner_type = ResponseMaker.get_schema_type(field, schema.inner, default=key)
             return f"{inner_type}[]"
-        # if isinstance(schema, fields.Mapping):
-        #     return 'any'
-        # if isinstance(schema, fields.Method):
-        #     return 'any'
         if isinstance(schema, fields.Nested):
             return "nested"
         if isinstance(schema, fields.Number):
             return "number"
-        # if isinstance(schema, fields.Raw):
-        #     return 'any'
         if isinstance(schema, fields.Str) or isinstance(schema, fields.String):
             return "string"
-        # if isinstance(schema, fields.TimeDelta):
-        #     return 'any'
 
         # Reached with lists of custom types
         if default:

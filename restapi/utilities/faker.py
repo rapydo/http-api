@@ -74,6 +74,8 @@ class PasswordProvider(BaseProvider):
             charset += string.digits
         if symbols:
             charset += string.punctuation
+            # Removed \ from allowed characters
+            charset = charset.replace("\\", "")
 
         rand = secrets.SystemRandom()
 

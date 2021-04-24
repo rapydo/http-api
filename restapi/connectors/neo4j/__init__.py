@@ -26,8 +26,12 @@ from neomodel.exceptions import (
 )
 from neomodel.match import NodeSet
 
-from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, DatabaseDuplicatedEntry, RestApiException
+from restapi.connectors import Connector, ExceptionsList
+from restapi.exceptions import (
+    DatabaseDuplicatedEntry,
+    DatabaseMissingRequiredProperty,
+    RestApiException,
+)
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
@@ -80,7 +84,7 @@ def catch_db_exceptions(func):
                 model = m.group(2)
                 message = f"Missing property {missing_property} required by {model}"
 
-            raise BadRequest(message)
+            raise DatabaseMissingRequiredProperty(message)
         except DeflateError as e:
             log.warning(e)
             return None
@@ -108,7 +112,7 @@ class NeoModel(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
 
         return (
             neobolt_ServiceUnavailable,
@@ -119,7 +123,7 @@ class NeoModel(Connector):
             # Raised here:
             # https://github.com/neo4j/neo4j-python-driver/blob/d36334e80a66d57b32621d319032751d2204ef67/neo4j/addressing.py#L112
             ValueError,
-        )
+        )  # type: ignore
 
     def connect(self, **kwargs):
 
@@ -235,7 +239,7 @@ class NeoModel(Connector):
 
 
 class Authentication(BaseAuthentication):
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_instance()
 
     def get_user(
@@ -281,6 +285,12 @@ class Authentication(BaseAuthentication):
 
     def get_groups(self) -> List[Group]:
         return cast(List[Group], self.db.Group.nodes.all())
+
+    def get_user_group(self, user: User) -> Group:
+        return user.belongs_to.single()
+
+    def get_group_members(self, group: Group) -> List[User]:
+        return list(group.members)
 
     def save_group(self, group: Group) -> bool:
         if not group:
@@ -370,8 +380,6 @@ class Authentication(BaseAuthentication):
 
             if prev_group is not None:
                 user.belongs_to.reconnect(prev_group, group)
-            elif prev_group == group:
-                pass
             else:
                 user.belongs_to.connect(group)
 

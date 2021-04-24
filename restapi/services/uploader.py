@@ -1,17 +1,5 @@
-"""
-Upload data to APIs
-
-Interesting reading:
-http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
-https://philsturgeon.uk/api/2016/01/04/http-rest-api-file-uploads/
-
-Note: originally developed for POST, should/could be used also for PUT
-http://stackoverflow.com/a/9533843/2114395
-
-"""
-
-import os
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 from flask import request
 from plumbum.cmd import file
@@ -19,21 +7,22 @@ from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
-from restapi.exceptions import BadRequest, ServiceUnavailable
+from restapi.exceptions import BadRequest, Conflict, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
+# Equivalent to -r--r-----
+DEFAULT_PERMISSIONS = 0o440
 
-######################################
-# Save files http://API/upload
+
 class Uploader:
 
     allowed_exts: List[str] = []
 
-    def set_allowed_exts(self, exts):
+    def set_allowed_exts(self, exts: List[str]) -> None:
         self.allowed_exts = exts
 
-    def allowed_file(self, filename):
+    def allowed_file(self, filename: str) -> bool:
         if not self.allowed_exts:
             return True
         return (
@@ -41,41 +30,42 @@ class Uploader:
         )
 
     @staticmethod
-    def absolute_upload_file(filename, subfolder=None, onlydir=False):
+    def absolute_upload_file(
+        filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
+    ) -> Path:
+
+        root_path = UPLOAD_PATH
+        if subfolder:
+            root_path = root_path.joinpath(subfolder)
+            if not root_path.exists():
+                root_path.mkdir(parents=True, exist_ok=True)
+
+        if onlydir:
+            return root_path
 
         filename = secure_filename(filename)
-
-        if subfolder is not None:
-            filename = os.path.join(subfolder, filename)
-            subdir = os.path.join(UPLOAD_PATH, subfolder)
-            if not os.path.exists(subdir):  # pragma: no cover
-                os.makedirs(subdir)
-        abs_file = os.path.join(UPLOAD_PATH, filename)
-        if onlydir:
-            return os.path.dirname(abs_file)
-        return abs_file
+        return root_path.joinpath(filename)
 
     @staticmethod
-    def get_file_metadata(abs_file):
+    def get_file_metadata(abs_file: Path) -> Dict[str, str]:
         try:
             # Check the type
             # Example of output:
             # text/plain; charset=us-ascii
-            out = file["-ib", abs_file]().split(";")
+            out = file["-ib", str(abs_file)]().split(";")
             return {"type": out[0].strip(), "charset": out[1].split("=")[1].strip()}
         except Exception:
             log.warning("Unknown type for '{}'", abs_file)
             return {}
 
     # this method is used by b2stage and mistral
-    def upload(self, subfolder: Optional[str] = None, force: bool = False) -> Response:
+    def upload(self, subfolder: Optional[Path] = None, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
 
         myfile = request.files["file"]
 
-        # Check file extension?
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
@@ -84,28 +74,33 @@ class Uploader:
         abs_file = Uploader.absolute_upload_file(fname, subfolder)
         log.info("File request for [{}]({})", myfile, abs_file)
 
-        if os.path.exists(abs_file):
+        if abs_file.exists():
             if not force:
-                raise BadRequest(
+                raise Conflict(
                     f"File '{fname}' already exists, use force parameter to overwrite"
                 )
-            os.remove(abs_file)
-            log.debug("Already exists, forced removal")
+            abs_file.unlink()
 
         # Save the file
         try:
-            myfile.save(abs_file)
+            # On b2stage without str it fails with:
+            # 'PosixPath' object has no attribute 'write'
+            # Maybe due to Werkzeug==0.16.1?
+            myfile.save(str(abs_file))
             log.debug("Absolute file path should be '{}'", abs_file)
-        except Exception:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
+            log.error(e)
             raise ServiceUnavailable("Permission denied: failed to write the file")
 
         # Check exists - but it is basicaly a test that cannot fail...
         # The has just been uploaded!
-        if not os.path.exists(abs_file):  # pragma: no cover
+        if not abs_file.exists():  # pragma: no cover
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################
         # ## Final response
+
+        abs_file.chmod(DEFAULT_PERMISSIONS)
 
         # Default redirect is to 302 state, which makes client
         # think that response was unauthorized....
@@ -120,26 +115,28 @@ class Uploader:
     # https://developers.google.com/drive/api/v3/manage-uploads#resumable
     # and with https://www.npmjs.com/package/ngx-uploadx and with
     def init_chunk_upload(
-        self, upload_dir: str, filename: str, force: bool = True
+        self, upload_dir: Path, filename: str, force: bool = True
     ) -> Response:
 
-        if not os.path.exists(upload_dir):  # pragma: no cover
-            os.makedirs(upload_dir)
+        if not self.allowed_file(filename):
+            raise BadRequest("File extension not allowed")
+
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True, exist_ok=True)
 
         filename = secure_filename(filename)
 
-        file_path = os.path.join(upload_dir, filename)
+        file_path = upload_dir.joinpath(filename)
 
-        if os.path.exists(file_path):
+        if file_path.exists():
             log.warning("File already exists")
             if force:
-                os.remove(file_path)
+                file_path.unlink()
                 log.debug("Forced removal")
             else:
-                return EndpointResource.response(
-                    f"File '{filename}' already exists",
-                    code=400,
-                )
+                raise Conflict(f"File '{filename}' already exists")
+
+        file_path.touch()
 
         host = get_backend_url()
         url = f"{host}{request.path}/{filename}"
@@ -194,8 +191,14 @@ class Uploader:
 
         return total_length, start, stop
 
+    # Please not that chunk_upload as to be used from a PUT endpoint
+    # PUT request is way different compared to POST request. With PUT request
+    # the file contents can be accessed using either request.data or request.stream.
+    # The first one stores incoming data as string, while request.stream acts
+    # more like a file object, making it more suitable for binary data
+    # Ref. http://stackoverflow.com/a/9533843/2114395
     def chunk_upload(
-        self, upload_dir: str, filename: str, chunk_size: Optional[int] = None
+        self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
         filename = secure_filename(filename)
 
@@ -211,16 +214,27 @@ class Uploader:
         if chunk_size is None:
             chunk_size = 1048576
 
-        file_path = os.path.join(upload_dir, filename)
-        with open(file_path, "ab") as f:
-            while True:
-                chunk = request.stream.read(chunk_size)
-                if not chunk:
-                    break
-                f.seek(start)
-                f.write(chunk)
+        file_path = upload_dir.joinpath(filename)
+
+        # Uhm... this upload is not initialized?
+        if not file_path.exists():
+            raise ServiceUnavailable(
+                "Permission denied: the destination file does not exist"
+            )
+
+        try:
+            with open(file_path, "ab") as f:
+                while True:
+                    chunk = request.stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.seek(start)
+                    f.write(chunk)
+        except PermissionError:
+            raise ServiceUnavailable("Permission denied: failed to write the file")
 
         if completed:
+            file_path.chmod(DEFAULT_PERMISSIONS)
             return (
                 completed,
                 EndpointResource.response(

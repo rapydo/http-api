@@ -62,8 +62,8 @@ else:
 
     # it does not handle custom headers => the endpoint will provide partial schema
     # due to missing authentication => skipping all private endpoints and schemas
-    # schema = schemathesis.from_wsgi('/api/swagger', app)
-    r = client.get(f"/api/swagger?access_token={token}")
+    # schema = schemathesis.from_wsgi('/api/specs', app)
+    r = client.get(f"/api/specs?access_token={token}")
     assert r.status_code == 200
     schema = json.loads(r.get_data().decode())
     schema = schemathesis.from_dict(schema, app=app)
@@ -74,6 +74,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_no_auth(case):
 
@@ -92,6 +93,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_with_admin_auth(case):
 
@@ -121,6 +123,7 @@ else:
     @settings(
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
+        max_examples=50,
     )
     def test_logout(case):
 

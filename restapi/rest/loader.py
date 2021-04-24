@@ -5,6 +5,7 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Set, Type
 
@@ -13,13 +14,7 @@ from attr import s as ClassOfAttributes
 from flask_restful import Resource
 
 from restapi import decorators
-from restapi.config import (
-    ABS_RESTAPI_PATH,
-    API_URL,
-    BASE_URLS,
-    CONF_PATH,
-    CUSTOM_PACKAGE,
-)
+from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.utilities import print_and_exit
@@ -43,26 +38,25 @@ class EndpointElements:
     uris: List[str] = attribute(default=[])
     methods: Dict[str, List[str]] = attribute(default={})
     tags: List[str] = attribute(default=[])
-    base_uri: str = attribute(default="")
     private: bool = attribute(default=False)
 
 
 class EndpointsLoader:
-    def __init__(self):
+    def __init__(self) -> None:
 
         # Used by server.py to load endpoints definitions
-        self.endpoints = []
+        self.endpoints: List[EndpointElements] = []
         # Used by server.py to remove unmapped methods
-        self.uri2methods = {}
+        self.uri2methods: Dict[str, List[str]] = {}
         # Used by server.py to configure ApiSpec
-        self.tags = []
+        self.tags: List[Dict[str, str]] = []
 
         # Used by swagger specs endpoints to show authentication info
-        self.authenticated_endpoints = {}
+        self.authenticated_endpoints: Dict[str, Dict[str, bool]] = {}
         # Used by swagger spec endpoint to remove private endpoints from public requests
-        self.private_endpoints = {}
+        self.private_endpoints: Dict[str, Dict[str, bool]] = {}
 
-        self._used_tags = set()
+        self._used_tags: Set[str] = set()
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
@@ -86,7 +80,7 @@ class EndpointsLoader:
 
         return configuration
 
-    def load_endpoints(self):
+    def load_endpoints(self) -> None:
 
         # core endpoints folder (rapydo/http-api)
         self.load_endpoints_folder(ABS_RESTAPI_PATH)
@@ -129,7 +123,7 @@ class EndpointsLoader:
 
         return False, None
 
-    def extract_endpoints(self, base_dir):
+    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:
 
         endpoints_classes = []
         # get last item of the path
@@ -156,7 +150,9 @@ class EndpointsLoader:
             classes = Meta.get_new_classes_from_module(module)  # type: ignore
             for class_name, epclss in classes.items():
                 # Filtering out classes without expected data
-                if not hasattr(epclss, "methods") or epclss.methods is None:
+                if (
+                    not hasattr(epclss, "methods") or epclss.methods is None
+                ):  # pragma: no cover
                     continue
 
                 log.debug("Importing {} from {}.{}", class_name, apis_dir, module_file)
@@ -176,17 +172,10 @@ class EndpointsLoader:
 
         return endpoints_classes
 
-    def load_endpoints_folder(self, base_dir):
+    def load_endpoints_folder(self, base_dir: str) -> None:
         # Walk folders looking for endpoints
 
         for epclss in self.extract_endpoints(base_dir):
-
-            if epclss.baseuri in BASE_URLS:
-                base = epclss.baseuri
-            else:
-                log.warning("Invalid base {}", epclss.baseuri)
-                base = API_URL
-            base = base.strip("/")
 
             # Building endpoint
             endpoint = EndpointElements(
@@ -194,7 +183,6 @@ class EndpointsLoader:
                 methods={},
                 cls=epclss,
                 tags=epclss.labels,
-                base_uri=base,
                 private=epclss.private,
             )
 
@@ -225,13 +213,30 @@ class EndpointsLoader:
                     )
                     continue
 
+                # Once dropped change uris: List into uri: str in decorators.endpoint
+                # Deprecated since 1.1
+                if len(fn.uris) > 1:  # pragma: no cover
+                    warnings.warn(
+                        "Deprecated multiple URI mapping set on "
+                        f"{epclss.__name__}.{method_fn}",
+                        DeprecationWarning,
+                    )
+
                 endpoint.methods[method_fn] = fn.uris
                 for uri in fn.uris:
 
-                    full_uri = f"/{endpoint.base_uri}{uri}"
-                    self.authenticated_endpoints.setdefault(full_uri, {})
+                    if uri.startswith("/api/public/") or uri.startswith(
+                        "/api/app/"
+                    ):  # pragma: no cover
+                        log.critical(
+                            "Due to a BUG on the proxy configuration, "
+                            "the {} URL will not work in production mode",
+                            uri,
+                        )
+
+                    self.authenticated_endpoints.setdefault(uri, {})
                     # method_fn is equivalent to m.lower()
-                    self.authenticated_endpoints[full_uri].setdefault(
+                    self.authenticated_endpoints[uri].setdefault(
                         method_fn, auth_required
                     )
 
@@ -252,33 +257,33 @@ class EndpointsLoader:
                     inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                     # This will be used by server.py.add
-                    endpoint.uris.append(full_uri)
+                    endpoint.uris.append(uri)
 
-                    self.private_endpoints.setdefault(full_uri, {})
-                    self.private_endpoints[full_uri].setdefault(
-                        method_fn, endpoint.private
-                    )
+                    self.private_endpoints.setdefault(uri, {})
+                    self.private_endpoints[uri].setdefault(method_fn, endpoint.private)
 
                     # Used by server.py to remove unmapped methods
-                    self.uri2methods.setdefault(full_uri, [])
-                    self.uri2methods[full_uri].append(method_fn)
+                    self.uri2methods.setdefault(uri, [])
+                    self.uri2methods[uri].append(method_fn)
 
-                    # log.debug("Built definition '{}:{}'", m, full_uri)
+                    # log.debug("Built definition '{}:{}'", m, uri)
 
                     self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
 
     @staticmethod
-    def remove_unused_tags(all_tags, used_tags):
-        tags = []
+    def remove_unused_tags(
+        all_tags: Dict[str, str], used_tags: Set[str]
+    ) -> List[Dict[str, str]]:
+        tags: List[Dict[str, str]] = []
         for tag, desc in all_tags.items():
-            if tag not in used_tags:
+            if tag not in used_tags:  # pragma: no cover
                 log.debug("Skipping unsed tag: {}", tag)
                 continue
             tags.append({"name": tag, "description": desc})
         return tags
 
-    def detect_endpoints_shadowing(self):
+    def detect_endpoints_shadowing(self) -> None:
         # Verify mapping duplication or shadowing
         # Example of shadowing:
         # /xyz/<variable>
@@ -288,13 +293,12 @@ class EndpointsLoader:
         classes: Dict[str, Dict[str, Type[Resource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
-            for method, uris in endpoint.methods.items():
+            for method, tmp_uris1 in endpoint.methods.items():
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})
 
-                for uri in uris:
-                    uri = f"/{endpoint.base_uri}{uri}"
-                    if uri in mappings[method]:
+                for uri in tmp_uris1:
+                    if uri in mappings[method]:  # pragma: no cover
                         log.warning(
                             "Endpoint redefinition: {} {} used from both {} and {}",
                             method.upper(),
@@ -307,9 +311,9 @@ class EndpointsLoader:
                         classes[method][uri] = endpoint.cls
 
         # Detect endpoints swadowing
-        for method, uris in mappings.items():
-            for idx1, u1 in enumerate(uris):
-                for idx2, u2 in enumerate(uris):
+        for method, tmp_uris2 in mappings.items():
+            for idx1, u1 in enumerate(tmp_uris2):
+                for idx2, u2 in enumerate(tmp_uris2):
                     # Just skip checks of an element with it-self (same index)
                     # or elements already verified (idx2 < idx1)
                     if idx2 <= idx1:
@@ -337,7 +341,7 @@ class EndpointsLoader:
                         if t1 != t2 and fixed_token1 and fixed_token2:
                             is_safe = True
                             break
-                    if not is_safe:
+                    if not is_safe:  # pragma: no cover
                         log.warning(
                             "Endpoint shadowing detected: {}({m} {}) and {}({m} {})",
                             classes[method][u1].__name__,

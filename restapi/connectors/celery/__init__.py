@@ -1,12 +1,17 @@
+import ssl
 import traceback
+import warnings
 from datetime import timedelta
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
 
 from celery import Celery
+from celery.app.task import Task
 
-from restapi.config import CUSTOM_PACKAGE, get_project_configuration
-from restapi.connectors import Connector
+from restapi.config import CUSTOM_PACKAGE, TESTING
+from restapi.connectors import Connector, ExceptionsList
+from restapi.connectors.redis import RedisExt
+from restapi.connectors.smtp.notifications import send_celery_error_notification
 from restapi.env import Env
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log, obfuscate_url
@@ -18,10 +23,59 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 class CeleryExt(Connector):
 
+    TaskType = Task
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
-    def get_connection_exception(self):
+    # This decorator replaces:
+    # - CeleryExt.celery_app.task(func, bind=True, name="{{name}}")
+    # - send_errors_by_email
+    # - with CeleryExt.app.app_context():
+    # Use with
+    # @CeleryExt.task() [to automatically use function name]
+    # or: CeleryExt.task(name="your_custom_name")
+    @staticmethod
+    def task(name=None):
+        def decorator(func):
+            # This decorated is not covered by tests because can't be tested on backend
+            # However it is tested on celery so... even if not covered it is ok
+            @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
+            @wraps(func)
+            def wrapper(self, *args, **kwargs):
+
+                try:
+                    with CeleryExt.app.app_context():
+                        return func(self, *args, **kwargs)
+                except BaseException:
+
+                    if TESTING:
+                        self.request.id = "fixed-id"
+                        self.request.task = name or func.__name__
+
+                    task_id = self.request.id
+                    task_name = self.request.task
+                    arguments = str(self.request.args)
+
+                    # Removing username and password from urls in error stack
+                    clean_error_stack = ""
+                    for line in traceback.format_exc().split("\n"):
+                        clean_error_stack += f"{obfuscate_url(line)}\n"
+
+                    log.error("Celery task {} ({}) failed", task_id, task_name)
+                    log.error("Failed task arguments: {}", arguments[0:256])
+                    log.error("Task error: {}", clean_error_stack)
+
+                    if Connector.check_availability("smtp"):
+                        log.info("Sending error report by email", task_id, task_name)
+                        send_celery_error_notification(
+                            task_id, task_name, arguments, clean_error_stack
+                        )
+
+            return wrapper
+
+        return decorator
+
+    def get_connection_exception(self) -> ExceptionsList:
         return None
 
     @staticmethod
@@ -40,7 +94,9 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(variables: Dict[str, str], protocol: str) -> str:
+    def get_redis_url(
+        variables: Dict[str, str], protocol: str, celery_beat: bool
+    ) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
@@ -48,7 +104,12 @@ class CeleryExt(Connector):
         if pwd:
             creds = f":{pwd}@"
 
-        return f"{protocol}://{creds}{host}:{port}/0"
+        if celery_beat:
+            db = RedisExt.CELERY_BEAT_DB
+        else:
+            db = RedisExt.CELERY_DB
+
+        return f"{protocol}://{creds}{host}:{port}/{db}"
 
     @staticmethod
     def get_mongodb_url(variables: Dict[str, str], protocol: str) -> str:
@@ -75,9 +136,23 @@ class CeleryExt(Connector):
         if broker == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
 
-            self.celery_app.conf.broker_use_ssl = Env.to_bool(
-                service_vars.get("ssl_enabled")
-            )
+            if Env.to_bool(service_vars.get("ssl_enabled")):
+                # The setting can be a dict with the following keys:
+                #   ssl_cert_reqs (required): one of the SSLContext.verify_mode values:
+                #         ssl.CERT_NONE
+                #         ssl.CERT_OPTIONAL
+                #         ssl.CERT_REQUIRED
+                #   ssl_ca_certs (optional): path to the CA certificate
+                #   ssl_certfile (optional): path to the client certificate
+                #   ssl_keyfile (optional): path to the client key
+                self.celery_app.conf.broker_use_ssl = {
+                    # 'keyfile': '/var/ssl/private/worker-key.pem',
+                    # 'certfile': '/var/ssl/amqp-server-cert.pem',
+                    # 'ca_certs': '/var/ssl/myca.pem',
+                    # 'cert_reqs': ssl.CERT_REQUIRED
+                    # 'cert_reqs': ssl.CERT_OPTIONAL
+                    "cert_reqs": ssl.CERT_NONE
+                }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
                 service_vars, protocol="amqp"
@@ -89,7 +164,7 @@ class CeleryExt(Connector):
             self.celery_app.conf.broker_use_ssl = False
 
             self.celery_app.conf.broker_url = self.get_redis_url(
-                service_vars, protocol="redis"
+                service_vars, protocol="redis", celery_beat=False
             )
 
         else:  # pragma: no cover
@@ -122,7 +197,7 @@ class CeleryExt(Connector):
             service_vars = Env.load_variables_group(prefix="redis")
 
             self.celery_app.conf.result_backend = self.get_redis_url(
-                service_vars, protocol="redis"
+                service_vars, protocol="redis", celery_beat=False
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
 
@@ -209,7 +284,9 @@ class CeleryExt(Connector):
             elif backend == "REDIS":
 
                 service_vars = Env.load_variables_group(prefix="redis")
-                url = self.get_redis_url(service_vars, protocol="redis")
+                url = self.get_redis_url(
+                    service_vars, protocol="redis", celery_beat=True
+                )
 
                 self.celery_app.conf["REDBEAT_REDIS_URL"] = url
                 self.celery_app.conf["REDBEAT_KEY_PREFIX"] = REDBEAT_KEY_PREFIX
@@ -388,50 +465,22 @@ class CeleryExt(Connector):
             )
 
 
-def send_errors_by_email(func):
+# Deprecated since 1.1
+def send_errors_by_email(func):  # pragma: no cover
     """
     Send a notification email to a given recipient to the
     system administrator with details about failure.
     """
 
+    warnings.warn(
+        "Deprecated use of send_errors_by_email decorator, you can remove it",
+        DeprecationWarning,
+    )
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        try:
-            return func(self, *args, **kwargs)
-
-        except BaseException:
-
-            task_id = self.request.id
-            task_name = self.request.task
-
-            log.error("Celery task {} failed ({})", task_id, task_name)
-            arguments = str(self.request.args)
-            log.error("Failed task arguments: {}", arguments[0:256])
-            log.error("Task error: {}", traceback.format_exc())
-
-            if Connector.check_availability("smtp"):
-                log.info("Sending error report by email", task_id, task_name)
-
-                body = f"""
-Celery task {task_id} failed
-
-Name: {task_name}
-
-Arguments: {self.request.args}
-
-Error: {traceback.format_exc()}
-"""
-
-                project = get_project_configuration(
-                    "project.title",
-                    default="Unkown title",
-                )
-                subject = f"{project}: task {task_name} failed"
-                from restapi.connectors import smtp
-
-                smtp_client = smtp.get_instance()
-                smtp_client.send(body, subject)
+        return func(self, *args, **kwargs)
 
     return wrapper
 

@@ -1,31 +1,11 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from restapi import decorators
+from restapi.connectors import Connector
+from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
 from restapi.exceptions import NotFound
-from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role
-
-
-class User(Schema):
-    uuid = fields.UUID()
-    email = fields.Email()
-    name = fields.String()
-    surname = fields.String()
-
-
-# Output Schema
-class Group(Schema):
-    uuid = fields.UUID()
-    fullname = fields.Str()
-    shortname = fields.Str()
-
-    members = fields.Nested(User(many=True))
-
-
-class GroupInput(Schema):
-    shortname = fields.Str(required=True, description="Short name")
-    fullname = fields.Str(required=True, description="Full name")
 
 
 class AdminGroups(EndpointResource):
@@ -34,7 +14,7 @@ class AdminGroups(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.marshal_with(Group(many=True), code=200)
+    @decorators.marshal_with(GroupWithMembers(many=True), code=200)
     @decorators.endpoint(
         path="/admin/groups",
         summary="List of groups",
@@ -45,12 +25,31 @@ class AdminGroups(EndpointResource):
     )
     def get(self) -> Response:
 
-        groups = self.auth.get_groups()
+        groups: List[Dict[str, Any]] = []
+
+        for g in self.auth.get_groups():
+
+            if Connector.authentication_service == "mongo":
+                members = self.auth.db.User.objects.raw({"belongs_to": g.id}).all()
+            else:
+                members = list(g.members)
+            coordinators = [u for u in members if self.auth.is_coordinator(u)]
+
+            groups.append(
+                {
+                    "uuid": g.uuid,
+                    "shortname": g.shortname,
+                    "fullname": g.fullname,
+                    "members": members,
+                    "coordinators": coordinators,
+                }
+            )
 
         return self.response(groups)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(GroupInput)
+    @decorators.database_transaction
+    @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
         path="/admin/groups",
         summary="Create a new group",
@@ -69,7 +68,8 @@ class AdminGroups(EndpointResource):
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
-    @decorators.use_kwargs(GroupInput)
+    @decorators.database_transaction
+    @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",
         summary="Modify a group",

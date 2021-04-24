@@ -10,6 +10,7 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
+from restapi.connectors.smtp.notifications import get_html_template
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -21,7 +22,7 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
-from restapi.models import AdvancedList, Schema, UniqueDelimitedList, fields
+from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
@@ -36,8 +37,7 @@ from restapi.utilities.processes import (
     stop_timeout,
     wait_socket,
 )
-from restapi.utilities.templates import get_html_template
-from restapi.utilities.time import get_timedelta
+from restapi.utilities.time import get_timedelta, seconds_to_human
 
 
 class TestApp(BaseTests):
@@ -88,7 +88,7 @@ class TestApp(BaseTests):
         os.environ[f"{prefix}_{var1}"] = val1
         os.environ[f"{prefix}_{var2}"] = val2
         os.environ[f"{prefix}_{var3}"] = val3
-        variables = Env.load_group(prefix)
+        variables = Env.load_variables_group(prefix)
         assert variables is not None
         assert isinstance(variables, dict)
         assert len(variables) == 3
@@ -129,13 +129,13 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.URL()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.Url()) == "string"
         assert ResponseMaker.get_schema_type(f, fields.UUID()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Constant("x")) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.Constant("x")) == "string"
         assert ResponseMaker.get_schema_type(f, fields.Field()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Function()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Mapping()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Method()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
-        assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.Function()) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.Mapping()) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.Method()) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
+        # assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
 
         assert not ResponseMaker.is_binary(None)  # type: ignore
         assert not ResponseMaker.is_binary("")
@@ -175,9 +175,12 @@ class TestApp(BaseTests):
         assert ResponseMaker.is_binary("video/anyother")
         assert not ResponseMaker.is_binary(faker.pystr())
 
-        assert EndpointResource.response("", code=200)[1] == 200  # type: ignore
-        assert EndpointResource.response(None, code=200)[1] == 204  # type: ignore
-        assert EndpointResource.response(None, code=200, head_method=True)[1] == 200  # type: ignore
+        response = EndpointResource.response("", code=200)
+        assert response[1] == 200  # type: ignore
+        response = EndpointResource.response(None, code=200)
+        assert response[1] == 204  # type: ignore
+        response = EndpointResource.response(None, code=200, head_method=True)
+        assert response[1] == 200  # type: ignore
 
     # #######################################
     # ####      Processes
@@ -267,7 +270,9 @@ class TestApp(BaseTests):
     #########################################
     def test_templates(self) -> None:
 
-        assert get_html_template("this-should-not-exist", {}) is None
+        h, p = get_html_template("this-should-not-exist", {})
+        assert h is None
+        assert p is None
 
     # #######################################
     # ####      Timeouts
@@ -303,10 +308,12 @@ class TestApp(BaseTests):
         assert isinstance(log_output, dict)
         assert len(log_output) == 0
 
+        assert handle_log_output(1) == 1
+
         # obfuscate_dict only accepts dict
-        assert obfuscate_dict(None) is None
-        assert obfuscate_dict(10) == 10
-        assert obfuscate_dict(["x"]) == ["x"]
+        assert obfuscate_dict(None) is None  # type: ignore
+        assert obfuscate_dict(10) == 10  # type: ignore
+        assert obfuscate_dict(["x"]) == ["x"]  # type: ignore
         assert len(obfuscate_dict({})) == 0
         assert obfuscate_dict({"x": "y"}) == {"x": "y"}
         assert obfuscate_dict({"password": "y"}) == {"password": "****"}
@@ -377,11 +384,23 @@ class TestApp(BaseTests):
     #########################################
     def test_uploader(self) -> None:
 
-        meta = Uploader.get_file_metadata("invalid_file")
+        meta = Uploader.get_file_metadata("invalid_file")  # type: ignore
         assert isinstance(meta, dict)
         assert len(meta) == 0
 
-        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")
+        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")  # type: ignore
+        assert isinstance(meta, dict)
+        assert len(meta) == 2
+        assert "type" in meta
+        assert "charset" in meta
+        assert meta["type"] == "text/plain"
+        assert meta["charset"] == "utf-8"
+
+        meta = Uploader.get_file_metadata(Path("invalid_file"))
+        assert isinstance(meta, dict)
+        assert len(meta) == 0
+
+        meta = Uploader.get_file_metadata(Path("confs/projects_defaults.yaml"))
         assert isinstance(meta, dict)
         assert len(meta) == 2
         assert "type" in meta
@@ -512,6 +531,50 @@ class TestApp(BaseTests):
         except BadRequest:
             pass
 
+        assert seconds_to_human(0) == "0 seconds"
+        assert seconds_to_human(1) == "1 second"
+        assert seconds_to_human(2) == "2 seconds"
+        assert seconds_to_human(59) == "59 seconds"
+        assert seconds_to_human(60) == "1 minute"
+        assert seconds_to_human(61) == "1 minute, 1 second"
+        assert seconds_to_human(62) == "1 minute, 2 seconds"
+        assert seconds_to_human(119) == "1 minute, 59 seconds"
+        assert seconds_to_human(120) == "2 minutes"
+        assert seconds_to_human(121) == "2 minutes, 1 second"
+        assert seconds_to_human(122) == "2 minutes, 2 seconds"
+        assert seconds_to_human(179) == "2 minutes, 59 seconds"
+        assert seconds_to_human(532) == "8 minutes, 52 seconds"
+        assert seconds_to_human(3600) == "1 hour"
+        assert seconds_to_human(3601) == "1 hour, 0 minutes, 1 second"
+        assert seconds_to_human(3602) == "1 hour, 0 minutes, 2 seconds"
+        assert seconds_to_human(3660) == "1 hour, 1 minute"
+        assert seconds_to_human(3661) == "1 hour, 1 minute, 1 second"
+        assert seconds_to_human(3662) == "1 hour, 1 minute, 2 seconds"
+        assert seconds_to_human(3720) == "1 hour, 2 minutes"
+        assert seconds_to_human(7200) == "2 hours"
+        assert seconds_to_human(82800) == "23 hours"
+        assert seconds_to_human(86399) == "23 hours, 59 minutes, 59 seconds"
+        assert seconds_to_human(86400) == "1 day"
+        assert seconds_to_human(86401) == "1 day, 0 hours, 0 minutes, 1 second"
+        assert seconds_to_human(86402) == "1 day, 0 hours, 0 minutes, 2 seconds"
+        assert seconds_to_human(86460) == "1 day, 0 hours, 1 minute"
+        assert seconds_to_human(86461) == "1 day, 0 hours, 1 minute, 1 second"
+        assert seconds_to_human(86520) == "1 day, 0 hours, 2 minutes"
+        assert seconds_to_human(86521) == "1 day, 0 hours, 2 minutes, 1 second"
+        assert seconds_to_human(86522) == "1 day, 0 hours, 2 minutes, 2 seconds"
+        assert seconds_to_human(90000) == "1 day, 1 hour"
+        assert seconds_to_human(90060) == "1 day, 1 hour, 1 minute"
+        assert seconds_to_human(90061) == "1 day, 1 hour, 1 minute, 1 second"
+        assert seconds_to_human(90062) == "1 day, 1 hour, 1 minute, 2 seconds"
+        assert seconds_to_human(90120) == "1 day, 1 hour, 2 minutes"
+        assert seconds_to_human(90121) == "1 day, 1 hour, 2 minutes, 1 second"
+        assert seconds_to_human(90122) == "1 day, 1 hour, 2 minutes, 2 seconds"
+        assert seconds_to_human(93600) == "1 day, 2 hours"
+        assert seconds_to_human(777600) == "9 days"
+        assert seconds_to_human(10627200) == "123 days"
+        assert seconds_to_human(22222222) == "257 days, 4 hours, 50 minutes, 22 seconds"
+        assert seconds_to_human(63072000) == "730 days"
+
     # #######################################
     # ####      Exceptions
     #########################################
@@ -554,16 +617,22 @@ class TestApp(BaseTests):
 
     def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
-            unique_delimited_list = UniqueDelimitedList(
-                fields.Str(), delimiter=",", required=True
+            # Note: This is a replacement of the normal DelimitedList defined by rapydo
+            unique_delimited_list = fields.DelimitedList(
+                fields.Str(), delimiter=",", required=True, unique=True
             )
-            advanced_list = AdvancedList(
-                fields.Str(), unique=True, min_items=2, required=True
+            # Note: This is a replacement of the normal List list defined by rapydo
+            advanced_list = fields.List(
+                fields.Str(),
+                required=True,
+                unique=True,
+                min_items=2,
             )
 
         schema = Input1(strip_required=False)
         try:
             schema.load({})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -578,6 +647,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": None})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -585,6 +655,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": ""})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -592,6 +663,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": [10]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -601,6 +673,7 @@ class TestApp(BaseTests):
         min_items_error = "Expected at least 2 items, received 1"
         try:
             schema.load({"advanced_list": ["a"]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -608,6 +681,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": ["a", "a"]})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -619,6 +693,7 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"advanced_list": {"a": "b"}})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "advanced_list" in e.messages
@@ -626,8 +701,10 @@ class TestApp(BaseTests):
 
         r = schema.load({"unique_delimited_list": ""})
         assert "unique_delimited_list" in r
-        assert len(r["unique_delimited_list"]) == 1
-        assert r["unique_delimited_list"][0] == ""
+        # This is because I added a check to return value if value is ""
+        assert len(r["unique_delimited_list"]) == 0
+        # assert len(r["unique_delimited_list"]) == 1
+        # assert r["unique_delimited_list"][0] == ""
 
         r = schema.load({"unique_delimited_list": "xyz"})
         assert "unique_delimited_list" in r
@@ -649,10 +726,11 @@ class TestApp(BaseTests):
 
         try:
             schema.load({"unique_delimited_list": "a,b,b"})
+            pytest.fail("No exception raised")  # pragma: no cover
         except ValidationError as e:
             assert isinstance(e.messages, dict)
             assert "unique_delimited_list" in e.messages
-            err = "Provided list contains duplicates"
+            err = "Input list contains duplicates"
             assert e.messages["unique_delimited_list"][0] == err
 
         # No strips on elements

@@ -1,14 +1,13 @@
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from flask import Response as FlaskResponse
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
-from restapi.config import API_URL
 from restapi.connectors import Connector
-from restapi.rest.bearer import HTTPTokenAuth
 from restapi.rest.response import ResponseMaker
-from restapi.services.authentication import BaseAuthentication, Role
+from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.services.cache import Cache
 from restapi.utilities.logs import Events, log, save_event_log
 
@@ -22,47 +21,60 @@ Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
 
 class EndpointResource(MethodResource, Resource):
 
-    baseuri = API_URL
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False
     events = Events
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.__auth = None
+        self.__auth: Optional[BaseAuthentication] = None
+        # extracted from the token, if provided and verified
+        self._unpacked_user: Optional[User] = None
+        self._unpacked_token: Optional[str] = None
 
     # Used to set keys with Flask-Caching memoize
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__class__.__module__
 
     @property
-    def auth(self):
+    def auth(self) -> BaseAuthentication:
         if not self.__auth:
             self.__auth = Connector.get_authentication_instance()
 
         return self.__auth
 
-    def get_token(self):
-        if not hasattr(self, "unpacked_token"):
-            return None
-        return self.unpacked_token[1]
+    def get_token(self) -> Optional[str]:
+        return self._unpacked_token
 
-    def get_user(self):
-        if not hasattr(self, "unpacked_token"):
-            return None
-        return self.unpacked_token[3]
+    def get_user(self) -> Optional[User]:
+        return self._unpacked_user
 
-    def verify_admin(self):
+    # Deprecated since 1.1
+    def verify_admin(self) -> bool:  # pragma: no cover
         """ Check if current user has Administration role """
+        warnings.warn(
+            "Deprecated use of verify_admin, use auth.is_admin(user) instead",
+            DeprecationWarning,
+        )
         return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
 
-    def verify_staff(self):
+    # Deprecated since 1.1
+    def verify_staff(self) -> bool:  # pragma: no cover
         """ Check if current user has Staff role """
+        warnings.warn(
+            "Deprecated use of verify_staff, use auth.is_staff(user) instead",
+            DeprecationWarning,
+        )
         return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
 
-    def verify_coordinator(self):
+    # Deprecated since 1.1
+    def verify_coordinator(self) -> bool:  # pragma: no cover
+        warnings.warn(
+            "Deprecated use of verify_coordinator use auth.is_coordinator instead",
+            DeprecationWarning,
+        )
         return self.auth.verify_roles(
             self.get_user(), [Role.COORDINATOR], warnings=False
         )
@@ -112,34 +124,7 @@ class EndpointResource(MethodResource, Resource):
     def pagination_total(self, total: int) -> Response:
         return self.response({"total": total}, code=206)
 
-    # Deprecated since 1.0
-    def get_user_if_logged(
-        self, allow_access_token_parameter=False
-    ):  # pragma: no cover
-        """
-        Helper to be used inside an endpoint that doesn't explicitly
-        ask for authentication, but might want to do some extra behaviour
-        when a valid token is presented
-        """
-
-        log.warning(
-            "Deprecated use of self.get_user_if_logged, "
-            "decorate the endpoint with @decorators.auth.optional() instead"
-        )
-        auth_type, token = HTTPTokenAuth.get_authorization_token(
-            allow_access_token_parameter=allow_access_token_parameter
-        )
-
-        if auth_type is None:
-            return None
-
-        unpacked_token = self.auth.verify_token(token)
-        if not unpacked_token[0]:
-            return None
-
-        return unpacked_token[3]
-
-    def clear_endpoint_cache(self):
+    def clear_endpoint_cache(self) -> None:
         Cache.invalidate(self.get)
 
     # Mostly copied in authentication.py

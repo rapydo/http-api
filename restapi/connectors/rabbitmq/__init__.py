@@ -17,7 +17,7 @@ from pika.exceptions import (
 )
 from requests.auth import HTTPBasicAuth
 
-from restapi.connectors import Connector
+from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import RestApiException, ServiceUnavailable
 from restapi.utilities.logs import log
@@ -26,9 +26,10 @@ from restapi.utilities.logs import log
 class RabbitExt(Connector):
     def __init__(self) -> None:
         self.connection: Optional[pika.BlockingConnection] = None
+        self.channel: Optional[pika.adapters.blocking_connection.BlockingChannel] = None
         super().__init__()
 
-    def get_connection_exception(self):
+    def get_connection_exception(self) -> ExceptionsList:
         # Includes:
         #   AuthenticationError,
         #   ProbableAuthenticationError,
@@ -38,7 +39,7 @@ class RabbitExt(Connector):
             AMQPConnectionError,
             # Includes failures in name resolution
             socket.gaierror,
-        )
+        )  # type: ignore
 
     def connect(self, **kwargs):
 
@@ -53,13 +54,13 @@ class RabbitExt(Connector):
 
         log.info("Connecting to the Rabbit (SSL = {})", ssl_enabled)
 
-        if (host := variables.get("host")) is None:
+        if (host := variables.get("host")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing hostname")
 
-        if (user := variables.get("user")) is None:
+        if (user := variables.get("user")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing credentials")
 
-        if (password := variables.get("password")) is None:
+        if (password := variables.get("password")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing credentials")
 
         port = int(variables.get("port", "0"))
@@ -70,19 +71,23 @@ class RabbitExt(Connector):
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             # context.verify_mode = ssl.CERT_REQUIRED
             context.verify_mode = ssl.CERT_NONE
+            # context.check_hostname = False
             context.load_default_certs()
             # Enable client certification verification
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
+
+            # ADD THIS TO ALLOW FOR CERT VALIDATION
+            # import certifi
+            # context.load_verify_locations(cafile=certifi.where())
+
             self.connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=host,
                     port=port,
                     virtual_host=vhost,
                     credentials=pika.PlainCredentials(user, password),
-                    ssl_options=pika.SSLOptions(
-                        context=context, server_hostname=variables.get("host")
-                    ),
+                    ssl_options=pika.SSLOptions(context=context, server_hostname=host),
                 )
             )
 
@@ -97,7 +102,6 @@ class RabbitExt(Connector):
                 )
             )
 
-        self.channel = None
         return self
 
     def disconnect(self) -> None:
@@ -131,8 +135,7 @@ class RabbitExt(Connector):
     def exchange_exists(self, exchange: str) -> bool:
         channel = self.get_channel()
         try:
-            out = channel.exchange_declare(exchange=exchange, passive=True)
-            log.debug(out)
+            channel.exchange_declare(exchange=exchange, passive=True)
             return True
         except ChannelClosedByBroker as e:
             log.error(e)
@@ -141,22 +144,19 @@ class RabbitExt(Connector):
     def create_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
-        out = channel.exchange_declare(
+        channel.exchange_declare(
             exchange=exchange, exchange_type="direct", durable=True, auto_delete=False
         )
-        log.debug(out)
 
     def delete_exchange(self, exchange: str) -> None:
 
         channel = self.get_channel()
-        out = channel.exchange_delete(exchange, if_unused=False)
-        log.debug(out)
+        channel.exchange_delete(exchange, if_unused=False)
 
     def queue_exists(self, queue: str) -> bool:
         channel = self.get_channel()
         try:
-            out = channel.queue_declare(queue=queue, passive=True)
-            log.debug(out)
+            channel.queue_declare(queue=queue, passive=True)
             return True
         except ChannelClosedByBroker as e:
             log.error(e)
@@ -165,24 +165,22 @@ class RabbitExt(Connector):
     def create_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_declare(
+        channel.queue_declare(
             queue=queue, durable=True, exclusive=False, auto_delete=False
         )
-        log.debug(out)
 
     def delete_queue(self, queue: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_delete(
+        channel.queue_delete(
             queue,
             if_unused=False,
             if_empty=False,
         )
-        log.debug(out)
 
     def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
         if not self.exchange_exists(exchange):
-            log.critical("Does not exist")
+            log.error("Exchange {} does not exist", exchange)
             return None
 
         host = self.variables.get("host", "")
@@ -208,8 +206,9 @@ class RabbitExt(Connector):
         )
         response = r.json()
         if r.status_code != 200:  # pragma: no cover
+            err = response.get("error", "Unknown error")
             raise RestApiException(
-                {"RabbitMQ": response.get("error", "Unknown error")},
+                f"RabbitMQ: {err}",
                 status_code=r.status_code,
             )
 
@@ -238,18 +237,12 @@ class RabbitExt(Connector):
     def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_bind(
-            queue=queue, exchange=exchange, routing_key=routing_key
-        )
-        log.debug(out)
+        channel.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
 
         channel = self.get_channel()
-        out = channel.queue_unbind(
-            queue=queue, exchange=exchange, routing_key=routing_key
-        )
-        log.debug(out)
+        channel.queue_unbind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def send_json(self, message, routing_key="", exchange="", headers=None):
         return self.send(
@@ -306,11 +299,11 @@ class RabbitExt(Connector):
         except UnroutableError as e:
             log.error(e)
 
-        except ConnectionClosed as e:
+        except ConnectionClosed as e:  # pragma: no cover
             # TODO: This happens often. Check if heartbeat solves problem.
             log.error("Failed to write message, connection is dead ({})", e)
 
-        except AMQPConnectionError as e:
+        except AMQPConnectionError as e:  # pragma: no cover
             log.error("Failed to write message, connection failed ({})", e)
 
         except AMQPChannelError as e:
@@ -322,29 +315,24 @@ class RabbitExt(Connector):
 
         return False
 
-    def get_channel(self):
+    def get_channel(self) -> pika.adapters.blocking_connection.BlockingChannel:
         """
-        Return existing channel (if healthy) or create and
-        return new one.
-
-        :return: An healthy channel.
-        :raises: AttributeError if the connection is None.
+        Return existing channel (if healthy) or create and return new one
         """
 
-        if not self.connection:
+        if not self.connection:  # pragma: no cover
             raise ServiceUnavailable(f"Service {self.name} is not available")
 
-        if self.channel is None:
-            log.debug("Creating new channel.")
-            self.channel = self.connection.channel()
-            self.channel.confirm_delivery()
+        # This workflow is to convert an Optional[Channel] into a Channel
+        if self.channel is None or self.channel.is_closed:
+            log.debug("Creating channel")
+            channel = self.connection.channel()
+            channel.confirm_delivery()
 
-        elif self.channel.is_closed:
-            log.debug("Recreating channel.")
-            self.channel = self.connection.channel()
-            self.channel.confirm_delivery()
-
-        return self.channel
+            self.channel = channel
+            return channel
+        else:
+            return self.channel
 
 
 instance = RabbitExt()

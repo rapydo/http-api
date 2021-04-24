@@ -39,8 +39,8 @@ class Bot:
     ##################
 
     # Startup workflow: init -> load_commands -> start
-    def __init__(self):
-        self.commands = {}
+    def __init__(self) -> None:
+        self.commands: Dict[str, str] = {}
         self.variables = Env.load_variables_group(prefix="telegram")
         if not self.variables.get("api_key"):  # pragma: no cover
             raise ServiceUnavailable("Missing API KEY")
@@ -68,7 +68,7 @@ class Bot:
         self.api = BotApiClient(self.variables)
 
     # Startup workflow: init -> load_commands -> start
-    def load_commands(self):
+    def load_commands(self) -> None:
         Meta.get_module_from_string("restapi.services.bot")
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
             Meta.get_module_from_string(f"{EXTENDED_PACKAGE}.bot")
@@ -81,16 +81,16 @@ class Bot:
             MessageHandler(Filters.text, self.invalid_message)
         )
 
-    def stop(self):
+    def stop(self) -> None:
         self.updater.stop()
         self.updater.is_idle = False
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.admins_broadcast("Bot is shutting down")
         threading.Thread(target=self.stop).start()
 
     # Startup workflow: init -> load_commands -> start
-    def start(self):
+    def start(self) -> None:
 
         self.updater.start_polling(read_latency=5)
         self.admins_broadcast("Bot is ready to accept requests")
