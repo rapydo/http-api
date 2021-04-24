@@ -75,7 +75,8 @@ class CeleryExt(Connector):
 
         return decorator
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return None
 
     @staticmethod

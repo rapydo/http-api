@@ -29,7 +29,8 @@ class RabbitExt(Connector):
         self.channel: Optional[pika.adapters.blocking_connection.BlockingChannel] = None
         super().__init__()
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         # Includes:
         #   AuthenticationError,
         #   ProbableAuthenticationError,

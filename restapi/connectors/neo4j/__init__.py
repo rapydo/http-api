@@ -112,7 +112,8 @@ class NeoModel(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
 
         return (
             neobolt_ServiceUnavailable,

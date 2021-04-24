@@ -198,7 +198,8 @@ class SQLAlchemy(Connector):
         )
         # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return (OperationalError,)
 
     def connect(self, **kwargs):

@@ -20,7 +20,8 @@ class RedisExt(Connector):
     def __init__(self) -> None:
         super().__init__()
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return None
 
     def connect(self, **kwargs):

@@ -118,8 +118,9 @@ class Connector(metaclass=abc.ABCMeta):
             return True
         return False  # pragma: no cover
 
+    @staticmethod
     @abc.abstractmethod
-    def get_connection_exception(self) -> ExceptionsList:  # pragma: no cover
+    def get_connection_exception() -> ExceptionsList:  # pragma: no cover
         return None
 
     @abc.abstractmethod
