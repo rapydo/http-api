@@ -38,7 +38,7 @@ jobs:
             neo4j \
             neobolt \
             neomodel \
-            sqlalchemy.engine \
+            sqlalchemy \
             pymodm \
             mongoengine \
             celerybeatmongo \
