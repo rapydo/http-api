@@ -61,8 +61,6 @@ class Token(MongoModel):
     expiration = fields.DateTimeField()
     last_access = fields.DateTimeField()
     IP = fields.CharField()
-    # no longer used
-    hostname = fields.CharField(blank=True)
     location = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User, blank=True)
 

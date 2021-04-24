@@ -58,8 +58,6 @@ class Token(db.Model):
     expiration = db.Column(db.DateTime(timezone=True))
     last_access = db.Column(db.DateTime(timezone=True))
     IP = db.Column(db.String(46))
-    # no longer used
-    hostname = db.Column(db.String(256))
     location = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     emitted_for = db.relationship("User", backref=db.backref("tokens", lazy="dynamic"))
