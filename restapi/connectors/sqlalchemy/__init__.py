@@ -241,13 +241,13 @@ class SQLAlchemy(Connector):
 
         db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
-        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
+        db.session.commit = catch_db_exceptions(db.session.commit)
+        db.session.flush = catch_db_exceptions(db.session.flush)
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
 
-        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
+        Connection.execute = catch_db_exceptions(Connection.execute)
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
@@ -270,7 +270,7 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return self.db.session  # type: ignore
+        return self.db.session
 
     def disconnect(self) -> None:
         if self.db:
