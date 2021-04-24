@@ -1,8 +1,7 @@
-# Temporary disabled 1/4
-# from gripcontrol import GripPubControl, WebSocketMessageFormat
-# from pubcontrol import Item
-
 from typing import Optional, Union
+
+from gripcontrol import GripPubControl, WebSocketMessageFormat
+from pubcontrol import Item
 
 from restapi.connectors import Connector, ExceptionsList
 from restapi.utilities.logs import log
@@ -12,8 +11,7 @@ class ServiceUnavailable(BaseException):
     pass
 
 
-# PLEASE NOTE THE PRAGMA NO COVER: remove when this connector will be enabled again
-class PushpinExt(Connector):  # pragma: no cover
+class PushpinExt(Connector):
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
         return (ServiceUnavailable,)
@@ -27,8 +25,7 @@ class PushpinExt(Connector):  # pragma: no cover
         port = variables.get("port")
 
         control_uri = f"http://{host}:{port}"
-        # Temporary disabled 2/4
-        # self.pubctrl = GripPubControl({"control_uri": control_uri})
+        self.pubctrl = GripPubControl({"control_uri": control_uri})
 
         is_active = self.publish_on_stream("admin", "Connection test", sync=True)
 
@@ -51,40 +48,35 @@ class PushpinExt(Connector):  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
 
     def publish_on_stream(self, channel, message, sync=False):
-        # Temporary disabled 3/4
+        if not sync:
+            self.pubctrl.publish_http_stream(
+                channel, message, callback=PushpinExt.callback
+            )
+            return True
 
-        # if not sync:
-        #     self.pubctrl.publish_http_stream(
-        #         channel, message, callback=PushpinExt.callback
-        #     )
-        #     return True
-
-        # try:
-        #     self.pubctrl.publish_http_stream(channel, message, blocking=True)
-        #     log.debug("Message successfully published on pushpin")
-        #     return True
-        # except BaseException as e:
-        #     log.error("Publish failed on pushpin: {}", message)
-        #     log.error(e)
-        #     return False
-        pass
+        try:
+            self.pubctrl.publish_http_stream(channel, message, blocking=True)
+            log.debug("Message successfully published on pushpin")
+            return True
+        except BaseException as e:
+            log.error("Publish failed on pushpin: {}", message)
+            log.error(e)
+            return False
 
     def publish_on_socket(self, channel, message, sync=False):
-        # Temporary disabled 4/4
-        # item = Item(WebSocketMessageFormat(message, binary=False))
-        # if not sync:
-        #     self.pubctrl.publish(channel, item, callback=self.callback)
-        #     return True
+        item = Item(WebSocketMessageFormat(message, binary=False))
+        if not sync:
+            self.pubctrl.publish(channel, item, callback=self.callback)
+            return True
 
-        # try:
-        #     self.pubctrl.publish(channel, item, blocking=True)
-        #     log.debug("Message successfully published on pushpin")
-        #     return True
-        # except BaseException as e:  # pragma: no cover
-        #     log.error("Publish failed on pushpin: {}", message)
-        #     log.error(e)
-        #     return False
-        pass
+        try:
+            self.pubctrl.publish(channel, item, blocking=True)
+            log.debug("Message successfully published on pushpin")
+            return True
+        except BaseException as e:  # pragma: no cover
+            log.error("Publish failed on pushpin: {}", message)
+            log.error(e)
+            return False
 
 
 instance = PushpinExt()
