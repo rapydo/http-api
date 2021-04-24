@@ -32,7 +32,7 @@ jobs:
             apispec \
             flask_caching \
             flask_cors \
-            flask_sqlalchemy
+            flask_sqlalchemy \
             flask_restful \
             flask_migrate \
             neo4j \
