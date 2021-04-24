@@ -77,7 +77,7 @@ setup(
         "pytest-flask==1.2.0",
         "pytest-cov==2.11.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.6.3",
+        "schemathesis==3.1.0",
         "Faker==8.1.1",
         "Telethon==1.21.1",
     ],
