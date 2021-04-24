@@ -53,12 +53,12 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.3",
+        "python-telegram-bot==13.4.1",
         # Later version prevent celery to connect to RabbitMQ with ssl
         "amqp==5.0.2",
         # TOTP
         "pyotp==2.6.0",
-        "segno==1.3.1",
+        "segno==1.3.3",
         # Utilities
         "PyYAML==5.4.1",
         "loguru",
@@ -77,9 +77,9 @@ setup(
         "pytest-flask==1.2.0",
         "pytest-cov==2.11.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.1.0",
+        "schemathesis==3.6.3",
         "Faker==6.5.0",
-        "Telethon==1.20",
+        "Telethon==1.21.1",
     ],
     classifiers=[
         "Programming Language :: Python",
