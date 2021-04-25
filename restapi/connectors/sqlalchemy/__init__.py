@@ -228,7 +228,7 @@ class SQLAlchemy(Connector):
         if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
-        uri = URL(
+        uri = URL.create(
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
             password=variables.get("password"),
