@@ -265,6 +265,8 @@ class SQLAlchemy(Connector):
         # db.is_connected = self.is_connected
 
         Connection.execute = catch_db_exceptions(Connection.execute)
+        # Used in case of autoflush
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
