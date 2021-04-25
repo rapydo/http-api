@@ -463,6 +463,18 @@ class TestApp(BaseTests):
         except BadRequest as e:
             assert str(e) == "Invalid null byte in subfolder parameter"
 
+        try:
+            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except BadRequest as e:
+            assert str(e) == "Invalid null byte in subfolder parameter"
+
+        try:
+            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except BadRequest as e:
+            assert str(e) == "Invalid null byte in subfolder parameter"
+
     # #######################################
     # ####      Time
     #########################################

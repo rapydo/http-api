@@ -37,7 +37,7 @@ class Uploader:
         root_path = UPLOAD_PATH
         if subfolder:
 
-            if subfolder == Path("\x00"):
+            if "\x00" in str(subfolder):
                 raise BadRequest("Invalid null byte in subfolder parameter")
 
             root_path = root_path.joinpath(subfolder)
