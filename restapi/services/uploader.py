@@ -37,7 +37,7 @@ class Uploader:
         root_path = UPLOAD_PATH
         if subfolder:
 
-            if subfolder == "\x00":
+            if subfolder == Path("\x00"):
                 raise BadRequest("Invalid null byte in subfolder parameter")
 
             root_path = root_path.joinpath(subfolder)
@@ -253,7 +253,7 @@ class Uploader:
                 "partial",
                 headers={
                     "Access-Control-Expose-Headers": "Range",
-                    "Range": "0-{}".format(stop - 1),
+                    "Range": f"0-{stop - 1}",
                 },
                 code=206,
             ),
