@@ -20,6 +20,7 @@ from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for e
 from restapi.rest.definition import Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+from restapi.utilities.uuid import getUUID
 
 log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
@@ -308,7 +309,7 @@ def init_chunk_upload(func):
     return wrapper
 
 
-# This decorator is automatically added to every endpoints... do not use it explicitly!
+# This decorator is automatically added to every endpoints... do not use it explicitly
 def catch_exceptions(**kwargs):
     """
     A decorator to preprocess an API class method,
@@ -360,14 +361,21 @@ def catch_exceptions(**kwargs):
                 message = str(e)
                 if not message:  # pragma: no cover
                     message = "Unknown error"
+
+                error_id = getUUID()
+
+                log.error(
+                    "Catched {} exception with ID {}: {}", excname, error_id, message
+                )
                 log.exception(message)
-                log.error("Catched {} exception: {}", excname, message)
 
                 if excname in SYSTEM_EXCEPTIONS:
-                    return self.response(
-                        "Server failure; please contact admin.", code=400
-                    )
-                return self.response({excname: message}, code=400)
+                    return self.response("Unexpected Server Error", code=500)
+                # return self.response({excname: message}, code=400)
+                return self.response(
+                    {excname: f"There was an unexpected error. ErrorID: {error_id}"},
+                    code=400,
+                )
 
             return out
 
