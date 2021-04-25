@@ -136,35 +136,6 @@ def cache(*args, **kwargs):
     return mem.cache.memoize(*args, **kwargs)
 
 
-# Deprecated since 1.0
-def catch_graph_exceptions(func):  # pragma: no cover
-
-    warnings.warn(
-        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it",
-        DeprecationWarning,
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        from neomodel.exceptions import RequiredProperty
-
-        from restapi.exceptions import DatabaseDuplicatedEntry
-
-        try:
-            return func(self, *args, **kwargs)
-
-        except DatabaseDuplicatedEntry as e:
-
-            raise Conflict(str(e))
-
-        except RequiredProperty as e:
-
-            raise BadRequest(e)
-
-    return wrapper
-
-
 # This decorator is still a work in progress, in particular for MongoDB
 def database_transaction(func):
     @wraps(func)
