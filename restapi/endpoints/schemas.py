@@ -299,8 +299,8 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 def profile_patch_input() -> Schema:
     attributes: MarshmallowSchema = {}
 
-    attributes["name"] = fields.Str()
-    attributes["surname"] = fields.Str()
+    attributes["name"] = fields.Str(label="First Name")
+    attributes["surname"] = fields.Str(label="Last Name")
     attributes["privacy_accepted"] = fields.Boolean()
 
     if custom_fields := mem.customizer.get_custom_input_fields(
