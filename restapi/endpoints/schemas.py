@@ -206,9 +206,11 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
     if is_post:
         attributes["email"] = fields.Email(required=is_post)
 
-    attributes["name"] = fields.Str(required=is_post, validate=validate.Length(min=1))
+    attributes["name"] = fields.Str(
+        required=is_post, validate=validate.Length(min=1), label="First Name"
+    )
     attributes["surname"] = fields.Str(
-        required=is_post, validate=validate.Length(min=1)
+        required=is_post, validate=validate.Length(min=1), label="Last Name"
     )
 
     attributes["password"] = fields.Str(
