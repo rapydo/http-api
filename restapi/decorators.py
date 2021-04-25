@@ -1,4 +1,3 @@
-import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
@@ -12,7 +11,7 @@ from sentry_sdk import capture_exception
 
 from restapi.config import API_URL, AUTH_URL, SENTRY_URL
 from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, Conflict, RestApiException
+from restapi.exceptions import RestApiException
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
