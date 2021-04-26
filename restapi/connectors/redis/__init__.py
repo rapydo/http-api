@@ -13,9 +13,8 @@ class RedisExt(Connector):
 
     DB = 0
     CELERY_DB = 1
-    # To be fixed to use 1... or 3?
-    CELERY_BEAT_DB = 0
     CACHE_DB = 2
+    CELERY_BEAT_DB = 3
 
     def __init__(self) -> None:
         super().__init__()
