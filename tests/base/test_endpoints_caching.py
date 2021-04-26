@@ -13,7 +13,10 @@ COUNTER = 1
 class TestApp(BaseTests):
     def test_caching_autocleaning(self, client: FlaskClient) -> None:
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
+        else:
+            headers = None
 
         # Syncronize this test to start at the beginning of the next second and
         # prevent the test to overlap a change of second
@@ -66,7 +69,10 @@ class TestApp(BaseTests):
 
     def test_caching_general_clearing(self, client: FlaskClient) -> None:
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
+        else:
+            headers = None
 
         # get method is cached for 200 seconds
 
