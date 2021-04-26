@@ -10,8 +10,6 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
-RUN_SCHEMATHESIS = Env.get_bool("RUN_SCHEMATHESIS")
-
 
 def get_auth_token(client, data):
 
@@ -44,7 +42,7 @@ def get_auth_token(client, data):
 
 
 # Schemathesis is always enabled during core tests
-if not RUN_SCHEMATHESIS:  # pragma: no cover
+if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
     # No need to restore the logger after this test because
