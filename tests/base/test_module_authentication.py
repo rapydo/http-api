@@ -645,6 +645,11 @@ class TestApp(BaseTests):
         assert group.fullname != "Changed"
 
     def test_authentication_abstract_methods(self, faker: Faker) -> None:
+
+        if not Connector.check_availability("authentication"):
+            log.warning("Skipping authentication test: service not available")
+            return
+
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
         abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
