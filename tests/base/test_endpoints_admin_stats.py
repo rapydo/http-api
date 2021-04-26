@@ -1,10 +1,16 @@
 from datetime import datetime
 
+from restapi.env import Env
 from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
     def test_admin_stats(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping admin/stats tests")
+            return
 
         r = client.get(f"{API_URI}/admin/stats")
         assert r.status_code == 401
