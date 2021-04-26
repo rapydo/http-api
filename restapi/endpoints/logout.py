@@ -5,6 +5,7 @@ from restapi.rest.definition import EndpointResource, Response
 class Logout(EndpointResource):
     """ Let the logged user escape from here, invalidating current token """
 
+    depends_on = ["AUTH_ENABLED"]
     labels = ["authentication"]
 
     @decorators.auth.require()

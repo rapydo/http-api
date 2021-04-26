@@ -12,6 +12,7 @@ class AdminTokens(EndpointResource):
     """ List all tokens for all users """
 
     labels = ["authentication"]
+    depends_on = ["AUTH_ENABLED"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)

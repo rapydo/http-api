@@ -7,6 +7,15 @@ from glom import glom
 from restapi.env import Env
 from restapi.utilities.globals import mem
 
+# ENDPOINTS bases
+API_URL = "/api"
+AUTH_URL = "/auth"
+
+if Env.get("AUTH_SERVICE") == "NO_AUTHENTICATION":
+    os.environ["AUTH_ENABLED"] = "0"
+else:
+    os.environ["AUTH_ENABLED"] = "1"
+
 APP_MODE: str = os.getenv("APP_MODE", "development")
 FORCE_PRODUCTION_TESTS: bool = Env.get_bool("FORCE_PRODUCTION_TESTS")
 TESTING: bool = APP_MODE == "test" or FORCE_PRODUCTION_TESTS
@@ -17,12 +26,6 @@ REMOVE_DATA_AT_INIT_TIME: bool = False
 HOSTNAME: str = os.getenv("HOSTNAME", "backend")
 CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
 IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
-
-# ENDPOINTS bases
-API_URL = "/api"
-AUTH_URL = "/auth"
-STATIC_URL = "/static"
-BASE_URLS = [API_URL, AUTH_URL]
 
 #################
 # THE APP

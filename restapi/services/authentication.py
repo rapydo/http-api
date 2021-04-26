@@ -1271,3 +1271,86 @@ class BaseAuthentication(metaclass=ABCMeta):
         Save the group.members -> user relationship
         """
         ...
+
+
+class NoAuthentication(BaseAuthentication):
+
+    # Also used by POST user
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
+        raise NotImplementedError("Create User not implemented with No Authentication")
+
+    def link_roles(self, user: User, roles: List[str]) -> None:
+        return None
+
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+        raise NotImplementedError("Create Group not implemented with No Authentication")
+
+    def add_user_to_group(self, user: User, group: Group) -> None:
+        return None
+
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:
+
+        return None
+
+    def get_users(self) -> List[User]:
+        return []
+
+    def save_user(self, user: User) -> bool:
+        return False
+
+    def delete_user(self, user: User) -> bool:
+        return False
+
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:
+        return None
+
+    def get_groups(self) -> List[Group]:
+        return []
+
+    def get_user_group(self, user: User) -> Group:
+        raise NotImplementedError("Get Group not implemented with No Authentication")
+
+    def get_group_members(self, group: Group) -> List[User]:
+        return []
+
+    def save_group(self, group: Group) -> bool:
+        return False
+
+    def delete_group(self, group: Group) -> bool:
+        return False
+
+    def get_roles(self) -> List[RoleObj]:
+        return []
+
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+        return []
+
+    def create_role(self, name: str, description: str) -> None:
+        return None
+
+    def save_role(self, role: RoleObj) -> bool:
+        return False
+
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
+        return None
+
+    def verify_token_validity(self, jti: str, user: User) -> bool:
+        return False
+
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:
+
+        return []
+
+    def invalidate_token(self, token: str) -> bool:
+        return False

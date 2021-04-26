@@ -12,7 +12,7 @@ from restapi.utilities.logs import log
 
 
 class LoginUnlock(EndpointResource):
-    depends_on = ["AUTH_MAX_LOGIN_ATTEMPTS"]
+    depends_on = ["AUTH_MAX_LOGIN_ATTEMPTS", "AUTH_ENABLED"]
 
     @decorators.endpoint(
         path="/auth/login/unlock/<token>",

@@ -10,7 +10,7 @@ from restapi.utilities.logs import log
 
 class Profile(EndpointResource):
 
-    depends_on = ["MAIN_LOGIN_ENABLE"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLED"]
     labels = ["profile"]
 
     @decorators.auth.require()

@@ -9,6 +9,7 @@ from restapi.rest.definition import EndpointResource, Response
 class Tokens(EndpointResource):
     """ List all active tokens for a user """
 
+    depends_on = ["AUTH_ENABLED"]
     labels = ["authentication"]
 
     @decorators.auth.require()

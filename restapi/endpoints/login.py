@@ -11,7 +11,7 @@ from restapi.rest.definition import EndpointResource, Response
 class Login(EndpointResource):
     """ Let a user login by using the configured method """
 
-    depends_on = ["MAIN_LOGIN_ENABLE"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLED"]
     labels = ["authentication"]
 
     @decorators.use_kwargs(Credentials)

@@ -12,7 +12,7 @@ from restapi.services.authentication import Role
 
 class SendMail(EndpointResource):
 
-    # depends_on = [""]
+    depends_on = ["AUTH_ENABLED"]
     labels = ["admin"]
     private = True
 

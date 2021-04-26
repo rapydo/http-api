@@ -14,6 +14,7 @@ from restapi.services.authentication import Role
 class AdminStats(EndpointResource):
 
     labels = ["helpers"]
+    depends_on = ["AUTH_ENABLED"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)

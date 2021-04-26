@@ -35,6 +35,7 @@ from restapi.config import (
 )
 from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
+from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.cache import Cache
@@ -191,8 +192,10 @@ def create_app(
         )
         # OpenAPI 3 changed the definition of the security level.
         # Some changes needed here?
-        api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
-        spec.components.security_scheme("Bearer", api_key_scheme)
+
+        if Env.get_bool("AUTH_ENABLED"):
+            api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
+            spec.components.security_scheme("Bearer", api_key_scheme)
 
         microservice.config.update(
             {
