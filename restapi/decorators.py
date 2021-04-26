@@ -339,7 +339,7 @@ def catch_exceptions(**kwargs):
                 )
                 log.exception(message)
 
-                if excname in SYSTEM_EXCEPTIONS:
+                if excname in SYSTEM_EXCEPTIONS:  # pragma: no cover
                     return self.response("Unexpected Server Error", code=500)
                 # return self.response({excname: message}, code=400)
                 return self.response(

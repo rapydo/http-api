@@ -17,14 +17,13 @@ BAN_MESSAGE = (
 )
 
 
-if max_login_attempts == 0:
+if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
+    log.warning("Skipping login ban tests")
+
+elif max_login_attempts == 0:
 
     class TestApp1(BaseTests):
         def test_01_login_ban_not_enabled(self, client: FlaskClient) -> None:
-
-            if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
-                log.warning("Skipping admin/users tests")
-                return
 
             uuid, data = self.create_user(client)
             # Login attempts are not registered, let's try to fail the login many times
@@ -51,7 +50,8 @@ if max_login_attempts == 0:
             self.delete_user(client, uuid)
 
 
-elif Env.get_bool("AUTH_ENABLE"):
+else:
+
     # This test executes a sleep(ban_duration)... this assert is to prevent to
     # block the tests due to a too-long ban duration
     assert ban_duration < 60
@@ -505,7 +505,3 @@ elif Env.get_bool("AUTH_ENABLE"):
 
             # Goodbye temporary user
             self.delete_user(client, uuid)
-
-
-else:
-    log.warning("Skipping login ban tests")
