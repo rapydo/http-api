@@ -6,6 +6,7 @@ Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be c
 import os
 
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
@@ -13,6 +14,10 @@ from restapi.utilities.logs import log
 
 
 def test_destroy() -> None:
+
+    if not Env.get_bool("AUTH_ENABLED"):
+        log.warning("Skipping destroy tests")
+        return
 
     # Only executed if tests are run with --destroy flag
     if os.getenv("TEST_DESTROY_MODE", "0") != "1":

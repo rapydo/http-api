@@ -2,11 +2,15 @@ from faker import Faker
 
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import Events
+from restapi.utilities.logs import Events, log
 
 
 class TestApp(BaseTests):
     def test_tokens(self, client: FlaskClient, faker: Faker) -> None:
+
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping tokens tests")
+            return
 
         last_token = None
         last_tokens_header = None

@@ -93,6 +93,10 @@ class TestApp1(BaseTests):
 
     def test_admin(self, client: FlaskClient) -> None:
 
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping admin authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
@@ -221,6 +225,10 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_staff(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping staff authorizations tests")
+            return
 
         auth = Connector.get_authentication_instance()
         auth.get_roles()
@@ -357,6 +365,11 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_coordinator(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping coordinator authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
@@ -485,6 +498,11 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_user(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping user authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
@@ -620,6 +638,14 @@ class TestApp1(BaseTests):
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
+
+        if not Env.get_bool("AUTH_ENABLED"):
+
+            assert paths == []
+
+            log.warning("Skipping other public authorizations tests")
+            return
+
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
 
         if Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS") > 0:

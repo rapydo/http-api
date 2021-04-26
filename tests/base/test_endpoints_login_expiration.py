@@ -11,8 +11,8 @@ from restapi.utilities.logs import Events, log
 class TestApp2(BaseTests):
     def test_01_login_expiration(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
-            log.warning("Skipping admin/users tests")
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping login expiration tests")
             return
 
         # Let's create a new user with an expiration time of N seconds

@@ -12,7 +12,7 @@ from restapi.utilities.logs import Events, log
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLED"):
             log.warning("Skipping admin/users tests")
             return
 
@@ -133,6 +133,10 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
     def test_events_file(self) -> None:
+
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLED"):
+            log.warning("Skipping admin/users tests")
+            return
 
         events = self.get_last_events(4, filters={"target_type": "Group"})
 

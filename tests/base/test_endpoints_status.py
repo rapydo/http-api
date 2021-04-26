@@ -1,3 +1,4 @@
+from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -20,9 +21,15 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == 404
 
-        # Check /auth/status with no token or invalid token
-        r = client.get(f"{AUTH_URI}/status")
-        assert r.status_code == 401
+        if Env.get_bool("AUTH_ENABLED"):
+            # Check /auth/status with no token or invalid token
+            r = client.get(f"{AUTH_URI}/status")
+            assert r.status_code == 401
 
-        r = client.get(f"{AUTH_URI}/status", headers={"Authorization": "Bearer ABC"})
-        assert r.status_code == 401
+            r = client.get(
+                f"{AUTH_URI}/status", headers={"Authorization": "Bearer ABC"}
+            )
+            assert r.status_code == 401
+        else:
+            r = client.get(f"{AUTH_URI}/status")
+            assert r.status_code == 404
