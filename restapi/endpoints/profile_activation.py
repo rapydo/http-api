@@ -12,7 +12,7 @@ from restapi.rest.definition import EndpointResource, Response
 
 
 class ProfileActivation(EndpointResource):
-    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
     labels = ["base", "profile"]
 
     @decorators.endpoint(

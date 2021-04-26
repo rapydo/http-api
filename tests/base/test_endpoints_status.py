@@ -21,7 +21,7 @@ class TestApp(BaseTests):
         r = client.get(API_URI)
         assert r.status_code == 404
 
-        if Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("AUTH_ENABLE"):
             # Check /auth/status with no token or invalid token
             r = client.get(f"{AUTH_URI}/status")
             assert r.status_code == 401

@@ -8,7 +8,7 @@ from restapi.utilities.logs import Events, log
 class TestApp(BaseTests):
     def test_tokens(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping tokens tests")
             return
 

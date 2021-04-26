@@ -15,7 +15,7 @@ from restapi.utilities.logs import log
 
 def test_destroy() -> None:
 
-    if not Env.get_bool("AUTH_ENABLED"):
+    if not Env.get_bool("AUTH_ENABLE"):
         log.warning("Skipping destroy tests")
         return
 

@@ -10,7 +10,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_database_exceptions(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping dabase exceptions tests")
             return
 

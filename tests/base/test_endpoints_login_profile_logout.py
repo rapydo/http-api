@@ -12,7 +12,7 @@ class TestApp(BaseTests):
     def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
         """ Check that you can login and receive back your token """
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping login tests")
             return
 
@@ -91,7 +91,7 @@ class TestApp(BaseTests):
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping profile tests")
             return
 
@@ -197,7 +197,7 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping change profile tests")
             return
 
@@ -367,7 +367,7 @@ class TestApp(BaseTests):
     def test_04_logout(self, client: FlaskClient) -> None:
         """ Check that you can logout with a valid token """
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping logout tests")
             return
 
@@ -391,7 +391,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_05_login_failures(self, client: FlaskClient) -> None:
-        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
             _, data = self.create_user(client)
             headers, _ = self.do_login(
@@ -402,7 +402,7 @@ class TestApp(BaseTests):
 
     def test_06_token_ip_validity(self, client: FlaskClient, faker: Faker) -> None:
 
-        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLE"):
             if Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD") < 10:
                 headers, _ = self.do_login(client, None, None)
 

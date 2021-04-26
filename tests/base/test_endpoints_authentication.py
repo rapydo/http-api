@@ -11,12 +11,13 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == "OK"
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
 
-        # Tokens are ignored
-        r = client.get(f"{API_URI}/tests/noauth", headers=headers)
-        assert r.status_code == 200
-        assert self.get_content(r) == "OK"
+            # Tokens are ignored
+            r = client.get(f"{API_URI}/tests/noauth", headers=headers)
+            assert r.status_code == 200
+            assert self.get_content(r) == "OK"
 
         # Tokens are ignored even if invalid
         r = client.get(
@@ -27,7 +28,7 @@ class TestApp(BaseTests):
 
     def test_auth(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
 
@@ -60,7 +61,7 @@ class TestApp(BaseTests):
 
     def test_optional_auth(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
 
@@ -123,7 +124,7 @@ class TestApp(BaseTests):
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
 
@@ -166,7 +167,7 @@ class TestApp(BaseTests):
 
     def test_optional_access_token_parameter(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
 
@@ -220,7 +221,7 @@ class TestApp(BaseTests):
 
     def test_authentication_with_multiple_roles(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
 

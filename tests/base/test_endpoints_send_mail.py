@@ -11,7 +11,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_sendmail(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Connector.check_availability("smtp") or not Env.get_bool("AUTH_ENABLED"):
+        if not Connector.check_availability("smtp") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin send mail tests")
             return
 

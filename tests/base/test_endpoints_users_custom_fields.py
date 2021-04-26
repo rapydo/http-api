@@ -9,7 +9,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_users_custom_fields(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping users custom fields tests")
             return
 

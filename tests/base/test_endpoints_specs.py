@@ -28,13 +28,13 @@ class TestApp(BaseTests):
         assert "security" not in content
         # assert "Bearer" in content["security"][0]
 
-        if Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("AUTH_ENABLE"):
             assert "securityDefinitions" in content
             assert "Bearer" in content["securityDefinitions"]
         else:
             assert "securityDefinitions" not in content
 
-        if Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("AUTH_ENABLE"):
             headers, _ = self.do_login(client, None, None)
             r = client.get(f"{API_URI}/specs", headers=headers)
             assert r.status_code == 200

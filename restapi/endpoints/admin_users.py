@@ -19,7 +19,7 @@ from restapi.utilities.time import date_lower_than as dt_lower
 
 
 class AdminSingleUser(EndpointResource):
-    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["admin"]
     private = True
 
@@ -44,7 +44,7 @@ class AdminSingleUser(EndpointResource):
 
 class AdminUsers(EndpointResource):
 
-    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLED"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["admin"]
     private = True
 

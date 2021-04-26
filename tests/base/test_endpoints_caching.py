@@ -122,7 +122,7 @@ class TestApp(BaseTests):
 
     def test_cached_authenticated_endpoint(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping cache with authentication tests")
             return
 
@@ -198,7 +198,7 @@ class TestApp(BaseTests):
 
     def test_cached_semiauthenticated_endpoint(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping cache with authentication tests")
             return
 
@@ -254,7 +254,7 @@ class TestApp(BaseTests):
 
     def test_cached_authenticated_param_endpoint(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping cache with authentication tests")
             return
 
@@ -314,7 +314,7 @@ class TestApp(BaseTests):
 
     def test_cached_semiauthenticated_param_endpoint(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping cache with authentication tests")
             return
 

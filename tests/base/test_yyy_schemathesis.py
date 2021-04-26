@@ -52,7 +52,7 @@ else:
     app = create_app()
     client = werkzeug.Client(app, werkzeug.wrappers.Response)
 
-    if Env.get_bool("AUTH_ENABLED"):
+    if Env.get_bool("AUTH_ENABLE"):
         BaseAuthentication.load_default_user()
         BaseAuthentication.load_roles()
         USER = BaseAuthentication.default_user
@@ -92,7 +92,7 @@ else:
         # https://github.com/kiwicom/schemathesis/blob/master/src/schemathesis/checks.py#L99
         case.validate_response(response)
 
-    if Env.get_bool("AUTH_ENABLED"):
+    if Env.get_bool("AUTH_ENABLE"):
 
         @schema.parametrize()
         @settings(

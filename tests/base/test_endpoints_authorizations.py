@@ -93,7 +93,7 @@ class TestApp1(BaseTests):
 
     def test_admin(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin authorizations tests")
             return
 
@@ -226,7 +226,7 @@ class TestApp1(BaseTests):
 
     def test_staff(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping staff authorizations tests")
             return
 
@@ -366,7 +366,7 @@ class TestApp1(BaseTests):
 
     def test_coordinator(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping coordinator authorizations tests")
             return
 
@@ -499,7 +499,7 @@ class TestApp1(BaseTests):
 
     def test_user(self, client: FlaskClient) -> None:
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping user authorizations tests")
             return
 
@@ -639,7 +639,7 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
 
-        if not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("AUTH_ENABLE"):
 
             assert paths == []
 

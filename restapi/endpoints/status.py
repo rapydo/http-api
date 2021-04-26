@@ -21,7 +21,7 @@ class Status(EndpointResource):
 class AuthStatus(EndpointResource):
     """ Check if APIs are online """
 
-    depends_on = ["AUTH_ENABLED"]
+    depends_on = ["AUTH_ENABLE"]
     labels = ["helpers"]
 
     @decorators.auth.require()

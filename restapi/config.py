@@ -11,11 +11,6 @@ from restapi.utilities.globals import mem
 API_URL = "/api"
 AUTH_URL = "/auth"
 
-if Env.get("AUTH_SERVICE") == "NO_AUTHENTICATION":
-    os.environ["AUTH_ENABLED"] = "0"
-else:
-    os.environ["AUTH_ENABLED"] = "1"
-
 APP_MODE: str = os.getenv("APP_MODE", "development")
 FORCE_PRODUCTION_TESTS: bool = Env.get_bool("FORCE_PRODUCTION_TESTS")
 TESTING: bool = APP_MODE == "test" or FORCE_PRODUCTION_TESTS

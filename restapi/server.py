@@ -193,7 +193,7 @@ def create_app(
         # OpenAPI 3 changed the definition of the security level.
         # Some changes needed here?
 
-        if Env.get_bool("AUTH_ENABLED"):
+        if Env.get_bool("AUTH_ENABLE"):
             api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
             spec.components.security_scheme("Bearer", api_key_scheme)
 

@@ -19,7 +19,7 @@ if Connector.check_availability("smtp"):
 
     class ProfileRegistration(EndpointResource):
 
-        depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLED"]
+        depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
         labels = ["profile"]
 
         @decorators.use_kwargs(user_registration_input)

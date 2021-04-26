@@ -10,7 +10,7 @@ class TestApp(BaseTests):
     def test_password_reset(self, client: FlaskClient, faker: Faker) -> None:
 
         # Always enabled during core tests
-        if not Env.get_bool("ALLOW_PASSWORD_RESET") or not Env.get_bool("AUTH_ENABLED"):
+        if not Env.get_bool("ALLOW_PASSWORD_RESET") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Password reset is disabled, skipping tests")
             return
 
