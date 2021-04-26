@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from celery import Celery
 from celery.app.task import Task
+from celery.exceptions import Ignore
 
 from restapi.config import CUSTOM_PACKAGE, TESTING
 from restapi.connectors import Connector, ExceptionsList
@@ -46,6 +47,8 @@ class CeleryExt(Connector):
                 try:
                     with CeleryExt.app.app_context():
                         return func(self, *args, **kwargs)
+                except Ignore:
+                    raise
                 except BaseException:
 
                     if TESTING:

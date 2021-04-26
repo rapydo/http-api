@@ -75,6 +75,16 @@ def test_celery(app: Flask, faker: Faker) -> None:
     )
     assert exc in body
 
+    # celery.exceptions.Ignore exceptions are ignored
+
+    BaseTests.delete_mock_email()
+    # ignore is a special value included in tasks template
+    task_output = BaseTests.send_task(app, "test_task", "ignore")
+    assert task_output is None
+    mail = BaseTests.read_mock_email()
+    # No email is raised
+    assert mail is None
+
     try:
         BaseTests.send_task(app, "does-not-exist")
         pytest.fail("No exception raised")  # pragma: no cover
