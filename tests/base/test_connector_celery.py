@@ -10,7 +10,7 @@ from flask import Flask
 from restapi.config import get_project_configuration
 from restapi.connectors import Connector
 from restapi.connectors import celery as connector
-from restapi.connectors.celery import CeleryExt
+from restapi.connectors.celery import CeleryExt, Ignore
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.tests import BaseTests
@@ -79,11 +79,14 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     BaseTests.delete_mock_email()
     # ignore is a special value included in tasks template
-    task_output = BaseTests.send_task(app, "test_task", "ignore")
-    assert task_output is None
-    mail = BaseTests.read_mock_email()
-    # No email is raised
-    assert mail is None
+    try:
+        BaseTests.send_task(app, "test_task", "ignore")
+        pytest.fail("No expcetion raised")  # pragma: no cover
+    # the errors decorator re-raise the Ignore exception, without any further action
+    except Ignore:
+        mail = BaseTests.read_mock_email()
+        # No email is raised with Ignore exceptions
+        assert mail is None
 
     try:
         BaseTests.send_task(app, "does-not-exist")
