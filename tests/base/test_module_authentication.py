@@ -50,8 +50,7 @@ def verify_token_is_not_valid(
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -265,7 +264,7 @@ class TestApp(BaseTests):
 
     def test_totp_management(self) -> None:
 
-        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):  # pragma: no cover
+        if not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             log.warning("Skipping TOTP test: 2FA not enabled")
             return
 
@@ -341,8 +340,7 @@ class TestApp(BaseTests):
 
     def test_ip_management(self) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -358,8 +356,7 @@ class TestApp(BaseTests):
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -473,8 +470,7 @@ class TestApp(BaseTests):
 
     def test_users_groups_roles(self, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 

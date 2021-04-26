@@ -197,13 +197,8 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("AUTH_ENABLE"):
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping change profile tests")
-            return
-
-        # Always enabled during core tests
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
-            log.warning("Profile is disabled, skipping tests")
             return
 
         headers, _ = self.do_login(client, None, None)

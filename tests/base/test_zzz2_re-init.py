@@ -6,7 +6,6 @@ Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be c
 import os
 
 from restapi.connectors import Connector
-from restapi.env import Env
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import log
@@ -14,18 +13,13 @@ from restapi.utilities.logs import log
 
 def test_init() -> None:
 
-    if not Env.get_bool("AUTH_ENABLE"):
-        log.warning("Skipping init tests")
+    if not Connector.check_availability("authentication"):
+        log.warning("Skipping init test: service not available")
         return
 
     # Only executed if tests are run with --destroy flag
     if os.getenv("TEST_DESTROY_MODE", "0") != "1":
         log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
-        return
-
-    # Always enabled during core tests
-    if not Connector.check_availability("authentication"):  # pragma: no cover
-        log.warning("Skipping authentication test: service not available")
         return
 
     auth = Connector.get_authentication_instance()
