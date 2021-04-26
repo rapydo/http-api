@@ -25,6 +25,7 @@ jobs:
             celery-rabbit-rabbit,
             mysql,
             mongo,
+            noauth,
           ]
         mode: [dev, prod]
 

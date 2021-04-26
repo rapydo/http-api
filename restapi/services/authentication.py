@@ -1273,7 +1273,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
 
-class NoAuthentication(BaseAuthentication):
+class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:

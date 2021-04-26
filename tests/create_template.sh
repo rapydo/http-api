@@ -22,6 +22,8 @@ elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
   rapydo create prj -s celery -s redis --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
   rapydo create prj -s celery -s redis -s mongo --auth ${AUTH} --frontend no;
+elif [[ "$TEMPLATE" == "noauth" ]]; then
+  rapydo create prj --auth no --frontend no
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no

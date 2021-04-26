@@ -67,15 +67,6 @@ def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
             prop = m.group(1)
             val = m.group(2)
             return f"A {table.title()} already exists with {prop}: {val}"
-        else:
-            log.critical(
-                "DEBUG CODE: unrecognized postgres duplication error line 2: {}",
-                excpt[1],
-            )
-    else:
-        log.critical(
-            "DEBUG CODE: unrecognized postgres duplication error line 1: {}", excpt[0]
-        )
 
     return None
 
@@ -94,14 +85,6 @@ def parse_mysql_duplication_error(excpt: List[str]) -> Optional[str]:
         if m:
             table = m.group(1)
             return f"A {table.title()} already exists with {prop}: {val}"
-        else:
-            log.critical(
-                "DEBUG CODE: unrecognized mysql duplication error line 2: {}", excpt[1]
-            )
-    else:
-        log.critical(
-            "DEBUG CODE: unrecognized mysql duplication error line 1: {}", excpt[0]
-        )
 
     return None  # pragma: no cover
 
