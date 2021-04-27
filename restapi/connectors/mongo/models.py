@@ -89,7 +89,6 @@ class Group(MongoModel):
 
 
 class Login(MongoModel):
-    id = fields.CharField(primary_key=True)
     date = fields.DateTimeField(required=True)
     username = fields.CharField()
     IP = fields.CharField()
