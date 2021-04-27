@@ -646,21 +646,6 @@ class Authentication(BaseAuthentication):
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
-        # TODO: to be removed:
-        if failed:
-            self.failed_logins.setdefault(username, [])
-
-            count = len(self.failed_logins[username])
-            self.failed_logins[username].append(
-                {
-                    "progressive_count": count + 1,
-                    "username": username,
-                    "date": date,
-                    "IP": ip_address,
-                    "location": ip_location,
-                }
-            )
-
     def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
 
         if only_unflushed:
@@ -675,9 +660,6 @@ class Authentication(BaseAuthentication):
         self.db.Login.query.filter_by(username=username, flushed=False).update(
             {"flushed": True}, synchronize_session="fetch"
         )
-
-        # TODO: to be removed:
-        self.failed_logins.pop(username, None)
 
 
 instance = SQLAlchemy()

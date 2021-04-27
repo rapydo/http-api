@@ -465,23 +465,6 @@ class Authentication(BaseAuthentication):
             flushed=not failed,
         ).save()
 
-        # TODO: to be removed:
-        if failed:
-            self.failed_logins.setdefault(username, [])
-
-            count = len(self.failed_logins[username])
-            self.failed_logins[username].append(
-                {
-                    "progressive_count": count + 1,
-                    "username": username,
-                    "date": date,
-                    "IP": ip_address,
-                    "location": ip_location,
-                }
-            )
-        else:
-            log.warning("Success login save not implemented yet")
-
     def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
 
         if only_unflushed:
@@ -497,9 +480,6 @@ class Authentication(BaseAuthentication):
         for login in self.db.Login.objects.raw(conditions):
             login.flushed = False
             login.save()
-
-        # TODO: to be removed:
-        self.failed_logins.pop(username, None)
 
 
 instance = MongoExt()

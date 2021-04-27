@@ -14,7 +14,7 @@ from restapi.config import (
 from restapi.connectors import CONNECTORS_FOLDER, Connector, smtp
 from restapi.connectors.smtp import Mail
 from restapi.env import Env
-from restapi.services.authentication import FailedLogin, User
+from restapi.services.authentication import Login, User
 from restapi.utilities.logs import log
 from restapi.utilities.time import seconds_to_human
 
@@ -175,7 +175,7 @@ def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 
 
 def notify_login_block(
-    user: User, events: Iterator[FailedLogin], duration: int, url: str
+    user: User, events: Iterator[Login], duration: int, url: str
 ) -> None:
 
     # no return value since it is a send_async

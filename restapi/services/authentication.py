@@ -108,14 +108,6 @@ class Token(TypedDict, total=False):
     user: Optional[User]
 
 
-class FailedLogin(TypedDict):
-    progressive_count: int
-    username: str
-    date: datetime
-    IP: str
-    location: str
-
-
 class Role(Enum):
     ADMIN = "admin_root"
     COORDINATOR = "group_coordinator"
@@ -221,9 +213,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
     default_role: str = Role.USER.value
-
-    # To be stored on DB
-    failed_logins: Dict[str, List[FailedLogin]] = {}
 
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
@@ -677,10 +666,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             rt = unlock_token.replace(".", "+")
             url = f"{server_url}/app/login/unlock/{rt}"
 
-            # NEW IMPLEMENTATION:
-            # failed_logins = self.get_logins(username, only_unflushed=True)
-            # OLD IMPLEMENTATION, TO BE REMOVED:
-            failed_logins = self.failed_logins[username]
+            failed_logins = self.get_logins(username, only_unflushed=True)
             notify_login_block(
                 user,
                 reversed(failed_logins),
@@ -690,36 +676,18 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def count_failed_login(self, username: str) -> int:
 
-        # NEW IMPLEMENTATION:
-
         failed_logins = self.get_logins(username, only_unflushed=True)
-        log.critical(failed_logins)
-        # if not failed_logins:
-        #     return 0
-
-        # last_failed = failed_logins[-1]
-        # exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
-
-        # if datetime.now(pytz.utc) > exp:
-        #     self.flush_failed_logins(username)
-        #     return 0
-
-        # return len(failed_logins)
-
-        # OLD IMPLEMENTATION:
-
-        # username not listed or listed with an empty array
-        if not (events := self.failed_logins.get(username, None)):
+        if not failed_logins:
             return 0
 
-        # Verify the last event
-        last_event = events[-1]
-        exp = last_event["date"] + self.FAILED_LOGINS_EXPIRATION
+        last_failed = failed_logins[-1]
+        exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
+
         if datetime.now(pytz.utc) > exp:
             self.flush_failed_logins(username)
             return 0
 
-        return last_event["progressive_count"]
+        return len(failed_logins)
 
     def get_totp_secret(self, user: User) -> str:
 
