@@ -725,6 +725,6 @@ class TestApp(BaseTests):
             is None
         )
 
-        assert len(auth.get_logins(username=faker.ascii_email)) == 0
+        assert auth.get_logins(username=faker.ascii_email) is None
 
         BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore
