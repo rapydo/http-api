@@ -452,7 +452,7 @@ class Authentication(BaseAuthentication):
         ip_address = self.get_remote_ip()
         ip_location = self.localize_ip(ip_address)
 
-        self.db.Token(
+        self.db.Login(
             date=date,
             username=username,
             IP=ip_address,
