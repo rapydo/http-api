@@ -47,6 +47,9 @@ class User(db.Model):
         "Group", backref=db.backref("members"), foreign_keys=[group_id]
     )
 
+    # + has `tokens` backref from Token
+    # + has `logins` backref from Login
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -70,3 +73,13 @@ class Group(db.Model):
     fullname = db.Column(db.String(256), nullable=False)
 
     # + has `members` backref from User
+
+
+class Login(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime(timezone=True), nullable=False)
+    IP = db.Column(db.String(46))
+    location = db.Column(db.String(256))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", backref=db.backref("logins", lazy="dynamic"))
+    failed = db.Column(db.Boolean, default=False)

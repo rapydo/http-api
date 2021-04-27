@@ -86,3 +86,13 @@ class Group(MongoModel):
             IndexModel("uuid", unique=True),
             IndexModel("shortname", unique=True),
         ]
+
+
+class Login(MongoModel):
+    id = fields.CharField(primary_key=True)
+
+    date = fields.DateTimeField(required=True)
+    IP = fields.CharField()
+    location = fields.CharField(blank=True)
+    user_id = fields.ReferenceField(User, blank=True)
+    failed = fields.BooleanField(default=False)

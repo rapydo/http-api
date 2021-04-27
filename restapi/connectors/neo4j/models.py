@@ -44,6 +44,7 @@ class User(UserCustomClass):
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
     belongs_to = RelationshipTo("Group", "BELONGS_TO")
+    logins = RelationshipTo("Login", "HAS_LOGIN", cardinality=ZeroOrMore)
 
 
 class Group(GroupCustomClass):
@@ -69,3 +70,11 @@ class Role(StructuredNode):
     name = StringProperty(required=True, unique_index=True)
     description = StringProperty(default="No description")
     privileged = RelationshipFrom(User, "HAS_ROLE", cardinality=OneOrMore)
+
+
+class Login(StructuredNode):
+    date = DateTimeProperty(required=True)
+    IP = StringProperty()
+    location = StringProperty()
+    user = RelationshipFrom("User", "HAS_LOGIN", cardinality=ZeroOrOne)
+    failed = BooleanProperty(default=False)
