@@ -539,6 +539,9 @@ class Authentication(BaseAuthentication):
     def get_logins(self, username: str) -> List[Login]:
         return [x for x in self.db.Login.nodes.filter(username=username)]
 
+    def flush_failed_logins(self, username: str) -> None:
+        self.failed_logins.pop(username, None)
+
 
 instance = NeoModel()
 

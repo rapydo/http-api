@@ -684,25 +684,20 @@ class BaseAuthentication(metaclass=ABCMeta):
                 url,
             )
 
-    @classmethod
-    def get_failed_login(cls, username: str) -> int:
+    def get_failed_login(self, username: str) -> int:
 
         # username not listed or listed with an empty array
-        if not (events := cls.failed_logins.get(username, None)):
+        if not (events := self.failed_logins.get(username, None)):
             return 0
 
         # Verify the last event
         last_event = events[-1]
-        exp = last_event["date"] + cls.FAILED_LOGINS_EXPIRATION
+        exp = last_event["date"] + self.FAILED_LOGINS_EXPIRATION
         if datetime.now(pytz.utc) > exp:
-            cls.flush_failed_logins(username)
+            self.flush_failed_logins(username)
             return 0
 
         return last_event["progressive_count"]
-
-    @classmethod
-    def flush_failed_logins(cls, username: str) -> None:
-        cls.failed_logins.pop(username, None)
 
     def get_totp_secret(self, user: User) -> str:
 
@@ -876,18 +871,17 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         return message
 
-    @classmethod
-    def verify_blocked_username(cls, username: str) -> None:
+    def verify_blocked_username(self, username: str) -> None:
 
         # We do not count failed logins
-        if cls.MAX_LOGIN_ATTEMPTS <= 0:
+        if self.MAX_LOGIN_ATTEMPTS <= 0:
             return
 
         # We register failed logins but the user does not reached it yet
-        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
+        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
-        cls.log_event(
+        self.log_event(
             Events.refused_login,
             payload={
                 "username": username,
@@ -1275,6 +1269,13 @@ class BaseAuthentication(metaclass=ABCMeta):
         """
         ...
 
+    @abstractmethod
+    def flush_failed_logins(self, username: str) -> None:
+        """
+        Flush failed logins for the give username
+        """
+        ...
+
 
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
@@ -1363,3 +1364,6 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     def get_logins(self, username: str) -> List[Login]:
         raise NotImplementedError("Get Login not implemented with No Authentication")
+
+    def flush_failed_logins(self, username: str) -> None:
+        return None

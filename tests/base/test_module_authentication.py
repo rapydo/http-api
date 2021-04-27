@@ -727,4 +727,6 @@ class TestApp(BaseTests):
 
         assert auth.get_logins(username=faker.ascii_email) is None
 
+        assert auth.flush_failed_logins(username=faker.ascii_email) is None
+
         BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore
