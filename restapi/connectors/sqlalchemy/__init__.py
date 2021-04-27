@@ -657,9 +657,11 @@ class Authentication(BaseAuthentication):
 
     def flush_failed_logins(self, username: str) -> None:
 
-        self.db.Login.query.filter_by(username=username, flushed=False).update(
-            {"flushed": True}, synchronize_session="fetch"
-        )
+        for login in self.db.Login.query.filter_by(username=username, flushed=False):
+            login.flushed = True
+            self.db.session.add(login)
+
+        self.db.session.commit()
 
 
 instance = SQLAlchemy()
