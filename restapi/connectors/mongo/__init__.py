@@ -367,7 +367,7 @@ class Authentication(BaseAuthentication):
         if token_entry.user_id is None or token_entry.user_id.email != user.email:
             return False
 
-        now = datetime.now(pytz.utc)
+        now = datetime.now()
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)
             log.info(
