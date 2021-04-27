@@ -661,8 +661,14 @@ class Authentication(BaseAuthentication):
                 }
             )
 
-    def get_logins(self, username: str) -> List[Login]:
-        return [x for x in self.db.Login.query.filter_by(username=username)]
+    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
+
+        if only_unflushed:
+            logins = self.db.Login.query.filter_by(username=username, flushed=False)
+        else:
+            logins = self.db.Login.query.filter_by(username=username)
+
+        return [x for x in logins]
 
     def flush_failed_logins(self, username: str) -> None:
         self.failed_logins.pop(username, None)

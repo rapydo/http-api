@@ -652,7 +652,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             log.debug("Failed login are not considered in this configuration")
             return
 
-        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+        if self.count_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
         log.error(
@@ -684,7 +684,25 @@ class BaseAuthentication(metaclass=ABCMeta):
                 url,
             )
 
-    def get_failed_login(self, username: str) -> int:
+    def count_failed_login(self, username: str) -> int:
+
+        # NEW IMPLEMENTATION:
+
+        failed_logins = self.get_logins(username, only_unflushed=True)
+        log.critical(failed_logins)
+        # if not failed_logins:
+        #     return 0
+
+        # last_failed = failed_logins[-1]
+        # exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
+
+        # if datetime.now(pytz.utc) > exp:
+        #     self.flush_failed_logins(username)
+        #     return 0
+
+        # return len(failed_logins)
+
+        # OLD IMPLEMENTATION:
 
         # username not listed or listed with an empty array
         if not (events := self.failed_logins.get(username, None)):
@@ -878,7 +896,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             return
 
         # We register failed logins but the user does not reached it yet
-        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+        if self.count_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
         self.log_event(
@@ -1263,7 +1281,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_logins(self, username: str) -> List[Login]:
+    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
         """
         Save login information
         """
@@ -1362,7 +1380,7 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
         return None
 
-    def get_logins(self, username: str) -> List[Login]:
+    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
         raise NotImplementedError("Get Login not implemented with No Authentication")
 
     def flush_failed_logins(self, username: str) -> None:
