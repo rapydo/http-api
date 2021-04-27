@@ -1350,5 +1350,5 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     def invalidate_token(self, token: str) -> bool:
         return False
 
-    def register_failed_login(self, username: str, user: Optional[User]) -> None:
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
         return None
