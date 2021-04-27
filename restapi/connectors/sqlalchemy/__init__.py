@@ -671,6 +671,7 @@ class Authentication(BaseAuthentication):
         return [x for x in logins]
 
     def flush_failed_logins(self, username: str) -> None:
+        # TODO: to be removed:
         self.failed_logins.pop(username, None)
 
 

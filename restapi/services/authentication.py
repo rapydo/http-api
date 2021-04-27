@@ -677,9 +677,13 @@ class BaseAuthentication(metaclass=ABCMeta):
             rt = unlock_token.replace(".", "+")
             url = f"{server_url}/app/login/unlock/{rt}"
 
+            # NEW IMPLEMENTATION:
+            # failed_logins = self.get_logins(username, only_unflushed=True)
+            # OLD IMPLEMENTATION, TO BE REMOVED:
+            failed_logins = self.failed_logins[username]
             notify_login_block(
                 user,
-                reversed(self.failed_logins[username]),
+                reversed(failed_logins),
                 self.FAILED_LOGINS_EXPIRATION.seconds,
                 url,
             )

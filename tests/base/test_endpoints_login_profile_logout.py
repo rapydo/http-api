@@ -31,9 +31,7 @@ class TestApp(BaseTests):
         assert events[0].user == USER
 
         auth = Connector.get_authentication_instance()
-        # TODO: verify saved login
         logins = auth.get_logins(USER)
-        log.critical(logins)
         login = logins[-1]
         assert login.username == USER
 
@@ -45,9 +43,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
 
-        # TODO: verify saved failed login
         logins = auth.get_logins(USER)
-        log.critical(logins)
         login = logins[-1]
         assert login.username == USER
 
