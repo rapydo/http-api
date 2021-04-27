@@ -622,19 +622,22 @@ class Authentication(BaseAuthentication):
         ip_address = self.get_remote_ip()
         ip_location = self.localize_ip(ip_address)
 
-        login = self.db.Login(
-            date=date,
-            username=username,
-            IP=ip_address,
-            location=ip_location or "Unknown",
-            # the following two are equivalent
-            # user_id=user.id,
-            user=user,
-            failed=failed,
-            # i.e. failed logins are not flushed by default
-            # success logins are automatically flushed
-            flushed=not failed,
-        )
+        login_data: Dict[str, Any] = {}
+
+        login_data["date"] = date
+        login_data["username"] = username
+        login_data["IP"] = ip_address
+        login_data["location"] = ip_location or "Unknown"
+        # the following two are equivalent
+        if user:
+            # login_data["user_id"] = user.id
+            login_data["user"] = user
+        login_data["failed"] = failed
+        # i.e. failed logins are not flushed by default
+        # success logins are automatically flushed
+        login_data["flushed"] = not failed
+
+        login = self.db.Login(**login_data)
 
         try:
             self.db.session.add(login)
