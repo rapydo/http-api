@@ -671,6 +671,11 @@ class Authentication(BaseAuthentication):
         return [x for x in logins]
 
     def flush_failed_logins(self, username: str) -> None:
+
+        self.db.Login.query.filter_by(username=username, flushed=False).update(
+            {"flushed": True}, synchronize_session="fetch"
+        )
+
         # TODO: to be removed:
         self.failed_logins.pop(username, None)
 

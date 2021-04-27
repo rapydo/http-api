@@ -546,6 +546,11 @@ class Authentication(BaseAuthentication):
         return [x for x in logins]
 
     def flush_failed_logins(self, username: str) -> None:
+
+        for login in self.db.Login.nodes.filter(username=username, flushed=False):
+            login.flushed = True
+            login.save()
+
         # TODO: to be removed:
         self.failed_logins.pop(username, None)
 
