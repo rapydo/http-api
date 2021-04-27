@@ -96,3 +96,7 @@ class Login(MongoModel):
     user_id = fields.ReferenceField(User, blank=True)
     failed = fields.BooleanField(default=False)
     flushed = fields.BooleanField(default=False)
+
+    class Meta:
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB
