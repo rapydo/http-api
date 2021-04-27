@@ -368,6 +368,7 @@ class TestApp(BaseTests):
             assert isinstance(logins, list)
             assert len(logins) > 0
 
+            auth.flush_failed_logins(BaseAuthentication.default_user)
             logins = auth.get_logins(
                 BaseAuthentication.default_user, only_unflushed=True
             )
