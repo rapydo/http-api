@@ -662,7 +662,7 @@ class Authentication(BaseAuthentication):
             )
 
     def get_logins(self, username: str) -> List[Login]:
-        return [self.db.Login.query.filter_by(username=username)]
+        return [x for x in self.db.Login.query.filter_by(username=username)]
 
 
 instance = SQLAlchemy()
