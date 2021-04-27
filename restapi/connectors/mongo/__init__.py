@@ -478,7 +478,7 @@ class Authentication(BaseAuthentication):
 
         conditions = {"username": username, "flushed": False}
         for login in self.db.Login.objects.raw(conditions):
-            login.flushed = False
+            login.flushed = True
             login.save()
 
 
