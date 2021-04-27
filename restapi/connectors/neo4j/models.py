@@ -74,7 +74,9 @@ class Role(StructuredNode):
 
 class Login(StructuredNode):
     date = DateTimeProperty(required=True)
+    username = StringProperty()
     IP = StringProperty()
     location = StringProperty()
     user = RelationshipFrom("User", "HAS_LOGIN", cardinality=ZeroOrOne)
     failed = BooleanProperty(default=False)
+    flushed = BooleanProperty(default=False)

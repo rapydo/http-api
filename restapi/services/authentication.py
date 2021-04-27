@@ -301,6 +301,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             payload, full_payload = self.fill_payload(user, expiration=user.expiration)
             token = self.create_token(payload)
 
+            self.save_login(username, user, failed=False)
             self.log_event(Events.login, user=user)
             return token, full_payload, user
 
@@ -644,24 +645,11 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def register_failed_login(self, username: str, user: Optional[User]) -> None:
 
+        self.save_login(username, user, failed=True)
+
         if self.MAX_LOGIN_ATTEMPTS == 0:
-            log.debug("Failed login are not registered in this configuration")
+            log.debug("Failed login are not considered in this configuration")
             return
-
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
-        self.failed_logins.setdefault(username, [])
-
-        count = len(self.failed_logins[username])
-        self.failed_logins[username].append(
-            {
-                "progressive_count": count + 1,
-                "username": username,
-                "date": datetime.now(pytz.utc),
-                "IP": ip,
-                "location": ip_loc,
-            }
-        )
 
         if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
@@ -1272,6 +1260,13 @@ class BaseAuthentication(metaclass=ABCMeta):
         """
         ...
 
+    @abstractmethod
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+        """
+        Save login information
+        """
+        ...
+
 
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
@@ -1354,3 +1349,6 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     def invalidate_token(self, token: str) -> bool:
         return False
+
+    def register_failed_login(self, username: str, user: Optional[User]) -> None:
+        return None

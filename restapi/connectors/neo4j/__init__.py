@@ -498,6 +498,32 @@ class Authentication(BaseAuthentication):
             return False
         return True
 
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+
+        date = datetime.now(pytz.utc)
+        # username
+        ip = self.get_remote_ip()
+        ip_loc = self.localize_ip(ip)
+        # user -> connect if not None
+        # failed
+        # flushed=False
+
+        if failed:
+            self.failed_logins.setdefault(username, [])
+
+            count = len(self.failed_logins[username])
+            self.failed_logins[username].append(
+                {
+                    "progressive_count": count + 1,
+                    "username": username,
+                    "date": date,
+                    "IP": ip,
+                    "location": ip_loc,
+                }
+            )
+        else:
+            log.warning("Success login save not implemented yet")
+
 
 instance = NeoModel()
 

@@ -90,9 +90,10 @@ class Group(MongoModel):
 
 class Login(MongoModel):
     id = fields.CharField(primary_key=True)
-
     date = fields.DateTimeField(required=True)
+    username = fields.CharField()
     IP = fields.CharField()
     location = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User, blank=True)
     failed = fields.BooleanField(default=False)
+    flushed = fields.BooleanField(default=False)
