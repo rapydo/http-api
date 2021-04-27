@@ -537,7 +537,7 @@ class Authentication(BaseAuthentication):
             log.warning("Success login save not implemented yet")
 
     def get_logins(self, username: str) -> List[Login]:
-        return cast(List[Login], self.db.Login.nodes.filter(username=username))
+        return [x for x in self.db.Login.nodes.filter(username=username)]
 
 
 instance = NeoModel()
