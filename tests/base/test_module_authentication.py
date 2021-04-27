@@ -354,6 +354,38 @@ class TestApp(BaseTests):
 
         assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
+    def test_login_management(self, faker: Faker) -> None:
+
+        if not Connector.check_availability("authentication"):
+            log.warning("Skipping authentication test: service not available")
+            return
+
+        auth = Connector.get_authentication_instance()
+
+        if BaseAuthentication.default_user:
+            logins = auth.get_logins(BaseAuthentication.default_user)
+
+            assert isinstance(logins, list)
+            assert len(logins) > 0
+
+            logins = auth.get_logins(
+                BaseAuthentication.default_user, only_unflushed=True
+            )
+            assert len(logins) == 0
+
+            logins = auth.get_logins(
+                BaseAuthentication.default_user, only_unflushed=False
+            )
+            assert len(logins) > 0
+
+        logins = auth.get_logins(faker.ascii_email())
+        assert isinstance(logins, list)
+        assert len(logins) == 0
+
+        logins = auth.get_logins(faker.pystr())
+        assert isinstance(logins, list)
+        assert len(logins) == 0
+
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
 
         if not Connector.check_availability("authentication"):
