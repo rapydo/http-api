@@ -35,6 +35,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -534,6 +535,9 @@ class Authentication(BaseAuthentication):
             )
         else:
             log.warning("Success login save not implemented yet")
+
+    def get_logins(self, username: str) -> List[Login]:
+        return cast(List[Login], self.db.Login.nodes.filter(username=username))
 
 
 instance = NeoModel()

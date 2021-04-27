@@ -708,4 +708,23 @@ class TestApp(BaseTests):
 
         assert auth.add_user_to_group(user=user, group=group) is None
 
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=user, failed=True)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=None, failed=True)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=user, failed=False)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=None, failed=False)
+            is None
+        )
+
+        assert len(auth.get_logins(username=faker.ascii_email)) == 0
+
         BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore

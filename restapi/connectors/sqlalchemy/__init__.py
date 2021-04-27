@@ -40,6 +40,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -659,6 +660,9 @@ class Authentication(BaseAuthentication):
                     "location": ip_location,
                 }
             )
+
+    def get_logins(self, username: str) -> List[Login]:
+        return [self.db.Login.query.filter_by(username=username)]
 
 
 instance = SQLAlchemy()

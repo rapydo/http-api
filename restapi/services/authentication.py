@@ -68,6 +68,7 @@ DEFAULT_GROUP_DESCR = "Default group"
 User = Any
 Group = Any
 RoleObj = Any
+Login = Any
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
@@ -1267,6 +1268,13 @@ class BaseAuthentication(metaclass=ABCMeta):
         """
         ...
 
+    @abstractmethod
+    def get_logins(self, username: str) -> List[Login]:
+        """
+        Save login information
+        """
+        ...
+
 
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
@@ -1352,3 +1360,6 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
         return None
+
+    def get_logins(self, username: str) -> List[Login]:
+        raise NotImplementedError("Get Login not implemented with No Authentication")

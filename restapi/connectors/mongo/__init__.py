@@ -19,6 +19,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -480,6 +481,9 @@ class Authentication(BaseAuthentication):
             )
         else:
             log.warning("Success login save not implemented yet")
+
+    def get_logins(self, username: str) -> List[Login]:
+        return list(self.db.Login.objects.raw({"username": username}).all())
 
 
 instance = MongoExt()

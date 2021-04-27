@@ -3,6 +3,7 @@ import time
 
 from faker import Faker
 
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import OBSCURE_VALUE, Events, log
@@ -29,6 +30,13 @@ class TestApp(BaseTests):
         assert events[0].event == Events.login.value
         assert events[0].user == USER
 
+        auth = Connector.get_authentication_instance()
+        # TODO: verify saved login
+        logins = auth.get_logins(USER)
+        log.critical(logins)
+        login = logins[-1]
+        assert login.username == USER
+
         # Wrong credentials
         # Off course PWD cannot be upper :D
         self.do_login(client, USER, PWD.upper(), status_code=401)
@@ -36,6 +44,12 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
+
+        # TODO: verify saved failed login
+        logins = auth.get_logins(USER)
+        log.critical(logins)
+        login = logins[-1]
+        assert login.username == USER
 
         log.info("*** VERIFY valid credentials")
         # Login by using normal username (no upper case)
