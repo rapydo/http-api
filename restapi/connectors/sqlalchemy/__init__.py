@@ -618,13 +618,34 @@ class Authentication(BaseAuthentication):
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
 
         date = datetime.now(pytz.utc)
-        # username
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
-        # user -> connect if not None
-        # failed
-        # flushed=False
+        ip_address = self.get_remote_ip()
+        ip_location = self.localize_ip(ip_address)
 
+        login = self.db.Login(
+            date=date,
+            username=username,
+            IP=ip_address,
+            location=ip_location or "Unknown",
+            # the following two are equivalent
+            # user_id=user.id,
+            user=user,
+            failed=failed,
+            # i.e. failed logins are not flushed by default
+            # success logins are automatically flushed
+            flushed=not failed,
+        )
+
+        try:
+            self.db.session.add(login)
+            # Save user updated in profile endpoint
+            self.db.session.add(user)
+            self.db.session.commit()
+
+        except BaseException as e:  # pragma: no cover
+            log.error("DB error ({}), rolling back", e)
+            self.db.session.rollback()
+
+        # TODO: to be removed:
         if failed:
             self.failed_logins.setdefault(username, [])
 
@@ -634,12 +655,10 @@ class Authentication(BaseAuthentication):
                     "progressive_count": count + 1,
                     "username": username,
                     "date": date,
-                    "IP": ip,
-                    "location": ip_loc,
+                    "IP": ip_address,
+                    "location": ip_location,
                 }
             )
-        else:
-            log.warning("Success login save not implemented yet")
 
 
 instance = SQLAlchemy()
