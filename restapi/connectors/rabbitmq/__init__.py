@@ -4,6 +4,7 @@ import ssl
 import urllib.parse
 from typing import Dict, List, Optional, Union
 
+import certifi
 import pika
 import requests
 from pika.exceptions import (
@@ -17,6 +18,7 @@ from pika.exceptions import (
 )
 from requests.auth import HTTPBasicAuth
 
+from restapi.config import SSL_CERTIFICATE
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import RestApiException, ServiceUnavailable
@@ -70,17 +72,18 @@ class RabbitExt(Connector):
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            # context.verify_mode = ssl.CERT_REQUIRED
-            context.verify_mode = ssl.CERT_NONE
+            context.verify_mode = ssl.CERT_REQUIRED
+            # context.verify_mode = ssl.CERT_NONE
             # context.check_hostname = False
             context.load_default_certs()
             # Enable client certification verification
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
 
-            # ADD THIS TO ALLOW FOR CERT VALIDATION
-            # import certifi
-            # context.load_verify_locations(cafile=certifi.where())
+            # Path to pem file to verify self signed certificates
+            context.load_verify_locations(cafile=SSL_CERTIFICATE)
+            # System CA to verify true cerificates
+            context.load_verify_locations(cafile=certifi.where())
 
             self.connection = pika.BlockingConnection(
                 pika.ConnectionParameters(

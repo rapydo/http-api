@@ -31,7 +31,7 @@ UPLOAD_PATH: Path = Path(os.getenv("UPLOAD_PATH", "/uploads"))
 APP_SECRETS = Path(os.getenv("APP_SECRETS", "/secrets"))
 JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
-
+SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
 #################
 
 MODELS_DIR = "models"

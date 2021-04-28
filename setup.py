@@ -54,7 +54,7 @@ setup(
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==13.4.1",
-        # Later version prevent celery to connect to RabbitMQ with ssl
+        # Later version prevents celery to connect to RabbitMQ with ssl
         "amqp==5.0.2",
         # TOTP
         "pyotp==2.6.0",
