@@ -78,7 +78,8 @@ class Group(db.Model):
 class Login(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime(timezone=True), nullable=False)
-    username = db.Column(db.String(46))
+    # same length of User.email
+    username = db.Column(db.String(100))
     IP = db.Column(db.String(46))
     location = db.Column(db.String(256))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
