@@ -81,7 +81,7 @@ class Login(db.Model):
     username = db.Column(db.String(46))
     IP = db.Column(db.String(46))
     location = db.Column(db.String(256))
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     user = db.relationship("User", backref=db.backref("logins", lazy="dynamic"))
     failed = db.Column(db.Boolean, default=False)
     flushed = db.Column(db.Boolean, default=False)

@@ -637,19 +637,16 @@ class Authentication(BaseAuthentication):
         # success logins are automatically flushed
         login_data["flushed"] = not failed
 
-        # log.critical(login_data)
-
         login = self.db.Login(**login_data)
 
         try:
             self.db.session.add(login)
-            # Save user updated in profile endpoint
-            self.db.session.add(user)
             self.db.session.commit()
 
         except BaseException as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
+            raise
 
     def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
 
