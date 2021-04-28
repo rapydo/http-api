@@ -683,7 +683,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         last_failed = failed_logins[-1]
         exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
 
-        if datetime.now(pytz.utc) > exp:
+        if get_now(exp.tzinfo) > exp:
             self.flush_failed_logins(username)
             return 0
 

@@ -637,7 +637,7 @@ class Authentication(BaseAuthentication):
         # success logins are automatically flushed
         login_data["flushed"] = not failed
 
-        log.critical(login_data)
+        # log.critical(login_data)
 
         login = self.db.Login(**login_data)
 
