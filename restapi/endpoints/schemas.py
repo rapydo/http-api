@@ -70,7 +70,7 @@ class TotalSchema(Schema):
 
 
 class Credentials(Schema):
-    username = fields.Email(required=True)
+    username = fields.Email(required=True, validate=validate.Length(max=100))
     password = fields.Str(
         required=True,
         password=True,
@@ -204,7 +204,9 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     attributes: MarshmallowSchema = {}
     if is_post:
-        attributes["email"] = fields.Email(required=is_post)
+        attributes["email"] = fields.Email(
+            required=is_post, validate=validate.Length(max=100)
+        )
 
     attributes["name"] = fields.Str(
         required=is_post, validate=validate.Length(min=1), label="First Name"
@@ -356,7 +358,11 @@ def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
-    attributes["email"] = fields.Email(required=True, label="Username (email address)")
+    attributes["email"] = fields.Email(
+        required=True,
+        label="Username (email address)",
+        validate=validate.Length(max=100),
+    )
     attributes["password"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
