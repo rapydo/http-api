@@ -69,6 +69,7 @@ class RabbitExt(Connector):
         port = int(variables.get("port", "0"))
         vhost = variables.get("vhost", "/")
 
+        ssl_options: Optional[pika.SSLOptions] = None
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -91,28 +92,19 @@ class RabbitExt(Connector):
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
 
-            self.connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=host,
-                    port=port,
-                    virtual_host=vhost,
-                    credentials=pika.PlainCredentials(user, password),
-                    ssl_options=pika.SSLOptions(
-                        context=context, server_hostname=self.get_hostname(host)
-                    ),
-                )
+            ssl_options = pika.SSLOptions(
+                context=context, server_hostname=self.get_hostname(host)
             )
 
-        else:
-
-            self.connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=host,
-                    port=port,
-                    virtual_host=vhost,
-                    credentials=pika.PlainCredentials(user, password),
-                )
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=host,
+                port=port,
+                virtual_host=vhost,
+                credentials=pika.PlainCredentials(user, password),
+                ssl_options=ssl_options,
             )
+        )
 
         return self
 
