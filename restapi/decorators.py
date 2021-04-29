@@ -24,8 +24,6 @@ from restapi.utilities.uuid import getUUID
 log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
 
-SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
-
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -339,9 +337,9 @@ def catch_exceptions(**kwargs):
                 )
                 log.exception(message)
 
-                if excname in SYSTEM_EXCEPTIONS:  # pragma: no cover
+                if excname in ["SystemError"]:  # pragma: no cover
                     return self.response("Unexpected Server Error", code=500)
-                # return self.response({excname: message}, code=400)
+
                 return self.response(
                     {excname: f"There was an unexpected error. ErrorID: {error_id}"},
                     code=400,
