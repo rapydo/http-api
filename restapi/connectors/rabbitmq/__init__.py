@@ -7,7 +7,6 @@ from typing import Dict, List, Optional, Union
 import certifi
 import pika
 import requests
-from pika.connection.ConnectionParameters import _DEFAULT
 from pika.exceptions import (
     AMQPChannelError,
     AMQPConnectionError,
@@ -70,7 +69,6 @@ class RabbitExt(Connector):
         port = int(variables.get("port", "0"))
         vhost = variables.get("vhost", "/")
 
-        ssl_options: Union[pika.SSLOptions, _DEFAULT] = _DEFAULT
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -93,19 +91,28 @@ class RabbitExt(Connector):
             # context.load_cert_chain(certfile=server_cert, keyfile=server_key)
             # context.load_verify_locations(cafile=client_certs)
 
-            ssl_options = pika.SSLOptions(
-                context=context, server_hostname=self.get_hostname(host)
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=host,
+                    port=port,
+                    virtual_host=vhost,
+                    credentials=pika.PlainCredentials(user, password),
+                    ssl_options=pika.SSLOptions(
+                        context=context, server_hostname=self.get_hostname(host)
+                    ),
+                )
             )
 
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host=host,
-                port=port,
-                virtual_host=vhost,
-                credentials=pika.PlainCredentials(user, password),
-                ssl_options=ssl_options,
+        else:
+
+            self.connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=host,
+                    port=port,
+                    virtual_host=vhost,
+                    credentials=pika.PlainCredentials(user, password),
+                )
             )
-        )
 
         return self
 
