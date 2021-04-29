@@ -32,6 +32,7 @@ APP_SECRETS = Path(os.getenv("APP_SECRETS", "/secrets"))
 JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
 SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
+DOMAIN = os.getenv("DOMAIN")
 #################
 
 MODELS_DIR = "models"
@@ -67,17 +68,15 @@ def get_project_configuration(key, default=None):
 
 @lru_cache
 def get_backend_url() -> str:
-    domain = os.getenv("DOMAIN")
     if PRODUCTION:
-        return f"https://{domain}"
+        return f"https://{DOMAIN}"
 
     port = os.getenv("FLASK_PORT")
-    return f"http://{domain}:{port}"
+    return f"http://{DOMAIN}:{port}"
 
 
 @lru_cache
 def get_frontend_url() -> str:
-    domain = os.getenv("DOMAIN")
     protocol = "https" if PRODUCTION else "http"
 
-    return f"{protocol}://{domain}"
+    return f"{protocol}://{DOMAIN}"

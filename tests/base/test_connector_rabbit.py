@@ -124,6 +124,11 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     # a second disconnect should not raise any error
     obj.disconnect()
 
+    assert obj.get_hostname("rabbit.dockerized.io") == "localhost"
+    assert obj.get_hostname("anything.dockerized.io") == "localhost"
+    assert obj.get_hostname("any.external.url") == "any.external.url"
+    assert obj.get_hostname("1.1.1.1") == "1.1.1.1"
+    assert obj.get_hostname("test") == "test"
     # Create new connector with short expiration time
     obj = connector.get_instance(expiration=2, verification=1)
     obj_id = id(obj)
