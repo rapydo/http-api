@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Union
 import certifi
 import pika
 import requests
+from pika.connection.ConnectionParameters import _DEFAULT
 from pika.exceptions import (
     AMQPChannelError,
     AMQPConnectionError,
@@ -69,7 +70,7 @@ class RabbitExt(Connector):
         port = int(variables.get("port", "0"))
         vhost = variables.get("vhost", "/")
 
-        ssl_options: Optional[pika.SSLOptions] = None
+        ssl_options: Union[pika.SSLOptions, _DEFAULT] = _DEFAULT
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
