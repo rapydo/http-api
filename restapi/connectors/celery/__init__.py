@@ -5,6 +5,7 @@ from datetime import timedelta
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
 
+import certifi
 from celery import Celery
 from celery.app.task import Task
 from celery.exceptions import Ignore
@@ -150,6 +151,13 @@ class CeleryExt(Connector):
                 #   ssl_ca_certs (optional): path to the CA certificate
                 #   ssl_certfile (optional): path to the client certificate
                 #   ssl_keyfile (optional): path to the client key
+
+                server_hostname = RabbitExt.get_hostname(service_vars.get("host"))
+                ca_certs = (
+                    SSL_CERTIFICATE
+                    if server_hostname == "localhost"
+                    else certifi.where()
+                )
                 self.celery_app.conf.broker_use_ssl = {
                     # 'keyfile': '/var/ssl/private/worker-key.pem',
                     # 'certfile': '/var/ssl/amqp-server-cert.pem',
@@ -157,8 +165,8 @@ class CeleryExt(Connector):
                     # 'cert_reqs': ssl.CERT_REQUIRED
                     # 'cert_reqs': ssl.CERT_OPTIONAL
                     "cert_reqs": ssl.CERT_REQUIRED,
-                    "server_hostname": RabbitExt.get_hostname(service_vars.get("host")),
-                    "ca_certs": SSL_CERTIFICATE,
+                    "server_hostname": server_hostname,
+                    "ca_certs": ca_certs,
                 }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
