@@ -9,8 +9,9 @@ from celery import Celery
 from celery.app.task import Task
 from celery.exceptions import Ignore
 
-from restapi.config import CUSTOM_PACKAGE, TESTING
+from restapi.config import CUSTOM_PACKAGE, SSL_CERTIFICATE, TESTING
 from restapi.connectors import Connector, ExceptionsList
+from restapi.connectors.rabbitmq import RabbitExt
 from restapi.connectors.redis import RedisExt
 from restapi.connectors.smtp.notifications import send_celery_error_notification
 from restapi.env import Env
@@ -155,7 +156,9 @@ class CeleryExt(Connector):
                     # 'ca_certs': '/var/ssl/myca.pem',
                     # 'cert_reqs': ssl.CERT_REQUIRED
                     # 'cert_reqs': ssl.CERT_OPTIONAL
-                    "cert_reqs": ssl.CERT_NONE
+                    "cert_reqs": ssl.CERT_REQUIRED,
+                    "server_hostname": RabbitExt.get_hostname(service_vars.get("host")),
+                    "ca_certs": SSL_CERTIFICATE,
                 }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
