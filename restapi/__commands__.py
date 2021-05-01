@@ -68,25 +68,18 @@ def launch() -> None:  # pragma: no cover
         log.warning("Server shutdown")
 
 
-# Multiple is not used, should be removed by fixing verify command
 @cli.command()
-@click.option("--services", "-s", multiple=True, default=[])
-def verify(services):
-    """Verify connected service"""
+@click.option("--service", "-s")
+def verify(service):
+    """Verify if a service is connecte"""
 
-    if len(services) == 0:
-        log.warning("Empty list of services, nothing to be verified.")
-        log.info("Provide list of services by using --services option")
+    if not Connector.check_availability(service):
+        print_and_exit("Service {} not detected", service)
 
-    for service in services:
-
-        if not Connector.check_availability(service):
-            print_and_exit("Service {} not detected", service)
-
-        log.info("Verifying service: {}", service)
-        variables = Connector.services.get(service, {})
-        host, port = get_service_address(variables, "host", "port", service)
-        wait_socket(host, port, service)
+    log.info("Verifying service: {}", service)
+    variables = Connector.services.get(service, {})
+    host, port = get_service_address(variables, "host", "port", service)
+    wait_socket(host, port, service)
 
     log.info("Completed successfully")
 
@@ -214,7 +207,7 @@ def clean() -> None:  # pragma: no cover
 
 @cli.command()
 def forced_clean() -> None:  # pragma: no cover
-    """DANGEROUS: Destroy current data without asking yes/no """
+    """DANGEROUS: Destroy current data without asking yes/no"""
 
     from restapi.server import ServerModes, create_app
 
