@@ -30,8 +30,9 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/outputs/tuple")
         assert r.status_code == 200
         response = self.get_content(r)
-        assert isinstance(response, tuple)
-        assert response == ("a", "b", "c", "c")
+        # Tuples are serialized as lists
+        assert isinstance(response, list)
+        assert response == ["a", "b", "c", "c"]
 
         r = client.post(f"{API_URI}/tests/outputs/set")
         assert r.status_code == 200
