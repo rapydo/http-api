@@ -17,6 +17,7 @@ import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
+from flask.json import JSONEncoder
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
@@ -47,6 +48,17 @@ from restapi.utilities.meta import Meta
 lock = Lock()
 
 
+# From Flask 2.0 simplejson will no longer be used
+# See here: https://github.com/pallets/flask/issues/3555
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o):
+        # Added support for set serialization
+        # Otherwise: TypeError: Object of type set is not JSON serializable
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
 class ServerModes(int, Enum):
     NORMAL = 0
     INIT = 1
@@ -73,7 +85,7 @@ def create_app(
     mode: ServerModes = ServerModes.NORMAL,
     options: Optional[Dict[str, bool]] = None,
 ) -> Flask:
-    """ Create the server istance for Flask application """
+    """Create the server istance for Flask application"""
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
@@ -110,6 +122,7 @@ def create_app(
 
     # Flask configuration from config file
     microservice.config.from_object(config)
+    microservice.json_encoder = ExtendedJSONEncoder
     log.debug("Flask app configured")
 
     if PRODUCTION:
