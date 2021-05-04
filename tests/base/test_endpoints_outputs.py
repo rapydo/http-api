@@ -51,4 +51,5 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/outputs/datetime")
         assert r.status_code == 200
         response = self.get_content(r)
-        assert isinstance(response, datetime)
+        # datetimes are serialized as strings
+        assert isinstance(response, str)
