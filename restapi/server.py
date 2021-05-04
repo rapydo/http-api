@@ -10,7 +10,7 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -51,7 +51,7 @@ lock = Lock()
 # From Flask 2.0 simplejson will no longer be used
 # See here: https://github.com/pallets/flask/issues/3555
 class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o):
+    def default(self, o: Any) -> Any:
         # Added support for set serialization
         # Otherwise: TypeError: Object of type set is not JSON serializable
         if isinstance(o, set):
