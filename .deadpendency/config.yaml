@@ -1,2 +1,25 @@
 rules-config:
   repository-is-fork: disabled
+
+additional-deps:
+  python:
+    - name: plumbum
+      repo: tomerfiliba/plumbum
+
+    - name: celerybeat-mongo
+      repo: zmap/celerybeat-mongo
+
+    - name: meinheld
+      repo: mopemope/meinheld
+
+    # - name: passlib
+    #   repo: ???
+
+    - name: pika
+      repo: pika/pika
+
+    - name: pyOpenSSL
+      repo: pyca/pyopenssl
+
+    - name: pymodm
+      repo: mongodb/pymodm
