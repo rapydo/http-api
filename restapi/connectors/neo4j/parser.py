@@ -83,8 +83,6 @@ class DataDump:
         if num > 0:
             cls.switch_label(old_label, new_label, limit=limit)
 
-    # A delete relationships would be needed...
-    # match (???)-[r]-(???) WITH r limit 100000 DELETE r;
     @classmethod
     def delete_nodes(cls, label: str, limit: int = 10000) -> None:
         cypher = f"""
@@ -98,14 +96,38 @@ class DataDump:
         result = cls.cypher_exec(cypher)
 
         num = result[0][0]
-        log.info("Deleted {} {}", num, label)
+        log.info("Deleted {} {} nodes", num, label)
         if num == limit:
             cls.delete_nodes(label, limit=limit)
 
-    def close(self):
+    # A delete relationships would be needed...
+    # match (???)-[r]-(???) WITH r limit 100000 DELETE r;
+
+    @classmethod
+    def delete_relationships(
+        cls, label1: str, relation: str, label2: str, limit: int = 50000
+    ) -> None:
+        cypher = f"""
+            MATCH (:{label1})-[r:{relation}]->(:{label2})
+            WITH r
+            LIMIT {limit}
+            DELETE r
+            RETURN count(r)
+        """
+
+        result = cls.cypher_exec(cypher)
+
+        num = result[0][0]
+        log.info(
+            "Deleted {} (:{}-[{}]->(:{}) relationships", num, label1, relation, label2
+        )
+        if num == limit:
+            cls.delete_relationships(label1, relation, label2, limit=limit)
+
+    def close(self) -> None:
         self.handle.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -115,6 +137,9 @@ class NodeDump(DataDump):
         filename = f"{label}.tsv".lower()
         super().__init__(filename, fields)
         self.label = label
+
+    # def bulk_delete(self, limit: int = 10000) -> None:
+    #     self.delete_nodes(self.label, limit=limit)
 
     def dump(self, *args: Any) -> None:
         if len(args) != len(self.fields):
@@ -166,6 +191,11 @@ class RelationDump(DataDump):
         self.label1 = label1
         self.relation = relation
         self.label2 = label2
+
+    # def bulk_delete(self, limit: int = 10000) -> None:
+    #     self.delete_relationships(
+    #         self.label1, self.relation, self.label2, limit=limit
+    #     )
 
     def dump(self, *args: Any) -> None:
         if len(args) != len(self.fields):
