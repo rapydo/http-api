@@ -1,6 +1,7 @@
 import csv
 from typing import Any, Dict, List
 
+from restapi.config import IMPORT_PATH
 from restapi.connectors import neo4j
 from restapi.utilities.logs import log
 
@@ -16,7 +17,7 @@ class DataDump:
                 )
 
         # This will be used by the backend to write the file
-        self.filepath = f"/imports/{filename}"
+        self.filepath = IMPORT_PATH.joinpath(filename)
         # This will be used by neo4j to read the file
         self.filename = filename
         self.cache: Dict[str, bool] = {}

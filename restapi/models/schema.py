@@ -21,7 +21,7 @@ class Schema(MarshmallowSchema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # Mypy does not accept the equivalence beetween
+    # Mypy does not accept the equivalence between
     # marshmallow.fields and restapi.models.fields
     # And cannot be blamed for that... it's a dirty implementation :-)
     @classmethod
