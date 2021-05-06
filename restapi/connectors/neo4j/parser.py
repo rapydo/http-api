@@ -83,6 +83,8 @@ class DataDump:
         if num > 0:
             cls.switch_label(old_label, new_label, limit=limit)
 
+    # A delete relationships would be needed...
+    # match (???)-[r]-(???) WITH r limit 100000 DELETE r;
     @classmethod
     def delete_nodes(cls, label: str, limit: int = 10000) -> None:
         cypher = f"""
@@ -97,7 +99,7 @@ class DataDump:
 
         num = result[0][0]
         log.info("Deleted {} {}", num, label)
-        if num > 0:
+        if num == limit:
             cls.delete_nodes(label, limit=limit)
 
     def close(self):
