@@ -6,6 +6,7 @@ import jinja2
 
 from restapi.config import (
     ABS_RESTAPI_PATH,
+    CODE_DIR,
     CUSTOM_PACKAGE,
     MODELS_DIR,
     get_frontend_url,
@@ -52,7 +53,7 @@ def convert_html2text(html_body: str) -> str:
 def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional[str]:
     # Custom templates from project backend/models/email/
     template_path = os.path.join(
-        os.curdir, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
+        CODE_DIR, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
     )
 
     if not os.path.exists(template_path):
