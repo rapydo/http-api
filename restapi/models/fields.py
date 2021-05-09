@@ -48,8 +48,6 @@ class Field(webargs_fields.Field):
 
         super().__init__(*args, **kwargs)
 
-    pass
-
 
 ####################################################################################
 #               1) Include all types from webargs to this custom module

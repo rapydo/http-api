@@ -40,7 +40,7 @@ def test_mongo(app: Flask) -> None:
     assert obj is not None
 
     try:
-        obj.InvalidModel
+        _ = obj.InvalidModel
         pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
     except AttributeError as e:
         assert str(e) == "Model InvalidModel not found"

@@ -100,9 +100,6 @@ class DataDump:
         if num == limit:
             cls.delete_nodes(label, limit=limit)
 
-    # A delete relationships would be needed...
-    # match (???)-[r]-(???) WITH r limit 100000 DELETE r;
-
     @classmethod
     def delete_relationships(
         cls, label1: str, relation: str, label2: str, limit: int = 50000

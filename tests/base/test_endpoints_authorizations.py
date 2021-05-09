@@ -102,9 +102,7 @@ class TestApp1(BaseTests):
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.ADMIN])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -242,9 +240,7 @@ class TestApp1(BaseTests):
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.STAFF])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -375,9 +371,7 @@ class TestApp1(BaseTests):
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.COORDINATOR])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -508,9 +502,7 @@ class TestApp1(BaseTests):
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.USER])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)

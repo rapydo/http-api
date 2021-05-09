@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 
 from restapi.tests import API_URI, BaseTests, FlaskClient
