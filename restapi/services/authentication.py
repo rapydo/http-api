@@ -48,6 +48,12 @@ def import_secret(abs_filename: Path) -> bytes:
 
     try:
         return open(abs_filename, "rb").read()
+    except PermissionError as e:  # pragma: no cover
+        log.critical("DEBUG CODE reading {}: {}", abs_filename, e)
+        log.critical(list(abs_filename.parent.iterdir()))
+
+        raise e
+
     # Can't be covered because it is execute once before the tests...
     except OSError:  # pragma: no cover
         key = Fernet.generate_key()
@@ -256,7 +262,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             )
 
     def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
-        """ The method which will check if credentials are good to go """
+        """The method which will check if credentials are good to go"""
 
         try:
             user = self.get_user(username=username)
@@ -379,7 +385,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     # ###################
     @classmethod
     def create_token(cls, payload: Payload) -> str:
-        """ Generate a str token with JWT library to encrypt the payload """
+        """Generate a str token with JWT library to encrypt the payload"""
         return jwt.encode(
             cast(Dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
         )
@@ -547,15 +553,15 @@ class BaseAuthentication(metaclass=ABCMeta):
     # #####   Roles handling   ######
     # ###############################
     def is_admin(self, user: User) -> bool:
-        """ Check if current user has Administration role """
+        """Check if current user has Administration role"""
         return self.verify_roles(user, [Role.ADMIN], warnings=False)
 
     def is_staff(self, user: User) -> bool:
-        """ Check if current user has Staff role """
+        """Check if current user has Staff role"""
         return self.verify_roles(user, [Role.STAFF], warnings=False)
 
     def is_coordinator(self, user: User) -> bool:
-        """ Check if current user has Coordinator role """
+        """Check if current user has Coordinator role"""
         return self.verify_roles(user, [Role.COORDINATOR], warnings=False)
 
     def verify_roles(

@@ -576,11 +576,6 @@ class BaseTests:
         if wrong_secret:
             secret = cls.faker.password()
         else:
-
-            # Debug code:
-            from restapi.config import APP_SECRETS
-
-            log.critical(list(APP_SECRETS.iterdir()))
             secret = open(JWT_SECRET_FILE, "rb").read()
 
         if wrong_algorithm:
