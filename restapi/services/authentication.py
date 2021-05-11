@@ -48,12 +48,6 @@ def import_secret(abs_filename: Path) -> bytes:
 
     try:
         return open(abs_filename, "rb").read()
-    except PermissionError as e:  # pragma: no cover
-        log.critical("DEBUG CODE reading {}: {}", abs_filename, e)
-        log.critical(list(abs_filename.parent.iterdir()))
-
-        raise e
-
     # Can't be covered because it is execute once before the tests...
     except OSError:  # pragma: no cover
         key = Fernet.generate_key()
