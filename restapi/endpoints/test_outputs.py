@@ -21,8 +21,8 @@ if TESTING:
             if out_type == "tuple":
                 return self.response(("a", "b", "c", "c"))
 
-            if out_type == "set":
-                return self.response({"a", "b", "c", "c"})
+            # if out_type == "set":
+            #     return self.response({"a", "b", "c", "c"})
 
             if out_type == "dict":
                 return self.response({"a": 1, "b": 2, "c": 3})
