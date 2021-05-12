@@ -33,13 +33,13 @@ class TestApp(BaseTests):
         assert isinstance(response, list)
         assert response == ["a", "b", "c", "c"]
 
-        # r = client.post(f"{API_URI}/tests/outputs/set")
-        # assert r.status_code == 200
-        # response = self.get_content(r)
-        # # Sets are serialized as lists
-        # assert isinstance(response, list)
-        # # But without duplicates :-) (and unordered...)
-        # assert sorted(response) == ["a", "b", "c"]
+        r = client.post(f"{API_URI}/tests/outputs/set")
+        assert r.status_code == 200
+        response = self.get_content(r)
+        # Sets are serialized as lists
+        assert isinstance(response, list)
+        # But without duplicates :-) (and unordered...)
+        assert sorted(response) == ["a", "b", "c"]
 
         r = client.post(f"{API_URI}/tests/outputs/dict")
         assert r.status_code == 200

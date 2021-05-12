@@ -31,6 +31,11 @@ setup(
     install_requires=[
         # Flask, plugins and webservers
         "Flask==1.1.2",
+        # Will be upgraded with Flask 2.0
+        "itsdangerous==1.1.0",
+        "Jinja2==2.11.3",
+        "MarkupSafe==1.1.1",
+        "Werkzeug==1.0.1",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.10.1",

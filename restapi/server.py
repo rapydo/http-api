@@ -10,13 +10,14 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
+from flask.json import JSONEncoder
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
@@ -45,6 +46,17 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 lock = Lock()
+
+
+# From Flask 2.0 simplejson will no longer be used
+# See here: https://github.com/pallets/flask/issues/3555
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        # Added support for set serialization
+        # Otherwise: TypeError: Object of type set is not JSON serializable
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
 
 
 class ServerModes(int, Enum):
@@ -110,6 +122,7 @@ def create_app(
 
     # Flask configuration from config file
     microservice.config.from_object(config)
+    microservice.json_encoder = ExtendedJSONEncoder
     log.debug("Flask app configured")
 
     if PRODUCTION:
