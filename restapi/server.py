@@ -16,7 +16,7 @@ import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask
+from flask import Flask  # , request
 from flask.json import JSONEncoder
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
@@ -32,6 +32,7 @@ from restapi.config import (
     SENTRY_URL,
     TESTING,
     get_backend_url,
+    get_frontend_url,
     get_project_configuration,
 )
 from restapi.connectors import Connector
@@ -64,6 +65,10 @@ class ServerModes(int, Enum):
     INIT = 1
     DESTROY = 2
     WORKER = 3
+
+
+# def inspect_request():
+#     log.critical(request.headers)
 
 
 def teardown_handler(signal, frame):  # pragma: no cover
@@ -104,7 +109,8 @@ def create_app(
 
     # CORS
     if not PRODUCTION:
-        cors = CORS(
+        CORS(
+            microservice,
             allow_headers=[
                 "Content-Type",
                 "Authorization",
@@ -115,10 +121,10 @@ def create_app(
             ],
             supports_credentials=["true"],
             methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            resources={r"*": {"origins": get_frontend_url()}},
         )
 
-        cors.init_app(microservice)
-        log.debug("CORS Injected")
+        log.debug("CORS Enabled")
 
     # Flask configuration from config file
     microservice.config.from_object(config)
@@ -256,6 +262,7 @@ def create_app(
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
+    # microservice.before_request(inspect_request)
     # Logging responses
     microservice.after_request(handle_response)
 
