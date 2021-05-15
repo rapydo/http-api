@@ -154,6 +154,13 @@ else:
         @staticmethod
         def test_parser() -> None:
 
+            try:
+                # missing :type
+                node1 = NodeDump("TestNode1", fields=["f1"])
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
             node1 = NodeDump("TestNode1", fields=["f1:string", "f2:int", "f3:float"])
 
             node2 = NodeDump("TestNode2", fields=["f1:string", "f2:int", "f3:float"])
