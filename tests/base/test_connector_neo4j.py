@@ -240,7 +240,7 @@ else:
 
             data = obj.cypher("MATCH (n)-[r:MY_REL]->(m) RETURN r")
             assert len(data) == 2
-            assert data[0][1]["custom"] == "custom"
+            assert data[0][0]["custom"] == "custom"
 
             DataDump.switch_label("TestNode2", "TestNode3")
 
