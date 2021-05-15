@@ -21,7 +21,7 @@ setup(
         ]
     },
     # python_requires=">=3.9.0",
-    # Due to mistral (also removed str.removeprefix)
+    # Due to mistral & b2stage/sdc (also removed str.removeprefix)
     python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]

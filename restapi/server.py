@@ -121,7 +121,7 @@ def create_app(
             ],
             supports_credentials=["true"],
             methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            resources={r"*": {"origins": get_frontend_url()}},
+            # resources={r"*": {"origins": get_frontend_url()}},
         )
 
         log.debug("CORS Enabled")
