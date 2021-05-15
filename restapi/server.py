@@ -109,6 +109,9 @@ def create_app(
 
     # CORS
     if not PRODUCTION:
+
+        cors_origin = get_frontend_url() if not TESTING else "*"
+
         CORS(
             microservice,
             allow_headers=[
@@ -121,7 +124,7 @@ def create_app(
             ],
             supports_credentials=["true"],
             methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            # resources={r"*": {"origins": get_frontend_url()}},
+            resources={r"*": {"origins": cors_origin}},
         )
 
         log.debug("CORS Enabled")
