@@ -10,7 +10,7 @@ from neo4j.exceptions import CypherSyntaxError
 
 from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
-from restapi.env import Env
+from restapi.connectors.neo4j.parser import DataDump, NodeDump, RelationDump
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, BaseTests, FlaskClient
@@ -150,3 +150,37 @@ else:
 
             with connector.get_instance() as obj:
                 assert obj is not None
+
+        @staticmethod
+        def test_parser() -> None:
+
+            node1 = NodeDump("TestNode1", fields=["f1:string", "f2:int", "f3:float"])
+
+            node2 = NodeDump("TestNode2", fields=["f1:string", "f2:int", "f3:float"])
+
+            rel = RelationDump(
+                "TestNode1",
+                "MY_REL",
+                "TestNode2",
+                fields=["f1", "f2"],
+            )
+
+            # To be verified the correct type assignment
+            node1.dump("test-string", 10, 20.30)
+            node2.dump("test-string2", 12, 24.36)
+
+            rel.dump("test-string", "test-string2")
+
+            # test the errors if a wrong number of fields is give
+
+            # What happens with a dump of wrong keys?
+
+            node1.store()
+            node2.store()
+            rel.store()
+
+            DataDump.delete_relationships("TestNode1", "MY_REL", "TestNode2")
+            DataDump.delete_nodes("TestNode1")
+            DataDump.delete_nodes("TestNode2")
+
+            # Verify that everything is deleted
