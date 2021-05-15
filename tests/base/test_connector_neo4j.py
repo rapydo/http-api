@@ -27,9 +27,6 @@ if not Connector.check_availability(CONNECTOR):
         pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
-# Alwas enabled during core tests
-elif not Env.get_bool("TEST_CORE_ENABLED"):  # pragma: no cover
-    log.warning("Skipping {} tests: only avaiable on core", CONNECTOR)
 else:
 
     log.info("Executing {} tests", CONNECTOR)

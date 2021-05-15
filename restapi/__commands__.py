@@ -270,7 +270,6 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
             print_and_exit("Folder not found: {}", folder)
         parameters.append(folder)
 
-    os.environ["TEST_CORE_ENABLED"] = str(core)
     # In prod mode tests are execute with the server running.
     # Destroy test fails with alchemy due to db locks
     if destroy and not PRODUCTION:
