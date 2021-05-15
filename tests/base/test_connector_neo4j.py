@@ -279,6 +279,10 @@ else:
             node2.dump("b")
             rel.dump("a", "b")
 
+            node1.store()
+            node2.store()
+            rel.store()
+
             data = obj.cypher("MATCH (n: T1) RETURN n")
             assert len(data) == 1
             data = obj.cypher("MATCH (n: T2) RETURN n")
