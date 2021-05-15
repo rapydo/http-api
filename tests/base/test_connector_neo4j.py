@@ -250,7 +250,7 @@ else:
             data = obj.cypher("MATCH (n: TestNode3) RETURN n")
             assert len(data) == 1
 
-            DataDump.delete_relationships("TestNode1", "MY_REL", "TestNode2", limit=1)
+            DataDump.delete_relationships("TestNode1", "MY_REL", "TestNode3", limit=1)
 
             data = obj.cypher("MATCH (n)-[r:MY_REL]->(m) RETURN r")
             assert len(data) == 0
