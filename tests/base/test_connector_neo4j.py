@@ -290,11 +290,17 @@ else:
             data = obj.cypher("MATCH (n)-[r:R1]->(m) RETURN r")
             assert len(data) == 1
 
-            DataDump.delete_relationships("T1", "R1", "T2")
+            # Due to detach delete this will delete both T1 and R1
+            # Of course T2 will not be deleted
+            DataDump.delete_nodes("T1")
 
             data = obj.cypher("MATCH (n: T1) RETURN n")
             assert len(data) == 0
             data = obj.cypher("MATCH (n: T2) RETURN n")
-            assert len(data) == 0
+            assert len(data) == 1
             data = obj.cypher("MATCH (n)-[r:R1]->(m) RETURN r")
+            assert len(data) == 0
+
+            DataDump.delete_nodes("T2")
+            data = obj.cypher("MATCH (n: T2) RETURN n")
             assert len(data) == 0
