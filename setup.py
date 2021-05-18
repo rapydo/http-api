@@ -31,6 +31,8 @@ setup(
     install_requires=[
         # Flask, plugins and webservers
         "Flask==1.1.4",
+        # To be removed with flask 2.0
+        "itsdangerous==1.1.0",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.10.1",
