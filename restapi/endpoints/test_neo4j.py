@@ -80,7 +80,7 @@ if TESTING and Connector.check_availability("neo4j"):
                 # Automatically update the modified attribute
                 elif test == "3":
                     data = {}
-                    n = self.neo4j.JustATest(p_str="")
+                    n = self.neo4j.NodeTest(p_str="")
                     n.save()
                     data["created"] = n.created
                     data["modified1"] = n.modified

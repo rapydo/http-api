@@ -2,19 +2,27 @@
 from typing import Type
 
 from neomodel import (
+    AliasProperty,
+    ArrayProperty,
     BooleanProperty,
+    DateProperty,
     DateTimeProperty,
     EmailProperty,
+    FloatProperty,
+    IntegerProperty,
+    JSONProperty,
     OneOrMore,
     RelationshipFrom,
     RelationshipTo,
     StringProperty,
     StructuredNode,
+    StructuredRel,
     ZeroOrMore,
     ZeroOrOne,
 )
 
-from restapi.connectors.neo4j.types import IdentifiedNode
+from restapi.config import TESTING
+from restapi.connectors.neo4j.types import IdentifiedNode, TimestampedNode
 from restapi.utilities.meta import Meta
 
 # mypy: ignore-errors
@@ -80,3 +88,34 @@ class Login(StructuredNode):
     user = RelationshipFrom("User", "HAS_LOGIN", cardinality=ZeroOrOne)
     failed = BooleanProperty(default=False)
     flushed = BooleanProperty(default=False)
+
+
+if TESTING:
+
+    class RelationTest(StructuredRel):
+        pp = StringProperty()
+
+    class NodeTest(TimestampedNode):
+        p_str = StringProperty(required=True)
+        p_int = IntegerProperty()
+        p_arr = ArrayProperty()
+        p_json = JSONProperty()
+        p_float = FloatProperty()
+        p_date = DateProperty()
+        p_dt = DateTimeProperty()
+        p_bool = BooleanProperty()
+        p_alias = AliasProperty()
+
+        test1 = RelationshipFrom(
+            "restapi.connectors.neo4j.models.User",
+            "TEST",
+            cardinality=ZeroOrMore,
+            model=RelationTest,
+        )
+
+        test2 = RelationshipFrom(
+            "restapi.connectors.neo4j.models.User",
+            "TEST2",
+            cardinality=ZeroOrMore,
+            model=RelationTest,
+        )
