@@ -144,6 +144,15 @@ class MailOutput(Schema):
     bcc = fields.List(fields.Email())
 
 
+class LoginsSchema(Schema):
+    username = fields.Email()
+    date = fields.DateTime(format=ISO8601UTC)
+    IP = fields.Str()
+    location = fields.Str()
+    failed = fields.Boolean()
+    flushed = fields.Boolean()
+
+
 #########################################
 # ############   Callbacks   ############
 #########################################

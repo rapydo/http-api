@@ -201,7 +201,7 @@ class NeoModel(Connector):
 
     @catch_db_exceptions
     def cypher(self, query):
-        """ Execute normal neo4j queries """
+        """Execute normal neo4j queries"""
         try:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
@@ -519,9 +519,13 @@ class Authentication(BaseAuthentication):
         if user:
             login.user.connect(user)
 
-    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
 
-        if only_unflushed:
+        if not username:
+            logins = self.db.Login.nodes.all()
+        elif only_unflushed:
             logins = self.db.Login.nodes.filter(username=username, flushed=False)
         else:
             logins = self.db.Login.nodes.filter(username=username)

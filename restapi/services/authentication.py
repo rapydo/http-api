@@ -1268,7 +1268,9 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
         """
         Save login information
         """
@@ -1367,7 +1369,9 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
         return None
 
-    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
         raise NotImplementedError("Get Login not implemented with No Authentication")
 
     def flush_failed_logins(self, username: str) -> None:

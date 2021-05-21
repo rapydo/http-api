@@ -203,6 +203,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, True, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, True, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, True, paths
         )
         paths = self.check_endpoint(
@@ -341,6 +344,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
         )
         paths = self.check_endpoint(
@@ -472,6 +478,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
         )
         paths = self.check_endpoint(
@@ -601,6 +610,9 @@ class TestApp1(BaseTests):
         )
         paths = self.check_endpoint(
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
+        )
+        paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
@@ -737,6 +749,9 @@ class TestApp1(BaseTests):
         )
         paths = self.check_endpoint(
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
+        )
+        paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths

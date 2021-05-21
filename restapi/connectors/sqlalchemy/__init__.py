@@ -648,9 +648,13 @@ class Authentication(BaseAuthentication):
             self.db.session.rollback()
             raise
 
-    def get_logins(self, username: str, only_unflushed: bool = False) -> List[Login]:
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
 
-        if only_unflushed:
+        if not username:
+            logins = self.db.Login.query.all()
+        elif only_unflushed:
             logins = self.db.Login.query.filter_by(username=username, flushed=False)
         else:
             logins = self.db.Login.query.filter_by(username=username)
