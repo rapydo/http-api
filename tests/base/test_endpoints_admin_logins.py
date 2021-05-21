@@ -18,7 +18,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         random_username = faker.ascii_email()
-        self.do_login(client, random_username, faker.pystr())
+        self.do_login(client, random_username, faker.pystr(), status_code=401)
 
         headers, _ = self.do_login(client, None, None)
 
