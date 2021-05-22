@@ -7,6 +7,10 @@ from glom import glom
 from restapi.env import Env
 from restapi.utilities.globals import mem
 
+# ENDPOINTS bases
+API_URL = "/api"
+AUTH_URL = "/auth"
+
 APP_MODE: str = os.getenv("APP_MODE", "development")
 FORCE_PRODUCTION_TESTS: bool = Env.get_bool("FORCE_PRODUCTION_TESTS")
 TESTING: bool = APP_MODE == "test" or FORCE_PRODUCTION_TESTS
@@ -18,22 +22,19 @@ HOSTNAME: str = os.getenv("HOSTNAME", "backend")
 CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
 IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
 
-# ENDPOINTS bases
-API_URL = "/api"
-AUTH_URL = "/auth"
-STATIC_URL = "/static"
-BASE_URLS = [API_URL, AUTH_URL]
-
 #################
 # THE APP
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
 UPLOAD_PATH: Path = Path(os.getenv("UPLOAD_PATH", "/uploads"))
+IMPORT_PATH: Path = Path(os.getenv("DATA_IMPORT_FOLDER", "/imports"))
+CODE_DIR: Path = Path(os.getenv("CODE_DIR", "/code"))
 APP_SECRETS = Path(os.getenv("APP_SECRETS", "/secrets"))
 JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
-
+SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
+DOMAIN = os.getenv("DOMAIN")
 #################
 
 MODELS_DIR = "models"
@@ -69,17 +70,15 @@ def get_project_configuration(key, default=None):
 
 @lru_cache
 def get_backend_url() -> str:
-    domain = os.getenv("DOMAIN")
     if PRODUCTION:
-        return f"https://{domain}"
+        return f"https://{DOMAIN}"
 
     port = os.getenv("FLASK_PORT")
-    return f"http://{domain}:{port}"
+    return f"http://{DOMAIN}:{port}"
 
 
 @lru_cache
 def get_frontend_url() -> str:
-    domain = os.getenv("DOMAIN")
     protocol = "https" if PRODUCTION else "http"
 
-    return f"{protocol}://{domain}"
+    return f"{protocol}://{DOMAIN}"

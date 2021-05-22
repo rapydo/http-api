@@ -3,6 +3,7 @@ import time
 from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import AUTH_URI, BaseTests, FlaskClient
@@ -17,14 +18,13 @@ BAN_MESSAGE = (
 )
 
 
-if max_login_attempts == 0:
+if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
+    log.warning("Skipping login ban tests")
+
+elif max_login_attempts == 0:
 
     class TestApp1(BaseTests):
         def test_01_login_ban_not_enabled(self, client: FlaskClient) -> None:
-
-            if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
-                log.warning("Skipping admin/users tests")
-                return
 
             uuid, data = self.create_user(client)
             # Login attempts are not registered, let's try to fail the login many times
@@ -173,6 +173,16 @@ else:
             )
             assert headers is None
 
+            auth = Connector.get_authentication_instance()
+            logins = auth.get_logins(data["email"])
+            login = logins[-1]
+            assert login.username == data["email"]
+            assert login.failed
+            assert not login.flushed
+
+            logins = auth.get_logins(data["email"], only_unflushed=True)
+            assert len(logins) > 0
+
             # Check if token is valid
             r = client.post(f"{AUTH_URI}/login/unlock/{token}")
             assert r.status_code == 200
@@ -181,6 +191,15 @@ else:
             assert events[0].event == Events.login_unlock.value
             assert events[0].user == data["email"]
             assert events[0].target_type == "User"
+
+            logins = auth.get_logins(data["email"])
+            login = logins[-1]
+            assert login.username == data["email"]
+            assert login.failed
+            assert login.flushed
+
+            logins = auth.get_logins(data["email"], only_unflushed=True)
+            assert len(logins) == 0
 
             # Now credentials are unlock again :-)
             headers, _ = self.do_login(client, data["email"], data["password"])

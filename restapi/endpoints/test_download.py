@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from restapi import decorators
 from restapi.config import TESTING

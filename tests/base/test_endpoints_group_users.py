@@ -9,23 +9,23 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_group_users(self, client: FlaskClient, faker: Faker) -> None:
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping group/users tests")
             return
 
         # Create group 1 with 1 Coordinator and 1 User
-        group1_uuid, group1_data = self.create_group(client)
-        user1_uuid, user1_data = self.create_user(
+        group1_uuid, _ = self.create_group(client)
+        _, user1_data = self.create_user(
             client, roles=[Role.COORDINATOR], data={"group": group1_uuid}
         )
-        user2_uuid, user2_data = self.create_user(
+        _, user2_data = self.create_user(
             client, roles=[Role.USER], data={"group": group1_uuid}
         )
 
         # Create group 2 with only 1 Coordinator
-        group2_uuid, group2_data = self.create_group(client)
+        group2_uuid, _ = self.create_group(client)
 
-        user3_uuid, user3_data = self.create_user(
+        _, user3_data = self.create_user(
             client, roles=[Role.COORDINATOR], data={"group": group2_uuid}
         )
 

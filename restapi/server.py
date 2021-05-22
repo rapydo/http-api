@@ -10,13 +10,14 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask
+from flask import Flask  # , request
+from flask.json import JSONEncoder
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
@@ -31,10 +32,12 @@ from restapi.config import (
     SENTRY_URL,
     TESTING,
     get_backend_url,
+    get_frontend_url,
     get_project_configuration,
 )
 from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
+from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import handle_marshmallow_errors, handle_response
 from restapi.services.cache import Cache
@@ -46,11 +49,26 @@ from restapi.utilities.meta import Meta
 lock = Lock()
 
 
+# From Flask 2.0 simplejson will no longer be used
+# See here: https://github.com/pallets/flask/issues/3555
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        # Added support for set serialization
+        # Otherwise: TypeError: Object of type set is not JSON serializable
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
 class ServerModes(int, Enum):
     NORMAL = 0
     INIT = 1
     DESTROY = 2
     WORKER = 3
+
+
+# def inspect_request():
+#     log.critical(request.headers)
 
 
 def teardown_handler(signal, frame):  # pragma: no cover
@@ -72,7 +90,7 @@ def create_app(
     mode: ServerModes = ServerModes.NORMAL,
     options: Optional[Dict[str, bool]] = None,
 ) -> Flask:
-    """ Create the server istance for Flask application """
+    """Create the server istance for Flask application"""
 
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
@@ -91,7 +109,11 @@ def create_app(
 
     # CORS
     if not PRODUCTION:
-        cors = CORS(
+
+        cors_origin = get_frontend_url() if not TESTING else "*"
+
+        CORS(
+            microservice,
             allow_headers=[
                 "Content-Type",
                 "Authorization",
@@ -102,13 +124,14 @@ def create_app(
             ],
             supports_credentials=["true"],
             methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            resources={r"*": {"origins": cors_origin}},
         )
 
-        cors.init_app(microservice)
-        log.debug("CORS Injected")
+        log.debug("CORS Enabled")
 
     # Flask configuration from config file
     microservice.config.from_object(config)
+    microservice.json_encoder = ExtendedJSONEncoder
     log.debug("Flask app configured")
 
     if PRODUCTION:
@@ -191,8 +214,10 @@ def create_app(
         )
         # OpenAPI 3 changed the definition of the security level.
         # Some changes needed here?
-        api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
-        spec.components.security_scheme("Bearer", api_key_scheme)
+
+        if Env.get_bool("AUTH_ENABLE"):
+            api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
+            spec.components.security_scheme("Bearer", api_key_scheme)
 
         microservice.config.update(
             {
@@ -240,6 +265,7 @@ def create_app(
     # marshmallow errors handler
     microservice.register_error_handler(422, handle_marshmallow_errors)
 
+    # microservice.before_request(inspect_request)
     # Logging responses
     microservice.after_request(handle_response)
 

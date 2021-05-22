@@ -1,6 +1,7 @@
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
@@ -10,12 +11,13 @@ class TestApp(BaseTests):
         assert r.status_code == 200
         assert self.get_content(r) == "OK"
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
 
-        # Tokens are ignored
-        r = client.get(f"{API_URI}/tests/noauth", headers=headers)
-        assert r.status_code == 200
-        assert self.get_content(r) == "OK"
+            # Tokens are ignored
+            r = client.get(f"{API_URI}/tests/noauth", headers=headers)
+            assert r.status_code == 200
+            assert self.get_content(r) == "OK"
 
         # Tokens are ignored even if invalid
         r = client.get(
@@ -25,6 +27,10 @@ class TestApp(BaseTests):
         assert self.get_content(r) == "OK"
 
     def test_auth(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
 
         r = client.get(f"{API_URI}/tests/authentication")
         assert r.status_code == 401
@@ -54,6 +60,10 @@ class TestApp(BaseTests):
             assert r.status_code == 401
 
     def test_optional_auth(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalauthentication")
@@ -114,6 +124,10 @@ class TestApp(BaseTests):
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
 
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
+
         r = client.get(f"{API_URI}/tests/queryauthentication")
         assert r.status_code == 401
 
@@ -152,6 +166,10 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_optional_access_token_parameter(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication")
@@ -202,6 +220,10 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_authentication_with_multiple_roles(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
 
         r = client.get(f"{API_URI}/tests/manyrolesauthentication")
         assert r.status_code == 401

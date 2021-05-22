@@ -14,26 +14,23 @@ from restapi.connectors import Connector
 def test_cli() -> None:
     runner = CliRunner()
 
-    response = runner.invoke(cli.verify, [])
-    assert response.exit_code == 0
-
     response = runner.invoke(cli.verify, ["test"])
     assert response.exit_code == 2
 
     assert "Got unexpected extra argument (test)" in response.output
 
-    response = runner.invoke(cli.verify, ["--service", "neo4j"])
+    response = runner.invoke(cli.verify, ["--services", "neo4j"])
     assert response.exit_code == 2
-    assert "Error: no such option: --service" in response.output
+    assert "Error: no such option: --services" in response.output
 
-    response = runner.invoke(cli.verify, ["--services", "x"])
+    response = runner.invoke(cli.verify, ["--service", "x"])
     assert response.exit_code == 1
 
     for service in ("neo4j", "mongo", "sqlalchemy"):
         if not Connector.check_availability(service):
             continue
 
-        response = runner.invoke(cli.verify, ["--services", service])
+        response = runner.invoke(cli.verify, ["--service", service])
         assert response.exit_code == 0
 
     response = runner.invoke(cli.wait, [])

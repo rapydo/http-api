@@ -47,7 +47,9 @@ class Downloader:
     # this is good for large files
     # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
-    def send_file_streamed(path: Path, mime: Optional[str] = None) -> Response:
+    def send_file_streamed(
+        path: Path, mime: Optional[str] = None, out_filename: Optional[str] = None
+    ) -> Response:
         if mime is None:
             # guess_type expects a str as argument because
             # it is intended to be used with urls and not with paths
@@ -59,7 +61,13 @@ class Downloader:
         if not path.is_file():
             raise NotFound("The requested file does not exist")
 
-        return Response(
+        response = Response(
             stream_with_context(Downloader.read_in_chunks(path)),
             mimetype=mime,
         )
+
+        if not out_filename:
+            out_filename = path.name
+
+        response.headers["Content-Disposition"] = f"attachment; filename={out_filename}"
+        return response

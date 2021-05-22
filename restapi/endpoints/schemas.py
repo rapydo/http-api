@@ -70,7 +70,7 @@ class TotalSchema(Schema):
 
 
 class Credentials(Schema):
-    username = fields.Email(required=True)
+    username = fields.Email(required=True, validate=validate.Length(max=100))
     password = fields.Str(
         required=True,
         password=True,
@@ -144,6 +144,15 @@ class MailOutput(Schema):
     bcc = fields.List(fields.Email())
 
 
+class LoginsSchema(Schema):
+    username = fields.Email()
+    date = fields.DateTime(format=ISO8601UTC)
+    IP = fields.Str()
+    location = fields.Str()
+    failed = fields.Boolean()
+    flushed = fields.Boolean()
+
+
 #########################################
 # ############   Callbacks   ############
 #########################################
@@ -204,11 +213,15 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     attributes: MarshmallowSchema = {}
     if is_post:
-        attributes["email"] = fields.Email(required=is_post)
+        attributes["email"] = fields.Email(
+            required=is_post, validate=validate.Length(max=100)
+        )
 
-    attributes["name"] = fields.Str(required=is_post, validate=validate.Length(min=1))
+    attributes["name"] = fields.Str(
+        required=is_post, validate=validate.Length(min=1), label="First Name"
+    )
     attributes["surname"] = fields.Str(
-        required=is_post, validate=validate.Length(min=1)
+        required=is_post, validate=validate.Length(min=1), label="Last Name"
     )
 
     attributes["password"] = fields.Str(
@@ -299,8 +312,8 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 def profile_patch_input() -> Schema:
     attributes: MarshmallowSchema = {}
 
-    attributes["name"] = fields.Str()
-    attributes["surname"] = fields.Str()
+    attributes["name"] = fields.Str(label="First Name")
+    attributes["surname"] = fields.Str(label="Last Name")
     attributes["privacy_accepted"] = fields.Boolean()
 
     if custom_fields := mem.customizer.get_custom_input_fields(
@@ -354,7 +367,11 @@ def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
-    attributes["email"] = fields.Email(required=True, label="Username (email address)")
+    attributes["email"] = fields.Email(
+        required=True,
+        label="Username (email address)",
+        validate=validate.Length(max=100),
+    )
     attributes["password"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),

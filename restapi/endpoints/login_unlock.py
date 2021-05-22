@@ -12,7 +12,7 @@ from restapi.utilities.logs import log
 
 
 class LoginUnlock(EndpointResource):
-    depends_on = ["AUTH_MAX_LOGIN_ATTEMPTS"]
+    depends_on = ["AUTH_MAX_LOGIN_ATTEMPTS", "AUTH_ENABLE"]
 
     @decorators.endpoint(
         path="/auth/login/unlock/<token>",
@@ -59,7 +59,7 @@ class LoginUnlock(EndpointResource):
             raise BadRequest("Invalid unlock token: this request is no longer valid")
 
         # If credentials are no longer locked, invalidate the token
-        if self.auth.get_failed_login(user.email) < self.auth.MAX_LOGIN_ATTEMPTS:
+        if self.auth.count_failed_login(user.email) < self.auth.MAX_LOGIN_ATTEMPTS:
             self.auth.invalidate_token(token)
             raise BadRequest("Invalid unlock token: this request is no longer valid")
 

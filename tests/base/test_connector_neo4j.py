@@ -10,7 +10,7 @@ from neo4j.exceptions import CypherSyntaxError
 
 from restapi.connectors import Connector
 from restapi.connectors import neo4j as connector
-from restapi.env import Env
+from restapi.connectors.neo4j.parser import DataDump, NodeDump, RelationDump
 from restapi.exceptions import ServiceUnavailable
 from restapi.services.authentication import BaseAuthentication
 from restapi.tests import API_URI, BaseTests, FlaskClient
@@ -27,9 +27,6 @@ if not Connector.check_availability(CONNECTOR):
         pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
-# Alwas enabled during core tests
-elif not Env.get_bool("TEST_CORE_ENABLED"):  # pragma: no cover
-    log.warning("Skipping {} tests: only avaiable on core", CONNECTOR)
 else:
 
     log.info("Executing {} tests", CONNECTOR)
@@ -153,3 +150,164 @@ else:
 
             with connector.get_instance() as obj:
                 assert obj is not None
+
+        @staticmethod
+        def test_parser() -> None:
+
+            try:
+                # missing :type
+                node1 = NodeDump("TestNode1", fields=["f1"])
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            node1 = NodeDump("TestNode1", fields=["f1:string", "f2:int", "f3:float"])
+
+            node2 = NodeDump("TestNode2", fields=["f1:string", "f2:int", "f3:float"])
+
+            rel = RelationDump(
+                "TestNode1",
+                "MY_REL",
+                "TestNode2",
+                fields=["f1", "f1", "custom:string"],
+            )
+
+            # To be verified the correct type assignment
+            node1.dump("test-string", 10, 20.30)
+            # This is a duplicate, should be ignored
+            node1.dump("test-string", 10, 20.30)
+            node1.dump("test-string-bis", 11, 22.33)
+            node2.dump("test-string2", 12, 24.36)
+
+            rel.dump("test-string", "test-string2", "custom")
+            rel.dump("test-string-bis", "test-string2", "custom")
+
+            try:
+                node1.dump("only-one")
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            try:
+                node1.dump("only-two", 2)
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            try:
+                node1.dump("too-many", 2, 2.2, 2.22)
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            try:
+                rel.dump("test-string", "test-string2")
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            try:
+                rel.dump("test-string", "test-string2", "custom1", "custom2")
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            # test the errors if a wrong number of fields is given
+
+            # What happens with a dump of wrong keys?
+            # Nothing, but will be ignored and nothing will be created...
+            rel.dump("does-not-exist", "test-string2", "custom")
+
+            node1.store()
+            node2.store()
+            rel.store()
+
+            obj = connector.get_instance()
+
+            data = obj.cypher("MATCH (n: TestNode1) RETURN n")
+            assert isinstance(data[0][0]["f1"], str)
+            assert isinstance(data[0][0]["f2"], int)
+            assert isinstance(data[0][0]["f3"], float)
+            assert len(data) == 2
+            f1 = data[0][0]["f1"]
+            f2 = data[0][0]["f2"]
+            f3 = data[0][0]["f3"]
+            assert f1 == "test-string" or f1 == "test-string-bis"
+            assert f2 == 10 or f2 == 11
+            assert f3 == 20.30 or f3 == 22.33
+            f1 = data[1][0]["f1"]
+            f2 = data[1][0]["f2"]
+            f3 = data[1][0]["f3"]
+            assert f1 == "test-string" or f1 == "test-string-bis"
+            assert f2 == 10 or f2 == 11
+            assert f3 == 20.30 or f3 == 22.33
+
+            data = obj.cypher("MATCH (n: TestNode2) RETURN n")
+            assert len(data) == 1
+
+            data = obj.cypher("MATCH (n)-[r:MY_REL]->(m) RETURN r")
+            assert len(data) == 2
+            assert data[0][0]["custom"] == "custom"
+
+            DataDump.switch_label("TestNode2", "TestNode3")
+
+            data = obj.cypher("MATCH (n: TestNode2) RETURN n")
+            assert len(data) == 0
+
+            data = obj.cypher("MATCH (n: TestNode3) RETURN n")
+            assert len(data) == 1
+
+            DataDump.delete_relationships("TestNode1", "MY_REL", "TestNode3", limit=1)
+
+            data = obj.cypher("MATCH (n)-[r:MY_REL]->(m) RETURN r")
+            assert len(data) == 0
+
+            data = obj.cypher("MATCH (n: TestNode1) RETURN n")
+            assert len(data) == 2
+
+            DataDump.delete_nodes("TestNode1", limit=1)
+            data = obj.cypher("MATCH (n: TestNode1) RETURN n")
+            assert len(data) == 0
+
+            DataDump.delete_nodes("TestNode3")
+            data = obj.cypher("MATCH (n: TestNode3) RETURN n")
+            assert len(data) == 0
+
+            # TestNode2 does not exist... no errors should be raised
+            DataDump.switch_label("TestNode2", "TestNode3")
+
+            # Test DETACH DELETE
+
+            node1 = NodeDump("T1", fields=["f1:string"])
+            node2 = NodeDump("T2", fields=["f1:string"])
+            rel = RelationDump("T1", "R1", "T2", fields=["f1", "f1"])
+
+            node1.dump("a")
+            node2.dump("b")
+            rel.dump("a", "b")
+
+            node1.store()
+            node2.store()
+            rel.store()
+
+            data = obj.cypher("MATCH (n: T1) RETURN n")
+            assert len(data) == 1
+            data = obj.cypher("MATCH (n: T2) RETURN n")
+            assert len(data) == 1
+            data = obj.cypher("MATCH (n)-[r:R1]->(m) RETURN r")
+            assert len(data) == 1
+
+            # Due to detach delete this will delete both T1 and R1
+            # Of course T2 will not be deleted
+            DataDump.delete_nodes("T1")
+
+            data = obj.cypher("MATCH (n: T1) RETURN n")
+            assert len(data) == 0
+            data = obj.cypher("MATCH (n: T2) RETURN n")
+            assert len(data) == 1
+            data = obj.cypher("MATCH (n)-[r:R1]->(m) RETURN r")
+            assert len(data) == 0
+
+            DataDump.delete_nodes("T2")
+            data = obj.cypher("MATCH (n: T2) RETURN n")
+            assert len(data) == 0

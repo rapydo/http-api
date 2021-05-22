@@ -13,7 +13,10 @@ COUNTER = 1
 class TestApp(BaseTests):
     def test_caching_autocleaning(self, client: FlaskClient) -> None:
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
+        else:
+            headers = None
 
         # Syncronize this test to start at the beginning of the next second and
         # prevent the test to overlap a change of second
@@ -66,7 +69,10 @@ class TestApp(BaseTests):
 
     def test_caching_general_clearing(self, client: FlaskClient) -> None:
 
-        headers, _ = self.do_login(client, None, None)
+        if Env.get_bool("AUTH_ENABLE"):
+            headers, _ = self.do_login(client, None, None)
+        else:
+            headers = None
 
         # get method is cached for 200 seconds
 
@@ -121,6 +127,10 @@ class TestApp(BaseTests):
         assert self.get_content(r) == counter3
 
     def test_cached_authenticated_endpoint(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping cache with authentication tests")
+            return
 
         headers1, _ = self.do_login(client, None, None)
 
@@ -193,6 +203,11 @@ class TestApp(BaseTests):
             self.delete_user(client, uuid)
 
     def test_cached_semiauthenticated_endpoint(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping cache with authentication tests")
+            return
+
         r = client.get(f"{API_URI}/tests/cache/optionalauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)
@@ -244,6 +259,10 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_cached_authenticated_param_endpoint(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping cache with authentication tests")
+            return
 
         headers1, _ = self.do_login(client, None, None)
 
@@ -300,6 +319,11 @@ class TestApp(BaseTests):
         assert resp5[COUNTER] == 2
 
     def test_cached_semiauthenticated_param_endpoint(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping cache with authentication tests")
+            return
+
         r = client.get(f"{API_URI}/tests/cache/optionalparamauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)

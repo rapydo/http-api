@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
 
+import pytz
 from pymodm import MongoModel
 from pymodm import connection as mongodb
 from pymodm.base.models import TopLevelMongoModel
@@ -18,6 +19,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -94,7 +96,8 @@ class MongoExt(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return (ServerSelectionTimeoutError,)
 
     @staticmethod
@@ -443,6 +446,44 @@ class Authentication(BaseAuthentication):
             log.warning("Could not invalidate non-existing token")
 
         return True
+
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+
+        date = datetime.now(pytz.utc)
+        ip_address = self.get_remote_ip()
+        ip_location = self.localize_ip(ip_address)
+
+        self.db.Login(
+            date=date,
+            username=username,
+            IP=ip_address,
+            location=ip_location or "Unknown",
+            user_id=user,
+            failed=failed,
+            # i.e. failed logins are not flushed by default
+            # success logins are automatically flushed
+            flushed=not failed,
+        ).save()
+
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
+
+        if not username:
+            logins = self.db.Login.objects
+        elif only_unflushed:
+            logins = self.db.Login.objects.raw({"username": username, "flushed": False})
+        else:
+            logins = self.db.Login.objects.raw({"username": username})
+
+        return list(logins.all())
+
+    def flush_failed_logins(self, username: str) -> None:
+
+        conditions = {"username": username, "flushed": False}
+        for login in self.db.Login.objects.raw(conditions):
+            login.flushed = True
+            login.save()
 
 
 instance = MongoExt()

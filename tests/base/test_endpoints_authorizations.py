@@ -93,14 +93,16 @@ class TestApp1(BaseTests):
 
     def test_admin(self, client: FlaskClient) -> None:
 
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping admin authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.ADMIN])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -201,6 +203,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, True, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, True, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, True, paths
         )
         paths = self.check_endpoint(
@@ -222,6 +227,10 @@ class TestApp1(BaseTests):
 
     def test_staff(self, client: FlaskClient) -> None:
 
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping staff authorizations tests")
+            return
+
         auth = Connector.get_authentication_instance()
         auth.get_roles()
 
@@ -234,9 +243,7 @@ class TestApp1(BaseTests):
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.STAFF])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -337,6 +344,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
         )
         paths = self.check_endpoint(
@@ -357,14 +367,17 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_coordinator(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping coordinator authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.COORDINATOR])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -465,6 +478,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
         )
         paths = self.check_endpoint(
@@ -485,14 +501,17 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_user(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping user authorizations tests")
+            return
+
         # List of all paths to be tested. After each test a path will be removed.
         # At the end the list is expected to be empty
         paths = self.get_paths(client)
 
         uuid, data = self.create_user(client, roles=[Role.USER])
-        headers, user_token = self.do_login(
-            client, data.get("email"), data.get("password")
-        )
+        headers, _ = self.do_login(client, data.get("email"), data.get("password"))
 
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
@@ -593,6 +612,9 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
         )
         paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
+        )
+        paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths
         )
         paths = self.check_endpoint(
@@ -620,6 +642,14 @@ class TestApp1(BaseTests):
         # These are public
         paths = self.check_endpoint(client, "GET", "/api/status", headers, True, paths)
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
+
+        if not Env.get_bool("AUTH_ENABLE"):
+
+            assert paths == []
+
+            log.warning("Skipping other public authorizations tests")
+            return
+
         paths = self.check_endpoint(client, "POST", "/auth/login", headers, True, paths)
 
         if Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS") > 0:
@@ -719,6 +749,9 @@ class TestApp1(BaseTests):
         )
         paths = self.check_endpoint(
             client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
+        )
+        paths = self.check_endpoint(
+            client, "GET", "/api/admin/logins", headers, False, paths
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/tokens", headers, False, paths

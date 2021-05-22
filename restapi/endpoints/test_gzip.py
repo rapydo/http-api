@@ -1,7 +1,8 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest, RestApiException
 from restapi.rest.definition import EndpointResource, Response
+from restapi.utilities.logs import log
 
 if TESTING:
 
@@ -20,10 +21,15 @@ if TESTING:
         )
         def get(self, size: str) -> Response:
 
-            # No type check... but it is only used from a very specific test...
-            # So... who cares?? :-)
-            if int(size) <= 0:
+            size_int = 0
+            try:
+                size_int = int(size)
+            except BaseException as e:
+                log.error("Invalid int value {} -> {}", size, e)
+                raise BadRequest("Invalid numeric value {size}")
+
+            if size_int <= 0:
                 raise RestApiException("Invalid size", status_code=416)
 
             # Just to prevent super giant responses
-            return self.response("a" * min(int(size), 1_000_000))
+            return self.response("a" * min(size_int, 1_000_000))

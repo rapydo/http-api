@@ -1,4 +1,3 @@
-import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
@@ -12,7 +11,7 @@ from sentry_sdk import capture_exception
 
 from restapi.config import API_URL, AUTH_URL, SENTRY_URL
 from restapi.connectors import Connector
-from restapi.exceptions import BadRequest, Conflict, RestApiException
+from restapi.exceptions import RestApiException
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
@@ -20,11 +19,10 @@ from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for e
 from restapi.rest.definition import Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
+from restapi.utilities.uuid import getUUID
 
 log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
-
-SYSTEM_EXCEPTIONS = ["AttributeError", "ValueError", "KeyError", "SystemError"]
 
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -133,35 +131,6 @@ def cache(*args, **kwargs):
     if "make_name" not in kwargs:
         kwargs["make_name"] = make_cache_function_name
     return mem.cache.memoize(*args, **kwargs)
-
-
-# Deprecated since 1.0
-def catch_graph_exceptions(func):  # pragma: no cover
-
-    warnings.warn(
-        "Deprecated use of decorators.catch_graph_exceptions, you can safely remove it",
-        DeprecationWarning,
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        from neomodel.exceptions import RequiredProperty
-
-        from restapi.exceptions import DatabaseDuplicatedEntry
-
-        try:
-            return func(self, *args, **kwargs)
-
-        except DatabaseDuplicatedEntry as e:
-
-            raise Conflict(str(e))
-
-        except RequiredProperty as e:
-
-            raise BadRequest(e)
-
-    return wrapper
 
 
 # This decorator is still a work in progress, in particular for MongoDB
@@ -308,7 +277,7 @@ def init_chunk_upload(func):
     return wrapper
 
 
-# This decorator is automatically added to every endpoints... do not use it explicitly!
+# This decorator is automatically added to every endpoints... do not use it explicitly
 def catch_exceptions(**kwargs):
     """
     A decorator to preprocess an API class method,
@@ -360,14 +329,21 @@ def catch_exceptions(**kwargs):
                 message = str(e)
                 if not message:  # pragma: no cover
                     message = "Unknown error"
-                log.exception(message)
-                log.error("Catched {} exception: {}", excname, message)
 
-                if excname in SYSTEM_EXCEPTIONS:
-                    return self.response(
-                        "Server failure; please contact admin.", code=400
-                    )
-                return self.response({excname: message}, code=400)
+                error_id = getUUID()
+
+                log.error(
+                    "Catched {} exception with ID {}: {}", excname, error_id, message
+                )
+                log.exception(message)
+
+                if excname in ["SystemError"]:  # pragma: no cover
+                    return self.response("Unexpected Server Error", code=500)
+
+                return self.response(
+                    {excname: f"There was an unexpected error. ErrorID: {error_id}"},
+                    code=400,
+                )
 
             return out
 

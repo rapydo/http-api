@@ -50,8 +50,7 @@ def verify_token_is_not_valid(
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -265,7 +264,7 @@ class TestApp(BaseTests):
 
     def test_totp_management(self) -> None:
 
-        if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):  # pragma: no cover
+        if not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             log.warning("Skipping TOTP test: 2FA not enabled")
             return
 
@@ -341,8 +340,7 @@ class TestApp(BaseTests):
 
     def test_ip_management(self) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -356,10 +354,42 @@ class TestApp(BaseTests):
 
         assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
+    def test_login_management(self, faker: Faker) -> None:
+
+        if not Connector.check_availability("authentication"):
+            log.warning("Skipping authentication test: service not available")
+            return
+
+        auth = Connector.get_authentication_instance()
+
+        if BaseAuthentication.default_user:
+            logins = auth.get_logins(BaseAuthentication.default_user)
+
+            assert isinstance(logins, list)
+            assert len(logins) > 0
+
+            auth.flush_failed_logins(BaseAuthentication.default_user)
+            logins = auth.get_logins(
+                BaseAuthentication.default_user, only_unflushed=True
+            )
+            assert len(logins) == 0
+
+            logins = auth.get_logins(
+                BaseAuthentication.default_user, only_unflushed=False
+            )
+            assert len(logins) > 0
+
+        logins = auth.get_logins(faker.ascii_email())
+        assert isinstance(logins, list)
+        assert len(logins) == 0
+
+        logins = auth.get_logins(faker.pystr())
+        assert isinstance(logins, list)
+        assert len(logins) == 0
+
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -473,8 +503,7 @@ class TestApp(BaseTests):
 
     def test_users_groups_roles(self, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Connector.check_availability("authentication"):  # pragma: no cover
+        if not Connector.check_availability("authentication"):
             log.warning("Skipping authentication test: service not available")
             return
 
@@ -649,6 +678,11 @@ class TestApp(BaseTests):
         assert group.fullname != "Changed"
 
     def test_authentication_abstract_methods(self, faker: Faker) -> None:
+
+        if not Connector.check_availability("authentication"):
+            log.warning("Skipping authentication test: service not available")
+            return
+
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
         abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
@@ -706,5 +740,26 @@ class TestApp(BaseTests):
         assert auth.create_group(groupdata={}) is None
 
         assert auth.add_user_to_group(user=user, group=group) is None
+
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=user, failed=True)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=None, failed=True)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=user, failed=False)
+            is None
+        )
+        assert (
+            auth.save_login(username=faker.ascii_email(), user=None, failed=False)
+            is None
+        )
+
+        assert auth.get_logins(username=faker.ascii_email) is None
+
+        assert auth.flush_failed_logins(username=faker.ascii_email) is None
 
         BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore

@@ -12,13 +12,13 @@ from restapi.services.authentication import Role
 
 class SendMail(EndpointResource):
 
-    # depends_on = [""]
+    depends_on = ["AUTH_ENABLE"]
     labels = ["admin"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
     @decorators.use_kwargs(MailInput)
-    @decorators.marshal_with(MailOutput)
+    @decorators.marshal_with(MailOutput, code=200)
     @decorators.endpoint(
         path="/admin/mail",
         summary="Send mail messages",
@@ -55,15 +55,15 @@ class SendMail(EndpointResource):
                     "bcc": bcc,
                 }
             )
-        else:
-            smtp_client = smtp.get_instance()
-            smtp_client.send(
-                body=html_body,
-                subject=subject,
-                to_address=to,
-                from_address=None,
-                cc=cc,
-                bcc=bcc,
-                plain_body=plain_body,
-            )
+
+        smtp_client = smtp.get_instance()
+        smtp_client.send(
+            body=html_body,
+            subject=subject,
+            to_address=to,
+            from_address=None,
+            cc=cc,
+            bcc=bcc,
+            plain_body=plain_body,
+        )
         return self.empty_response()

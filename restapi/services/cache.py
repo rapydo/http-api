@@ -1,3 +1,5 @@
+import os
+import tempfile
 from typing import Dict, Optional, Union
 
 from flask_caching import Cache as FlaskCache
@@ -14,7 +16,7 @@ class Cache:
         if use_redis:
             redis = Env.load_variables_group(prefix="redis")
             return {
-                "CACHE_TYPE": "redis",
+                "CACHE_TYPE": "flask_caching.backends.redis",
                 "CACHE_REDIS_HOST": redis.get("host"),
                 "CACHE_REDIS_PORT": redis.get("port"),
                 "CACHE_REDIS_PASSWORD": redis.get("password"),
@@ -24,8 +26,8 @@ class Cache:
             }
 
         return {
-            "CACHE_TYPE": "filesystem",
-            "CACHE_DIR": "/tmp/cache",
+            "CACHE_TYPE": "flask_caching.backends.filesystem",
+            "CACHE_DIR": os.path.join(tempfile.gettempdir(), "cache"),
             "CACHE_THRESHOLD": 4096,
             # 'CACHE_IGNORE_ERRORS': True,
         }

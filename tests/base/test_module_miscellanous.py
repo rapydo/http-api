@@ -388,7 +388,8 @@ class TestApp(BaseTests):
         assert isinstance(meta, dict)
         assert len(meta) == 0
 
-        meta = Uploader.get_file_metadata("confs/projects_defaults.yaml")  # type: ignore
+        metadata_file_path = "confs/projects_defaults.yaml"
+        meta = Uploader.get_file_metadata(metadata_file_path)  # type: ignore
         assert isinstance(meta, dict)
         assert len(meta) == 2
         assert "type" in meta
@@ -455,6 +456,24 @@ class TestApp(BaseTests):
         assert tlen == 1000
         assert start == 0
         assert end == 1000
+
+        try:
+            Uploader.absolute_upload_file("0", subfolder=Path("\x00"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except BadRequest as e:
+            assert str(e) == "Invalid null byte in subfolder parameter"
+
+        try:
+            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except BadRequest as e:
+            assert str(e) == "Invalid null byte in subfolder parameter"
+
+        try:
+            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
+            pytest.fail("No exception raised")  # pragma: no cover
+        except BadRequest as e:
+            assert str(e) == "Invalid null byte in subfolder parameter"
 
     # #######################################
     # ####      Time

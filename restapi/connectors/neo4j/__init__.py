@@ -35,6 +35,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -112,7 +113,8 @@ class NeoModel(Connector):
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
 
         return (
             neobolt_ServiceUnavailable,
@@ -199,7 +201,7 @@ class NeoModel(Connector):
 
     @catch_db_exceptions
     def cypher(self, query):
-        """ Execute normal neo4j queries """
+        """Execute normal neo4j queries"""
         try:
             # results, meta = db.cypher_query(query)
             results, _ = db.cypher_query(query)
@@ -496,6 +498,45 @@ class Authentication(BaseAuthentication):
             log.warning("Unable to invalidate, token not found: {}", token)
             return False
         return True
+
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+
+        date = datetime.now(pytz.utc)
+        ip_address = self.get_remote_ip()
+        ip_location = self.localize_ip(ip_address)
+
+        login = self.db.Login()
+        login.date = date
+        login.username = username
+        login.IP = ip_address
+        login.location = ip_location or "Unknown"
+        login.failed = failed
+        # i.e. failed logins are not flushed by default
+        # success logins are automatically flushed
+        login.flushed = not failed
+
+        login.save()
+        if user:
+            login.user.connect(user)
+
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
+
+        if not username:
+            logins = self.db.Login.nodes.all()
+        elif only_unflushed:
+            logins = self.db.Login.nodes.filter(username=username, flushed=False)
+        else:
+            logins = self.db.Login.nodes.filter(username=username)
+
+        return [x for x in logins]
+
+    def flush_failed_logins(self, username: str) -> None:
+
+        for login in self.db.Login.nodes.filter(username=username, flushed=False):
+            login.flushed = True
+            login.save()
 
 
 instance = NeoModel()

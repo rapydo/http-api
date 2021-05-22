@@ -7,11 +7,12 @@ from restapi.connectors.smtp.notifications import send_activation_link
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
-from restapi.utilities.logs import log
+
+# from restapi.utilities.logs import log
 
 
 class ProfileActivation(EndpointResource):
-    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
     labels = ["base", "profile"]
 
     @decorators.endpoint(

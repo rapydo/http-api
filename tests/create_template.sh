@@ -22,6 +22,8 @@ elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
   rapydo create prj -s celery -s redis --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
   rapydo create prj -s celery -s redis -s mongo --auth ${AUTH} --frontend no;
+elif [[ "$TEMPLATE" == "noauth" ]]; then
+  rapydo create prj --auth no --frontend no
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no
@@ -30,14 +32,13 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
   # The flag is not included in all templates to be able to also tests the cases
   # when input and output models are not extended
 
-  # Temporary disabled pushpin
-  # -s pushpin \
   rapydo --testing create prj --current \
                     --add-optionals \
                     --extend prjbase \
                     --auth ${AUTH} \
                     --frontend no \
                     -s ftp \
+                    -s pushpin \
                     -s bot \
                     -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
                     -e AUTH_MAX_PASSWORD_VALIDITY=60 \

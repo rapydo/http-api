@@ -40,6 +40,7 @@ from restapi.exceptions import (
 from restapi.services.authentication import (
     BaseAuthentication,
     Group,
+    Login,
     Payload,
     RoleObj,
     Token,
@@ -198,7 +199,8 @@ class SQLAlchemy(Connector):
         )
         # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return (OperationalError,)
 
     def connect(self, **kwargs):
@@ -210,7 +212,7 @@ class SQLAlchemy(Connector):
         if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
-        uri = URL(
+        uri = URL.create(
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
             password=variables.get("password"),
@@ -240,13 +242,15 @@ class SQLAlchemy(Connector):
 
         db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
-        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
+        db.session.commit = catch_db_exceptions(db.session.commit)
+        db.session.flush = catch_db_exceptions(db.session.flush)
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
 
-        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
+        Connection.execute = catch_db_exceptions(Connection.execute)
+        # Used in case of autoflush
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
@@ -269,7 +273,7 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return self.db.session  # type: ignore
+        return self.db.session
 
     def disconnect(self) -> None:
         if self.db:
@@ -611,6 +615,59 @@ class Authentication(BaseAuthentication):
 
         log.warning("Could not invalidate token")
         return False
+
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+
+        date = datetime.now(pytz.utc)
+        ip_address = self.get_remote_ip()
+        ip_location = self.localize_ip(ip_address)
+
+        login_data: Dict[str, Any] = {}
+
+        login_data["date"] = date
+        login_data["username"] = username
+        login_data["IP"] = ip_address
+        login_data["location"] = ip_location or "Unknown"
+        # the following two are equivalent
+        if user:
+            # login_data["user_id"] = user.id
+            login_data["user"] = user
+        login_data["failed"] = failed
+        # i.e. failed logins are not flushed by default
+        # success logins are automatically flushed
+        login_data["flushed"] = not failed
+
+        login = self.db.Login(**login_data)
+
+        try:
+            self.db.session.add(login)
+            self.db.session.commit()
+
+        except BaseException as e:  # pragma: no cover
+            log.error("DB error ({}), rolling back", e)
+            self.db.session.rollback()
+            raise
+
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
+
+        if not username:
+            logins = self.db.Login.query.all()
+        elif only_unflushed:
+            logins = self.db.Login.query.filter_by(username=username, flushed=False)
+        else:
+            logins = self.db.Login.query.filter_by(username=username)
+
+        return [x for x in logins]
+
+    def flush_failed_logins(self, username: str) -> None:
+
+        for login in self.db.Login.query.filter_by(username=username, flushed=False):
+            login.flushed = True
+            self.db.session.add(login)
+
+        self.db.session.commit()
 
 
 instance = SQLAlchemy()

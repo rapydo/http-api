@@ -3,6 +3,7 @@ import time
 
 from faker import Faker
 
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.tests import AUTH_URI, BaseAuthentication, BaseTests, FlaskClient
 from restapi.utilities.logs import OBSCURE_VALUE, Events, log
@@ -11,6 +12,10 @@ from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 class TestApp(BaseTests):
     def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
         """ Check that you can login and receive back your token """
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping login tests")
+            return
 
         log.info("*** VERIFY CASE INSENSITIVE LOGIN")
         # BaseAuthentication.load_default_user()
@@ -25,6 +30,11 @@ class TestApp(BaseTests):
         assert events[0].event == Events.login.value
         assert events[0].user == USER
 
+        auth = Connector.get_authentication_instance()
+        logins = auth.get_logins(USER)
+        login = logins[-1]
+        assert login.username == USER
+
         # Wrong credentials
         # Off course PWD cannot be upper :D
         self.do_login(client, USER, PWD.upper(), status_code=401)
@@ -32,6 +42,10 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
+
+        logins = auth.get_logins(USER)
+        login = logins[-1]
+        assert login.username == USER
 
         log.info("*** VERIFY valid credentials")
         # Login by using normal username (no upper case)
@@ -86,6 +100,10 @@ class TestApp(BaseTests):
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """ Check if you can use your token for protected endpoints """
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping profile tests")
+            return
 
         # Check success
         log.info("*** VERIFY valid token")
@@ -189,9 +207,8 @@ class TestApp(BaseTests):
 
     def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
-            log.warning("Profile is disabled, skipping tests")
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping change profile tests")
             return
 
         headers, _ = self.do_login(client, None, None)
@@ -355,6 +372,10 @@ class TestApp(BaseTests):
     def test_04_logout(self, client: FlaskClient) -> None:
         """ Check that you can logout with a valid token """
 
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping logout tests")
+            return
+
         # Check success
         log.info("*** VERIFY valid token")
         r = client.get(f"{AUTH_URI}/logout", headers=self.get("auth_header"))
@@ -375,7 +396,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_05_login_failures(self, client: FlaskClient) -> None:
-        if Env.get_bool("MAIN_LOGIN_ENABLE"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLE"):
             # Create a new user on the fly to test the cached endpoint
             _, data = self.create_user(client)
             headers, _ = self.do_login(
@@ -386,7 +407,7 @@ class TestApp(BaseTests):
 
     def test_06_token_ip_validity(self, client: FlaskClient, faker: Faker) -> None:
 
-        if Env.get_bool("MAIN_LOGIN_ENABLE"):
+        if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLE"):
             if Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD") < 10:
                 headers, _ = self.do_login(client, None, None)
 

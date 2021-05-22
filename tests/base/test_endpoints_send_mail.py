@@ -3,6 +3,7 @@ from typing import Any, Dict
 from faker import Faker
 
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -10,8 +11,7 @@ from restapi.utilities.logs import log
 class TestApp(BaseTests):
     def test_sendmail(self, client: FlaskClient, faker: Faker) -> None:
 
-        # mailmock is always enabled during core tests
-        if not Connector.check_availability("smtp"):  # pragma: no cover
+        if not Connector.check_availability("smtp") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin send mail tests")
             return
 

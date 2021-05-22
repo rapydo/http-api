@@ -1,12 +1,18 @@
 from faker import Faker
 
 from restapi.connectors import Connector
+from restapi.env import Env
 from restapi.services.authentication import DEFAULT_GROUP_NAME
 from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
     def test_database_exceptions(self, client: FlaskClient, faker: Faker) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping dabase exceptions tests")
+            return
 
         # This is a special value. The endpoint will try to create a group without
         # shortname. A BadRequest is expected because the database should refuse the

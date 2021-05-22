@@ -30,7 +30,8 @@ class Mail(Connector):
         # This way the send method will be able to use variabiles overridden in connect
         self.instance_variables = self.variables.copy()
 
-    def get_connection_exception(self) -> ExceptionsList:
+    @staticmethod
+    def get_connection_exception() -> ExceptionsList:
         return (socket.gaierror, SMTPAuthenticationError)
 
     def connect(self, **kwargs):

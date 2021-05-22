@@ -18,7 +18,7 @@ from restapi.config import (
 )
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, NoAuthentication
 from restapi.tests_initialization import initialize_testing_environment
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -81,7 +81,10 @@ class Connector(metaclass=abc.ABCMeta):
     @staticmethod
     def init() -> None:
 
-        log.info("Authentication service: {}", Connector.authentication_service)
+        if Connector.authentication_service == NO_AUTH:
+            log.info("No Authentication service configured")
+        else:
+            log.info("Authentication service: {}", Connector.authentication_service)
 
         Connector.services = Connector.load_connectors(
             ABS_RESTAPI_PATH, BACKEND_PACKAGE, Connector.services
@@ -118,8 +121,9 @@ class Connector(metaclass=abc.ABCMeta):
             return True
         return False  # pragma: no cover
 
+    @staticmethod
     @abc.abstractmethod
-    def get_connection_exception(self) -> ExceptionsList:  # pragma: no cover
+    def get_connection_exception() -> ExceptionsList:  # pragma: no cover
         return None
 
     @abc.abstractmethod
@@ -168,7 +172,7 @@ class Connector(metaclass=abc.ABCMeta):
             if not Env.to_bool(
                 variables.get("enable_connector", True)
             ):  # pragma: no cover
-                log.info("{} connector is disabled", connector)
+                log.debug("{} connector is disabled", connector)
                 continue
 
             external = False
@@ -274,6 +278,10 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_authentication_instance() -> BaseAuthentication:
+
+        if Connector.authentication_service == NO_AUTH:
+            return NoAuthentication()
+
         if not Connector._authentication_module:
             Connector._authentication_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
@@ -290,9 +298,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         Connector.app = app
 
-        if Connector.authentication_service == NO_AUTH:  # pragma: no cover
-            if not worker_mode:
-                log.warning("No authentication service configured")
+        if Connector.authentication_service == NO_AUTH:
             return
 
         if (

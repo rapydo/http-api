@@ -50,11 +50,26 @@ def import_secret(abs_filename: Path) -> bytes:
         return open(abs_filename, "rb").read()
     # Can't be covered because it is execute once before the tests...
     except OSError:  # pragma: no cover
-        key = Fernet.generate_key()
-        with open(abs_filename, "wb") as key_file:
-            key_file.write(key)
-        abs_filename.chmod(0o400)
-        return key
+        try:
+            key = Fernet.generate_key()
+            with open(abs_filename, "wb") as key_file:
+                key_file.write(key)
+            abs_filename.chmod(0o400)
+            return key
+        # Debug code
+        except PermissionError as e:  # pragma: no cover
+            log.critical("DEBUG CODE: {}", e)
+            from pwd import getpwuid
+
+            stats = abs_filename.parent.stat()
+            log.critical(
+                "Permission mask set to {} is {} (owner {} = {})",
+                abs_filename.parent,
+                str(oct(stats.st_mode))[-3:],
+                stats.st_uid,
+                getpwuid(stats.st_uid).pw_name,
+            )
+            raise e
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -68,6 +83,7 @@ DEFAULT_GROUP_DESCR = "Default group"
 User = Any
 Group = Any
 RoleObj = Any
+Login = Any
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
@@ -105,14 +121,6 @@ class Token(TypedDict, total=False):
     IP: str
     location: str
     user: Optional[User]
-
-
-class FailedLogin(TypedDict):
-    progressive_count: int
-    username: str
-    date: datetime
-    IP: str
-    location: str
 
 
 class Role(Enum):
@@ -221,9 +229,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     roles_data: Dict[str, str] = {}
     default_role: str = Role.USER.value
 
-    # To be stored on DB
-    failed_logins: Dict[str, List[FailedLogin]] = {}
-
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
         self.db: Any
@@ -266,7 +271,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             )
 
     def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
-        """ The method which will check if credentials are good to go """
+        """The method which will check if credentials are good to go"""
 
         try:
             user = self.get_user(username=username)
@@ -301,6 +306,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             payload, full_payload = self.fill_payload(user, expiration=user.expiration)
             token = self.create_token(payload)
 
+            self.save_login(username, user, failed=False)
             self.log_event(Events.login, user=user)
             return token, full_payload, user
 
@@ -388,7 +394,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     # ###################
     @classmethod
     def create_token(cls, payload: Payload) -> str:
-        """ Generate a str token with JWT library to encrypt the payload """
+        """Generate a str token with JWT library to encrypt the payload"""
         return jwt.encode(
             cast(Dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
         )
@@ -556,15 +562,15 @@ class BaseAuthentication(metaclass=ABCMeta):
     # #####   Roles handling   ######
     # ###############################
     def is_admin(self, user: User) -> bool:
-        """ Check if current user has Administration role """
+        """Check if current user has Administration role"""
         return self.verify_roles(user, [Role.ADMIN], warnings=False)
 
     def is_staff(self, user: User) -> bool:
-        """ Check if current user has Staff role """
+        """Check if current user has Staff role"""
         return self.verify_roles(user, [Role.STAFF], warnings=False)
 
     def is_coordinator(self, user: User) -> bool:
-        """ Check if current user has Coordinator role """
+        """Check if current user has Coordinator role"""
         return self.verify_roles(user, [Role.COORDINATOR], warnings=False)
 
     def verify_roles(
@@ -644,26 +650,13 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def register_failed_login(self, username: str, user: Optional[User]) -> None:
 
+        self.save_login(username, user, failed=True)
+
         if self.MAX_LOGIN_ATTEMPTS == 0:
-            log.debug("Failed login are not registered in this configuration")
+            log.debug("Failed login are not considered in this configuration")
             return
 
-        ip = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip)
-        self.failed_logins.setdefault(username, [])
-
-        count = len(self.failed_logins[username])
-        self.failed_logins[username].append(
-            {
-                "progressive_count": count + 1,
-                "username": username,
-                "date": datetime.now(pytz.utc),
-                "IP": ip,
-                "location": ip_loc,
-            }
-        )
-
-        if self.get_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
+        if self.count_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
         log.error(
@@ -688,32 +681,28 @@ class BaseAuthentication(metaclass=ABCMeta):
             rt = unlock_token.replace(".", "+")
             url = f"{server_url}/app/login/unlock/{rt}"
 
+            failed_logins = self.get_logins(username, only_unflushed=True)
             notify_login_block(
                 user,
-                reversed(self.failed_logins[username]),
+                reversed(failed_logins),
                 self.FAILED_LOGINS_EXPIRATION.seconds,
                 url,
             )
 
-    @classmethod
-    def get_failed_login(cls, username: str) -> int:
+    def count_failed_login(self, username: str) -> int:
 
-        # username not listed or listed with an empty array
-        if not (events := cls.failed_logins.get(username, None)):
+        failed_logins = self.get_logins(username, only_unflushed=True)
+        if not failed_logins:
             return 0
 
-        # Verify the last event
-        last_event = events[-1]
-        exp = last_event["date"] + cls.FAILED_LOGINS_EXPIRATION
-        if datetime.now(pytz.utc) > exp:
-            cls.flush_failed_logins(username)
+        last_failed = failed_logins[-1]
+        exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
+
+        if get_now(exp.tzinfo) > exp:
+            self.flush_failed_logins(username)
             return 0
 
-        return last_event["progressive_count"]
-
-    @classmethod
-    def flush_failed_logins(cls, username: str) -> None:
-        cls.failed_logins.pop(username, None)
+        return len(failed_logins)
 
     def get_totp_secret(self, user: User) -> str:
 
@@ -887,18 +876,17 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         return message
 
-    @classmethod
-    def verify_blocked_username(cls, username: str) -> None:
+    def verify_blocked_username(self, username: str) -> None:
 
         # We do not count failed logins
-        if cls.MAX_LOGIN_ATTEMPTS <= 0:
+        if self.MAX_LOGIN_ATTEMPTS <= 0:
             return
 
         # We register failed logins but the user does not reached it yet
-        if cls.get_failed_login(username) < cls.MAX_LOGIN_ATTEMPTS:
+        if self.count_failed_login(username) < self.MAX_LOGIN_ATTEMPTS:
             return
 
-        cls.log_event(
+        self.log_event(
             Events.refused_login,
             payload={
                 "username": username,
@@ -1271,3 +1259,120 @@ class BaseAuthentication(metaclass=ABCMeta):
         Save the group.members -> user relationship
         """
         ...
+
+    @abstractmethod
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+        """
+        Save login information
+        """
+        ...
+
+    @abstractmethod
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
+        """
+        Save login information
+        """
+        ...
+
+    @abstractmethod
+    def flush_failed_logins(self, username: str) -> None:
+        """
+        Flush failed logins for the give username
+        """
+        ...
+
+
+class NoAuthentication(BaseAuthentication):  # pragma: no cover
+
+    # Also used by POST user
+    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
+        raise NotImplementedError("Create User not implemented with No Authentication")
+
+    def link_roles(self, user: User, roles: List[str]) -> None:
+        return None
+
+    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+        raise NotImplementedError("Create Group not implemented with No Authentication")
+
+    def add_user_to_group(self, user: User, group: Group) -> None:
+        return None
+
+    def get_user(
+        self, username: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Optional[User]:
+
+        return None
+
+    def get_users(self) -> List[User]:
+        return []
+
+    def save_user(self, user: User) -> bool:
+        return False
+
+    def delete_user(self, user: User) -> bool:
+        return False
+
+    def get_group(
+        self, group_id: Optional[str] = None, name: Optional[str] = None
+    ) -> Optional[Group]:
+        return None
+
+    def get_groups(self) -> List[Group]:
+        return []
+
+    def get_user_group(self, user: User) -> Group:
+        raise NotImplementedError("Get Group not implemented with No Authentication")
+
+    def get_group_members(self, group: Group) -> List[User]:
+        return []
+
+    def save_group(self, group: Group) -> bool:
+        return False
+
+    def delete_group(self, group: Group) -> bool:
+        return False
+
+    def get_roles(self) -> List[RoleObj]:
+        return []
+
+    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+        return []
+
+    def create_role(self, name: str, description: str) -> None:
+        return None
+
+    def save_role(self, role: RoleObj) -> bool:
+        return False
+
+    def save_token(
+        self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
+    ) -> None:
+        return None
+
+    def verify_token_validity(self, jti: str, user: User) -> bool:
+        return False
+
+    def get_tokens(
+        self,
+        user: Optional[User] = None,
+        token_jti: Optional[str] = None,
+        get_all: bool = False,
+    ) -> List[Token]:
+
+        return []
+
+    def invalidate_token(self, token: str) -> bool:
+        return False
+
+    def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
+        return None
+
+    def get_logins(
+        self, username: Optional[str] = None, only_unflushed: bool = False
+    ) -> List[Login]:
+        raise NotImplementedError("Get Login not implemented with No Authentication")
+
+    def flush_failed_logins(self, username: str) -> None:
+        return None

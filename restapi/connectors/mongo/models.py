@@ -61,8 +61,6 @@ class Token(MongoModel):
     expiration = fields.DateTimeField()
     last_access = fields.DateTimeField()
     IP = fields.CharField()
-    # no longer used
-    hostname = fields.CharField(blank=True)
     location = fields.CharField(blank=True)
     user_id = fields.ReferenceField(User, blank=True)
 
@@ -88,3 +86,17 @@ class Group(MongoModel):
             IndexModel("uuid", unique=True),
             IndexModel("shortname", unique=True),
         ]
+
+
+class Login(MongoModel):
+    date = fields.DateTimeField(required=True)
+    username = fields.CharField()
+    IP = fields.CharField()
+    location = fields.CharField(blank=True)
+    user_id = fields.ReferenceField(User, blank=True)
+    failed = fields.BooleanField(default=False)
+    flushed = fields.BooleanField(default=False)
+
+    class Meta:
+        # write_concern = WriteConcern(j=True)
+        connection_alias = AUTH_DB

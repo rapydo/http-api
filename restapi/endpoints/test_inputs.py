@@ -130,7 +130,7 @@ if TESTING and Connector.check_availability("neo4j"):
         @decorators.endpoint(
             path="/tests/neo4jinputs",
             summary="Accept inputs based on a neo4j-related schema",
-            desingleponses={204: "Tests executed"},
+            responses={204: "Tests executed"},
         )
         def post(self, choice: str) -> Response:
 

@@ -10,8 +10,7 @@ from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 class TestApp(BaseTests):
     def test_registration(self, client: FlaskClient, faker: Faker) -> None:
 
-        # Always enabled during core tests
-        if not Env.get_bool("ALLOW_REGISTRATION"):  # pragma: no cover
+        if not Env.get_bool("ALLOW_REGISTRATION") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("User registration is disabled, skipping tests")
             return
 

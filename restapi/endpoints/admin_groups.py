@@ -10,6 +10,7 @@ from restapi.services.authentication import Role
 
 class AdminGroups(EndpointResource):
 
+    depends_on = ["AUTH_ENABLE"]
     labels = ["admin"]
     private = True
 

@@ -21,7 +21,7 @@ setup(
         ]
     },
     # python_requires=">=3.9.0",
-    # Due to mistral (also removed str.removeprefix)
+    # Due to mistral & b2stage/sdc (also removed str.removeprefix)
     python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]
@@ -30,19 +30,20 @@ setup(
     # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask, plugins and webservers
-        "Flask==1.1.2",
+        "Flask==1.1.4",
+        # To be removed with flask 2.0
+        "itsdangerous==1.1.0",
         "Flask-RESTful==0.3.8",
         "flask-apispec==0.11.0",
-        "Flask-Caching==1.9.0",
+        "Flask-Caching==1.10.1",
         "Flask-Cors==3.0.10",
-        "Flask-SQLAlchemy==2.4.4",
-        "sqlalchemy==1.3.23",
-        "Flask-Migrate==2.6.0",
+        "Flask-SQLAlchemy==2.5.1",
+        "Flask-Migrate==2.7.0",
         "PyJWT==2.0.1",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
-        "gunicorn==20.0.4",
+        "gunicorn==20.1.0",
         # DB and services drivers
         "neomodel==4.0.2",
         "psycopg2-binary",
@@ -54,12 +55,11 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.3",
-        # Later version prevent celery to connect to RabbitMQ with ssl
-        "amqp==5.0.2",
+        "python-telegram-bot==13.4.1",
+        "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
-        "segno==1.3.1",
+        "segno==1.3.3",
         # Utilities
         "PyYAML==5.4.1",
         "loguru",
@@ -72,15 +72,15 @@ setup(
         "simplejson",
         # Web sockets and others
         "websocket-client",
-        # "gripcontrol==4.0.0",
-        "sentry-sdk[flask]==0.20.3",
+        "gripcontrol==4.1.0",
+        "sentry-sdk[flask]==1.0.0",
         # Tests
         "pytest-flask==1.2.0",
         "pytest-cov==2.11.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.1.0",
-        "Faker==6.5.0",
-        "Telethon==1.20",
+        "schemathesis==3.6.3",
+        "Faker==8.1.1",
+        "Telethon==1.21.1",
     ],
     classifiers=[
         "Programming Language :: Python",

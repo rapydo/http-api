@@ -7,7 +7,7 @@ from restapi.services.authentication import Role
 
 class GroupUsers(EndpointResource):
 
-    depends_on = ["MAIN_LOGIN_ENABLE"]
+    depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["admin"]
 
     @decorators.auth.require_all(Role.COORDINATOR)
