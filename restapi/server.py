@@ -17,12 +17,12 @@ import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask  # , request
-from flask.json import JSONEncoder
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
 from sentry_sdk.integrations.flask import FlaskIntegration
+from simplejson import JSONEncoder
 
 from restapi import config
 from restapi.config import (
@@ -49,8 +49,6 @@ from restapi.utilities.meta import Meta
 lock = Lock()
 
 
-# From Flask 2.0 simplejson will no longer be used
-# See here: https://github.com/pallets/flask/issues/3555
 class ExtendedJSONEncoder(JSONEncoder):
     def default(self, o: Any) -> Any:
         # Added support for set serialization
