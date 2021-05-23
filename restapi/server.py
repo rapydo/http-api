@@ -8,6 +8,7 @@ import signal
 import sys
 import time
 import warnings
+from datetime import date, datetime
 from enum import Enum
 from threading import Lock
 from typing import Any, Dict, Optional
@@ -16,7 +17,7 @@ import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask  # , request
+from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
@@ -55,6 +56,8 @@ class ExtendedJSONEncoder(JSONEncoder):
         # Otherwise: TypeError: Object of type set is not JSON serializable
         if isinstance(o, set):
             return list(o)
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
         return super().default(o)
 
 
