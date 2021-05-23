@@ -433,19 +433,14 @@ class BaseTests:
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
 
-                # Fri, 26 Feb 2021 23:59:59 GMT
-                fmt = "%a, %d %b %Y %H:%M:%S %Z"
-                # d = cls.faker.date(pattern="%Y-%m-%d")
-                # data[key] = f"{d}T00:00:00.000Z"
-
                 min_date = None
                 max_date = None
 
                 if min_value := d.get("min"):
-                    min_date = datetime.strptime(min_value, fmt)
+                    min_date = datetime.fromisoformat(min_value)
 
                 if max_value := d.get("max"):
-                    max_date = datetime.strptime(max_value, fmt)
+                    max_date = datetime.fromisoformat(max_value)
 
                 d = cls.faker.date_time_between_dates(
                     datetime_start=min_date, datetime_end=max_date
