@@ -70,6 +70,9 @@ class Uploader:
 
         myfile = request.files["file"]
 
+        if not myfile.filename:
+            raise BadRequest("Invalid filename")
+
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
@@ -181,17 +184,17 @@ class Uploader:
 
             return total_length, start, stop
 
-        total_length = int(content_range.length)
+        total_length = content_range.length
         # es: 'bytes */35738983'
         if content_range.start is None:
             start = 0
         else:
-            start = int(content_range.start)
+            start = content_range.start
 
         if content_range.stop is None:
             stop = total_length
         else:
-            stop = int(content_range.stop)
+            stop = content_range.stop
 
         return total_length, start, stop
 

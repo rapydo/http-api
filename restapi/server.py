@@ -8,10 +8,9 @@ import signal
 import sys
 import time
 import warnings
-from datetime import date, datetime
 from enum import Enum
 from threading import Lock
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
@@ -23,7 +22,6 @@ from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
 from sentry_sdk.integrations.flask import FlaskIntegration
-from simplejson import JSONEncoder
 
 from restapi import config
 from restapi.config import (
@@ -40,7 +38,11 @@ from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
 from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
-from restapi.rest.response import handle_marshmallow_errors, handle_response
+from restapi.rest.response import (
+    ExtendedJSONEncoder,
+    handle_marshmallow_errors,
+    handle_response,
+)
 from restapi.services.cache import Cache
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -48,17 +50,6 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 lock = Lock()
-
-
-class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o: Any) -> Any:
-        # Added support for set serialization
-        # Otherwise: TypeError: Object of type set is not JSON serializable
-        if isinstance(o, set):
-            return list(o)
-        if isinstance(o, (datetime, date)):
-            return o.isoformat()
-        return super().default(o)
 
 
 class ServerModes(int, Enum):
@@ -238,19 +229,20 @@ def create_app(
 
         for rule in microservice.url_map.iter_rules():
 
-            endpoint = microservice.view_functions[rule.endpoint]
-            if not hasattr(endpoint, "view_class"):
+            view_function = microservice.view_functions[rule.endpoint]
+            if not hasattr(view_function, "view_class"):
                 continue
 
             newmethods = ignore_verbs.copy()
             rulename = str(rule)
 
-            for verb in rule.methods - ignore_verbs:
-                method = verb.lower()
-                if method in endpoints_loader.uri2methods[rulename]:
-                    # remove from flask mapping
-                    # to allow 405 response
-                    newmethods.add(verb)
+            if rule.methods:
+                for verb in rule.methods - ignore_verbs:
+                    method = verb.lower()
+                    if method in endpoints_loader.uri2methods[rulename]:
+                        # remove from flask mapping
+                        # to allow 405 response
+                        newmethods.add(verb)
 
             rule.methods = newmethods
 

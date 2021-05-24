@@ -1,11 +1,14 @@
+import decimal
 import gzip
 import sys
 import time
+from datetime import date, datetime
 from io import BytesIO
-from typing import List
+from typing import Any, List
 from urllib import parse as urllib_parse
 
 from flask import jsonify, render_template, request
+from flask.json import JSONEncoder
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
@@ -136,6 +139,19 @@ def handle_response(response):
     )
 
     return response
+
+
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        # Added support for set serialization
+        # Otherwise: TypeError: Object of type set is not JSON serializable
+        if isinstance(o, set):
+            return list(o)
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        return super().default(o)
 
 
 class ResponseMaker:
