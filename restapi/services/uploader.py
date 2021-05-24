@@ -178,11 +178,10 @@ class Uploader:
                 log.error("Invalid Content-Range: {}", range_header)
                 return None, None, None
 
-            total_length = int(tokens[1])
-            start = 0
-            stop = total_length
-
-            return total_length, start, stop
+            # A pattern like */len is expected
+            # => is returned start == 0 and stop == len
+            tot_len = int(tokens[1])
+            return tot_len, 0, tot_len
 
         total_length = content_range.length
         # es: 'bytes */35738983'
