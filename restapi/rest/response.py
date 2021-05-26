@@ -143,15 +143,14 @@ def handle_response(response):
 
 class ExtendedJSONEncoder(JSONEncoder):
     def default(self, o: Any) -> Any:
-        # Added support for set serialization
-        # Otherwise: TypeError: Object of type set is not JSON serializable
         if isinstance(o, set):
             return list(o)
         if isinstance(o, (datetime, date)):
             return o.isoformat()
         if isinstance(o, decimal.Decimal):
             return str(o)
-        return super().default(o)
+        # Otherwise: TypeError: Object of type xxx is not JSON serializable
+        return super().default(o)  # pragma: no cover
 
 
 class ResponseMaker:

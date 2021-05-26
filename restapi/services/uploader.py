@@ -70,7 +70,7 @@ class Uploader:
 
         myfile = request.files["file"]
 
-        if not myfile.filename:
+        if not myfile.filename:  # pragma: no cover
             raise BadRequest("Invalid filename")
 
         if not self.allowed_file(myfile.filename):
