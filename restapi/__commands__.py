@@ -79,7 +79,8 @@ def verify(service):
     log.info("Verifying service: {}", service)
     variables = Connector.services.get(service, {})
     host, port = get_service_address(variables, "host", "port", service)
-    wait_socket(host, port, service)
+    if host != "nohost":
+        wait_socket(host, port, service)
 
     log.info("Completed successfully")
 
@@ -187,7 +188,8 @@ def mywait() -> None:
         else:
             host, port = get_service_address(variables, "host", "port", name)
 
-            wait_socket(host, port, name)
+            if host != "nohost":
+                wait_socket(host, port, name)
 
 
 # Too dangerous to launch it during tests... skipping tests
