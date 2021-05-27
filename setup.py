@@ -53,7 +53,7 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.4.1",
+        "python-telegram-bot==13.5",
         "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
@@ -71,7 +71,7 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
-        "sentry-sdk[flask]==1.0.0",
+        "sentry-sdk[flask]==1.1.0",
         # Tests
         "pytest-flask==1.2.0",
         "pytest-cov==2.12.0",
