@@ -74,10 +74,10 @@ setup(
         "sentry-sdk[flask]==1.0.0",
         # Tests
         "pytest-flask==1.2.0",
-        "pytest-cov==2.11.1",
+        "pytest-cov==2.12.0",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.6.3",
-        "Faker==8.1.1",
+        "schemathesis==3.7.1",
+        "Faker==8.3.0",
         "Telethon==1.21.1",
     ],
     classifiers=[
