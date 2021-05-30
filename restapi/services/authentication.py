@@ -3,6 +3,7 @@ import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
@@ -376,6 +377,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         return "0.0.0.0"
 
     @staticmethod
+    @lru_cache
     def localize_ip(ip: str) -> Any:
 
         try:
