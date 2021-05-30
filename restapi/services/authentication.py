@@ -378,7 +378,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     @lru_cache
-    def localize_ip(ip: str) -> Any:
+    def localize_ip(ip: str) -> Optional[str]:
 
         try:
             data = mem.geo_reader.get(ip)
@@ -389,14 +389,14 @@ class BaseAuthentication(metaclass=ABCMeta):
             if "country" in data:
                 try:
                     c = data["country"]["names"]["en"]
-                    return c
+                    return c  # type: ignore
                 except BaseException:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
             if "continent" in data:  # pragma: no cover
                 try:
                     c = data["continent"]["names"]["en"]
-                    return c
+                    return c  # type: ignore
 
                 except BaseException:
                     log.error("Missing continent.names.en in {}", data)
