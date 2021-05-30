@@ -35,6 +35,7 @@ JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
 SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
 DOMAIN = os.getenv("DOMAIN")
+PROXIED_CONNECTION: bool = Env.get_bool("PROXIED_CONNECTION")
 #################
 
 MODELS_DIR = "models"

@@ -11,7 +11,7 @@ from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 class TestApp(BaseTests):
     def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
-        """ Check that you can login and receive back your token """
+        """Check that you can login and receive back your token"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping login tests")
@@ -99,7 +99,7 @@ class TestApp(BaseTests):
         assert events[0].payload["username"] == random_email
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
-        """ Check if you can use your token for protected endpoints """
+        """Check if you can use your token for protected endpoints"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping profile tests")
@@ -370,7 +370,7 @@ class TestApp(BaseTests):
         self.save("auth_header", headers)
 
     def test_04_logout(self, client: FlaskClient) -> None:
-        """ Check that you can logout with a valid token """
+        """Check that you can logout with a valid token"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping logout tests")
@@ -450,9 +450,12 @@ class TestApp(BaseTests):
                 )
 
                 # Another option to provide IP is through the header passed by nginx
-                headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
-                r = client.get(f"{AUTH_URI}/status", headers=headers)
-                assert r.status_code == 401
+                # This only works if PROXIED_CONNECTION is on
+                # (disabled by default, for security purpose)
+                if Env.get_bool("PROXIED_CONNECTION"):
+                    headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
+                    r = client.get(f"{AUTH_URI}/status", headers=headers)
+                    assert r.status_code == 401
 
     if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 

@@ -20,6 +20,7 @@ from restapi.config import (
     IS_CELERY_CONTAINER,
     JWT_SECRET_FILE,
     PRODUCTION,
+    PROXIED_CONNECTION,
     TESTING,
     TOTP_SECRET_FILE,
     get_frontend_url,
@@ -339,13 +340,28 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def get_remote_ip() -> str:
         try:
-            if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-                # it can be something like: ['IP1, IP2']
-                return str(forwarded_ips[-1].split(",")[0].strip())
+
+            # Syntax: X-Forwarded-For: <client>, <proxy1>, <proxy2>
+            #   <client> The client IP address
+            #   <proxy1>, <proxy2> If a request goes through multiple proxies, the
+            #        IP addresses of each successive proxy is listed. This means, the
+            #        right-most IP address is the IP address of the most recent proxy
+            #        and the left-most IP address is the IP address of the originating
+            #        client.
+            if PROXIED_CONNECTION:
+                header_key = "X-Forwarded-For"
+                if forwarded_ips := request.headers.getlist(header_key):
+                    # it can be something like: ['IP1, IP2']
+                    return str(forwarded_ips[0].split(",")[0].strip())
+            # Standard (and more secure) way to obtain remote IP
+            else:
+                header_key = "X-Real-Ip"
+                if real_ip := request.headers.get(header_key):
+                    return real_ip
 
             if PRODUCTION and not TESTING:  # pragma: no cover
                 log.warning(
-                    "Production mode is enabled, but X-Forwarded-For header is missing"
+                    "Production mode is enabled, but {} header is missing", header_key
                 )
 
             if request.remote_addr:

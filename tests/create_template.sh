@@ -26,7 +26,7 @@ elif [[ "$TEMPLATE" == "noauth" ]]; then
   rapydo create prj --auth no --frontend no
 
 elif [[ "$TEMPLATE" == "extra" ]]; then
-  rapydo create prjbase --auth ${AUTH} --frontend no
+  rapydo create prjbase --auth ${AUTH} --frontend no -e PROXIED_CONNECTION=1
   # the --testing flag here (not included in others templates) will extend the
   # customizer class with additinal input/output fields to test these customizations
   # The flag is not included in all templates to be able to also tests the cases
