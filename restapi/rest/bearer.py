@@ -135,25 +135,44 @@ class HTTPTokenAuth:
 
         return decorator
 
+    # type of callback is: Callable[[FlaskRequest, User], None]
+    # FlaskRequest == from restapi.customizer import FlaskRequest
+    # User = from restapi.services.authentication import User
     @classmethod
-    def require_all(cls, *roles, allow_access_token_parameter=False):
+    def require_all(
+        cls,
+        *roles,
+        allow_access_token_parameter=False,
+        callback=None,
+    ):
         return cls.require(
             roles=roles,
             required_roles=ALL_ROLES,
             allow_access_token_parameter=allow_access_token_parameter,
+            callback=callback,
         )
 
     @classmethod
-    def require_any(cls, *roles, allow_access_token_parameter=False):
+    def require_any(
+        cls,
+        *roles,
+        allow_access_token_parameter=False,
+        callback=None,
+    ):
         return cls.require(
             roles=roles,
             required_roles=ANY_ROLE,
             allow_access_token_parameter=allow_access_token_parameter,
+            callback=callback,
         )
 
     @classmethod
     def require(
-        cls, roles=None, required_roles=ALL_ROLES, allow_access_token_parameter=False
+        cls,
+        roles=None,
+        required_roles=ALL_ROLES,
+        allow_access_token_parameter=False,
+        callback=None,
     ):
         def decorator(func):
             # it is used in Loader to verify if an endpoint is requiring
@@ -224,6 +243,9 @@ class HTTPTokenAuth:
                         code=401,
                         allow_html=True,
                     )
+
+                if callback:
+                    callback(request, user)
 
                 caller._unpacked_user = user
                 caller._unpacked_token = token

@@ -1,3 +1,4 @@
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, BaseTests, FlaskClient
@@ -272,3 +273,51 @@ class TestApp(BaseTests):
             assert r.status_code == 401
 
             self.delete_user(client, uuid)
+
+    def test_authentication_with_auth_callback(self, client: FlaskClient) -> None:
+
+        if not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping authentication tests")
+            return
+
+        auth = Connector.get_authentication_instance()
+        user = auth.get_user(username=BaseAuthentication.default_user)
+
+        assert user is not None
+
+        VALID = f"/tests/authcallback/{user.uuid}"
+        INVALID = "/tests/authcallback/12345678-90ab-cdef-1234-567890abcdef"
+        admin_headers, admin_token = self.do_login(client, None, None)
+
+        # Verify both endpoint ...
+
+        r = client.get(
+            f"{API_URI}{VALID}", query_string={"test": True}, headers=admin_headers
+        )
+        assert r.status_code == 200
+
+        r = client.get(
+            f"{API_URI}{INVALID}", query_string={"test": True}, headers=admin_headers
+        )
+        assert r.status_code == 401
+
+        # and get_schema!
+
+        r = client.get(
+            f"{API_URI}{VALID}",
+            query_string={"get_schema": True},
+            headers=admin_headers,
+        )
+        assert r.status_code == 200
+        content = self.get_content(r)
+        assert isinstance(content, list)
+        assert len(content) == 1
+        assert content[0]["key"] == "tet"
+        assert content[0]["type"] == "boolean"
+
+        r = client.get(
+            f"{API_URI}{INVALID}",
+            query_string={"get_schema": True},
+            headers=admin_headers,
+        )
+        assert r.status_code == 401
