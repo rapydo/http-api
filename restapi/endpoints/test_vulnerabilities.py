@@ -22,13 +22,17 @@ if TESTING:
             # This is just a stub... to be completed
             if Connector.check_availability("neo4j"):
                 graph = neo4j.get_instance()
-                graph.cypher(f"MATCH (u: User) WHERE u.name = '{test}' return u")
-                graph.cypher(f'MATCH (u: User) WHERE u.name = "{test}" return u')
+                graph.cypher(f"MATCH (u: User) WHERE u.name = '{test}' return u.name")
+                graph.cypher(f'MATCH (u: User) WHERE u.name = "{test}" return u.name')
+                graph.cypher(f"MATCH (u: User) return u.name as {test}")
+                graph.cypher(f"MATCH (u: User) return u.name as {test}")
                 graph.User.nodes.get_or_none(name=test)
             elif Connector.check_availability("sqlalchemy"):
                 sql = sqlalchemy.get_instance()
-                sql.execute(f"SELECT * FROM User WHERE u.name = '{test}'")
-                sql.execute(f'SELECT * FROM User WHERE u.name = "{test}"')
+                sql.execute(f"SELECT name FROM User WHERE u.name = '{test}'")
+                sql.execute(f'SELECT name FROM User WHERE u.name = "{test}"')
+                sql.execute(f"SELECT name as {test} FROM User")
+                sql.execute(f"SELECT name as {test} FROM User")
                 sql.User.query.filter_by(name=test).first()
 
             return self.response(True)
