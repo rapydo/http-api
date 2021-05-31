@@ -30,10 +30,10 @@ if TESTING:
             elif Connector.check_availability("sqlalchemy"):
                 sql = sqlalchemy.get_instance()
 
-                sql.db.execute(f"SELECT name FROM User WHERE u.name = '{value}'")
-                sql.db.execute(f'SELECT name FROM User WHERE u.name = "{value}"')
-                sql.db.execute(f"SELECT name as {value} FROM User")
-                sql.db.execute(f"SELECT name as {value} FROM User")
+                sql.db.engine.execute(f"SELECT name FROM User WHERE u.name = '{value}'")
+                sql.db.engine.execute(f'SELECT name FROM User WHERE u.name = "{value}"')
+                sql.db.engine.execute(f"SELECT name as {value} FROM User")
+                sql.db.engine.execute(f"SELECT name as {value} FROM User")
                 sql.User.query.filter_by(name=value).first()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
