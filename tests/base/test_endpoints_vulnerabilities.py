@@ -9,7 +9,6 @@ def test_vulnerabilities(client: FlaskClient) -> None:
         'x"x',
         "x#x",
         "x--x",
-        "x//x",
         "x\\*x",
         "x*x",
         "x+x",
@@ -26,3 +25,12 @@ def test_vulnerabilities(client: FlaskClient) -> None:
 
         r = client.post(f"{API_URI}/tests/vulnerabilities/{s}", data={"payload": s})
         assert r.status_code == 200
+
+    # Can't test x//x as url parameter
+    r = client.get(
+        f"{API_URI}/tests/vulnerabilities/x", query_string={"payload": "x//x"}
+    )
+    assert r.status_code == 200
+
+    r = client.post(f"{API_URI}/tests/vulnerabilities/x", data={"payload": "x//x"})
+    assert r.status_code == 200
