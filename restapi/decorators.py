@@ -16,7 +16,7 @@ from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
-from restapi.rest.definition import Response
+from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
@@ -89,6 +89,51 @@ def endpoint(
 
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
+
+            return cast(F, func(self, *args, **kwargs))
+
+        return cast(F, wrapper)
+
+    return decorator
+
+
+def preload(
+    callback: Callable[[EndpointResource], Optional[Dict[str, Any]]]
+) -> Callable[[F], F]:
+    """
+    callback example:
+
+    from flask import request
+    def myfunc(endpoint: EndpointResource) -> Optional[Dict[str, Any]]:
+
+        user = endpoint.get_user()
+        if (
+            not user
+            or not request.view_args
+            or request.view_args.get("uuid") != user.uuid
+        ):
+            raise Unauthorized("You are not authorized")
+
+        # Returned values, if any, will be injected as endpoint parameters
+        return {"user": user}
+        # Otherwise can simply return None to inject nothing
+        # return None
+    """
+
+    def decorator(func: F) -> F:
+        @wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
+
+            # callback can raise exceptions to stop che execution and e.g. implement
+            # custom authorization policies
+            # or can optionally return values (as dict) to be injected
+            # into the endpoint as function parameters
+            if inject := callback(self):
+                log.info(
+                    "This endpoint is experimental and untested, "
+                    "will be stabilized in version 2.0"
+                )
+                kwargs.update(inject)
 
             return cast(F, func(self, *args, **kwargs))
 
