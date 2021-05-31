@@ -46,7 +46,7 @@ if TESTING:
         def get(self, urlvalue: str, payload: str) -> Response:
 
             self.do_queries(urlvalue)
-            self.payload(urlvalue)
+            self.do_queries(payload)
 
             return self.response(True)
 
@@ -60,5 +60,5 @@ if TESTING:
         def post(self, urlvalue: str, payload: str) -> Response:
 
             self.do_queries(urlvalue)
-            self.payload(urlvalue)
+            self.do_queries(payload)
             return self.response(True)
