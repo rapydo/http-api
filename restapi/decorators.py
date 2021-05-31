@@ -100,6 +100,26 @@ def endpoint(
 def preload(
     callback: Callable[[EndpointResource], Optional[Dict[str, Any]]]
 ) -> Callable[[F], F]:
+    """
+    callback example:
+
+    from flask import request
+    def myfunc(endpoint: EndpointResource) -> Optional[Dict[str, Any]]:
+
+        user = endpoint.get_user()
+        if (
+            not user
+            or not request.view_args
+            or request.view_args.get("uuid") != user.uuid
+        ):
+            raise Unauthorized("You are not authorized")
+
+        # Returned values, if any, will be injected as endpoint parameters
+        return {"user": user}
+        # Otherwise can simply return None to inject nothing
+        # return None
+    """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:

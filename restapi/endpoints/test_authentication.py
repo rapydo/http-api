@@ -145,7 +145,11 @@ if TESTING:
         # request.view_args == {'uuid': '1234567890'}
 
         user = endpoint.get_user()
-        if not user or request.view_args.get("uuid") != user.uuid:
+        if (
+            not user
+            or not request.view_args
+            or request.view_args.get("uuid") != user.uuid
+        ):
             raise Unauthorized("You are not authorized")
 
         # Returned values, if any,  will be injected into the endpoint as fn parameters
