@@ -1,6 +1,9 @@
+from typing import Any, Dict, Optional
+
+from flask import request
+
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.customizer import FlaskRequest
 from restapi.exceptions import Unauthorized
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
@@ -132,26 +135,37 @@ if TESTING:
 
             return self.response(resp)
 
-    def verify_uuid_value(request: FlaskRequest, user: User) -> None:
+    def verify_uuid_value(endpoint: EndpointResource) -> Optional[Dict[str, Any]]:
+
         # request.method == GET
-        # request.path == /tests/authcallback/12345...67890
+        # request.path == /tests/preloadcallback/12345...67890
         # request.headers == { ... }
-        # request.url_rule == /tests/authcallback/<uuid>
-        # request.url == http(s)://.../tests/authcallback/12345...67890
+        # request.url_rule == /tests/preloadcallback/<uuid>
+        # request.url == http(s)://.../tests/preloadcallback/12345...67890
         # request.view_args == {'uuid': '1234567890'}
 
-        if request.view_args.get("uuid") != user.uuid:
+        user = endpoint.get_user()
+        if not user or request.view_args.get("uuid") != user.uuid:
             raise Unauthorized("You are not authorized")
 
-    # Note: this endpoint has an authentication callback
-    class TestAuthenticationCallback(EndpointResource):
-        @decorators.auth.require(callback=verify_uuid_value)
+        # Returned values, if any,  will be injected into the endpoint as fn parameters
+        return {"user": user}
+        # Otherwise can simply return None to inject nothing
+        # return None
+
+    # Note: this endpoint has a preload callback to verify the uuid and inject the user
+    class TestPreloadCallback(EndpointResource):
+        @decorators.auth.require()
+        @decorators.preload(callback=verify_uuid_value)
         @decorators.use_kwargs({"test": fields.Bool(required=True)}, location="query")
         @decorators.endpoint(
-            path="/tests/authcallback/<uuid>",
+            path="/tests/preloadcallback/<uuid>",
             summary="Only authorized if uuid matches the user uuid",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self, uuid: str, test: bool) -> Response:
-            return self.response(True)
+        # Note: user is injected by the preload decorator
+        def get(self, uuid: str, test: bool, user: User) -> Response:
+
+            # return user name to demonstrate the user injection
+            return self.response(user.name)

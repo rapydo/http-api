@@ -285,8 +285,8 @@ class TestApp(BaseTests):
 
         assert user is not None
 
-        VALID = f"/tests/authcallback/{user.uuid}"
-        INVALID = "/tests/authcallback/12345678-90ab-cdef-1234-567890abcdef"
+        VALID = f"/tests/preloadcallback/{user.uuid}"
+        INVALID = "/tests/preloadcallback/12345678-90ab-cdef-1234-567890abcdef"
         admin_headers, admin_token = self.do_login(client, None, None)
 
         # Verify both endpoint ...
@@ -295,6 +295,9 @@ class TestApp(BaseTests):
             f"{API_URI}{VALID}", query_string={"test": True}, headers=admin_headers
         )
         assert r.status_code == 200
+        content = self.get_content(r)
+        assert isinstance(content, str)
+        assert content == user.name
 
         r = client.get(
             f"{API_URI}{INVALID}", query_string={"test": True}, headers=admin_headers
