@@ -312,7 +312,7 @@ class TestApp(BaseTests):
         content = self.get_content(r)
         assert isinstance(content, list)
         assert len(content) == 1
-        assert content[0]["key"] == "tet"
+        assert content[0]["key"] == "test"
         assert content[0]["type"] == "boolean"
 
         r = client.get(
