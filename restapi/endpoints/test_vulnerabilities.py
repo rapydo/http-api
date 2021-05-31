@@ -30,8 +30,8 @@ if TESTING:
             elif Connector.check_availability("sqlalchemy"):
                 sql = sqlalchemy.get_instance()
 
-                sql.db.engine.execute(f"SELECT name FROM user WHERE u.name = '{value}'")
-                sql.db.engine.execute(f'SELECT name FROM user WHERE u.name = "{value}"')
+                sql.db.engine.execute(f"SELECT name FROM user WHERE name = '{value}'")
+                sql.db.engine.execute(f'SELECT name FROM user WHERE name = "{value}"')
                 sql.db.engine.execute(f"SELECT name as {value} FROM user")
                 sql.db.engine.execute(f"SELECT name as {value} FROM user")
                 sql.User.query.filter_by(name=value).first()
