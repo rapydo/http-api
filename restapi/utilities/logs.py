@@ -176,7 +176,7 @@ OBSCURED_FIELDS = [
 
 
 def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
-    """ Avoid printing passwords! """
+    """Avoid printing passwords!"""
     if original_parameters_string is None:
         return {}
 

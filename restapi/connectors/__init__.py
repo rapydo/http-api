@@ -388,7 +388,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     @classmethod
     def set_object(cls, name: str, obj: T, key: str = "[]") -> None:
-        """ set object into internal array """
+        """set object into internal array"""
 
         tid = os.getpid()
         cls._instances.setdefault(tid, {})
@@ -397,7 +397,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     @classmethod
     def get_object(cls, name: str, key: str = "[]") -> Optional[T]:
-        """ recover object if any """
+        """recover object if any"""
 
         tid = os.getpid()
         cls._instances.setdefault(tid, {})

@@ -40,7 +40,7 @@ if Connector.check_availability("smtp"):
             password_confirm: str,
             **kwargs: Any,
         ) -> Response:
-            """ Register new user """
+            """Register new user"""
 
             user = self.auth.get_user(username=email)
             if user is not None:

@@ -7,7 +7,7 @@ from restapi.rest.definition import EndpointResource, Response
 
 
 class Tokens(EndpointResource):
-    """ List all active tokens for a user """
+    """List all active tokens for a user"""
 
     depends_on = ["AUTH_ENABLE"]
     labels = ["authentication"]

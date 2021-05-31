@@ -53,7 +53,7 @@ class EndpointResource(MethodResource, Resource):
 
     # Deprecated since 1.1
     def verify_admin(self) -> bool:  # pragma: no cover
-        """ Check if current user has Administration role """
+        """Check if current user has Administration role"""
         warnings.warn(
             "Deprecated use of verify_admin, use auth.is_admin(user) instead",
             DeprecationWarning,
@@ -62,7 +62,7 @@ class EndpointResource(MethodResource, Resource):
 
     # Deprecated since 1.1
     def verify_staff(self) -> bool:  # pragma: no cover
-        """ Check if current user has Staff role """
+        """Check if current user has Staff role"""
         warnings.warn(
             "Deprecated use of verify_staff, use auth.is_staff(user) instead",
             DeprecationWarning,
@@ -117,7 +117,7 @@ class EndpointResource(MethodResource, Resource):
         return (content, code, headers)
 
     def empty_response(self) -> Response:
-        """ Empty response as defined by the protocol """
+        """Empty response as defined by the protocol"""
         return self.response("", code=204)
 
     # This function has to be coupled with a marshal_with(TotalSchema, code=206)

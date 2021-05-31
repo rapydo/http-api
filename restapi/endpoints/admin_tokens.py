@@ -9,7 +9,7 @@ from restapi.utilities.logs import log
 
 
 class AdminTokens(EndpointResource):
-    """ List all tokens for all users """
+    """List all tokens for all users"""
 
     labels = ["authentication"]
     depends_on = ["AUTH_ENABLE"]

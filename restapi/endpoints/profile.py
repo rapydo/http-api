@@ -66,7 +66,7 @@ class Profile(EndpointResource):
         password_confirm: str,
         totp_code: Optional[str] = None,
     ) -> Response:
-        """ Update password for current user """
+        """Update password for current user"""
 
         user = self.get_user()
 
@@ -93,7 +93,7 @@ class Profile(EndpointResource):
         responses={204: "Profile updated"},
     )
     def patch(self, **kwargs: Any) -> Response:
-        """ Update profile for current user """
+        """Update profile for current user"""
 
         user = self.get_user()
 
