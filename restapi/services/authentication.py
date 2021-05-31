@@ -357,7 +357,8 @@ class BaseAuthentication(metaclass=ABCMeta):
             # Standard (and more secure) way to obtain remote IP
             else:
                 header_key = "X-Real-Ip"
-                if real_ip := request.headers.get(header_key):
+                # in testing mode X-Forwarded-For is used
+                if real_ip := request.headers.get(header_key):  # pragma: no cover
                     return real_ip
 
             if PRODUCTION and not TESTING:  # pragma: no cover
