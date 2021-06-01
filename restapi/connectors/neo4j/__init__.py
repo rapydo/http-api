@@ -200,11 +200,12 @@ class NeoModel(Connector):
             instance.__dict__[field] = value
 
     @catch_db_exceptions
-    def cypher(self, query):
-        """Execute normal neo4j queries"""
+    def cypher(self, query, **parameters):
+        """Execute raw cypher queries"""
+
         try:
-            # results, meta = db.cypher_query(query)
-            results, _ = db.cypher_query(query)
+            # results, meta = db.cypher_query(query, parameters)
+            results, _ = db.cypher_query(query, parameters)
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
@@ -214,7 +215,7 @@ class NeoModel(Connector):
     @staticmethod
     def sanitize_input(term):
         """
-        Strip and clean up term from special characters.
+        Strip and clean up terms from special characters. To be used in fuzzy search
         """
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
