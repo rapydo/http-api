@@ -28,10 +28,6 @@ if TESTING:
                     value=value,
                 )
 
-                graph.cypher(
-                    "MATCH (g: Group) return g.shortname as $value", value=value
-                )
-
                 graph.Group.nodes.get_or_none(shortname=value)
 
             elif postgres_enabled:
