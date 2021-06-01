@@ -200,11 +200,11 @@ class NeoModel(Connector):
             instance.__dict__[field] = value
 
     @catch_db_exceptions
-    def cypher(self, query):
+    def cypher(self, query, **parameters):
         """Execute normal neo4j queries"""
         try:
-            # results, meta = db.cypher_query(query)
-            results, _ = db.cypher_query(query)
+            # results, meta = db.cypher_query(query, parameters)
+            results, _ = db.cypher_query(query, parameters)
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
