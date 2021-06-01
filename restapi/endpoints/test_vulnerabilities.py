@@ -24,43 +24,36 @@ if TESTING:
                 graph = neo4j.get_instance()
 
                 graph.cypher(
-                    f"MATCH (g: Group) WHERE g.shortname = '{value}' return g.shortname"
+                    "MATCH (g: Group) WHERE g.shortname = $value return g.shortname",
+                    value=value,
                 )
+
                 graph.cypher(
-                    f'MATCH (g: Group) WHERE g.shortname = "{value}" return g.shortname'
+                    "MATCH (g: Group) return g.shortname as $value", value=value
                 )
-                graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
-                graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
+
                 graph.Group.nodes.get_or_none(shortname=value)
 
             elif postgres_enabled:
                 sql = sqlalchemy.get_instance()
 
-                sql.db.engine.execute(
-                    f"SELECT * FROM \"group\" WHERE shortname = '{value}'"
-                )
-                sql.db.engine.execute(
-                    f"SELECT * FROM \"group\" WHERE shortname = '{value}'"
-                )
-                sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
-                sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
+                t = sqlalchemy.text('SELECT * FROM "group" WHERE shortname = :value')
+                sql.db.engine.execute(t, value=value)
+
+                t = sqlalchemy.text('SELECT shortname as :value FROM "group"')
+                sql.db.engine.execute(t, value=value)
+
                 sql.Group.query.filter_by(shortname=value).first()
 
             elif mysql_enabled:
                 sql = sqlalchemy.get_instance()
 
-                sql.db.engine.execute(
-                    f"SELECT * FROM `group` WHERE shortname = '{value}'"
-                )
-                sql.db.engine.execute(
-                    f"SELECT * FROM `group` WHERE shortname = '{value}'"
-                )
-                # Unknown column 'value' in 'where clause'
-                # sql.db.engine.execute(
-                #     f"SELECT * FROM `group` WHERE shortname = `{value}`"
-                # )
-                sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
-                sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
+                t = sqlalchemy.text("SELECT * FROM `group` WHERE shortname = :value'")
+                sql.db.engine.execute(t, value=value)
+
+                t = sqlalchemy.text("SELECT shortname as :value FROM `group`")
+                sql.db.engine.execute(t, value=value)
+
                 sql.Group.query.filter_by(shortname=value).first()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
