@@ -14,9 +14,6 @@ if TESTING:
 
         def do_queries(self, value: str) -> None:
 
-            # Temporary disabled
-            value = "value"
-
             neo4j_enabled = Connector.check_availability("neo4j")
             sql_enabled = Connector.check_availability("sqlalchemy")
             mysql_enabled = sql_enabled and sqlalchemy.SQLAlchemy.is_mysql()
