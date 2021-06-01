@@ -31,7 +31,6 @@ from restapi.exceptions import (
     DatabaseDuplicatedEntry,
     DatabaseMissingRequiredProperty,
     RestApiException,
-    ServerError,
 )
 from restapi.services.authentication import (
     BaseAuthentication,
@@ -209,7 +208,7 @@ class NeoModel(Connector):
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
-            raise ServerError("Failed to execute query")
+            raise CypherSyntaxError("Failed to execute Cypher Query")
         return results
 
     @staticmethod

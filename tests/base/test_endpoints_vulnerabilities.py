@@ -7,6 +7,7 @@ def test_vulnerabilities(client: FlaskClient) -> None:
         "xx",
         "x'x",
         'x"x',
+        "x`x",
         "x#x",
         "x--x",
         "x\\*x",

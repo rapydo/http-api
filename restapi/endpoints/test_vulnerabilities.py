@@ -53,13 +53,16 @@ if TESTING:
                 sql = sqlalchemy.get_instance()
 
                 sql.db.engine.execute(
-                    f"SELECT * FROM group WHERE shortname = '{value}'"
+                    f"SELECT * FROM `group` WHERE shortname = '{value}'"
                 )
                 sql.db.engine.execute(
-                    f"SELECT * FROM group WHERE shortname = '{value}'"
+                    f"SELECT * FROM `group` WHERE shortname = '{value}'"
                 )
-                sql.db.engine.execute(f"SELECT shortname as {value} FROM group")
-                sql.db.engine.execute(f"SELECT shortname as {value} FROM group")
+                sql.db.engine.execute(
+                    f"SELECT * FROM `group` WHERE shortname = `{value}`"
+                )
+                sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
+                sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
                 sql.Group.query.filter_by(shortname=value).first()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
