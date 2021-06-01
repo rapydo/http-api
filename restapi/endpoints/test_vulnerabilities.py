@@ -58,9 +58,10 @@ if TESTING:
                 sql.db.engine.execute(
                     f"SELECT * FROM `group` WHERE shortname = '{value}'"
                 )
-                sql.db.engine.execute(
-                    f"SELECT * FROM `group` WHERE shortname = `{value}`"
-                )
+                # Unknown column 'value' in 'where clause'
+                # sql.db.engine.execute(
+                #     f"SELECT * FROM `group` WHERE shortname = `{value}`"
+                # )
                 sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
                 sql.db.engine.execute(f"SELECT shortname as {value} FROM `group`")
                 sql.Group.query.filter_by(shortname=value).first()
