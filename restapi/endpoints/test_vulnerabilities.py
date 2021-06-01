@@ -36,18 +36,12 @@ if TESTING:
                 t = sqlalchemy.text('SELECT * FROM "group" WHERE shortname = :value')
                 sql.db.engine.execute(t, value=value)
 
-                t = sqlalchemy.text('SELECT shortname as :value FROM "group"')
-                sql.db.engine.execute(t, value=value)
-
                 sql.Group.query.filter_by(shortname=value).first()
 
             elif mysql_enabled:
                 sql = sqlalchemy.get_instance()
 
                 t = sqlalchemy.text("SELECT * FROM `group` WHERE shortname = :value")
-                sql.db.engine.execute(t, value=value)
-
-                t = sqlalchemy.text("SELECT shortname as :value FROM `group`")
                 sql.db.engine.execute(t, value=value)
 
                 sql.Group.query.filter_by(shortname=value).first()
