@@ -17,8 +17,13 @@ if TESTING:
             # Temporary disabled
             value = "value"
 
+            neo4j_enabled = Connector.check_availability("neo4j")
+            sql_enabled = Connector.check_availability("sqlalchemy")
+            mysql_enabled = sql_enabled and sqlalchemy.SQLAlchemy.is_mysql()
+            postgres_enabled = sql_enabled and not sqlalchemy.SQLAlchemy.is_mysql()
+
             # This is just a stub... to be completed
-            if Connector.check_availability("neo4j"):
+            if neo4j_enabled:
                 graph = neo4j.get_instance()
 
                 graph.cypher(
@@ -29,9 +34,9 @@ if TESTING:
                 )
                 graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
                 graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
-                graph.Group.nodes.get_or_none(name=value)
+                graph.Group.nodes.get_or_none(shortname=value)
 
-            elif Connector.check_availability("sqlalchemy"):
+            elif postgres_enabled:
                 sql = sqlalchemy.get_instance()
 
                 sql.db.engine.execute(
@@ -42,6 +47,19 @@ if TESTING:
                 )
                 sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
                 sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
+                sql.Group.query.filter_by(shortname=value).first()
+
+            elif mysql_enabled:
+                sql = sqlalchemy.get_instance()
+
+                sql.db.engine.execute(
+                    f"SELECT * FROM group WHERE shortname = '{value}'"
+                )
+                sql.db.engine.execute(
+                    f"SELECT * FROM group WHERE shortname = '{value}'"
+                )
+                sql.db.engine.execute(f"SELECT shortname as {value} FROM group")
+                sql.db.engine.execute(f"SELECT shortname as {value} FROM group")
                 sql.Group.query.filter_by(shortname=value).first()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
