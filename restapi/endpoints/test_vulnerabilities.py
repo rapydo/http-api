@@ -21,20 +21,28 @@ if TESTING:
             if Connector.check_availability("neo4j"):
                 graph = neo4j.get_instance()
 
-                graph.cypher(f"MATCH (u: User) WHERE u.name = '{value}' return u.name")
-                graph.cypher(f'MATCH (u: User) WHERE u.name = "{value}" return u.name')
-                graph.cypher(f"MATCH (u: User) return u.name as {value}")
-                graph.cypher(f"MATCH (u: User) return u.name as {value}")
-                graph.User.nodes.get_or_none(name=value)
+                graph.cypher(
+                    f"MATCH (g: Group) WHERE g.shortname = '{value}' return g.shortname"
+                )
+                graph.cypher(
+                    f'MATCH (g: Group) WHERE g.shortname = "{value}" return g.shortname'
+                )
+                graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
+                graph.cypher(f"MATCH (g: Group) return g.shortname as {value}")
+                graph.Group.nodes.get_or_none(name=value)
 
             elif Connector.check_availability("sqlalchemy"):
                 sql = sqlalchemy.get_instance()
 
-                sql.db.engine.execute(f"SELECT name FROM user WHERE name = '{value}'")
-                sql.db.engine.execute(f'SELECT name FROM user WHERE name = "{value}"')
-                sql.db.engine.execute(f"SELECT name as {value} FROM user")
-                sql.db.engine.execute(f"SELECT name as {value} FROM user")
-                sql.User.query.filter_by(name=value).first()
+                sql.db.engine.execute(
+                    f"SELECT * FROM \"group\" WHERE shortname = '{value}'"
+                )
+                sql.db.engine.execute(
+                    f"SELECT * FROM \"group\" WHERE shortname = '{value}'"
+                )
+                sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
+                sql.db.engine.execute(f'SELECT shortname as {value} FROM "group"')
+                sql.Group.query.filter_by(shortname=value).first()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
         @decorators.endpoint(
