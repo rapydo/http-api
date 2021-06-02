@@ -74,7 +74,7 @@ setup(
         "sentry-sdk[flask]==1.1.0",
         # Tests
         "pytest-flask==1.2.0",
-        "pytest-cov==2.12.0",
+        "pytest-cov==2.12.1",
         "pytest-timeout==1.4.2",
         "schemathesis==3.7.7",
         "Faker==8.4.0",
