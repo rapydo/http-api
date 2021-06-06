@@ -4,30 +4,18 @@ Generalization of Exceptions
 to handle services known errors
 
 """
-import warnings
 from typing import Union
 
 ExceptionType = Union[str, Exception]
 
 
 class RestApiException(Exception):
-    # code is now an alias for status_code
     def __init__(
         self,
         exception: ExceptionType,
         status_code: int = 404,
-        code: int = None,
         is_warning: bool = False,
     ):
-
-        if code:  # pragma: no cover
-            # Deprecated since 1.0
-            warnings.warn(
-                "Deprecated use of RestApiException(code),"
-                "use status_code or even better specific exceptions",
-                DeprecationWarning,
-            )
-            status_code = code
 
         super().__init__(exception)
         self.status_code = status_code or 404
