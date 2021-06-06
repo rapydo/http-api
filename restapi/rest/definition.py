@@ -60,25 +60,6 @@ class EndpointResource(MethodResource, Resource):
         )
         return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
 
-    # Deprecated since 1.1
-    def verify_staff(self) -> bool:  # pragma: no cover
-        """Check if current user has Staff role"""
-        warnings.warn(
-            "Deprecated use of verify_staff, use auth.is_staff(user) instead",
-            DeprecationWarning,
-        )
-        return self.auth.verify_roles(self.get_user(), [Role.STAFF], warnings=False)
-
-    # Deprecated since 1.1
-    def verify_coordinator(self) -> bool:  # pragma: no cover
-        warnings.warn(
-            "Deprecated use of verify_coordinator use auth.is_coordinator instead",
-            DeprecationWarning,
-        )
-        return self.auth.verify_roles(
-            self.get_user(), [Role.COORDINATOR], warnings=False
-        )
-
     @staticmethod
     def response(
         content: Any = None,
