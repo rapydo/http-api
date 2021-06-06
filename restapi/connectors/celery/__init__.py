@@ -480,26 +480,6 @@ class CeleryExt(Connector):
             )
 
 
-# Deprecated since 1.1
-def send_errors_by_email(func):  # pragma: no cover
-    """
-    Send a notification email to a given recipient to the
-    system administrator with details about failure.
-    """
-
-    warnings.warn(
-        "Deprecated use of send_errors_by_email decorator, you can remove it",
-        DeprecationWarning,
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 instance = CeleryExt()
 
 
