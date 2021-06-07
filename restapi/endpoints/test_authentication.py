@@ -152,7 +152,7 @@ if TESTING:
         ):
             raise Unauthorized("You are not authorized")
 
-        # Returned values, if any,  will be injected into the endpoint as fn parameters
+        # Returned values if any will be injected into the endpoint as fn parameters
         return {"user": user}
         # Otherwise can simply return None to inject nothing
         # return None
