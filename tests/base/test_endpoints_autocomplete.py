@@ -17,7 +17,7 @@ class TestApp(BaseTests):
         assert "autocomplete_id_bind" in schema[0]
         assert "autocomplete_label_bind" in schema[0]
         assert "autocomplete_show_id" in schema[0]
-        assert schema[0]["autocomplete_endpoint"] == "tests/autocomplete"
+        assert schema[0]["autocomplete_endpoint"] == "/api/tests/autocomplete"
         assert schema[0]["autocomplete_id_bind"] == "my_id"
         assert schema[0]["autocomplete_label_bind"] == "my_label"
         assert schema[0]["autocomplete_show_id"] is True
