@@ -19,6 +19,7 @@ from restapi.config import (
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
+LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
 LOGS_FOLDER = Path("/logs")
 
 
@@ -77,7 +78,7 @@ if LOGS_PATH is not None:
             LOGS_PATH,
             level=FILE_LOGLEVEL,
             rotation="1 week",
-            retention="4 weeks",
+            retention=f"{LOG_RETENTION} days",
             # If True the exception trace is extended upward, beyond the catching point
             # to show the full stacktrace which generated the error.
             backtrace=False,
@@ -108,6 +109,7 @@ if LOGS_PATH is not None:
             EVENTS_PATH,
             level=0,
             rotation="1 month",
+            retention=f"{LOG_RETENTION} days",
             filter=lambda record: "event" in record["extra"],
             format=fmt,
             # Otherwise in case of missing extra fields the event will be simply ignored
