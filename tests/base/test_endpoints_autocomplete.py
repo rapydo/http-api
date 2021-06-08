@@ -22,7 +22,7 @@ class TestApp(BaseTests):
         assert schema[0]["autocomplete_label_bind"] == "my_label"
         assert schema[0]["autocomplete_show_id"] is True
 
-        autocomplete_endpoint = f"{SERVER_URI}/{schema[0]['autocomplete_endpoint']}"
+        autocomplete_endpoint = f"{SERVER_URI}{schema[0]['autocomplete_endpoint']}"
 
         r = client.get(f"{autocomplete_endpoint}/nobody")
         assert r.status_code == 200
