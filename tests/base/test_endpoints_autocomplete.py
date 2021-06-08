@@ -1,7 +1,7 @@
 import json
 import random
 
-from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
@@ -22,7 +22,7 @@ class TestApp(BaseTests):
         assert schema[0]["autocomplete_label_bind"] == "my_label"
         assert schema[0]["autocomplete_show_id"] is True
 
-        autocomplete_endpoint = f"{API_URI}/{schema[0]['autocomplete_endpoint']}"
+        autocomplete_endpoint = f"{SERVER_URI}/{schema[0]['autocomplete_endpoint']}"
 
         r = client.get(f"{autocomplete_endpoint}/nobody")
         assert r.status_code == 200
