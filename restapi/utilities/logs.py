@@ -10,9 +10,11 @@ from typing import Any, Dict, Optional, Tuple
 from loguru import logger as log
 
 from restapi.config import (
-    CONTAINER_ID,
+    BACKEND_HOSTNAME,
+    BOT_HOSTNAME,
+    CELERY_HOSTNAME,
+    HOST_TYPE,
     HOSTNAME,
-    IS_CELERY_CONTAINER,
     PRODUCTION,
     TESTING,
 )
@@ -23,18 +25,18 @@ LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
 LOGS_FOLDER = Path("/logs")
 
 
-# BACKEND-SERVER
-if not IS_CELERY_CONTAINER:
-    LOGS_FILE = HOSTNAME
-# Flower or Celery-Beat
-elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
-    LOGS_FILE = HOSTNAME
+# BACKEND-SERVER / BOT
+if HOST_TYPE == BACKEND_HOSTNAME or HOST_TYPE == BOT_HOSTNAME:
+    LOGS_FILE = HOST_TYPE
+# Celery (variable name due to scaling)
+elif HOST_TYPE == CELERY_HOSTNAME:  # pragma: no cover
+    LOGS_FILE = f"celery_{HOSTNAME}"
     LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
     if not LOGS_FOLDER.is_dir():
         LOGS_FOLDER.mkdir(exist_ok=True)
-# Celery (variables name due to scaling)
+# Flower / Celery-Beat
 else:  # pragma: no cover
-    LOGS_FILE = f"celery_{HOSTNAME}"
+    LOGS_FILE = HOSTNAME
     LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
     if not LOGS_FOLDER.is_dir():
         LOGS_FOLDER.mkdir(exist_ok=True)

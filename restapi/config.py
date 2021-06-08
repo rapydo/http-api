@@ -18,9 +18,35 @@ PRODUCTION: bool = APP_MODE == "production"
 STACKTRACE: bool = False
 REMOVE_DATA_AT_INIT_TIME: bool = False
 
-HOSTNAME: str = os.getenv("HOSTNAME", "backend")
-CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
-IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
+HOSTNAME: str = os.getenv("HOSTNAME", "backend-server")
+# hostnames as defined in backend.yml
+
+BACKEND_HOSTNAME = "backend-server"
+FLOWER_HOSTNAME = "flower"
+CELERYBEAT_HOSTNAME = "celery-beat"
+BOT_HOSTNAME = "telegram-bot"
+CELERY_HOSTNAME = "celery"
+
+
+def get_host_type(HOSTNAME: str) -> str:
+
+    if HOSTNAME == BACKEND_HOSTNAME:
+        return BACKEND_HOSTNAME
+
+    if HOSTNAME == FLOWER_HOSTNAME:
+        return FLOWER_HOSTNAME
+
+    if HOSTNAME == CELERYBEAT_HOSTNAME:
+        return CELERYBEAT_HOSTNAME
+
+    if HOSTNAME == BOT_HOSTNAME:
+        return BOT_HOSTNAME
+
+    # Celery has not a fixed hostname
+    return CELERY_HOSTNAME
+
+
+HOST_TYPE = get_host_type(HOSTNAME)
 
 #################
 # THE APP

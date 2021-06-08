@@ -18,7 +18,9 @@ from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
-    IS_CELERY_CONTAINER,
+    BACKEND_HOSTNAME,
+    BOT_HOSTNAME,
+    HOST_TYPE,
     JWT_SECRET_FILE,
     PRODUCTION,
     PROXIED_CONNECTION,
@@ -45,7 +47,7 @@ from restapi.utilities.uuid import getUUID
 
 def import_secret(abs_filename: Path) -> bytes:
 
-    if IS_CELERY_CONTAINER:  # pragma: no cover
+    if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
         return Fernet.generate_key()
 
     try:
