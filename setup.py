@@ -53,7 +53,7 @@ setup(
         "flower==0.9.5",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.5",
+        "python-telegram-bot==13.6",
         "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
@@ -76,8 +76,8 @@ setup(
         "pytest-flask==1.2.0",
         "pytest-cov==2.12.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.8.0",
-        "Faker==8.5.1",
+        "schemathesis==3.9.0",
+        "Faker==8.6.0",
         "Telethon==1.21.1",
     ],
     classifiers=[
