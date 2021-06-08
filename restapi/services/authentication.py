@@ -52,26 +52,11 @@ def import_secret(abs_filename: Path) -> bytes:
         return open(abs_filename, "rb").read()
     # Can't be covered because it is execute once before the tests...
     except OSError:  # pragma: no cover
-        try:
-            key = Fernet.generate_key()
-            with open(abs_filename, "wb") as key_file:
-                key_file.write(key)
-            abs_filename.chmod(0o400)
-            return key
-        # Debug code
-        except PermissionError as e:  # pragma: no cover
-            log.critical("DEBUG CODE: {}", e)
-            from pwd import getpwuid
-
-            stats = abs_filename.parent.stat()
-            log.critical(
-                "Permission mask set to {} is {} (owner {} = {})",
-                abs_filename.parent,
-                str(oct(stats.st_mode))[-3:],
-                stats.st_uid,
-                getpwuid(stats.st_uid).pw_name,
-            )
-            raise e
+        key = Fernet.generate_key()
+        with open(abs_filename, "wb") as key_file:
+            key_file.write(key)
+        abs_filename.chmod(0o400)
+        return key
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

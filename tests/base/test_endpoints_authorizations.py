@@ -37,9 +37,7 @@ class TestApp1(BaseTests):
                     if path.startswith("/api/tests/"):
                         continue
 
-                    p = self.get_path(method, path)
-                    log.warning("DEBUG CODE: Loaded endpoint {}", p)
-                    paths.append(p)
+                    paths.append(self.get_path(method, path))
 
         return paths
 
