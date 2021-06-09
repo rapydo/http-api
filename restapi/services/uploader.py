@@ -105,7 +105,7 @@ class Uploader:
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################
-        # ## Final response
+        # ## Final response
 
         abs_file.chmod(DEFAULT_PERMISSIONS)
 

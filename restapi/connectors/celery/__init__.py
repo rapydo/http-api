@@ -1,6 +1,5 @@
 import ssl
 import traceback
-import warnings
 from datetime import timedelta
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
