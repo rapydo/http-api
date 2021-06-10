@@ -189,10 +189,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         "AUTH_FORCE_FIRST_PASSWORD_CHANGE", False
     )
 
-    # enabled if explicitly set or for 2FA is enabled
-    VERIFY_PASSWORD_STRENGTH = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
-        "AUTH_VERIFY_PASSWORD_STRENGTH", False
-    )
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = get_timedelta(
         Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0),
         MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE,
@@ -817,18 +813,16 @@ class BaseAuthentication(metaclass=ABCMeta):
         if new_password != password_confirm:
             raise Conflict("Your password doesn't match the confirmation")
 
-        if self.VERIFY_PASSWORD_STRENGTH:
+        check, msg = self.verify_password_strength(
+            pwd=new_password,
+            old_pwd=password,
+            email=user.email,
+            name=user.name,
+            surname=user.surname,
+        )
 
-            check, msg = self.verify_password_strength(
-                pwd=new_password,
-                old_pwd=password,
-                email=user.email,
-                name=user.name,
-                surname=user.surname,
-            )
-
-            if not check:
-                raise Conflict(msg)
+        if not check:
+            raise Conflict(msg)
 
         user.password = BaseAuthentication.get_password_hash(new_password)
         user.last_password_change = datetime.now(pytz.utc)

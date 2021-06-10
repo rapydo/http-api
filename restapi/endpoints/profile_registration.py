@@ -49,18 +49,16 @@ if Connector.check_availability("smtp"):
             if password != password_confirm:
                 raise Conflict("Your password doesn't match the confirmation")
 
-            if self.auth.VERIFY_PASSWORD_STRENGTH:
+            check, msg = self.auth.verify_password_strength(
+                pwd=password,
+                old_pwd=None,
+                email=email,
+                name=name,
+                surname=surname,
+            )
 
-                check, msg = self.auth.verify_password_strength(
-                    pwd=password,
-                    old_pwd=None,
-                    email=email,
-                    name=name,
-                    surname=surname,
-                )
-
-                if not check:
-                    raise Conflict(msg)
+            if not check:
+                raise Conflict(msg)
 
             kwargs["name"] = name
             kwargs["surname"] = surname
