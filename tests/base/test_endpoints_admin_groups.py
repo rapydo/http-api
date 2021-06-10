@@ -24,24 +24,6 @@ class TestApp(BaseTests):
         schema = self.getDynamicInputSchema(client, "admin/groups", headers)
         data = self.buildData(schema)
 
-        # Test the differences between post and put schema
-        post_schema = {s["key"]: s for s in schema}
-
-        tmp_schema = self.getDynamicInputSchema(
-            client, "admin/groups/myuuid", headers, method="put"
-        )
-        put_schema = {s["key"]: s for s in tmp_schema}
-
-        assert "shortname" in post_schema
-        assert post_schema["shortname"]["required"]
-        assert "shortname" in put_schema
-        assert put_schema["shortname"]["required"]
-
-        assert "fullname" in post_schema
-        assert post_schema["fullname"]["required"]
-        assert "fullname" in put_schema
-        assert put_schema["fullname"]["required"]
-
         # Event 1: create
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
@@ -75,6 +57,25 @@ class TestApp(BaseTests):
             "shortname": faker.company(),
             "fullname": faker.company(),
         }
+
+        # Test the differences between post and put schema
+        post_schema = {s["key"]: s for s in schema}
+
+        tmp_schema = self.getDynamicInputSchema(
+            client, f"admin/groups/{uuid}", headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in tmp_schema}
+
+        assert "shortname" in post_schema
+        assert post_schema["shortname"]["required"]
+        assert "shortname" in put_schema
+        assert put_schema["shortname"]["required"]
+
+        assert "fullname" in post_schema
+        assert post_schema["fullname"]["required"]
+        assert "fullname" in put_schema
+        assert put_schema["fullname"]["required"]
+
         # Event 2: modify
         r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
         assert r.status_code == 204
