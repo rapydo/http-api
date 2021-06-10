@@ -97,9 +97,7 @@ def endpoint(
     return decorator
 
 
-def preload(
-    callback: Callable[[EndpointResource], Optional[Dict[str, Any]]]
-) -> Callable[[F], F]:
+def preload(callback: Callable[..., Optional[Dict[str, Any]]]) -> Callable[[F], F]:
     """
     callback example:
 
@@ -128,7 +126,7 @@ def preload(
             # custom authorization policies
             # or can optionally return values (as dict) to be injected
             # into the endpoint as function parameters
-            if inject := callback(self):
+            if inject := callback(self, **request.view_args):
                 kwargs.update(inject)
 
             return cast(F, func(self, *args, **kwargs))

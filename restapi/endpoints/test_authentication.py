@@ -135,21 +135,12 @@ if TESTING:
 
             return self.response(resp)
 
-    def verify_uuid_value(endpoint: EndpointResource) -> Optional[Dict[str, Any]]:
-
-        # request.method == GET
-        # request.path == /tests/preloadcallback/12345...67890
-        # request.headers == { ... }
-        # request.url_rule == /tests/preloadcallback/<uuid>
-        # request.url == http(s)://.../tests/preloadcallback/12345...67890
-        # request.view_args == {'uuid': '1234567890'}
+    def verify_uuid_value(
+        endpoint: EndpointResource, uuid: str
+    ) -> Optional[Dict[str, Any]]:
 
         user = endpoint.get_user()
-        if (
-            not user
-            or not request.view_args
-            or request.view_args.get("uuid") != user.uuid
-        ):
+        if not user or uuid != user.uuid:
             raise Unauthorized("You are not authorized")
 
         # Returned values if any will be injected into the endpoint as fn parameters

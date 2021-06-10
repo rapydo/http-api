@@ -32,18 +32,6 @@ def read_configuration(
     if project is None:  # pragma: no cover
         raise AttributeError("Missing project configuration")
 
-    variables = ["title", "description", "version", "rapydo"]
-
-    for key in variables:
-        # Can't be tested because it is included in default configuration
-        if project.get(key) is None:  # pragma: no cover
-            print_and_exit(
-                "Project not configured, missing key '{}' in file {}/{}",
-                key,
-                base_project_path,
-                PROJECT_CONF_FILENAME,
-            )
-
     base_configuration = load_yaml_file(
         file=PROJECTS_DEFAULTS_FILE, path=default_file_path
     )
