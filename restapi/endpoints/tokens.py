@@ -1,9 +1,25 @@
+from typing import Any, Dict, Optional
+
 from restapi import decorators
 from restapi.endpoints.schemas import TokenSchema
 from restapi.exceptions import BadRequest, Forbidden
 from restapi.rest.definition import EndpointResource, Response
 
 # from restapi.utilities.logs import log
+
+
+def inject_token(endpoint: EndpointResource, token_id: str) -> Optional[Dict[str, Any]]:
+
+    user = endpoint.get_user()
+    tokens = endpoint.auth.get_tokens(user=user)
+
+    for token in tokens:
+        if token["id"] != token_id:
+            continue
+
+        return {"token": tokens[0]["token"]}
+
+    raise Forbidden("Token not emitted for your account or does not exist")
 
 
 class Tokens(EndpointResource):
@@ -29,26 +45,18 @@ class Tokens(EndpointResource):
 
     # token_id = uuid associated to the token you want to select
     @decorators.auth.require()
+    @decorators.preload(callback=inject_token)
     @decorators.endpoint(
         path="/auth/tokens/<token_id>",
         summary="Remove specified token and make it invalid from now on",
         responses={204: "Token has been invalidated"},
     )
-    def delete(self, token_id: str) -> Response:
+    def delete(self, token_id: str, token: str) -> Response:
 
-        user = self.get_user()
-        tokens = self.auth.get_tokens(user=user)
+        if self.auth.invalidate_token(token=token):
+            return self.empty_response()
 
-        for token in tokens:
-            if token["id"] != token_id:
-                continue
-
-            if self.auth.invalidate_token(token=token["token"]):
-                return self.empty_response()
-
-            # Added just to make very sure, but it can never happen because
-            # invalidate_token can only fail if the token is invalid
-            # since this is an authenticated endpoint the token is already verified
-            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
-
-        raise Forbidden("Token not emitted for your account or does not exist")
+        # Added just to make very sure, but it can never happen because
+        # invalidate_token can only fail if the token is invalid
+        # since this is an authenticated endpoint the token is already verified
+        raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover

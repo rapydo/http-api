@@ -26,11 +26,30 @@ class TestApp(BaseTests):
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
 
+        data["email_notification"] = True
+        data["is_active"] = True
+        data["expiration"] = None
+
+        # Event 1: create
+        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+        assert r.status_code == 200
+        uuid = self.get_content(r)
+
+        mail = self.read_mock_email()
+        body = mail.get("body")
+
+        # Subject: is a key in the MIMEText
+        assert body is not None
+        assert mail.get("headers") is not None
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert data.get("email", "MISSING").lower() in body
+        assert data.get("password") in body or escape(str(data.get("password"))) in body
+
         # Test the differences between post and put schema
         post_schema = {s["key"]: s for s in schema}
 
         tmp_schema = self.getDynamicInputSchema(
-            client, "admin/users/myuuid", headers, method="put"
+            client, f"admin/users/{uuid}", headers, method="put"
         )
         put_schema = {s["key"]: s for s in tmp_schema}
 
@@ -57,25 +76,6 @@ class TestApp(BaseTests):
         assert post_schema["group"]["required"]
         assert "group" in put_schema
         assert not put_schema["group"]["required"]
-
-        data["email_notification"] = True
-        data["is_active"] = True
-        data["expiration"] = None
-
-        # Event 1: create
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-
-        # Subject: is a key in the MIMEText
-        assert body is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
-        assert data.get("email", "MISSING").lower() in body
-        assert data.get("password") in body or escape(str(data.get("password"))) in body
 
         # Event 2: read
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
