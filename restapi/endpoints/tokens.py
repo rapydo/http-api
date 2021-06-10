@@ -14,10 +14,8 @@ def inject_token(endpoint: EndpointResource, token_id: str) -> Optional[Dict[str
     tokens = endpoint.auth.get_tokens(user=user)
 
     for token in tokens:
-        if token["id"] != token_id:
-            continue
-
-        return {"token": tokens[0]["token"]}
+        if token["id"] == token_id:
+            return {"token": token["token"]}
 
     raise Forbidden("Token not emitted for your account or does not exist")
 
