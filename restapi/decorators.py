@@ -130,7 +130,10 @@ def preload(callback: Callable[..., Optional[Dict[str, Any]]]) -> Callable[[F], 
             # custom authorization policies
             # or can optionally return values (as dict) to be injected
             # into the endpoint as function parameters
-            if inject := callback(self, **request.view_args):
+            # type ignore is needed because mypy blames:
+            # Argument after ** must be a mapping, but view_args is a dict...
+            # probably a proper type hint is missing at flask level
+            if inject := callback(self, **request.view_args):  # type: ignore
                 kwargs.update(inject)
 
             return cast(F, func(self, *args, **kwargs))

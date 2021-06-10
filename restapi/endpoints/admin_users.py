@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict, List, Optional
 
 from restapi import decorators
 from restapi.connectors.smtp.notifications import (
@@ -12,10 +12,19 @@ from restapi.endpoints.schemas import (
 )
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import BaseAuthentication, Role
+from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.utilities.time import date_lower_than as dt_lower
 
 # from restapi.utilities.logs import log
+
+
+def inject_user(endpoint: EndpointResource, user_id: str) -> Optional[Dict[str, Any]]:
+
+    user = endpoint.auth.get_user(user_id=user_id)
+    if user is None:
+        raise NotFound("This user cannot be found or you are not authorized")
+
+    return {"user": user}
 
 
 class AdminSingleUser(EndpointResource):
@@ -24,18 +33,14 @@ class AdminSingleUser(EndpointResource):
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_user)
     @decorators.marshal_with(admin_user_output(many=False), code=200)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Return information on a single user",
         responses={200: "User information successfully retrieved"},
     )
-    def get(self, user_id: str) -> Response:
-
-        user = self.auth.get_user(user_id=user_id)
-
-        if user is None:
-            raise NotFound("This user cannot be found or you are not authorized")
+    def get(self, user_id: str, user: User) -> Response:
 
         self.log_event(self.events.access, user)
 
@@ -103,6 +108,7 @@ class AdminUsers(EndpointResource):
         return self.response(user.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_user)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_user_put_input)
     @decorators.endpoint(
@@ -110,12 +116,7 @@ class AdminUsers(EndpointResource):
         summary="Modify a user",
         responses={200: "User successfully modified"},
     )
-    def put(self, user_id: str, **kwargs: Any) -> Response:
-
-        user = self.auth.get_user(user_id=user_id)
-
-        if user is None:
-            raise NotFound("This user cannot be found or you are not authorized")
+    def put(self, user_id: str, user: User, **kwargs: Any) -> Response:
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -175,17 +176,13 @@ class AdminUsers(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_user)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
         summary="Delete a user",
         responses={200: "User successfully deleted"},
     )
-    def delete(self, user_id: str) -> Response:
-
-        user = self.auth.get_user(user_id=user_id)
-
-        if user is None:
-            raise NotFound("This user cannot be found or you are not authorized")
+    def delete(self, user_id: str, user: User) -> Response:
 
         self.auth.delete_user(user)
 
