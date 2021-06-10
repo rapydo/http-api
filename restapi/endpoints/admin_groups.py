@@ -1,11 +1,20 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from restapi import decorators
 from restapi.connectors import Connector
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Group, Role
+
+
+def inject_group(endpoint: EndpointResource, group_id: str) -> Optional[Dict[str, Any]]:
+
+    group = endpoint.auth.get_group(group_id=group_id)
+    if not group:
+        raise NotFound("This group cannot be found")
+
+    return {"group": group}
 
 
 class AdminGroups(EndpointResource):
@@ -69,6 +78,7 @@ class AdminGroups(EndpointResource):
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_group)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
@@ -76,11 +86,7 @@ class AdminGroups(EndpointResource):
         summary="Modify a group",
         responses={204: "Group successfully modified", 404: "Group not found"},
     )
-    def put(self, group_id: str, **kwargs: Any) -> Response:
-
-        group = self.auth.get_group(group_id=group_id)
-        if not group:
-            raise NotFound("This group cannot be found")
+    def put(self, group_id: str, group: Group, **kwargs: Any) -> Response:
 
         self.auth.db.update_properties(group, kwargs)
 
@@ -91,16 +97,13 @@ class AdminGroups(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_group)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",
         summary="Delete a group",
         responses={204: "Group successfully deleted", 404: "Group not found"},
     )
-    def delete(self, group_id: str) -> Response:
-
-        group = self.auth.get_group(group_id=group_id)
-        if not group:
-            raise NotFound("This group cannot be found")
+    def delete(self, group_id: str, group: Group) -> Response:
 
         self.auth.delete_group(group)
 

@@ -16,7 +16,7 @@ from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
-from restapi.rest.definition import EndpointResource, Response
+from restapi.rest.definition import Response
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
@@ -97,6 +97,10 @@ def endpoint(
     return decorator
 
 
+# The callback is expected to have a first argumento that is a EndpointResource
+# and then optionally url parameters, e.g uuid: str
+# I can't define with mypy something like:
+# Callable[[EndpointResource, ...],
 def preload(callback: Callable[..., Optional[Dict[str, Any]]]) -> Callable[[F], F]:
     """
     callback example:
