@@ -10,6 +10,7 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
+from restapi.config import get_host_type
 from restapi.connectors.smtp.notifications import get_html_template
 from restapi.env import Env
 from restapi.exceptions import (
@@ -273,6 +274,19 @@ class TestApp(BaseTests):
         h, p = get_html_template("this-should-not-exist", {})
         assert h is None
         assert p is None
+
+    # #######################################
+    # ####      Config Utilities
+    #########################################
+    def test_conf_utilities(self, faker: Faker) -> None:
+
+        assert get_host_type("backend-server") == "backend-server"
+        assert get_host_type("celery") == "celery"
+        assert get_host_type("telegram-bot") == "telegram-bot"
+        assert get_host_type("celery-beat") == "celery-beat"
+        assert get_host_type("flower") == "flower"
+        assert get_host_type("whateverelse") == "celery"
+        assert get_host_type(faker.pystr()) == "celery"
 
     # #######################################
     # ####      Timeouts
