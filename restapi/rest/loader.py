@@ -60,7 +60,7 @@ class EndpointsLoader:
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
-        confs_path = Path(os.curdir).joinpath(CONF_PATH)
+        confs_path = Path(os.curdir, CONF_PATH)
 
         CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
         defaults_path = Path(CONF_FOLDERS.get("defaults_path", confs_path))
