@@ -132,6 +132,11 @@ def create_app(
     # Flask configuration from config file
     microservice.config.from_object(config)
     microservice.json_encoder = ExtendedJSONEncoder
+
+    # Used to force flask to avoid json sorting and ensure that
+    # the output to reflect the order of field in the Marshmallow schema
+    microservice.config["JSON_SORT_KEYS"] = False
+
     log.debug("Flask app configured")
 
     if PRODUCTION:
