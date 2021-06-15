@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from restapi import decorators
 from restapi.connectors.smtp.notifications import (
@@ -18,7 +18,7 @@ from restapi.utilities.time import date_lower_than as dt_lower
 # from restapi.utilities.logs import log
 
 
-def inject_user(endpoint: EndpointResource, user_id: str) -> Optional[Dict[str, Any]]:
+def inject_user(endpoint: EndpointResource, user_id: str) -> Dict[str, Any]:
 
     user = endpoint.auth.get_user(user_id=user_id)
     if user is None:

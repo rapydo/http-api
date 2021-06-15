@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from restapi import decorators
 from restapi.endpoints.schemas import TokenSchema
@@ -8,7 +8,7 @@ from restapi.rest.definition import EndpointResource, Response
 # from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Optional[Dict[str, Any]]:
+def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
 
     user = endpoint.get_user()
     tokens = endpoint.auth.get_tokens(user=user)

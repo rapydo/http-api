@@ -1,6 +1,4 @@
-from typing import Any, Dict, Optional
-
-from flask import request
+from typing import Any, Dict
 
 from restapi import decorators
 from restapi.config import TESTING
@@ -135,9 +133,7 @@ if TESTING:
 
             return self.response(resp)
 
-    def verify_uuid_value(
-        endpoint: EndpointResource, uuid: str
-    ) -> Optional[Dict[str, Any]]:
+    def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> Dict[str, Any]:
 
         user = endpoint.get_user()
         if not user or uuid != user.uuid:

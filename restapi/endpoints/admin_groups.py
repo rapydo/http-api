@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from restapi import decorators
 from restapi.connectors import Connector
@@ -8,7 +8,7 @@ from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Group, Role
 
 
-def inject_group(endpoint: EndpointResource, group_id: str) -> Optional[Dict[str, Any]]:
+def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
 
     group = endpoint.auth.get_group(group_id=group_id)
     if not group:

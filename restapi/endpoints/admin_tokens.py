@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from glom import glom
 
@@ -10,7 +10,7 @@ from restapi.services.authentication import Role
 from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Optional[Dict[str, Any]]:
+def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
 
     tokens = endpoint.auth.get_tokens(token_jti=token_id)
 

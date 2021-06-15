@@ -101,12 +101,12 @@ def endpoint(
 # and then optionally url parameters, e.g uuid: str
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],
-def preload(callback: Callable[..., Optional[Dict[str, Any]]]) -> Callable[[F], F]:
+def preload(callback: Callable[..., Dict[str, Any]]) -> Callable[[F], F]:
     """
     callback example:
 
     from flask import request
-    def myfunc(endpoint: EndpointResource) -> Optional[Dict[str, Any]]:
+    def myfunc(endpoint: EndpointResource) -> Dict[str, Any]:
 
         user = endpoint.get_user()
         if (
