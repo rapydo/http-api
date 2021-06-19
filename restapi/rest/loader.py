@@ -35,7 +35,8 @@ class EndpointElements:
     # type of endpoint from flask_restful
     cls: Type[Resource] = attribute(default=None)
     uri: str = attribute(default="")
-    methods: Dict[str, List[str]] = attribute(default={})
+    # {'method': path, 'get': path, 'post': path}
+    methods: Dict[str, str] = attribute(default={})
     tags: List[str] = attribute(default=[])
     private: bool = attribute(default=False)
 
@@ -212,7 +213,7 @@ class EndpointsLoader:
                     )
                     continue
 
-                endpoint.methods[method_fn] = [fn.uri]
+                endpoint.methods[method_fn] = fn.uri
 
                 if fn.uri.startswith("/api/public/") or fn.uri.startswith(
                     "/api/app/"
@@ -255,8 +256,6 @@ class EndpointsLoader:
                 self.uri2methods.setdefault(fn.uri, [])
                 self.uri2methods[fn.uri].append(method_fn)
 
-                # log.debug("Built definition '{}:{}'", m, uri)
-
                 self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
 
@@ -282,22 +281,21 @@ class EndpointsLoader:
         classes: Dict[str, Dict[str, Type[Resource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
-            for method, tmp_uris1 in endpoint.methods.items():
+            for method, uri in endpoint.methods.items():
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})
 
-                for uri in tmp_uris1:
-                    if uri in mappings[method]:  # pragma: no cover
-                        log.warning(
-                            "Endpoint redefinition: {} {} used from both {} and {}",
-                            method.upper(),
-                            uri,
-                            endpoint.cls.__name__,
-                            classes[method][uri].__name__,
-                        )
-                    else:
-                        mappings[method].add(uri)
-                        classes[method][uri] = endpoint.cls
+                if uri in mappings[method]:  # pragma: no cover
+                    log.warning(
+                        "Endpoint redefinition: {} {} used from both {} and {}",
+                        method.upper(),
+                        uri,
+                        endpoint.cls.__name__,
+                        classes[method][uri].__name__,
+                    )
+                else:
+                    mappings[method].add(uri)
+                    classes[method][uri] = endpoint.cls
 
         # Detect endpoints swadowing
         for method, tmp_uris2 in mappings.items():
