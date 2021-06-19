@@ -17,7 +17,7 @@ from telegram.ext import (
 
 from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
-from restapi.exceptions import RestApiException, ServiceUnavailable
+from restapi.exceptions import RestApiException, ServerError, ServiceUnavailable
 from restapi.models import validate
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -397,7 +397,7 @@ class BotApiClient:
         # Never raised during tests: how to test it?
         except Exception as e:  # pragma: no cover
             log.error(f"API call failed: {e}")
-            raise RestApiException(str(e), status_code=500)
+            raise ServerError(str(e))
 
         if response.status_code >= 300:
             raise RestApiException(out, status_code=response.status_code)
