@@ -34,7 +34,7 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 class EndpointElements:
     # type of endpoint from flask_restful
     cls: Type[Resource] = attribute(default=None)
-    uri: str = attribute(default="")
+    uris: List[str] = attribute(default=[])
     # {'method': path, 'get': path, 'post': path}
     methods: Dict[str, str] = attribute(default={})
     tags: List[str] = attribute(default=[])
@@ -179,7 +179,7 @@ class EndpointsLoader:
 
             # Building endpoint
             endpoint = EndpointElements(
-                uri="",
+                uris=[],
                 methods={},
                 cls=epclss,
                 tags=epclss.labels,
@@ -247,7 +247,7 @@ class EndpointsLoader:
                 inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                 # This will be used by server.py.add
-                endpoint.uri = fn.uri
+                endpoint.uris.append(fn.uri)
 
                 self.private_endpoints.setdefault(fn.uri, {})
                 self.private_endpoints[fn.uri].setdefault(method_fn, endpoint.private)

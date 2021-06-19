@@ -183,7 +183,7 @@ def create_app(
         for endpoint in endpoints_loader.endpoints:
             # Create the restful resource with it;
             # this method is from RESTful plugin
-            rest_api.add_resource(endpoint.cls, endpoint.uri)
+            rest_api.add_resource(endpoint.cls, *endpoint.uris)
 
         # HERE all endpoints will be registered by using FlaskRestful
         rest_api.init_app(microservice)
