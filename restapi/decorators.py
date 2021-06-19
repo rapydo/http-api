@@ -17,6 +17,7 @@ from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.rest.definition import Response
+from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.uuid import getUUID
@@ -70,10 +71,6 @@ def endpoint(
             for code, message in responses.items():
                 specs_responses[str(code)] = {"description": message}
         specs["responses"] = specs_responses
-
-        if not hasattr(func, "uris"):
-            setattr(func, "uris", [])
-
         if not path.startswith("/"):
             normalized_path = f"/{path}"
         else:
@@ -84,7 +81,14 @@ def endpoint(
         ):
             normalized_path = f"{API_URL}{normalized_path}"
 
-        getattr(func, "uris").append(normalized_path)
+        if hasattr(func, "uri"):  # pragma: no cover
+            print_and_exit(
+                "Unsupported multiple endpoint mapping found: {}, {}",
+                getattr(func, "uri"),
+                normalized_path,
+            )
+
+        setattr(func, "uri", normalized_path)
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)

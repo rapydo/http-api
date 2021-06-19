@@ -205,7 +205,7 @@ class EndpointsLoader:
                 # auth.optional injected by the optional decorator in bearer.py
                 auth_optional = fn.__dict__.get("auth.optional", False)
 
-                if not hasattr(fn, "uris"):  # pragma: no cover
+                if not hasattr(fn, "uri"):  # pragma: no cover
                     print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
                         method_fn,
@@ -213,62 +213,52 @@ class EndpointsLoader:
                     )
                     continue
 
-                # Once dropped change uris: List into uri: str in decorators.endpoint
-                # Deprecated since 1.1
-                if len(fn.uris) > 1:  # pragma: no cover
-                    warnings.warn(
-                        "Deprecated multiple URI mapping set on "
-                        f"{epclss.__name__}.{method_fn}",
-                        DeprecationWarning,
+                endpoint.methods[method_fn] = [fn.uri]
+
+                if fn.uri.startswith("/api/public/") or fn.uri.startswith(
+                    "/api/app/"
+                ):  # pragma: no cover
+                    log.critical(
+                        "Due to a BUG on the proxy configuration, "
+                        "the {} URL will not work in production mode",
+                        fn.uri,
                     )
 
-                endpoint.methods[method_fn] = fn.uris
-                for uri in fn.uris:
+                self.authenticated_endpoints.setdefault(fn.uri, {})
+                # method_fn is equivalent to m.lower()
+                self.authenticated_endpoints[fn.uri].setdefault(
+                    method_fn, auth_required
+                )
 
-                    if uri.startswith("/api/public/") or uri.startswith(
-                        "/api/app/"
-                    ):  # pragma: no cover
-                        log.critical(
-                            "Due to a BUG on the proxy configuration, "
-                            "the {} URL will not work in production mode",
-                            uri,
-                        )
+                # Set default responses
+                responses: Dict[str, Dict[str, str]] = {}
 
-                    self.authenticated_endpoints.setdefault(uri, {})
-                    # method_fn is equivalent to m.lower()
-                    self.authenticated_endpoints[uri].setdefault(
-                        method_fn, auth_required
-                    )
+                responses.setdefault("400", ERR400)
+                if auth_required:
+                    responses.setdefault("401", ERR401)
+                    responses.setdefault("404", ERR404_AUTH)
+                elif auth_optional:
+                    responses.setdefault("401", ERR401)
+                    responses.setdefault("404", ERR404)
+                else:
+                    responses.setdefault("404", ERR404)
+                # inject _METHOD dictionaries into __apispec__ attribute
+                # __apispec__ is normally populated by using @docs decorator
+                inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
-                    # Set default responses
-                    responses: Dict[str, Dict[str, str]] = {}
+                # This will be used by server.py.add
+                endpoint.uris.append(fn.uri)
 
-                    responses.setdefault("400", ERR400)
-                    if auth_required:
-                        responses.setdefault("401", ERR401)
-                        responses.setdefault("404", ERR404_AUTH)
-                    elif auth_optional:
-                        responses.setdefault("401", ERR401)
-                        responses.setdefault("404", ERR404)
-                    else:
-                        responses.setdefault("404", ERR404)
-                    # inject _METHOD dictionaries into __apispec__ attribute
-                    # __apispec__ is normally populated by using @docs decorator
-                    inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
+                self.private_endpoints.setdefault(fn.uri, {})
+                self.private_endpoints[fn.uri].setdefault(method_fn, endpoint.private)
 
-                    # This will be used by server.py.add
-                    endpoint.uris.append(uri)
+                # Used by server.py to remove unmapped methods
+                self.uri2methods.setdefault(fn.uri, [])
+                self.uri2methods[fn.uri].append(method_fn)
 
-                    self.private_endpoints.setdefault(uri, {})
-                    self.private_endpoints[uri].setdefault(method_fn, endpoint.private)
+                # log.debug("Built definition '{}:{}'", m, uri)
 
-                    # Used by server.py to remove unmapped methods
-                    self.uri2methods.setdefault(uri, [])
-                    self.uri2methods[uri].append(method_fn)
-
-                    # log.debug("Built definition '{}:{}'", m, uri)
-
-                    self._used_tags.update(endpoint.tags)
+                self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
 
     @staticmethod
