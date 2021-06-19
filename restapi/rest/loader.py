@@ -5,7 +5,6 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
-import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Set, Type
 
@@ -35,7 +34,7 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 class EndpointElements:
     # type of endpoint from flask_restful
     cls: Type[Resource] = attribute(default=None)
-    uris: List[str] = attribute(default=[])
+    uri: str = attribute(default="")
     methods: Dict[str, List[str]] = attribute(default={})
     tags: List[str] = attribute(default=[])
     private: bool = attribute(default=False)
@@ -179,7 +178,7 @@ class EndpointsLoader:
 
             # Building endpoint
             endpoint = EndpointElements(
-                uris=[],
+                uri="",
                 methods={},
                 cls=epclss,
                 tags=epclss.labels,
@@ -247,7 +246,7 @@ class EndpointsLoader:
                 inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                 # This will be used by server.py.add
-                endpoint.uris.append(fn.uri)
+                endpoint.uri = fn.uri
 
                 self.private_endpoints.setdefault(fn.uri, {})
                 self.private_endpoints[fn.uri].setdefault(method_fn, endpoint.private)
