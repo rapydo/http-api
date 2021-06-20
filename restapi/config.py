@@ -67,7 +67,7 @@ CONF_PATH = Path("confs")
 EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = "restapi"  # package inside rapydo-http
 
-CUSTOM_PACKAGE = os.getenv("VANILLA_PACKAGE", "custom")
+CUSTOM_PACKAGE = os.getenv("PROJECT_NAME", "custom")
 EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", EXTENDED_PROJECT_DISABLED)
 #################
 # SQLALCHEMY
