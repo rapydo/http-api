@@ -366,20 +366,20 @@ class TestApp(BaseTests):
 
         # Invalid file / path
         try:
-            load_yaml_file(Path("invalid"), Path("path"))
+            load_yaml_file(Path("path", "invalid"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         try:
-            load_yaml_file(Path("invalid"), Path("tests"))
+            load_yaml_file(Path("tests", "invalid"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
 
         # Valid path, but not in yaml format
         try:
-            load_yaml_file(Path("conftest.py"), Path("tests"))
+            load_yaml_file(Path("tests", "conftest.py"))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
@@ -387,7 +387,7 @@ class TestApp(BaseTests):
         # File is empty
         tmpf = tempfile.NamedTemporaryFile()
         try:
-            load_yaml_file(Path(tmpf.name), Path("."))
+            load_yaml_file(Path(tmpf.name))
             pytest.fail("No exception raised")  # pragma: no cover
         except AttributeError:
             pass
