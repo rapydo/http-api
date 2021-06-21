@@ -287,7 +287,7 @@ class TestApp(BaseTests):
 
         VALID = f"/tests/preloadcallback/{user.uuid}"
         INVALID = "/tests/preloadcallback/12345678-90ab-cdef-1234-567890abcdef"
-        admin_headers, admin_token = self.do_login(client, None, None)
+        admin_headers, _ = self.do_login(client, None, None)
 
         # Verify both endpoint ...
 
