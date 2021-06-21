@@ -3,7 +3,7 @@ import traceback
 import warnings
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import certifi
 from celery import Celery
@@ -26,7 +26,7 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 class CeleryExt(Connector):
 
-    TaskType = Task
+    TaskType = Type[Task]
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
