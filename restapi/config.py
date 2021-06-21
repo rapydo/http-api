@@ -69,12 +69,6 @@ BACKEND_PACKAGE = "restapi"  # package inside rapydo-http
 
 CUSTOM_PACKAGE = os.getenv("PROJECT_NAME", "custom")
 EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", EXTENDED_PROJECT_DISABLED)
-#################
-# SQLALCHEMY
-BASE_DB_DIR = "/dbs"
-SQLLITE_DBFILE = "backend.db"
-dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
-SQLALCHEMY_DATABASE_URI = f"sqlite:///{dbfile}"
 
 SENTRY_URL = os.getenv("SENTRY_URL")
 if SENTRY_URL is not None and SENTRY_URL.strip() == "":
