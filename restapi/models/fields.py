@@ -76,9 +76,10 @@ class Number(Field, webargs_fields.Number):
 
 class String(Field, webargs_fields.String):
     def _deserialize(self, value, attr, data, **kwargs):
+        value = super()._deserialize(value, attr, data, **kwargs)
         if value:
             value = value.strip()
-        return super()._deserialize(value, attr, data, **kwargs)
+        return value
 
 
 # Derived/child types
