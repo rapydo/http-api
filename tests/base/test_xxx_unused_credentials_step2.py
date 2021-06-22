@@ -59,7 +59,7 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
             assert (
                 events[1].payload["motivation"] == "account blocked due to inactivity"
             )
-            assert events[1].url == "/api/reset"
+            assert events[1].url == "/auth/reset"
 
             # Goodbye temporary user
             self.delete_user(client, BaseTests.unused_credentials[2])
