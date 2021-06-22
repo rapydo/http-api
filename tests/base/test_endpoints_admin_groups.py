@@ -146,6 +146,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "Group"
+        assert events[INDEX].url == "/api/admin/groups"
         assert "fullname" in events[INDEX].payload
         assert "shortname" in events[INDEX].payload
 
@@ -155,6 +156,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "Group"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
         assert "fullname" in events[INDEX].payload
         assert "shortname" in events[INDEX].payload
 
@@ -164,6 +166,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "Group"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # A new group is created
@@ -172,6 +175,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "Group"
         assert events[INDEX].target_id != events[0].target_id
+        assert events[INDEX].url == "/api/admin/groups"
         assert "fullname" in events[INDEX].payload
         assert "shortname" in events[INDEX].payload
         group_uuid = events[INDEX].target_id
@@ -183,6 +187,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
+        assert events[INDEX].url == f"/api/admin/groups/{group_uuid}"
         assert "fullname" not in events[INDEX].payload
         assert "shortname" not in events[INDEX].payload
         assert "group" in events[INDEX].payload
