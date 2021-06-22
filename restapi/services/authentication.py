@@ -961,7 +961,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             user=user,
             target=target,
             ip=cls.get_remote_ip(),
-            url="-",
+            url=request.path,
         )
 
     def init_auth_db(self, options):
