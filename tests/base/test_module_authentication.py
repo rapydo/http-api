@@ -643,6 +643,24 @@ class TestApp(BaseTests):
         # While custom roles are not modified
         auth.init_roles()
 
+        # Verify that duplicated role names are refused at init time
+        roles_data_backup = auth.roles_data
+        auth.roles_data = {
+            "admin_root": "Admin",
+            "staff_user": "Coordinator",
+            "group_coordinator": "Coordinator",
+            "normal_user": "User",
+        }
+        try:
+            auth.init_roles()
+            pytest.fail("No exception raised")  # pragma: no cover
+        except SystemExit as e:
+            err = "Found duplicated role names: "
+            err += "['Admin', 'Coordinator', 'Coordinator', 'User']"
+            assert str(e) == err
+
+        auth.roles_data = roles_data_backup
+
         for r in auth.get_roles():
             # default description restored for this default role
             if r.name == default_name:

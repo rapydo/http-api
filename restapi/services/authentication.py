@@ -975,6 +975,12 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def init_roles(self) -> None:
         current_roles = {role.name: role for role in self.get_roles()}
+        role_names = list(self.roles_data.values())
+
+        num_of_roles = len(role_names)
+        num_of_unique_roles = len(list(set(role_names)))
+        if num_of_roles != num_of_unique_roles:
+            print_and_exit("Found duplicated role names: {}", sorted(role_names))
 
         for role_name in self.roles:
             description = self.roles_data.get(role_name, ROLE_DISABLED)
