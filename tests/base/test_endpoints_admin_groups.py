@@ -187,7 +187,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.modify.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
-        assert events[INDEX].url == f"/api/admin/groups/{group_uuid}"
+        assert events[INDEX].url == f"/api/admin/users/{events[INDEX].target_id}"
         assert "fullname" not in events[INDEX].payload
         assert "shortname" not in events[INDEX].payload
         assert "group" in events[INDEX].payload
