@@ -283,7 +283,7 @@ class TestApp(BaseTests):
         # Tokens does not have a uuid...
         # assert events[0].target_id == token_id
         assert events[0].user == "-"
-        assert events[0].url == f"/auth/tokens/{token_id}"
+        assert events[0].url == f"/api/admin/tokens/{token_id}"
 
         r = client.delete(
             f"{API_URI}/admin/tokens/{token_id}", headers=last_tokens_header

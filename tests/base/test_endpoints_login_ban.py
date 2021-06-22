@@ -34,6 +34,7 @@ elif max_login_attempts == 0:
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+            assert events[0].url == "/auth/login"
 
             # and verify that login is still allowed
             headers, _ = self.do_login(client, data["email"], data["password"])
@@ -42,6 +43,7 @@ elif max_login_attempts == 0:
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == data["email"]
+            assert events[0].url == "/auth/login"
 
             # Furthermore the login/unlock endpoint is now enabled
             r = client.post(f"{AUTH_URI}/login/unlock/token")
@@ -98,6 +100,7 @@ else:
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+            assert events[0].url == "/auth/login"
 
             self.verify_credentials_ban_notification()
 
@@ -114,6 +117,7 @@ else:
                 events[0].payload["motivation"]
                 == "account blocked due to too many failed logins"
             )
+            assert events[0].url == "/auth/login"
 
             reset_data = {"reset_email": data["email"]}
             r = client.post(f"{AUTH_URI}/reset", data=reset_data)
@@ -127,6 +131,7 @@ else:
                 events[0].payload["motivation"]
                 == "account blocked due to too many failed logins"
             )
+            assert events[0].url == "/auth/reset"
 
             time.sleep(ban_duration)
 
@@ -136,6 +141,7 @@ else:
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == data["email"]
+            assert events[0].url == "/auth/login"
 
             # Verify that already emitted tokens are not blocked
             # 1) Block again the account
@@ -191,6 +197,7 @@ else:
             assert events[0].event == Events.login_unlock.value
             assert events[0].user == data["email"]
             assert events[0].target_type == "User"
+            assert events[0].url == f"/auth/login/unlock/{token}"
 
             logins = auth.get_logins(data["email"])
             login = logins[-1]
@@ -353,6 +360,7 @@ else:
                 assert events[0].event == Events.refused_login.value
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
+                assert events[0].url == "/auth/login"
 
                 self.delete_mock_email()
 
@@ -368,6 +376,7 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
                 assert events[0].payload["username"] == registration_data["email"]
+                assert events[0].url == "/auth/login"
 
                 self.verify_credentials_ban_notification()
 
@@ -385,6 +394,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == f"/profile/activate/{token}"
 
                 # request activation forbidden due to blocked acount
                 r = client.post(
@@ -401,6 +411,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == "/auth/profile/activate"
 
                 time.sleep(ban_duration)
 
@@ -463,6 +474,7 @@ else:
                 assert "username" not in events[0].payload
                 assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
+                assert events[0].url == "/auth/login"
 
                 self.verify_credentials_ban_notification()
 
@@ -479,6 +491,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == "/auth/login"
 
                 time.sleep(ban_duration)
 
@@ -489,6 +502,7 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.login.value
                 assert events[0].user == data["email"]
+                assert events[0].url == "/auth/login"
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)
