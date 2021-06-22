@@ -205,7 +205,7 @@ class TestApp(BaseTests):
 
         events = self.get_last_events(1)
         assert events[0].event != Events.activation.value
-        assert events[0].url == "/auth/profile/activate"
+        assert events[0].url == "/auth/login"
 
         assert self.read_mock_email() is None
 
