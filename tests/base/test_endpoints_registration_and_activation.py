@@ -205,6 +205,7 @@ class TestApp(BaseTests):
 
         events = self.get_last_events(1)
         assert events[0].event != Events.activation.value
+        assert events[0].url == "/auth/profile/activate"
 
         assert self.read_mock_email() is None
 
@@ -241,6 +242,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.activation.value
         assert events[0].user == registration_data["email"]
         assert events[0].target_type == "User"
+        assert events[0].url == f"/auth/profile/activate/{token}"
 
         # Activation token is no longer valid
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
