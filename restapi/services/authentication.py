@@ -955,13 +955,18 @@ class BaseAuthentication(metaclass=ABCMeta):
         user: Optional[Any] = None,
     ) -> None:
 
+        try:
+            url_path = request.path
+        except RuntimeError:
+            url_path = "-"
+
         save_event_log(
             event=event,
             payload=payload,
             user=user,
             target=target,
             ip=cls.get_remote_ip(),
-            url=request.path,
+            url=url_path,
         )
 
     def init_auth_db(self, options):
