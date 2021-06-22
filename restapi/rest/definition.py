@@ -2,6 +2,7 @@ import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from flask import Response as FlaskResponse
+from flask import request
 from flask_apispec import MethodResource
 from flask_restful import Resource
 
@@ -126,4 +127,5 @@ class EndpointResource(MethodResource, Resource):
             payload=payload,
             user=user,
             ip=BaseAuthentication.get_remote_ip(),
+            url=request.path,
         )

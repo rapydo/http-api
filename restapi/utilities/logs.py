@@ -106,6 +106,7 @@ if LOGS_PATH is not None:
         fmt += "{extra[event]} "
         fmt += "{extra[target_type]} "
         fmt += "{extra[target_id]} "
+        fmt += "{extra[url]} "
         fmt += "{extra[payload]} "
         log.add(
             EVENTS_PATH,
@@ -264,6 +265,7 @@ def save_event_log(
     payload: Optional[Dict[str, Any]] = None,
     user: Optional[Any] = None,
     ip: str = "-",
+    url: str = "",
 ) -> None:
 
     target_type, target_id = parse_event_target(target)
@@ -282,4 +284,5 @@ def save_event_log(
         target_id=target_id,
         target_type=target_type,
         payload=p,
+        url=url,
     )

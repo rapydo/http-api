@@ -40,7 +40,8 @@ AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 FlaskClient = Any
 
 Event = namedtuple(
-    "Event", ["date", "ip", "user", "event", "target_type", "target_id", "payload"]
+    "Event",
+    ["date", "ip", "user", "event", "target_type", "target_id", "url", "payload"],
 )
 
 
@@ -639,7 +640,7 @@ class BaseTests:
 
                 tokens = line.strip().split(" ")
 
-                payload = json.loads(" ".join(tokens[7:])) if len(tokens) >= 8 else {}
+                payload = json.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
 
                 event = Event(
                     # datetime
@@ -654,6 +655,8 @@ class BaseTests:
                     tokens[5] if len(tokens) >= 6 else "",
                     # Target ID or empty
                     tokens[6] if len(tokens) >= 7 else "",
+                    # Target ID or empty
+                    tokens[7] if len(tokens) >= 8 else "",
                     # Payload dictionary
                     payload,
                 )
