@@ -394,7 +394,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
-                assert events[0].url == f"/profile/activate/{token}"
+                assert events[0].url == f"/auth/profile/activate/{token}"
 
                 # request activation forbidden due to blocked acount
                 r = client.post(

@@ -234,6 +234,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
+        assert events[INDEX].url == "/api/admin/users"
         assert "name" in events[INDEX].payload
         assert "surname" in events[INDEX].payload
         assert "email" in events[INDEX].payload
@@ -244,6 +245,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # Another User is created
@@ -252,6 +254,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
+        assert events[INDEX].url == "/api/admin/users"
         assert "name" in events[INDEX].payload
         assert "surname" in events[INDEX].payload
         assert "email" in events[INDEX].payload
@@ -262,6 +265,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert "name" in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
@@ -273,14 +277,16 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert len(events[INDEX].payload) == 0
 
-        # User 2 is deleted (same target_id as above)
+        # User 1 is deleted (same target_id as above)
         INDEX = 5
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # User 2 modified (same target_id as above)
@@ -289,6 +295,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
@@ -303,6 +310,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # Default user is modified
@@ -312,6 +320,8 @@ class TestApp(BaseTests):
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
         assert events[INDEX].target_id != events[2].target_id
+        assert events[INDEX].url != f"/api/admin/users/{events[0].target_id}"
+        assert events[INDEX].url != f"/api/admin/users/{events[2].target_id}"
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload

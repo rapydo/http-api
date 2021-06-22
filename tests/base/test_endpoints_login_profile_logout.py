@@ -29,6 +29,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         auth = Connector.get_authentication_instance()
         logins = auth.get_logins(USER)
@@ -42,6 +43,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
+        assert events[0].url == "/auth/login"
 
         logins = auth.get_logins(USER)
         login = logins[-1]
@@ -54,6 +56,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         time.sleep(5)
         # Verify MAX_PASSWORD_VALIDITY, if set
@@ -62,6 +65,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         self.save("auth_header", headers)
         self.save("auth_token", token)
@@ -97,6 +101,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == random_email
+        assert events[0].url == "/auth/login"
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
         """Check if you can use your token for protected endpoints"""
@@ -228,6 +233,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
+        assert events[0].url == "/auth/profile"
         # It is true in the core, but projects may introduce additional values
         # and expand the input dictionary even if initially empty
         # e.g. meteohub adds here the requests_expiration_days parameter
@@ -257,6 +263,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
+        assert events[0].url == "/auth/profile"
         # It is true in the core, but projects may introduce additional values
         # and expand the input dictionary even if initially empty
         # e.g. meteohub adds here the requests_expiration_days parameter
@@ -386,9 +393,11 @@ class TestApp(BaseTests):
         assert events[0].event == Events.delete.value
         assert events[0].user == "-"
         assert events[0].target_type == "Token"
+        assert events[0].url == "/auth/logout"
 
         assert events[1].event == Events.logout.value
         assert events[1].user == BaseAuthentication.default_user
+        assert events[1].url == "/auth/logout"
 
         # Check failure
         log.info("*** VERIFY invalid token")
@@ -496,6 +505,7 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/login"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
@@ -512,6 +522,7 @@ class TestApp(BaseTests):
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == username
+            assert events[0].url == "/auth/login"
 
             password = new_password
 
@@ -541,6 +552,7 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/login"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
@@ -557,6 +569,7 @@ class TestApp(BaseTests):
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == username
+            assert events[0].url == "/auth/login"
 
             ###################################
             # Test password change
@@ -584,6 +597,7 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/profile"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
