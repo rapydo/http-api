@@ -161,7 +161,21 @@ class NeoModel(Connector):
 
         if self.app:
             with self.app.app_context():
-                remove_all_labels()
+
+                try:
+                    remove_all_labels()
+                # With neo4j 4.3 remove all labels on empty DB started to fail with:
+                # [...]
+                #   File "/usr/local/lib/python3.9/dist-packages/neomodel/core.py", ...
+                #                                           ... line 62, in drop_indexes
+                #     index[7][0], index[8][0]))
+                # IndexError: list index out of range
+                # Maybe that a future release of neomdel will fix the issue
+                # and the try/except will be no longer needed
+                # It maily fails on NIG when executing init_hpo.sh
+                except IndexError:  # pragma: no cover
+                    log.warning("Can't remove label, is database empty?")
+
                 # install_all_labels()
 
                 # install_all_labels can fail when models are cross-referenced between
