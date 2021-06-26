@@ -9,40 +9,16 @@ from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
-from restapi.config import (
-    BACKEND_HOSTNAME,
-    BOT_HOSTNAME,
-    CELERY_HOSTNAME,
-    HOST_TYPE,
-    HOSTNAME,
-    PRODUCTION,
-    TESTING,
-)
+from restapi.config import HOST_TYPE, PRODUCTION
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
 LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
+FILE_LOGLEVEL = os.getenv("FILE_LOGLEVEL", "WARNING")
+# FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
 LOGS_FOLDER = Path("/logs")
 
-
-# BACKEND-SERVER / BOT
-if HOST_TYPE == BACKEND_HOSTNAME or HOST_TYPE == BOT_HOSTNAME:
-    LOGS_FILE = HOST_TYPE
-# Celery (variable name due to scaling)
-elif HOST_TYPE == CELERY_HOSTNAME:  # pragma: no cover
-    LOGS_FILE = f"celery_{HOSTNAME}"
-    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
-    if not LOGS_FOLDER.is_dir():
-        LOGS_FOLDER.mkdir(exist_ok=True)
-# Flower / Celery-Beat
-else:  # pragma: no cover
-    LOGS_FILE = HOSTNAME
-    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
-    if not LOGS_FOLDER.is_dir():
-        LOGS_FOLDER.mkdir(exist_ok=True)
-
-
-LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{LOGS_FILE}.log")
+LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{HOST_TYPE}.log")
 EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
 
 
@@ -74,7 +50,6 @@ def print_message_on_stderr(record):
 
 
 if LOGS_PATH is not None:
-    FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
     try:
         log.add(
             LOGS_PATH,
