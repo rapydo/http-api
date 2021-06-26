@@ -306,7 +306,3 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     app = create_app(mode=ServerModes.WORKER)
     assert app is not None
-    from restapi.utilities.logs import LOGS_FILE
-
-    assert os.environ["HOSTNAME"] == "backend-server"
-    assert LOGS_FILE == "backend-server"
