@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import jwt
 import pyotp
+import pytest
 import pytz
 from faker import Faker
 from flask import Flask
@@ -25,7 +26,7 @@ from restapi.config import (
 )
 from restapi.connectors import Connector, celery
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication, Payload, Role
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.faker import get_faker
 from restapi.utilities.logs import LOGS_FOLDER, log
 
@@ -131,6 +132,9 @@ class BaseTests:
         """
         Make login and return both token and authorization header
         """
+
+        if not Connector.check_availability("authentication"):  # pragma: no cover
+            pytest.fail("Authentication is not enabled")
 
         if USER is None or PWD is None:
             BaseAuthentication.load_default_user()

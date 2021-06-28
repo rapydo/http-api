@@ -173,8 +173,9 @@ class NeoModel(Connector):
                 # Maybe that a future release of neomdel will fix the issue
                 # and the try/except will be no longer needed
                 # It maily fails on NIG when executing init_hpo.sh
-                except IndexError:  # pragma: no cover
+                except IndexError as e:  # pragma: no cover
                     log.warning("Can't remove label, is database empty?")
+                    log.error(e)
 
                 # install_all_labels()
 
