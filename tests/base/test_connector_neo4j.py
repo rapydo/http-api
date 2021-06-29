@@ -312,18 +312,26 @@ else:
             data = obj.cypher("MATCH (n: T2) RETURN n")
             assert len(data) == 0
 
+            # len(cache) == .count
             assert node1.count == 1
+            assert len(node1.cache) == 1
             assert node1.filepath.exists()
 
+            # len(cache) == .count
             assert node2.count == 1
+            assert len(node2.cache) == 1
             assert node2.filepath.exists()
 
             # Flush the cache, keep the files
+            # The .count still stores the total amount, but cache is empty
             node1.flush_cache()
-            assert node1.count == 0
+            assert node1.count == 1
+            assert len(node1.cache) == 0
             assert node1.filepath.exists()
 
             # Flush the cache AND the files
             node2.clean()
-            assert node2.count == 0
+            # The .count still stores the total amount, but cache is empty
+            assert node2.count == 1
+            assert len(node2.cache) == 0
             assert not node2.filepath.exists()
