@@ -37,6 +37,14 @@ class DataDump:
     def count(self) -> int:
         return len(self.cache)
 
+    def flush_cache(self) -> None:
+        self.cache.clear()
+
+    def clean(self) -> None:
+        self.flush_cache()
+        self.close()
+        self.filepath.unlink()
+
     def print_line(self, *args: Any) -> None:
 
         h = str(args)
@@ -146,7 +154,7 @@ class NodeDump(DataDump):
             )
         self.print_line(args)
 
-    def store(self, chunk_size: int = 1000) -> None:
+    def store(self, chunk_size: int = 10000) -> None:
 
         self.close()
 

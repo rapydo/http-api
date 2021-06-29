@@ -311,3 +311,15 @@ else:
             DataDump.delete_nodes("T2")
             data = obj.cypher("MATCH (n: T2) RETURN n")
             assert len(data) == 0
+
+            assert node1.count == 1
+            assert node1.filepath.exists()
+            node1.flush_cache()
+            assert node1.count == 0
+            assert node1.filepath.exists()
+
+            node1.dump("a")
+            assert node1.count == 1
+            node1.clean()
+            assert node1.count == 0
+            assert not node1.filepath.exists()
