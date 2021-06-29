@@ -22,6 +22,7 @@ class DataDump:
         self.filename = filename
         self.cache: Dict[str, bool] = {}
         self.fields = fields
+        self.counter = 0
 
         with open(self.filepath, "w+") as out_handle:
             tsv_node_writer = csv.writer(out_handle, delimiter="\t")
@@ -35,9 +36,10 @@ class DataDump:
 
     @property
     def count(self) -> int:
-        return len(self.cache)
+        return self.counter + len(self.cache)
 
     def flush_cache(self) -> None:
+        self.counter += self.count
         self.cache.clear()
 
     def clean(self) -> None:
