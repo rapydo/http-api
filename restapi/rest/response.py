@@ -131,7 +131,7 @@ def handle_response(response):
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
         "{} {} {}{} -> {}",
-        BaseAuthentication.get_remote_ip(),
+        BaseAuthentication.get_remote_ip(raise_warnings=False),
         request.method,
         url,
         data_string,

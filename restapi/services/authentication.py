@@ -322,7 +322,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         return pwd_context.hash(password)
 
     @staticmethod
-    def get_remote_ip() -> str:
+    def get_remote_ip(raise_warnings: bool = True) -> str:
         try:
 
             # Syntax: X-Forwarded-For: <client>, <proxy1>, <proxy2>
@@ -344,7 +344,7 @@ class BaseAuthentication(metaclass=ABCMeta):
                 if real_ip := request.headers.get(header_key):  # pragma: no cover
                     return real_ip
 
-            if PRODUCTION and not TESTING:  # pragma: no cover
+            if raise_warnings and PRODUCTION and not TESTING:  # pragma: no cover
                 log.warning(
                     "Production mode is enabled, but {} header is missing", header_key
                 )
