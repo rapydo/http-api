@@ -39,7 +39,7 @@ class DataDump:
         return self.counter + len(self.cache)
 
     def flush_cache(self) -> None:
-        self.counter += self.count
+        self.counter += len(self.cache)
         self.cache.clear()
 
     def clean(self) -> None:
