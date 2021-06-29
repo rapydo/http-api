@@ -314,12 +314,16 @@ else:
 
             assert node1.count == 1
             assert node1.filepath.exists()
+
+            assert node2.count == 1
+            assert node2.filepath.exists()
+
+            # Flush the cache, keep the files
             node1.flush_cache()
             assert node1.count == 0
             assert node1.filepath.exists()
 
-            node1.dump("a")
-            assert node1.count == 1
-            node1.clean()
-            assert node1.count == 0
-            assert not node1.filepath.exists()
+            # Flush the cache AND the files
+            node2.clean()
+            assert node2.count == 0
+            assert not node2.filepath.exists()
