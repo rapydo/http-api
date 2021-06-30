@@ -165,6 +165,30 @@ else:
 
             node2 = NodeDump("TestNode2", fields=["f1:string", "f2:int", "f3:float"])
 
+            try:
+                rel = RelationDump(
+                    "TestNode1",
+                    "MY_REL",
+                    "TestNode2",
+                    fields=["f1", "f1", "custom:string"],
+                )
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            rel = RelationDump(
+                "TestNode1",
+                "MY_REL",
+                "TestNode2",
+                fields=["f1", "f1", "custom:string"],
+                ignore_indexes=True,
+            )
+
+            obj = connector.get_instance()
+
+            obj.cypher("CREATE INDEX testnode_index_name1 FOR (n:TestNode1) ON (n.f1)")
+            obj.cypher("CREATE INDEX testnode_index_name2 FOR (n:TestNode2) ON (n.f1)")
+
             rel = RelationDump(
                 "TestNode1",
                 "MY_REL",
@@ -228,8 +252,6 @@ else:
             node2.store()
             rel.store()
 
-            obj = connector.get_instance()
-
             data = obj.cypher("MATCH (n: TestNode1) RETURN n")
             assert isinstance(data[0][0]["f1"], str)
             assert isinstance(data[0][0]["f2"], int)
@@ -286,7 +308,9 @@ else:
 
             node1 = NodeDump("T1", fields=["f1:string"])
             node2 = NodeDump("T2", fields=["f1:string"])
-            rel = RelationDump("T1", "R1", "T2", fields=["f1", "f1"])
+            rel = RelationDump(
+                "T1", "R1", "T2", fields=["f1", "f1"], ignore_indexes=True
+            )
 
             node1.dump("a")
             node2.dump("b")
