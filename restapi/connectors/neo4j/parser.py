@@ -271,5 +271,5 @@ MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
         else:
             raise ValueError(
                 f"Can't find an index for {label}.{key}: "
-                "add an index of skip the check with ignore_indexes"
+                "add an index or skip this check with ignore_indexes=True"
             )
