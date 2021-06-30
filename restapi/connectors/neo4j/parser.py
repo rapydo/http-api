@@ -236,8 +236,8 @@ FROM 'file:///{self.filename}'
 AS line
 FIELDTERMINATOR '\t'
 
-MERGE (node1: {self.label1} {{{self.key1}: line.{field1}}})
-MERGE (node2: {self.label2} {{{self.key2}: line.{field2}}})
+MATCH (node1: {self.label1} {{{self.key1}: line.{field1}}})
+MATCH (node2: {self.label2} {{{self.key2}: line.{field2}}})
 MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
 """
 
