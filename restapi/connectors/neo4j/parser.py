@@ -47,7 +47,7 @@ class DataDump:
         self.close()
         self.filepath.unlink()
 
-    def print_line(self, *args: Any) -> None:
+    def print_line(self, args: Any) -> None:
 
         for a in args:
             if a is None:
@@ -58,7 +58,7 @@ class DataDump:
             return
         self.cache[h] = True
 
-        self.writer.writerow(*args)
+        self.writer.writerow(args)
 
     @staticmethod
     def cypher_exec(cypher: str) -> Any:
