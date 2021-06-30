@@ -49,6 +49,10 @@ class DataDump:
 
     def print_line(self, *args: Any) -> None:
 
+        for a in args:
+            if a is None:
+                raise ValueError(f"Found NULL value in line: {args}")
+
         h = str(args)
         if h in self.cache:
             return

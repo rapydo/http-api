@@ -183,6 +183,12 @@ else:
             rel.dump("test-string-bis", "test-string2", "custom")
 
             try:
+                node1.dump(None, 10, 20.30)
+                pytest.fail("No exception raised")  # pragma: no cover
+            except ValueError:
+                pass
+
+            try:
                 node1.dump("only-one")
                 pytest.fail("No exception raised")  # pragma: no cover
             except ValueError:
