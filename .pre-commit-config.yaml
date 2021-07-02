@@ -41,6 +41,7 @@ repos:
             "types-redis",
             "pika-stubs",
             "celery-types",
+            "mongo-types",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
