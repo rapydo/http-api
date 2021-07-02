@@ -43,7 +43,7 @@ setup(
         "meinheld==1.0.2",
         "gunicorn==20.1.0",
         # DB and services drivers
-        "neomodel==4.0.3",
+        "neomodel==4.0.4",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",

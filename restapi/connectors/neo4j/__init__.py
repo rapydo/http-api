@@ -136,7 +136,9 @@ class NeoModel(Connector):
         PWD = variables.get("password")
         HOST = variables.get("host")
         PORT = variables.get("port")
-        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
+        # Fixed... to be configured?
+        DATABASE = "neo4j"
+        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}/{DATABASE}"
         config.DATABASE_URL = URI
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
