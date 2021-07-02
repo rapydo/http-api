@@ -166,7 +166,7 @@ class NeoModel(Connector):
 
                 try:
                     remove_all_labels()
-                # With neo4j 4.3 remove all labels on empty DB started to fail with:
+                # With Neo4j 4.3 remove all labels on empty DB started to fail with:
                 # [...]
                 #   File "/usr/local/lib/python3.9/dist-packages/neomodel/core.py", ...
                 #                                           ... line 62, in drop_indexes
@@ -178,6 +178,8 @@ class NeoModel(Connector):
                 except IndexError as e:  # pragma: no cover
                     log.warning("Can't remove label, is database empty?")
                     log.error(e)
+                    # Just a simple retry, it seems be enough (sometimes...)
+                    remove_all_labels()
 
                 # install_all_labels()
 
