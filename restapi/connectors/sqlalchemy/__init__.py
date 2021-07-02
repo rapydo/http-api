@@ -212,7 +212,7 @@ class SQLAlchemy(Connector):
         if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
-        uri = URL.create(
+        uri = URL.create(  # type: ignore
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
             password=variables.get("password"),
@@ -242,15 +242,15 @@ class SQLAlchemy(Connector):
 
         db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_db_exceptions(db.session.commit)
-        db.session.flush = catch_db_exceptions(db.session.flush)
+        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
+        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
 
-        Connection.execute = catch_db_exceptions(Connection.execute)
+        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
         # Used in case of autoflush
-        Connection._execute_context = catch_db_exceptions(Connection._execute_context)
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
@@ -273,7 +273,7 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return self.db.session
+        return cast(Session, self.db.session)
 
     def disconnect(self) -> None:
         if self.db:

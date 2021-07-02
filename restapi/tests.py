@@ -683,7 +683,7 @@ class BaseTests:
         # Mypy complains about: error: "Callable[[], Any]" has no attribute "get"
         # But .tasks is a TaskRegistry and it is child of dict...
         # so that .get is totally legit!
-        task = c.celery_app.tasks.get(task_name)  # type: ignore
+        task = c.celery_app.tasks.get(task_name)
 
         if not task:
             raise AttributeError("Task not found")
