@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 
 import werkzeug.exceptions
-from amqp.exceptions import AccessRefused
+from amqp.exceptions import AccessRefused  # type: ignore
 from flask import request
 from flask_apispec import marshal_with  # also imported from endpoints
 from flask_apispec import use_kwargs as original_use_kwargs

@@ -37,7 +37,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     obj = connector.get_instance()
     assert obj is not None
 
-    task = obj.celery_app.send_task("test_task", args=["myinput"])
+    task = obj.celery_app.send_task("test_task", args=("myinput",))
 
     assert task is not None
     assert task.id is not None
