@@ -152,7 +152,7 @@ class NeoModel(Connector):
         db.url = URI
         db.set_connection(URI)
 
-        db.driver.verify_connectivity()
+        # db.driver.verify_connectivity()
 
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
@@ -165,15 +165,16 @@ class NeoModel(Connector):
 
     def is_connected(self) -> bool:
 
-        if self.disconnected:
-            return False
+        return not self.disconnected
+        # if self.disconnected:
+        #     return False
 
-        try:
-            self.db.driver.verify_connectivity()
-            return True
-        except (ServiceUnavailable, TransientError) as e:
-            log.error(e)
-            return False
+        # try:
+        #     self.db.driver.verify_connectivity()
+        #     return True
+        # except (ServiceUnavailable, TransientError) as e:
+        #     log.error(e)
+        #     return False
 
     def initialize(self) -> None:
 
