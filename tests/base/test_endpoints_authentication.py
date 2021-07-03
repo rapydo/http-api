@@ -67,8 +67,6 @@ class TestApp(BaseTests):
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalauthentication")
         assert r.status_code == 204
-        content = self.get_content(r)
-        assert "email" not in content
 
         headers, token = self.do_login(client, None, None)
 
@@ -95,8 +93,6 @@ class TestApp(BaseTests):
             )
             # query token is ignored but the endpoint accepts missing tokens
             assert r.status_code == 204
-            content = self.get_content(r)
-            assert "email" not in content
 
             r = client.get(
                 f"{API_URI}/tests/optionalauthentication",
@@ -104,8 +100,6 @@ class TestApp(BaseTests):
             )
             # invalid tokens should be rejected, but query token is ignored
             assert r.status_code == 204
-            content = self.get_content(r)
-            assert "email" not in content
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
 
@@ -155,8 +149,6 @@ class TestApp(BaseTests):
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication")
         assert r.status_code == 204
-        content = self.get_content(r)
-        assert "email" not in content
 
         headers, token = self.do_login(client, None, None)
 
