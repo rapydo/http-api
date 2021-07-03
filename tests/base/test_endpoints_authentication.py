@@ -47,11 +47,9 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/authentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         if not Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER"):
             # access token parameter is not allowed by default
@@ -68,13 +66,9 @@ class TestApp(BaseTests):
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalauthentication")
-        assert r.status_code == 200
+        assert r.status_code == 204
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] is None
-        assert content["user"] is None
+        assert "email" not in content
 
         headers, token = self.do_login(client, None, None)
 
@@ -82,11 +76,9 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/optionalauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         # But not invalid tokens, i.e. if presented the tokens is always validated
         r = client.get(
@@ -102,26 +94,18 @@ class TestApp(BaseTests):
                 query_string={"access_token": token},
             )
             # query token is ignored but the endpoint accepts missing tokens
-            assert r.status_code == 200
+            assert r.status_code == 204
             content = self.get_content(r)
-            assert len(content) == 2
-            assert "token" in content
-            assert "user" in content
-            assert content["token"] is None
-            assert content["user"] is None
+            assert "email" not in content
 
             r = client.get(
                 f"{API_URI}/tests/optionalauthentication",
                 query_string={"access_token": "invalid"},
             )
             # invalid tokens should be rejected, but query token is ignored
-            assert r.status_code == 200
+            assert r.status_code == 204
             content = self.get_content(r)
-            assert len(content) == 2
-            assert "token" in content
-            assert "user" in content
-            assert content["token"] is None
-            assert content["user"] is None
+            assert "email" not in content
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
 
@@ -143,22 +127,18 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/queryauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         r = client.get(
             f"{API_URI}/tests/queryauthentication", query_string={"access_token": token}
         )
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         r = client.get(
             f"{API_URI}/tests/queryauthentication",
@@ -174,13 +154,9 @@ class TestApp(BaseTests):
 
         # Optional authentication can accept missing tokens
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication")
-        assert r.status_code == 200
+        assert r.status_code == 204
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] is None
-        assert content["user"] is None
+        assert "email" not in content
 
         headers, token = self.do_login(client, None, None)
 
@@ -188,11 +164,9 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         # But not invalid tokens, i.e. if presented the tokens is always validated
         r = client.get(
@@ -207,11 +181,9 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         r = client.get(
             f"{API_URI}/tests/optionalqueryauthentication",
@@ -239,11 +211,9 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
-        assert len(content) == 2
-        assert "token" in content
-        assert "user" in content
-        assert content["token"] == admin_token
-        assert content["user"] == BaseAuthentication.default_user
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == BaseAuthentication.default_user
 
         r = client.get(
             f"{API_URI}/tests/unknownroleauthentication", headers=admin_headers
@@ -261,11 +231,9 @@ class TestApp(BaseTests):
             )
             assert r.status_code == 200
             content = self.get_content(r)
-            assert len(content) == 2
-            assert "token" in content
-            assert "user" in content
-            assert content["token"] == user_token
-            assert content["user"] == data.get("email")
+            assert len(content) == 1
+            assert "email" in content
+            assert content["email"] == data.get("email")
 
             r = client.get(
                 f"{API_URI}/tests/unknownroleauthentication", headers=user_header
@@ -296,8 +264,9 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
-        assert isinstance(content, str)
-        assert content == user.name
+        assert len(content) == 1
+        assert "email" in content
+        assert content["email"] == user.name
 
         r = client.get(
             f"{API_URI}{INVALID}", query_string={"test": True}, headers=admin_headers
