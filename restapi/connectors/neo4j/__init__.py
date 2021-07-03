@@ -7,10 +7,15 @@ from functools import wraps
 from typing import Any, Dict, List, Optional, Union, cast
 
 import pytz
-from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
+from neo4j.exceptions import (
+    AuthError,
+    CypherSyntaxError,
+    ServiceUnavailable,
+    TransientError,
+)
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
-from neomodel import (  # install_all_labels,
+from neomodel import (
     StructuredNode,
     clear_neo4j_database,
     config,
@@ -119,6 +124,7 @@ class NeoModel(Connector):
         return (
             neobolt_ServiceUnavailable,
             neobolt_AddressError,
+            ServiceUnavailable,
             AuthError,
             socket.gaierror,
             # REALLY?? A ValueError!? :-(
@@ -146,6 +152,8 @@ class NeoModel(Connector):
         db.url = URI
         db.set_connection(URI)
 
+        db.driver.verify_connectivity()
+
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
 
@@ -156,7 +164,12 @@ class NeoModel(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
-        log.warning("neo4j.is_connected method is not implemented")
+        try:
+            self.db.driver.verify_connectivity()
+        except (ServiceUnavailable, TransientError) as e:
+            log.error(e)
+            return False
+
         return not self.disconnected
 
     def initialize(self) -> None:
@@ -178,10 +191,6 @@ class NeoModel(Connector):
                 except IndexError as e:  # pragma: no cover
                     log.warning("Can't remove label, is database empty?")
                     log.error(e)
-                    # Just a simple retry, it seems be enough (sometimes...)
-                    remove_all_labels()
-
-                # install_all_labels()
 
                 # install_all_labels can fail when models are cross-referenced between
                 # core and custom. For example:
