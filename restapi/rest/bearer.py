@@ -125,7 +125,8 @@ class HTTPTokenAuth:
                             allow_html=True,
                         )
 
-                    caller.authorized_user = user.uuid
+                    caller._unpacked_user = user
+                    caller.authorized_user = user.user_id
                     request.environ[TOKEN_VALIDATED_KEY] = True
 
                 return func(*args, **kwargs)
@@ -235,7 +236,7 @@ class HTTPTokenAuth:
                         allow_html=True,
                     )
 
-                caller.authorized_user = user.uuid
+                caller._unpacked_user = user
                 return func(*args, **kwargs)
 
             return wrapper
