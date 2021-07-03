@@ -33,7 +33,7 @@ class EndpointResource(MethodResource, Resource):
         self.__auth: Optional[BaseAuthentication] = None
         # extracted from the token, if provided and verified
         self._unpacked_user: Optional[User] = None
-        # self.authorized_user: Optional[str] = None
+        self.authorized_user: Optional[str] = None
 
     # Used to set keys with Flask-Caching memoize
     def __repr__(self) -> str:
@@ -47,9 +47,7 @@ class EndpointResource(MethodResource, Resource):
         return self.__auth
 
     def get_user(self) -> Optional[User]:
-        # if self.authorized_user:
-        #     return self.auth.get_user(user_id=self.authorized_user)
-        # return None
+        # return self.auth.get_user(user_id=self.authorized_user)
         return self._unpacked_user
 
     # Deprecated since 1.1
