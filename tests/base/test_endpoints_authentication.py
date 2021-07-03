@@ -258,7 +258,7 @@ class TestApp(BaseTests):
         content = self.get_content(r)
         assert len(content) == 1
         assert "email" in content
-        assert content["email"] == user.name
+        assert content["email"] == user.email
 
         r = client.get(
             f"{API_URI}{INVALID}", query_string={"test": True}, headers=admin_headers
