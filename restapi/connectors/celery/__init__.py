@@ -25,7 +25,8 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 class CeleryExt(Connector):
 
-    TaskType = Type[Task]
+    # TaskType = Type[Task]
+    TaskType = Task
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
