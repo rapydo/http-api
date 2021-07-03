@@ -9,6 +9,9 @@ from restapi.services.authentication import Role, User
 
 if TESTING:
 
+    class Email(Schema):
+        email = fields.Str()
+
     class TestAuthenticationNotRequired(EndpointResource):
         @decorators.endpoint(
             path="/tests/noauth",
@@ -22,7 +25,7 @@ if TESTING:
 
     class TestAuthentication(EndpointResource):
         @decorators.auth.require()
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/authentication",
             summary="Only echos received token and corresponding user",
@@ -34,7 +37,7 @@ if TESTING:
 
     class TestOptionalAuthentication(EndpointResource):
         @decorators.auth.optional()
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/optionalauthentication",
             summary="Only echos received token and corresponding user, if any",
@@ -49,7 +52,7 @@ if TESTING:
 
     class TestQueryParameterAuthentication(EndpointResource):
         @decorators.auth.require(allow_access_token_parameter=True)
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/queryauthentication",
             summary="Only echos received token and corresponding user",
@@ -61,7 +64,7 @@ if TESTING:
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
         @decorators.auth.optional(allow_access_token_parameter=True)
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/optionalqueryauthentication",
             summary="Only echos received token and corresponding user, if any",
@@ -76,7 +79,7 @@ if TESTING:
 
     class TestAuthenticationWithMultipleRoles(EndpointResource):
         @decorators.auth.require_any(Role.ADMIN, Role.USER)
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/manyrolesauthentication",
             summary="Only echos received token and corresponding user",
@@ -89,7 +92,7 @@ if TESTING:
     # Note: this endpoint requires a role that does not exist!
     class TestAuthenticationWithMissingRole(EndpointResource):
         @decorators.auth.require_any("UnknownRole")
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/unknownroleauthentication",
             summary="Only echos received token and corresponding user, if any",
@@ -117,7 +120,7 @@ if TESTING:
         @decorators.auth.require()
         @decorators.preload(callback=verify_uuid_value)
         @decorators.use_kwargs({"test": fields.Bool(required=True)}, location="query")
-        @decorators.marshal_with({"email": fields.Str()}, code=200)
+        @decorators.marshal_with(Email, code=200)
         @decorators.endpoint(
             path="/tests/preloadcallback/<uuid>",
             summary="Only authorized if uuid matches the user uuid",
