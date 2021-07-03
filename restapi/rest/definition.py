@@ -46,7 +46,9 @@ class EndpointResource(MethodResource, Resource):
         return self.__auth
 
     def get_user(self) -> Optional[User]:
-        return self.auth.get_user(user_id=self.authorized_user)
+        if self.authorized_user:
+            return self.auth.get_user(user_id=self.authorized_user)
+        return None
 
     # Deprecated since 1.1
     def verify_admin(self) -> bool:  # pragma: no cover
