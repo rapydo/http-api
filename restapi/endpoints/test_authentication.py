@@ -31,8 +31,9 @@ if TESTING:
         def get(self) -> Response:
             user = self.get_user()
             email = user.email if user else "N/A"
+            _, token = decorators.auth.get_authorization_token()
             resp = {
-                "token": self.get_token(),
+                "token": token,
                 "user": email,
             }
             return self.response(resp)
@@ -48,7 +49,8 @@ if TESTING:
         def get(self) -> Response:
 
             resp = {}
-            resp["token"] = self.get_token()
+            _, token = decorators.auth.get_authorization_token()
+            resp["token"] = token
             if user := self.get_user():
                 resp["user"] = user.email
             else:
@@ -68,8 +70,11 @@ if TESTING:
             user = self.get_user()
 
             email = user.email if user else "N/A"
+            _, token = decorators.auth.get_authorization_token(
+                allow_access_token_parameter=True
+            )
             resp = {
-                "token": self.get_token(),
+                "token": token,
                 "user": email,
             }
             return self.response(resp)
@@ -84,7 +89,10 @@ if TESTING:
         )
         def get(self) -> Response:
             resp = {}
-            resp["token"] = self.get_token()
+            _, token = decorators.auth.get_authorization_token(
+                allow_access_token_parameter=True
+            )
+            resp["token"] = token
             if user := self.get_user():
                 resp["user"] = user.email
             else:
@@ -104,9 +112,9 @@ if TESTING:
 
             user = self.get_user()
             email = user.email if user else "N/A"
-
+            _, token = decorators.auth.get_authorization_token()
             resp = {
-                "token": self.get_token(),
+                "token": token,
                 "user": email,
             }
 
@@ -125,7 +133,8 @@ if TESTING:
         # because it requires an Unknown Role to be accessed
         def get(self) -> Response:  # pragma: no cover
             resp = {}
-            resp["token"] = self.get_token()
+            _, token = decorators.auth.get_authorization_token()
+            resp["token"] = token
             if user := self.get_user():
                 resp["user"] = user.email
             else:

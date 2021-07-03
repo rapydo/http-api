@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import simplejson
 from marshmallow import EXCLUDE
@@ -37,11 +37,11 @@ class Schema(MarshmallowSchema):
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
-    def raise_get_schema(self, data, **kwargs):
+    def raise_get_schema(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
 
         if "access_token" in data:
             # valid for ImmutableMultiDict:
-            data = data.to_dict()
+            data = data.to_dict()  # type: ignore
             data.pop("access_token")
 
         if GET_SCHEMA_KEY in data:
