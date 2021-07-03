@@ -126,7 +126,7 @@ class HTTPTokenAuth:
                         )
 
                     caller._unpacked_user = user
-                    caller.authorized_user = user.user_id
+                    caller.authorized_user = user.uuid
                     request.environ[TOKEN_VALIDATED_KEY] = True
 
                 return func(*args, **kwargs)
