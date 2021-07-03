@@ -17,7 +17,7 @@ class Logout(EndpointResource):
     )
     def get(self) -> Response:
 
-        token = self.get_token()
+        _, token = decorators.auth.get_authorization_token()
         if token:
             self.auth.invalidate_token(token)
         self.log_event(self.events.logout)

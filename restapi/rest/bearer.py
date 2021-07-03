@@ -126,7 +126,6 @@ class HTTPTokenAuth:
                         )
 
                     caller._unpacked_user = user
-                    caller._unpacked_token = token
                     request.environ[TOKEN_VALIDATED_KEY] = True
 
                 return func(*args, **kwargs)
@@ -237,7 +236,6 @@ class HTTPTokenAuth:
                     )
 
                 caller._unpacked_user = user
-                caller._unpacked_token = token
                 return func(*args, **kwargs)
 
             return wrapper
