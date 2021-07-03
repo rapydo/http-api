@@ -164,13 +164,16 @@ class NeoModel(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
+
+        if self.disconnected:
+            return False
+
         try:
             self.db.driver.verify_connectivity()
+            return True
         except (ServiceUnavailable, TransientError) as e:
             log.error(e)
             return False
-
-        return not self.disconnected
 
     def initialize(self) -> None:
 
