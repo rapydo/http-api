@@ -163,7 +163,7 @@ def cache_response_filter(response: Response) -> bool:
 # will always user-dependent.
 def make_cache_function_name(name: str) -> str:
 
-    # Non authenticated endpoints do not valida the token.
+    # Non authenticated endpoints do not validate the token.
     # Function name is not expanded by any token that could be provided (are ignored)
     if not request.environ.get(TOKEN_VALIDATED_KEY):
         return name

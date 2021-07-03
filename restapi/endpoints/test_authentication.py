@@ -42,7 +42,10 @@ if TESTING:
             path="/tests/optionalauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={
+                200: "Tests executed with auth",
+                204: "Tests executed without auth",
+            },
         )
         def get(self) -> Response:
             return self.response(self.get_user())
@@ -66,7 +69,10 @@ if TESTING:
             path="/tests/optionalqueryauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={
+                200: "Tests executed with auth",
+                204: "Tests executed without auth",
+            },
         )
         def get(self) -> Response:
             return self.response(self.get_user())
