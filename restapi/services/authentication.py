@@ -493,8 +493,9 @@ class BaseAuthentication(metaclass=ABCMeta):
                 raise InvalidToken("Invalid token type")
             return self.unpacked_token(False)
 
+        user_id = payload.get("user_id")
         # Get the user from payload
-        user = self.get_user(user_id=payload.get("user_id"))
+        user = self.get_user(user_id=user_id)
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
