@@ -42,7 +42,7 @@ class ProfileActivation(EndpointResource):
             raise BadRequest("Invalid activation token")
 
         # if token does not exist (or other generic errors)
-        except BaseException:
+        except Exception:
             raise BadRequest("Invalid activation token")
 
         if user is None:  # pragma: no cover

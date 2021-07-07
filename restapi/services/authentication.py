@@ -119,7 +119,7 @@ class Role(Enum):
     USER = "normal_user"
 
 
-class InvalidToken(BaseException):
+class InvalidToken(Exception):
     pass
 
 
@@ -265,7 +265,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
             raise BadRequest("Invalid input received")
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
 
             raise ServiceUnavailable("Unable to connect to auth backend")
@@ -374,7 +374,7 @@ class BaseAuthentication(metaclass=ABCMeta):
                 try:
                     c = data["country"]["names"]["en"]
                     return c  # type: ignore
-                except BaseException:  # pragma: no cover
+                except Exception:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
             if "continent" in data:  # pragma: no cover
@@ -382,11 +382,11 @@ class BaseAuthentication(metaclass=ABCMeta):
                     c = data["continent"]["names"]["en"]
                     return c  # type: ignore
 
-                except BaseException:
+                except Exception:
                     log.error("Missing continent.names.en in {}", data)
                     return None
             return None  # pragma: no cover
-        except BaseException as e:
+        except Exception as e:
             log.error("{}. Input was {}", e, ip)
 
         return None
@@ -626,7 +626,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
         except RestApiException:  # pragma: no cover
             raise
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             raise BadRequest(f"Unable to pre-customize user properties: {e}")
 
         if "email" in userdata:
@@ -642,7 +642,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             )
         except RestApiException:  # pragma: no cover
             raise
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata
@@ -834,7 +834,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.critical("Failed to invalidate token {}", e)
 
         return True

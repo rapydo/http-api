@@ -30,7 +30,7 @@ def test_mongo(app: Flask) -> None:
         obj = connector.get_instance(host="invalidhostname", port=123)
         try:
             obj.Token.objects.first()
-        except BaseException:
+        except Exception:
             raise ServiceUnavailable("")
         pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:

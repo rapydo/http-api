@@ -39,7 +39,7 @@ def handle_marshmallow_errors(error):
             if request.form.get(GET_SCHEMA_KEY, False):
                 return ResponseMaker.respond_with_schema(error.data.get("schema"))
 
-    except BaseException as e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         log.error(e)
 
     errors = {}
@@ -370,7 +370,7 @@ class ResponseMaker:
         try:
             fields = ResponseMaker.convert_model_to_schema(schema)
             return (jsonify(fields), 200, {})
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error(e)
             content = {"Server internal error": "Failed to retrieve input schema"}
             return (jsonify(content), 500, {})

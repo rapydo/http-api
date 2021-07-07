@@ -36,7 +36,8 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
 
-ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
+# ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
+ExceptionsList = Optional[Tuple[Type[Exception]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -112,8 +113,8 @@ class Connector(metaclass=abc.ABCMeta):
 
     def __exit__(
         self,
-        exctype: Optional[Type[BaseException]],
-        excinst: Optional[BaseException],
+        exctype: Optional[Type[Exception]],
+        excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
         if not self.disconnected:
@@ -429,7 +430,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         exceptions = obj.get_connection_exception()
         if exceptions is None:
-            exceptions = (BaseException,)
+            exceptions = (Exception,)
 
         try:
             obj = obj.connect(**kwargs)

@@ -43,7 +43,7 @@ def verify_token_is_not_valid(
     try:
         auth.verify_token(token, token_type=ttype, raiseErrors=True)
         pytest.fail("No exception raised")  # pragma: no cover
-    except BaseException:
+    except Exception:
         pass
 
 
@@ -177,7 +177,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 400
             assert str(e) == "Missing new password"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -186,7 +186,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 400
             assert str(e) == "Missing password confirmation"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -196,7 +196,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 409
             assert str(e) == "Your password doesn't match the confirmation"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -205,7 +205,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 409
             assert str(e) == "The new password cannot match the previous password"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -221,7 +221,7 @@ class TestApp(BaseTests):
                 str(e)
                 == f"Password is too short, use at least {min_pwd_len} characters"
             )
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         pwd1 = faker.password(strong=True)
@@ -237,7 +237,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Invalid password"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -246,7 +246,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Invalid password"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         assert auth.verify_password(pwd1, hash_1)
@@ -255,7 +255,7 @@ class TestApp(BaseTests):
             pytest.fail("Hashed a None password!")  # pragma: no cover
         except TypeError:
             pass
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         assert not auth.verify_password(pwd1, None)  # type: ignore
@@ -276,7 +276,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Verification code is missing"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         user = auth.get_user(username=auth.default_user)
@@ -300,7 +300,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Verification code is not valid"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -309,7 +309,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Verification code is not valid"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         # Extend validity window
@@ -326,7 +326,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Verification code is not valid"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -335,7 +335,7 @@ class TestApp(BaseTests):
         except RestApiException as e:
             assert e.status_code == 401
             assert str(e) == "Verification code is not valid"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
     def test_ip_management(self) -> None:
@@ -465,7 +465,7 @@ class TestApp(BaseTests):
             pytest.fail("No exception raised!")  # pragma: no cover
         except InvalidToken as e:
             assert str(e) == "Missing token"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         # Test token validiy

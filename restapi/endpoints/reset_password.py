@@ -125,7 +125,7 @@ if Connector.check_availability("smtp"):
                 log.info(e)
                 raise BadRequest("Invalid reset token")
             # if token does not exist (or other generic errors)
-            except BaseException as e:
+            except Exception as e:
                 log.info(e)
                 raise BadRequest("Invalid reset token")
 

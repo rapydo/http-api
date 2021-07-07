@@ -99,7 +99,7 @@ if Connector.check_availability("smtp"):
                 if Env.get_bool("REGISTRATION_NOTIFICATIONS"):
                     send_registration_notification(user)
 
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 self.auth.delete_user(user)
                 raise ServiceUnavailable(f"Errors during account registration: {e}")
 

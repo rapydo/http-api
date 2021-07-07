@@ -23,8 +23,8 @@ class SMTP:
 
     def __exit__(
         self,
-        _type: Optional[Type[BaseException]],
-        value: Optional[BaseException],
+        _type: Optional[Type[Exception]],
+        value: Optional[Exception],
         tb: Optional[TracebackType],
     ) -> bool:  # pragma: no cover
         # return False if the exception is not handled:
@@ -60,7 +60,7 @@ class SMTP:
             raise SMTPException("SMTP Error")
 
         if from_address == "invalid2":
-            raise BaseException("Generic Error")
+            raise Exception("Generic Error")
 
         json_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.json")
         body_fpath = LOGS_FOLDER.joinpath("mock.mail.lastsent.body")

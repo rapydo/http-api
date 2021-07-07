@@ -153,7 +153,7 @@ class List(Field, webargs_fields.List):
         if isinstance(value, str):
             try:
                 value = json.loads(value)
-            except BaseException:
+            except Exception:
                 pass
 
         value = super()._deserialize(value, attr, data, **kwargs)
@@ -179,7 +179,7 @@ class Nested(Field, webargs_fields.Nested):
         if isinstance(value, str):
             try:
                 value = json.loads(value)
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.warning(e)
         return super()._deserialize(value, attr, data, **kwargs)
 

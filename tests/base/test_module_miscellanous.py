@@ -298,7 +298,7 @@ class TestApp(BaseTests):
             # This operation will be interrupted because slower than timeout
             time.sleep(2)
             pytest.fail("Operation not interrupted")  # pragma: no cover
-        except BaseException as e:
+        except Exception as e:
             assert str(e) == "Operation timeout: interrupted"
 
         start_timeout(1)
@@ -306,7 +306,7 @@ class TestApp(BaseTests):
             stop_timeout()
             # This operation will not be interrupted
             time.sleep(2)
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Operation interrupted")
 
     # #######################################

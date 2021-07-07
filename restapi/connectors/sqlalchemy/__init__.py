@@ -168,7 +168,7 @@ def catch_db_exceptions(func):
 
             raise
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
@@ -513,7 +513,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
@@ -554,7 +554,7 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.add(token_entry)
                 self.db.session.commit()
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.error("DB error ({}), rolling back", e)
                 self.db.session.rollback()
 
@@ -608,7 +608,7 @@ class Authentication(BaseAuthentication):
                 self.db.session.commit()
                 self.log_event(Events.delete, target=token_entry)
                 return True
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.error("Could not invalidate token ({}), rolling back", e)
                 self.db.session.rollback()
                 return False
@@ -643,7 +643,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(login)
             self.db.session.commit()
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
             raise

@@ -118,7 +118,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -128,7 +128,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -140,7 +140,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
         try:
@@ -152,7 +152,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )  # pragma: no cover
         except AttributeError as e:
             assert str(e) == "Unsupported celery-beat scheduler: None"
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Unexpected exception raised")
 
     else:

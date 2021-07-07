@@ -24,7 +24,7 @@ if TESTING:
             size_int = 0
             try:
                 size_int = int(size)
-            except BaseException as e:
+            except Exception as e:
                 log.error("Invalid int value {} -> {}", size, e)
                 raise BadRequest("Invalid numeric value {size}")
 

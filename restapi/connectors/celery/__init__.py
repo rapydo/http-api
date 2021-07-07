@@ -49,7 +49,7 @@ class CeleryExt(Connector):
                         return func(self, *args, **kwargs)
                 except Ignore:
                     raise
-                except BaseException:
+                except Exception:
 
                     if TESTING:
                         self.request.id = "fixed-id"

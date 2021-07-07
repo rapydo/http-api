@@ -79,7 +79,7 @@ def catch_db_exceptions(func):
             # but the cause is still unknown...
             raise BadRequest(str(e))
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 

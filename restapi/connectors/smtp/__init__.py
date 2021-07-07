@@ -237,7 +237,7 @@ class Mail(Connector):
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
             return False
-        except BaseException as e:
+        except Exception as e:
             log.error(str(e))
             return False
 

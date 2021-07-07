@@ -177,7 +177,7 @@ def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, An
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
 
             return original_parameters_string
 

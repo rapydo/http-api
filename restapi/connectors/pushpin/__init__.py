@@ -7,7 +7,7 @@ from restapi.connectors import Connector, ExceptionsList
 from restapi.utilities.logs import log
 
 
-class ServiceUnavailable(BaseException):
+class ServiceUnavailable(Exception):
     pass
 
 
@@ -58,7 +58,7 @@ class PushpinExt(Connector):
             self.pubctrl.publish_http_stream(channel, message, blocking=True)
             log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:
+        except Exception as e:
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
@@ -73,7 +73,7 @@ class PushpinExt(Connector):
             self.pubctrl.publish(channel, item, blocking=True)
             log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False

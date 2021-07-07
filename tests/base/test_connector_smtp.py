@@ -95,7 +95,7 @@ def test_smtp(app: Flask, faker: Faker) -> None:
 
     # This is a special from_address, used to raise SMTPException
     assert not obj.send("body", "subject", "to_addr", "invalid1")
-    # This is a special from_address, used to raise BaseException
+    # This is a special from_address, used to raise Exception
     assert not obj.send("body", "subject", "to_addr", "invalid2")
     # This is NOT a special from_address
     assert obj.send("body", "subject", "to_addr", "invalid3")
