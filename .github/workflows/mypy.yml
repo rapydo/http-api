@@ -40,6 +40,7 @@ jobs:
         run: |
 
           echo "[mypy]" > mypy.ini
+          echo "mypy_path = ./stubs" >> mypy.ini
 
           for lib in \
             flask_apispec \
@@ -68,7 +69,6 @@ jobs:
             
           done
 
-          export MYPYPATH='./stubs'
           # --disallow-any-unimported
           mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
           cat report/index.txt
