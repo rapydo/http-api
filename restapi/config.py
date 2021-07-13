@@ -82,7 +82,7 @@ GZIP_LEVEL = max(1, min(9, Env.get_int("GZIP_COMPRESSION_LEVEL")))
 
 
 @lru_cache
-def get_project_configuration(key, default=None):
+def get_project_configuration(key: str, default: str) -> str:
     return glom(mem.configuration, key, default=default)
 
 

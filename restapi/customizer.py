@@ -1,13 +1,12 @@
 import abc
-from typing import Any, Dict, Tuple
+from typing import Any, Tuple
 
 from flask import Flask
 
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import User
+from restapi.types import FlaskRequest, Props
 
-Props = Dict[str, Any]
-FlaskRequest = Any
 FlaskApp = Flask
 
 

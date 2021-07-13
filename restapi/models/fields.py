@@ -12,16 +12,16 @@ from restapi.utilities.logs import log
 class Field(webargs_fields.Field):
     def __init__(
         self,
-        *args,
-        label=None,
-        description=None,
-        password=False,
-        autocomplete_endpoint=None,
-        autocomplete_show_id=False,
-        autocomplete_id_bind=None,
-        autocomplete_label_bind=None,
-        **kwargs,
-    ):
+        *args: Any,
+        label: Optional[str] = None,
+        description: Optional[str] = None,
+        password: bool = False,
+        autocomplete_endpoint: Optional[str] = None,
+        autocomplete_show_id: bool = False,
+        autocomplete_id_bind: Optional[str] = None,
+        autocomplete_label_bind: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
 
         kwargs.setdefault("metadata", {})
 
@@ -148,7 +148,9 @@ Int = Integer
 #   2) Override some types with custom implementation to extend functionalities
 ####################################################################################
 class List(Field, webargs_fields.List):
-    def __init__(self, *args, unique=False, min_items=0, **kwargs):
+    def __init__(
+        self, *args: Any, unique: bool = False, min_items: int = 0, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.unique = unique
         self.min_items = min_items
@@ -208,7 +210,7 @@ class Nested(Field, webargs_fields.Nested):
 # DelimitedList is child of List as defined in:
 # https://github.com/marshmallow-code/webargs/blob/dev/src/webargs/fields.py
 class DelimitedList(List, webargs_fields.DelimitedList):
-    def __init__(self, *args, unique=False, **kwargs):
+    def __init__(self, *args: Any, unique: bool = False, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Note: Can't use self.unique otherwise the elements will be silently cleaned
         # by the custom List deserializer
@@ -245,7 +247,7 @@ class Neo4jChoice(Field):
     """Field that serializes from a neo4j choice"""
 
     # choice_model is the same used in neo4j model as choices=
-    def __init__(self, choices_model, **kwargs):
+    def __init__(self, choices_model: Any, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         if isinstance(choices_model, dict):
             self.choices_dict = choices_model

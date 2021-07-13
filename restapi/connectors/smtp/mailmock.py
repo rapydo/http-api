@@ -14,7 +14,7 @@ class SMTP:
     This is a very rough replacement of smtplib.SMTP class
     """
 
-    def __init__(self, host):
+    def __init__(self, host: str) -> None:
         log.info("Mail mock initialized with host = {}", host)
         self.disconnected = False
 
@@ -34,15 +34,15 @@ class SMTP:
         return _type is None
 
     @staticmethod
-    def set_debuglevel(intval):
+    def set_debuglevel(intval: int) -> None:
         log.info("Mail mock set debug level = {}", intval)
 
     @staticmethod
-    def connect(host, port):
+    def connect(host: str, port: int) -> None:
         log.info("Mail mock connected to {}:{}", host, port)
 
     @staticmethod
-    def login(user, pwd):
+    def login(user: str, pwd: str) -> None:
         log.info("Mail mock login ok")
 
     def quit(self) -> None:
@@ -54,7 +54,7 @@ class SMTP:
         log.info("Mail mock sent ehlo message")
 
     @staticmethod
-    def sendmail(from_address, dest_addresses, msg):
+    def sendmail(from_address: str, dest_addresses: str, msg: str) -> None:
 
         if from_address == "invalid1":
             raise SMTPException("SMTP Error")

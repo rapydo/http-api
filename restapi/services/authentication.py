@@ -14,6 +14,7 @@ import pytz
 import segno
 from cryptography.fernet import Fernet
 from flask import request
+from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
@@ -38,6 +39,7 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
+from restapi.types import Props
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
@@ -237,9 +239,10 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def load_roles() -> None:
-        BaseAuthentication.roles_data = get_project_configuration(
-            "variables.roles"
-        ).copy()
+
+        BaseAuthentication.roles_data = glom(
+            mem.configuration, "variables.roles", default={}
+        )
         if not BaseAuthentication.roles_data:  # pragma: no cover
             print_and_exit("No roles configured")
 
@@ -316,10 +319,11 @@ class BaseAuthentication(metaclass=ABCMeta):
             return False
 
     @staticmethod
-    def get_password_hash(password):
+    def get_password_hash(password: Optional[str]) -> str:
         if not password:
             raise Unauthorized("Invalid password")
-        return pwd_context.hash(password)
+        # CryptContext is no typed.. but this is a string!
+        return cast(str, pwd_context.hash(password))
 
     @staticmethod
     def get_remote_ip(raise_warnings: bool = True) -> str:
@@ -635,7 +639,9 @@ class BaseAuthentication(metaclass=ABCMeta):
         return userdata, extradata
 
     @staticmethod
-    def custom_user_properties_post(user, userdata, extra_userdata, db):
+    def custom_user_properties_post(
+        user: User, userdata: Props, extra_userdata: Props, db: Any
+    ) -> Props:
         try:
             mem.customizer.custom_user_properties_post(
                 user, userdata, extra_userdata, db
@@ -970,7 +976,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             url=url_path,
         )
 
-    def init_auth_db(self, options):
+    def init_auth_db(self, options: Dict[str, bool]) -> None:
 
         self.init_roles()
 
@@ -1009,7 +1015,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             if r not in self.roles:
                 log.warning("Unknown role found: {}", r)
 
-    def init_groups(self, force):
+    def init_groups(self, force: bool) -> Group:
 
         create = False
         update = False
@@ -1049,7 +1055,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         return default_group
 
-    def init_users(self, default_group, roles, force):
+    def init_users(self, default_group: Group, roles: List[str], force: bool) -> User:
 
         create = False
         update = False

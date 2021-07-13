@@ -326,7 +326,7 @@ class Connector(metaclass=abc.ABCMeta):
             connector.initialize()
 
             if options is None:
-                options = {}
+                options: Dict[str, bool] = {}
 
             with Connector.app.app_context():
                 authentication_instance.init_auth_db(options)

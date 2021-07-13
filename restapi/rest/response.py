@@ -4,12 +4,13 @@ import sys
 import time
 from datetime import date, datetime
 from io import BytesIO
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 from urllib import parse as urllib_parse
 
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
 from flask.json import JSONEncoder
+from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
@@ -106,7 +107,7 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
 
     response.headers["_RV"] = str(version)
 
-    PROJECT_VERSION = get_project_configuration("project.version", default=None)
+    PROJECT_VERSION = get_project_configuration("project.version", default="0")
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
 
@@ -181,7 +182,7 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
-    def is_binary(content_type: str) -> bool:
+    def is_binary(content_type: Optional[str]) -> bool:
         if not content_type:
             return False
 
@@ -222,7 +223,12 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
-    def gzip_response(content, code, content_encoding, content_type):
+    def gzip_response(
+        content: bytes,
+        code: int,
+        content_encoding: Optional[str],
+        content_type: Optional[str],
+    ) -> Tuple[Optional[bytes], Dict[str, str]]:
         if code < 200 or code >= 300 or content_encoding is not None:
             return None, {}
 
@@ -254,7 +260,7 @@ class ResponseMaker:
         headers = {
             "Content-Encoding": "gzip",
             "Vary": "Accept-Encoding",
-            "Content-Length": len(gzipped_content),
+            "Content-Length": str(len(gzipped_content)),
         }
 
         end_time = time.time()
@@ -388,7 +394,9 @@ class ResponseMaker:
             return (jsonify(content), 500, {})
 
     @staticmethod
-    def get_schema_type(field, schema, default=None):
+    def get_schema_type(
+        field: str, schema: marshmallow_fields.Field, default: Optional[Any] = None
+    ) -> str:
 
         if schema.metadata.get("password", False):
             return "password"
@@ -426,7 +434,7 @@ class ResponseMaker:
 
         # Reached with lists of custom types
         if default:
-            return default
+            return str(default)
 
         log.error("Unknown schema type: {}", type(schema))
 
