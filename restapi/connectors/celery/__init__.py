@@ -2,11 +2,10 @@ import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 import certifi
 from celery import Celery
-from celery.app.task import Task
 from celery.exceptions import Ignore
 
 from restapi.config import CUSTOM_PACKAGE, SSL_CERTIFICATE, TESTING
@@ -128,7 +127,7 @@ class CeleryExt(Connector):
 
         return f"{protocol}://{creds}{host}:{port}"
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "CeleryExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -150,7 +149,7 @@ class CeleryExt(Connector):
                 #   ssl_certfile (optional): path to the client certificate
                 #   ssl_keyfile (optional): path to the client key
 
-                server_hostname = RabbitExt.get_hostname(service_vars.get("host"))
+                server_hostname = RabbitExt.get_hostname(service_vars.get("host", ""))
                 ca_certs = (
                     SSL_CERTIFICATE
                     if server_hostname == "localhost"

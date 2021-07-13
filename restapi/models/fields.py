@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Any, Mapping, Optional
 
 from marshmallow import ValidationError
 from webargs import fields as webargs_fields
@@ -75,7 +76,13 @@ class Number(Field, webargs_fields.Number):
 
 
 class String(Field, webargs_fields.String):
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
         value = super()._deserialize(value, attr, data, **kwargs)
         if value:
             value = value.strip()
@@ -146,7 +153,13 @@ class List(Field, webargs_fields.List):
         self.unique = unique
         self.min_items = min_items
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
 
         # this is the case when requests (or pytest) send some json-dumped lists
         # for example for a multi-value select
@@ -173,7 +186,15 @@ class List(Field, webargs_fields.List):
 
 
 class Nested(Field, webargs_fields.Nested):
-    def _deserialize(self, value, attr, data, **kwargs):
+    # Probably due to the double parents: Nested(Field, webargs_fields.Nested)
+    # Signature of "_deserialize" incompatible with supertype "Nested"
+    def _deserialize(  # type: ignore
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
 
         # this is the case when requests (or pytest) send some json-dumped object
         if isinstance(value, str):
@@ -194,7 +215,13 @@ class DelimitedList(List, webargs_fields.DelimitedList):
         # self.unique = unique
         self.no_duplicates = unique
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
 
         if not value:
             return value
@@ -228,27 +255,42 @@ class Neo4jChoice(Field):
             for k, v in choices_model:
                 self.choices_dict.setdefault(k, v)
 
-    def _serialize(self, value, attr, obj, **kwargs):
+    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
         return {
             "key": value,
             # the value correspondance from choices_dict or value as default
             "description": self.choices_dict.get(value, value),
         }
 
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
         return value
 
 
 class Neo4jRelationshipToMany(Nested):
     # nested_obj: StructuredRel
-    def _serialize(self, nested_obj, attr, obj, **kwargs):
+    # Probably due to the double parents: Nested(Field, webargs_fields.Nested)
+    # Signature of "_serialize" incompatible with supertype "Field"
+    def _serialize(  # type: ignore
+        self, nested_obj: Any, attr: str, obj: Any, **kwargs: Any
+    ) -> Any:
         self.many = True
         return super()._serialize(nested_obj.all(), attr, obj, **kwargs)
 
 
 class Neo4jRelationshipToSingle(Nested):
     # nested_obj: StructuredRel
-    def _serialize(self, nested_obj, attr, obj, **kwargs):
+    # Probably due to the double parents: Nested(Field, webargs_fields.Nested)
+    # Signature of "_serialize" incompatible with supertype "Field"
+
+    def _serialize(  # type: ignore
+        self, nested_obj: Any, attr: str, obj: Any, **kwargs: Any
+    ) -> Any:
         self.many = False
         self.schema.many = False
         return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
@@ -256,12 +298,18 @@ class Neo4jRelationshipToSingle(Nested):
 
 class Neo4jRelationshipToCount(Int):
     # value: StructuredRel
-    def _serialize(self, value, attr, obj, **kwargs):
+    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
         return self._format_num(len(value))
 
 
 class TOTP(String):
-    def _deserialize(self, value, attr, data, **kwargs):
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs: Any,
+    ) -> Any:
 
         value = super()._deserialize(value, attr, data, **kwargs)
 

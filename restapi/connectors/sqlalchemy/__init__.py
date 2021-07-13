@@ -203,7 +203,7 @@ class SQLAlchemy(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (OperationalError,)
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "SQLAlchemy":
 
         variables = self.variables.copy()
         variables.update(kwargs)

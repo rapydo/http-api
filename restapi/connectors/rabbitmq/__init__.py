@@ -2,7 +2,7 @@ import json
 import socket
 import ssl
 import urllib.parse
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import certifi
 import pika
@@ -44,7 +44,7 @@ class RabbitExt(Connector):
             socket.gaierror,
         )  # type: ignore
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "RabbitExt":
 
         variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
@@ -145,7 +145,7 @@ class RabbitExt(Connector):
             return False
 
     @classmethod
-    def get_hostname(cls, host):
+    def get_hostname(cls, host: str) -> str:
         """
         Method used from both RabbitMQ and Celery to guess the host server name
         that matches the SSL certificate.

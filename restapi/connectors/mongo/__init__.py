@@ -112,7 +112,7 @@ class MongoExt(Connector):
 
         return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "MongoExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)

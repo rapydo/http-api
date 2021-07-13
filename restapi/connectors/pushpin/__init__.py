@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
@@ -16,7 +16,7 @@ class PushpinExt(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (ServiceUnavailable,)
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "PushpinExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)

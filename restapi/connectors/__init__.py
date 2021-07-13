@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType, TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -36,7 +36,6 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
 
-# ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
 ExceptionsList = Optional[Tuple[Type[Exception]]]
 
 
@@ -128,8 +127,8 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def connect(self, **kwargs) -> None:  # pragma: no cover
-        return
+    def connect(self: T, **kwargs: Any) -> Generic[T]:  # pragma: no cover
+        return self
 
     @abc.abstractmethod
     def disconnect(self) -> None:  # pragma: no cover

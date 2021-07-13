@@ -7,12 +7,7 @@ from functools import wraps
 from typing import Any, Dict, List, Optional, Union, cast
 
 import pytz
-from neo4j.exceptions import (
-    AuthError,
-    CypherSyntaxError,
-    ServiceUnavailable,
-    TransientError,
-)
+from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neomodel import (
@@ -133,7 +128,7 @@ class NeoModel(Connector):
             ValueError,
         )  # type: ignore
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "NeoModel":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -169,6 +164,7 @@ class NeoModel(Connector):
         # if self.disconnected:
         #     return False
 
+        # from neo4j.exceptions import TransientError
         # try:
         #     self.db.driver.verify_connectivity()
         #     return True

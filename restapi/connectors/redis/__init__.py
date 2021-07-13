@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -23,7 +23,7 @@ class RedisExt(Connector):
     def get_connection_exception() -> ExceptionsList:
         return None
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: Any) -> "RedisExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
