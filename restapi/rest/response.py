@@ -4,7 +4,7 @@ import sys
 import time
 from datetime import date, datetime
 from io import BytesIO
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Dict, List, Tuple, cast
 from urllib import parse as urllib_parse
 
 from flask import Response as FlaskResponse
@@ -20,8 +20,8 @@ from restapi.config import (
     get_project_configuration,
 )
 from restapi.models import GET_SCHEMA_KEY, Schema, fields, validate
-from restapi.rest.definition import Response
 from restapi.services.authentication import BaseAuthentication
+from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
@@ -208,7 +208,7 @@ class ResponseMaker:
 
     @staticmethod
     def get_html(
-        content: Union[str, List[str]], code: int, headers: Dict[str, str]
+        content: ResponseContent, code: int, headers: Dict[str, str]
     ) -> Tuple[str, Dict[str, str]]:
 
         if isinstance(content, list):  # pragma: no cover
@@ -321,9 +321,9 @@ class ResponseMaker:
             elif not isinstance(field_def.missing, _Missing):  # pragma: no cover
                 f["default"] = field_def.missing
 
-            validators = []
+            validators: List[validate.Validator] = []
             if field_def.validate:
-                validators.append(field_def.validate)
+                validators.append(field_def.validate)  # type: ignore
 
             # activated in case of fields.List(fields.SomeThing) with an inner validator
             if isinstance(field_def, fields.List) and field_def.inner.validate:
@@ -369,7 +369,9 @@ class ResponseMaker:
                     )
 
             if f["type"] == "nested":
-                f["schema"] = ResponseMaker.convert_model_to_schema(field_def.schema)
+                f["schema"] = ResponseMaker.convert_model_to_schema(
+                    field_def.schema  # type: ignore
+                )
 
             schema_fields.append(f)
         return schema_fields

@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from flask import Response as FlaskResponse
 from flask import request
@@ -10,14 +10,13 @@ from restapi.connectors import Connector
 from restapi.rest.response import ResponseMaker
 from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.services.cache import Cache
+from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import Events, log, save_event_log
 
 CURRENTPAGE_KEY = "currentpage"
 DEFAULT_CURRENTPAGE = 1
 PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
-
-Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
 
 
 class EndpointResource(MethodResource, Resource):
@@ -59,7 +58,7 @@ class EndpointResource(MethodResource, Resource):
 
     @staticmethod
     def response(
-        content: Any = None,
+        content: ResponseContent = None,
         code: Optional[int] = None,
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
