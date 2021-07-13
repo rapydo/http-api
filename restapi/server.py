@@ -10,6 +10,7 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
+from types import FrameType
 from typing import Dict, Optional
 
 import sentry_sdk
@@ -63,7 +64,8 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(signal, frame):  # pragma: no cover
+def teardown_handler(signal: int, frame: FrameType) -> None:  # pragma: no cover
+
     with lock:
 
         Connector.disconnect_all()

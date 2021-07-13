@@ -227,7 +227,7 @@ class NeoModel(Connector):
             instance.__dict__[field] = value
 
     @catch_db_exceptions
-    def cypher(self, query, **parameters):
+    def cypher(self, query: str, **parameters: str) -> Any:
         """Execute raw cypher queries"""
 
         try:

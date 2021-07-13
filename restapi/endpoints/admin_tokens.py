@@ -6,7 +6,7 @@ from restapi import decorators
 from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Role, Token
 from restapi.utilities.logs import log
 
 
@@ -74,8 +74,8 @@ class AdminTokens(EndpointResource):
 
         if sort_by:
 
-            def sorter(t):
-                return glom(t, sort_by, default="")
+            def sorter(t: Token) -> str:
+                return glom(t, sort_by, default="")  # type: ignore
 
             tokens = sorted(
                 tokens,

@@ -41,7 +41,7 @@ class PushpinExt(Connector):
         return not self.disconnected
 
     @staticmethod
-    def callback(result, message):
+    def callback(result: str, message: str) -> None:
         if result:
             log.debug("Message successfully published on pushpin")
         else:  # pragma: no cover

@@ -47,20 +47,20 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
         obj.delete_queue(queue)
 
     assert not obj.queue_exists(queue)
-    assert not obj.send("test", routing_key=queue)
+    assert not obj.send(b"test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
     obj.create_queue(queue)
     assert obj.queue_exists(queue)
     obj.create_queue(queue)
 
     # Now send works because queue exists
-    assert obj.send("test", routing_key=queue)
+    assert obj.send(b"test", routing_key=queue)
     assert obj.send_json("test", routing_key=queue)
 
     assert not obj.exchange_exists(exchange)
     assert obj.get_bindings(exchange) is None
     # This send does not work because exchange does not exist
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.create_exchange(exchange)
@@ -71,7 +71,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     bindings = obj.get_bindings(exchange)
     assert isinstance(bindings, list)
     assert len(bindings) == 0
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
@@ -82,7 +82,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     assert bindings[0]["routing_key"] == queue
     assert bindings[0]["queue"] == queue
 
-    assert obj.send("test", routing_key=queue, exchange=exchange)
+    assert obj.send(b"test", routing_key=queue, exchange=exchange)
     assert obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_unbind(queue, exchange, queue)
@@ -90,7 +90,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     assert isinstance(bindings, list)
     assert len(bindings) == 0
 
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
@@ -105,18 +105,18 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
         obj.channel.close()
 
     # Channel is automatically opened, if found closed
-    assert obj.send("test", queue)
+    assert obj.send(b"test", queue)
 
     obj.delete_exchange(exchange)
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
-    assert obj.send("test", routing_key=queue)
+    assert obj.send(b"test", routing_key=queue)
     assert obj.send_json("test", routing_key=queue)
 
     obj.delete_queue(queue)
 
-    assert not obj.send("test", routing_key=queue)
+    assert not obj.send(b"test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
 
     obj.disconnect()

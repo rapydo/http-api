@@ -1,4 +1,5 @@
 import json
+from typing import Dict, Optional, Tuple
 
 import schemathesis
 import werkzeug
@@ -11,7 +12,9 @@ from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
 
-def get_auth_token(client, data):
+def get_auth_token(
+    client: werkzeug.Client, data: Dict[str, Optional[str]]
+) -> Tuple[str, Dict[str, str]]:
 
     data["totp_code"] = BaseTests.generate_totp(data.get("username"))
     r = client.post("/auth/login", data=data)
@@ -79,7 +82,7 @@ else:
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
         max_examples=50,
     )
-    def test_no_auth(case):
+    def test_no_auth(case: schemathesis.Case) -> None:
 
         response = case.call_wsgi()
 
@@ -100,7 +103,7 @@ else:
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
         )
-        def test_with_auth(case):
+        def test_with_auth(case: schemathesis.Case) -> None:
 
             if case.path == "/auth/logout":
                 # log.warning("Skipping logout")
@@ -126,7 +129,7 @@ else:
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
         )
-        def test_logout(case):
+        def test_logout(case: schemathesis.Case) -> None:
 
             if case.headers is None:  # pragma: no cover
                 case.headers = auth_header

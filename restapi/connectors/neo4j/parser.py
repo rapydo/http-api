@@ -257,7 +257,7 @@ MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
         self.cypher_exec(cypher)
 
     @staticmethod
-    def verify_indexes(label, key):
+    def verify_indexes(label: str, key: str) -> None:
         graph = neo4j.get_instance()
         indexes = graph.cypher("CALL db.indexes()")
         for index in indexes:

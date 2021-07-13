@@ -6,7 +6,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -76,7 +76,7 @@ class EndpointsLoader:
                 submodules_path=submodules_path,
             )
         except AttributeError as e:  # pragma: no cover
-            print_and_exit(e)
+            print_and_exit(str(e))
 
         return configuration
 
@@ -100,7 +100,7 @@ class EndpointsLoader:
         self.detect_endpoints_shadowing()
 
     @staticmethod
-    def skip_endpoint(depends_on):
+    def skip_endpoint(depends_on: List[str]) -> Tuple[bool, Optional[str]]:
         for var in depends_on:
             pieces = var.strip().split(" ")
             pieces_num = len(pieces)

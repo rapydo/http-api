@@ -59,7 +59,7 @@ def read_configuration(
         print_and_exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
     if not os.path.exists(extend_path):  # pragma: no cover
-        print_and_exit("From project not found: {}", extend_path)
+        print_and_exit("From project not found: {}", str(extend_path))
 
     extend_file = Path(f"extended_{PROJECT_CONF_FILENAME}")
     extended_configuration = load_yaml_file(extend_path.joinpath(extend_file))

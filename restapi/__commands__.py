@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from typing import Dict, List, Optional, Tuple
 
 import click
 from flask.cli import FlaskGroup
@@ -22,7 +23,7 @@ def cli() -> None:  # pragma: no cover
 
 
 # Too dangerous to launch it during tests... skipping tests
-def main(args):  # pragma: no cover
+def main(args: List[str]) -> None:  # pragma: no cover
 
     current_app = os.getenv("FLASK_APP")
     if current_app is None or current_app.strip() == "":
@@ -52,7 +53,7 @@ def launch() -> None:  # pragma: no cover
         "--host",
         BIND_INTERFACE,
         "--port",
-        os.getenv("FLASK_PORT"),
+        os.getenv("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
         "--eager-loading",
@@ -70,7 +71,7 @@ def launch() -> None:  # pragma: no cover
 
 @cli.command()
 @click.option("--service", "-s")
-def verify(service):
+def verify(service: str) -> None:
     """Verify if a service is connecte"""
 
     if not Connector.check_availability(service):
@@ -101,7 +102,7 @@ def verify(service):
     default=False,
     help="Force the creation of default group",
 )
-def init(wait, force_user, force_group):
+def init(wait: bool, force_user: bool, force_group: bool) -> None:
     """Initialize data for connected services"""
     if wait:
         mywait()
@@ -125,15 +126,19 @@ def wait() -> None:
     mywait()
 
 
-def get_service_address(variables, host_var, port_var, service):
+def get_service_address(
+    variables: Dict[str, str], host_var: str, port_var: str, service: str
+) -> Tuple[str, int]:
 
     host = variables.get(host_var)
     if host is None:
-        print_and_exit("Cannot find any variable matching {} for {}", host_var, service)
+        log.critical("Cannot find any variable matching {} for {}", host_var, service)
+        sys.exit(1)
 
     port = variables.get(port_var)
     if port is None:
-        print_and_exit("Cannot find any variable matching {} for {}", port_var, service)
+        log.critical("Cannot find any variable matching {} for {}", port_var, service)
+        sys.exit(1)
 
     log.info("Connecting to {} ({}:{})...", service, host, port)
 
@@ -230,7 +235,9 @@ def forced_clean() -> None:  # pragma: no cover
 @click.option(
     "--destroy/--no-destroy", default=False, help="Destroy database after tests"
 )
-def tests(wait, core, file, folder, destroy):  # pragma: no cover
+def tests(  # pragma: no cover
+    wait: bool, core: bool, file: Optional[str], folder: Optional[str], destroy: bool
+) -> None:
     """Compute tests and coverage"""
 
     if wait:
