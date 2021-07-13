@@ -246,14 +246,16 @@ class BaseAuthentication(metaclass=ABCMeta):
         if not BaseAuthentication.roles_data:  # pragma: no cover
             print_and_exit("No roles configured")
 
-        BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
+        BaseAuthentication.default_role = BaseAuthentication.roles_data.pop(
+            "default", ""
+        )
 
         BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
 
-        if not BaseAuthentication.default_role:  # pragma: no cover
+        if not BaseAuthentication.default_role:
             print_and_exit(
                 "Default role {} not available!", BaseAuthentication.default_role
             )
