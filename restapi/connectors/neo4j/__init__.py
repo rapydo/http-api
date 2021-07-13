@@ -221,7 +221,7 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, properties):
+    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
             instance.__dict__[field] = value
@@ -240,14 +240,14 @@ class NeoModel(Connector):
         return results
 
     @staticmethod
-    def sanitize_input(term):
+    def sanitize_input(term: str) -> str:
         """
         Strip and clean up terms from special characters. To be used in fuzzy search
         """
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
     @staticmethod
-    def fuzzy_tokenize(term):
+    def fuzzy_tokenize(term: str) -> str:
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
 

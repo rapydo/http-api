@@ -47,7 +47,7 @@ class PushpinExt(Connector):
         else:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
 
-    def publish_on_stream(self, channel, message, sync=False):
+    def publish_on_stream(self, channel: str, message: str, sync: bool = False) -> bool:
         if not sync:
             self.pubctrl.publish_http_stream(
                 channel, message, callback=PushpinExt.callback
@@ -63,7 +63,7 @@ class PushpinExt(Connector):
             log.error(e)
             return False
 
-    def publish_on_socket(self, channel, message, sync=False):
+    def publish_on_socket(self, channel: str, message: str, sync: bool = False) -> bool:
         item = Item(WebSocketMessageFormat(message, binary=False))
         if not sync:
             self.pubctrl.publish(channel, item, callback=self.callback)

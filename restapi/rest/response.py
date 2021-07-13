@@ -4,9 +4,10 @@ import sys
 import time
 from datetime import date, datetime
 from io import BytesIO
-from typing import Any, List
+from typing import Any, Dict, List, Tuple, Union, cast
 from urllib import parse as urllib_parse
 
+from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
 from flask.json import JSONEncoder
 from marshmallow.utils import _Missing
@@ -18,33 +19,40 @@ from restapi.config import (
     GZIP_THRESHOLD,
     get_project_configuration,
 )
-from restapi.models import GET_SCHEMA_KEY, fields, validate
+from restapi.models import GET_SCHEMA_KEY, Schema, fields, validate
+from restapi.rest.definition import Response
 from restapi.services.authentication import BaseAuthentication
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
-def handle_marshmallow_errors(error):
+def handle_marshmallow_errors(error: Exception) -> Response:
 
     try:
 
         if request.args:
             if request.args.get(GET_SCHEMA_KEY, False):  # pragma: no cover
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
         elif j := request.get_json():
             if j.get(GET_SCHEMA_KEY, False):  # pragma: no cover
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
         elif request.form:
             if request.form.get(GET_SCHEMA_KEY, False):
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
     except Exception as e:  # pragma: no cover
         log.error(e)
 
     errors = {}
 
-    for key, messages in error.data.get("messages").items():
+    error_messages = cast(
+        Dict[str, Dict[str, str]], error.data.get("messages")  # type: ignore
+    )
+    for key, messages in error_messages.items():
         for k, msg in messages.items():
             if not msg:  # pragma: no cover
                 continue
@@ -54,7 +62,7 @@ def handle_marshmallow_errors(error):
     return (errors, 400, {})
 
 
-def obfuscate_query_parameters(raw_url):
+def obfuscate_query_parameters(raw_url: str) -> str:
     url = urllib_parse.urlparse(raw_url)
     try:
         params = urllib_parse.unquote(
@@ -68,7 +76,7 @@ def obfuscate_query_parameters(raw_url):
     except TypeError:  # pragma: no cover
         log.error("Unable to url encode the following parameters:")
         print(url.query)
-        return url
+        return urllib_parse.urlunparse(url)
 
     return urllib_parse.urlunparse(url)
 
@@ -94,7 +102,7 @@ def get_data_from_request() -> str:
     return ""
 
 
-def handle_response(response):
+def handle_response(response: FlaskResponse) -> FlaskResponse:
 
     response.headers["_RV"] = str(version)
 
@@ -199,7 +207,9 @@ class ResponseMaker:
         return False
 
     @staticmethod
-    def get_html(content, code, headers):
+    def get_html(
+        content: Union[str, List[str]], code: int, headers: Dict[str, str]
+    ) -> Tuple[str, Dict[str, str]]:
 
         if isinstance(content, list):  # pragma: no cover
             content = content.pop()
@@ -269,11 +279,11 @@ class ResponseMaker:
         return gzipped_content, headers
 
     @staticmethod
-    def convert_model_to_schema(schema):
+    def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
 
-            f = {}
+            f: Dict[str, Any] = {}
 
             f["key"] = field_def.data_key or field
 
@@ -365,7 +375,7 @@ class ResponseMaker:
         return schema_fields
 
     @staticmethod
-    def respond_with_schema(schema):
+    def respond_with_schema(schema: Schema) -> Response:
 
         try:
             fields = ResponseMaker.convert_model_to_schema(schema)

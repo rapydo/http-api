@@ -315,7 +315,7 @@ class SQLAlchemy(Connector):
                 instance.db.drop_all()
 
     @staticmethod
-    def update_properties(instance, properties):
+    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
             set_attribute(instance, field, value)

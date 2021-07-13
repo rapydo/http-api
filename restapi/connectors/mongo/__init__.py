@@ -101,7 +101,7 @@ class MongoExt(Connector):
         return (ServerSelectionTimeoutError,)
 
     @staticmethod
-    def _get_uri(variables):
+    def _get_uri(variables: Dict[str, str]) -> str:
         HOST = variables.get("host")
         PORT = variables.get("port")
         USER = variables.get("user")
@@ -157,7 +157,7 @@ class MongoExt(Connector):
                 log.critical("Dropped db '{}'", db)
 
     @staticmethod
-    def update_properties(instance, properties):
+    def update_properties(instance: MongoModel, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
             setattr(instance, field, value)
