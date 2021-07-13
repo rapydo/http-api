@@ -4,7 +4,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, cast
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
@@ -128,7 +128,7 @@ class NeoModel(Connector):
             ValueError,
         )  # type: ignore
 
-    def connect(self, **kwargs: Any) -> "NeoModel":
+    def connect(self, **kwargs: str) -> "NeoModel":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -573,7 +573,7 @@ instance = NeoModel()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "NeoModel":
 
     return instance.get_instance(

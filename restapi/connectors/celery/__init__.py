@@ -127,7 +127,7 @@ class CeleryExt(Connector):
 
         return f"{protocol}://{creds}{host}:{port}"
 
-    def connect(self, **kwargs: Any) -> "CeleryExt":
+    def connect(self, **kwargs: str) -> "CeleryExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -483,7 +483,7 @@ instance = CeleryExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "CeleryExt":
 
     return instance.get_instance(

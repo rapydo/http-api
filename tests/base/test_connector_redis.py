@@ -25,7 +25,7 @@ def test_redis(app: Flask) -> None:
 
     log.info("Executing {} tests", CONNECTOR)
 
-    obj = connector.get_instance(host="invalidhostname", port=123)
+    obj = connector.get_instance(host="invalidhostname", port="123")
     assert obj is not None
     assert not obj.is_connected()
 

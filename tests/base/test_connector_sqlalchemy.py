@@ -28,7 +28,7 @@ def test_sqlalchemy(app: Flask) -> None:
 
     if not connector.SQLAlchemy.is_mysql():
         try:
-            connector.get_instance(host="invalidhostname", port=123)
+            connector.get_instance(host="invalidhostname", port="123")
 
             pytest.fail(
                 "No exception raised on unavailable service"

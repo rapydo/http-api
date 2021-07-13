@@ -421,7 +421,7 @@ class Connector(metaclass=abc.ABCMeta):
         log.info("[{}] All connectors disconnected", os.getpid())
 
     def initialize_connection(
-        self, expiration: int, verification: int, **kwargs: Any
+        self, expiration: int, verification: int, **kwargs: str
     ) -> T:
 
         # Create a new instance of itself
@@ -462,7 +462,7 @@ class Connector(metaclass=abc.ABCMeta):
         self: T,
         verification: Optional[int] = None,
         expiration: Optional[int] = None,
-        **kwargs,
+        **kwargs: str,
     ) -> T:
 
         if not Connector.check_availability(self.name):

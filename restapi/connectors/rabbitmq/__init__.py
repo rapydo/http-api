@@ -2,7 +2,7 @@ import json
 import socket
 import ssl
 import urllib.parse
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Dict, List, Optional
 
 import certifi
 import pika
@@ -44,7 +44,7 @@ class RabbitExt(Connector):
             socket.gaierror,
         )  # type: ignore
 
-    def connect(self, **kwargs: Any) -> "RabbitExt":
+    def connect(self, **kwargs: str) -> "RabbitExt":
 
         variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
@@ -367,7 +367,7 @@ instance = RabbitExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "RabbitExt":
 
     return instance.get_instance(

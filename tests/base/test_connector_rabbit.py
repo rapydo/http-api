@@ -28,7 +28,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     log.info("Executing {} tests", CONNECTOR)
 
     try:
-        connector.get_instance(host="invalidhostname", port=123)
+        connector.get_instance(host="invalidhostname", port="123")
         pytest.fail("No exception raised on unavailable service")  # pragma: no cover
     except ServiceUnavailable:
         pass

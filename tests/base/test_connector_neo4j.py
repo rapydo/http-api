@@ -52,7 +52,7 @@ else:
         def test_connector(app: Flask, faker: Faker) -> None:
 
             try:
-                connector.get_instance(host="invalidhostname", port=123)
+                connector.get_instance(host="invalidhostname", port="123")
                 pytest.fail(
                     "No exception raised on unavailable service"
                 )  # pragma: no cover

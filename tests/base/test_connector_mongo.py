@@ -27,7 +27,7 @@ def test_mongo(app: Flask) -> None:
     log.info("Executing {} tests", CONNECTOR)
 
     try:
-        obj = connector.get_instance(host="invalidhostname", port=123)
+        obj = connector.get_instance(host="invalidhostname", port="123")
         try:
             obj.Token.objects.first()
         except Exception:

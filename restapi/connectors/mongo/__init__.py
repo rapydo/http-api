@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pytz
 from pymodm import MongoModel
@@ -112,7 +112,7 @@ class MongoExt(Connector):
 
         return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
 
-    def connect(self, **kwargs: Any) -> "MongoExt":
+    def connect(self, **kwargs: str) -> "MongoExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -492,7 +492,7 @@ instance = MongoExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "MongoExt":
 
     return instance.get_instance(

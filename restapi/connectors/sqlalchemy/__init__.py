@@ -9,7 +9,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, cast
 
 import pytz
 import sqlalchemy
@@ -203,7 +203,7 @@ class SQLAlchemy(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (OperationalError,)
 
-    def connect(self, **kwargs: Any) -> "SQLAlchemy":
+    def connect(self, **kwargs: str) -> "SQLAlchemy":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -676,7 +676,7 @@ instance = SQLAlchemy()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "SQLAlchemy":
 
     return instance.get_instance(

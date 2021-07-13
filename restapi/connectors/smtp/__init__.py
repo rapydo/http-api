@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.utils import formatdate
 from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
 from threading import Thread
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 from restapi.config import TESTING
 from restapi.connectors import Connector, ExceptionsList
@@ -34,7 +34,7 @@ class Mail(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (socket.gaierror, SMTPAuthenticationError)
 
-    def connect(self, **kwargs: Any) -> "Mail":
+    def connect(self, **kwargs: str) -> "Mail":
         self.instance_variables.update(kwargs)
 
         if port := self.instance_variables.get("port"):
@@ -248,7 +248,7 @@ instance = Mail()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "Mail":
 
     return instance.get_instance(

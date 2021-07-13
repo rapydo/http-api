@@ -35,11 +35,11 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = connector.get_instance(port=465)
+    obj = connector.get_instance(port="465")
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = connector.get_instance(port=587)
+    obj = connector.get_instance(port="587")
     assert obj is not None
     assert obj.smtp is not None
 
@@ -100,7 +100,15 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     # This is NOT a special from_address
     assert obj.send("body", "subject", "to_addr", "invalid3")
 
-    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)  # type: ignore
+    # Test that cc and bcc with wrong types are ignored
+    assert obj.send(
+        "body",
+        "subject",
+        "to_addr",
+        "from_addr",
+        cc=10,  # type: ignore
+        bcc=20,  # type: ignore
+    )
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
@@ -119,7 +127,7 @@ def test_smtp(app: Flask, faker: Faker) -> None:
         assert obj.smtp is not None
     # assert obj.smtp is None
 
-    with connector.get_instance(noreply=None, admin=None) as obj:
+    with connector.get_instance(noreply="", admin="") as obj:
         assert not obj.send("body", "subject")
         assert not obj.send("body", "subject", "to_addr")
         assert obj.send("body", "subject", "to_addr", "from_addr")

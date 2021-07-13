@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Optional
 
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -23,7 +23,7 @@ class RedisExt(Connector):
     def get_connection_exception() -> ExceptionsList:
         return None
 
-    def connect(self, **kwargs: Any) -> "RedisExt":
+    def connect(self, **kwargs: str) -> "RedisExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -62,7 +62,7 @@ instance = RedisExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "RedisExt":
 
     return instance.get_instance(
