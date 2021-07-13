@@ -240,9 +240,10 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def load_roles() -> None:
 
+        empty_dict: Dict[str, str] = {}
         BaseAuthentication.roles_data = glom(
-            mem.configuration, "variables.roles", default={}
-        )
+            mem.configuration, "variables.roles", default=empty_dict
+        ).copy()
         if not BaseAuthentication.roles_data:  # pragma: no cover
             print_and_exit("No roles configured")
 
@@ -250,15 +251,13 @@ class BaseAuthentication(metaclass=ABCMeta):
             "default", ""
         )
 
+        if not BaseAuthentication.default_role:  # pragma: no cover
+            print_and_exit("Default role not available!")
+
         BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
-
-        if not BaseAuthentication.default_role:
-            print_and_exit(
-                "Default role {} not available!", BaseAuthentication.default_role
-            )
 
     def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
         """The method which will check if credentials are good to go"""

@@ -1,19 +1,21 @@
 import json
 import threading
 from functools import wraps
-from typing import Dict
+from typing import Any, Dict, List
 
 import requests
-from marshmallow import ValidationError
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from marshmallow import ValidationError, fields
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.error import Conflict as TelegramConflict
 from telegram.ext import (
+    CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
     Filters,
     MessageHandler,
     Updater,
 )
+from telegram.ext.utils.types import BD, CD, UD
 
 from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
@@ -116,7 +118,12 @@ class Bot:
 
     def restricted_to_admins(self, func):
         @wraps(func)
-        def wrapper(update, context, *args, **kwargs):
+        def wrapper(
+            update: Update,
+            context: CallbackContext[UD, CD, BD],
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             if self.check_authorized(update, context, required_admin=True):
                 return func(update, context, *args, **kwargs)
 
@@ -124,7 +131,12 @@ class Bot:
 
     def restricted_to_users(self, func):
         @wraps(func)
-        def wrapper(update, context, *args, **kwargs):
+        def wrapper(
+            update: Update,
+            context: CallbackContext[UD, CD, BD],
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             if self.check_authorized(update, context):
                 return func(update, context, *args, **kwargs)
 
@@ -133,8 +145,16 @@ class Bot:
     def parameters(self, schema):
         def decorator(func):
             @wraps(func)
-            def wrapper(update, context, *args, **kwargs):
+            def wrapper(
+                update: Update,
+                context: CallbackContext[UD, CD, BD],
+                *args: Any,
+                **kwargs: Any,
+            ) -> Any:
                 inputs = context.args
+
+                if not inputs:
+                    return None
 
                 data = {}
                 keys = list(schema.declared_fields.keys())
@@ -191,17 +211,18 @@ class Bot:
     #    MESSAGES
     ##################
 
-    def send_markdown(self, msg, update):
+    def send_markdown(self, msg: str, update: Update) -> None:
         if not msg.strip():  # pragma: no cover
             return
 
-        self.updater.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=msg.replace("_", "-"),
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        if update.message:
+            self.updater.bot.send_message(
+                chat_id=update.message.chat_id,
+                text=msg.replace("_", "-"),
+                parse_mode=ParseMode.MARKDOWN,
+            )
 
-    def admins_broadcast(self, msg):
+    def admins_broadcast(self, msg: str) -> None:
         for admin in self.admins:
             self.updater.bot.send_message(chat_id=admin, text=msg)
 
@@ -210,7 +231,8 @@ class Bot:
     #          mostly private methods
     ##########################################
 
-    def error_callback(self, update, context):
+    # Strange, but update is expected to be object, not : Update
+    def error_callback(self, update: Any, context: CallbackContext[UD, CD, BD]) -> None:
         # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
         if isinstance(context.error, TooManyInputs):
             update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
@@ -224,18 +246,36 @@ class Bot:
             log.error(context.error)
             self.admins_broadcast(str(context.error))
 
-    def invalid_message(self, update, context):
-        log.info(
-            "Received invalid message from {}: {}",
-            update.message.from_user.id,
-            update.message.text,
-        )
-        if self.check_authorized(update, context):
-            self.updater.bot.send_message(
-                chat_id=update.message.chat_id, text="Invalid command, ask for /help"
-            )
+    def invalid_message(
+        self, update: Update, context: CallbackContext[UD, CD, BD]
+    ) -> None:
 
-    def manage_missing_parameter(self, func, param, definition, update, context, error):
+        if update.message:
+            user = update.message.from_user.id if update.message.from_user else "N/A"
+            log.info(
+                "Received invalid message from {}: {}",
+                user,
+                update.message.text,
+            )
+            if self.check_authorized(update, context):
+                self.updater.bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text="Invalid command, ask for /help",
+                )
+
+    def manage_missing_parameter(
+        self,
+        func: Any,
+        param: str,
+        definition: fields.Field,
+        update: Update,
+        context: CallbackContext[UD, CD, BD],
+        error: List[str],
+    ) -> None:
+
+        if not update.message:  # pragma
+            log.error("Missing message")
+            return None
 
         # Parameters without description should raise some kind of errors/warnings?
         if "description" in definition.metadata:
