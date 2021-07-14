@@ -272,7 +272,7 @@ class RabbitExt(Connector):
 
     def send_json(
         self,
-        message: str,
+        message: Any,
         routing_key: str = "",
         exchange: str = "",
         headers: Optional[Dict[str, Any]] = None,
