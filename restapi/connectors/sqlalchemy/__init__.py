@@ -9,7 +9,7 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 import sqlalchemy
@@ -52,6 +52,8 @@ from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
 db = OriginalAlchemy()
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
@@ -117,9 +119,9 @@ def parse_missing_error(excpt: List[str]) -> Optional[str]:
     return None  # pragma: no cover
 
 
-def catch_db_exceptions(func):
+def catch_db_exceptions(func: F) -> F:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
 
         try:
             return func(*args, **kwargs)
@@ -172,7 +174,7 @@ def catch_db_exceptions(func):
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
-    return wrapper
+    return cast(F, wrapper)
 
 
 class SQLAlchemy(Connector):

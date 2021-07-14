@@ -2,7 +2,7 @@ import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, cast
 
 import certifi
 from celery import Celery
@@ -21,6 +21,8 @@ from restapi.utilities.time import AllowedTimedeltaPeriods, get_timedelta
 
 REDBEAT_KEY_PREFIX: str = "redbeat:"
 
+F = TypeVar("F", bound=Callable[..., Any])
+
 
 class CeleryExt(Connector):
 
@@ -35,13 +37,13 @@ class CeleryExt(Connector):
     # @CeleryExt.task() [to automatically use function name]
     # or: CeleryExt.task(name="your_custom_name")
     @staticmethod
-    def task(name=None):
-        def decorator(func):
+    def task(name: Optional[str] = None) -> Callable[[F], F]:
+        def decorator(func: F) -> F:
             # This decorated is not covered by tests because can't be tested on backend
             # However it is tested on celery so... even if not covered it is ok
             @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
             @wraps(func)
-            def wrapper(self, *args, **kwargs):
+            def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
                 try:
                     with CeleryExt.app.app_context():
@@ -73,7 +75,7 @@ class CeleryExt(Connector):
                             task_id, task_name, arguments, clean_error_stack
                         )
 
-            return wrapper
+            return cast(F, wrapper)
 
         return decorator
 

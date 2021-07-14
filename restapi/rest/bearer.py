@@ -12,12 +12,13 @@ there is no client id nor is client authentication required.
 
 import sys
 from functools import wraps
-from typing import Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
 
 from flask import request
 
 from restapi.env import Env
-from restapi.services.authentication import ALL_ROLES, ANY_ROLE
+from restapi.services.authentication import ALL_ROLES, ANY_ROLE, Role
+from restapi.types import EndpointFunction
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -71,14 +72,16 @@ class HTTPTokenAuth:
         return None, None
 
     @staticmethod
-    def optional(allow_access_token_parameter=False):
-        def decorator(func):
+    def optional(
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
+        def decorator(func: EndpointFunction) -> EndpointFunction:
             # it is used in Loader to verify if an endpoint is requiring
             # authentication and inject 401 errors
             func.__dict__["auth.optional"] = True
 
             @wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 # Recover the auth object
                 auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
@@ -130,16 +133,16 @@ class HTTPTokenAuth:
 
                 return func(*args, **kwargs)
 
-            return wrapper
+            return cast(EndpointFunction, wrapper)
 
         return decorator
 
     @classmethod
     def require_all(
         cls,
-        *roles,
-        allow_access_token_parameter=False,
-    ):
+        *roles: Union[str, Role],
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
         return cls.require(
             roles=roles,
             required_roles=ALL_ROLES,
@@ -149,9 +152,9 @@ class HTTPTokenAuth:
     @classmethod
     def require_any(
         cls,
-        *roles,
-        allow_access_token_parameter=False,
-    ):
+        *roles: Union[str, Role],
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
         return cls.require(
             roles=roles,
             required_roles=ANY_ROLE,
@@ -161,17 +164,17 @@ class HTTPTokenAuth:
     @classmethod
     def require(
         cls,
-        roles=None,
-        required_roles=ALL_ROLES,
-        allow_access_token_parameter=False,
-    ):
-        def decorator(func):
+        roles: Optional[Iterable[Union[str, Role]]] = None,
+        required_roles: str = ALL_ROLES,
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
+        def decorator(func: EndpointFunction) -> EndpointFunction:
             # it is used in Loader to verify if an endpoint is requiring
             # authentication and inject 401 errors
             func.__dict__["auth.required"] = True
 
             @wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 # Recover the auth object
                 auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
@@ -238,6 +241,6 @@ class HTTPTokenAuth:
                 caller.authorized_user = user.uuid
                 return func(*args, **kwargs)
 
-            return wrapper
+            return cast(EndpointFunction, wrapper)
 
         return decorator

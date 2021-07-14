@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
+from typing import Any, Callable, Dict, Optional, Union, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused  # type: ignore
@@ -17,6 +17,7 @@ from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
 from restapi.rest.definition import Response
+from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
@@ -24,9 +25,6 @@ from restapi.utilities.uuid import getUUID
 
 log.debug("Auth loaded {}", auth)
 log.debug("Marshal loaded {}", marshal_with)
-
-
-F = TypeVar("F", bound=Callable[..., Any])
 
 
 # same definition as in:
@@ -58,8 +56,8 @@ def endpoint(
     description: Optional[str] = None,
     responses: Optional[Dict[Union[str, int], str]] = None,
     **kwargs: Any,
-) -> Callable[[F], F]:
-    def decorator(func: F) -> F:
+) -> Callable[[EndpointFunction], EndpointFunction]:
+    def decorator(func: EndpointFunction) -> EndpointFunction:
 
         specs: Dict[str, Any] = {}
 
@@ -92,11 +90,11 @@ def endpoint(
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)
-        def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> EndpointFunction:
 
-            return cast(F, func(self, *args, **kwargs))
+            return cast(EndpointFunction, func(self, *args, **kwargs))
 
-        return cast(F, wrapper)
+        return cast(EndpointFunction, wrapper)
 
     return decorator
 
@@ -105,7 +103,9 @@ def endpoint(
 # and then optionally url parameters, e.g uuid: str
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],
-def preload(callback: Callable[..., Dict[str, Any]]) -> Callable[[F], F]:
+def preload(
+    callback: Callable[..., Dict[str, Any]]
+) -> Callable[[EndpointFunction], EndpointFunction]:
     """
     callback example:
 
@@ -126,9 +126,9 @@ def preload(callback: Callable[..., Dict[str, Any]]) -> Callable[[F], F]:
         # return None
     """
 
-    def decorator(func: F) -> F:
+    def decorator(func: EndpointFunction) -> EndpointFunction:
         @wraps(func)
-        def wrapper(self: Any, *args: Any, **kwargs: Any) -> F:
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
             # callback can raise exceptions to stop che execution and e.g. implement
             # custom authorization policies
@@ -140,9 +140,9 @@ def preload(callback: Callable[..., Dict[str, Any]]) -> Callable[[F], F]:
             if inject := callback(self, **request.view_args):  # type: ignore
                 kwargs.update(inject)
 
-            return cast(F, func(self, *args, **kwargs))
+            return func(self, *args, **kwargs)
 
-        return cast(F, wrapper)
+        return cast(EndpointFunction, wrapper)
 
     return decorator
 
@@ -175,7 +175,7 @@ def make_cache_function_name(name: str) -> str:
 
 
 # Used to cache endpoint with @decorators.cache(timeout=60)
-def cache(*args, **kwargs):
+def cache(*args: Any, **kwargs: Any) -> Any:
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
@@ -184,9 +184,9 @@ def cache(*args, **kwargs):
 
 
 # This decorator is still a work in progress, in particular for MongoDB
-def database_transaction(func):
+def database_transaction(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
@@ -250,7 +250,7 @@ def database_transaction(func):
                 log.warning("Exception raised during rollback: {}", sub_ex)
             raise e
 
-    return wrapper
+    return cast(EndpointFunction, wrapper)
 
 
 class Pagination(PartialSchema):
@@ -274,7 +274,7 @@ class Pagination(PartialSchema):
     input_filter = fields.Str(required=False, missing=None)
 
     @post_load
-    def verify_parameters(self, data, **kwargs):
+    def verify_parameters(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
         if "get_total" in data:
             data["page"] = None
             data["size"] = None
@@ -286,12 +286,12 @@ class Pagination(PartialSchema):
         return data
 
 
-def get_pagination(func):
+def get_pagination(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination, location="query")
-    def get_wrapper(self, *args, **kwargs):
+    def get_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         return func(self, *args, **kwargs)
 
@@ -299,13 +299,13 @@ def get_pagination(func):
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         return func(self, *args, **kwargs)
 
     if func.__name__ == "get":
-        return get_wrapper
-    return wrapper
+        return cast(EndpointFunction, get_wrapper)
+    return cast(EndpointFunction, wrapper)
 
 
 class ChunkUpload(PartialSchema):
@@ -315,28 +315,28 @@ class ChunkUpload(PartialSchema):
     lastModified = fields.Int(required=True, validate=validate.Range(min=1))
 
 
-def init_chunk_upload(func):
+def init_chunk_upload(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
     # Should be converted in use_args, if/when available
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(ChunkUpload)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         return func(self, *args, **kwargs)
 
-    return wrapper
+    return cast(EndpointFunction, wrapper)
 
 
 # This decorator is automatically added to every endpoints... do not use it explicitly
-def catch_exceptions(**kwargs):
+def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunction]:
     """
     A decorator to preprocess an API class method,
     and catch a specific error.
     """
 
-    def decorator(func):
+    def decorator(func: EndpointFunction) -> EndpointFunction:
         @wraps(func)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             out = None
 
             try:
@@ -397,6 +397,6 @@ def catch_exceptions(**kwargs):
 
             return out
 
-        return wrapper
+        return cast(EndpointFunction, wrapper)
 
     return decorator

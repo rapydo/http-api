@@ -69,8 +69,7 @@ jobs:
             
           done
 
-          # --disallow-any-unimported
-          mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
+          mypy --disallow-untyped-defs --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
           cat report/index.txt
 
       - name: Save Report

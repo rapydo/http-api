@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 from pymodm import MongoModel
@@ -28,10 +28,12 @@ from restapi.services.authentication import (
 from restapi.utilities.logs import Events, log
 from restapi.utilities.uuid import getUUID
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def catch_db_exceptions(func):
+
+def catch_db_exceptions(func: F) -> F:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
 
         try:
             return func(*args, **kwargs)
@@ -83,7 +85,7 @@ def catch_db_exceptions(func):
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 
-    return wrapper
+    return cast(F, wrapper)
 
 
 class MongoExt(Connector):

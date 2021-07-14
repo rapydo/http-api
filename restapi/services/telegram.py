@@ -1,10 +1,11 @@
 import json
 import threading
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import requests
-from marshmallow import ValidationError, fields
+from marshmallow import Schema, ValidationError, fields
+from mypy_extensions import KwArg, VarArg
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.error import Conflict as TelegramConflict
 from telegram.ext import (
@@ -30,6 +31,12 @@ from restapi.utilities.uuid import getUUID
 data_cache = {}
 
 CommandFunction = Callable[[Update, CallbackContext[Any, Any, Any]], None]
+# DecoratedCommandFunction = Union[
+#     Callable[[Update, CallbackContext[Any, Any, Any]], Any],
+#     Callable[[Update, CallbackContext[Any, Any, Any], VarArg(Any), KwArg(Any)], Any],
+# ]
+
+DecoratedCommandFunction = Callable[..., Any]
 
 
 class TooManyInputs(ValidationError):
@@ -120,7 +127,9 @@ class Bot:
 
         return decorator
 
-    def restricted_to_admins(self, func):
+    def restricted_to_admins(
+        self, func: DecoratedCommandFunction
+    ) -> DecoratedCommandFunction:
         @wraps(func)
         def wrapper(
             update: Update,
@@ -131,9 +140,11 @@ class Bot:
             if self.check_authorized(update, context, required_admin=True):
                 return func(update, context, *args, **kwargs)
 
-        return wrapper
+        return cast(DecoratedCommandFunction, wrapper)
 
-    def restricted_to_users(self, func):
+    def restricted_to_users(
+        self, func: DecoratedCommandFunction
+    ) -> DecoratedCommandFunction:
         @wraps(func)
         def wrapper(
             update: Update,
@@ -144,10 +155,12 @@ class Bot:
             if self.check_authorized(update, context):
                 return func(update, context, *args, **kwargs)
 
-        return wrapper
+        return cast(DecoratedCommandFunction, wrapper)
 
-    def parameters(self, schema):
-        def decorator(func):
+    def parameters(
+        self, schema: Schema
+    ) -> Callable[[DecoratedCommandFunction], DecoratedCommandFunction]:
+        def decorator(func: DecoratedCommandFunction) -> DecoratedCommandFunction:
             @wraps(func)
             def wrapper(
                 update: Update,
@@ -202,7 +215,7 @@ class Bot:
                             definition,
                             update,
                             context,
-                            e.messages[param],
+                            e.messages[param],  # type: ignore
                         )
                         break
 
@@ -210,7 +223,7 @@ class Bot:
 
                 return func(update, context, *args, **val, **kwargs)
 
-            return wrapper
+            return cast(DecoratedCommandFunction, wrapper)
 
         return decorator
 
