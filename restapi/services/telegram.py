@@ -1,7 +1,7 @@
 import json
 import threading
 from functools import wraps
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import requests
 from marshmallow import ValidationError, fields
@@ -28,6 +28,11 @@ from restapi.utilities.uuid import getUUID
 
 # it is used to pass data to inline button callbacks
 data_cache = {}
+
+CommandFunction = Callable[[Update, CallbackContext[Any, Any, Any]], None]
+# CommandFunction = TypeVar(
+#     "CommandFunction", bound=Callable[[Update, CallbackContext[Any, Any, Any]], None]
+# )
 
 
 class TooManyInputs(ValidationError):
@@ -104,8 +109,10 @@ class Bot:
     #    DECORATORS
     ##################
 
-    def command(self, cmd, help="N/A", run_async=False):
-        def decorator(func):
+    def command(
+        self, cmd: str, help: str = "N/A", run_async: bool = False
+    ) -> Callable[[CommandFunction], CommandFunction]:
+        def decorator(func: CommandFunction) -> CommandFunction:
             log.info("Registering {}", cmd)
             self.updater.dispatcher.add_handler(
                 CommandHandler(cmd, func, pass_args=True, run_async=run_async)
@@ -151,11 +158,13 @@ class Bot:
                 *args: Any,
                 **kwargs: Any,
             ) -> Any:
-                inputs = context.args
+                # context.args == Optional[List[str]]
+                # => inputs == List[str]
+                inputs: List[str] = context.args or []
 
-                if not inputs:
-                    log.critical("Debug code: missing inputs")
-                    return None
+                # if not inputs:
+                #     log.critical("Debug code: missing inputs")
+                #     return None
 
                 data = {}
                 keys = list(schema.declared_fields.keys())
@@ -325,8 +334,14 @@ class Bot:
     # Callback used by ALL inline keyboard button. It will received a data_key
     # as callback_data to access to data from the specific commands
     # Not called during tests... how to test it?
-    def inline_keyboard_button(self, update, context):  # pragma: no cover
+    def inline_keyboard_button(
+        self, update: Update, context: CallbackContext[UD, CD, BD]
+    ) -> None:  # pragma: no cover
         query = update.callback_query
+
+        if not query:
+            log.critical("Debug code: query is empty in inline_keyboard_button")
+            return None
 
         # Callback queries need to be answered, even if no notification to the user
         # is needed. Some clients may have trouble otherwise.
@@ -336,6 +351,11 @@ class Bot:
         # The data cache contains the parameters wrapper of the command function. This
         # wrapper will be invoked by augmenting the original list of parameters with
         # the choice obtained from the inline keyboard argument
+
+        if not query.data:
+            log.critical("Debug code: query.data is empty in inline_keyboard_button")
+            return None
+
         data = data_cache.pop(query.data)
         query.edit_message_text(text=f"Selected option: {data['parameter']}")
         # func is the parameters wrapper of the command function
@@ -346,14 +366,24 @@ class Bot:
         # Let's invoke the parameters wrapper with the new additional parameter
         func(data["update"], data["context"])
 
-    def is_authorized(self, user_id, required_admin):
+    def is_authorized(self, user_id: int, required_admin: bool) -> bool:
 
         if required_admin:
             return user_id in self.admins
 
         return user_id in self.admins + self.users
 
-    def check_authorized(self, update, context, required_admin=False):
+    def check_authorized(
+        self,
+        update: Update,
+        context: CallbackContext[UD, CD, BD],
+        required_admin: bool = False,
+    ) -> bool:
+
+        if not update.message or not update.message.from_user:
+            log.critical("Debug code: missing user in check_authorized")
+            return False
+
         user = update.message.from_user
         user_id = user.id
         text = update.message.text
@@ -383,7 +413,7 @@ class Bot:
         return False
 
     @staticmethod
-    def get_ids(ids_list):
+    def get_ids(ids_list: Optional[str]) -> List[int]:
         if not ids_list:
             return []
 
@@ -402,33 +432,38 @@ class BotApiClient:
         BotApiClient.variables = variables
 
     @staticmethod
-    def get(path, base="api"):
+    def get(path: str, base: str = "api") -> Any:
         return BotApiClient.api(path, "GET", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def put(path, base="api"):  # pragma: no cover
+    def put(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "PUT", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def patch(path, base="api"):  # pragma: no cover
+    def patch(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "PATCH", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def post(path, base="api", payload=None):  # pragma: no cover
-        if payload:
-            payload = json.dumps(payload)
+    def post(
+        path: str, base: str = "api", payload: Optional[Dict[str, Any]] = None
+    ) -> Any:  # pragma: no cover
         return BotApiClient.api(path, "POST", base=base, payload=payload)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def delete(path, base="api"):  # pragma: no cover
+    def delete(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "DELETE", base=base)
 
     @staticmethod
-    def api(path, method, base="api", payload=None):
+    def api(
+        path: str,
+        method: str,
+        base: str = "api",
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> Any:
         host = BotApiClient.variables.get("backend_host")
         port = Env.get("FLASK_PORT")
         url = f"http://{host}:{port}/{base}/{path}"
@@ -436,7 +471,11 @@ class BotApiClient:
         log.debug("Calling {} on {}", method, url)
 
         try:
-            response = requests.request(method, url=url, data=payload)
+            data: Optional[str] = None
+            if payload:
+                data = json.dumps(payload)
+
+            response = requests.request(method, url=url, data=data)
 
             out = response.json()
         # Never raised during tests: how to test it?
