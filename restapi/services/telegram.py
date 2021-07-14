@@ -1,11 +1,10 @@
 import json
 import threading
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import requests
 from marshmallow import Schema, ValidationError, fields
-from mypy_extensions import KwArg, VarArg
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.error import Conflict as TelegramConflict
 from telegram.ext import (
@@ -31,11 +30,6 @@ from restapi.utilities.uuid import getUUID
 data_cache = {}
 
 CommandFunction = Callable[[Update, CallbackContext[Any, Any, Any]], None]
-# DecoratedCommandFunction = Union[
-#     Callable[[Update, CallbackContext[Any, Any, Any]], Any],
-#     Callable[[Update, CallbackContext[Any, Any, Any], VarArg(Any), KwArg(Any)], Any],
-# ]
-
 DecoratedCommandFunction = Callable[..., Any]
 
 
