@@ -30,9 +30,6 @@ from restapi.utilities.uuid import getUUID
 data_cache = {}
 
 CommandFunction = Callable[[Update, CallbackContext[Any, Any, Any]], None]
-# CommandFunction = TypeVar(
-#     "CommandFunction", bound=Callable[[Update, CallbackContext[Any, Any, Any]], None]
-# )
 
 
 class TooManyInputs(ValidationError):
@@ -428,7 +425,7 @@ class BotApiClient:
 
     variables: Dict[str, str] = {}
 
-    def __init__(self, variables):
+    def __init__(self, variables: Dict[str, str]) -> None:
         BotApiClient.variables = variables
 
     @staticmethod
