@@ -1,8 +1,9 @@
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 from flask import Response as FlaskResponse
+from werkzeug.wrappers import Response as WerkzeugResponse
 
-Response = Union[FlaskResponse, Tuple[Any, int, Dict[str, str]]]
+Response = Union[FlaskResponse, WerkzeugResponse, Tuple[Any, int, Dict[str, str]]]
 ResponseContent = Optional[Any]
 Props = Dict[str, Any]
 FlaskRequest = Any
