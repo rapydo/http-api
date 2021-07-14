@@ -154,6 +154,7 @@ class Bot:
                 inputs = context.args
 
                 if not inputs:
+                    log.critical("Debug code: missing inputs")
                     return None
 
                 data = {}
@@ -221,6 +222,8 @@ class Bot:
                 text=msg.replace("_", "-"),
                 parse_mode=ParseMode.MARKDOWN,
             )
+        else:  # pragma: no cover
+            log.critical("Debug code: update.message in missing in send_markdown")
 
     def admins_broadcast(self, msg: str) -> None:
         for admin in self.admins:
@@ -262,6 +265,8 @@ class Bot:
                     chat_id=update.message.chat_id,
                     text="Invalid command, ask for /help",
                 )
+        else:  # pragma: no cover
+            log.critical("Debug code: update.message in missing in invalid_message")
 
     def manage_missing_parameter(
         self,
@@ -274,7 +279,7 @@ class Bot:
     ) -> None:
 
         if not update.message:  # pragma
-            log.error("Missing message")
+            log.critical("Debug code: missing message in manage_missing_parameter")
             return None
 
         # Parameters without description should raise some kind of errors/warnings?
