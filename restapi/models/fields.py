@@ -12,7 +12,8 @@ from restapi.utilities.logs import log
 class Field(webargs_fields.Field):
     def __init__(
         self,
-        *args: Any,
+        *,
+        required: bool = False,
         label: Optional[str] = None,
         description: Optional[str] = None,
         password: bool = False,
@@ -47,7 +48,7 @@ class Field(webargs_fields.Field):
 
         kwargs["metadata"].setdefault("password", password)
 
-        super().__init__(*args, **kwargs)
+        super().__init__(required=required, **kwargs)
 
 
 ####################################################################################

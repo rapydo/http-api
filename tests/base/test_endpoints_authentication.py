@@ -196,7 +196,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/unknownroleauthentication")
         assert r.status_code == 401
 
-        admin_headers, admin_token = self.do_login(client, None, None)
+        admin_headers, _ = self.do_login(client, None, None)
 
         r = client.get(
             f"{API_URI}/tests/manyrolesauthentication", headers=admin_headers
@@ -214,7 +214,7 @@ class TestApp(BaseTests):
 
         if Env.get_bool("MAIN_LOGIN_ENABLE"):
             uuid, data = self.create_user(client, roles=[Role.USER])
-            user_header, user_token = self.do_login(
+            user_header, _ = self.do_login(
                 client, data.get("email"), data.get("password")
             )
 
