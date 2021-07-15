@@ -150,11 +150,16 @@ Int = Integer
 ####################################################################################
 #   2) Override some types with custom implementation to extend functionalities
 ####################################################################################
-class List(Field, webargs_fields.List):
+class List(webargs_fields.List, Field):
     def __init__(
-        self, *args: Any, unique: bool = False, min_items: int = 0, **kwargs: Any
+        self,
+        cls_or_instance: Union[webargs_fields.Field, type],
+        *,
+        unique: bool = False,
+        min_items: int = 0,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(cls_or_instance, **kwargs)
         self.unique = unique
         self.min_items = min_items
 
@@ -234,9 +239,16 @@ class Nested(webargs_fields.Nested, Field):
 
 # DelimitedList is child of List as defined in:
 # https://github.com/marshmallow-code/webargs/blob/dev/src/webargs/fields.py
-class DelimitedList(List, webargs_fields.DelimitedList):
-    def __init__(self, *args: Any, unique: bool = False, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+class DelimitedList(webargs_fields.DelimitedList, List):
+    def __init__(
+        self,
+        cls_or_instance: Union[webargs_fields.Field, type],
+        *,
+        delimiter: Optional[str] = None,
+        unique: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(cls_or_instance, delimiter=delimiter, **kwargs)
         # Note: Can't use self.unique otherwise the elements will be silently cleaned
         # by the custom List deserializer
         # self.unique = unique
