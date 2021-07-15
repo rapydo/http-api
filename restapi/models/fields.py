@@ -1,8 +1,10 @@
 import json
 import re
-from typing import Any, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Union
 
-from marshmallow import ValidationError
+from marshmallow import ValidationError, types
+from marshmallow.base import SchemaABC
+from marshmallow.utils import missing as missing_
 from webargs import fields as webargs_fields
 
 from restapi.config import TESTING
@@ -188,7 +190,29 @@ class List(Field, webargs_fields.List):
         return value
 
 
-class Nested(Field, webargs_fields.Nested):
+class Nested(webargs_fields.Nested, Field):
+    def __init__(
+        self,
+        nested: Union[SchemaABC, type, str, Callable[[], SchemaABC]],
+        *,
+        default: Any = missing_,
+        only: Optional[types.StrSequenceOrSet] = None,
+        exclude: types.StrSequenceOrSet = (),
+        many: bool = False,
+        unknown: Optional[str] = None,
+        **kwargs: Any,
+    ):
+
+        super().__init__(
+            nested,
+            default=default,
+            only=only,
+            exclude=exclude,
+            many=many,
+            unknown=unknown,
+            **kwargs,
+        )
+
     # Probably due to the double parents: Nested(Field, webargs_fields.Nested)
     # Signature of "_deserialize" incompatible with supertype "Nested"
     def _deserialize(  # type: ignore
