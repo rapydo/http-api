@@ -70,8 +70,15 @@ class DateTime(Field, webargs_fields.DateTime):
 
 
 # Should extend Mapping... but I'm not using Mapping so let's directly extend from Field
-class Dict(Field, webargs_fields.Dict):
-    pass
+class Dict(webargs_fields.Dict, Field):
+    def __init__(
+        self,
+        keys: Optional[Union[Field, type]] = None,
+        values: Optional[Union[Field, type]] = None,
+        **kwargs: Any,
+    ) -> None:
+
+        super().__init__(keys, values, **kwargs)
 
 
 class Number(Field, webargs_fields.Number):
