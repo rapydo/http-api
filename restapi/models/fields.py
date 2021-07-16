@@ -205,7 +205,9 @@ class List(webargs_fields.List, Field):
 class Nested(webargs_fields.Nested, Field):
     def __init__(
         self,
-        nested: Union[SchemaABC, type, str, Callable[[], SchemaABC]],
+        # nested: Union[SchemaABC, type, str, Callable[[], SchemaABC]],
+        # the above type is from marshmallow, but it fails with Dict[str, Any] (imc)
+        nested: Any,
         *,
         default: Any = missing_,
         only: Optional[types.StrSequenceOrSet] = None,
