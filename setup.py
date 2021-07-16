@@ -68,6 +68,7 @@ setup(
         "html2text",
         # Used by Marshmallow to serialize Decimals
         "simplejson",
+        "orjson",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
