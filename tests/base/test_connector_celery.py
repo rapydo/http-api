@@ -82,9 +82,8 @@ def test_celery(app: Flask, faker: Faker) -> None:
     # No email is raised with Ignore exceptions
     assert mail is None
 
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(AttributeError, match=r"Task not found"):
         BaseTests.send_task(app, "does-not-exist")
-    assert str(e.value) == "Task not found"
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
