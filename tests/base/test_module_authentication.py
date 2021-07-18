@@ -9,7 +9,7 @@ from faker import Faker
 
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.exceptions import RestApiException
+from restapi.exceptions import BadRequest, Conflict, Unauthorized
 from restapi.services.authentication import (
     DEFAULT_GROUP_NAME,
     BaseAuthentication,
@@ -168,42 +168,37 @@ class TestApp(BaseTests):
         user = auth.get_user(username=BaseAuthentication.default_user)
         pwd = faker.password(min_pwd_len - 1)
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(BadRequest, match=r"Missing new password"):
             # None password
             auth.change_password(user, pwd, None, None)
-        assert e.value.status_code == 400
-        assert str(e.value) == "Missing new password"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(BadRequest, match=r"Missing password confirmation"):
             # None password confirmation
             auth.change_password(user, pwd, pwd, None)
-        assert e.value.status_code == 400
-        assert str(e.value) == "Missing password confirmation"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(
+            Conflict, match=r"Your password doesn't match the confirmation"
+        ):
             # wrong confirmation
             auth.change_password(user, pwd, pwd, faker.password(strong=True))
-        assert e.value.status_code == 409
-        assert str(e.value) == "Your password doesn't match the confirmation"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(
+            Conflict,
+            match=r"The new password cannot match the previous password",
+        ):
             # Failed password strength checks
             auth.change_password(user, pwd, pwd, pwd)
-        assert e.value.status_code == 409
-        assert str(e.value) == "The new password cannot match the previous password"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(
+            Conflict,
+            match=rf"Password is too short, use at least {min_pwd_len} characters",
+        ):
             # the first password parameter is only checked for new password strenght
             # i.e. is verified password != newpassword
             # pwd validity will be checked once completed checks on new password
             # => a random current password is ok here
             # Failed password strength checks
             auth.change_password(user, faker.password(), pwd, pwd)
-        assert e.value.status_code == 409
-        assert (
-            str(e.value)
-            == f"Password is too short, use at least {min_pwd_len} characters"
-        )
 
         pwd1 = faker.password(strong=True)
         pwd2 = faker.password(strong=True)
@@ -212,17 +207,13 @@ class TestApp(BaseTests):
         assert len(hash_1) > 0
         assert hash_1 != auth.get_password_hash(pwd2)
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Invalid password"):
             # Hashing empty password
             auth.get_password_hash("")
-        assert e.value.status_code == 401
-        assert str(e.value) == "Invalid password"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Invalid password"):
             # Hashing a None password!
             auth.get_password_hash(None)
-        assert e.value.status_code == 401
-        assert str(e.value) == "Invalid password"
 
         assert auth.verify_password(pwd1, hash_1)
         with pytest.raises(TypeError):
@@ -241,11 +232,9 @@ class TestApp(BaseTests):
 
         auth = Connector.get_authentication_instance()
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Verification code is missing"):
             # NULL totp
             auth.verify_totp(None, None)  # type: ignore
-        assert e.value.status_code == 401
-        assert str(e.value) == "Verification code is missing"
 
         user = auth.get_user(username=auth.default_user)
         secret = auth.get_totp_secret(user)
@@ -262,17 +251,13 @@ class TestApp(BaseTests):
         assert auth.verify_totp(user, totp.at(now - t30s))
 
         # Verify second-previous and second-ntext totp(s)
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Verification code is not valid"):
             # Future totp
             auth.verify_totp(user, totp.at(now + t30s + t30s))
-        assert e.value.status_code == 401
-        assert str(e.value) == "Verification code is not valid"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Verification code is not valid"):
             # Past totp
             auth.verify_totp(user, totp.at(now - t30s - t30s))
-        assert e.value.status_code == 401
-        assert str(e.value) == "Verification code is not valid"
 
         # Extend validity window
         auth.TOTP_VALIDITY_WINDOW = 2
@@ -282,17 +267,13 @@ class TestApp(BaseTests):
         assert auth.verify_totp(user, totp.at(now - t30s - t30s))
 
         # Verify second-second-previous and second-second-ntext totp(s)
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Verification code is not valid"):
             # Future totp
             auth.verify_totp(user, totp.at(now + t30s + t30s + t30s))
-        assert e.value.status_code == 401
-        assert str(e.value) == "Verification code is not valid"
 
-        with pytest.raises(RestApiException) as e:
+        with pytest.raises(Unauthorized, match=r"Verification code is not valid"):
             # Past totp
             auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
-        assert e.value.status_code == 401
-        assert str(e.value) == "Verification code is not valid"
 
     def test_ip_management(self) -> None:
 
@@ -417,9 +398,8 @@ class TestApp(BaseTests):
         unpacked_token = auth.verify_token(None, raiseErrors=False)
         assert not unpacked_token[0]
 
-        with pytest.raises(InvalidToken) as invalidtoken:
+        with pytest.raises(InvalidToken, match=r"Missing token"):
             auth.verify_token(None, raiseErrors=True)
-        assert str(invalidtoken.value) == "Missing token"
 
         # Test token validiy
         _, token = self.do_login(client, None, None)

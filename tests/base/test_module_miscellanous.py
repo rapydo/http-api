@@ -280,10 +280,9 @@ class TestApp(BaseTests):
     def test_timeouts(self) -> None:
 
         start_timeout(1)
-        with pytest.raises(Timeout) as timeout:
+        with pytest.raises(Timeout, match=r"Operation timeout: interrupted"):
             # This operation will be interrupted because slower than timeout
             time.sleep(2)
-        assert str(timeout.value) == "Operation timeout: interrupted"
 
         start_timeout(1)
         try:
@@ -443,17 +442,20 @@ class TestApp(BaseTests):
         assert start == 0
         assert end == 1000
 
-        with pytest.raises(BadRequest) as badrequest:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("\x00"))
-        assert str(badrequest.value) == "Invalid null byte in subfolder parameter"
 
-        with pytest.raises(BadRequest) as badrequest:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
-        assert str(badrequest.value) == "Invalid null byte in subfolder parameter"
 
-        with pytest.raises(BadRequest) as badrequest:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
-        assert str(badrequest.value) == "Invalid null byte in subfolder parameter"
 
     # #######################################
     # ####      Time

@@ -57,9 +57,8 @@ else:
             obj = connector.get_instance()
             assert obj is not None
 
-            with pytest.raises(AttributeError) as e:
+            with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
                 obj.InvalidModel
-            assert str(e.value) == "Model InvalidModel not found"
 
             for row in obj.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = obj.User.inflate(row[0])
@@ -77,10 +76,11 @@ else:
             assert t.emitted_for.single() is None
             t.delete()
 
-            with pytest.raises(CypherSyntaxError) as cyphersyntaxerror:
+            with pytest.raises(
+                CypherSyntaxError, match=r"{code: None} {message: None}"
+            ):
                 obj.cypher("MATCH (n) RETURN n with a syntax error")
             # Query information are removed from the CypherSyntaxError exception
-            assert str(cyphersyntaxerror.value) == "{code: None} {message: None}"
 
             assert obj.sanitize_input("x") == "x"
             assert obj.sanitize_input("x ") == "x"

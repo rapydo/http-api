@@ -33,9 +33,8 @@ def test_sqlalchemy(app: Flask) -> None:
     obj = connector.get_instance()
     assert obj is not None
 
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
         obj.InvalidModel
-    assert str(e.value) == "Model InvalidModel not found"
 
     obj.disconnect()
 

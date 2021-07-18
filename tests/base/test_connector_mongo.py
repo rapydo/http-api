@@ -33,9 +33,8 @@ def test_mongo(app: Flask) -> None:
     obj = connector.get_instance()
     assert obj is not None
 
-    with pytest.raises(AttributeError) as e:
-        _ = obj.InvalidModel
-    assert str(e.value) == "Model InvalidModel not found"
+    with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
+        obj.InvalidModel
 
     obj.disconnect()
 
