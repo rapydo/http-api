@@ -5,7 +5,9 @@ Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be c
 """
 import os
 
-from restapi.connectors import Connector
+import pytest
+
+from restapi.connectors import Connector, sqlalchemy
 from restapi.exceptions import ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
@@ -30,11 +32,17 @@ def test_destroy() -> None:
 
     create_app(mode=ServerModes.DESTROY)
 
-    # Can raise ServiceUnavailable or not?
-    auth = Connector.get_authentication_instance()
-    user = auth.get_user(username=BaseAuthentication.default_user)
-    assert user is None
+    is_alchemy = Connector.check_availability("sqlalchemy")
+    is_mysql = is_alchemy and sqlalchemy.SQLAlchemy.is_mysql()
 
+    if is_mysql:
+        with pytest.raises(ServiceUnavailable):
+            auth = Connector.get_authentication_instance()
+            user = auth.get_user(username=BaseAuthentication.default_user)
+    else:
+        auth = Connector.get_authentication_instance()
+        user = auth.get_user(username=BaseAuthentication.default_user)
+        assert user is None
     # try:
     #     auth = Connector.get_authentication_instance()
     #     user = auth.get_user(username=BaseAuthentication.default_user)

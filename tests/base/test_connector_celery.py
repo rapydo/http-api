@@ -82,7 +82,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     # No email is raised with Ignore exceptions
     assert mail is None
 
-    with pytest.raises(AttributeError, match=r"Task not found"):
+    with pytest.raises(AttributeError, match=r"Task not found added err to test match"):
         BaseTests.send_task(app, "does-not-exist")
 
     if obj.variables.get("backend") == "RABBIT":
@@ -102,29 +102,33 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
-        with pytest.raises(AttributeError) as e:
+        with pytest.raises(
+            AttributeError, match=r"Unsupported celery-beat scheduler: None"
+        ):
             # get_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.get_periodic_task("does_not_exist")
-        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        with pytest.raises(AttributeError) as e:
+        with pytest.raises(
+            AttributeError, match=r"Unsupported celery-beat scheduler: None"
+        ):
             # delete_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.delete_periodic_task("does_not_exist")
-        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        with pytest.raises(AttributeError) as e:
+        with pytest.raises(
+            AttributeError, match=r"Unsupported celery-beat scheduler: None"
+        ):
             # create_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.create_periodic_task(
                 name="task1", task="task.does.not.exists", every="60"
             )
-        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        with pytest.raises(AttributeError) as e:
+        with pytest.raises(
+            AttributeError, match=r"Unsupported celery-beat scheduler: None"
+        ):
             # create_crontab_task with unknown CELERYBEAT_SCHEDULER
             obj.create_crontab_task(
                 name="task2", task="task.does.not.exists", minute="0", hour="1"
             )
-        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
     else:
         assert obj.get_periodic_task("does_not_exist") is None
@@ -199,14 +203,13 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )
             assert obj.delete_periodic_task("task7")
 
-            with pytest.raises(BadRequest) as badrequest:
+            with pytest.raises(BadRequest, match=r"Invalid timedelta period: years"):
                 obj.create_periodic_task(
                     name="task8",
                     task="task.does.not.exists",
                     every="60",
                     period="years",  # type: ignore
                 )
-            assert str(badrequest.value) == "Invalid timedelta period: years"
 
             obj.create_periodic_task(
                 name="task9",
@@ -215,21 +218,25 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )
             assert obj.delete_periodic_task("task9")
 
-            with pytest.raises(AttributeError) as e:
+            with pytest.raises(
+                AttributeError,
+                match=r"Invalid input parameter every = ['60'] (type list)",
+            ):
                 obj.create_periodic_task(
                     name="task10",
                     task="task.does.not.exists",
                     every=["60"],  # type: ignore
                 )
-            assert str(e.value) == "Invalid input parameter every = ['60'] (type list)"
 
-            with pytest.raises(AttributeError) as e:
+            with pytest.raises(
+                AttributeError,
+                match=r"Invalid input parameter every = invalid (type str)",
+            ):
                 obj.create_periodic_task(
                     name="task11",
                     task="task.does.not.exists",
                     every="invalid",
                 )
-            assert str(e.value) == "Invalid input parameter every = invalid (type str)"
 
         else:
             obj.create_periodic_task(
