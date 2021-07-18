@@ -32,10 +32,7 @@ def test_destroy() -> None:
 
     create_app(mode=ServerModes.DESTROY)
 
-    is_alchemy = Connector.check_availability("sqlalchemy")
-    is_mysql = is_alchemy and sqlalchemy.SQLAlchemy.is_mysql()
-
-    if is_mysql:
+    if Connector.check_availability("sqlalchemy"):
         with pytest.raises(ServiceUnavailable):
             auth = Connector.get_authentication_instance()
             user = auth.get_user(username=BaseAuthentication.default_user)
@@ -43,9 +40,3 @@ def test_destroy() -> None:
         auth = Connector.get_authentication_instance()
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user is None
-    # try:
-    #     auth = Connector.get_authentication_instance()
-    #     user = auth.get_user(username=BaseAuthentication.default_user)
-    #     assert user is None
-    # except ServiceUnavailable:
-    #     pass
