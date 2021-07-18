@@ -220,7 +220,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
             with pytest.raises(
                 AttributeError,
-                match=r"Invalid input parameter every = \['60'\] (type list)",
+                match=r"Invalid input parameter every = \['60'\] \(type list\)",
             ):
                 obj.create_periodic_task(
                     name="task10",
@@ -230,7 +230,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
             with pytest.raises(
                 AttributeError,
-                match=r"Invalid input parameter every = invalid (type str)",
+                match=r"Invalid input parameter every = invalid \(type str\)",
             ):
                 obj.create_periodic_task(
                     name="task11",
